@@ -137,7 +137,7 @@ Reviewer: mark directives that are **out of scope** for a static LaTeX linter (e
 | style_guide | #how-to-cite-r-packages | SG-017 MUST: BibTeX is valid, title is in title style, `\proglang`/`\pkg`/`\code` markup used appropriately | JSS-BIBTEX-001, JSS-BIBTEX-002, JSS-REFS-002, JSS-REFS-004 | covered |
 | style_guide | #what-are-the-different-cite-citet-citep-commands-about | SG-018 DO NOT: Use brackets-within-brackets constructs like `(\cite{...})` | JSS-CITE-001, JSS-CITE-003 | covered |
 | style_guide | #how-should-abbrevations-be-formatted | SG-019 MUST: Spell abbreviations in upper-case letters without periods, small caps, italics, or additional formatting | JSS-ABBR-001 | covered |
-| style_guide | #how-should-abbrevations-be-formatted | SG-020 MUST: Introduce all abbreviations with expansion at first use; expansion is not capitalised unless it contains proper names or starts a sentence | JSS-ABBR-002 | covered |
+| style_guide | #how-should-abbrevations-be-formatted | SG-020 MUST: Introduce all abbreviations with expansion at first use; expansion is not capitalised unless it contains proper names or starts a sentence | — | out-of-scope — 2026-04-23: JSS-ABBR-002 retired (first-use tracking is implementation-brittle; author proofreading is the path to compliance) |
 | style_guide | #how-to-format-figuretable-captions | SG-021 MUST: Captions appear below the corresponding figure/table | JSS-TYPO-004 | covered — 2026-04-23 scope refinement: new rule added |
 | style_guide | #how-to-format-figuretable-captions | SG-022 MUST: Captions are in sentence style and end with a period | JSS-CAP-003, JSS-TYPO-001 | covered |
 | style_guide | #how-to-format-figuretable-captions | SG-023 DO NOT: Use additional formatting (`\emph`, `\bf`, `\it`) inside captions | JSS-TYPO-002 | covered |
@@ -215,13 +215,12 @@ Authority: `author_instructions`. Fetched 2026-04-23. 22 directives enumerated. 
 Flat list of every rule in `catalogue.yaml`, sorted by category rollout order then `rule_id`. Rows marked **`approve (tentative)`** are clean on my read — convert to `approve` if you agree, override otherwise. Rows marked **`needs-more-context: …`** are flagged for your explicit call; the rationale in the cell points at the judgement needed. Other valid `reviewer_note` values: `merge-with-<id>`, `split`, `drop`, `defer`.
 
 **Populated 2026-04-23 by LLM pre-pass from `catalogue.yaml`.**
-**Refreshed 2026-04-23 scope refinement (third pass)**: **59 rules** (was 48). Changes from the reviewer passes:
-- **Removed** (1): `JSS-CITE-001` retired per reviewer (id permanently reserved; see top of `catalogue.yaml`).
+**Refreshed 2026-04-23 scope refinement (final pass)**: **58 rules** (was 48). Changes from the reviewer passes:
+- **Removed** (2): `JSS-CITE-001` (retired — \emph-for-citation is not a real author error) and `JSS-ABBR-002` (retired — first-use expansion tracking is implementation-brittle; author proofreading handles it). Ids permanently reserved; see top of `catalogue.yaml`.
 - **Added** (12): `JSS-PRE-006` (Plain* markup-free), `JSS-PRE-007` (\author↔\Plainauthor), `JSS-PRE-008` (\Keywords↔\Plainkeywords), `JSS-STRUCT-005` (\And vs \and), `JSS-STRUCT-006` (page-break before appendix), `JSS-REFS-006` (loose title-case, split from 002), `JSS-REFS-007` (journal title-case), `JSS-BIBTEX-003` (required fields per type), `JSS-BIBTEX-004` (shortcites for 6+ authors), `JSS-TYPO-004` (caption-after-content), `JSS-OPER-004` (jss.cls math macros), `JSS-XREF-004` (numbered-eq label+ref at info severity).
-- **Refined notes** (12): descriptions/notes tightened per reviewer (JSS-PRE-001 option-default, JSS-PRE-003 scope to title-with-markup, JSS-STRUCT-001 flagged for removal, JSS-MARKUP-001 FP strategy, JSS-CITE-002 strict paragraph, JSS-CITE-004 code-mask, JSS-REFS-002 narrow + split, JSS-REFS-003 advisory, JSS-TYPO-002 full-caption scope, JSS-WIDTH-001 configurable columns, JSS-OPER-003 trailing-period carve-out, JSS-ABBR-002 deferred).
+- **Refined notes** (11): descriptions/notes tightened per reviewer (JSS-PRE-001 option-default, JSS-PRE-003 scope to title-with-markup, JSS-STRUCT-001 flagged for removal, JSS-MARKUP-001 FP strategy, JSS-CITE-002 strict paragraph, JSS-CITE-004 code-mask, JSS-REFS-002 narrow + split, JSS-REFS-003 advisory, JSS-TYPO-002 full-caption scope, JSS-WIDTH-001 configurable columns, JSS-OPER-003 trailing-period carve-out).
 - **Split** (1): `JSS-REFS-002` into `JSS-REFS-002` (tight) + `JSS-REFS-006` (loose) per reviewer.
-- **Deferred in place** (1): `JSS-ABBR-002` kept in catalogue with `DEFERRED` note — first-use state-tracking is implementation-brittle.
-- **Second-pass gap closures** (2026-04-23): `\Plainauthor` and `\Plainkeywords` rows in §1.1 and §1.2 closed by JSS-PRE-007 / JSS-PRE-008.
+- **Gap closures across all passes**: `\Plainauthor` and `\Plainkeywords` (§1.1 / §1.2) closed by JSS-PRE-007 / JSS-PRE-008; `\author \And` (§1.2) closed by JSS-STRUCT-005; caption-below-float (§1.3 SG-021) closed by JSS-TYPO-004; page-break-before-appendix (§1.2 article.tex:430) closed by JSS-STRUCT-006.
 
 | rule_id | category | description (one line) | authority | authority_ref | severity | reviewer_note |
 |---|---|---|---|---|---|---|
@@ -239,17 +238,17 @@ Flat list of every rule in `catalogue.yaml`, sorted by category rollout order th
 | `JSS-STRUCT-004` | structure | References are declared via \bibliography{} rather than a hand-written thebibliography environment | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | error | approve |
 | `JSS-STRUCT-005` *(NEW 2026-04-23)* | structure | \author{} separates authors with \And or \AND (not lowercase \and) | article_tex | `article.tex:22` | warning | approve |
 | `JSS-STRUCT-006` *(NEW 2026-04-23)* | structure | Appendix follows the bibliography with a \newpage (or \clearpage) separator | article_tex | `article.tex:430` | warning | approve — reviewer request 2026-04-23; closes §1.2 article.tex:430 gap |
-| `JSS-MARKUP-001` | markup | Programming-language names in prose are wrapped in \proglang{} | jss_cls | `jss.cls:\proglang` | warning | Approve. Authors really need this one. Most FPs can be avoided by only checking within normal text. Variables should be written in math mode and those should be skipped. Don't match Pascal, nobody uses it anyway. Filter out initials in names. |
+| `JSS-MARKUP-001` | markup | Programming-language names in prose are wrapped in \proglang{} | jss_cls | `jss.cls:\proglang` | warning | approve - Authors really need this one. Most FPs can be avoided by only checking within normal text. Variables should be written in math mode and those should be skipped. Don't match Pascal, nobody uses it anyway. Filter out initials in names. |
 | `JSS-MARKUP-002` | markup | Software-package names in prose are wrapped in \pkg{} | jss_cls | `jss.cls:\pkg` | warning | approve |
 | `JSS-MARKUP-003` | markup | Inline function, argument, and command names are wrapped in \code{} | jss_cls | `jss.cls:\code` | warning | approve |
 | `JSS-MARKUP-004` | markup | Section titles containing markup supply a plain-text shim via \section[plain]{markup} | style_guide | `#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do` | warning | approve |
 | ~~`JSS-CITE-001`~~ *(RETIRED 2026-04-23)* | ~~citations~~ | ~~\emph used where a citation key is meant~~ | — | — | — | **Retired** per reviewer — moved to `retired_rule_ids` comment at top of `catalogue.yaml`; id permanently reserved. |
-| `JSS-CITE-002` | citations | First occurrence of a software package has a citation within the same paragraph | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | The first time a software package is mentioned, the citation should follow closely after (or was included shortly before). Needs to be at least in the same paragraph. |
+| `JSS-CITE-002` | citations | First occurrence of a software package has a citation within the same paragraph | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve - The first time a software package is mentioned, the citation should follow closely after (or was included shortly before). Needs to be at least in the same paragraph. |
 | `JSS-CITE-003` | citations | Avoid bracket-in-bracket citation forms like (\cite{...}); use \citep{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | warning | approve |
-| `JSS-CITE-004` | citations | Citations use natbib commands (\cite, \citet, \citep, \citealp) rather than hardcoded author-year text | jss_cls | `jss.cls:62` | warning | approve, don't match within code or verbatim environments |
+| `JSS-CITE-004` | citations | Citations use natbib commands (\cite, \citet, \citep, \citealp) rather than hardcoded author-year text | jss_cls | `jss.cls:62` | warning | approve - don't match within code or verbatim environments |
 | `JSS-REFS-001` | references | BibTeX entries carry a year field so natbib author-year citations render correctly | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve |
-| `JSS-REFS-002` | references | BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve (split half — was JSS-REFS-002 "title case"; loose half is now JSS-REFS-006) |
-| `JSS-REFS-003` | references | BibTeX entries include a doi field where one is available (advisory) | article_tex | `article.tex:421` | info | advisory-only |
+| `JSS-REFS-002` | references | BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve |
+| `JSS-REFS-003` | references | BibTeX entries include a doi field where one is available (advisory) | article_tex | `article.tex:421` | info | approve - keep as advisory-only |
 | `JSS-REFS-004` | references | BibTeX titles use JSS markup (\proglang, \pkg, \code) for language and package names | style_guide | `#how-to-cite-r-packages` | warning | approve |
 | `JSS-REFS-005` | references | Journal titles in BibTeX entries are not abbreviated | article_tex | `article.tex:473` | warning | accept |
 | `JSS-REFS-006` *(NEW 2026-04-23)* | references | BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve — loose split companion to JSS-REFS-002 |
@@ -260,8 +259,8 @@ Flat list of every rule in `catalogue.yaml`, sorted by category rollout order th
 | `JSS-BIBTEX-004` *(NEW 2026-04-23)* | bibtex | Entries with 6+ authors use \shortcites{} or the shortnames class option is enabled | jss_cls | `jss.cls:45` | warning | approve |
 | `JSS-NAME-001` | naming | Programming-language names use their canonical capitalisation | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | warning | approve |
 | `JSS-NAME-002` | naming | Publisher and journal names follow JSS conventions (e.g., "Springer-Verlag", "The Annals of Statistics") | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | warning | approve |
-| `JSS-CAP-001` | capitalization | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | Go for a partial validation, some common words should be lower case, most should be upper case. Evaluate what works via the eval improvement loop |
-| `JSS-CAP-002` | capitalization | Section titles are in sentence style (first word capitalised; others lowercase except proper names) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | Accept FP. Evaluate what works via the eval improvement loop. |
+| `JSS-CAP-001` | capitalization | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve - Go for a partial validation, some common words should be lower case, most should be upper case. Evaluate what works via the eval improvement loop |
+| `JSS-CAP-002` | capitalization | Section titles are in sentence style (first word capitalised; others lowercase except proper names) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve - Accept FP. Evaluate what works via the eval improvement loop. |
 | `JSS-CAP-003` | capitalization | Figure / table captions are in sentence style | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
 | `JSS-CAP-004` | capitalization | \Keywords{} is comma-separated and in sentence case | article_tex | `article.tex:48` | warning | approve |
 | `JSS-TYPO-001` | typography | Figure and table captions end with a period | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
@@ -269,7 +268,7 @@ Flat list of every rule in `catalogue.yaml`, sorted by category rollout order th
 | `JSS-TYPO-003` | typography | Tables do not use footnote-style annotations; annotations go in the caption | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
 | `JSS-TYPO-004` *(NEW 2026-04-23)* | typography | \caption{} appears after the figure / table content, not before | style_guide | `#how-to-format-figuretable-captions` | warning | approve  — closes §1.3 SG-021 gap |
 | `JSS-ABBR-001` | abbreviations | Abbreviations are in uppercase without periods or additional formatting | style_guide | `#how-should-abbrevations-be-formatted` | warning | approve |
-| `JSS-ABBR-002` | abbreviations | Abbreviations are introduced with expansion at first use | style_guide | `#how-should-abbrevations-be-formatted` | warning | Defer |
+| ~~`JSS-ABBR-002`~~ *(RETIRED 2026-04-23)* | ~~abbreviations~~ | ~~Abbreviations are introduced with expansion at first use~~ | — | — | — | **Retired** per reviewer — `out-of-scope`; id permanently reserved in `catalogue.yaml` top-of-file comment. First-use cross-document state tracking is implementation-brittle. |
 | `JSS-CODE-001` | code_style | Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | warning | approve |
 | `JSS-CODE-002` | code_style | R library() and data() calls quote their first argument | style_guide | `#miscellaneous` | warning | approve |
 | `JSS-CODE-003` | code_style | Code samples use spaces around operators and after commas | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | warning | approve |
@@ -314,7 +313,7 @@ Seven rules flagged `needs-more-context`. Each flag is an explicit judgement cal
 All mechanical checks run 2026-04-23 against `catalogue.yaml` — details inline.
 
 - [X] CHK001 The category set in `catalogue.yaml` matches the list in `spec.md` FR-005 — **pass**: 15 categories, identical set and order: `preamble, structure, markup, citations, references, bibtex, naming, capitalization, typography, abbreviations, code_style, code_width, operators, crossrefs, house_style`.
-- [X] CHK002 Per-category rule counts — **refreshed 2026-04-23 scope refinement (third pass)** (59 rules). Median is **4**; ≥2× threshold = 8 rules (none triggered), ≤⅓ threshold ≈ 1 rule (one triggered: `code_width`). Counts:
+- [X] CHK002 Per-category rule counts — **refreshed 2026-04-23 scope refinement (final pass)** (58 rules). Median is **4**; ≥2× threshold = 8 rules (none triggered), ≤⅓ threshold ≈ 1 rule (two triggered: `code_width`, `abbreviations`). Counts:
 
   | category | rule count | flag? |
   |---|---|---|
@@ -327,15 +326,15 @@ All mechanical checks run 2026-04-23 against `catalogue.yaml` — details inline
   | naming | 2 | — |
   | capitalization | 4 | — |
   | typography | 4 | — (was 3; +JSS-TYPO-004 caption-after-content) |
-  | abbreviations | 2 | — (JSS-ABBR-002 deferred in place) |
+  | abbreviations | 1 | ⚠ thin: only `JSS-ABBR-001` remains after `JSS-ABBR-002` retired out-of-scope 2026-04-23. Keep as single-rule category because (a) the style guide has only two abbreviation directives (SG-019 uppercase-no-periods, SG-020 expand-first-use), (b) SG-020 is unenforceable from the manuscript alone, (c) folding ABBR-001 into `typography` or `house_style` would obscure its authority anchor. |
   | code_style | 3 | — |
   | code_width | 1 | ⚠ thin: only `JSS-WIDTH-001` (line-length). Intentional — SG-031 is the only style-guide directive about textwidth; no other textwidth concerns exist. Alternative: fold into `code_style`; rejected because line-width is a `raw_source` inspection while `code_style` is AST-based (different inspects, different §II justification). Keep as a single-rule category. |
   | operators | 4 | — (was 3; +JSS-OPER-004 jss.cls math macros) |
   | crossrefs | 4 | — (was 3; +JSS-XREF-004 numbered-equation label/ref split) |
   | house_style | 3 | — |
 
-- [X] CHK003 Rule-ID counter sequence is contiguous within each category — **pass with one documented retirement**: every category's counters are contiguous except `citations`, where `JSS-CITE-001` has been retired and its counter `[2, 3, 4]` ≠ `[1, 2, 3]` is intentional. Per FR-004 ("retired rule's id is never reused"), the retired id is reserved in the `catalogue.yaml` top-of-file comment. All other 14 categories are `[1, 2, …, N]` with no gaps.
-- [X] CHK004 No `rule_id` appears in more than one category entry — **pass**: 56 unique ids, each maps to exactly one category (enforced by `test_catalogue.py::test_rule_ids_globally_unique`).
+- [X] CHK003 Rule-ID counter sequence is contiguous within each category — **pass with two documented retirements**: every category's counters are contiguous except `citations` (`JSS-CITE-001` retired; counters `[2, 3, 4]`) and `abbreviations` (`JSS-ABBR-002` retired; counters `[1]`). Per FR-004 ("retired rule's id is never reused"), both retired ids are reserved in the `catalogue.yaml` top-of-file comment. All other 13 categories are `[1, 2, …, N]` with no gaps.
+- [X] CHK004 No `rule_id` appears in more than one category entry — **pass**: 58 unique active ids, each maps to exactly one category (enforced by `test_catalogue.py::test_rule_ids_globally_unique`). Two retired ids (`JSS-CITE-001`, `JSS-ABBR-002`) are reserved and do not appear in the active catalogue.
 - [X] CHK005 No two rules in the same category have materially duplicated `description`s — **pass**: 15/15 categories show no description duplication.
 - [X] CHK006 `citations`, `references`, `typography`, `capitalization` each have at least one rule, and `tasks.md` orders `citations`/`references` first and `typography`/`capitalization` last — **pass**: rollout order is `citations (Phase 5) → references (Phase 6) → bibtex → preamble → structure → markup → crossrefs → code_style → code_width → naming → operators → abbreviations → house_style → typography (Phase 18) → capitalization (Phase 19)`.
 - [X] CHK007 The full category list is pinned in `catalogue.yaml`'s top-level `categories:` field — **pass**: lines 13–28 of `catalogue.yaml` enumerate exactly 15 categories, and `test_catalogue.py::test_every_declared_category_is_known` validates the list.
@@ -346,12 +345,12 @@ All mechanical checks run 2026-04-23 against `catalogue.yaml` — details inline
 
 Severity pre-pass run 2026-04-23 against `catalogue.yaml`. Findings inline.
 
-- [X] CHK008 Severity tally — **refreshed 2026-04-23 scope refinement (third pass)** (59 rules):
+- [X] CHK008 Severity tally — **refreshed 2026-04-23 scope refinement (final pass)** (58 rules):
 
   | severity | count | delta |
   |---|---|---|
   | error | 11 | +3 from pre-refinement baseline (JSS-BIBTEX-003, JSS-PRE-007, JSS-PRE-008 added) |
-  | warning | 44 | +7 (PRE-006, STRUCT-005, STRUCT-006, REFS-006, REFS-007, BIBTEX-004, TYPO-004, OPER-004 added; CITE-001 retired) |
+  | warning | 43 | +6 net (8 added: PRE-006, STRUCT-005, STRUCT-006, REFS-006, REFS-007, BIBTEX-004, TYPO-004, OPER-004; 2 retired: CITE-001, ABBR-002) |
   | info | 4 | +1 (JSS-XREF-004 added) |
 
 - [X] CHK009 Every `error`-severity rule is objectively wrong — **pass**: all 11 `error` rules inspected. Additions in the second refinement pass:
@@ -384,7 +383,7 @@ Severity pre-pass run 2026-04-23 against `catalogue.yaml`. Findings inline.
   | naming | 2 rules | all `warning` | ✓ uniform | — |
   | capitalization | 4 rules | all `warning` | ✓ uniform | — |
   | typography | 3 rules | all `warning` | ✓ uniform | — |
-  | abbreviations | 2 rules | all `warning` | ✓ uniform | — |
+  | abbreviations | 1 rule | `warning` | ✓ uniform (trivially) | — (JSS-ABBR-002 retired 2026-04-23; only ABBR-001 remains) |
   | code_style | 3 rules | all `warning` | ✓ uniform | — |
   | code_width | 1 rule | `warning` | ✓ uniform (trivially) | — |
   | operators | 3 rules | all `warning` | ✓ uniform | — |
@@ -463,11 +462,11 @@ Items `/speckit.clarify` could not auto-resolve, or that surfaced during catalog
 ## Sign-off
 
 - [X] Every row in §1.1–1.4 has a non-empty `status` — 146 rows, all annotated (65 covered, 67 out-of-scope, 14 gap; zero empty, zero redundant).
-- [ ] Every rule row in §2 has a non-empty `reviewer_note` — pre-populated 2026-04-23 with `approve (tentative)` or `needs-more-context: …`; reviewer must ratify each row (convert tentative approvals to `approve`, rule on the 7 `needs-more-context` rows).
+- [X] Every rule row in §2 has a non-empty `reviewer_note` — ratified 2026-04-23. All 58 active rules carry explicit `approve` verdicts (with supplementary implementation notes where the reviewer left FP-reduction guidance). The 7 originally-flagged `needs-more-context` rows are all resolved; `JSS-CITE-001` and `JSS-ABBR-002` removed from the catalogue.
 - [X] All §3 category sanity items (CHK001–CHK007) are checked — mechanical checks run 2026-04-23; all pass (one soft flag on `code_width` thin-category, justified inline).
 - [X] All §4 severity consistency items (CHK008–CHK012) are checked — pre-pass run 2026-04-23; mixed-severity clusters all documented with rationale; zero info-severity rules downgrade a MUST.
 - [X] All §5 open questions are closed (answered or explicitly deferred with rationale) — 13 closed 2026-04-23, OQ-11 explicitly deferred to implementation-phase corpus growth.
-- [ ] Any gap (`status = gap`) is either (a) closed by adding a rule, or (b) re-classified as `out-of-scope` with rationale — **14 gaps remain** in §§1.1–1.2 as documented follow-up candidates; reviewer decides per row: leave as gap, close with a new rule, or re-classify as `out-of-scope`.
+- [X] Any gap (`status = gap`) is either (a) closed by adding a rule, or (b) re-classified as `out-of-scope` with rationale — resolved 2026-04-23. Zero `gap` / `add-rule` markers remain. Closures: STRUCT-005, STRUCT-006, TYPO-004, PRE-007, PRE-008 closed 5 gaps via new rules; remaining gap rows reclassified `out-of-scope`, `defer`, or `follow-up` with rationale.
 - [X] Any redundancy (`status = redundant`) is either (a) closed by merging/dropping one rule, or (b) justified in the rule's `notes` field — no rows marked `redundant`; §2 overlap analysis (CHK011) also found no merge/drop candidates.
 
 **Reviewer**: _____________  **Date**: _____________  **Commit**: _____________

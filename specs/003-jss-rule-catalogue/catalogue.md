@@ -4,7 +4,7 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 59  
+**Rule count**: 58  
 **Category count**: 15
 
 ---
@@ -116,12 +116,11 @@ _typography_ — 4 rule(s)
 
 ## Abbreviations
 
-_abbreviations_ — 2 rule(s)
+_abbreviations_ — 1 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-ABBR-001` | warning | Abbreviations are in uppercase without periods or additional formatting | style_guide | `#how-should-abbrevations-be-formatted` | ✓ |
-| `JSS-ABBR-002` | warning | Abbreviations are introduced with expansion at first use | style_guide | `#how-should-abbrevations-be-formatted` | — |
 
 ## Code style
 
@@ -1781,41 +1780,6 @@ Data collected in the USA during 2020.
 ```
 
 </details>
-
----
-
-### JSS-ABBR-002
-
-**Category**: `abbreviations` · **Severity**: `warning` · **Auto-fixable**: no
-
-Abbreviations are introduced with expansion at first use
-
-**Authority**: `style_guide` → `#how-should-abbrevations-be-formatted`
-
-**Inspects**: `tex_files`
-
-<details>
-<summary>Example violation</summary>
-
-```latex
-The IWLS algorithm is used throughout this paper.
-```
-
-</details>
-
-<details>
-<summary>Example fix</summary>
-
-```latex
-The iterative weighted least squares (IWLS) algorithm is used throughout this paper.
-```
-
-</details>
-
-**Notes**: DEFERRED per reviewer 2026-04-23 — implementing a "first use" check requires robust cross-document state
-tracking (per-file state plus an explicit allowlist of pre-introduced abbreviations like "JSS" / "LaTeX"
-/ "PDF"). Candidate for a future spec after a simpler heuristic — flagging unknown uppercase acronyms
-without preceding expansion — is prototyped and precision-gated.
 
 ---
 

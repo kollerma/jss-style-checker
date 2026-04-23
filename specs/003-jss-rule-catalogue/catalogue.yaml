@@ -13,6 +13,11 @@
 #     rule. Reviewer judgement: real JSS authors do not misuse \emph
 #     for citation keys; the pattern is an artefact of the style-guide
 #     examples. No corpus signal justifies the rule.
+#   - JSS-ABBR-002 (retired 2026-04-23): abbreviations introduced with
+#     expansion at first use. Reviewer judgement: out-of-scope —
+#     first-use cross-document state tracking is implementation-brittle
+#     and the abbreviation-expansion rule is better handled by the
+#     authors' own proofreading pass than by the linter.
 
 version: 1
 source_vendored_at: "2021-05-23"
@@ -954,23 +959,8 @@ rules:
     inspects: [tex_files]
     auto_fixable: true
 
-  - rule_id: JSS-ABBR-002
-    category: abbreviations
-    severity: warning
-    description: Abbreviations are introduced with expansion at first use
-    authority: style_guide
-    authority_ref: "#how-should-abbrevations-be-formatted"
-    example_violation: |
-      The IWLS algorithm is used throughout this paper.
-    example_fix: |
-      The iterative weighted least squares (IWLS) algorithm is used throughout this paper.
-    inspects: [tex_files]
-    auto_fixable: false
-    notes: |
-      DEFERRED per reviewer 2026-04-23 — implementing a "first use" check requires robust cross-document state
-      tracking (per-file state plus an explicit allowlist of pre-introduced abbreviations like "JSS" / "LaTeX"
-      / "PDF"). Candidate for a future spec after a simpler heuristic — flagging unknown uppercase acronyms
-      without preceding expansion — is prototyped and precision-gated.
+  # JSS-ABBR-002 retired 2026-04-23 (reviewer judgement: out-of-scope);
+  # see retired_rule_ids comment at top of file.
 
   # ---------------------------------------------------------------------------
   # code_style
