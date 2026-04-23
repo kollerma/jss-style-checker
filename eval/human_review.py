@@ -36,7 +36,7 @@ def _resolve_reviewer(reviewer: str | None) -> str:
     return f"human:{user}"
 
 
-def _source_snippet(paper_path: Path, line: int | None, window: int = 3) -> str | None:
+def source_snippet(paper_path: Path, line: int | None, window: int = 3) -> str | None:
     """Return a ±window line slice of `paper_path`'s first `.tex` file, or None."""
     if not paper_path.exists() or not paper_path.is_dir():
         return None
@@ -75,7 +75,7 @@ def _render_violation(
     table.add_row("Message", message)
     console.print(table)
 
-    snippet = _source_snippet(Path(paper_path), line)
+    snippet = source_snippet(Path(paper_path), line)
     if snippet:
         start = max(1, (line or 1) - 3)
         console.print(

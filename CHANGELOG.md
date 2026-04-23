@@ -27,6 +27,20 @@ version bump and an entry in this file — see the spec's Clarification Q2.
   the `JSS-CITE-001` / `JSS-SRC-001` / clean code paths; the 10-paper
   real-CRAN corpus is planned follow-up work.
 
+### Fixed
+
+- `eval/review.py` now builds a `±3`-line source snippet per violation and
+  passes it as `paper_context` to the `ReviewClient`, rather than sending
+  an empty string. Observed effect: AI precision on the canonical JSS
+  template's `JSS-SRC-001` violations improved from 86% to 57%, moving
+  measurably toward the human ground-truth of 11%. Residual gap is the
+  AI blind spot documented in `eval/review-skip-list.toml` and
+  `specs/002-eval-jss-harness/spec.md`'s Assumptions section.
+- `eval-jss review` now fail-fast-exits 2 with a diagnostic message on
+  first-call network errors, per `contracts/review-client.md`. Earlier
+  behaviour silently degraded every row to `uncertain`, which made a
+  mis-pointed `--base-url` (or a down server) invisible to the operator.
+
 ### Packaging note
 
 `eval-jss` is registered as a console script. The `eval` Python module

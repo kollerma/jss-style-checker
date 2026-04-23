@@ -5,3 +5,9 @@ ts,tool_version,rule_id,category,tp,fp,pending,precision,source,below_threshold
 2026-04-23T11:53:30Z,0.1.0,JSS-BIB-001,bibliography,1,0,0,1.0000,manual,0
 2026-04-23T11:53:30Z,0.1.0,JSS-CITE-001,citation,1,0,0,1.0000,manual,0
 2026-04-23T11:53:30Z,0.1.0,JSS-SRC-001,typography,1,8,0,0.1111,manual,1
+2026-04-23T13:29:06Z,0.1.0,JSS-BIB-001,bibliography,0,0,1,,overall,0
+2026-04-23T13:29:06Z,0.1.0,JSS-CITE-001,citation,1,0,0,1.0000,overall,0
+2026-04-23T13:29:06Z,0.1.0,JSS-SRC-001,typography,4,3,2,0.5714,overall,1
+2026-04-23T13:29:06Z,0.1.0,JSS-BIB-001,bibliography,0,0,1,,manual,0
+2026-04-23T13:29:06Z,0.1.0,JSS-CITE-001,citation,1,0,0,1.0000,manual,0
+2026-04-23T13:29:06Z,0.1.0,JSS-SRC-001,typography,4,3,2,0.5714,manual,1

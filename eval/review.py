@@ -285,6 +285,10 @@ def run(
         labelled = skipped_low_conf = network_degraded = skipped_uncertain = 0
         saw_any_success = False
 
+        # Import lazily so `eval.review` stays importable without pulling
+        # `rich` (used by `human_review` for terminal rendering).
+        from eval.human_review import source_snippet
+
         for i, row in enumerate(rows):
             violation_dict = {
                 "rule_id": row["rule_id"],
@@ -295,7 +299,10 @@ def run(
                 "severity": row["severity"],
                 "paper_path": row["paper_path"],
             }
-            result = client.classify(violation_dict, paper_context="")
+            paper_context = (
+                source_snippet(Path(row["paper_path"]), row["line"]) or ""
+            )
+            result = client.classify(violation_dict, paper_context=paper_context)
 
             is_network_failure = (
                 result.verdict == api.Verdict.UNCERTAIN

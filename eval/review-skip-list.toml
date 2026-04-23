@@ -9,11 +9,11 @@
 #
 # Bare-string entries (just `"JSS-FOO-123"`) are also accepted.
 #
-# Example (commented out because the rule it references does not ship
-# in the Step 1 foundation yet):
+# Examples (commented; uncomment / adapt when Step 3 has the rule
+# catalogue that makes each one a live concern):
 #
-# skip_rules = [
 #   { rule_id = "JSS-CODE-003", reason = "Qwen3 mislabels param=value inside \\code{}" },
-# ]
+#
+#   { rule_id = "JSS-SRC-001", reason = "Qwen3 rubber-stamps numeric-assertion messages as TP; see spec.md Assumptions for the 2026-04-23 observation" },
 
 skip_rules = []
