@@ -63,7 +63,13 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr" -exist
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Resolve and add other allowed domains
+# Resolve and add other allowed domains.
+#
+# The last six entries (cran.r-project.org … crandb.r-pkg.org) feed
+# `eval-jss corpus fetch` (spec 002 FR-025) and related discovery /
+# cross-check paths; see eval/corpus.py. arXiv is listed twice because
+# the listing API lives on `export.arxiv.org` while source tarballs
+# live on `arxiv.org`.
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
@@ -75,7 +81,12 @@ for domain in \
     "update.code.visualstudio.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
-    "cran.r-project.org"; do
+    "cran.r-project.org" \
+    "bioconductor.org" \
+    "arxiv.org" \
+    "export.arxiv.org" \
+    "archive.softwareheritage.org" \
+    "crandb.r-pkg.org"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then

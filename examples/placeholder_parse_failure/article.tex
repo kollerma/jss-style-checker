@@ -1,0 +1,14 @@
+\documentclass{jss}
+
+\title{Placeholder: Parse Failure}
+\author{Placeholder}
+
+\begin{document}
+\section{Introduction}
+
+This file intentionally triggers a \code{JSS-PARSE-000} by containing
+an unbalanced environment: we \begin{itemize} open a list but never
+close it. pylatexenc should raise LatexWalkerError on this file, which
+the harness converts to a JSS-PARSE-000 violation per spec FR-011.
+
+\end{document}

@@ -264,6 +264,11 @@ def run(
     `client` is an injection seam for tests. Production callers leave
     it as `None` and get a `LlamaServerClient` with the given
     `model`/`base_url`.
+
+    Fail-fast on first-call network errors (exit 2). Per-row degradation
+    to UNCERTAIN only happens *after* at least one row has round-tripped
+    cleanly, so a mis-pointed `--base-url` or a down server surfaces
+    immediately instead of silently leaving rows NULL.
     """
     if client is None:
         client = LlamaServerClient(model=model, base_url=base_url)
@@ -274,8 +279,13 @@ def run(
     try:
         rows = _select_unlabelled(cx, skip_rules=skip_rules, limit=limit)
         if not rows:
+            print("eval-jss: no pending violations to review.")
             return 0
-        for row in rows:
+
+        labelled = skipped_low_conf = network_degraded = skipped_uncertain = 0
+        saw_any_success = False
+
+        for i, row in enumerate(rows):
             violation_dict = {
                 "rule_id": row["rule_id"],
                 "category": row["category"],
@@ -286,9 +296,34 @@ def run(
                 "paper_path": row["paper_path"],
             }
             result = client.classify(violation_dict, paper_context="")
+
+            is_network_failure = (
+                result.verdict == api.Verdict.UNCERTAIN
+                and result.reason.startswith("network:")
+            )
+
+            # Fail-fast: first row can't network to the server → exit 2.
+            if i == 0 and is_network_failure:
+                print(
+                    f"eval-jss: AI review client unreachable on first call: "
+                    f"{result.reason}. Check --base-url (currently {base_url}) "
+                    f"and that llama-server is bound to an interface reachable "
+                    f"from this process.",
+                    flush=True,
+                )
+                return 2
+
+            if is_network_failure:
+                network_degraded += 1
+                continue
+
             if result.verdict == api.Verdict.UNCERTAIN:
+                skipped_uncertain += 1
+                saw_any_success = True
                 continue
             if result.confidence < confidence_threshold:
+                skipped_low_conf += 1
+                saw_any_success = True
                 continue
             _write_verdict(
                 cx,
@@ -297,6 +332,16 @@ def run(
                 reason=result.reason,
                 reviewer=f"ai:{model}",
             )
+            labelled += 1
+            saw_any_success = True
+
+        print(
+            f"eval-jss review: {labelled} labelled, "
+            f"{skipped_uncertain} uncertain, "
+            f"{skipped_low_conf} below threshold "
+            f"(<{confidence_threshold}), "
+            f"{network_degraded} network-degraded out of {len(rows)} candidates."
+        )
     finally:
         cx.close()
 
