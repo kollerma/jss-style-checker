@@ -65,11 +65,17 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
 # Resolve and add other allowed domains.
 #
-# The last six entries (cran.r-project.org … crandb.r-pkg.org) feed
+# The cran.r-project.org … crandb.r-pkg.org block feeds
 # `eval-jss corpus fetch` (spec 002 FR-025) and related discovery /
 # cross-check paths; see eval/corpus.py. arXiv is listed twice because
 # the listing API lives on `export.arxiv.org` while source tarballs
 # live on `arxiv.org`.
+#
+# www.jstatsoft.org feeds JSS rule derivation (spec 003): the style
+# guide (https://www.jstatsoft.org/style), the author instructions
+# (https://www.jstatsoft.org/authors#manuscript-preparation), and the
+# canonical template zip (https://www.jstatsoft.org/public/journals/1/
+# jss-article-tex.zip) used to refresh docs/jss-template/.
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
@@ -86,7 +92,8 @@ for domain in \
     "arxiv.org" \
     "export.arxiv.org" \
     "archive.softwareheritage.org" \
-    "crandb.r-pkg.org"; do
+    "crandb.r-pkg.org" \
+    "www.jstatsoft.org"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
