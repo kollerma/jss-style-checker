@@ -9,7 +9,7 @@ description = "Fixture: a no-op journal plugin used to test texlint's entry-poin
 requires-python = ">=3.10"
 
 [project.entry-points."texlint.journals"]
-stub = "stub_journal:JOURNAL"
+stub = "stub_journal:StubJournal"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/stub_journal"]

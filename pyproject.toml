@@ -41,7 +41,7 @@ dev = [
 jss-lint = "texlint.cli:main"
 
 [project.entry-points."texlint.journals"]
-# Journal modules register here. Step 1 will add the JSS entry.
+jss = "texlint.journals.jss:JSSJournal"
 
 [project.urls]
 Homepage = "https://github.com/kollerma/jss-style-checker"
