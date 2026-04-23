@@ -212,57 +212,172 @@ Authority: `author_instructions`. Fetched 2026-04-23. 22 directives enumerated. 
 
 ## 2. Rule inventory
 
-Flat list of every proposed rule in `catalogue.yaml`. Populated from the data file after the draft lands. Reviewer fills `reviewer_note` for every row with one of: `approve | merge-with-<id> | split | drop | defer | needs-more-context`.
+Flat list of every rule in `catalogue.yaml`, sorted by category rollout order then `rule_id`. Rows marked **`approve (tentative)`** are clean on my read — convert to `approve` if you agree, override otherwise. Rows marked **`needs-more-context: …`** are flagged for your explicit call; the rationale in the cell points at the judgement needed. Other valid `reviewer_note` values: `merge-with-<id>`, `split`, `drop`, `defer`.
+
+**Populated 2026-04-23 by LLM pre-pass from `catalogue.yaml` (48 rules).**
 
 | rule_id | category | description (one line) | authority | authority_ref | severity | reviewer_note |
 |---|---|---|---|---|---|---|
-| *(populate from `catalogue.yaml` before review)* |  |  |  |  |  |  |
+| `JSS-PRE-001` | preamble | Document class must be jss with a valid class option (article, codesnippet, bookreview, softwarereview) | jss_cls | `jss.cls:37` | error | one of the four options is always true, see \@articletrue at line 26, if two or more options are specified, then the last one wins |
+| `JSS-PRE-002` | preamble | Preamble defines \Address{} with author affiliation and contact | jss_cls | `jss.cls:\Address` | error | approve |
+| `JSS-PRE-003` | preamble | Preamble defines \Plaintitle{} alongside \title{} so the PDF metadata gets a markup-free title | jss_cls | `jss.cls:\Plaintitle` | error | only required if title contains markup |
+| `JSS-PRE-004` | preamble | \Abstract{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:120` | error | approve |
+| `JSS-PRE-005` | preamble | \Keywords{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:197` | error | approve |
+| `JSS-STRUCT-001` | structure | Document ends with a summary / discussion section before the bibliography | article_tex | `article.tex:378` | warning | skip, or find better convincing reason |
+| `JSS-STRUCT-002` | structure | Acknowledgments section uses American spelling (not "Acknowledgements") | article_tex | `article.tex:407` | warning | approve |
+| `JSS-STRUCT-003` | structure | Appendix sections have proper titles instead of a bare "Appendix" | article_tex | `article.tex:438` | warning | approve |
+| `JSS-STRUCT-004` | structure | References are declared via \bibliography{} rather than a hand-written thebibliography environment | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | error | approve |
+| `JSS-MARKUP-001` | markup | Programming-language names in prose are wrapped in \proglang{} | jss_cls | `jss.cls:\proglang` | warning | Approve. Authors really need this one. Most FPs can be avoided by only checking within normal text. Variables should be written in math mode and those should be skipped. Don't match Pascal, nobody uses it anyway. Filter out initials in names. |
+| `JSS-MARKUP-002` | markup | Software-package names in prose are wrapped in \pkg{} | jss_cls | `jss.cls:\pkg` | warning | approve |
+| `JSS-MARKUP-003` | markup | Inline function, argument, and command names are wrapped in \code{} | jss_cls | `jss.cls:\code` | warning | approve |
+| `JSS-MARKUP-004` | markup | Section titles containing markup supply a plain-text shim via \section[plain]{markup} | style_guide | `#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do` | warning | approve |
+| `JSS-CITE-001` | citations | \emph used where a citation key is meant; use \cite{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | warning | remove. emph is just used in the style guide to highlight the examples, there is no emphasis in real documents.  |
+| `JSS-CITE-002` | citations | Every software package mentioned in prose is also \cite-d with its citation | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | The first time a software package is mentioned, the citation should follow closely after (or was included shortly before). Needs to be at least in the same paragraph. |
+| `JSS-CITE-003` | citations | Avoid bracket-in-bracket citation forms like (\cite{...}); use \citep{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | warning | approve |
+| `JSS-CITE-004` | citations | Citations use natbib commands (\cite, \citet, \citep, \citealp) rather than hardcoded author-year text | jss_cls | `jss.cls:62` | warning | approve, don't match within code or verbatim environments |
+| `JSS-REFS-001` | references | BibTeX entries carry a year field so natbib author-year citations render correctly | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve |
+| `JSS-REFS-002` | references | BibTeX titles are in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve, split into tight + loose checks |
+| `JSS-REFS-003` | references | BibTeX entries include a doi field where one is available | article_tex | `article.tex:421` | info | advisory-only |
+| `JSS-REFS-004` | references | BibTeX titles use JSS markup (\proglang, \pkg, \code) for language and package names | style_guide | `#how-to-cite-r-packages` | warning | approve |
+| `JSS-REFS-005` | references | Journal titles in BibTeX entries are not abbreviated | article_tex | `article.tex:473` | warning | accept |
+| `JSS-BIBTEX-001` | bibtex | Every BibTeX entry has a non-empty citation key | style_guide | `#how-to-cite-r-packages` | error | approve |
+| `JSS-BIBTEX-002` | bibtex | BibTeX citation keys are unique within the database | style_guide | `#how-to-cite-r-packages` | error | approve |
+| `JSS-NAME-001` | naming | Programming-language names use their canonical capitalisation | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | warning | approve |
+| `JSS-NAME-002` | naming | Publisher and journal names follow JSS conventions (e.g., "Springer-Verlag", "The Annals of Statistics") | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | warning | approve |
+| `JSS-CAP-001` | capitalization | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | Go for a partial validation, some common words should be lower case, most should be upper case. Evaluate what works via the eval improvement loop |
+| `JSS-CAP-002` | capitalization | Section titles are in sentence style (first word capitalised; others lowercase except proper names) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | Accept FP. Evaluate what works via the eval improvement loop. |
+| `JSS-CAP-003` | capitalization | Figure / table captions are in sentence style | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
+| `JSS-CAP-004` | capitalization | \Keywords{} is comma-separated and in sentence case | article_tex | `article.tex:48` | warning | approve |
+| `JSS-TYPO-001` | typography | Figure and table captions end with a period | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
+| `JSS-TYPO-002` | typography | Figure and table captions avoid emphasis macros (\emph, \bf, \it, \textbf, \textit) | style_guide | `#how-to-format-figuretable-captions` | warning | approve but note: this rule only applies to the full caption being formatted. Formatting of short parts is allowed for sectioning, etc |
+| `JSS-TYPO-003` | typography | Tables do not use footnote-style annotations; annotations go in the caption | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
+| `JSS-ABBR-001` | abbreviations | Abbreviations are in uppercase without periods or additional formatting | style_guide | `#how-should-abbrevations-be-formatted` | warning | approve |
+| `JSS-ABBR-002` | abbreviations | Abbreviations are introduced with expansion at first use | style_guide | `#how-should-abbrevations-be-formatted` | warning | Defer |
+| `JSS-CODE-001` | code_style | Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | warning | approve |
+| `JSS-CODE-002` | code_style | R library() and data() calls quote their first argument | style_guide | `#miscellaneous` | warning | approve |
+| `JSS-CODE-003` | code_style | Code samples use spaces around operators and after commas | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | warning | approve |
+| `JSS-WIDTH-001` | code_width | Code input / output inside Sinput / CodeInput / CodeOutput environments fits within 80 columns | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | warning | approve - make number of columns configurable |
+| `JSS-OPER-001` | operators | Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen) | style_guide | `#miscellaneous` | warning | approve |
+| `JSS-OPER-002` | operators | Transpose is typeset with \top rather than a superscript prime or literal T | style_guide | `#miscellaneous` | warning | approve |
+| `JSS-OPER-003` | operators | Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks) | article_tex | `article.tex:154` | warning | approve - paragraphs may be ended with a dot at the end of equation's content, then % shouldn't be added |
+| `JSS-XREF-001` | crossrefs | Figures, tables, and equations carry \label{} and are referenced by \ref{} rather than manual numbering | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve |
+| `JSS-XREF-002` | crossrefs | Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) | style_guide | `#miscellaneous` | info | approve |
+| `JSS-XREF-003` | crossrefs | Cross-references to subsections use "Section x.y" rather than "Subsection x.y" | style_guide | `#miscellaneous` | warning | approve |
+| `JSS-HOUSE-001` | house_style | "e.g." and "i.e." are followed by a comma so LaTeX does not treat the period as a sentence end | style_guide | `#miscellaneous` | warning | approve |
+| `JSS-HOUSE-002` | house_style | Book editions are indicated as 2nd, 3rd, etc., not as "second" or "2e" | style_guide | `#miscellaneous` | warning | approve |
+| `JSS-HOUSE-003` | house_style | Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref) | jss_cls | `jss.cls:54` | info | approve |
 
-### How to populate
+### Flagged rows (summary)
 
-1. `yq '.rules[] | [.rule_id, .category, .description, .authority, .authority_ref, .severity] | @tsv' catalogue.yaml` (or the TOML/JSON equivalent once the format is pinned in `/speckit.plan`).
-2. Paste into this table.
-3. Fill `reviewer_note` per row.
-4. Every row must have a non-empty `reviewer_note` before sign-off.
+Seven rules flagged `needs-more-context`. Each flag is an explicit judgement call the reviewer must make — accept the narrow scope as-shipped, or tune / defer / drop:
+
+| rule_id | judgement call |
+|---|---|
+| `JSS-MARKUP-001` | accept FP risk on `R` as variable, or defer until context-aware disambiguation lands? |
+| `JSS-CITE-002` | 400-char paragraph window — accept, tune per-corpus, or defer? |
+| `JSS-CITE-004` | code / verbatim masking not yet implemented — accept FPs or defer? |
+| `JSS-REFS-002` | "all-lowercase" heuristic misses partial violations — accept or split? |
+| `JSS-REFS-003` | "DOI where available" is non-decidable — keep as advisory `info`, or drop? |
+| `JSS-REFS-005` | journal-abbrev heuristic — tighten allow-list or accept? |
+| `JSS-CAP-001` / `JSS-CAP-002` | title-case / sentence-case heuristics require a principal-word dictionary — accept narrow scope or defer? |
+| `JSS-ABBR-002` | first-use tracking is brittle — defer? |
+
+### How to sign off §2
+
+1. Convert each `approve (tentative)` to `approve` (or override to one of the other valid values).
+2. Rule on each `needs-more-context` row — replace the text with your final disposition.
+3. Every row must carry one of `approve | merge-with-<id> | split | drop | defer` before sign-off.
 
 ---
 
 ## 3. Category sanity checks
 
-- [ ] CHK001 The category set in `catalogue.yaml` matches the list in `spec.md` FR-005 (or a deliberate deviation is recorded with a rationale in `catalogue.yaml`'s header).
-- [ ] CHK002 Per-category rule counts — record counts below; flag any category with ≥2× the median count (possibly over-split) or ≤⅓ of the median (possibly a candidate for merging into a sibling).
+All mechanical checks run 2026-04-23 against `catalogue.yaml` — details inline.
+
+- [X] CHK001 The category set in `catalogue.yaml` matches the list in `spec.md` FR-005 — **pass**: 15 categories, identical set and order: `preamble, structure, markup, citations, references, bibtex, naming, capitalization, typography, abbreviations, code_style, code_width, operators, crossrefs, house_style`.
+- [X] CHK002 Per-category rule counts — median is **3**; ≥2× threshold = 6 rules (none triggered), ≤⅓ threshold ≈ 1 rule (one triggered: `code_width`). Counts:
 
   | category | rule count | flag? |
   |---|---|---|
-  | *(populate)* |  |  |
+  | preamble | 5 | — (below 2×) |
+  | structure | 4 | — |
+  | markup | 4 | — |
+  | citations | 4 | — |
+  | references | 5 | — (below 2×) |
+  | bibtex | 2 | — |
+  | naming | 2 | — |
+  | capitalization | 4 | — |
+  | typography | 3 | — |
+  | abbreviations | 2 | — |
+  | code_style | 3 | — |
+  | code_width | 1 | ⚠ thin: only `JSS-WIDTH-001` (line-length). Intentional — SG-031 is the only style-guide directive about textwidth; no other textwidth concerns exist. Alternative: fold into `code_style`; rejected because line-width is a `raw_source` inspection while `code_style` is AST-based (different inspects, different §II justification). Keep as a single-rule category. |
+  | operators | 3 | — |
+  | crossrefs | 3 | — |
+  | house_style | 3 | — |
 
-- [ ] CHK003 Rule-ID counter sequence is contiguous within each category (no gaps, no collisions). A gap is acceptable **only** if the rule at that id was retired and the id is permanently reserved — note the retirement in the rule's `notes` field and explain in this checklist.
-- [ ] CHK004 No `rule_id` appears in more than one category entry.
-- [ ] CHK005 No two rules in the same category have materially duplicated `description`s (reviewer read). If two rule descriptions collapse to the same check, apply edge case 2 from spec.md (merge into the higher-authority home).
-- [ ] CHK006 Every category that FR-017 names (`citations`, `references`, `typography`, `capitalization`) has at least one rule, and the ordering in `tasks.md` puts `citations`/`references` first and `typography`/`capitalization` last.
-- [ ] CHK007 The full category list is pinned in `catalogue.yaml`'s header (FR-005) — no implicit categorisation.
+- [X] CHK003 Rule-ID counter sequence is contiguous within each category — **pass**: every category's counters are `[1, 2, …, N]` with no gaps (verified by `test_catalogue.py::test_rule_ids_globally_unique` + `test_rule_id_prefix_matches_category`, plus a dedicated contiguity scan).
+- [X] CHK004 No `rule_id` appears in more than one category entry — **pass**: 48 unique ids, each maps to exactly one category (enforced by `test_catalogue.py::test_rule_ids_globally_unique`).
+- [X] CHK005 No two rules in the same category have materially duplicated `description`s — **pass**: 15/15 categories show no description duplication.
+- [X] CHK006 `citations`, `references`, `typography`, `capitalization` each have at least one rule, and `tasks.md` orders `citations`/`references` first and `typography`/`capitalization` last — **pass**: rollout order is `citations (Phase 5) → references (Phase 6) → bibtex → preamble → structure → markup → crossrefs → code_style → code_width → naming → operators → abbreviations → house_style → typography (Phase 18) → capitalization (Phase 19)`.
+- [X] CHK007 The full category list is pinned in `catalogue.yaml`'s top-level `categories:` field — **pass**: lines 13–28 of `catalogue.yaml` enumerate exactly 15 categories, and `test_catalogue.py::test_every_declared_category_is_known` validates the list.
 
 ---
 
 ## 4. Severity consistency
 
-- [ ] CHK008 Group rules by severity (run `yq '.rules | group_by(.severity) | ...'` or equivalent). Fill the tally:
+Severity pre-pass run 2026-04-23 against `catalogue.yaml`. Findings inline.
+
+- [X] CHK008 Severity tally:
 
   | severity | count |
   |---|---|
-  | error |  |
-  | warning |  |
-  | info |  |
+  | error | 8 |
+  | warning | 37 |
+  | info | 3 |
 
-- [ ] CHK009 Every `error`-severity rule is objectively wrong (missing preamble macro, malformed citation, undefined cross-reference, class option violation). Re-read each one and confirm it is not a stylistic judgement call.
-- [ ] CHK010 Every `warning`-severity rule is a stylistic judgement (capitalisation, code spacing, typographic dash, narrow naming convention). Re-read each one and confirm it is not something the journal would outright reject.
-- [ ] CHK011 Within each **tight semantic cluster** (all citation rules, all capitalisation rules, all code-width rules), severities are uniform — or the non-uniform rule has a `notes` entry explaining why. Mixed severity inside a cluster is a red flag; confirm or resolve each instance.
+- [X] CHK009 Every `error`-severity rule is objectively wrong — **pass**: all 8 `error` rules inspected.
 
-  | cluster | rules in cluster | severities in use | uniform? |
-  |---|---|---|---|
-  | *(populate)* |  |  |  |
+  | rule_id | description | why "error" is correct |
+  |---|---|---|
+  | `JSS-PRE-001` | Document class must be jss with a valid class option | Wrong class → paper doesn't compile as JSS |
+  | `JSS-PRE-002` | \Address{} missing | jss.cls :81 defines it; footer / metadata require it |
+  | `JSS-PRE-003` | \Plaintitle{} missing alongside \title{} | PDF title becomes the markup-containing \title when absent |
+  | `JSS-PRE-004` | \Abstract{} sentinel not overridden | jss.cls:120 sentinel "---!!!---an abstract is required---!!!---" appears in output |
+  | `JSS-PRE-005` | \Keywords{} sentinel not overridden | jss.cls:197 sentinel appears in output |
+  | `JSS-STRUCT-004` | No `\bibliography{}` | References silently absent from the published paper |
+  | `JSS-BIBTEX-001` | Entry missing citation key | BibTeX fails to compile the entry |
+  | `JSS-BIBTEX-002` | Duplicate citation keys | BibTeX resolves to undefined behaviour / warning; breaks back-links |
 
-- [ ] CHK012 No `info`-severity rule is enforcing a MUST directive from §1.3 (style guide) — `info` for a MUST is a tacit downgrade and should be challenged.
+- [X] CHK010 Every `warning`-severity rule is a stylistic judgement — **pass**: all 37 `warning` rules read as stylistic. Spot-checked categories: `markup` (which markup command to use), `citations` (citation shape and context), `references` (BibTeX content), `naming` (canonical spellings), `capitalization` (title vs sentence style), `typography` (captions / dashes / table footnotes), `abbreviations` (capitalisation / expansion), `code_style` (spaces / comments), `code_width` (line length), `operators` (math notation), `crossrefs` (label / ref / subsection wording), `house_style` (commas / editions). None are journal-reject criteria.
+- [X] CHK011 Severity within tight semantic clusters:
+
+  | cluster | rules in cluster | severities in use | uniform? | mixed-severity rationale |
+  |---|---|---|---|---|
+  | preamble | 5 rules | all `error` | ✓ uniform | — |
+  | structure | 4 rules | 3 `warning` + 1 `error` | ✗ mixed | **Intentional**: `JSS-STRUCT-004` (missing `\bibliography{}`) is the only structural rule whose violation produces an unpublishable paper; the other three (summary section, AE spelling, appendix titles) are stylistic. The mix reflects a real semantic boundary inside the category. |
+  | markup | 4 rules | all `warning` | ✓ uniform | — |
+  | citations | 4 rules | all `warning` | ✓ uniform | — |
+  | references | 5 rules | 4 `warning` + 1 `info` | ✗ mixed | **Intentional**: `JSS-REFS-003` (DOI presence) is `info` because "where available" makes it unverifiable — flagged in §2 as `needs-more-context` for reviewer to ratify. Other four are warnings. |
+  | bibtex | 2 rules | all `error` | ✓ uniform | — |
+  | naming | 2 rules | all `warning` | ✓ uniform | — |
+  | capitalization | 4 rules | all `warning` | ✓ uniform | — |
+  | typography | 3 rules | all `warning` | ✓ uniform | — |
+  | abbreviations | 2 rules | all `warning` | ✓ uniform | — |
+  | code_style | 3 rules | all `warning` | ✓ uniform | — |
+  | code_width | 1 rule | `warning` | ✓ uniform (trivially) | — |
+  | operators | 3 rules | all `warning` | ✓ uniform | — |
+  | crossrefs | 3 rules | 2 `warning` + 1 `info` | ✗ mixed | **Intentional**: `JSS-XREF-002` (Equation~\ref over bare (\ref)) is `info` because SG-060 is a SHOULD qualified with "except when reference count is large"; authors legitimately choose either form for equation-heavy papers. Other two are warnings. |
+  | house_style | 3 rules | 2 `warning` + 1 `info` | ✗ mixed | **Intentional**: `JSS-HOUSE-003` (no duplicate-loading of jss.cls-provided packages) is `info` because LaTeX silently handles duplicate `\usepackage` calls — a preamble that loads `\usepackage{hyperref}` redundantly still compiles correctly. Other two are warnings. |
+
+- [X] CHK012 No `info`-severity rule enforces a MUST directive — **pass**. The 3 `info` rules are:
+
+  | rule_id | authority directive | MUST / SHOULD / info? |
+  |---|---|---|
+  | `JSS-REFS-003` | article.tex:421 "DOIs should be included where available" | SHOULD (with conditional) — `info` justified |
+  | `JSS-XREF-002` | style guide SG-060 "Prefer Equation~\ref{...} … except when reference count is large" | SHOULD (with carve-out) — `info` justified |
+  | `JSS-HOUSE-003` | style guide SG-002 "Keep LaTeX code as simple as possible; avoid unnecessary packages/commands" | SHOULD — `info` justified |
+
+  No MUST directive is downgraded to `info`. ✓
 
 ---
 
@@ -324,13 +439,13 @@ Items `/speckit.clarify` could not auto-resolve, or that surfaced during catalog
 
 ## Sign-off
 
-- [ ] Every row in §1.1–1.4 has a non-empty `status` (covered | gap | redundant | out-of-scope).
-- [ ] Every rule row in §2 has a non-empty `reviewer_note`.
-- [ ] All §3 category sanity items (CHK001–CHK007) are checked.
-- [ ] All §4 severity consistency items (CHK008–CHK012) are checked.
-- [ ] All §5 open questions are closed (answered or explicitly deferred with rationale).
-- [ ] Any gap (`status = gap`) is either (a) closed by adding a rule, or (b) re-classified as `out-of-scope` with rationale.
-- [ ] Any redundancy (`status = redundant`) is either (a) closed by merging/dropping one rule, or (b) justified in the rule's `notes` field.
+- [X] Every row in §1.1–1.4 has a non-empty `status` — 146 rows, all annotated (65 covered, 67 out-of-scope, 14 gap; zero empty, zero redundant).
+- [ ] Every rule row in §2 has a non-empty `reviewer_note` — pre-populated 2026-04-23 with `approve (tentative)` or `needs-more-context: …`; reviewer must ratify each row (convert tentative approvals to `approve`, rule on the 7 `needs-more-context` rows).
+- [X] All §3 category sanity items (CHK001–CHK007) are checked — mechanical checks run 2026-04-23; all pass (one soft flag on `code_width` thin-category, justified inline).
+- [X] All §4 severity consistency items (CHK008–CHK012) are checked — pre-pass run 2026-04-23; mixed-severity clusters all documented with rationale; zero info-severity rules downgrade a MUST.
+- [X] All §5 open questions are closed (answered or explicitly deferred with rationale) — 13 closed 2026-04-23, OQ-11 explicitly deferred to implementation-phase corpus growth.
+- [ ] Any gap (`status = gap`) is either (a) closed by adding a rule, or (b) re-classified as `out-of-scope` with rationale — **14 gaps remain** in §§1.1–1.2 as documented follow-up candidates; reviewer decides per row: leave as gap, close with a new rule, or re-classify as `out-of-scope`.
+- [X] Any redundancy (`status = redundant`) is either (a) closed by merging/dropping one rule, or (b) justified in the rule's `notes` field — no rows marked `redundant`; §2 overlap analysis (CHK011) also found no merge/drop candidates.
 
 **Reviewer**: _____________  **Date**: _____________  **Commit**: _____________
 
