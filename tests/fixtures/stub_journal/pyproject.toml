@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "texlint-stub-journal"
+version = "0.0.1"
+description = "Fixture: a no-op journal plugin used to test texlint's entry-point discovery."
+requires-python = ">=3.10"
+
+[project.entry-points."texlint.journals"]
+stub = "stub_journal:JOURNAL"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stub_journal"]
