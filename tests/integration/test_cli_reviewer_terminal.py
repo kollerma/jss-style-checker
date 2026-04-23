@@ -50,7 +50,7 @@ class TestReviewerMode:
         assert "PASS" in result.output  # other categories
 
     def test_ignored_category_shows_skipped(self, runner: CliRunner):
-        # Ignore the one rule in Citation → category is SKIPPED,
+        # Ignore every rule in Citations → category is SKIPPED,
         # excluded from compliance_percentage.
         result = runner.invoke(
             main,
@@ -58,7 +58,7 @@ class TestReviewerMode:
                 "--mode",
                 "reviewer",
                 "--ignore-rules",
-                "JSS-CITE-001",
+                "JSS-CITE-001,JSS-CITE-002,JSS-CITE-003,JSS-CITE-004",
                 str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
                 str(FIXTURES / "compliant" / "minimal.bib"),
             ],
