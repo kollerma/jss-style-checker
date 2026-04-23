@@ -302,6 +302,36 @@ rules:
       so it produces incorrect spacing between authors. Closes the §1.2 article.tex:22 gap from the reviewer
       checklist.
 
+  - rule_id: JSS-STRUCT-006
+    category: structure
+    severity: warning
+    description: Appendix follows the bibliography with a \newpage (or \clearpage) separator
+    authority: article_tex
+    authority_ref: "article.tex:430"
+    example_violation: |
+      \bibliography{refs}
+
+      \begin{appendix}
+      \section{More technical details}
+      ...
+      \end{appendix}
+    example_fix: |
+      \bibliography{refs}
+
+      \newpage
+
+      \begin{appendix}
+      \section{More technical details}
+      ...
+      \end{appendix}
+    inspects: [tex_files]
+    auto_fixable: true
+    notes: |
+      article.tex:430 places an explicit `\newpage` between `\bibliography{refs}` (line 423) and the
+      `\begin{appendix}` env (line 432). Appendices start on a fresh page in JSS papers. The check fires when
+      both \bibliography{} and \begin{appendix} exist and there is no \newpage / \clearpage / \pagebreak
+      between them in source order. Closes the §1.2 article.tex:430 gap (reviewer flagged add-rule 2026-04-23).
+
   # ---------------------------------------------------------------------------
   # markup — \proglang, \pkg, \code
   # ---------------------------------------------------------------------------

@@ -99,15 +99,15 @@ Authority: `article_tex`. Structural rules should enforce the same section order
 | article.tex | 86 (`\section`) | First numbered section is Introduction; uses `\section[plain]{markup}` to separate bookmark/PDF title from markup title | JSS-MARKUP-004 | covered — MARKUP-004 enforces the plain-text shim on section titles with markup |
 | article.tex | 86, 145, 247, 378 | Section labels follow the `sec:introname` convention (`sec:intro`, `sec:models`, `sec:illustrations`, `sec:summary`) | — | out-of-scope — label-naming convention not enforced; candidate follow-up (low severity, high FP risk) |
 | article.tex | 378 (summary) | Summary / discussion section is present | JSS-STRUCT-001 | covered |
-| article.tex | 387 (`\section*`) | "Computational details" is an **unnumbered** section (`\section*{...}`) | — | gap — pattern not enforced; "Computational details" is optional per article.tex:389 |
+| article.tex | 387 (`\section*`) | "Computational details" is an **unnumbered** section (`\section*{...}`) | — | out-of-scope — pattern not enforced; "Computational details" is optional per article.tex:389 |
 | article.tex | 404 (`\section*`) | "Acknowledgments" is an unnumbered section; **AE spelling** ("Acknowledgments", not "Acknowledgements") is normative (comment on line 407) | JSS-STRUCT-002 | covered |
 | article.tex | 423 (`\bibliography`) | References are loaded via `\bibliography{refs}` (BibTeX) | JSS-STRUCT-004 | covered |
-| article.tex | 430 (`\newpage`) | Appendix follows the bibliography after a page break | — | gap — page-break-before-appendix not enforced; low signal |
+| article.tex | 430 (`\newpage`) | Appendix follows the bibliography after a page break | JSS-STRUCT-006 | covered — 2026-04-23 scope refinement (third pass): new rule added per reviewer request |
 | article.tex | 432–480 (appendix) | Appendix sections have proper titles (not just "Appendix"); labels use `app:name` convention | JSS-STRUCT-003 | covered — STRUCT-003 enforces proper titles; label convention is gap |
 | article.tex | 88–104 (markup usage) | `\proglang{}`, `\pkg{}`, `\code{}` markup is used throughout the manuscript body (including in section titles — with plain-text shim in the optional argument) | JSS-MARKUP-001, JSS-MARKUP-002, JSS-MARKUP-003, JSS-MARKUP-004 | covered |
 | article.tex | 170–174 (`{Code}`) | `{Code}` environment used for code synopses that are not meant to be executed | — | out-of-scope — environment choice is author preference |
 | article.tex | 289–317 (`{CodeChunk}`+`{CodeInput}`/`{CodeOutput}`) | `{CodeChunk}` wraps matching `{CodeInput}` / `{CodeOutput}` for executed code | — | out-of-scope — environment-wrapping pattern, author preference |
-| article.tex | 291 (`R> ` prompt) | R code inputs use `R> ` as the prompt and `+  ` as the continuation prompt | — | gap — prompt convention not enforced; candidate follow-up |
+| article.tex | 291 (`R> ` prompt) | R code inputs use `R> ` as the prompt and `+  ` as the continuation prompt | — | defer to when we implement .Rnw Sweave manuscripts — prompt convention not enforced; candidate follow-up |
 | article.tex | 154–156 (equation spacing) | `{equation}` environments have **no blank lines** before/after (blank lines are suppressed with `%` comments) | JSS-OPER-003 | covered |
 
 ### 1.3 Style guide — `https://www.jstatsoft.org/style`
@@ -133,7 +133,7 @@ Reviewer: mark directives that are **out of scope** for a static LaTeX linter (e
 | style_guide | #what-are-the-capitalization-rules-in-jss-what-is-title-style-and-sentence-style | SG-013 MUST: In sentence style, capitalise only the first word and the first word after colon/hyphen; proper names remain uppercase | JSS-CAP-002, JSS-CAP-003, JSS-CAP-004 | covered |
 | style_guide | #what-are-the-capitalization-rules-in-jss-what-is-title-style-and-sentence-style | SG-014 MUST: In title style, capitalise all principal words; articles, coordinating conjunctions, and prepositions stay lowercase unless first/last | JSS-CAP-001 | covered — heuristic-only; full principal-word dictionary deferred |
 | style_guide | #how-to-cite-software | SG-015 SHOULD: If software has a recommended citation, use it; otherwise cite the manual or webpage | JSS-CITE-002 | covered |
-| style_guide | #how-to-cite-r-packages | SG-016 SHOULD: Check for official R package citation on CRAN or via `citation("pkg")`; otherwise use CRAN-style reference | — | gap — CRAN-backed validation is explicitly deferred (spec FR-023); covered in future work via an ecosystem check |
+| style_guide | #how-to-cite-r-packages | SG-016 SHOULD: Check for official R package citation on CRAN or via `citation("pkg")`; otherwise use CRAN-style reference | — | out-of-scope — CRAN-backed validation is explicitly deferred (spec FR-023); covered in future work via an ecosystem check |
 | style_guide | #how-to-cite-r-packages | SG-017 MUST: BibTeX is valid, title is in title style, `\proglang`/`\pkg`/`\code` markup used appropriately | JSS-BIBTEX-001, JSS-BIBTEX-002, JSS-REFS-002, JSS-REFS-004 | covered |
 | style_guide | #what-are-the-different-cite-citet-citep-commands-about | SG-018 DO NOT: Use brackets-within-brackets constructs like `(\cite{...})` | JSS-CITE-001, JSS-CITE-003 | covered |
 | style_guide | #how-should-abbrevations-be-formatted | SG-019 MUST: Spell abbreviations in upper-case letters without periods, small caps, italics, or additional formatting | JSS-ABBR-001 | covered |
@@ -141,7 +141,7 @@ Reviewer: mark directives that are **out of scope** for a static LaTeX linter (e
 | style_guide | #how-to-format-figuretable-captions | SG-021 MUST: Captions appear below the corresponding figure/table | JSS-TYPO-004 | covered — 2026-04-23 scope refinement: new rule added |
 | style_guide | #how-to-format-figuretable-captions | SG-022 MUST: Captions are in sentence style and end with a period | JSS-CAP-003, JSS-TYPO-001 | covered |
 | style_guide | #how-to-format-figuretable-captions | SG-023 DO NOT: Use additional formatting (`\emph`, `\bf`, `\it`) inside captions | JSS-TYPO-002 | covered |
-| style_guide | #how-to-format-figuretable-captions | SG-024 MUST: All table row/column headers are in sentence style | — | gap — requires tabular-cell-aware check; candidate follow-up |
+| style_guide | #how-to-format-figuretable-captions | SG-024 MUST: All table row/column headers are in sentence style | — | follow-up — requires tabular-cell-aware check; candidate follow-up |
 | style_guide | #how-to-format-figuretable-captions | SG-025 DO NOT: Use footnote-style annotations in tables; annotations go in the caption | JSS-TYPO-003 | covered |
 | style_guide | #how-should-code-be-formatted-in-the-manuscript | SG-026 SHOULD: Present code in usual text flow with sufficient spaces for readability | — | out-of-scope — "text flow" is layout / rendering, not a source-level check |
 | style_guide | #how-should-code-be-formatted-in-the-manuscript | SG-027 SHOULD: Include spaces before/after operators and after commas in code (unless syntactically meaningful) | JSS-CODE-003 | covered |
@@ -215,9 +215,9 @@ Authority: `author_instructions`. Fetched 2026-04-23. 22 directives enumerated. 
 Flat list of every rule in `catalogue.yaml`, sorted by category rollout order then `rule_id`. Rows marked **`approve (tentative)`** are clean on my read — convert to `approve` if you agree, override otherwise. Rows marked **`needs-more-context: …`** are flagged for your explicit call; the rationale in the cell points at the judgement needed. Other valid `reviewer_note` values: `merge-with-<id>`, `split`, `drop`, `defer`.
 
 **Populated 2026-04-23 by LLM pre-pass from `catalogue.yaml`.**
-**Refreshed 2026-04-23 scope refinement (second pass)**: **58 rules** (was 48). Changes from the reviewer passes:
+**Refreshed 2026-04-23 scope refinement (third pass)**: **59 rules** (was 48). Changes from the reviewer passes:
 - **Removed** (1): `JSS-CITE-001` retired per reviewer (id permanently reserved; see top of `catalogue.yaml`).
-- **Added** (11): `JSS-PRE-006` (Plain* markup-free), `JSS-PRE-007` (\author↔\Plainauthor), `JSS-PRE-008` (\Keywords↔\Plainkeywords), `JSS-STRUCT-005` (\And vs \and), `JSS-REFS-006` (loose title-case, split from 002), `JSS-REFS-007` (journal title-case), `JSS-BIBTEX-003` (required fields per type), `JSS-BIBTEX-004` (shortcites for 6+ authors), `JSS-TYPO-004` (caption-after-content), `JSS-OPER-004` (jss.cls math macros), `JSS-XREF-004` (numbered-eq label+ref at info severity).
+- **Added** (12): `JSS-PRE-006` (Plain* markup-free), `JSS-PRE-007` (\author↔\Plainauthor), `JSS-PRE-008` (\Keywords↔\Plainkeywords), `JSS-STRUCT-005` (\And vs \and), `JSS-STRUCT-006` (page-break before appendix), `JSS-REFS-006` (loose title-case, split from 002), `JSS-REFS-007` (journal title-case), `JSS-BIBTEX-003` (required fields per type), `JSS-BIBTEX-004` (shortcites for 6+ authors), `JSS-TYPO-004` (caption-after-content), `JSS-OPER-004` (jss.cls math macros), `JSS-XREF-004` (numbered-eq label+ref at info severity).
 - **Refined notes** (12): descriptions/notes tightened per reviewer (JSS-PRE-001 option-default, JSS-PRE-003 scope to title-with-markup, JSS-STRUCT-001 flagged for removal, JSS-MARKUP-001 FP strategy, JSS-CITE-002 strict paragraph, JSS-CITE-004 code-mask, JSS-REFS-002 narrow + split, JSS-REFS-003 advisory, JSS-TYPO-002 full-caption scope, JSS-WIDTH-001 configurable columns, JSS-OPER-003 trailing-period carve-out, JSS-ABBR-002 deferred).
 - **Split** (1): `JSS-REFS-002` into `JSS-REFS-002` (tight) + `JSS-REFS-006` (loose) per reviewer.
 - **Deferred in place** (1): `JSS-ABBR-002` kept in catalogue with `DEFERRED` note — first-use state-tracking is implementation-brittle.
@@ -238,6 +238,7 @@ Flat list of every rule in `catalogue.yaml`, sorted by category rollout order th
 | `JSS-STRUCT-003` | structure | Appendix sections have proper titles instead of a bare "Appendix" | article_tex | `article.tex:438` | warning | approve |
 | `JSS-STRUCT-004` | structure | References are declared via \bibliography{} rather than a hand-written thebibliography environment | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | error | approve |
 | `JSS-STRUCT-005` *(NEW 2026-04-23)* | structure | \author{} separates authors with \And or \AND (not lowercase \and) | article_tex | `article.tex:22` | warning | approve |
+| `JSS-STRUCT-006` *(NEW 2026-04-23)* | structure | Appendix follows the bibliography with a \newpage (or \clearpage) separator | article_tex | `article.tex:430` | warning | approve — reviewer request 2026-04-23; closes §1.2 article.tex:430 gap |
 | `JSS-MARKUP-001` | markup | Programming-language names in prose are wrapped in \proglang{} | jss_cls | `jss.cls:\proglang` | warning | Approve. Authors really need this one. Most FPs can be avoided by only checking within normal text. Variables should be written in math mode and those should be skipped. Don't match Pascal, nobody uses it anyway. Filter out initials in names. |
 | `JSS-MARKUP-002` | markup | Software-package names in prose are wrapped in \pkg{} | jss_cls | `jss.cls:\pkg` | warning | approve |
 | `JSS-MARKUP-003` | markup | Inline function, argument, and command names are wrapped in \code{} | jss_cls | `jss.cls:\code` | warning | approve |
@@ -313,12 +314,12 @@ Seven rules flagged `needs-more-context`. Each flag is an explicit judgement cal
 All mechanical checks run 2026-04-23 against `catalogue.yaml` — details inline.
 
 - [X] CHK001 The category set in `catalogue.yaml` matches the list in `spec.md` FR-005 — **pass**: 15 categories, identical set and order: `preamble, structure, markup, citations, references, bibtex, naming, capitalization, typography, abbreviations, code_style, code_width, operators, crossrefs, house_style`.
-- [X] CHK002 Per-category rule counts — **refreshed 2026-04-23 scope refinement (second pass)** (58 rules). Median is **4**; ≥2× threshold = 8 rules (none triggered), ≤⅓ threshold ≈ 1 rule (one triggered: `code_width`). Counts:
+- [X] CHK002 Per-category rule counts — **refreshed 2026-04-23 scope refinement (third pass)** (59 rules). Median is **4**; ≥2× threshold = 8 rules (none triggered), ≤⅓ threshold ≈ 1 rule (one triggered: `code_width`). Counts:
 
   | category | rule count | flag? |
   |---|---|---|
   | preamble | 8 | — (was 6; +JSS-PRE-007 \author↔\Plainauthor, +JSS-PRE-008 \Keywords↔\Plainkeywords) |
-  | structure | 5 | — |
+  | structure | 6 | — (was 5; +JSS-STRUCT-006 page-break before appendix) |
   | markup | 4 | — |
   | citations | 3 | — (was 4; JSS-CITE-001 retired) |
   | references | 7 | — (was 5; +JSS-REFS-006 loose title-case, +JSS-REFS-007 journal title-case) |
@@ -345,12 +346,12 @@ All mechanical checks run 2026-04-23 against `catalogue.yaml` — details inline
 
 Severity pre-pass run 2026-04-23 against `catalogue.yaml`. Findings inline.
 
-- [X] CHK008 Severity tally — **refreshed 2026-04-23 scope refinement (second pass)** (58 rules):
+- [X] CHK008 Severity tally — **refreshed 2026-04-23 scope refinement (third pass)** (59 rules):
 
   | severity | count | delta |
   |---|---|---|
   | error | 11 | +3 from pre-refinement baseline (JSS-BIBTEX-003, JSS-PRE-007, JSS-PRE-008 added) |
-  | warning | 43 | +6 (PRE-006, STRUCT-005, REFS-006, REFS-007, BIBTEX-004, TYPO-004, OPER-004 added; CITE-001 retired) |
+  | warning | 44 | +7 (PRE-006, STRUCT-005, STRUCT-006, REFS-006, REFS-007, BIBTEX-004, TYPO-004, OPER-004 added; CITE-001 retired) |
   | info | 4 | +1 (JSS-XREF-004 added) |
 
 - [X] CHK009 Every `error`-severity rule is objectively wrong — **pass**: all 11 `error` rules inspected. Additions in the second refinement pass:
@@ -375,7 +376,7 @@ Severity pre-pass run 2026-04-23 against `catalogue.yaml`. Findings inline.
   | cluster | rules in cluster | severities in use | uniform? | mixed-severity rationale |
   |---|---|---|---|---|
   | preamble | 8 rules | 7 `error` + 1 `warning` | ✗ mixed | **Intentional**: JSS-PRE-006 (\Plaintitle/\Plainauthor/\Plainkeywords contain no markup) is `warning` because a \Plaintitle with markup still renders — the PDF metadata is cosmetically ugly, not unpublishable. The seven `error` rules (class declaration, required metadata macros, Plain-sibling-when-markup) all cause the paper to fail to compile correctly or leak unusable PDF metadata. |
-  | structure | 4 rules | 3 `warning` + 1 `error` | ✗ mixed | **Intentional**: `JSS-STRUCT-004` (missing `\bibliography{}`) is the only structural rule whose violation produces an unpublishable paper; the other three (summary section, AE spelling, appendix titles) are stylistic. The mix reflects a real semantic boundary inside the category. |
+  | structure | 6 rules | 5 `warning` + 1 `error` | ✗ mixed | **Intentional**: `JSS-STRUCT-004` (missing `\bibliography{}`) is the only structural rule whose violation produces an unpublishable paper; the other five (summary section, AE spelling, appendix titles, `\And` separator, page-break before appendix) are stylistic. The mix reflects a real semantic boundary inside the category. |
   | markup | 4 rules | all `warning` | ✓ uniform | — |
   | citations | 4 rules | all `warning` | ✓ uniform | — |
   | references | 5 rules | 4 `warning` + 1 `info` | ✗ mixed | **Intentional**: `JSS-REFS-003` (DOI presence) is `info` because "where available" makes it unverifiable — flagged in §2 as `needs-more-context` for reviewer to ratify. Other four are warnings. |

@@ -4,7 +4,7 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 58  
+**Rule count**: 59  
 **Category count**: 15
 
 ---
@@ -26,7 +26,7 @@ _preamble_ — 8 rule(s)
 
 ## Structure
 
-_structure_ — 5 rule(s)
+_structure_ — 6 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
@@ -35,6 +35,7 @@ _structure_ — 5 rule(s)
 | `JSS-STRUCT-003` | warning | Appendix sections have proper titles instead of a bare "Appendix" | article_tex | `article.tex:438` | — |
 | `JSS-STRUCT-004` | error | References are declared via \bibliography{} rather than a hand-written thebibliography environment | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-STRUCT-005` | warning | \author{} separates authors with \And or \AND (not lowercase \and) | article_tex | `article.tex:22` | ✓ |
+| `JSS-STRUCT-006` | warning | Appendix follows the bibliography with a \newpage (or \clearpage) separator | article_tex | `article.tex:430` | ✓ |
 
 ## Markup
 
@@ -650,6 +651,53 @@ References are declared via \bibliography{} rather than a hand-written thebiblio
 the lowercase `\and` is LaTeX's default but is not wired to jss.cls's title-block layout (jss.cls:339-344)
 so it produces incorrect spacing between authors. Closes the §1.2 article.tex:22 gap from the reviewer
 checklist.
+
+---
+
+### JSS-STRUCT-006
+
+**Category**: `structure` · **Severity**: `warning` · **Auto-fixable**: yes
+
+Appendix follows the bibliography with a \newpage (or \clearpage) separator
+
+**Authority**: `article_tex` → `article.tex:430`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\bibliography{refs}
+
+\begin{appendix}
+\section{More technical details}
+...
+\end{appendix}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\bibliography{refs}
+
+\newpage
+
+\begin{appendix}
+\section{More technical details}
+...
+\end{appendix}
+```
+
+</details>
+
+**Notes**: article.tex:430 places an explicit `\newpage` between `\bibliography{refs}` (line 423) and the
+`\begin{appendix}` env (line 432). Appendices start on a fresh page in JSS papers. The check fires when
+both \bibliography{} and \begin{appendix} exist and there is no \newpage / \clearpage / \pagebreak
+between them in source order. Closes the §1.2 article.tex:430 gap (reviewer flagged add-rule 2026-04-23).
 
 ---
 
