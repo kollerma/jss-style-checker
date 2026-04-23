@@ -5,6 +5,15 @@
 **Status**: Draft
 **Input**: User description: "Build the foundation of `jss-style-checker`: a deterministic, rule-based LaTeX style linter that takes `.tex` + `.bib` files and produces a compliance report. Framework + minimal smoke-test rule set; full JSS rule catalogue is a later spec."
 
+## Clarifications
+
+### Session 2026-04-22
+
+- Q: What shape do parse-error violations take in the compliance report? → A: Synthetic `rule_id = "PARSE_ERROR"` in a synthetic `parse` category (severity `error`); included in `violations` and rendered by all output formats, but excluded from the `compliance_percentage` denominator because parse-ability is tool-processability, not style.
+- Q: What stability contract does the JSON output carry for CI consumers? → A: No `schema_version` field. The top-level key set (`violations`, `categories`, `compliance_percentage`, `tool_version`) is **additive-only** within a major `tool_version`; any breaking shape change requires a major-version bump and a CHANGELOG entry.
+- Q: How does the report treat a category whose rules are all ignored (or whose applicable formats don't match any input)? → A: Shown in the per-category table as `SKIPPED` (a distinct render state, derived from `rules_applied == 0`); excluded from both the numerator and the denominator of `compliance_percentage`.
+- Q: What source-file encoding does the parser expect? → A: UTF-8 only. A leading byte-order mark (BOM) is tolerated and silently stripped. Files that are not valid UTF-8 produce a `PARSE_ERROR` violation rather than being auto-decoded.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — Author checks a manuscript before submission (Priority: P1)
@@ -30,13 +39,14 @@ A JSS reviewer or section editor receives a submission and wants an at-a-glance 
 
 **Why this priority**: This is how editorial triage actually uses the tool. An author wants the violation list; a reviewer wants the summary. Without reviewer mode, the tool still works for authors but cannot replace the manual checklist reviewers use today.
 
-**Independent Test**: Running the tool in reviewer mode on a manuscript that violates one rule from exactly one category prints a table where that category is `FAIL`, every other category is `PASS`, and the overall compliance percentage equals (categories with zero violations) / (total categories) expressed as a percentage.
+**Independent Test**: Running the tool in reviewer mode on a manuscript that violates one rule from exactly one category prints a table where that category is `FAIL`, every other category with at least one rule applied is `PASS`, and the overall `compliance_percentage` equals (categories with status `PASS`) / (categories with status `PASS` or `FAIL`), expressed as a percentage (i.e. excluding `SKIPPED` and the synthetic `parse` category).
 
 **Acceptance Scenarios**:
 
-1. **Given** a manuscript with zero violations, **When** run in reviewer mode, **Then** every category row shows `PASS` and the overall compliance percentage is 100%.
-2. **Given** a manuscript that violates one rule in one category, **When** run in reviewer mode, **Then** that category shows `FAIL`, the others show `PASS`, and the overall percentage reflects the proportion of categories that passed.
-3. **Given** the same manuscript, **When** run in author mode instead, **Then** the output shows per-violation detail and not the category table.
+1. **Given** a manuscript with zero violations and at least one rule applied in every journal-declared category, **When** run in reviewer mode, **Then** every category row shows `PASS` and the overall `compliance_percentage` is 100%.
+2. **Given** a manuscript that violates one rule in one category, **When** run in reviewer mode, **Then** that category shows `FAIL`, every other category with `rules_applied > 0` shows `PASS`, and `compliance_percentage` reflects the proportion of PASS categories within the PASS/FAIL set.
+3. **Given** a configuration whose `ignore_rules` removes every rule in a category, **When** run in reviewer mode, **Then** that category shows `SKIPPED`, the category is excluded from `compliance_percentage`, and the number is computed only over the remaining PASS/FAIL categories.
+4. **Given** the same manuscript, **When** run in author mode instead, **Then** the output shows per-violation detail and not the category table.
 
 ---
 
@@ -107,6 +117,8 @@ A contributor or downstream packager wants to support a journal other than JSS w
 
 - **Malformed `.tex`**: parse error is recorded as a `Violation` on the parsed result; the report is still produced; exit status is 2.
 - **Malformed `.bib`**: same handling as malformed `.tex` — a violation, not a crash.
+- **Non-UTF-8 source file** (e.g., latin1-encoded `.tex`): treated as a parse failure — a `PARSE_ERROR` violation, not a silent auto-decode.
+- **UTF-8 file with BOM**: BOM is stripped; parsing proceeds normally.
 - **Missing file path on the command line**: exit status 2 with an error identifying the missing file.
 - **Unknown `--journal` identifier**: exit status 2.
 - **`ignore_rules` references a rule id that does not exist**: honoured silently (the referenced rule simply does not exist to be ignored); the tool does not fail, because configuration is shared across tool versions and rule ids may be added or removed.
@@ -126,8 +138,8 @@ A contributor or downstream packager wants to support a journal other than JSS w
 
 **Parsing**
 
-- **FR-004**: The tool MUST parse `.tex` files into an abstract representation usable by rule checks, and MUST parse `.bib` files into a structured representation of bibliography entries.
-- **FR-005**: A failure to parse a file MUST NOT raise an exception out of the tool. Instead, the parse failure MUST be recorded as a violation on the returned parsed object, with a severity appropriate for "tool could not process this file".
+- **FR-004**: The tool MUST parse `.tex` files into an abstract representation usable by rule checks, and MUST parse `.bib` files into a structured representation of bibliography entries. All source files MUST be decoded as **UTF-8**. A leading UTF-8 byte-order mark (BOM) MUST be tolerated and silently stripped before parsing. A file that is not valid UTF-8 MUST NOT be auto-decoded via detection; instead, the decode failure MUST be reported as a `PARSE_ERROR` violation (see FR-005).
+- **FR-005**: A failure to parse a file MUST NOT raise an exception out of the tool. Instead, the parse failure MUST be recorded as a `Violation` on the returned parsed object with `rule_id = "PARSE_ERROR"`, severity `error`, and a synthetic category identifier of `parse`. Parse-error violations flow through the same violation list and the same renderers as rule-produced violations.
 
 **Rule engine**
 
@@ -135,7 +147,12 @@ A contributor or downstream packager wants to support a journal other than JSS w
 - **FR-007**: The tool MUST run every enabled rule from the selected journal against the parsed document, collect all resulting violations, and produce a single compliance report.
 - **FR-008**: Each rule MAY declare the set of file formats it applies to. A rule that declares no formats MUST be treated as applying to all formats. A rule that declares a specific format set MUST only be applied to files of those formats.
 - **FR-009**: The engine MUST suppress any rule whose identifier appears in the effective ignored-rules list.
-- **FR-010**: The compliance report MUST include, per rule category, a PASS/FAIL summary (FAIL iff at least one violation in that category) and an overall compliance percentage equal to (categories with zero violations) / (total categories applied).
+- **FR-010**: The compliance report MUST include, per rule category, a status that is one of `PASS`, `FAIL`, or `SKIPPED`, and an overall `compliance_percentage`. The status is derived as follows:
+  - `SKIPPED` iff the category's `rules_applied` count is zero (every rule in the category was either on the `ignore_rules` list or had no applicable input file for its declared `formats` filter).
+  - `FAIL` iff `rules_applied > 0` and the category has at least one non-parse-error violation.
+  - `PASS` otherwise.
+
+  `compliance_percentage` equals (categories with status `PASS`) / (categories with status `PASS` or `FAIL`) — i.e., categories with status `SKIPPED` are excluded from both the numerator and the denominator. The synthetic `parse` category (see FR-005) is likewise **excluded** from `compliance_percentage` because it reflects tool-processability, not style; it still appears in the per-category summary so reviewers see that a file failed to parse. If no category has status `PASS` or `FAIL` (e.g., every journal category was skipped), `compliance_percentage` is `null`.
 
 **Violations**
 
@@ -145,7 +162,7 @@ A contributor or downstream packager wants to support a journal other than JSS w
 **Output**
 
 - **FR-013**: In terminal mode, the tool MUST render violations in a human-readable form, group them by source file, and visually distinguish severities (e.g., by colour). In author mode the output MUST surface individual violations; in reviewer mode the output MUST surface the per-category compliance table.
-- **FR-014**: In JSON mode, the tool MUST emit a single JSON document with, at minimum, top-level fields `violations`, `categories`, `compliance_percentage`, and `tool_version`. The JSON MUST be deterministic: identical input MUST produce byte-identical output across runs and hosts.
+- **FR-014**: In JSON mode, the tool MUST emit a single JSON document with, at minimum, top-level fields `violations`, `categories`, `compliance_percentage`, and `tool_version`. The JSON MUST be deterministic: identical input MUST produce byte-identical output across runs and hosts. The top-level key set is **additive-only** within a single major `tool_version`; any breaking change to the JSON shape requires a major-version bump of the tool and a CHANGELOG entry documenting the change. No explicit `schema_version` field is emitted.
 - **FR-015**: In HTML mode, the tool MUST emit a rendered HTML report using a distinct template per mode (author / reviewer). Templates MUST be packaged with the tool so it works with no external template configuration.
 
 **Exit status**
@@ -160,8 +177,8 @@ A contributor or downstream packager wants to support a journal other than JSS w
 
 - **Violation**: A single detected style issue. Carries file, line, optional column, rule identifier, severity (error | warning), human-readable message, optional textual suggestion, and a fix-suggestion slot reserved for the later auto-fix step.
 - **Rule**: A named check belonging to a category, with metadata (identifier, severity, message template, applicable file formats) and a callable that inspects a parsed document and returns zero or more violations.
-- **Rule Category**: A named grouping of rules (e.g., "bibliography", "typography"). Used by the reviewer-mode summary.
-- **Category Summary**: For a single category, the total number of rules applied, the number that passed, and the derived PASS/FAIL verdict.
+- **Rule Category**: A named grouping of rules (e.g., "bibliography", "typography"). Used by the reviewer-mode summary. In addition to journal-declared categories, the engine exposes a synthetic `parse` category that collects `PARSE_ERROR` violations; it appears in the per-category PASS/FAIL table but is excluded from `compliance_percentage`.
+- **Category Summary**: For a single category, the total number of rules applied (`rules_applied`), the number that passed, and the derived status (`PASS`, `FAIL`, or `SKIPPED`). `SKIPPED` is emitted whenever `rules_applied == 0` (all rules ignored, or no input file matched their `formats` filter).
 - **Compliance Report**: The whole output of one tool run: the flat list of violations, the per-category summaries, the overall compliance percentage, and the tool version.
 - **Tool Configuration**: The merged result of built-in defaults, the `.jss-lint.toml` file, and CLI flags. Drives journal selection, mode, output format, ignored-rules set, and verbosity.
 - **Parsed Tex File / Parsed Bib File**: The structured representation of a single input file, carrying either a usable AST / entry list or a parse-error violation in lieu of it.
