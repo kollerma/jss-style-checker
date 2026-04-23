@@ -148,3 +148,6 @@ cython_debug/
 
 # macOS
 .DS_Store
+
+# Claude worktrees
+.claude/worktrees/
