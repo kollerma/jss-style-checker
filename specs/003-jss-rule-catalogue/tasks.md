@@ -29,10 +29,10 @@ Single-project layout rooted at `/workspace`. Rule modules live under `src/texli
 
 **Purpose**: project tooling changes that every later phase consumes.
 
-- [ ] T001 Add `"PyYAML>=6.0"` to `[project.optional-dependencies].dev` in `pyproject.toml` (the only new dependency added by this spec; `jss-lint` runtime deps are unchanged).
-- [ ] T002 Add `"tools"` to `tool.hatch.build.targets.sdist.include` in `pyproject.toml` so `python -m tools.render_catalogue` works from a source install but the wheel is still `src/texlint`-only.
-- [ ] T003 [P] Create empty package stubs: `tools/__init__.py`, `tests/unit/journals/jss/__init__.py`, and `tests/unit/rules/__init__.py`.
-- [ ] T004 [P] Create fixture directory scaffolding: `tests/fixtures/violations/` with one empty `<category>/` subdirectory per category listed in `plan.md` and a `README.md` at `tests/fixtures/violations/README.md` explaining the per-rule good/bad pair naming convention (per contracts/rules-module.md §Test contract).
+- [X] T001 Add `"PyYAML>=6.0"` to `[project.optional-dependencies].dev` in `pyproject.toml` (the only new dependency added by this spec; `jss-lint` runtime deps are unchanged).
+- [X] T002 Add `"tools"` to `tool.hatch.build.targets.sdist.include` in `pyproject.toml` so `python -m tools.render_catalogue` works from a source install but the wheel is still `src/texlint`-only.
+- [X] T003 [P] Create empty package stubs: `tools/__init__.py`, `tests/unit/journals/jss/__init__.py`, and `tests/unit/rules/__init__.py`.
+- [X] T004 [P] Create fixture directory scaffolding: `tests/fixtures/violations/` with one empty `<category>/` subdirectory per category listed in `plan.md` and a `README.md` at `tests/fixtures/violations/README.md` explaining the per-rule good/bad pair naming convention (per contracts/rules-module.md §Test contract).
 
 **Checkpoint**: `pip install -e '.[dev]'` succeeds; `python -c "import yaml"` works; empty test/fixture trees exist.
 
@@ -42,8 +42,8 @@ Single-project layout rooted at `/workspace`. Rule modules live under `src/texli
 
 **Purpose**: small structural prereqs that every user story needs. The catalogue itself is US1's deliverable; only genuinely shared scaffolding lives here.
 
-- [ ] T005 Create the category-abbreviation mapping table as a Python dict in `tools/_catalogue_validate.py` (see contracts/catalogue-schema.md `rule_id` prefix table). This module is imported by both the renderer and the catalogue tests, so it lands before either.
-- [ ] T006 Verify `docs/jss-template/jss.cls` and `docs/jss-template/article.tex` exist at the paths the catalogue's `authority_ref` fields will reference; update `docs/jss-template/README.md` if the provenance section does not already record the upstream URL, fetch date, and SHA256 of the zip (spec FR-007). (Existing vendored copy is at commit `cf4e5be`; this task verifies completeness only.)
+- [X] T005 Create the category-abbreviation mapping table as a Python dict in `tools/_catalogue_validate.py` (see contracts/catalogue-schema.md `rule_id` prefix table). This module is imported by both the renderer and the catalogue tests, so it lands before either.
+- [X] T006 Verify `docs/jss-template/jss.cls` and `docs/jss-template/article.tex` exist at the paths the catalogue's `authority_ref` fields will reference; update `docs/jss-template/README.md` if the provenance section does not already record the upstream URL, fetch date, and SHA256 of the zip (spec FR-007). (Existing vendored copy is at commit `cf4e5be`; this task verifies completeness only.)
 
 **Checkpoint**: shared validator module exists; vendored template's provenance is complete.
 
@@ -59,18 +59,18 @@ Single-project layout rooted at `/workspace`. Rule modules live under `src/texli
 
 > Write these tests FIRST, let them FAIL on an empty/invalid catalogue, then make them pass.
 
-- [ ] T007 [P] [US1] Write `tests/unit/journals/jss/test_catalogue.py` covering all ten data-model.md §1.5 invariants plus the forbidden-keys check from contracts/catalogue-schema.md. Tests parse `catalogue.yaml` via `yaml.safe_load`, assert structure, and validate `authority_ref` resolvability against `docs/jss-template/` for `jss_cls` / `article_tex` rows.
-- [ ] T008 [P] [US1] Write `tests/unit/journals/jss/test_render.py` covering: (a) rendering is deterministic (two runs produce identical output), (b) rendered markdown matches committed `catalogue.md` byte-for-byte, (c) `--check` CLI mode returns non-zero when the committed markdown drifts.
+- [X] T007 [P] [US1] Write `tests/unit/journals/jss/test_catalogue.py` covering all ten data-model.md §1.5 invariants plus the forbidden-keys check from contracts/catalogue-schema.md. Tests parse `catalogue.yaml` via `yaml.safe_load`, assert structure, and validate `authority_ref` resolvability against `docs/jss-template/` for `jss_cls` / `article_tex` rows.
+- [X] T008 [P] [US1] Write `tests/unit/journals/jss/test_render.py` covering: (a) rendering is deterministic (two runs produce identical output), (b) rendered markdown matches committed `catalogue.md` byte-for-byte, (c) `--check` CLI mode returns non-zero when the committed markdown drifts.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Draft `specs/003-jss-rule-catalogue/catalogue.yaml` with the top-level shape from contracts/catalogue-schema.md: `version: 1`, `source_vendored_at: "2021-05-23"`, the 15-category list, and one rule row per rule. Derive each row from the authority coverage matrices in `checklists/rule-catalogue-review.md` §§1.1–1.4; every row MUST cite at least one of `jss_cls` / `article_tex` / `style_guide` / `author_instructions` with a resolvable `authority_ref`. Include the three retrofitted Step 1 rules (JSS-CITE-001, JSS-REFS-001, JSS-WIDTH-001) as ordinary rows.
-- [ ] T010 [P] [US1] Implement `tools/render_catalogue.py` per contracts/rendering.md — `yaml.safe_load` → sort by `(category_order_index, rule_id_counter_asc)` → emit header + per-category summary table + per-rule detail block → write atomically via `tempfile` + `os.replace`. Supports `--check` mode (compare without writing, exit 0/1). Reuses `tools/_catalogue_validate.py` (T005) for schema validation.
-- [ ] T011 [US1] Run `python -m tools.render_catalogue` to produce `specs/003-jss-rule-catalogue/catalogue.md`. Check in both `catalogue.yaml` and `catalogue.md`.
-- [ ] T012 [US1] Run `pytest tests/unit/journals/jss/test_catalogue.py tests/unit/journals/jss/test_render.py -x` and resolve any failures by editing `catalogue.yaml` (not by weakening tests). Iterate until green.
-- [ ] T013 [US1] Walk `checklists/rule-catalogue-review.md` §1.1–1.4 and fill in the `covering_rule_ids` column for every enumerated provision. Every provision MUST have either ≥1 `covering_rule_ids` value or `status = out-of-scope` with a one-line rationale. Gaps (zero coverage, not out-of-scope) either close by adding rules to `catalogue.yaml` (loop back to T009) or explicitly convert to `out-of-scope`.
-- [ ] T014 [US1] Re-render and re-test: `python -m tools.render_catalogue && pytest tests/unit/journals/jss/ -x`.
-- [ ] T015 [US1] Open `checklists/rule-catalogue-review.md` §5 (Open questions) and close every item (answer or defer with rationale). §§2–4 remain empty until US2 implementations land.
+- [X] T009 [US1] Draft `specs/003-jss-rule-catalogue/catalogue.yaml` with the top-level shape from contracts/catalogue-schema.md: `version: 1`, `source_vendored_at: "2021-05-23"`, the 15-category list, and one rule row per rule. Derive each row from the authority coverage matrices in `checklists/rule-catalogue-review.md` §§1.1–1.4; every row MUST cite at least one of `jss_cls` / `article_tex` / `style_guide` / `author_instructions` with a resolvable `authority_ref`. Include the three retrofitted Step 1 rules (JSS-CITE-001, JSS-REFS-001, JSS-WIDTH-001) as ordinary rows.
+- [X] T010 [P] [US1] Implement `tools/render_catalogue.py` per contracts/rendering.md — `yaml.safe_load` → sort by `(category_order_index, rule_id_counter_asc)` → emit header + per-category summary table + per-rule detail block → write atomically via `tempfile` + `os.replace`. Supports `--check` mode (compare without writing, exit 0/1). Reuses `tools/_catalogue_validate.py` (T005) for schema validation.
+- [X] T011 [US1] Run `python -m tools.render_catalogue` to produce `specs/003-jss-rule-catalogue/catalogue.md`. Check in both `catalogue.yaml` and `catalogue.md`.
+- [X] T012 [US1] Run `pytest tests/unit/journals/jss/test_catalogue.py tests/unit/journals/jss/test_render.py -x` and resolve any failures by editing `catalogue.yaml` (not by weakening tests). Iterate until green.
+- [X] T013 [US1] Walk `checklists/rule-catalogue-review.md` §1.1–1.4 and fill in the `covering_rule_ids` column for every enumerated provision. Every provision MUST have either ≥1 `covering_rule_ids` value or `status = out-of-scope` with a one-line rationale. Gaps (zero coverage, not out-of-scope) either close by adding rules to `catalogue.yaml` (loop back to T009) or explicitly convert to `out-of-scope`.
+- [X] T014 [US1] Re-render and re-test: `python -m tools.render_catalogue && pytest tests/unit/journals/jss/ -x`.
+- [X] T015 [US1] Open `checklists/rule-catalogue-review.md` §5 (Open questions) and close every item (answer or defer with rationale). §§2–4 remain empty until US2 implementations land.
 
 **Checkpoint**: catalogue is drafted, validated, rendered; every provision in §§1.1–1.4 of the reviewer checklist is annotated. US2 category work is unblocked.
 
@@ -84,12 +84,12 @@ Single-project layout rooted at `/workspace`. Rule modules live under `src/texli
 
 ### Tests for User Story 4 (mandatory)
 
-- [ ] T016 [P] [US4] Write `tests/unit/journals/jss/test_terms.py` covering invariants T-01..T-06 from contracts/terms-list.md: `CANONICAL.values()` ⊆ LANGUAGES ∪ R_PACKAGES; `CANONICAL` keys disjoint from LANGUAGES ∪ R_PACKAGES; `canonical_form` is a fixed point on canonical tokens; `canonical_form` resolves aliases; `canonical_form("")` and `canonical_form("  ")` return `None`; rule-module shadow-term grep with an explicit allowlist.
+- [X] T016 [P] [US4] Write `tests/unit/journals/jss/test_terms.py` covering invariants T-01..T-06 from contracts/terms-list.md: `CANONICAL.values()` ⊆ LANGUAGES ∪ R_PACKAGES; `CANONICAL` keys disjoint from LANGUAGES ∪ R_PACKAGES; `canonical_form` is a fixed point on canonical tokens; `canonical_form` resolves aliases; `canonical_form("")` and `canonical_form("  ")` return `None`; rule-module shadow-term grep with an explicit allowlist.
 
 ### Implementation for User Story 4
 
-- [ ] T017 [US4] Implement `src/texlint/journals/jss/terms.py` per contracts/terms-list.md — `LANGUAGES: frozenset[str]`, `R_PACKAGES: frozenset[str]`, `CANONICAL: Mapping[str, str]` via `types.MappingProxyType`, `canonical_form(token: str) -> str | None`. Seed contents from research §5 and from style-guide directives SG-044..SG-052.
-- [ ] T018 [US4] Run `pytest tests/unit/journals/jss/test_terms.py -x` and resolve failures by editing `terms.py` until green.
+- [X] T017 [US4] Implement `src/texlint/journals/jss/terms.py` per contracts/terms-list.md — `LANGUAGES: frozenset[str]`, `R_PACKAGES: frozenset[str]`, `CANONICAL: Mapping[str, str]` via `types.MappingProxyType`, `canonical_form(token: str) -> str | None`. Seed contents from research §5 and from style-guide directives SG-044..SG-052.
+- [X] T018 [US4] Run `pytest tests/unit/journals/jss/test_terms.py -x` and resolve failures by editing `terms.py` until green.
 
 **Checkpoint**: `terms.py` is single-source-of-truth for canonical spellings. US2 categories that consume it (`capitalization`, `naming`, `house_style`, `references`, `markup`, `citations`, `abbreviations`) can import it when they land.
 

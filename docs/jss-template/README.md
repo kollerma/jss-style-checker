@@ -21,9 +21,17 @@ against the real upstream sources without a network round-trip.
   zips `jss-article-tex.zip` (provided `article.tex`, `refs.bib`, `article.R`,
   `jss.cls`, `jss.bst`) and `jss-article-rnw.zip` (provided `article.Rnw`;
   remaining files were byte-identical to the `-tex` variant).
+- Distribution URLs:
+  - `https://www.jstatsoft.org/public/journals/1/jss-article-tex.zip`
+  - `https://www.jstatsoft.org/public/journals/1/jss-article-rnw.zip`
 - Upstream version captured: `jss.cls` v3.3 (2021-05-23); demo article and
   bibliography dated 2018-04-30; demo article last touched 2021-12-10.
-- Maintainer: Achim Zeileis (`Achim.Zeileis@R-project.org`).
+- Fetched into this repository: **2026-04-23** (commit
+  [`cf4e5be`](https://github.com/kollerma/jss-style-checker/commit/cf4e5be)).
+- SHA256 of the downloaded zips at that fetch:
+  - `jss-article-tex.zip`: `9ce1f09286537600370be9fb64d80b1fa55d1de89fd9240db0dc065da7f03507`
+  - `jss-article-rnw.zip`: `4c88f98b54f83e9b4e26926db6d26d7858d1de15e6d1b49f6e77077d1b12e1d9`
+- Maintainer (upstream): Achim Zeileis (`Achim.Zeileis@R-project.org`).
 
 ## Licence
 

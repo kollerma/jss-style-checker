@@ -35,6 +35,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
+    "PyYAML>=6.0",
 ]
 
 [project.scripts]
@@ -55,6 +56,7 @@ packages = ["src/texlint", "eval"]
 include = [
     "src/texlint",
     "eval",
+    "tools",
     "examples",
     "tests",
     "scripts",
