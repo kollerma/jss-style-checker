@@ -151,3 +151,8 @@ cython_debug/
 
 # Claude worktrees
 .claude/worktrees/
+
+# eval-jss runtime state — corpus, manifest, skip-list, and precision history
+# are all checked in; only the live SQLite database is ephemeral.
+eval/eval.db
+eval/eval.db-*

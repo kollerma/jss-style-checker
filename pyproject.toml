@@ -39,6 +39,7 @@ dev = [
 
 [project.scripts]
 jss-lint = "texlint.cli:main"
+eval-jss = "eval.cli:main"
 
 [project.entry-points."texlint.journals"]
 jss = "texlint.journals.jss:JSSJournal"
@@ -48,11 +49,13 @@ Homepage = "https://github.com/kollerma/jss-style-checker"
 Issues = "https://github.com/kollerma/jss-style-checker/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/texlint"]
+packages = ["src/texlint", "eval"]
 
 [tool.hatch.build.targets.sdist]
 include = [
     "src/texlint",
+    "eval",
+    "examples",
     "tests",
     "scripts",
     "README.md",
@@ -72,3 +75,6 @@ select = ["E", "F", "W", "I", "B", "UP"]
 minversion = "7.0"
 testpaths = ["tests"]
 addopts = "-ra"
+markers = [
+    "network: marks tests that require a live network or local server (deselect with '-m \"not network\"')",
+]
