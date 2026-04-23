@@ -16,12 +16,12 @@ class JSSJournal(JournalRuleModule):
         # Lazy imports: each rule module is pulled in only when the engine
         # actually runs this journal. Third-party consumers who import
         # `texlint` but never load the JSS rules pay nothing for them.
-        from texlint.journals.jss.rules import citations
         from texlint.journals.jss.rules.bib_001_year import rule as bib_001
+        from texlint.journals.jss.rules.cite_001_emph import rule as cite_001
         from texlint.journals.jss.rules.src_001_width import rule as src_001
 
         return (
-            RuleCategory(id="citations", title="Citations", rules=citations.rules),
+            RuleCategory(id="citation", title="Citation", rules=(cite_001,)),
             RuleCategory(id="bibliography", title="Bibliography", rules=(bib_001,)),
             RuleCategory(id="typography", title="Typography", rules=(src_001,)),
         )
