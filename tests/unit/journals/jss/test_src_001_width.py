@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texlint.api import ParsedBibFile, ParsedDocument, ParsedTexFile, ToolConfig
+from texlint.api import ParsedDocument, ParsedTexFile, ToolConfig
 from texlint.journals.jss.rules.src_001_width import rule as src_001
 
 

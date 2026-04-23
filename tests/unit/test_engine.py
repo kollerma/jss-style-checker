@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import pytest
 
@@ -237,7 +237,10 @@ class TestDeterministicOrdering:
         report = run(ToolConfig(), doc, journal)
         # Deterministic: by file, then line, then column (None first), then rule_id.
         keys = [(str(v.file), v.line, v.column, v.rule_id) for v in report.violations]
-        assert keys == sorted(keys, key=lambda t: (t[0], t[1], (0, 0) if t[2] is None else (1, t[2]), t[3]))
+        assert keys == sorted(
+            keys,
+            key=lambda t: (t[0], t[1], (0, 0) if t[2] is None else (1, t[2]), t[3]),
+        )
 
 
 class TestFormatsFilter:

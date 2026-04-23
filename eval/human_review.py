@@ -20,7 +20,6 @@ from rich.table import Table
 
 from eval import db
 
-
 _CHOICES = ["t", "f", "u", "s", "q"]
 _VERDICT = {
     "t": "true_positive",

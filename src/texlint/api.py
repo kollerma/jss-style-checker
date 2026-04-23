@@ -93,7 +93,7 @@ class CategorySummary:
         rules_applied: int,
         rules_passed: int = 0,
         violations: tuple[Violation, ...] = (),
-    ) -> "CategorySummary":
+    ) -> CategorySummary:
         if rules_applied == 0:
             status = CategoryStatus.SKIPPED
         elif violations:

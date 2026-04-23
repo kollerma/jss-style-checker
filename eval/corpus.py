@@ -20,14 +20,12 @@ import hashlib
 import io
 import shutil
 import tarfile
-import tempfile
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
 from eval import db
-
 
 MANIFEST_HEADER = [
     "jss_doi",
@@ -69,7 +67,7 @@ def load_manifest(path: Path) -> list[ManifestRow]:
         try:
             header = next(reader)
         except StopIteration:
-            raise ManifestError(f"{path}: empty manifest")
+            raise ManifestError(f"{path}: empty manifest") from None
         if header != MANIFEST_HEADER:
             raise ManifestError(
                 f"{path}: header {header!r} != {MANIFEST_HEADER!r}"
@@ -198,7 +196,7 @@ def _safe_extract(tar_bytes: bytes, target: Path) -> None:
             except ValueError:
                 raise ManifestError(
                     f"tarslip: member {m.name!r} escapes {target}"
-                )
+                ) from None
         tar.extractall(path=target)
 
 

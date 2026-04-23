@@ -9,7 +9,8 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from eval import cli as cli_mod, db, report
+from eval import cli as cli_mod
+from eval import db, report
 
 
 def _seed(cx, rule_id: str, category: str, tp: int, fp: int, pending: int) -> None:

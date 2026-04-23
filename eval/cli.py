@@ -22,7 +22,6 @@ import click
 
 from eval import db
 
-
 DEFAULT_DB = Path("eval/eval.db")
 
 

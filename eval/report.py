@@ -26,7 +26,6 @@ from rich.table import Table
 
 from eval import db
 
-
 PRECISION_THRESHOLD = 0.90
 
 

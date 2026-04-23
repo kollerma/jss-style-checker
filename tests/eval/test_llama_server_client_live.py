@@ -11,7 +11,6 @@ import pytest
 
 from eval import api, review
 
-
 pytestmark = pytest.mark.network
 
 

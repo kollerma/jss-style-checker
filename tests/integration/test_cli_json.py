@@ -86,7 +86,16 @@ class TestDeterminism:
         )
         payload = result.output
         # Top-level keys appear in alphabetical order because of sort_keys=True.
-        positions = [payload.index(f'"{k}"') for k in sorted(["categories", "compliance_percentage", "journal_id", "tool_version", "violations"])]
+        keys = sorted(
+            [
+                "categories",
+                "compliance_percentage",
+                "journal_id",
+                "tool_version",
+                "violations",
+            ]
+        )
+        positions = [payload.index(f'"{k}"') for k in keys]
         assert positions == sorted(positions)
 
 

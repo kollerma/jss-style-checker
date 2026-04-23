@@ -9,13 +9,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
-from eval import api, db, scan
 from tests.eval.conftest import FakeCorpus  # type: ignore[import-not-found]
 
+from eval import api, db, scan
 
-def _fake_result(paper_dir: Path, *, violations: list[dict], exit_code: int = 0) -> api.LinterResult:
+
+def _fake_result(
+    paper_dir: Path, *, violations: list[dict], exit_code: int = 0
+) -> api.LinterResult:
     """Build a fake `LinterResult` shaped like `jss-lint --output json`."""
     payload = {
         "tool_version": "0.1.0",
@@ -59,7 +60,9 @@ def _install_fake_linter(monkeypatch, fake_corpus: FakeCorpus) -> list[Path]:
     return call_log
 
 
-def test_scan_persists_violations_and_runs_row(monkeypatch, tmp_db: Path, fake_corpus: FakeCorpus) -> None:
+def test_scan_persists_violations_and_runs_row(
+    monkeypatch, tmp_db: Path, fake_corpus: FakeCorpus
+) -> None:
     _install_fake_linter(monkeypatch, fake_corpus)
 
     code = scan.run(db_path=tmp_db, corpus_dir=fake_corpus.root, batch_size=None, force=False)

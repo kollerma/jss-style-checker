@@ -10,12 +10,10 @@ import hashlib
 import io
 import tarfile
 from pathlib import Path
-from typing import Callable
 
 import pytest
 
 from eval import corpus
-
 
 # -----------------------------------------------------------------------------
 # Manifest parsing
@@ -32,7 +30,15 @@ def test_load_manifest_parses_valid_rows(tmp_path: Path) -> None:
     _write_manifest(
         mp,
         [
-            ["10.18637/jss.v001.i01", "cran", "foo", "1.0.0", "paper.tex", "cran_foo_1.0.0/", "a" * 64],
+            [
+                "10.18637/jss.v001.i01",
+                "cran",
+                "foo",
+                "1.0.0",
+                "paper.tex",
+                "cran_foo_1.0.0/",
+                "a" * 64,
+            ],
             ["", "arxiv", "2401.12345", "v2", "paper.tex", "arxiv_2401.12345_v2/", "b" * 64],
         ],
     )
@@ -153,7 +159,7 @@ class _FakeResponse:
         self._pos += n
         return out
 
-    def __enter__(self) -> "_FakeResponse":
+    def __enter__(self) -> _FakeResponse:
         return self
 
     def __exit__(self, *args: object) -> None:
@@ -264,7 +270,6 @@ def test_fetch_skips_already_materialised_matching_hash(
     sha = hashlib.sha256(tar_bytes).hexdigest()
     (paper_dir / ".sha256").write_text(sha, encoding="utf-8")
 
-    url = "https://cran.r-project.org/src/contrib/Archive/foo/foo_1.0.tar.gz"
     call_count = {"n": 0}
 
     def fake_urlopen(req, timeout=None):  # noqa: ARG001

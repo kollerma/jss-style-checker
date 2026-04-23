@@ -7,10 +7,7 @@ FK CASCADE), data-model.md (timestamp format).
 from __future__ import annotations
 
 import re
-import sqlite3
 from pathlib import Path
-
-import pytest
 
 from eval import db
 
@@ -71,7 +68,8 @@ def test_foreign_key_cascade_papers_to_violations(tmp_db: Path) -> None:
         )
         paper_id = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
         cx.execute(
-            "INSERT INTO violations (paper_id, rule_id, category, message, severity, first_seen_run_id)"
+            "INSERT INTO violations"
+            " (paper_id, rule_id, category, message, severity, first_seen_run_id)"
             " VALUES (?, 'JSS-CITE-001', 'citation', 'm', 'warning', ?)",
             (paper_id, run_id),
         )

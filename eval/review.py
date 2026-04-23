@@ -26,7 +26,6 @@ from typing import Any, Protocol
 
 from eval import api, db
 
-
 # -----------------------------------------------------------------------------
 # Protocol
 # -----------------------------------------------------------------------------
@@ -283,7 +282,6 @@ def run(
             return 0
 
         labelled = skipped_low_conf = network_degraded = skipped_uncertain = 0
-        saw_any_success = False
 
         # Import lazily so `eval.review` stays importable without pulling
         # `rich` (used by `human_review` for terminal rendering).
@@ -326,11 +324,9 @@ def run(
 
             if result.verdict == api.Verdict.UNCERTAIN:
                 skipped_uncertain += 1
-                saw_any_success = True
                 continue
             if result.confidence < confidence_threshold:
                 skipped_low_conf += 1
-                saw_any_success = True
                 continue
             _write_verdict(
                 cx,
@@ -340,7 +336,6 @@ def run(
                 reviewer=f"ai:{model}",
             )
             labelled += 1
-            saw_any_success = True
 
         print(
             f"eval-jss review: {labelled} labelled, "

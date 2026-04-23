@@ -8,8 +8,6 @@ from __future__ import annotations
 from collections import deque
 from pathlib import Path
 
-import pytest
-
 from eval import db, human_review
 
 

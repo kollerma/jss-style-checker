@@ -15,9 +15,10 @@ from collections import deque
 from pathlib import Path
 
 from click.testing import CliRunner
-
-from eval import api, cli as cli_mod, db, human_review, scan
 from tests.eval.conftest import FakeCorpus  # type: ignore[import-not-found]
+
+from eval import api, db, human_review, scan
+from eval import cli as cli_mod
 
 
 def _install_fake_linter(monkeypatch, fake_corpus: FakeCorpus) -> None:
@@ -45,7 +46,9 @@ def _install_fake_linter(monkeypatch, fake_corpus: FakeCorpus) -> None:
     monkeypatch.setattr(scan.shutil, "which", lambda _n: "/fake/bin/jss-lint")
 
 
-def test_full_phase_a_pipeline_under_10s(monkeypatch, tmp_path: Path, fake_corpus: FakeCorpus) -> None:
+def test_full_phase_a_pipeline_under_10s(
+    monkeypatch, tmp_path: Path, fake_corpus: FakeCorpus
+) -> None:
     _install_fake_linter(monkeypatch, fake_corpus)
 
     # Scripted answers for human-review: three violations in review order.
@@ -55,7 +58,9 @@ def test_full_phase_a_pipeline_under_10s(monkeypatch, tmp_path: Path, fake_corpu
     #   3. paper_violations/  → JSS-SRC-001   (line 42) → "t" TP
     answers = deque(["t", "", "f", "noisy", "t", "", "q"])
     monkeypatch.setattr(
-        human_review.Prompt, "ask", staticmethod(lambda *a, **k: answers.popleft() if answers else "q")
+        human_review.Prompt,
+        "ask",
+        staticmethod(lambda *a, **k: answers.popleft() if answers else "q"),
     )
 
     db_path = tmp_path / "eval.db"
@@ -66,7 +71,9 @@ def test_full_phase_a_pipeline_under_10s(monkeypatch, tmp_path: Path, fake_corpu
     r = runner.invoke(cli_mod.cli, ["--db", str(db_path), "init"])
     assert r.exit_code == 0, r.output
 
-    r = runner.invoke(cli_mod.cli, ["--db", str(db_path), "scan", "--corpus", str(fake_corpus.root)])
+    r = runner.invoke(
+        cli_mod.cli, ["--db", str(db_path), "scan", "--corpus", str(fake_corpus.root)]
+    )
     assert r.exit_code == 1, r.output  # violations present
 
     r = runner.invoke(
