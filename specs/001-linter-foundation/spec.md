@@ -9,10 +9,10 @@
 
 ### Session 2026-04-22
 
-- Q: What shape do parse-error violations take in the compliance report? → A: Synthetic `rule_id = "PARSE_ERROR"` in a synthetic `parse` category (severity `error`); included in `violations` and rendered by all output formats, but excluded from the `compliance_percentage` denominator because parse-ability is tool-processability, not style.
+- Q: What shape do parse-error violations take in the compliance report? → A: Synthetic `rule_id = "JSS-PARSE-000"` in a synthetic `parse` category (severity `error`); included in `violations` and rendered by all output formats, but excluded from the `compliance_percentage` denominator because parse-ability is tool-processability, not style. *(The exact string was concretised from the Q1-session placeholder `PARSE_ERROR` to the journal-prefixed `JSS-PARSE-000` at plan time to match the rule-id convention used by every other rule.)*
 - Q: What stability contract does the JSON output carry for CI consumers? → A: No `schema_version` field. The top-level key set (`violations`, `categories`, `compliance_percentage`, `tool_version`) is **additive-only** within a major `tool_version`; any breaking shape change requires a major-version bump and a CHANGELOG entry.
 - Q: How does the report treat a category whose rules are all ignored (or whose applicable formats don't match any input)? → A: Shown in the per-category table as `SKIPPED` (a distinct render state, derived from `rules_applied == 0`); excluded from both the numerator and the denominator of `compliance_percentage`.
-- Q: What source-file encoding does the parser expect? → A: UTF-8 only. A leading byte-order mark (BOM) is tolerated and silently stripped. Files that are not valid UTF-8 produce a `PARSE_ERROR` violation rather than being auto-decoded.
+- Q: What source-file encoding does the parser expect? → A: UTF-8 only. A leading byte-order mark (BOM) is tolerated and silently stripped. Files that are not valid UTF-8 produce a `JSS-PARSE-000` violation rather than being auto-decoded.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -117,7 +117,7 @@ A contributor or downstream packager wants to support a journal other than JSS w
 
 - **Malformed `.tex`**: parse error is recorded as a `Violation` on the parsed result; the report is still produced; exit status is 2.
 - **Malformed `.bib`**: same handling as malformed `.tex` — a violation, not a crash.
-- **Non-UTF-8 source file** (e.g., latin1-encoded `.tex`): treated as a parse failure — a `PARSE_ERROR` violation, not a silent auto-decode.
+- **Non-UTF-8 source file** (e.g., latin1-encoded `.tex`): treated as a parse failure — a `JSS-PARSE-000` violation, not a silent auto-decode.
 - **UTF-8 file with BOM**: BOM is stripped; parsing proceeds normally.
 - **Missing file path on the command line**: exit status 2 with an error identifying the missing file.
 - **Unknown `--journal` identifier**: exit status 2.
@@ -138,8 +138,8 @@ A contributor or downstream packager wants to support a journal other than JSS w
 
 **Parsing**
 
-- **FR-004**: The tool MUST parse `.tex` files into an abstract representation usable by rule checks, and MUST parse `.bib` files into a structured representation of bibliography entries. All source files MUST be decoded as **UTF-8**. A leading UTF-8 byte-order mark (BOM) MUST be tolerated and silently stripped before parsing. A file that is not valid UTF-8 MUST NOT be auto-decoded via detection; instead, the decode failure MUST be reported as a `PARSE_ERROR` violation (see FR-005).
-- **FR-005**: A failure to parse a file MUST NOT raise an exception out of the tool. Instead, the parse failure MUST be recorded as a `Violation` on the returned parsed object with `rule_id = "PARSE_ERROR"`, severity `error`, and a synthetic category identifier of `parse`. Parse-error violations flow through the same violation list and the same renderers as rule-produced violations.
+- **FR-004**: The tool MUST parse `.tex` files into an abstract representation usable by rule checks, and MUST parse `.bib` files into a structured representation of bibliography entries. All source files MUST be decoded as **UTF-8**. A leading UTF-8 byte-order mark (BOM) MUST be tolerated and silently stripped before parsing. A file that is not valid UTF-8 MUST NOT be auto-decoded via detection; instead, the decode failure MUST be reported as a `JSS-PARSE-000` violation (see FR-005).
+- **FR-005**: A failure to parse a file MUST NOT raise an exception out of the tool. Instead, the parse failure MUST be recorded as a `Violation` on the returned parsed object with `rule_id = "JSS-PARSE-000"`, severity `error`, and a synthetic category identifier of `parse`. Parse-error violations flow through the same violation list and the same renderers as rule-produced violations.
 
 **Rule engine**
 
@@ -177,7 +177,7 @@ A contributor or downstream packager wants to support a journal other than JSS w
 
 - **Violation**: A single detected style issue. Carries file, line, optional column, rule identifier, severity (error | warning), human-readable message, optional textual suggestion, and a fix-suggestion slot reserved for the later auto-fix step.
 - **Rule**: A named check belonging to a category, with metadata (identifier, severity, message template, applicable file formats) and a callable that inspects a parsed document and returns zero or more violations.
-- **Rule Category**: A named grouping of rules (e.g., "bibliography", "typography"). Used by the reviewer-mode summary. In addition to journal-declared categories, the engine exposes a synthetic `parse` category that collects `PARSE_ERROR` violations; it appears in the per-category PASS/FAIL table but is excluded from `compliance_percentage`.
+- **Rule Category**: A named grouping of rules (e.g., "bibliography", "typography"). Used by the reviewer-mode summary. In addition to journal-declared categories, the engine exposes a synthetic `parse` category that collects `JSS-PARSE-000` violations; it appears in the per-category PASS/FAIL table but is excluded from `compliance_percentage`.
 - **Category Summary**: For a single category, the total number of rules applied (`rules_applied`), the number that passed, and the derived status (`PASS`, `FAIL`, or `SKIPPED`). `SKIPPED` is emitted whenever `rules_applied == 0` (all rules ignored, or no input file matched their `formats` filter).
 - **Compliance Report**: The whole output of one tool run: the flat list of violations, the per-category summaries, the overall compliance percentage, and the tool version.
 - **Tool Configuration**: The merged result of built-in defaults, the `.jss-lint.toml` file, and CLI flags. Drives journal selection, mode, output format, ignored-rules set, and verbosity.
