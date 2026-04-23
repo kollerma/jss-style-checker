@@ -104,10 +104,11 @@ Two optional additional rules are deliberately **not** shipped in this step. The
 
 ### Compliant fixture preamble source
 
-- **Issue**: the plan-input prompt states that `tests/fixtures/compliant/minimal.tex` should use "the real `article.tex` template preamble from `docs/jss-template/` (checked in during Step 0.5)". `docs/jss-template/` does not exist in the repository at the time of planning — Step 0.5 has not run.
-- **Decision**: land a **hand-authored minimal preamble** in `tests/fixtures/compliant/minimal.tex` that deliberately satisfies the three smoke rules (contains only `\cite{...}` for citations, bibliography entries all have `year`, and every line is ≤80 chars). Leave a `TODO(step-0.5): replace with docs/jss-template/article.tex preamble once it lands.` comment at the top of the file.
-- **Why this is safe**: the three smoke rules are verifying framework plumbing, not real JSS style enforcement. The framework's correctness does not depend on which preamble the compliant fixture uses, only that the fixture passes every smoke rule. Step 2, which introduces the real rule catalogue, is the point at which the fixture preamble must be authoritative.
-- **Alternative considered**: block this plan on Step 0.5 — rejected because it would defer the entire foundation for a fixture-content upgrade the framework does not need.
+- **Issue**: the plan-input prompt states that `tests/fixtures/compliant/minimal.tex` should use "the real `article.tex` template preamble from `docs/jss-template/` (checked in during Step 0.5)". `docs/jss-template/` did not exist in the repository at planning time — Step 0.5 had not run.
+- **Decision (originally)**: land a **hand-authored minimal preamble** in `tests/fixtures/compliant/minimal.tex` and leave a `TODO(step-0.5)` comment at the top of the file pointing at the eventual swap.
+- **Resolved by Step 0.5 (content drop, 2026-04-23)**: `docs/jss-template/` now contains the canonical CTAN `jss` package (`article.tex`, `refs.bib`, `article.R`, `jss.cls`, `jss.bst`) verbatim. `tests/fixtures/compliant/minimal.tex` was rewritten to mirror the canonical `article.tex` preamble (lines 1–69 of upstream, with one comment reflowed so every line fits within the JSS-SRC-001 80-column default) and a minimal `\cite{smith2020}` body. The TODO comment is gone.
+- **Why this is safe**: the three smoke rules are verifying framework plumbing, not real JSS style enforcement. The framework's correctness does not depend on which preamble the compliant fixture uses, only that the fixture passes every smoke rule. Step 2, which introduces the real rule catalogue, is the point at which an authoritative fixture preamble matters — and Step 0.5 has now made it authoritative.
+- **Alternative considered (originally)**: block this plan on Step 0.5 — rejected because it would defer the entire foundation for a fixture-content upgrade the framework does not need.
 
 ### Existing `tests/fixtures/stub_journal/` package
 

@@ -1,7 +1,75 @@
-% TODO(step-0.5): replace with docs/jss-template/article.tex preamble once
-% Step 0.5 lands it. Until then, this hand-authored minimal document is
-% designed to pass every JSS smoke rule.
-\documentclass{article}
+\documentclass[article]{jss}
+
+%% -- LaTeX packages and custom commands ---------------------------------------
+
+%% recommended packages
+\usepackage{orcidlink,thumbpdf,lmodern}
+
+%% another package (only for this demo article)
+\usepackage{framed}
+
+%% new custom commands
+\newcommand{\class}[1]{`\code{#1}'}
+\newcommand{\fct}[1]{\code{#1()}}
+
+
+%% -- Article metainformation (author, title, ...) -----------------------------
+
+%% - \author{} with primary affiliation (and optionally ORCID link)
+%% - \Plainauthor{} without affiliations
+%% - Separate authors by \And or \AND (in \author)
+%%   or by comma (in \Plainauthor).
+%% - \AND starts a new line, \And does not.
+\author{Achim Zeileis~\orcidlink{0000-0003-0918-3766}\\Universit\"at Innsbruck
+   \And Second Author\\Plus Affiliation}
+\Plainauthor{Achim Zeileis, Second Author}
+
+%% - \title{} in title case
+%% - \Plaintitle{} without LaTeX markup (if any)
+%% - \Shorttitle{} with LaTeX markup (if any), used as running title
+\title{A Short Demo Article: Regression Models for Count Data in \proglang{R}}
+\Plaintitle{A Short Demo Article: Regression Models for Count Data in R}
+\Shorttitle{A Short Demo Article in \proglang{R}}
+
+%% - \Abstract{} almost as usual
+\Abstract{
+  This short article illustrates how to write a manuscript for the
+  \emph{Journal of Statistical Software} (JSS) using its {\LaTeX} style files.
+  Generally, we ask to follow JSS's style guide and FAQs precisely. Also,
+  it is recommended to keep the {\LaTeX} code as simple as possible,
+  i.e., avoid inclusion of packages/commands that are not necessary.
+  For outlining the typical structure of a JSS article some brief text snippets
+  are employed that have been inspired by \cite{Zeileis+Kleiber+Jackman:2008},
+  discussing count data regression in \proglang{R}. Editorial comments and
+  instructions are marked by vertical bars.
+}
+
+%% - \Keywords{} with LaTeX markup, at least one required
+%% - \Plainkeywords{} without LaTeX markup (if necessary)
+%% - Should be comma-separated and in sentence case.
+\Keywords{JSS, style guide, comma-separated, not capitalized, \proglang{R}}
+\Plainkeywords{JSS, style guide, comma-separated, not capitalized, R}
+
+%% - \Address{} of at least one author
+%% - May contain multiple affiliations for each author
+%%   (in extra lines, separated by \emph{and}\\).
+%% - May contain multiple authors for the same affiliation
+%%   (in the same first line, separated by comma).
+\Address{
+  Achim Zeileis\\
+  Journal of Statistical Software\\
+  \emph{and}\\
+  Department of Statistics\\
+  Faculty of Economics and Statistics\\
+  Universit\"at Innsbruck\\
+  Universit\"atsstr.~15\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{Achim.Zeileis@R-project.org}\\
+  URL: \url{https://www.zeileis.org/}
+}
+
 \begin{document}
+
 See \cite{smith2020} for a thorough discussion.
+
 \end{document}

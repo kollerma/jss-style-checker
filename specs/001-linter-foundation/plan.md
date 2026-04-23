@@ -91,7 +91,7 @@ tests/
 ├── conftest.py                    # parse_tex_source(src) / run_rule(rule, src) helpers
 ├── fixtures/
 │   ├── compliant/
-│   │   ├── minimal.tex            # passes every smoke rule (hand-authored; TODO: swap to docs/jss-template once Step 0.5 lands)
+│   │   ├── minimal.tex            # passes every smoke rule (mirrors docs/jss-template/article.tex preamble — landed via Step 0.5)
 │   │   └── minimal.bib
 │   ├── violations/
 │   │   ├── JSS-CITE-001.tex

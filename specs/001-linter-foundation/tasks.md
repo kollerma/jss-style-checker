@@ -94,7 +94,7 @@ description: "Task list for Linter Foundation (001-linter-foundation)"
 
 ### Fixtures for US1 (reused by US2–US6)
 
-- [x] T025 [P] [US1] Create `tests/fixtures/compliant/minimal.tex` — hand-authored preamble + one `\cite{smith2020}` in prose, every line ≤80 chars, leading comment `% TODO(step-0.5): replace with docs/jss-template/article.tex preamble once Step 0.5 lands.` (research.md §Open items).
+- [x] T025 [P] [US1] Create `tests/fixtures/compliant/minimal.tex` — initially a hand-authored preamble + one `\cite{smith2020}` in prose with a leading `TODO(step-0.5)` comment; **resolved by Step 0.5 (content drop, 2026-04-23)** by swapping in the `docs/jss-template/article.tex` preamble verbatim (one comment reflowed for the 80-column default) plus a minimal `\cite{smith2020}` body. TODO comment dropped (research.md §Open items).
 - [x] T026 [P] [US1] Create `tests/fixtures/compliant/minimal.bib` — one BibTeX entry with every required field including `year`.
 - [x] T027 [P] [US1] Create `tests/fixtures/violations/JSS-CITE-001.tex` — minimal document with `\emph{smith2020}` in prose on a known line.
 - [x] T028 [P] [US1] Create `tests/fixtures/violations/JSS-BIB-001.bib` — one entry that lacks `year` and passes every other field check.
@@ -257,7 +257,7 @@ With three developers after the Phase 2 gate:
 - The plugin mechanism (`contracts/journal-plugin.md`) is fully specified; Phase 8's integration test proves it, no placeholder.
 - The three smoke rules have concrete authority citations (research.md §Smoke rules) and complete branch coverage is gated by T045.
 
-The one hand-authored concession is the compliant fixture preamble (research.md §Open items, T025): it uses a minimal preamble rather than the full `docs/jss-template/article.tex` preamble until Step 0.5 lands that file. This is a ~5-line LaTeX stand-in and does not affect any code path.
+~~The one hand-authored concession is the compliant fixture preamble (research.md §Open items, T025): it uses a minimal preamble rather than the full `docs/jss-template/article.tex` preamble until Step 0.5 lands that file. This is a ~5-line LaTeX stand-in and does not affect any code path.~~ **Resolved 2026-04-23**: Step 0.5 landed the canonical `docs/jss-template/` (CTAN `jss` package) and the fixture now mirrors the upstream `article.tex` preamble.
 
 ---
 
