@@ -95,7 +95,15 @@ Single-project layout rooted at `/workspace`. Rule modules live under `src/texli
 
 ---
 
-## Phase 5: User Story 2 / Category `citations` (Priority: P1 — rollout position #1)
+## ⚠ Phases 5–19 and Phase 21 items T098–T099: **DEFERRED to spec 004 — JSS Rule Modules**
+
+Per the 2026-04-23 scope-narrowing clarification in `spec.md`, rule-module implementation (User Story 2 / category rollout / precision gate) is moved to a successor spec. Spec 003 freezes at the catalogue data file, the shared term list, the renderer, and the reviewer sign-off — Phase 4 is the last in-scope phase. An earlier implementation pass on Phase 5 (`citations`, commit `3379299`) was reverted (commit `538c86d`) so the Step 1 smoke rules (`bib_001_year.py`, `cite_001_emph.py`, `src_001_width.py`) remain the only live rule modules at the close of spec 003.
+
+The task list below is retained verbatim as the starting point for spec 004; task IDs stay stable across specs.
+
+---
+
+## Phase 5: User Story 2 / Category `citations` (Priority: P1 — rollout position #1) *(deferred to spec 004)*
 
 **Goal**: all `citations` rules implemented; 100% branch coverage; N≥10 rules meeting ≥90% precision gate; the Step 1 smoke rule `cite_001_emph.py` is deleted.
 

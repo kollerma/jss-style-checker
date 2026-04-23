@@ -88,7 +88,7 @@ Authority: `article_tex`. Structural rules should enforce the same section order
 | article.tex | 1 | Document class is declared as `\documentclass[article]{jss}` (for ordinary articles) | JSS-PRE-001 | covered |
 | article.tex | 6 | Recommended packages are `orcidlink`, `thumbpdf`, `lmodern` | — | out-of-scope — author-choice recommendation; enforcing would false-positive on papers that don't use ORCID |
 | article.tex | 12–13 (`\class`, `\fct`) | Authors MAY define article-local convenience macros (`\class`, `\fct`) that delegate to `\code{}` | — | out-of-scope — "MAY" not "MUST"; author-local convenience |
-| article.tex | 22–23 (`\author`) | `\author{...}` uses `\And` or `\AND` to separate authors (not comma); inline `\orcidlink{...}` is permitted | — | gap — author-separator convention not enforced; candidate follow-up |
+| article.tex | 22–23 (`\author`) | `\author{...}` uses `\And` or `\AND` to separate authors (not comma); inline `\orcidlink{...}` is permitted | JSS-STRUCT-005 | covered — 2026-04-23 scope refinement: new rule added |
 | article.tex | 24 (`\Plainauthor`) | `\Plainauthor{...}` separates authors by comma | — | gap — companion to `\Plaintitle`; deferred |
 | article.tex | 29–31 (title block) | `\title{...}` (with markup), `\Plaintitle{...}` (no markup), and `\Shorttitle{...}` (with markup) all present | JSS-PRE-003 | covered — PRE-003 enforces `\Plaintitle`; `\Shorttitle` is gap row above |
 | article.tex | 29 | `\title{}` uses **title case** (per style guide SG-007) | JSS-CAP-001 | covered |
@@ -138,7 +138,7 @@ Reviewer: mark directives that are **out of scope** for a static LaTeX linter (e
 | style_guide | #what-are-the-different-cite-citet-citep-commands-about | SG-018 DO NOT: Use brackets-within-brackets constructs like `(\cite{...})` | JSS-CITE-001, JSS-CITE-003 | covered |
 | style_guide | #how-should-abbrevations-be-formatted | SG-019 MUST: Spell abbreviations in upper-case letters without periods, small caps, italics, or additional formatting | JSS-ABBR-001 | covered |
 | style_guide | #how-should-abbrevations-be-formatted | SG-020 MUST: Introduce all abbreviations with expansion at first use; expansion is not capitalised unless it contains proper names or starts a sentence | JSS-ABBR-002 | covered |
-| style_guide | #how-to-format-figuretable-captions | SG-021 MUST: Captions appear below the corresponding figure/table | — | gap — caption-below-float ordering not enforced; low signal on existing corpus (authors usually comply) |
+| style_guide | #how-to-format-figuretable-captions | SG-021 MUST: Captions appear below the corresponding figure/table | JSS-TYPO-004 | covered — 2026-04-23 scope refinement: new rule added |
 | style_guide | #how-to-format-figuretable-captions | SG-022 MUST: Captions are in sentence style and end with a period | JSS-CAP-003, JSS-TYPO-001 | covered |
 | style_guide | #how-to-format-figuretable-captions | SG-023 DO NOT: Use additional formatting (`\emph`, `\bf`, `\it`) inside captions | JSS-TYPO-002 | covered |
 | style_guide | #how-to-format-figuretable-captions | SG-024 MUST: All table row/column headers are in sentence style | — | gap — requires tabular-cell-aware check; candidate follow-up |
@@ -214,7 +214,13 @@ Authority: `author_instructions`. Fetched 2026-04-23. 22 directives enumerated. 
 
 Flat list of every rule in `catalogue.yaml`, sorted by category rollout order then `rule_id`. Rows marked **`approve (tentative)`** are clean on my read — convert to `approve` if you agree, override otherwise. Rows marked **`needs-more-context: …`** are flagged for your explicit call; the rationale in the cell points at the judgement needed. Other valid `reviewer_note` values: `merge-with-<id>`, `split`, `drop`, `defer`.
 
-**Populated 2026-04-23 by LLM pre-pass from `catalogue.yaml` (48 rules).**
+**Populated 2026-04-23 by LLM pre-pass from `catalogue.yaml`.**
+**Refreshed 2026-04-23 scope refinement**: **56 rules** (was 48). Changes from the reviewer pass:
+- **Removed** (1): `JSS-CITE-001` retired per reviewer (id permanently reserved; see top of `catalogue.yaml`).
+- **Added** (9): `JSS-PRE-006`, `JSS-STRUCT-005`, `JSS-CITE-004` retained, `JSS-REFS-006` / `JSS-REFS-007`, `JSS-BIBTEX-003` / `JSS-BIBTEX-004`, `JSS-TYPO-004`, `JSS-OPER-004`, `JSS-XREF-004`.
+- **Refined notes** (12): descriptions/notes tightened per reviewer (JSS-PRE-001 option-default, JSS-PRE-003 scope to title-with-markup, JSS-STRUCT-001 flagged for removal, JSS-MARKUP-001 FP strategy, JSS-CITE-002 strict paragraph, JSS-CITE-004 code-mask, JSS-REFS-002 narrow + split, JSS-REFS-003 advisory, JSS-TYPO-002 full-caption scope, JSS-WIDTH-001 configurable columns, JSS-OPER-003 trailing-period carve-out, JSS-ABBR-002 deferred).
+- **Split** (1): `JSS-REFS-002` into `JSS-REFS-002` (tight) + `JSS-REFS-006` (loose) per reviewer.
+- **Deferred in place** (1): `JSS-ABBR-002` kept in catalogue with `DEFERRED` note — first-use state-tracking is implementation-brittle.
 
 | rule_id | category | description (one line) | authority | authority_ref | severity | reviewer_note |
 |---|---|---|---|---|---|---|
@@ -223,25 +229,31 @@ Flat list of every rule in `catalogue.yaml`, sorted by category rollout order th
 | `JSS-PRE-003` | preamble | Preamble defines \Plaintitle{} alongside \title{} so the PDF metadata gets a markup-free title | jss_cls | `jss.cls:\Plaintitle` | error | only required if title contains markup |
 | `JSS-PRE-004` | preamble | \Abstract{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:120` | error | approve |
 | `JSS-PRE-005` | preamble | \Keywords{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:197` | error | approve |
+| `JSS-PRE-006` *(NEW 2026-04-23)* | preamble | \Plaintitle, \Plainauthor, \Plainkeywords contain no LaTeX markup (PDF metadata must be plain text) | jss_cls | `jss.cls:\Plaintitle` | warning | approve (tentative) |
 | `JSS-STRUCT-001` | structure | Document ends with a summary / discussion section before the bibliography | article_tex | `article.tex:378` | warning | skip, or find better convincing reason |
 | `JSS-STRUCT-002` | structure | Acknowledgments section uses American spelling (not "Acknowledgements") | article_tex | `article.tex:407` | warning | approve |
 | `JSS-STRUCT-003` | structure | Appendix sections have proper titles instead of a bare "Appendix" | article_tex | `article.tex:438` | warning | approve |
 | `JSS-STRUCT-004` | structure | References are declared via \bibliography{} rather than a hand-written thebibliography environment | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | error | approve |
+| `JSS-STRUCT-005` *(NEW 2026-04-23)* | structure | \author{} separates authors with \And or \AND (not lowercase \and) | article_tex | `article.tex:22` | warning | approve (tentative) |
 | `JSS-MARKUP-001` | markup | Programming-language names in prose are wrapped in \proglang{} | jss_cls | `jss.cls:\proglang` | warning | Approve. Authors really need this one. Most FPs can be avoided by only checking within normal text. Variables should be written in math mode and those should be skipped. Don't match Pascal, nobody uses it anyway. Filter out initials in names. |
 | `JSS-MARKUP-002` | markup | Software-package names in prose are wrapped in \pkg{} | jss_cls | `jss.cls:\pkg` | warning | approve |
 | `JSS-MARKUP-003` | markup | Inline function, argument, and command names are wrapped in \code{} | jss_cls | `jss.cls:\code` | warning | approve |
 | `JSS-MARKUP-004` | markup | Section titles containing markup supply a plain-text shim via \section[plain]{markup} | style_guide | `#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do` | warning | approve |
-| `JSS-CITE-001` | citations | \emph used where a citation key is meant; use \cite{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | warning | remove. emph is just used in the style guide to highlight the examples, there is no emphasis in real documents.  |
-| `JSS-CITE-002` | citations | Every software package mentioned in prose is also \cite-d with its citation | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | The first time a software package is mentioned, the citation should follow closely after (or was included shortly before). Needs to be at least in the same paragraph. |
+| ~~`JSS-CITE-001`~~ *(RETIRED 2026-04-23)* | ~~citations~~ | ~~\emph used where a citation key is meant~~ | — | — | — | **Retired** per reviewer — moved to `retired_rule_ids` comment at top of `catalogue.yaml`; id permanently reserved. |
+| `JSS-CITE-002` | citations | First occurrence of a software package has a citation within the same paragraph | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | The first time a software package is mentioned, the citation should follow closely after (or was included shortly before). Needs to be at least in the same paragraph. |
 | `JSS-CITE-003` | citations | Avoid bracket-in-bracket citation forms like (\cite{...}); use \citep{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | warning | approve |
 | `JSS-CITE-004` | citations | Citations use natbib commands (\cite, \citet, \citep, \citealp) rather than hardcoded author-year text | jss_cls | `jss.cls:62` | warning | approve, don't match within code or verbatim environments |
 | `JSS-REFS-001` | references | BibTeX entries carry a year field so natbib author-year citations render correctly | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve |
-| `JSS-REFS-002` | references | BibTeX titles are in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve, split into tight + loose checks |
-| `JSS-REFS-003` | references | BibTeX entries include a doi field where one is available | article_tex | `article.tex:421` | info | advisory-only |
+| `JSS-REFS-002` | references | BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve (split half — was JSS-REFS-002 "title case"; loose half is now JSS-REFS-006) |
+| `JSS-REFS-003` | references | BibTeX entries include a doi field where one is available (advisory) | article_tex | `article.tex:421` | info | advisory-only |
 | `JSS-REFS-004` | references | BibTeX titles use JSS markup (\proglang, \pkg, \code) for language and package names | style_guide | `#how-to-cite-r-packages` | warning | approve |
 | `JSS-REFS-005` | references | Journal titles in BibTeX entries are not abbreviated | article_tex | `article.tex:473` | warning | accept |
+| `JSS-REFS-006` *(NEW 2026-04-23)* | references | BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve (tentative) — loose split companion to JSS-REFS-002 |
+| `JSS-REFS-007` *(NEW 2026-04-23)* | references | Journal titles in BibTeX entries are in title case | article_tex | `article.tex:473` | warning | approve (tentative) — user-requested; complements JSS-REFS-005's not-abbreviated half |
 | `JSS-BIBTEX-001` | bibtex | Every BibTeX entry has a non-empty citation key | style_guide | `#how-to-cite-r-packages` | error | approve |
 | `JSS-BIBTEX-002` | bibtex | BibTeX citation keys are unique within the database | style_guide | `#how-to-cite-r-packages` | error | approve |
+| `JSS-BIBTEX-003` *(NEW 2026-04-23)* | bibtex | BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …) | style_guide | `#how-to-cite-r-packages` | error | approve (tentative) — per-type required-field matrix documented in catalogue notes |
+| `JSS-BIBTEX-004` *(NEW 2026-04-23)* | bibtex | Entries with 6+ authors use \shortcites{} or the shortnames class option is enabled | jss_cls | `jss.cls:45` | warning | approve (tentative) |
 | `JSS-NAME-001` | naming | Programming-language names use their canonical capitalisation | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | warning | approve |
 | `JSS-NAME-002` | naming | Publisher and journal names follow JSS conventions (e.g., "Springer-Verlag", "The Annals of Statistics") | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | warning | approve |
 | `JSS-CAP-001` | capitalization | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | Go for a partial validation, some common words should be lower case, most should be upper case. Evaluate what works via the eval improvement loop |
@@ -249,8 +261,9 @@ Flat list of every rule in `catalogue.yaml`, sorted by category rollout order th
 | `JSS-CAP-003` | capitalization | Figure / table captions are in sentence style | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
 | `JSS-CAP-004` | capitalization | \Keywords{} is comma-separated and in sentence case | article_tex | `article.tex:48` | warning | approve |
 | `JSS-TYPO-001` | typography | Figure and table captions end with a period | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
-| `JSS-TYPO-002` | typography | Figure and table captions avoid emphasis macros (\emph, \bf, \it, \textbf, \textit) | style_guide | `#how-to-format-figuretable-captions` | warning | approve but note: this rule only applies to the full caption being formatted. Formatting of short parts is allowed for sectioning, etc |
+| `JSS-TYPO-002` | typography | Figure / table captions avoid emphasis macros wrapping the whole caption (\emph, \textbf, \textit on full caption) | style_guide | `#how-to-format-figuretable-captions` | warning | approve but note: this rule only applies to the full caption being formatted. Formatting of short parts is allowed for sectioning, etc |
 | `JSS-TYPO-003` | typography | Tables do not use footnote-style annotations; annotations go in the caption | style_guide | `#how-to-format-figuretable-captions` | warning | approve |
+| `JSS-TYPO-004` *(NEW 2026-04-23)* | typography | \caption{} appears after the figure / table content, not before | style_guide | `#how-to-format-figuretable-captions` | warning | approve (tentative) — closes §1.3 SG-021 gap |
 | `JSS-ABBR-001` | abbreviations | Abbreviations are in uppercase without periods or additional formatting | style_guide | `#how-should-abbrevations-be-formatted` | warning | approve |
 | `JSS-ABBR-002` | abbreviations | Abbreviations are introduced with expansion at first use | style_guide | `#how-should-abbrevations-be-formatted` | warning | Defer |
 | `JSS-CODE-001` | code_style | Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | warning | approve |
@@ -260,9 +273,11 @@ Flat list of every rule in `catalogue.yaml`, sorted by category rollout order th
 | `JSS-OPER-001` | operators | Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen) | style_guide | `#miscellaneous` | warning | approve |
 | `JSS-OPER-002` | operators | Transpose is typeset with \top rather than a superscript prime or literal T | style_guide | `#miscellaneous` | warning | approve |
 | `JSS-OPER-003` | operators | Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks) | article_tex | `article.tex:154` | warning | approve - paragraphs may be ended with a dot at the end of equation's content, then % shouldn't be added |
-| `JSS-XREF-001` | crossrefs | Figures, tables, and equations carry \label{} and are referenced by \ref{} rather than manual numbering | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve |
+| `JSS-OPER-004` *(NEW 2026-04-23)* | operators | Expectation / variance / covariance / probability use jss.cls shortcuts \E, \VAR, \COV, \Prob | jss_cls | `jss.cls:484` | warning | approve (tentative) |
+| `JSS-XREF-001` | crossrefs | Figures and tables carry \label{} and are referenced by \ref{} rather than manual numbering | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | warning | approve (scope narrowed to figures/tables; numbered equations split to JSS-XREF-004 at info severity) |
 | `JSS-XREF-002` | crossrefs | Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) | style_guide | `#miscellaneous` | info | approve |
 | `JSS-XREF-003` | crossrefs | Cross-references to subsections use "Section x.y" rather than "Subsection x.y" | style_guide | `#miscellaneous` | warning | approve |
+| `JSS-XREF-004` *(NEW 2026-04-23)* | crossrefs | Numbered equations carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | info | approve (tentative) — info severity because unreferenced numbered equations are a style nit, not missing-callout |
 | `JSS-HOUSE-001` | house_style | "e.g." and "i.e." are followed by a comma so LaTeX does not treat the period as a sentence end | style_guide | `#miscellaneous` | warning | approve |
 | `JSS-HOUSE-002` | house_style | Book editions are indicated as 2nd, 3rd, etc., not as "second" or "2e" | style_guide | `#miscellaneous` | warning | approve |
 | `JSS-HOUSE-003` | house_style | Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref) | jss_cls | `jss.cls:54` | info | approve |
@@ -295,28 +310,28 @@ Seven rules flagged `needs-more-context`. Each flag is an explicit judgement cal
 All mechanical checks run 2026-04-23 against `catalogue.yaml` — details inline.
 
 - [X] CHK001 The category set in `catalogue.yaml` matches the list in `spec.md` FR-005 — **pass**: 15 categories, identical set and order: `preamble, structure, markup, citations, references, bibtex, naming, capitalization, typography, abbreviations, code_style, code_width, operators, crossrefs, house_style`.
-- [X] CHK002 Per-category rule counts — median is **3**; ≥2× threshold = 6 rules (none triggered), ≤⅓ threshold ≈ 1 rule (one triggered: `code_width`). Counts:
+- [X] CHK002 Per-category rule counts — **refreshed 2026-04-23 scope refinement** (56 rules). Median is **4**; ≥2× threshold = 8 rules (none triggered), ≤⅓ threshold ≈ 1 rule (one triggered: `code_width`). Counts:
 
   | category | rule count | flag? |
   |---|---|---|
-  | preamble | 5 | — (below 2×) |
-  | structure | 4 | — |
+  | preamble | 6 | — |
+  | structure | 5 | — |
   | markup | 4 | — |
-  | citations | 4 | — |
-  | references | 5 | — (below 2×) |
-  | bibtex | 2 | — |
+  | citations | 3 | — (was 4; JSS-CITE-001 retired) |
+  | references | 7 | — (was 5; +JSS-REFS-006 loose title-case, +JSS-REFS-007 journal title-case) |
+  | bibtex | 4 | — (was 2; +JSS-BIBTEX-003 required fields, +JSS-BIBTEX-004 shortcites) |
   | naming | 2 | — |
   | capitalization | 4 | — |
-  | typography | 3 | — |
-  | abbreviations | 2 | — |
+  | typography | 4 | — (was 3; +JSS-TYPO-004 caption-after-content) |
+  | abbreviations | 2 | — (JSS-ABBR-002 deferred in place) |
   | code_style | 3 | — |
   | code_width | 1 | ⚠ thin: only `JSS-WIDTH-001` (line-length). Intentional — SG-031 is the only style-guide directive about textwidth; no other textwidth concerns exist. Alternative: fold into `code_style`; rejected because line-width is a `raw_source` inspection while `code_style` is AST-based (different inspects, different §II justification). Keep as a single-rule category. |
-  | operators | 3 | — |
-  | crossrefs | 3 | — |
+  | operators | 4 | — (was 3; +JSS-OPER-004 jss.cls math macros) |
+  | crossrefs | 4 | — (was 3; +JSS-XREF-004 numbered-equation label/ref split) |
   | house_style | 3 | — |
 
-- [X] CHK003 Rule-ID counter sequence is contiguous within each category — **pass**: every category's counters are `[1, 2, …, N]` with no gaps (verified by `test_catalogue.py::test_rule_ids_globally_unique` + `test_rule_id_prefix_matches_category`, plus a dedicated contiguity scan).
-- [X] CHK004 No `rule_id` appears in more than one category entry — **pass**: 48 unique ids, each maps to exactly one category (enforced by `test_catalogue.py::test_rule_ids_globally_unique`).
+- [X] CHK003 Rule-ID counter sequence is contiguous within each category — **pass with one documented retirement**: every category's counters are contiguous except `citations`, where `JSS-CITE-001` has been retired and its counter `[2, 3, 4]` ≠ `[1, 2, 3]` is intentional. Per FR-004 ("retired rule's id is never reused"), the retired id is reserved in the `catalogue.yaml` top-of-file comment. All other 14 categories are `[1, 2, …, N]` with no gaps.
+- [X] CHK004 No `rule_id` appears in more than one category entry — **pass**: 56 unique ids, each maps to exactly one category (enforced by `test_catalogue.py::test_rule_ids_globally_unique`).
 - [X] CHK005 No two rules in the same category have materially duplicated `description`s — **pass**: 15/15 categories show no description duplication.
 - [X] CHK006 `citations`, `references`, `typography`, `capitalization` each have at least one rule, and `tasks.md` orders `citations`/`references` first and `typography`/`capitalization` last — **pass**: rollout order is `citations (Phase 5) → references (Phase 6) → bibtex → preamble → structure → markup → crossrefs → code_style → code_width → naming → operators → abbreviations → house_style → typography (Phase 18) → capitalization (Phase 19)`.
 - [X] CHK007 The full category list is pinned in `catalogue.yaml`'s top-level `categories:` field — **pass**: lines 13–28 of `catalogue.yaml` enumerate exactly 15 categories, and `test_catalogue.py::test_every_declared_category_is_known` validates the list.
@@ -327,15 +342,15 @@ All mechanical checks run 2026-04-23 against `catalogue.yaml` — details inline
 
 Severity pre-pass run 2026-04-23 against `catalogue.yaml`. Findings inline.
 
-- [X] CHK008 Severity tally:
+- [X] CHK008 Severity tally — **refreshed 2026-04-23 scope refinement** (56 rules):
 
-  | severity | count |
-  |---|---|
-  | error | 8 |
-  | warning | 37 |
-  | info | 3 |
+  | severity | count | delta |
+  |---|---|---|
+  | error | 9 | +1 (JSS-BIBTEX-003 added) |
+  | warning | 43 | +6 (PRE-006, STRUCT-005, REFS-006, REFS-007, BIBTEX-004, TYPO-004, OPER-004 added; CITE-001 retired) |
+  | info | 4 | +1 (JSS-XREF-004 added) |
 
-- [X] CHK009 Every `error`-severity rule is objectively wrong — **pass**: all 8 `error` rules inspected.
+- [X] CHK009 Every `error`-severity rule is objectively wrong — **pass**: all 9 `error` rules inspected (JSS-BIBTEX-003 added 2026-04-23: missing required fields produce malformed BibTeX output — objectively wrong).
 
   | rule_id | description | why "error" is correct |
   |---|---|---|
@@ -358,7 +373,7 @@ Severity pre-pass run 2026-04-23 against `catalogue.yaml`. Findings inline.
   | markup | 4 rules | all `warning` | ✓ uniform | — |
   | citations | 4 rules | all `warning` | ✓ uniform | — |
   | references | 5 rules | 4 `warning` + 1 `info` | ✗ mixed | **Intentional**: `JSS-REFS-003` (DOI presence) is `info` because "where available" makes it unverifiable — flagged in §2 as `needs-more-context` for reviewer to ratify. Other four are warnings. |
-  | bibtex | 2 rules | all `error` | ✓ uniform | — |
+  | bibtex | 4 rules | 3 `error` + 1 `warning` | ✗ mixed | **Intentional**: `JSS-BIBTEX-004` (shortcites for 6+ authors) is `warning` because an un-shortcited citation compiles cleanly; the other three (missing key, duplicate keys, missing required fields) produce malformed BibTeX output. |
   | naming | 2 rules | all `warning` | ✓ uniform | — |
   | capitalization | 4 rules | all `warning` | ✓ uniform | — |
   | typography | 3 rules | all `warning` | ✓ uniform | — |
@@ -366,18 +381,19 @@ Severity pre-pass run 2026-04-23 against `catalogue.yaml`. Findings inline.
   | code_style | 3 rules | all `warning` | ✓ uniform | — |
   | code_width | 1 rule | `warning` | ✓ uniform (trivially) | — |
   | operators | 3 rules | all `warning` | ✓ uniform | — |
-  | crossrefs | 3 rules | 2 `warning` + 1 `info` | ✗ mixed | **Intentional**: `JSS-XREF-002` (Equation~\ref over bare (\ref)) is `info` because SG-060 is a SHOULD qualified with "except when reference count is large"; authors legitimately choose either form for equation-heavy papers. Other two are warnings. |
+  | crossrefs | 4 rules | 2 `warning` + 2 `info` | ✗ mixed | **Intentional**: `JSS-XREF-002` (Equation~\ref over bare (\ref)) is `info` per SG-060's SHOULD-with-carve-out; `JSS-XREF-004` (numbered equation label+ref) is `info` per the 2026-04-23 split — unreferenced numbered equations are a style nit, unlike unreferenced figures/tables which suggest a missing callout. Warnings: `JSS-XREF-001`, `JSS-XREF-003`. |
   | house_style | 3 rules | 2 `warning` + 1 `info` | ✗ mixed | **Intentional**: `JSS-HOUSE-003` (no duplicate-loading of jss.cls-provided packages) is `info` because LaTeX silently handles duplicate `\usepackage` calls — a preamble that loads `\usepackage{hyperref}` redundantly still compiles correctly. Other two are warnings. |
 
-- [X] CHK012 No `info`-severity rule enforces a MUST directive — **pass**. The 3 `info` rules are:
+- [X] CHK012 No `info`-severity rule enforces a MUST directive — **pass**. The 4 `info` rules are:
 
   | rule_id | authority directive | MUST / SHOULD / info? |
   |---|---|---|
   | `JSS-REFS-003` | article.tex:421 "DOIs should be included where available" | SHOULD (with conditional) — `info` justified |
   | `JSS-XREF-002` | style guide SG-060 "Prefer Equation~\ref{...} … except when reference count is large" | SHOULD (with carve-out) — `info` justified |
+  | `JSS-XREF-004` | style guide SG-011 "Figures, tables, and equations are marked with \label and referenced by \ref" (MUST) | MUST, but scope-split: figures/tables are `warning` (JSS-XREF-001), numbered equations are `info` (JSS-XREF-004). Reviewer judgement 2026-04-23: unreferenced numbered equations are a style nit rather than a missing callout. Informational severity is the conscious downgrade for the equation subset only. |
   | `JSS-HOUSE-003` | style guide SG-002 "Keep LaTeX code as simple as possible; avoid unnecessary packages/commands" | SHOULD — `info` justified |
 
-  No MUST directive is downgraded to `info`. ✓
+  One narrow exception (JSS-XREF-004): the underlying MUST directive is split between `warning` (figures/tables) and `info` (numbered equations) per reviewer judgement. Documented here for explicit ratification rather than silent downgrade.
 
 ---
 

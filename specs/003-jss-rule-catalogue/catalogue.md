@@ -4,26 +4,27 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 48  
+**Rule count**: 56  
 **Category count**: 15
 
 ---
 
 ## Preamble
 
-_preamble_ — 5 rule(s)
+_preamble_ — 6 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-PRE-001` | error | Document class must be jss with a valid class option (article, codesnippet, bookreview, softwarereview) | jss_cls | `jss.cls:37` | — |
 | `JSS-PRE-002` | error | Preamble defines \Address{} with author affiliation and contact | jss_cls | `jss.cls:\Address` | — |
-| `JSS-PRE-003` | error | Preamble defines \Plaintitle{} alongside \title{} so the PDF metadata gets a markup-free title | jss_cls | `jss.cls:\Plaintitle` | ✓ |
+| `JSS-PRE-003` | error | When \title{} contains LaTeX markup, preamble also defines \Plaintitle{} with the markup-free form | jss_cls | `jss.cls:\Plaintitle` | ✓ |
 | `JSS-PRE-004` | error | \Abstract{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:120` | — |
 | `JSS-PRE-005` | error | \Keywords{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:197` | — |
+| `JSS-PRE-006` | warning | \Plaintitle, \Plainauthor, \Plainkeywords contain no LaTeX markup (PDF metadata must be plain text) | jss_cls | `jss.cls:\Plaintitle` | ✓ |
 
 ## Structure
 
-_structure_ — 4 rule(s)
+_structure_ — 5 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
@@ -31,6 +32,7 @@ _structure_ — 4 rule(s)
 | `JSS-STRUCT-002` | warning | Acknowledgments section uses American spelling (not "Acknowledgements") | article_tex | `article.tex:407` | ✓ |
 | `JSS-STRUCT-003` | warning | Appendix sections have proper titles instead of a bare "Appendix" | article_tex | `article.tex:438` | — |
 | `JSS-STRUCT-004` | error | References are declared via \bibliography{} rather than a hand-written thebibliography environment | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-STRUCT-005` | warning | \author{} separates authors with \And or \AND (not lowercase \and) | article_tex | `article.tex:22` | ✓ |
 
 ## Markup
 
@@ -45,35 +47,38 @@ _markup_ — 4 rule(s)
 
 ## Citations
 
-_citations_ — 4 rule(s)
+_citations_ — 3 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
-| `JSS-CITE-001` | warning | \emph used where a citation key is meant; use \cite{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | ✓ |
-| `JSS-CITE-002` | warning | Every software package mentioned in prose is also \cite-d with its citation | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-CITE-002` | warning | First occurrence of a software package has a citation within the same paragraph | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-CITE-003` | warning | Avoid bracket-in-bracket citation forms like (\cite{...}); use \citep{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | ✓ |
 | `JSS-CITE-004` | warning | Citations use natbib commands (\cite, \citet, \citep, \citealp) rather than hardcoded author-year text | jss_cls | `jss.cls:62` | — |
 
 ## References
 
-_references_ — 5 rule(s)
+_references_ — 7 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-REFS-001` | warning | BibTeX entries carry a year field so natbib author-year citations render correctly | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-REFS-002` | warning | BibTeX titles are in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-REFS-003` | info | BibTeX entries include a doi field where one is available | article_tex | `article.tex:421` | — |
+| `JSS-REFS-002` | warning | BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-REFS-003` | info | BibTeX entries include a doi field where one is available (advisory) | article_tex | `article.tex:421` | — |
 | `JSS-REFS-004` | warning | BibTeX titles use JSS markup (\proglang, \pkg, \code) for language and package names | style_guide | `#how-to-cite-r-packages` | — |
 | `JSS-REFS-005` | warning | Journal titles in BibTeX entries are not abbreviated | article_tex | `article.tex:473` | — |
+| `JSS-REFS-006` | warning | BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-REFS-007` | warning | Journal titles in BibTeX entries are in title case | article_tex | `article.tex:473` | — |
 
 ## BibTeX
 
-_bibtex_ — 2 rule(s)
+_bibtex_ — 4 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-BIBTEX-001` | error | Every BibTeX entry has a non-empty citation key | style_guide | `#how-to-cite-r-packages` | — |
 | `JSS-BIBTEX-002` | error | BibTeX citation keys are unique within the database | style_guide | `#how-to-cite-r-packages` | — |
+| `JSS-BIBTEX-003` | error | BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …) | style_guide | `#how-to-cite-r-packages` | — |
+| `JSS-BIBTEX-004` | warning | Entries with 6+ authors use \shortcites{} or the shortnames class option is enabled | jss_cls | `jss.cls:45` | — |
 
 ## Naming
 
@@ -97,13 +102,14 @@ _capitalization_ — 4 rule(s)
 
 ## Typography
 
-_typography_ — 3 rule(s)
+_typography_ — 4 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-TYPO-001` | warning | Figure and table captions end with a period | style_guide | `#how-to-format-figuretable-captions` | ✓ |
-| `JSS-TYPO-002` | warning | Figure and table captions avoid emphasis macros (\emph, \bf, \it, \textbf, \textit) | style_guide | `#how-to-format-figuretable-captions` | ✓ |
+| `JSS-TYPO-002` | warning | Figure / table captions avoid emphasis macros wrapping the whole caption (\emph, \textbf, \textit on full caption) | style_guide | `#how-to-format-figuretable-captions` | — |
 | `JSS-TYPO-003` | warning | Tables do not use footnote-style annotations; annotations go in the caption | style_guide | `#how-to-format-figuretable-captions` | — |
+| `JSS-TYPO-004` | warning | \caption{} appears after the figure / table content, not before | style_guide | `#how-to-format-figuretable-captions` | — |
 
 ## Abbreviations
 
@@ -130,27 +136,29 @@ _code_width_ — 1 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
-| `JSS-WIDTH-001` | warning | Code input / output inside Sinput / CodeInput / CodeOutput environments fits within 80 columns | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | — |
+| `JSS-WIDTH-001` | warning | Code input / output inside Sinput / CodeInput / CodeOutput environments fits within the configured column limit | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | — |
 
 ## Operators
 
-_operators_ — 3 rule(s)
+_operators_ — 4 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-OPER-001` | warning | Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen) | style_guide | `#miscellaneous` | ✓ |
 | `JSS-OPER-002` | warning | Transpose is typeset with \top rather than a superscript prime or literal T | style_guide | `#miscellaneous` | ✓ |
 | `JSS-OPER-003` | warning | Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks) | article_tex | `article.tex:154` | ✓ |
+| `JSS-OPER-004` | warning | Expectation / variance / covariance / probability use jss.cls shortcuts \E, \VAR, \COV, \Prob | jss_cls | `jss.cls:484` | ✓ |
 
 ## Cross-references
 
-_crossrefs_ — 3 rule(s)
+_crossrefs_ — 4 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
-| `JSS-XREF-001` | warning | Figures, tables, and equations carry \label{} and are referenced by \ref{} rather than manual numbering | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-XREF-001` | warning | Figures and tables carry \label{} and are referenced by \ref{} rather than manual numbering | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-XREF-002` | info | Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) | style_guide | `#miscellaneous` | ✓ |
 | `JSS-XREF-003` | warning | Cross-references to subsections use "Section x.y" rather than "Subsection x.y" | style_guide | `#miscellaneous` | — |
+| `JSS-XREF-004` | info | Numbered equations carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 
 ## House style
 
@@ -194,6 +202,10 @@ Document class must be jss with a valid class option (article, codesnippet, book
 </details>
 
 **Notes**: The class line defines four mutually-exclusive publication types (jss.cls:37-44); one must be selected.
+Class-option default: `\@articletrue` at jss.cls:26 means `article` is the silent default if no option is
+specified. If multiple mutually-exclusive options are specified, the last one wins (jss.cls:37-44 call
+\@articlefalse / \@codesnippettrue / etc sequentially). The rule flags the "wrong class" case
+(\documentclass{article} with a \usepackage{jss} instead of \documentclass[...]{jss}).
 
 ---
 
@@ -242,7 +254,7 @@ Preamble defines \Address{} with author affiliation and contact
 
 **Category**: `preamble` · **Severity**: `error` · **Auto-fixable**: yes
 
-Preamble defines \Plaintitle{} alongside \title{} so the PDF metadata gets a markup-free title
+When \title{} contains LaTeX markup, preamble also defines \Plaintitle{} with the markup-free form
 
 **Authority**: `jss_cls` → `jss.cls:\Plaintitle`
 
@@ -267,7 +279,9 @@ Preamble defines \Plaintitle{} alongside \title{} so the PDF metadata gets a mar
 
 </details>
 
-**Notes**: jss.cls line 82 defines \Plaintitle; article.tex:30 uses it. Without it the PDF title contains \proglang{...} literally.
+**Notes**: jss.cls:82 defines \Plaintitle; article.tex:30 uses it. Rule fires only when \title{} contains a LaTeX
+macro call (\proglang, \pkg, \code, \emph, \textit, etc). A plain-text \title{} does not require a
+companion \Plaintitle{} — the two are identical in that case.
 
 ---
 
@@ -349,6 +363,42 @@ Introduction...
 
 ---
 
+### JSS-PRE-006
+
+**Category**: `preamble` · **Severity**: `warning` · **Auto-fixable**: yes
+
+\Plaintitle, \Plainauthor, \Plainkeywords contain no LaTeX markup (PDF metadata must be plain text)
+
+**Authority**: `jss_cls` → `jss.cls:\Plaintitle`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\Plaintitle{Regression Models in \proglang{R}}
+\Plainauthor{\textbf{Achim Zeileis}}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\Plaintitle{Regression Models in R}
+\Plainauthor{Achim Zeileis}
+```
+
+</details>
+
+**Notes**: jss.cls:82/84/94 define the plain-text twin commands for PDF metadata (pdftitle, pdfauthor, pdfkeywords
+via hyperref — see jss.cls:449-465). Any LaTeX macro inside these values lands verbatim in the PDF info
+dictionary, producing strings like "Regression Models in \proglang{R}" in reader metadata panels.
+
+---
+
 ### JSS-STRUCT-001
 
 **Category**: `structure` · **Severity**: `warning` · **Auto-fixable**: no
@@ -382,6 +432,10 @@ Document ends with a summary / discussion section before the bibliography
 ```
 
 </details>
+
+**Notes**: DRAFT — reviewer flagged 2026-04-23 for either a better authority anchor or removal. Template comment at
+article.tex:381 says "As usual …" (placeholder) which is weak grounding. Candidate for removal in the
+next review round unless a firmer style-guide anchor surfaces.
 
 ---
 
@@ -487,6 +541,41 @@ References are declared via \bibliography{} rather than a hand-written thebiblio
 
 ---
 
+### JSS-STRUCT-005
+
+**Category**: `structure` · **Severity**: `warning` · **Auto-fixable**: yes
+
+\author{} separates authors with \And or \AND (not lowercase \and)
+
+**Authority**: `article_tex` → `article.tex:22`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\author{Alice Smith \and Bob Jones}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\author{Alice Smith \And Bob Jones}
+```
+
+</details>
+
+**Notes**: article.tex:22-23 template comment specifies `\And` (inline separator) or `\AND` (line-break separator);
+the lowercase `\and` is LaTeX's default but is not wired to jss.cls's title-block layout (jss.cls:339-344)
+so it produces incorrect spacing between authors. Closes the §1.2 article.tex:22 gap from the reviewer
+checklist.
+
+---
+
 ### JSS-MARKUP-001
 
 **Category**: `markup` · **Severity**: `warning` · **Auto-fixable**: yes
@@ -515,7 +604,12 @@ We compare implementations in \proglang{R} and \proglang{Python}.
 
 </details>
 
-**Notes**: Style guide SG-005 mirrors this. jss.cls:476 defines \proglang as \textsf. Cross-checked against terms.LANGUAGES.
+**Notes**: Style guide SG-005 mirrors this. jss.cls:476 defines \proglang as \textsf. Cross-checked against
+terms.LANGUAGES. FP-reduction strategies required for reasonable precision:
+  * Mask math-mode content — "let $R$ be the covariance matrix" must not flag R as a language.
+  * Skip Pascal — nobody uses it in JSS manuscripts, FP rate too high.
+  * Filter out initials — "J. R. Statistical Society" has R as an initial, not the language.
+  * Only scan plain body text (not \section titles, not \code, not verbatim envs).
 
 ---
 
@@ -613,43 +707,11 @@ Section titles containing markup supply a plain-text shim via \section[plain]{ma
 
 ---
 
-### JSS-CITE-001
-
-**Category**: `citations` · **Severity**: `warning` · **Auto-fixable**: yes
-
-\emph used where a citation key is meant; use \cite{...} instead
-
-**Authority**: `style_guide` → `#what-are-the-different-cite-citet-citep-commands-about`
-
-**Inspects**: `tex_files`
-
-<details>
-<summary>Example violation</summary>
-
-```latex
-Recently \emph{Knuth1984} described algorithms.
-```
-
-</details>
-
-<details>
-<summary>Example fix</summary>
-
-```latex
-Recently \cite{Knuth1984} described algorithms.
-```
-
-</details>
-
-**Notes**: Retrofit of the Step 1 smoke rule cite_001_emph.py. Matches \emph macros whose argument is a bibkey-shaped token (^[A-Za-z][A-Za-z0-9_-]*\d{4}$).
-
----
-
 ### JSS-CITE-002
 
 **Category**: `citations` · **Severity**: `warning` · **Auto-fixable**: no
 
-Every software package mentioned in prose is also \cite-d with its citation
+First occurrence of a software package has a citation within the same paragraph
 
 **Authority**: `style_guide` → `#what-are-the-most-important-style-guidelines-in-jss`
 
@@ -673,7 +735,11 @@ We fit the model using \pkg{mgcv} \citep{Wood:2006}.
 
 </details>
 
-**Notes**: Style guide SG-012 requires software packages to be cited via \cite{}. The check fires on the first \pkg{} mention in the body when no \cite / \citep / \citet appears within the same paragraph.
+**Notes**: Strict same-paragraph definition: "paragraph" is the token span bounded by char nodes containing blank
+lines (`\n\n`) or by environment / group boundaries. The check: first \pkg{X} mention per distinct X
+requires a \cite / \citet / \citep / \citealp / \citealt / \citeauthor / \citeyear macro within the same
+paragraph, either before or after \pkg{X}. Subsequent \pkg{X} mentions are silent even if uncited
+(package already introduced).
 
 ---
 
@@ -735,7 +801,12 @@ The method of \citet{Knuth1984} predates this work.
 
 </details>
 
-**Notes**: jss.cls:62 loads natbib in author-year mode; hardcoded references bypass the bibliography and cannot be back-linked to refs.bib.
+**Notes**: jss.cls:62 loads natbib in author-year mode; hardcoded references bypass the bibliography and cannot be
+back-linked to refs.bib. The regex-based match MUST mask:
+  * Content inside \code{}, \verb{}, \url{} — parenthetical years inside literal strings are not
+    citations (e.g., \code{as.Date("2020-01-01")} must not flag).
+  * Content inside verbatim, Code, CodeInput, CodeOutput, Sinput, Soutput, Scode environments.
+  * Bibliography-rendering envs (thebibliography, BibTeX output).
 
 ---
 
@@ -784,7 +855,7 @@ BibTeX entries carry a year field so natbib author-year citations render correct
 
 **Category**: `references` · **Severity**: `warning` · **Auto-fixable**: no
 
-BibTeX titles are in title style (principal words capitalised)
+BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase)
 
 **Authority**: `style_guide` → `#what-are-the-most-important-style-guidelines-in-jss`
 
@@ -816,7 +887,9 @@ BibTeX titles are in title style (principal words capitalised)
 
 </details>
 
-**Notes**: Style-guide SG-008. Heuristic — we only flag titles that are entirely lowercase, to avoid false-positives on legitimate acronym spellings.
+**Notes**: Tight companion to the loose heuristic in JSS-REFS-006. Split per reviewer feedback 2026-04-23: REFS-002
+is the high-precision narrow check (every word lowercase), REFS-006 catches subtler violations. Both are
+heuristics; a principled title-case validator requires a principal-word dictionary (deferred).
 
 ---
 
@@ -824,7 +897,7 @@ BibTeX titles are in title style (principal words capitalised)
 
 **Category**: `references` · **Severity**: `info` · **Auto-fixable**: no
 
-BibTeX entries include a doi field where one is available
+BibTeX entries include a doi field where one is available (advisory)
 
 **Authority**: `article_tex` → `article.tex:421`
 
@@ -859,7 +932,10 @@ BibTeX entries include a doi field where one is available
 
 </details>
 
-**Notes**: Fired only when the entry type is article/inproceedings/incollection/book — entries that typically carry DOIs. The rule is informational because the author may legitimately not know the DOI.
+**Notes**: Advisory-only. Fires on article / inproceedings / incollection / book entry types lacking a `doi` field.
+The rule cannot verify "where available" — some entries legitimately have no DOI (older journals, book
+chapters, technical reports). `info` severity acknowledges the uncertainty and prompts the author to
+double-check rather than declaring a violation.
 
 ---
 
@@ -937,7 +1013,92 @@ Journal titles in BibTeX entries are not abbreviated
 
 </details>
 
-**Notes**: Template comment at article.tex:473 pins this: "Journal titles should not be abbreviated and in title case." Heuristic — flag journal fields that contain periods or obvious abbreviations (J\.|Jnl\.|Proc\.).
+**Notes**: Template comment at article.tex:473 pins this: "Journal titles should not be abbreviated and in title case."
+This rule covers the not-abbreviated half; JSS-REFS-007 covers the title-case half. Heuristic — flag journal
+fields that contain periods or obvious abbreviations (J\.|Jnl\.|Proc\.|Trans\.).
+
+---
+
+### JSS-REFS-006
+
+**Category**: `references` · **Severity**: `warning` · **Auto-fixable**: no
+
+BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case)
+
+**Authority**: `style_guide` → `#what-are-the-most-important-style-guidelines-in-jss`
+
+**Inspects**: `bib_files`
+
+<details>
+<summary>Example violation</summary>
+
+```bibtex
+@article{Demo,
+  title = {literate Programming: a Survey},
+  year  = {2020}
+}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```bibtex
+@article{Demo,
+  title = {Literate Programming: A Survey},
+  year  = {2020}
+}
+```
+
+</details>
+
+**Notes**: Loose companion to JSS-REFS-002's tight heuristic. Checks: first word must be capitalised; word after a
+colon or hyphen must be capitalised (style-guide SG-013 cross-reference). Higher false-positive rate than
+REFS-002 — acceptable per reviewer 2026-04-23; tuned via the precision gate on the real corpus.
+
+---
+
+### JSS-REFS-007
+
+**Category**: `references` · **Severity**: `warning` · **Auto-fixable**: no
+
+Journal titles in BibTeX entries are in title case
+
+**Authority**: `article_tex` → `article.tex:473`
+
+**Inspects**: `bib_files`
+
+<details>
+<summary>Example violation</summary>
+
+```bibtex
+@article{Demo,
+  author  = {Jane Doe},
+  title   = {On Counting},
+  journal = {journal of statistical software},
+  year    = {2020}
+}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```bibtex
+@article{Demo,
+  author  = {Jane Doe},
+  title   = {On Counting},
+  journal = {Journal of Statistical Software},
+  year    = {2020}
+}
+```
+
+</details>
+
+**Notes**: article.tex:473 mandates "Journal titles should not be abbreviated and in title case." JSS-REFS-005 covers
+the not-abbreviated half; this rule covers the title-case half. Same principal-word heuristic as REFS-002.
 
 ---
 
@@ -1022,6 +1183,104 @@ BibTeX citation keys are unique within the database
 ```
 
 </details>
+
+---
+
+### JSS-BIBTEX-003
+
+**Category**: `bibtex` · **Severity**: `error` · **Auto-fixable**: no
+
+BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …)
+
+**Authority**: `style_guide` → `#how-to-cite-r-packages`
+
+**Inspects**: `bib_files`
+
+<details>
+<summary>Example violation</summary>
+
+```bibtex
+@article{Demo,
+  author = {Jane Doe},
+  year   = {2020}
+}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```bibtex
+@article{Demo,
+  author  = {Jane Doe},
+  title   = {On Counting},
+  journal = {Journal of Statistical Software},
+  year    = {2020}
+}
+```
+
+</details>
+
+**Notes**: Required-field matrix (per BibTeX standard + JSS SG-017 "valid BibTeX"):
+  * article        → author, title, journal, year
+  * book           → author|editor, title, publisher, year
+  * inproceedings  → author, title, booktitle, year
+  * incollection   → author, title, booktitle, publisher, year
+  * inbook         → author|editor, title, chapter|pages, publisher, year
+  * manual         → title
+  * mastersthesis  → author, title, school, year
+  * phdthesis      → author, title, school, year
+  * techreport     → author, title, institution, year
+  * unpublished    → author, title, note
+  * misc           → (no required fields)
+Missing required fields produce silently malformed citation output.
+
+---
+
+### JSS-BIBTEX-004
+
+**Category**: `bibtex` · **Severity**: `warning` · **Auto-fixable**: no
+
+Entries with 6+ authors use \shortcites{} or the shortnames class option is enabled
+
+**Authority**: `jss_cls` → `jss.cls:45`
+
+**Inspects**: `bib_files`
+
+<details>
+<summary>Example violation</summary>
+
+```bibtex
+% preamble does NOT set [shortnames] on \documentclass[article]{jss}
+@article{Many,
+  author = {A. Smith and B. Jones and C. Chen and D. Lopez and E. Patel and F. Nguyen and G. Walker},
+  title  = {Study},
+  journal = {Stats},
+  year    = {2020}
+}
+% main text:
+Following \citet{Many} we extend...
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```bibtex
+\documentclass[article,shortnames]{jss}
+% ... same bib entry, main text:
+Following \citet{Many} we extend...
+```
+
+</details>
+
+**Notes**: natbib's default author-year output for 6+-author entries produces "A. Smith, B. Jones, C. Chen, D. Lopez,
+E. Patel, F. Nguyen, and G. Walker (2020)" which overflows line wrapping and clutters the text.
+jss.cls:45 defines the `shortnames` class option (passed through to natbib) that collapses to
+"Smith et al. (2020)" on first mention. Alternative: \shortcites{key} in the preamble for per-entry
+control. The rule fires when an entry has ≥6 authors AND the preamble lacks both mitigations.
 
 ---
 
@@ -1123,7 +1382,10 @@ Publisher and journal names follow JSS conventions (e.g., "Springer-Verlag", "Th
 
 </details>
 
-**Notes**: Style guide SG-007 and SG-014. Heuristic — flag titles whose every word is lowercase. Full title-case validation requires a principal-word dictionary and is deferred.
+**Notes**: Style guide SG-007 and SG-014. Pragmatic heuristic: flag titles whose first word is lowercase OR whose
+every word is lowercase. Common function words (of, and, the, in, for, a, an, to, with) may stay
+lowercase; principal words should be capitalised. Full dictionary-based title-case validation is
+deferred; the narrow heuristic ships first and is tuned via the precision gate on the real corpus.
 
 ---
 
@@ -1155,7 +1417,11 @@ Section titles are in sentence style (first word capitalised; others lowercase e
 
 </details>
 
-**Notes**: Style guide SG-009. Heuristic — flag section titles where two or more words after the first are capitalised without being proper names (cross-checked against terms.LANGUAGES and terms.R_PACKAGES).
+**Notes**: Style guide SG-009. Also covers SG-013 "In sentence style, capitalise only the first word and the first
+word after colon/hyphen; proper names remain uppercase" — the rule enforces the capital-after-colon /
+capital-after-hyphen rule as part of the sentence-style check. Heuristic — flag section titles where two
+or more words after the first are capitalised without being proper names (cross-checked against
+terms.LANGUAGES and terms.R_PACKAGES). Tuned via the precision gate.
 
 ---
 
@@ -1186,6 +1452,8 @@ Figure / table captions are in sentence style
 ```
 
 </details>
+
+**Notes**: Style guide SG-010 and SG-013. Same sentence-style semantics as JSS-CAP-002 applied to captions.
 
 ---
 
@@ -1253,9 +1521,9 @@ Figure and table captions end with a period
 
 ### JSS-TYPO-002
 
-**Category**: `typography` · **Severity**: `warning` · **Auto-fixable**: yes
+**Category**: `typography` · **Severity**: `warning` · **Auto-fixable**: no
 
-Figure and table captions avoid emphasis macros (\emph, \bf, \it, \textbf, \textit)
+Figure / table captions avoid emphasis macros wrapping the whole caption (\emph, \textbf, \textit on full caption)
 
 **Authority**: `style_guide` → `#how-to-format-figuretable-captions`
 
@@ -1265,7 +1533,7 @@ Figure and table captions avoid emphasis macros (\emph, \bf, \it, \textbf, \text
 <summary>Example violation</summary>
 
 ```latex
-\caption{\label{tab:ov} \emph{Overview} of the regression models.}
+\caption{\label{tab:ov} \emph{Overview of the regression models}.}
 ```
 
 </details>
@@ -1278,6 +1546,11 @@ Figure and table captions avoid emphasis macros (\emph, \bf, \it, \textbf, \text
 ```
 
 </details>
+
+**Notes**: Applies only to emphasis macros wrapping the whole caption (or the full non-label portion of it). Targeted
+formatting on short phrases within a caption is allowed — e.g., italicising a Latin species name, a
+journal title inside the caption, or a subsection label. The rule flags the "entire caption is one
+\emph{...}" / "entire caption is one \textit{...}" pattern, not intra-caption markup.
 
 ---
 
@@ -1313,6 +1586,46 @@ Tables do not use footnote-style annotations; annotations go in the caption
 ```
 
 </details>
+
+---
+
+### JSS-TYPO-004
+
+**Category**: `typography` · **Severity**: `warning` · **Auto-fixable**: no
+
+\caption{} appears after the figure / table content, not before
+
+**Authority**: `style_guide` → `#how-to-format-figuretable-captions`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\begin{figure}
+\caption{\label{fig:x} Frequency distribution.}
+\includegraphics{visualization}
+\end{figure}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\begin{figure}
+\includegraphics{visualization}
+\caption{\label{fig:x} Frequency distribution.}
+\end{figure}
+```
+
+</details>
+
+**Notes**: Style guide SG-021: "Captions appear below the corresponding figure/table." Closes the §1.3 SG-021 gap
+from the reviewer checklist. Caption placement before content produces visual separation between the
+caption and its target even when LaTeX compiles cleanly.
 
 ---
 
@@ -1373,6 +1686,11 @@ The iterative weighted least squares (IWLS) algorithm is used throughout this pa
 ```
 
 </details>
+
+**Notes**: DEFERRED per reviewer 2026-04-23 — implementing a "first use" check requires robust cross-document state
+tracking (per-file state plus an explicit allowlist of pre-introduced abbreviations like "JSS" / "LaTeX"
+/ "PDF"). Candidate for a future spec after a simpler heuristic — flagging unknown uppercase acronyms
+without preceding expansion — is prototyped and precision-gated.
 
 ---
 
@@ -1481,7 +1799,7 @@ Code samples use spaces around operators and after commas
 
 **Category**: `code_width` · **Severity**: `warning` · **Auto-fixable**: no
 
-Code input / output inside Sinput / CodeInput / CodeOutput environments fits within 80 columns
+Code input / output inside Sinput / CodeInput / CodeOutput environments fits within the configured column limit
 
 **Authority**: `style_guide` → `#how-should-code-be-formatted-in-the-manuscript`
 
@@ -1511,7 +1829,10 @@ R> summary(glm(Days ~ (Eth + Sex + Age + Lrn)^2, data = quine,
 
 </details>
 
-**Notes**: Retrofit of the Step 1 smoke rule src_001_width.py. Line-length checks are byte-level, not structural — Constitution §II carve-out applies (line width is intrinsically textual). 80-column default tracks the style-guide SG-031 "fits within normal textwidth".
+**Notes**: Retrofit of the Step 1 smoke rule src_001_width.py. Line-length checks are byte-level, not structural —
+Constitution §II carve-out applies (line width is intrinsically textual). Default column limit is 80,
+tracking SG-031's "fits within normal textwidth"; the limit is **configurable** via ToolConfig so authors
+using a wider code-block style can set their own max (per reviewer 2026-04-23).
 
 ---
 
@@ -1615,7 +1936,46 @@ where the coefficients are estimated by ML.
 
 </details>
 
-**Notes**: article.tex:161-165 template comment says "no spaces before/after equations so that 'normal' spacing is used and not a new paragraph started".
+**Notes**: article.tex:161-165 template comment says "no spaces before/after equations so that 'normal' spacing is
+used and not a new paragraph started". Carve-out: when the equation's content ends with a period (full
+sentence ending inside the display), the following paragraph is legitimately ending and the surrounding
+`%` is unnecessary — the rule MUST NOT fire in that case. Detection: inspect the last non-whitespace
+token inside the equation body for a trailing `.`.
+
+---
+
+### JSS-OPER-004
+
+**Category**: `operators` · **Severity**: `warning` · **Auto-fixable**: yes
+
+Expectation / variance / covariance / probability use jss.cls shortcuts \E, \VAR, \COV, \Prob
+
+**Authority**: `jss_cls` → `jss.cls:484`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+The expectation $\mathbb{E}[X]$ and variance $\mathsf{Var}(X)$.
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+The expectation $\E[X]$ and variance $\VAR(X)$.
+```
+
+</details>
+
+**Notes**: jss.cls:484-487 define \E, \VAR, \COV, \Prob (all as \mathsf). Ad-hoc alternatives (\mathbb{E},
+\mathrm{Var}, \operatorname{Cov}, \mathrm{P}) produce visually inconsistent output across JSS papers.
+The rule flags \mathbb{E}, \mathsf{Var}, \mathrm{Var}, \operatorname{Cov}, \mathrm{P}, \Pr and their
+common siblings inside math mode.
 
 ---
 
@@ -1623,7 +1983,7 @@ where the coefficients are estimated by ML.
 
 **Category**: `crossrefs` · **Severity**: `warning` · **Auto-fixable**: no
 
-Figures, tables, and equations carry \label{} and are referenced by \ref{} rather than manual numbering
+Figures and tables carry \label{} and are referenced by \ref{} rather than manual numbering
 
 **Authority**: `style_guide` → `#what-are-the-most-important-style-guidelines-in-jss`
 
@@ -1646,6 +2006,10 @@ See Figure~\ref{fig:quine} for the frequency distribution.
 ```
 
 </details>
+
+**Notes**: Scope narrowed 2026-04-23 (reviewer split): figures and tables carry the warning severity; numbered
+equations are covered separately by JSS-XREF-004 at info severity. An unreferenced figure/table suggests
+a missing callout from the prose; an unreferenced numbered equation is a milder style nit.
 
 ---
 
@@ -1677,7 +2041,8 @@ See Equation~\ref{eq:mean} for the derivation.
 
 </details>
 
-**Notes**: SG-060 makes this advisory for manuscripts with many equation references; the rule ships at info severity and is easy to suppress per-paper.
+**Notes**: SG-060 makes this advisory for manuscripts with many equation references; the rule ships at info severity
+and is easy to suppress per-paper.
 
 ---
 
@@ -1708,6 +2073,45 @@ See Section~\ref{sec:details} for details.
 ```
 
 </details>
+
+---
+
+### JSS-XREF-004
+
+**Category**: `crossrefs` · **Severity**: `info` · **Auto-fixable**: no
+
+Numbered equations carry \label{} and are referenced from the text
+
+**Authority**: `style_guide` → `#what-are-the-most-important-style-guidelines-in-jss`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\begin{equation}
+\log(\mu) = x^\top \beta.
+\end{equation}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\begin{equation} \label{eq:mean}
+\log(\mu) = x^\top \beta.
+\end{equation}
+The mean is given by Equation~\ref{eq:mean}.
+```
+
+</details>
+
+**Notes**: Companion to JSS-XREF-001 for numbered equations only; info severity because unreferenced numbered
+equations are a style nit, not a missing-callout signal (the reader still sees the equation in place).
+`{equation*}` / unnumbered displays are out of scope — they have no counter to label.
 
 ---
 
