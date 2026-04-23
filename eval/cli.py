@@ -121,12 +121,18 @@ def review_cmd(
     base_url: str,
     skip_list: Path,
 ) -> None:
-    """(Phase B) Delegate labelling of unlabelled violations to a local LLM."""
-    click.echo(
-        "eval-jss: `review` is Phase B — not wired in this revision of the harness.",
-        err=True,
+    """Delegate labelling of unlabelled violations to a local LLM."""
+    from eval import review as review_mod
+
+    code = review_mod.run(
+        db_path=ctx.obj["db"],
+        limit=limit,
+        confidence_threshold=confidence_threshold,
+        model=model,
+        base_url=base_url,
+        skip_list_path=Path(skip_list),
     )
-    ctx.exit(2)
+    ctx.exit(code)
 
 
 @cli.command("report")
@@ -153,27 +159,73 @@ def report_cmd(ctx: click.Context, by_source: bool, csv_path: str | None) -> Non
 
 @cli.group("corpus")
 def corpus_group() -> None:
-    """(Phase B) Reproduce the corpus from the pinned manifest."""
+    """Reproduce the corpus from the pinned manifest (Phase B)."""
 
 
 @corpus_group.command("fetch")
+@click.option(
+    "--manifest",
+    "manifest_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/corpus-manifest.csv"),
+    show_default=True,
+)
+@click.option(
+    "--target",
+    "target_dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=Path("examples"),
+    show_default=True,
+)
+@click.option(
+    "--gaps",
+    "gaps_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/corpus-manifest-gaps.csv"),
+    show_default=True,
+)
 @click.pass_context
-def corpus_fetch_cmd(ctx: click.Context) -> None:
-    click.echo(
-        "eval-jss: `corpus fetch` is Phase B — not wired in this revision of the harness.",
-        err=True,
+def corpus_fetch_cmd(
+    ctx: click.Context,
+    manifest_path: Path,
+    target_dir: Path,
+    gaps_path: Path,
+) -> None:
+    """Materialise every manifest row from an immutable distribution URL."""
+    from eval import corpus as corpus_mod
+
+    code = corpus_mod.run_fetch(
+        manifest_path=manifest_path,
+        target_dir=target_dir,
+        gaps_path=gaps_path,
     )
-    ctx.exit(2)
+    ctx.exit(code)
 
 
 @corpus_group.command("status")
+@click.option(
+    "--manifest",
+    "manifest_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/corpus-manifest.csv"),
+    show_default=True,
+)
+@click.option(
+    "--target",
+    "target_dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=Path("examples"),
+    show_default=True,
+)
 @click.pass_context
-def corpus_status_cmd(ctx: click.Context) -> None:
-    click.echo(
-        "eval-jss: `corpus status` is Phase B — not wired in this revision of the harness.",
-        err=True,
-    )
-    ctx.exit(2)
+def corpus_status_cmd(
+    ctx: click.Context, manifest_path: Path, target_dir: Path
+) -> None:
+    """Show which manifest rows are materialised, pending, or mismatched."""
+    from eval import corpus as corpus_mod
+
+    code = corpus_mod.run_status(manifest_path=manifest_path, target_dir=target_dir)
+    ctx.exit(code)
 
 
 def main(argv: list[str] | None = None) -> int:

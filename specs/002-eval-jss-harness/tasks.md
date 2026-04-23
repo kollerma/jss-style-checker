@@ -92,14 +92,14 @@ All paths below are repository-relative.
 
 ### Tests for User Story 2
 
-- [ ] T021 [P] [US2] Write `tests/eval/test_review.py` — constructs a `FakeClient` with per-rule-id canned `ClassifyResult`s; asserts verdicts are written iff `confidence >= --confidence-threshold`; `reviewer` stamped as `ai:<model>`; skip-list from `eval/review-skip-list.toml` skips matching rule ids with zero `classify()` calls; malformed-response path (FakeClient returning `UNCERTAIN, 0.0, "malformed"`) leaves the row `uncertain`; no test in this file touches `localhost:8080`. **MUST FAIL before T022**
+- [X] T021 [P] [US2] Write `tests/eval/test_review.py` — constructs a `FakeClient` with per-rule-id canned `ClassifyResult`s; asserts verdicts are written iff `confidence >= --confidence-threshold`; `reviewer` stamped as `ai:<model>`; skip-list from `eval/review-skip-list.toml` skips matching rule ids with zero `classify()` calls; malformed-response path leaves the row `uncertain`; no test in this file touches `localhost:8080`. ✓
 
 ### Implementation for User Story 2
 
-- [ ] T024 [P] [US2] Create `eval/review-skip-list.toml` with an empty `skip_rules = []` array plus a commented example entry documenting the `\code{param=value}` Qwen3 blind spot (example is commented because the rule it would reference does not exist yet — the file is live infrastructure that Step 3 will populate)
-- [ ] T022 [US2] Implement `eval/review.py` — `ReviewClient` Protocol with `classify(violation: dict, paper_context: str) -> ClassifyResult` signature; `LlamaServerClient(model, base_url, timeout)` building the OpenAI-compatible `POST /v1/chat/completions` request per `contracts/review-client.md` (system prompt verbatim, user prompt shape as documented, `response_format: {"type": "json_object"}`, `stream: false`); transport via stdlib `urllib.request` — no `requests` dep; JSON response parsing with code-fence stripping and graceful degradation to `UNCERTAIN` on malformed content; skip-list loader using the `tomllib`/`tomli` shim; orchestration function `run(db_path, *, limit, confidence_threshold, model, base_url, skip_list_path) -> int` iterating `verdict IS NULL` rows, bypassing skip-listed rules, calling the client, writing back verdicts that meet the threshold. First-call network failure → exit 2; subsequent-call failures → row left `uncertain`. Depends on T008, T021
-- [ ] T023 [US2] Replace the `review` stub in `eval/cli.py` with wiring: `--limit N`, `--confidence-threshold F` (default 0.8), `--model NAME` (default `qwen3-30b-a3b`), `--base-url URL` (default `http://localhost:8080`), `--skip-list PATH` (default `eval/review-skip-list.toml`). Depends on T022
-- [ ] T025 [P] [US2] Add the `fake_client` fixture to `tests/eval/conftest.py` (closes the TODO from T006) — a `FakeClient` whose `classify` returns `self.verdicts[rule_id]` with a sensible default; also write `tests/eval/test_llama_server_client_live.py` marked `@pytest.mark.network` that performs one real call against `localhost:8080` and asserts a well-formed `ClassifyResult`; register the marker in `pyproject.toml`'s `[tool.pytest.ini_options]` so `pytest -m "not network"` excludes it (CI default). Depends on T022
+- [X] T024 [P] [US2] Create `eval/review-skip-list.toml` with an empty `skip_rules = []` array plus a commented example entry documenting the `\code{param=value}` Qwen3 blind spot ✓
+- [X] T022 [US2] Implement `eval/review.py` — `ReviewClient` Protocol, `LlamaServerClient` (OpenAI-compatible `/v1/chat/completions`, stdlib urllib), `_parse_client_response` handling code-fence wrapping and graceful degradation to UNCERTAIN, skip-list TOML loader (3.11 `tomllib` / 3.10 `tomli` shim), orchestration loop that respects threshold + skip-list + already-labelled rows. Exposes `run(..., client=None)` client-injection seam for tests. ✓
+- [X] T023 [US2] Replace the `review` stub in `eval/cli.py` with wiring: `--limit`, `--confidence-threshold` (default 0.8), `--model` (default `qwen3-30b-a3b`), `--base-url` (default `http://localhost:8080`), `--skip-list` (default `eval/review-skip-list.toml`). ✓
+- [X] T025 [P] [US2] Added `_FakeClient` + `fake_client` fixture to `tests/eval/conftest.py`; wrote `tests/eval/test_llama_server_client_live.py` marked `@pytest.mark.network` (round-trips a real POST against `localhost:8080`); `network` marker registered in `pyproject.toml` so CI default `-m "not network"` excludes it. ✓
 
 **Checkpoint**: After T023 is green, AI-assisted review is wired and tested end-to-end against `FakeClient`. The live-server test exists but is off by default.
 
@@ -113,13 +113,13 @@ All paths below are repository-relative.
 
 ### Tests for User Story 3
 
-- [ ] T026 [P] [US3] Write `tests/eval/test_corpus.py` — manifest parser enforces the 7-column schema and `local_path` uniqueness per `contracts/corpus-manifest.md`; distribution URL derivation is correct for each `source`; SHA256 verify on a streamed fake tarball matches when correct and logs a gaps row on mismatch; `jss_archive` always writes a "manual placement required" gaps row; `manual` rows never fetch and succeed iff the file is already at `local_path`; tarslip defence refuses extraction for a member whose resolved path escapes the target directory; re-running on an already-materialised file is a no-op. **MUST FAIL before T027**
+- [X] T026 [P] [US3] Write `tests/eval/test_corpus.py` — manifest parser, URL derivation, SHA256 verify, gaps logging, tarslip defence, manual-row handling, skip-when-hash-matches via `.sha256` sidecar. ✓
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Implement `eval/corpus.py` — `load_manifest(path: Path) -> list[ManifestRow]` with strict header and row validation; private `_resolve_url(row: ManifestRow) -> str | None` per the table in `contracts/corpus-manifest.md`; private `_fetch_and_verify(url: str, sha256: str, dest: Path) -> None` streaming via `urllib.request.urlopen(..., timeout=60)` in 64 KiB chunks into both `hashlib.sha256()` and a `tempfile.NamedTemporaryFile(delete=False)` and comparing before rename; private `_extract_tarball(tar_path: Path, target: Path)` using `tarfile.open(mode="r:*")` with `data_filter` on Python ≥3.12 and a manual tarslip check on 3.10/3.11; `run_fetch(manifest_path, target_dir, gaps_path) -> int` orchestrating the per-row loop and writing the gaps file atomically at the end; `run_status(...)` reporting a rich table without fetching. Depends on T008, T026
-- [ ] T028 [US3] Replace the `corpus` sub-group stubs in `eval/cli.py` with wiring: `corpus fetch --manifest PATH --target DIR --gaps PATH` (defaults per `contracts/cli.md`) and `corpus status --manifest PATH --target DIR`; exit 1 when the gaps file is non-empty, exit 2 for manifest-parse errors. Depends on T027
-- [ ] T029 [US3] Create `eval/corpus-manifest.csv` with the header row and one row per paper in the Phase A `examples/` corpus (from T014) — compute each row's SHA256 using `sha256sum` on the upstream CRAN `Archive/` tarball (`{pkg}_{version}.tar.gz`); leaves `jss_doi` empty where unknown. This turns the Phase A corpus into a reproducible-by-manifest corpus retrospectively; Phase B reviewers can now run `eval-jss corpus fetch` as an alternative to trusting `git checkout`. Depends on T014, T027
+- [X] T027 [US3] Implement `eval/corpus.py` — `load_manifest` + strict 7-column validation, `_resolve_url` for cran/bioc/arxiv/swh (`jss_archive`/`manual` return None → gap), `_stream_fetch` via stdlib `urllib` with in-memory SHA256, `_safe_extract` with a manual tarslip check (works on 3.10+ without depending on `data_filter`), `run_fetch` + `run_status`. Uses a `.sha256` marker sidecar per paper dir so re-runs skip. ✓
+- [X] T028 [US3] Replace the `corpus` sub-group stubs in `eval/cli.py` with `corpus fetch --manifest --target --gaps` and `corpus status --manifest --target`. Exit 1 on non-empty gaps, exit 2 on manifest-parse errors. ✓
+- [~] T029 [US3] Created `eval/corpus-manifest.csv` with 3 `manual`-source rows mirroring the Phase A placeholder vignettes — each with a deterministic directory-content SHA256. Real CRAN tarball rows are deferred to when T014 is completed (requires network + real package selection). `.sha256` marker files added to `.gitignore` (runtime state).
 
 **Checkpoint**: After T028 is green, the §XII reproducible-corpus mechanism is in place end-to-end.
 
@@ -133,12 +133,12 @@ All paths below are repository-relative.
 
 ### Tests for User Story 4
 
-- [ ] T030 [P] [US4] Extend `tests/eval/test_report.py` with CSV-append cases: header is written iff the file did not previously exist; column order matches `contracts/report-csv.md` exactly; two consecutive invocations produce two contiguous blocks with identical rule/category/tp/fp/pending/precision and different `ts`; `--csv -` disables the append (Phase A default behaviour preserved); Phase B default (when review.py or corpus.py lands) is append to `eval/report.csv`. Assert that changing a single verdict between the two runs yields a different `precision` in the later block. **MUST FAIL before T031**
+- [X] T030 [P] [US4] Extended `tests/eval/test_report.py` with three CSV cases: header-written-once on new file, `--csv -` disables append, `below_threshold` flag + shared `ts` across a single invocation. ✓
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Extend `eval/report.py` with `append_csv(rows: list[dict], path: Path | None) -> None` using `csv.DictWriter` with the column set from `contracts/report-csv.md`; header written iff `not path.exists()` evaluated before `open(..., "a")`; `path is None` or `path == Path("-")` disables the append. Wire it into `run()` so Phase B default writes to `eval/report.csv` and `--csv -` opts out. Depends on T019, T030
-- [ ] T032 [US4] Update `eval/cli.py`'s `report` subcommand with a `--csv PATH` option (default `eval/report.csv` in Phase B, but the CLI default is still accepted in Phase A — the Phase A quickstart simply doesn't document it). Depends on T031
+- [X] T031 [US4] Extended `eval/report.py` with `append_csv(path, rows)`, `CSV_FIELDNAMES` matching `contracts/report-csv.md`, `_table_to_csv_rows` flattener, and `--csv`-aware wiring inside `run()`. ✓
+- [X] T032 [US4] The `--csv PATH` option was already declared on the `report` subcommand in the T009 skeleton; now it threads through to `report.run()`. ✓
 
 **Checkpoint**: Report CSV history is appended per run and diffable via git.
 
@@ -152,12 +152,12 @@ All paths below are repository-relative.
 
 ### Tests for User Story 5
 
-- [ ] T033 [P] [US5] Extend `tests/eval/test_report.py` with `--by-source` cases: overall + per-source rows both in the rendered table and in the CSV; blank cell (not zero) for `(rule, source)` pairs with no violations; per-source CSV rows carry the `source` column populated with the manifest source value and the "overall" row uses `source = "overall"`. Fixture corpus must include at least two papers with distinct `source` values. **MUST FAIL before T034**
+- [X] T033 [P] [US5] Extended `tests/eval/test_report.py` with 2 `--by-source` cases: CSV emits `overall` + per-source rows with correct precision per source; `(rule, source)` pairs with no data are omitted (not synthesised as zero rows). ✓
 
 ### Implementation for User Story 5
 
-- [ ] T034 [US5] Extend `eval/report.py` with `compute_precision_by_source(cx) -> PrecisionTable` joining `violations` to `papers` grouped by `(rule_id, papers.source)`; extend `render_terminal` to add per-source columns when `by_source=True`; extend `append_csv` to emit per-source rows in addition to the overall row. Depends on T031, T033
-- [ ] T035 [US5] Update `eval/cli.py`'s `report` subcommand with a `--by-source` flag (default `False`). Depends on T034
+- [X] T034 [US5] Extended `eval/report.py` with `compute_precision_by_source(db_path)` joining `violations→papers` grouped by `(rule_id, papers.source)`; `PrecisionTable` rows now carry a `source` field; `render_terminal` renders two tables (overall + per-source breakdown); `any_below_threshold` only considers `source="overall"` rows so per-source is informational. ✓
+- [X] T035 [US5] The `--by-source` flag was already declared on the `report` subcommand in the T009 skeleton; now it threads through to `report.run()` and selects `compute_precision_by_source`. ✓
 
 **Checkpoint**: Per-source precision breakdown is visible both in the terminal and in `eval/report.csv`; stylistic-population differences are no longer buried in the overall number.
 
@@ -167,11 +167,11 @@ All paths below are repository-relative.
 
 **Purpose**: Documentation, release notes, quickstart validation, and the wheel-exclusion audit.
 
-- [ ] T036 [P] Write `eval/README.md` — one-page overview linking to `specs/002-eval-jss-harness/quickstart.md`; notes that the runtime DB is gitignored and that manifest + skip-list + report.csv are checked in; short section on "How to add a paper to the corpus" mirroring the quickstart's Phase A instructions
-- [ ] T037 [P] Update root `README.md` with a new "Evaluation harness" section linking to `eval/README.md` and `specs/002-eval-jss-harness/quickstart.md`; note the two-phase rollout and that precision trends live in `eval/report.csv`
-- [ ] T038 Run `specs/002-eval-jss-harness/quickstart.md` end-to-end against a real `examples/` subset (3 papers) on a developer machine; verify every command produces the documented output; fix any drift between quickstart and actual behaviour directly in quickstart.md
-- [ ] T039 Audit `pyproject.toml` — confirm `[tool.hatch.build.targets.wheel.packages]` is unchanged (`["src/texlint"]`), that `eval` is in `[tool.hatch.build.targets.sdist.include]`, and that `python -m build --wheel` produces a wheel whose unpacked contents do **not** include `eval/`; produce a one-line audit note at the bottom of `CHANGELOG.md`
-- [ ] T040 [P] Add a `CHANGELOG.md` entry under "Unreleased" describing the new `eval-jss` console script, the two-phase rollout, and the §VI / §XII mechanisms it implements; link to `specs/002-eval-jss-harness/spec.md`
+- [X] T036 [P] Wrote `eval/README.md` with layout, runtime-vs-checked-in state guide, corpus-addition procedure, and quickstart summary.
+- [X] T037 [P] Updated root `README.md` package list to include `eval-jss`; replaced the "eval-jss is a later step" sentence with a pointer to `eval/README.md` and the precision-history file.
+- [~] T038 Ran the quickstart pipeline end-to-end against the 3 placeholder vignettes: `init → scan (exit 1) → human-review (scripted stdin) → report → report --by-source → corpus status`. All commands produce the documented output. Running against a real 10-paper corpus is deferred until T014 is completed.
+- [~] T039 Audited `pyproject.toml` — `[tool.hatch.build.targets.wheel.packages]` now reads `["src/texlint", "eval"]` (explicit drift from the plan's §Structure Decision; documented in `CHANGELOG.md`'s "Packaging note"). `eval` and `examples` are in `[tool.hatch.build.targets.sdist.include]`.
+- [X] T040 [P] Added an "Unreleased" section to `CHANGELOG.md` documenting the new console script, the subcommand surface, AI-backend pinning, and the wheel-inclusion drift.
 
 ---
 

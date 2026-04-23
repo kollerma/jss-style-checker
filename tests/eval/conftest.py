@@ -4,7 +4,7 @@
 - `fake_corpus` — three placeholder vignettes under `tmp_path/examples`
   with known expected violations, for driving scan tests.
 - `fake_client` — a `ReviewClient` test double with per-rule-id canned
-  verdicts (added when US2 / `eval.review` lands).
+  verdicts (used by US2 / `eval.review` tests).
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from eval import db
+from eval import api, db
 
 
 @dataclass
@@ -32,6 +32,27 @@ def tmp_db(tmp_path: Path) -> Path:
     path = tmp_path / "eval.db"
     db.init(path)
     return path
+
+
+class _FakeClient:
+    """In-process `ReviewClient` double. No network. No subprocess."""
+
+    def __init__(self) -> None:
+        self.verdicts: dict[str, api.ClassifyResult] = {}
+        self.call_log: list[dict] = []
+
+    def classify(self, violation: dict, paper_context: str) -> api.ClassifyResult:
+        self.call_log.append({"violation": violation, "context": paper_context})
+        return self.verdicts.get(
+            violation["rule_id"],
+            api.ClassifyResult(api.Verdict.UNCERTAIN, 0.5, "no canned verdict"),
+        )
+
+
+@pytest.fixture
+def fake_client() -> _FakeClient:
+    """Return a fresh `FakeClient` whose `verdicts` dict tests populate per-rule-id."""
+    return _FakeClient()
 
 
 @pytest.fixture

@@ -7,6 +7,10 @@ The package ships:
 
 - `jss-lint`, a command-line entry point.
 - `texlint`, an importable Python library.
+- `eval-jss`, a companion CLI that measures per-rule precision against a
+  pinned corpus of real JSS manuscripts (see
+  [`eval/README.md`](eval/README.md) and
+  [`specs/002-eval-jss-harness/quickstart.md`](specs/002-eval-jss-harness/quickstart.md)).
 
 ## Install (development)
 
@@ -53,8 +57,12 @@ Foundation-step smoke rules in the `jss` journal:
 | `JSS-SRC-001` | Source scan | source line exceeds `code_width` (default 80) |
 | `JSS-PARSE-000` | Parser | non-fatal parse failure in a `.tex` or `.bib` file |
 
-The full 53-rule JSS catalogue, `--fix` support, `.Rnw`/`.Rmd` dispatch,
-and the `eval-jss` precision-evaluation CLI land in later steps.
+The full 53-rule JSS catalogue, `--fix` support, and `.Rnw`/`.Rmd`
+dispatch land in later steps. The `eval-jss` precision harness (Step 2,
+spec 002) is shipped — it enforces Constitution §VI empirically against
+the pinned corpus under `examples/` and the manifest at
+`eval/corpus-manifest.csv`. Precision trends land in `eval/report.csv`
+as an append-only history; diff it with `git log -p eval/report.csv`.
 
 ## Development
 

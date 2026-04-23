@@ -153,6 +153,8 @@ cython_debug/
 .claude/worktrees/
 
 # eval-jss runtime state — corpus, manifest, skip-list, and precision history
-# are all checked in; only the live SQLite database is ephemeral.
+# are all checked in; only the live SQLite database and per-paper SHA256
+# marker files (`.sha256` left by `corpus fetch`) are ephemeral.
 eval/eval.db
 eval/eval.db-*
+examples/**/.sha256

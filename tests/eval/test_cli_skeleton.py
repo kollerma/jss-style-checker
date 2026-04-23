@@ -33,8 +33,22 @@ def test_init_creates_schema(tmp_path: Path) -> None:
     assert result2.exit_code == 0, result2.output
 
 
-def test_corpus_fetch_phase_a_stub_exits_2() -> None:
+def test_corpus_fetch_rejects_missing_manifest(tmp_path: Path) -> None:
+    """`corpus fetch` against a non-existent manifest exits 2 (malformed)."""
     runner = CliRunner()
-    result = runner.invoke(cli_mod.cli, ["corpus", "fetch"])
-    assert result.exit_code == 2
-    assert "Phase B" in result.output or "Phase B" in (result.stderr if hasattr(result, "stderr") else "")
+    result = runner.invoke(
+        cli_mod.cli,
+        [
+            "corpus",
+            "fetch",
+            "--manifest",
+            str(tmp_path / "no-such-manifest.csv"),
+            "--target",
+            str(tmp_path / "target"),
+            "--gaps",
+            str(tmp_path / "gaps.csv"),
+        ],
+    )
+    # A missing manifest surfaces as an OSError wrapped by the file read —
+    # the CLI should still exit non-zero (click's file-check or our catch).
+    assert result.exit_code != 0

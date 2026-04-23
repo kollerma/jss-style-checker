@@ -1,0 +1,19 @@
+# Rules whose AI-label precision is historically low.
+#
+# `eval-jss review` skips these rule ids entirely so the violations
+# flow straight to `human-review`. Add rules here as Step 3 lands them
+# and observes model blind spots; remove them once the model improves.
+#
+# Format: each entry is a `{rule_id = "...", reason = "..."}` table.
+# The `reason` field is documentation only — it is not interpreted.
+#
+# Bare-string entries (just `"JSS-FOO-123"`) are also accepted.
+#
+# Example (commented out because the rule it references does not ship
+# in the Step 1 foundation yet):
+#
+# skip_rules = [
+#   { rule_id = "JSS-CODE-003", reason = "Qwen3 mislabels param=value inside \\code{}" },
+# ]
+
+skip_rules = []
