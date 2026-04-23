@@ -4,14 +4,14 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 56  
+**Rule count**: 58  
 **Category count**: 15
 
 ---
 
 ## Preamble
 
-_preamble_ — 6 rule(s)
+_preamble_ — 8 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
@@ -21,6 +21,8 @@ _preamble_ — 6 rule(s)
 | `JSS-PRE-004` | error | \Abstract{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:120` | — |
 | `JSS-PRE-005` | error | \Keywords{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:197` | — |
 | `JSS-PRE-006` | warning | \Plaintitle, \Plainauthor, \Plainkeywords contain no LaTeX markup (PDF metadata must be plain text) | jss_cls | `jss.cls:\Plaintitle` | ✓ |
+| `JSS-PRE-007` | error | When \author{} contains LaTeX markup, preamble also defines \Plainauthor{} with the markup-free form | jss_cls | `jss.cls:\Plainauthor` | ✓ |
+| `JSS-PRE-008` | error | When \Keywords{} contains LaTeX markup, preamble also defines \Plainkeywords{} with the markup-free form | jss_cls | `jss.cls:\Plainkeywords` | ✓ |
 
 ## Structure
 
@@ -396,6 +398,81 @@ Introduction...
 **Notes**: jss.cls:82/84/94 define the plain-text twin commands for PDF metadata (pdftitle, pdfauthor, pdfkeywords
 via hyperref — see jss.cls:449-465). Any LaTeX macro inside these values lands verbatim in the PDF info
 dictionary, producing strings like "Regression Models in \proglang{R}" in reader metadata panels.
+
+---
+
+### JSS-PRE-007
+
+**Category**: `preamble` · **Severity**: `error` · **Auto-fixable**: yes
+
+When \author{} contains LaTeX markup, preamble also defines \Plainauthor{} with the markup-free form
+
+**Authority**: `jss_cls` → `jss.cls:\Plainauthor`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\author{Achim Zeileis~\orcidlink{0000-0003-0918-3766}\\Universit\"at Innsbruck
+   \And Second Author\\Plus Affiliation}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\author{Achim Zeileis~\orcidlink{0000-0003-0918-3766}\\Universit\"at Innsbruck
+   \And Second Author\\Plus Affiliation}
+\Plainauthor{Achim Zeileis, Second Author}
+```
+
+</details>
+
+**Notes**: jss.cls:84 defines \Plainauthor; jss.cls:121 sets its default to `\@author` (i.e., whatever is in
+\author{} verbatim). When \author{} contains macros (\orcidlink, affiliation \\ separators, \textbf, …)
+the default value leaks raw LaTeX into the PDF's pdfauthor metadata (jss.cls:449-465 via hyperref).
+Rule fires only when \author{} contains a LaTeX macro call. Closes the §1.1 jss.cls:84 `\Plainauthor`
+gap from the reviewer checklist. Severity matches JSS-PRE-003 (parallel case for \title ↔ \Plaintitle).
+
+---
+
+### JSS-PRE-008
+
+**Category**: `preamble` · **Severity**: `error` · **Auto-fixable**: yes
+
+When \Keywords{} contains LaTeX markup, preamble also defines \Plainkeywords{} with the markup-free form
+
+**Authority**: `jss_cls` → `jss.cls:\Plainkeywords`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\Keywords{JSS, style guide, comma-separated, not capitalized, \proglang{R}}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\Keywords{JSS, style guide, comma-separated, not capitalized, \proglang{R}}
+\Plainkeywords{JSS, style guide, comma-separated, not capitalized, R}
+```
+
+</details>
+
+**Notes**: jss.cls:94 defines \Plainkeywords; jss.cls:153/161 set its default to `\@Keywords` verbatim. When
+\Keywords{} contains a LaTeX macro, the default value leaks raw LaTeX into the PDF's pdfkeywords
+metadata. Rule fires only when \Keywords{} contains a LaTeX macro call. Closes the §1.1 jss.cls:94
+`\Plainkeywords` gap from the reviewer checklist.
 
 ---
 

@@ -165,6 +165,47 @@ rules:
       via hyperref — see jss.cls:449-465). Any LaTeX macro inside these values lands verbatim in the PDF info
       dictionary, producing strings like "Regression Models in \proglang{R}" in reader metadata panels.
 
+  - rule_id: JSS-PRE-007
+    category: preamble
+    severity: error
+    description: When \author{} contains LaTeX markup, preamble also defines \Plainauthor{} with the markup-free form
+    authority: jss_cls
+    authority_ref: "jss.cls:\\Plainauthor"
+    example_violation: |
+      \author{Achim Zeileis~\orcidlink{0000-0003-0918-3766}\\Universit\"at Innsbruck
+         \And Second Author\\Plus Affiliation}
+    example_fix: |
+      \author{Achim Zeileis~\orcidlink{0000-0003-0918-3766}\\Universit\"at Innsbruck
+         \And Second Author\\Plus Affiliation}
+      \Plainauthor{Achim Zeileis, Second Author}
+    inspects: [tex_files]
+    auto_fixable: true
+    notes: |
+      jss.cls:84 defines \Plainauthor; jss.cls:121 sets its default to `\@author` (i.e., whatever is in
+      \author{} verbatim). When \author{} contains macros (\orcidlink, affiliation \\ separators, \textbf, …)
+      the default value leaks raw LaTeX into the PDF's pdfauthor metadata (jss.cls:449-465 via hyperref).
+      Rule fires only when \author{} contains a LaTeX macro call. Closes the §1.1 jss.cls:84 `\Plainauthor`
+      gap from the reviewer checklist. Severity matches JSS-PRE-003 (parallel case for \title ↔ \Plaintitle).
+
+  - rule_id: JSS-PRE-008
+    category: preamble
+    severity: error
+    description: When \Keywords{} contains LaTeX markup, preamble also defines \Plainkeywords{} with the markup-free form
+    authority: jss_cls
+    authority_ref: "jss.cls:\\Plainkeywords"
+    example_violation: |
+      \Keywords{JSS, style guide, comma-separated, not capitalized, \proglang{R}}
+    example_fix: |
+      \Keywords{JSS, style guide, comma-separated, not capitalized, \proglang{R}}
+      \Plainkeywords{JSS, style guide, comma-separated, not capitalized, R}
+    inspects: [tex_files]
+    auto_fixable: true
+    notes: |
+      jss.cls:94 defines \Plainkeywords; jss.cls:153/161 set its default to `\@Keywords` verbatim. When
+      \Keywords{} contains a LaTeX macro, the default value leaks raw LaTeX into the PDF's pdfkeywords
+      metadata. Rule fires only when \Keywords{} contains a LaTeX macro call. Closes the §1.1 jss.cls:94
+      `\Plainkeywords` gap from the reviewer checklist.
+
   # ---------------------------------------------------------------------------
   # structure — article.tex pins the section shape
   # ---------------------------------------------------------------------------
