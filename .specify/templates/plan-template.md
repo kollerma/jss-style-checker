@@ -31,7 +31,37 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Standing gates derived from the project constitution (see
+`.specify/memory/constitution.md`). Mark each PASS / FAIL / N/A and justify any
+FAIL or deviation in the Complexity Tracking table.
+
+- [ ] **§I Determinism**: No ML, heuristics, or nondeterministic logic inside
+      any proposed rule `check` callable.
+- [ ] **§II AST-First**: Each proposed rule uses pylatexenc or bibtexparser
+      AST, or else explicitly justifies a raw-source scan (line width,
+      trailing whitespace, byte-level encoding).
+- [ ] **§III Non-Fatal Parse**: Plan records parse failures as `Violation`s;
+      no code path raises out of the parse step.
+- [ ] **§IV Zero Core Edits for Journals**: If this plan adds or changes a
+      journal, no files under `src/texlint/core/` or `src/texlint/api.py` are
+      modified. Journal wiring uses `importlib.metadata` entry points only.
+- [ ] **§V Authority Cited**: Each new rule's metadata cites `jss.cls`,
+      `article.tex`, the JSS style guide, or author instructions. Conflicts
+      resolved per the §V priority order.
+- [ ] **§VI ≥90% Precision Gate**: Plan references the eval corpus pass and
+      explains how precision will be measured (`eval-jss report`) before the
+      rule ships.
+- [ ] **§VII Safe Auto-Fix**: Any `FixSuggestion` designed in this plan is
+      self-verifying (re-check after apply) and writes via `tempfile` +
+      `os.replace()`, or else sets `fix = None`.
+- [ ] **§VIII TDD**: Tests are listed in `tasks.md` before the corresponding
+      implementation tasks.
+- [ ] **§IX Branch Coverage**: Plan commits to 100% branch coverage for every
+      new or edited file under `src/texlint/journals/*/rules/`.
+- [ ] **§X Small Surface**: No speculative helpers, shims, or dead code paths
+      are introduced. Any new abstraction has at least three concrete callers.
+- [ ] **§XII Reproducible Corpus**: If this plan introduces a precision claim,
+      the corpus commit hash and manifest path are referenced.
 
 ## Project Structure
 
