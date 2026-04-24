@@ -24,4 +24,4 @@ Procedure:
 Keep the plan under ~6 items. Anything bigger should be deferred to a
 later iteration rather than attempted in one pass.
 
-End your reply with the literal line: `Next: /eval:implement`
+End your reply with the literal line: `Next: /eval-implement`

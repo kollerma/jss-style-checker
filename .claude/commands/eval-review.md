@@ -22,9 +22,9 @@ After the run, report:
 - remaining unlabelled count
 
 If the LLM endpoint is unreachable, print the error and suggest the user
-start their local model (or skip to `/eval:human-review`).
+start their local model (or skip to `/eval-human-review`).
 
 End your reply with one of:
 
-- `Next: /eval:human-review` — if any `uncertain` or unlabelled rows remain.
-- `Next: /eval:record <label>` — if the review is complete.
+- `Next: /eval-human-review` — if any `uncertain` or unlabelled rows remain.
+- `Next: /eval-record <label>` — if the review is complete.

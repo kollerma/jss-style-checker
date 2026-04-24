@@ -39,4 +39,4 @@ If `eval/corpus-manifest-gaps.csv` has new rows, surface them.
 Report how many packages were added, how many failed, and the current
 corpus size.
 
-End your reply with the literal line: `Next: /eval:scan`
+End your reply with the literal line: `Next: /eval-scan`

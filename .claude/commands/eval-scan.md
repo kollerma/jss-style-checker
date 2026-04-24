@@ -21,4 +21,4 @@ Then summarize:
 If any papers are marked `scan_failed`, list them with the parse error
 message.
 
-End your reply with the literal line: `Next: /eval:review`
+End your reply with the literal line: `Next: /eval-review`

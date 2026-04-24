@@ -28,6 +28,6 @@ Refuse to run if `$ARGUMENTS` is empty — a label is required.
 
 End your reply with one of:
 
-- `Next: /eval:suggest` — if this was a pre-change / baseline record.
-- `Next: /eval:add-corpus` — if this was a `post-<label>` record and the
+- `Next: /eval-suggest` — if this was a pre-change / baseline record.
+- `Next: /eval-add-corpus` — if this was a `post-<label>` record and the
   loop has closed; the next iteration starts by growing the corpus.

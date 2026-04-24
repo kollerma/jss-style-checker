@@ -31,5 +31,5 @@ pattern that needs attention next iteration.
 
 The loop is closed.
 
-End your reply with the literal line: `Next: /eval:add-corpus` (to start
+End your reply with the literal line: `Next: /eval-add-corpus` (to start
 iteration N+1).

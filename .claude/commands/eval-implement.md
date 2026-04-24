@@ -25,5 +25,5 @@ Constraints:
 
 When the checklist is done, move on to rescanning.
 
-End your reply with the literal line: `Next: /eval:rescan <label>` (using
+End your reply with the literal line: `Next: /eval-rescan <label>` (using
 the same label as the pre-change record).

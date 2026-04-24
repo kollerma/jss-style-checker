@@ -26,9 +26,9 @@ Procedure:
 5. Write a ranked table into the Findings block, replacing the
    `_(fill in)_` placeholder. Include: change summary, estimated
    volume affected, surface (files touched), risk level.
-6. Do NOT fill in the Plan block — that's `/eval:plan`'s job.
+6. Do NOT fill in the Plan block — that's `/eval-plan`'s job.
 
 Avoid proposing spec-level corpus or harness changes here unless they
 directly affect rule precision. Focus on rule modules.
 
-End your reply with the literal line: `Next: /eval:plan`
+End your reply with the literal line: `Next: /eval-plan`

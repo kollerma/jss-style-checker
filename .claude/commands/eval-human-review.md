@@ -24,4 +24,4 @@ session's shell).
 
 Once they've finished labelling, the next step is record.
 
-End your reply with the literal line: `Next: /eval:record <label>`
+End your reply with the literal line: `Next: /eval-record <label>`
