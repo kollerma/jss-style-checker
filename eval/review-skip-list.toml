@@ -26,3 +26,18 @@ skip_rules = []
 rule_id       = "JSS-CITE-004"
 reason        = "Regex-over-prose with code/verbatim masking; AI labeller rubber-stamps matches."
 added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-REFS-002"
+reason        = "BibTeX title-case tight heuristic; Qwen3 rubber-stamps 'looks-like-a-title' cases (spec 002 note)."
+added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-REFS-005"
+reason        = "Journal-abbreviation heuristic over English morphology; AI labeller unreliable."
+added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-REFS-006"
+reason        = "BibTeX title-case loose heuristic; same Qwen3 blind spot as REFS-002."
+added_in_spec = "004"

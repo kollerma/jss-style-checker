@@ -95,15 +95,15 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Independent Test**: `scripts/vtest.sh tests/unit/rules/test_references.py --cov=... --cov-branch --cov-fail-under=100` green; `scripts/eval-category.sh references` precision gate passes.
 
-- [ ] T025 [P] [US1] Create fixture pairs for all 7 references rules under `tests/fixtures/violations/references/`: `JSS-REFS-001-{bad,good}.bib` through `JSS-REFS-007-{bad,good}.bib` (or `.tex` if the catalogue declares tex-inspection for a given rule). Seed content from catalogue `example_violation`/`example_fix`.
-- [ ] T026 [US1, US4] Write failing `tests/unit/rules/test_references.py` — 7 rules × (positive + good-fixture negative + ≥1 near-miss negative) + module-level invariants. Confirm ImportError.
-- [ ] T027 [US1, US3] Create `src/texlint/journals/jss/rules/references.py` with `check_jss_refs_001..007` and module-level `rules` tuple of 7. JSS-REFS-001 reproduces `bib_001_year.py`'s year-presence check semantics.
-- [ ] T028 [US3] Delete `src/texlint/journals/jss/rules/bib_001_year.py` and `tests/unit/journals/jss/test_bib_001_year.py` (FR-016) in the same commit.
-- [ ] T029 [US1] Remove xfail for references in `test_catalogue_registration.py`; wire `references.rules` into `JSSJournal.categories()` (remove empty-tuple skeleton).
-- [ ] T030 [US1] Verify 100% branch coverage with auxiliary fixtures as needed.
-- [ ] T031 [US2] Add `JSS-REFS-002`, `JSS-REFS-005`, `JSS-REFS-006` to `eval/review-skip-list.toml` per `contracts/ai-skip-list.md`.
-- [ ] T032 [US2] Run `scripts/eval-category.sh references` and capture precision-gate report.
-- [ ] T033 [US1, US2, US3, US4] Commit references PR.
+- [X] T025 [P] [US1] Create fixture pairs for all 7 references rules under `tests/fixtures/violations/references/`: `JSS-REFS-001-{bad,good}.bib` through `JSS-REFS-007-{bad,good}.bib` (or `.tex` if the catalogue declares tex-inspection for a given rule). Seed content from catalogue `example_violation`/`example_fix`.
+- [X] T026 [US1, US4] Write failing `tests/unit/rules/test_references.py` — 7 rules × (positive + good-fixture negative + ≥1 near-miss negative) + module-level invariants. Confirm ImportError.
+- [X] T027 [US1, US3] Create `src/texlint/journals/jss/rules/references.py` with `check_jss_refs_001..007` and module-level `rules` tuple of 7. JSS-REFS-001 reproduces `bib_001_year.py`'s year-presence check semantics.
+- [X] T028 [US3] Delete `src/texlint/journals/jss/rules/bib_001_year.py` and `tests/unit/journals/jss/test_bib_001_year.py` (FR-016) in the same commit.
+- [X] T029 [US1] Remove xfail for references in `test_catalogue_registration.py`; wire `references.rules` into `JSSJournal.categories()` (remove empty-tuple skeleton).
+- [X] T030 [US1] Verify 100% branch coverage with auxiliary fixtures as needed.
+- [X] T031 [US2] Add `JSS-REFS-002`, `JSS-REFS-005`, `JSS-REFS-006` to `eval/review-skip-list.toml` per `contracts/ai-skip-list.md`.
+- [X] T032 [US2] Run `scripts/eval-category.sh references` and capture precision-gate report.
+- [X] T033 [US1, US2, US3, US4] Commit references PR.
 
 **Checkpoint**: references category shipped. `bib_001_year.py` retrofit complete.
 
@@ -115,13 +115,13 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Note (bundling)**: MAY ship in the same PR as references per the allowlist (both inspect `bib_files`). If bundled, the PR description MUST include two separate precision-gate report blocks — one per category.
 
-- [ ] T034 [P] [US1] Create fixture pairs for 4 bibtex rules under `tests/fixtures/violations/bibtex/`.
-- [ ] T035 [US1, US4] Write failing `tests/unit/rules/test_bibtex.py`.
-- [ ] T036 [US1] Create `src/texlint/journals/jss/rules/bibtex.py`.
-- [ ] T037 [US1] Remove xfail + wire into `JSSJournal.categories()`.
-- [ ] T038 [US1] Verify 100% branch coverage.
-- [ ] T039 [US2] Run `scripts/eval-category.sh bibtex`.
-- [ ] T040 [US1, US2, US4] Commit bibtex PR (or bundled references+bibtex PR).
+- [X] T034 [P] [US1] Create fixture pairs for 4 bibtex rules under `tests/fixtures/violations/bibtex/`.
+- [X] T035 [US1, US4] Write failing `tests/unit/rules/test_bibtex.py`.
+- [X] T036 [US1] Create `src/texlint/journals/jss/rules/bibtex.py`.
+- [X] T037 [US1] Remove xfail + wire into `JSSJournal.categories()`.
+- [X] T038 [US1] Verify 100% branch coverage.
+- [X] T039 [US2] Run `scripts/eval-category.sh bibtex`.
+- [X] T040 [US1, US2, US4] Commit bibtex PR (or bundled references+bibtex PR).
 
 **Checkpoint**: bibtex category shipped.
 
