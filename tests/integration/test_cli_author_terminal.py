@@ -31,10 +31,10 @@ class TestExitCodes:
 
     def test_single_rule_violation_exits_one(self, runner: CliRunner):
         result = runner.invoke(
-            main, [str(FIXTURES / "violations" / "JSS-CITE-001.tex")]
+            main, [str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex")]
         )
         assert result.exit_code == 1
-        assert "JSS-CITE-001" in result.output
+        assert "JSS-CITE-002" in result.output
 
     def test_parse_error_exits_two(self, runner: CliRunner):
         result = runner.invoke(
@@ -49,23 +49,23 @@ class TestAuthorOutputShape:
         result = runner.invoke(
             main,
             [
-                str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
-                str(FIXTURES / "violations" / "JSS-SRC-001.tex"),
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-003-bad.tex"),
             ],
         )
         assert result.exit_code == 1
         # Both file paths appear as rule banners.
-        assert "JSS-CITE-001.tex" in result.output
-        assert "JSS-SRC-001.tex" in result.output
+        assert "JSS-CITE-002-bad.tex" in result.output
+        assert "JSS-CITE-003-bad.tex" in result.output
         # Both rule ids appear.
-        assert "JSS-CITE-001" in result.output
-        assert "JSS-SRC-001" in result.output
+        assert "JSS-CITE-002" in result.output
+        assert "JSS-CITE-003" in result.output
 
     def test_includes_suggestion(self, runner: CliRunner):
         result = runner.invoke(
-            main, [str(FIXTURES / "violations" / "JSS-CITE-001.tex")]
+            main, [str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex")]
         )
-        assert "Replace" in result.output  # suggestion text
+        assert "Add a citation" in result.output  # suggestion text
 
     def test_compliant_output_is_empty(self, runner: CliRunner):
         result = runner.invoke(
@@ -85,12 +85,12 @@ class TestIgnoreRules:
             main,
             [
                 "--ignore-rules",
-                "JSS-CITE-001",
-                str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
+                "JSS-CITE-002",
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
             ],
         )
         assert result.exit_code == 0
-        assert "JSS-CITE-001" not in result.output
+        assert "JSS-CITE-002" not in result.output
 
     def test_unknown_rule_in_ignore_is_silently_tolerated(self, runner: CliRunner):
         result = runner.invoke(

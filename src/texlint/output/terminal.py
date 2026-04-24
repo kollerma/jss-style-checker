@@ -25,6 +25,7 @@ _STATUS_STYLE = {
 _SEVERITY_STYLE = {
     Severity.ERROR: "red",
     Severity.WARNING: "yellow",
+    Severity.INFO: "cyan",
 }
 
 

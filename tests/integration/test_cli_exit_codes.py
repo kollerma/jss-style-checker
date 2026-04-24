@@ -52,7 +52,7 @@ class TestStreamSeparation:
         # when mix_stderr is disabled). For determinism, we simply assert that the
         # violation appears in the captured output and the exit code is 1.
         result = runner.invoke(
-            main, [str(FIXTURES / "violations" / "JSS-CITE-001.tex")]
+            main, [str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex")]
         )
         assert result.exit_code == 1
-        assert "JSS-CITE-001" in result.output
+        assert "JSS-CITE-002" in result.output

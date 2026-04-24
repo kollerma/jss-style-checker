@@ -172,6 +172,80 @@ def test_human_review_rule_filter(monkeypatch, tmp_db: Path) -> None:
         cx.close()
 
 
+def test_human_review_back_undoes_previous_verdict(monkeypatch, tmp_db: Path) -> None:
+    cx = db.connect(tmp_db)
+    try:
+        _seed_violations(cx, count=2)
+    finally:
+        cx.close()
+
+    # Label first as true, then press 'b' to undo, then re-label as false.
+    # Prompts: t, reason, b, f, reason, q
+    _script_prompts(monkeypatch, ["t", "", "b", "f", "", "q"])
+
+    human_review.run(db_path=tmp_db, limit=None, rule_id=None, reviewer="human:tester")
+
+    cx = db.connect(tmp_db)
+    try:
+        rows = cx.execute(
+            "SELECT rule_id, verdict FROM violations ORDER BY rule_id"
+        ).fetchall()
+        # The first violation (JSS-CITE-001) was labelled t, undone, then f.
+        # The second (JSS-CITE-002) is still NULL because the session quit
+        # before reaching it on the second pass — actually reprompt of idx 0
+        # then advances to idx 1 which sees 'q'. So CITE-002 is untouched.
+        assert rows[0]["verdict"] == "false_positive"
+        assert rows[1]["verdict"] is None
+    finally:
+        cx.close()
+
+
+def test_human_review_back_at_start_is_noop(monkeypatch, tmp_db: Path) -> None:
+    cx = db.connect(tmp_db)
+    try:
+        _seed_violations(cx, count=1)
+    finally:
+        cx.close()
+
+    # Press b on the very first prompt (nothing to undo), then label t.
+    _script_prompts(monkeypatch, ["b", "t", "", "q"])
+
+    human_review.run(db_path=tmp_db, limit=None, rule_id=None, reviewer="human:tester")
+
+    cx = db.connect(tmp_db)
+    try:
+        row = cx.execute("SELECT verdict FROM violations").fetchone()
+        assert row["verdict"] == "true_positive"
+    finally:
+        cx.close()
+
+
+def test_locator_builds_clickable_path(tmp_path: Path) -> None:
+    paper = tmp_path / "paperA"
+    paper.mkdir()
+    (paper / "article.tex").write_text("x\n", encoding="utf-8")
+    # When paper_path contains a .tex file, the locator points at it with
+    # line:col appended (VS-Code-style).
+    loc = human_review._locator(str(paper), 42, 7)
+    assert loc.endswith("article.tex:42:7")
+
+
+def test_locator_line_only_when_column_missing(tmp_path: Path) -> None:
+    paper = tmp_path / "paperB"
+    paper.mkdir()
+    (paper / "article.tex").write_text("x\n", encoding="utf-8")
+    loc = human_review._locator(str(paper), 42, None)
+    assert loc.endswith("article.tex:42")
+
+
+def test_locator_falls_back_to_dir_without_tex(tmp_path: Path) -> None:
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    loc = human_review._locator(str(empty), 42, 7)
+    # No .tex file → locator points at the dir with line:col.
+    assert loc.endswith("empty:42:7")
+
+
 def test_human_review_reviewer_defaults_to_env(monkeypatch, tmp_db: Path) -> None:
     cx = db.connect(tmp_db)
     try:

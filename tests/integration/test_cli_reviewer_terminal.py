@@ -29,8 +29,9 @@ class TestReviewerMode:
             ],
         )
         assert result.exit_code == 0, result.output
-        assert "Citation" in result.output
-        assert "Bibliography" in result.output
+        # Reviewer mode emits one row per category from JSSJournal.categories().
+        assert "Citations" in result.output
+        assert "References" in result.output
         assert "Typography" in result.output
         assert "PASS" in result.output
         assert "100" in result.output  # overall percentage
@@ -41,13 +42,15 @@ class TestReviewerMode:
             [
                 "--mode",
                 "reviewer",
-                str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
                 str(FIXTURES / "compliant" / "minimal.bib"),
             ],
         )
         assert result.exit_code == 1
         assert "FAIL" in result.output
-        assert "PASS" in result.output  # other categories
+        # During spec-004 rollout, only implemented categories (currently:
+        # citations) have rules — others report SKIPPED until they ship.
+        assert "SKIPPED" in result.output
 
     def test_ignored_category_shows_skipped(self, runner: CliRunner):
         # Ignore the one rule in Citation → category is SKIPPED,
@@ -58,8 +61,8 @@ class TestReviewerMode:
                 "--mode",
                 "reviewer",
                 "--ignore-rules",
-                "JSS-CITE-001",
-                str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
+                "JSS-CITE-002",
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
                 str(FIXTURES / "compliant" / "minimal.bib"),
             ],
         )
@@ -74,12 +77,12 @@ class TestAuthorVsReviewer:
         result = runner.invoke(
             main,
             [
-                str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
             ],
         )
         # Author mode shows individual violations, not the summary table heading.
         assert "Journal compliance" not in result.output
-        assert "JSS-CITE-001" in result.output
+        assert "JSS-CITE-002" in result.output
 
     def test_reviewer_mode_shows_table_heading(self, runner: CliRunner):
         result = runner.invoke(
@@ -87,7 +90,7 @@ class TestAuthorVsReviewer:
             [
                 "--mode",
                 "reviewer",
-                str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
             ],
         )
         assert "Journal compliance" in result.output

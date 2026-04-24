@@ -28,11 +28,11 @@ class TestPluginDispatch:
             [
                 "--journal",
                 "stub",
-                str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
             ],
         )
         assert result.exit_code == 0, result.output
-        assert "JSS-CITE-001" not in result.output
+        assert "JSS-CITE-002" not in result.output
 
     def test_unknown_journal_exits_two(self, runner: CliRunner):
         result = runner.invoke(

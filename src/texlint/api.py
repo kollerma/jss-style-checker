@@ -19,6 +19,7 @@ from typing import Any, ClassVar, Literal
 class Severity(str, Enum):
     ERROR = "error"
     WARNING = "warning"
+    INFO = "info"
 
 
 class CategoryStatus(str, Enum):

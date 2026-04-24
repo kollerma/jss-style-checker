@@ -41,13 +41,13 @@ class TestAuthorHtml:
             [
                 "--output",
                 "html",
-                str(FIXTURES / "violations" / "JSS-CITE-001.tex"),
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
             ],
         )
         assert result.exit_code == 1
         _assert_parseable(result.output)
-        assert "JSS-CITE-001" in result.output
-        assert "JSS-CITE-001.tex" in result.output
+        assert "JSS-CITE-002" in result.output
+        assert "JSS-CITE-002-bad.tex" in result.output
         assert "<table" in result.output
 
     def test_compliant_shows_no_violations_message(self, runner: CliRunner):
@@ -81,8 +81,8 @@ class TestReviewerHtml:
         assert result.exit_code == 0
         _assert_parseable(result.output)
         assert "Journal compliance" in result.output
-        assert "Citation" in result.output
-        assert "Bibliography" in result.output
+        assert "Citations" in result.output
+        assert "References" in result.output
         assert "Typography" in result.output
         assert "PASS" in result.output
         assert "100" in result.output

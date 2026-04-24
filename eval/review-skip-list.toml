@@ -17,3 +17,12 @@
 #   { rule_id = "JSS-SRC-001", reason = "Qwen3 rubber-stamps numeric-assertion messages as TP; see spec.md Assumptions for the 2026-04-23 observation" },
 
 skip_rules = []
+
+# Spec 004 pre-populated entries — rules whose violations bypass AI labelling
+# entirely. See specs/004-jss-rule-modules/contracts/ai-skip-list.md.
+# Removal policy: each removal MUST include rationale in the removing PR.
+
+[[rules]]
+rule_id       = "JSS-CITE-004"
+reason        = "Regex-over-prose with code/verbatim masking; AI labeller rubber-stamps matches."
+added_in_spec = "004"

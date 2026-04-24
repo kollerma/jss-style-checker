@@ -57,7 +57,14 @@ def _load_toml(path: Path) -> dict[str, Any]:
 
 
 def load_skip_list(path: Path | None) -> set[str]:
-    """Return the set of rule ids to skip. Missing file → empty set."""
+    """Return the set of rule ids to skip. Missing file → empty set.
+
+    Accepts two formats:
+      * ``skip_rules = [...]`` (spec 002 flat list of strings / inline tables).
+      * ``[[rules]]`` blocks with ``rule_id`` / ``reason`` / ``added_in_spec``
+        fields (spec 004 schema — see
+        ``specs/004-jss-rule-modules/contracts/ai-skip-list.md``).
+    """
     if path is None or not path.exists():
         return set()
     data = _load_toml(path)
@@ -68,6 +75,9 @@ def load_skip_list(path: Path | None) -> set[str]:
             out.add(entry)
         elif isinstance(entry, dict) and "rule_id" in entry:
             out.add(str(entry["rule_id"]))
+    for rule in data.get("rules", []) or []:
+        if isinstance(rule, dict) and "rule_id" in rule:
+            out.add(str(rule["rule_id"]))
     return out
 
 

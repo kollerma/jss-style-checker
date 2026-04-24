@@ -53,9 +53,14 @@ class TestSeverity:
     def test_values_are_strings(self):
         assert Severity.ERROR.value == "error"
         assert Severity.WARNING.value == "warning"
+        assert Severity.INFO.value == "info"
 
     def test_is_str_subclass(self):
         assert isinstance(Severity.ERROR, str)
+
+    def test_info_round_trip(self):
+        assert Severity("info") is Severity.INFO
+        assert Severity.INFO == "info"
 
 
 class TestCategoryStatus:

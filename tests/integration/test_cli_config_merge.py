@@ -24,14 +24,14 @@ def _copy_fixture_bytes(name: str) -> bytes:
 class TestConfigPrecedence:
     def test_toml_ignore_rules_applies(self, runner: CliRunner, tmp_path: Path):
         # Stage the violation fixture into an isolated cwd with a .jss-lint.toml
-        # that ignores JSS-CITE-001.
+        # that ignores JSS-CITE-002.
         workdir = tmp_path / "work"
         workdir.mkdir()
         (workdir / "paper.tex").write_bytes(
-            _copy_fixture_bytes("violations/JSS-CITE-001.tex")
+            _copy_fixture_bytes("violations/citations/JSS-CITE-002-bad.tex")
         )
         (workdir / ".jss-lint.toml").write_text(
-            'ignore_rules = ["JSS-CITE-001"]\n', encoding="utf-8"
+            'ignore_rules = ["JSS-CITE-002"]\n', encoding="utf-8"
         )
         with runner.isolated_filesystem(temp_dir=workdir):
             # isolated_filesystem chdir's into a fresh dir; we need cwd to be
@@ -48,7 +48,7 @@ class TestConfigPrecedence:
             os.chdir(workdir)
             result = runner.invoke(main, ["paper.tex"])
             assert result.exit_code == 0, result.output
-            assert "JSS-CITE-001" not in result.output
+            assert "JSS-CITE-002" not in result.output
         finally:
             os.chdir(original)
 
@@ -56,10 +56,10 @@ class TestConfigPrecedence:
         workdir = tmp_path / "work"
         workdir.mkdir()
         (workdir / "paper.tex").write_bytes(
-            _copy_fixture_bytes("violations/JSS-CITE-001.tex")
+            _copy_fixture_bytes("violations/citations/JSS-CITE-002-bad.tex")
         )
         (workdir / ".jss-lint.toml").write_text(
-            'ignore_rules = ["JSS-CITE-001"]\n', encoding="utf-8"
+            'ignore_rules = ["JSS-CITE-002"]\n', encoding="utf-8"
         )
 
         import os
@@ -70,7 +70,7 @@ class TestConfigPrecedence:
             # Override the TOML's ignore set with an empty CLI value.
             result = runner.invoke(main, ["--ignore-rules", "", "paper.tex"])
             assert result.exit_code == 1
-            assert "JSS-CITE-001" in result.output
+            assert "JSS-CITE-002" in result.output
         finally:
             os.chdir(original)
 

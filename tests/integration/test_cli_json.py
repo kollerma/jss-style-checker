@@ -47,7 +47,7 @@ class TestJsonShape:
     def test_violation_fields(self, runner: CliRunner):
         result = runner.invoke(
             main,
-            ["--output", "json", str(FIXTURES / "violations" / "JSS-CITE-001.tex")],
+            ["--output", "json", str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex")],
         )
         assert result.exit_code == 1
         payload = json.loads(result.output)
@@ -63,7 +63,7 @@ class TestJsonShape:
             "suggestion",
             "fix",
         }
-        assert v["rule_id"] == "JSS-CITE-001"
+        assert v["rule_id"] == "JSS-CITE-002"
         assert v["fix"] is None
 
 
@@ -82,7 +82,7 @@ class TestDeterminism:
     def test_object_keys_sorted(self, runner: CliRunner):
         result = runner.invoke(
             main,
-            ["--output", "json", str(FIXTURES / "violations" / "JSS-CITE-001.tex")],
+            ["--output", "json", str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex")],
         )
         payload = result.output
         # Top-level keys appear in alphabetical order because of sort_keys=True.
