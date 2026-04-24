@@ -5,6 +5,14 @@
 **Status**: Draft
 **Input**: User description: "Add first-class support for Sweave/Knitr (`.Rnw`) and R Markdown (`.Rmd`) manuscripts to `jss-lint`. Both formats mix R code with document markup; we do not want style rules to fire inside R code chunks, but we do want rules to fire on the prose/LaTeX surrounding those chunks."
 
+## Clarifications
+
+### Session 2026-04-24
+
+- Q: Markdown parser for `.Rmd` → A: `markdown-it-py` (CommonMark-compliant, token-stream API matches the spec's segment model).
+- Q: Which existing rules' `formats` narrow at launch? → A: Preamble category only (PRE-001..008) narrow to `{"tex", "rnw"}`; all other categories stay `formats=None`.
+- Q: Inline LaTeX in `.Rmd` prose — raw-LaTeX island or plain text? → A: Raw-LaTeX island. Inline `$math$` / `\macro{...}` / bare `\macro` spans are tex-parsed with source-accurate line numbers so math-masking and citation rules fire on Rmd prose.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Lint a Sweave (`.Rnw`) manuscript (Priority: P1)
@@ -158,10 +166,11 @@ per-rule violation counts before and after this feature merges.
   skipped but surrounding prose is linted. A prose paragraph with
   multiple inline code spans yields violations only on the prose
   segments, with correct line numbers.
-- **Rmd with raw LaTeX passages**: a `` ```{=latex} `` block OR a
-  `\begin{...}...\end{...}` fragment in prose is parsed as LaTeX and
-  fed to the tex-applicable rules. Line numbers map back to the `.Rmd`
-  source.
+- **Rmd with raw LaTeX passages**: a `` ```{=latex} `` block, a
+  `\begin{...}...\end{...}` environment, or an inline LaTeX fragment
+  in prose (`$x^2$`, `\ref{eq:1}`, `\citep{Smith2020}`) is parsed as
+  LaTeX and fed to the tex-applicable rules. Line numbers map back to
+  the `.Rmd` source.
 - **Line-number drift after chunk stripping**: verify via snapshot that
   reported line numbers match the original `.Rnw` / `.Rmd` source, not
   a stripped intermediate.
@@ -191,6 +200,9 @@ per-rule violation counts before and after this feature merges.
   `.Rnw` files or inside fenced code blocks in `.Rmd` files.
 - **FR-006**: Raw LaTeX fragments inside `.Rmd` prose MUST be linted
   by the tex-applicable rule subset with source-accurate line numbers.
+  This covers both delimited blocks (`` ```{=latex} `` fences,
+  `\begin{…}…\end{…}` environments) and inline fragments within a
+  prose paragraph (`$math$`, `\macro{args}`, bare `\macro` tokens).
 - **FR-007**: Each rule MUST declare which input formats it applies to
   via a format filter; `None` / unset MUST mean "all formats".
 - **FR-008**: Rules whose format filter excludes the input MUST be
@@ -237,6 +249,11 @@ per-rule violation counts before and after this feature merges.
   pinned by SHA256. `eval-jss report` MUST support slicing per-rule
   precision by input format so the established `.tex` baseline is
   isolated from new-format numbers.
+- **FR-020**: At launch the preamble-category rules (JSS-PRE-001..008)
+  MUST declare `formats={"tex", "rnw"}`; all other categories MUST
+  keep `formats=None` (apply to every input format). Running
+  `jss-lint --verbose` on an `.Rmd` input MUST list the 8 preamble
+  rules in the skipped-rules section with a format-mismatch reason.
 
 ### Key Entities
 
@@ -305,6 +322,10 @@ per-rule violation counts before and after this feature merges.
 - **pyyaml as a runtime dependency**: acceptable — already a dev
   extra, now promoted. Downstream consumers who `pip install texlint`
   without the `[rmd]` extra get Rmd support unconditionally.
+- **`markdown-it-py` as a runtime dependency**: the `.Rmd` body parser
+  uses `markdown-it-py` (CommonMark-compliant, token-stream API that
+  maps cleanly to the ordered segment model described in the Key
+  Entities section). No `[rmd]` extra; the dep ships unconditionally.
 - **Corpus expansion for Rnw / Rmd**: this feature ships a small real
   batch of CRAN-vignette sources alongside the synthetic unit-test
   fixtures. Target: **3–5 `.Rnw` vignettes + 2–3 `.Rmd` vignettes**
