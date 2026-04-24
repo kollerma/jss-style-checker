@@ -53,7 +53,7 @@ def _violation(
 def check_jss_name_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexCharsNode):
                 continue

@@ -1,0 +1,6 @@
+---
+title: "Broken
+author: -: : not valid yaml
+---
+
+Body continues despite broken frontmatter.

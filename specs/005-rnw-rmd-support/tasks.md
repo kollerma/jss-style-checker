@@ -108,30 +108,30 @@ description: "Task breakdown for spec 005: Rnw / Rmd manuscript support"
 
 ### Fixtures + failing tests first (TDD)
 
-- [ ] T023 [P] [US2] Create fixture `tests/fixtures/compliant/minimal.Rmd` — valid YAML frontmatter, one heading, one prose paragraph with inline `$math$` and `` `r runif(1)` ``, one fenced `` ```{r} `` code block, no violations.
-- [ ] T024 [P] [US2] Create fixture `tests/fixtures/violations/rmd/JSS-MARKUP-002-bad.Rmd` — prose says "the MASS package"; code block contains `library(MASS)`; assert MARKUP-002 fires on prose line only.
-- [ ] T025 [P] [US2] Create auxiliary fixtures for parser edge cases: `tests/fixtures/violations/rmd/` plus three malformed files — `malformed-yaml.Rmd` (tab indent / bad structure), `unterminated-fence.Rmd` (open ``` with no close), `unterminated-frontmatter.Rmd` (leading `---` with no close).
-- [ ] T026 [US2] Write failing `tests/unit/test_rmd_parser.py` per `contracts/rmd-parser.md §Test matrix`: 14 cases covering M-1..M-7 invariants (token ordering, line-coverage, malformed YAML / fence / frontmatter, inline R code stripping, fence language tag, prose-with-math).
+- [X] T023 [P] [US2] Create fixture `tests/fixtures/compliant/minimal.Rmd` — valid YAML frontmatter, one heading, one prose paragraph with inline `$math$` and `` `r runif(1)` ``, one fenced `` ```{r} `` code block, no violations.
+- [X] T024 [P] [US2] Create fixture `tests/fixtures/violations/rmd/JSS-MARKUP-002-bad.Rmd` — prose says "the MASS package"; code block contains `library(MASS)`; assert MARKUP-002 fires on prose line only.
+- [X] T025 [P] [US2] Create auxiliary fixtures for parser edge cases: `tests/fixtures/violations/rmd/` plus three malformed files — `malformed-yaml.Rmd` (tab indent / bad structure), `unterminated-fence.Rmd` (open ``` with no close), `unterminated-frontmatter.Rmd` (leading `---` with no close).
+- [X] T026 [US2] Write failing `tests/unit/test_rmd_parser.py` per `contracts/rmd-parser.md §Test matrix`: 14 cases covering M-1..M-7 invariants (token ordering, line-coverage, malformed YAML / fence / frontmatter, inline R code stripping, fence language tag, prose-with-math).
 
 ### Implementation
 
-- [ ] T027 [US2] Create `src/texlint/core/rmd_parser.py` implementing the state machine from `contracts/rmd-parser.md`:
+- [X] T027 [US2] Create `src/texlint/core/rmd_parser.py` implementing the state machine from `contracts/rmd-parser.md`:
   - `parse_rmd_source(path, src) -> ParsedRmdFile` pure function.
   - `parse_rmd_file(path) -> ParsedRmdFile` thin wrapper.
   - `_INLINE_R` regex for inline-code stripping on prose.
   - `yaml.safe_load` for frontmatter; emit `JSS-PARSE-000` on failure.
   - For each prose block, call `parse_tex_source(prose.text, path=f"{rmd.path}:block@{prose.line}")` and attach to `latex_fragments`. Set `_input_format = "rmd"` on the returned `ParsedRmdFile`.
-- [ ] T028 [US2] Extend `src/texlint/core/parser.py` with a `parse_tex_source(src, path)` helper if it does not yet accept a pre-read source string. The helper is used by T027 for raw-LaTeX island parsing.
-- [ ] T029 [US2] Wire `.rmd` into the dispatch map from T008; engine populates `ParsedDocument.rmd_files`. Verify `scripts/vtest.sh tests/unit/test_rmd_parser.py tests/unit/test_engine.py` is green.
+- [X] T028 [US2] Extend `src/texlint/core/parser.py` with a `parse_tex_source(src, path)` helper if it does not yet accept a pre-read source string. The helper is used by T027 for raw-LaTeX island parsing.
+- [X] T029 [US2] Wire `.rmd` into the dispatch map from T008; engine populates `ParsedDocument.rmd_files`. Verify `scripts/vtest.sh tests/unit/test_rmd_parser.py tests/unit/test_engine.py` is green.
 
 ### Engine integration for Rmd traversal
 
-- [ ] T030 [US2] Audit every rule module under `src/texlint/journals/jss/rules/` for usages of `doc.tex_files` that should ALSO iterate raw-LaTeX islands on `.Rmd` input. Replace `doc.tex_files` with `doc.all_tex_like()` in rules whose check callable walks tex content and is appropriate for Rmd prose (markup, naming, crossrefs, code_style, citations, structure). Preamble rules stay on `doc.tex_files` because they are format-restricted to tex+rnw in US3.
-- [ ] T031 [US2] Add integration tests `tests/integration/test_rmd_end_to_end.py`: run `jss-lint` on each fixture from T023–T025, assert the acceptance scenarios from spec §US2 (rule fires on prose only; YAML frontmatter produces zero violations; missing `.bib` → warning).
+- [X] T030 [US2] Audit every rule module under `src/texlint/journals/jss/rules/` for usages of `doc.tex_files` that should ALSO iterate raw-LaTeX islands on `.Rmd` input. Replace `doc.tex_files` with `doc.all_tex_like()` in rules whose check callable walks tex content and is appropriate for Rmd prose (markup, naming, crossrefs, code_style, citations, structure). Preamble rules stay on `doc.tex_files` because they are format-restricted to tex+rnw in US3.
+- [X] T031 [US2] Add integration tests `tests/integration/test_rmd_end_to_end.py`: run `jss-lint` on each fixture from T023–T025, assert the acceptance scenarios from spec §US2 (rule fires on prose only; YAML frontmatter produces zero violations; missing `.bib` → warning).
 
 ### Missing `.bib` warning (FR-012)
 
-- [ ] T032 [US2] In `engine.run` (or cli.main), detect the case where `doc.rmd_files` is non-empty, citation-dependent rules exist, and `doc.bib_files` is empty. Emit a `JSS-PARSE-000`-style informational violation with `severity=Severity.INFO` and message "No sibling .bib file; bibliography-inspection rules skipped." Cite FR-012.
+- [X] T032 [US2] In `engine.run` (or cli.main), detect the case where `doc.rmd_files` is non-empty, citation-dependent rules exist, and `doc.bib_files` is empty. Emit a `JSS-PARSE-000`-style informational violation with `severity=Severity.INFO` and message "No sibling .bib file; bibliography-inspection rules skipped." Cite FR-012.
 
 **Checkpoint**: US2 shipped. `jss-lint paper.Rmd` lints R Markdown manuscripts end-to-end including raw-LaTeX island support.
 
@@ -145,13 +145,13 @@ description: "Task breakdown for spec 005: Rnw / Rmd manuscript support"
 
 ### Preamble `formats` narrowing
 
-- [ ] T033 [US3] Extend the `_rule(rule_id, check_fn, formats=None)` helper in `src/texlint/journals/jss/rules/preamble.py` to accept an optional `formats` kwarg and pass it through to the `Rule(...)` constructor.
-- [ ] T034 [US3] Update each of the 8 preamble `Rule` constructions in `src/texlint/journals/jss/rules/preamble.py` to pass `formats=frozenset({"tex", "rnw"})`. Add a one-line comment above each documenting the reason (per Constitution §X: "Rmd has no LaTeX preamble"). Per FR-020.
-- [ ] T035 [US3] Re-run `scripts/vtest.sh tests/unit/rules/test_preamble.py --cov=texlint.journals.jss.rules.preamble --cov-branch --cov-fail-under=100` — confirm the one-line edits do not introduce coverage gaps.
+- [X] T033 [US3] Extend the `_rule(rule_id, check_fn, formats=None)` helper in `src/texlint/journals/jss/rules/preamble.py` to accept an optional `formats` kwarg and pass it through to the `Rule(...)` constructor.
+- [X] T034 [US3] Update each of the 8 preamble `Rule` constructions in `src/texlint/journals/jss/rules/preamble.py` to pass `formats=frozenset({"tex", "rnw"})`. Add a one-line comment above each documenting the reason (per Constitution §X: "Rmd has no LaTeX preamble"). Per FR-020.
+- [X] T035 [US3] Re-run `scripts/vtest.sh tests/unit/rules/test_preamble.py --cov=texlint.journals.jss.rules.preamble --cov-branch --cov-fail-under=100` — confirm the one-line edits do not introduce coverage gaps.
 
 ### Skipped-rule behaviour tests
 
-- [ ] T036 [US3] Add `tests/integration/test_skipped_rules.py`:
+- [X] T036 [US3] Add `tests/integration/test_skipped_rules.py`:
   - Run `jss-lint` on `minimal.Rmd` → all 8 preamble rule ids present in `ComplianceReport.skipped_rules`.
   - Run `jss-lint` on `minimal.tex` → `skipped_rules` empty.
   - Run `jss-lint` with `--verbose` on `minimal.Rmd` → terminal output includes "Skipped rules" section with 8 rows.
@@ -159,7 +159,7 @@ description: "Task breakdown for spec 005: Rnw / Rmd manuscript support"
 
 ### FR-015 regression
 
-- [ ] T037 [US3] Capture a `scripts/vtest.sh tests/` snapshot (test count + xfail / xpass counts) and confirm it matches the baseline from T002 before merging. Also run `eval-jss scan --force && eval-jss report` on the existing 6-paper `.tex`+`.bib` corpus; assert byte-identical per-rule violation counts vs the baseline from T002.
+- [X] T037 [US3] Capture a `scripts/vtest.sh tests/` snapshot (test count + xfail / xpass counts) and confirm it matches the baseline from T002 before merging. Also run `eval-jss scan --force && eval-jss report` on the existing 6-paper `.tex`+`.bib` corpus; assert byte-identical per-rule violation counts vs the baseline from T002.
 
 **Checkpoint**: US3 shipped. Format filter wiring and preamble narrowing are live; FR-015 regression verified.
 
@@ -197,13 +197,13 @@ description: "Task breakdown for spec 005: Rnw / Rmd manuscript support"
 
 **Purpose**: Cross-cutting validation and sign-off per spec §End-of-spec checkpoint and Constitution §XII.
 
-- [ ] T045 Run `scripts/vtest.sh tests/` — full suite green, 0 xfailed, 0 xpassed. Target: 721 + roughly 70 new tests from this spec = ~790 passing.
-- [ ] T046 [P] Run repo-wide branch-coverage gate: `scripts/vtest.sh tests/ --cov=texlint.journals.jss.rules --cov=texlint.core --cov-branch --cov-fail-under=100` (rules) and case-by-case for `core/parser.py` + `core/rmd_parser.py` + `core/engine.py`. Rule modules hold 100% per Constitution §IX; parser modules hold whatever ordinary engineering judgement yields (the contracts' invariants should make high coverage natural).
-- [ ] T047 [P] Run the golden-path demo: `jss-lint docs/jss-template/article.tex docs/jss-template/refs.bib` — per-rule violation counts MUST match the spec-004 baseline (9 warnings from FP-free template findings). Then run `jss-lint docs/jss-template/article.Rnw` if a `.Rnw` sibling exists. Open follow-up issues for any unexpected new violation.
-- [ ] T048 [P] Run the synthetic full-catalogue-coverage test: `scripts/vtest.sh tests/integration/test_full_catalogue_coverage.py` — every catalogue rule id fires on its bad fixture. SC-001 regression.
-- [ ] T049 Produce `specs/005-rnw-rmd-support/end-of-spec-summary.md` — per-rule status after the spec (any newly-measurable rules on `.Rnw` / `.Rmd` via the expanded corpus), the CRAN packages selected with versions + SHA256 snippets, FR-015 regression evidence, and SC-006 by-format report slice snapshot.
-- [ ] T050 [P] Update `CLAUDE.md` agent-context pointer to reference the end-of-spec summary. (The plan reference was already updated in `/speckit.plan`; this step is a sanity check.)
-- [ ] T051 Close the checklists: `specs/005-rnw-rmd-support/checklists/requirements.md` passes all items.
+- [X] T045 Run `scripts/vtest.sh tests/` — full suite green, 0 xfailed, 0 xpassed. Target: 721 + roughly 70 new tests from this spec = ~790 passing.
+- [X] T046 [P] Run repo-wide branch-coverage gate: `scripts/vtest.sh tests/ --cov=texlint.journals.jss.rules --cov=texlint.core --cov-branch --cov-fail-under=100` (rules) and case-by-case for `core/parser.py` + `core/rmd_parser.py` + `core/engine.py`. Rule modules hold 100% per Constitution §IX; parser modules hold whatever ordinary engineering judgement yields (the contracts' invariants should make high coverage natural).
+- [X] T047 [P] Run the golden-path demo: `jss-lint docs/jss-template/article.tex docs/jss-template/refs.bib` — per-rule violation counts MUST match the spec-004 baseline (9 warnings from FP-free template findings). Then run `jss-lint docs/jss-template/article.Rnw` if a `.Rnw` sibling exists. Open follow-up issues for any unexpected new violation.
+- [X] T048 [P] Run the synthetic full-catalogue-coverage test: `scripts/vtest.sh tests/integration/test_full_catalogue_coverage.py` — every catalogue rule id fires on its bad fixture. SC-001 regression.
+- [X] T049 Produce `specs/005-rnw-rmd-support/end-of-spec-summary.md` — per-rule status after the spec (any newly-measurable rules on `.Rnw` / `.Rmd` via the expanded corpus), the CRAN packages selected with versions + SHA256 snippets, FR-015 regression evidence, and SC-006 by-format report slice snapshot.
+- [X] T050 [P] Update `CLAUDE.md` agent-context pointer to reference the end-of-spec summary. (The plan reference was already updated in `/speckit.plan`; this step is a sanity check.)
+- [X] T051 Close the checklists: `specs/005-rnw-rmd-support/checklists/requirements.md` passes all items.
 
 **Checkpoint**: Spec 005 closes when T045–T051 are all done and the end-of-spec summary cites an FR-015 green regression diff and at least one newly-measurable rule on `.Rnw` / `.Rmd` (corpus permitting).
 

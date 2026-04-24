@@ -1,0 +1,12 @@
+---
+title: "Bad Rmd"
+---
+
+# Intro
+
+The MASS package is used throughout the analysis.
+
+```{r}
+library("MASS")
+data("quine")
+```

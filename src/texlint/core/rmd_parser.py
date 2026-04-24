@@ -42,6 +42,31 @@ _HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 _INLINE_R = re.compile(r"`r\s[^`]*`")
 
 
+class _OffsetWalker:
+    """Proxy around a ``pylatexenc.LatexWalker`` that shifts the line
+    number returned by ``pos_to_lineno_colno`` by a fixed offset.
+
+    Used so raw-LaTeX islands inside Rmd prose blocks report
+    source-accurate line numbers on the ``.Rmd`` file.
+    """
+
+    __slots__ = ("_inner", "_offset")
+
+    def __init__(self, inner: Any, offset: int) -> None:
+        self._inner = inner
+        self._offset = offset
+
+    def pos_to_lineno_colno(self, pos: int, *args: Any, **kwargs: Any):
+        out = self._inner.pos_to_lineno_colno(pos, *args, **kwargs)
+        if isinstance(out, tuple) and len(out) == 2:
+            line, col = out
+            return (line + self._offset, col)
+        return out
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
+
+
 def _parse_error(path: Path, *, line: int, message: str) -> Violation:
     return Violation(
         file=path,
@@ -187,38 +212,39 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
         for p in prose_blocks
     ]
 
-    # Parse raw-LaTeX islands from each prose block (FR-006).
+    # Parse raw-LaTeX islands from each prose block (FR-006). Each
+    # fragment carries the original Rmd path and an offset-aware walker
+    # so rule-emitted violations map back to source-accurate Rmd lines.
     latex_fragments: list[ParsedTexFile] = []
     for prose in prose_blocks:
         if not prose.text.strip():
             continue
-        frag_path = Path(f"{path}:block@{prose.line}")
-        fragment = parse_tex_source(prose.text, frag_path)
-        # Offset line numbers on any parse-error violations so they map
-        # back to the original Rmd source.
-        if fragment.violations:
-            offset_violations = tuple(
-                Violation(
-                    file=path,
-                    line=prose.line + v.line - 1,
-                    column=v.column,
-                    rule_id=v.rule_id,
-                    severity=v.severity,
-                    message=v.message,
-                    suggestion=v.suggestion,
-                    fix=v.fix,
-                )
-                for v in fragment.violations
+        offset = prose.line - 1
+        fragment = parse_tex_source(prose.text, path)
+        wrapped = _OffsetWalker(fragment.walker, offset) if fragment.walker else None
+        # Offset parse-error violations from the fragment.
+        offset_viol = tuple(
+            Violation(
+                file=path,
+                line=prose.line + v.line - 1,
+                column=v.column,
+                rule_id=v.rule_id,
+                severity=v.severity,
+                message=v.message,
+                suggestion=v.suggestion,
+                fix=v.fix,
             )
-            violations.extend(offset_violations)
-            fragment = ParsedTexFile(
-                path=fragment.path,
-                source=fragment.source,
-                nodes=fragment.nodes,
-                walker=fragment.walker,
-                violations=(),
-            )
-        latex_fragments.append(fragment)
+            for v in fragment.violations
+        )
+        if offset_viol:
+            violations.extend(offset_viol)
+        latex_fragments.append(ParsedTexFile(
+            path=path,
+            source=fragment.source,
+            nodes=fragment.nodes,
+            walker=wrapped,
+            violations=(),
+        ))
 
     return ParsedRmdFile(
         path=path,

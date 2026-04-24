@@ -70,7 +70,7 @@ def check_jss_cite_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     meta = _catalogue_data.RULES["JSS-CITE-002"]
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         seen: set[str] = set()
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
@@ -129,7 +129,7 @@ def check_jss_cite_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     meta = _catalogue_data.RULES["JSS-CITE-003"]
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not isinstance(node, LatexMacroNode):
                 continue
@@ -241,7 +241,7 @@ def check_jss_cite_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     meta = _catalogue_data.RULES["JSS-CITE-004"]
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node in _helpers._walk(tex.nodes):
             if not isinstance(node, LatexCharsNode):
                 continue

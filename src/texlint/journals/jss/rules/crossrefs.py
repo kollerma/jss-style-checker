@@ -66,7 +66,7 @@ def _violation(
 def check_jss_xref_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexCharsNode):
                 continue
@@ -107,7 +107,7 @@ def _chars_starts_with_close_paren(node: Any) -> bool:
 def check_jss_xref_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode) and node.macroname == "ref"
@@ -138,7 +138,7 @@ def check_jss_xref_002(
 def check_jss_xref_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexCharsNode):
                 continue
@@ -165,7 +165,7 @@ def check_jss_xref_003(
 def check_jss_xref_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node in _helpers._walk(tex.nodes):
             if not isinstance(node, LatexEnvironmentNode):
                 continue

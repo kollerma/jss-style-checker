@@ -1,0 +1,9 @@
+---
+title: "Unterminated"
+---
+
+Prose before.
+
+```{r}
+x <- 1
+y <- 2

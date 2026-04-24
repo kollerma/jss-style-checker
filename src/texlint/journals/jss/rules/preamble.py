@@ -376,7 +376,9 @@ def check_jss_pre_006(
 # ---------------------------------------------------------------------------
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
+def _rule(
+    rule_id: str, check_fn, *, formats: frozenset[str] | None = None
+) -> Rule:
     meta = _catalogue_data.RULES[rule_id]
     return Rule(
         id=rule_id,
@@ -385,18 +387,24 @@ def _rule(rule_id: str, check_fn) -> Rule:
         message_template=meta["message_template"],
         authority=meta["authority"],
         check=check_fn,
-        formats=None,
+        formats=formats,
     )
 
 
-jss_pre_001 = _rule("JSS-PRE-001", check_jss_pre_001)
-jss_pre_002 = _rule("JSS-PRE-002", check_jss_pre_002)
-jss_pre_003 = _rule("JSS-PRE-003", check_jss_pre_003)
-jss_pre_004 = _rule("JSS-PRE-004", check_jss_pre_004)
-jss_pre_005 = _rule("JSS-PRE-005", check_jss_pre_005)
-jss_pre_006 = _rule("JSS-PRE-006", check_jss_pre_006)
-jss_pre_007 = _rule("JSS-PRE-007", check_jss_pre_007)
-jss_pre_008 = _rule("JSS-PRE-008", check_jss_pre_008)
+# Spec 005 FR-020: preamble is a LaTeX concept; .Rmd has no preamble,
+# so narrow these rules to tex + rnw inputs. Running jss-lint on an
+# .Rmd file places these rules in ComplianceReport.skipped_rules with
+# a format-mismatch reason.
+_PREAMBLE_FORMATS = frozenset({"tex", "rnw"})
+
+jss_pre_001 = _rule("JSS-PRE-001", check_jss_pre_001, formats=_PREAMBLE_FORMATS)
+jss_pre_002 = _rule("JSS-PRE-002", check_jss_pre_002, formats=_PREAMBLE_FORMATS)
+jss_pre_003 = _rule("JSS-PRE-003", check_jss_pre_003, formats=_PREAMBLE_FORMATS)
+jss_pre_004 = _rule("JSS-PRE-004", check_jss_pre_004, formats=_PREAMBLE_FORMATS)
+jss_pre_005 = _rule("JSS-PRE-005", check_jss_pre_005, formats=_PREAMBLE_FORMATS)
+jss_pre_006 = _rule("JSS-PRE-006", check_jss_pre_006, formats=_PREAMBLE_FORMATS)
+jss_pre_007 = _rule("JSS-PRE-007", check_jss_pre_007, formats=_PREAMBLE_FORMATS)
+jss_pre_008 = _rule("JSS-PRE-008", check_jss_pre_008, formats=_PREAMBLE_FORMATS)
 
 
 rules: tuple[Rule, ...] = (

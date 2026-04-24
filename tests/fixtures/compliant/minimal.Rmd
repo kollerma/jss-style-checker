@@ -1,0 +1,28 @@
+---
+title: "A Short Demo"
+author: "Jane Doe"
+date: "2026-04-24"
+output: html_document
+---
+
+# Introduction
+
+We use the `mgcv` package for generalized additive models $f(x) = \beta_0 + s(x)$.
+
+```{r setup, echo=FALSE}
+library("mgcv")
+data("mcycle", package = "MASS")
+```
+
+# Analysis
+
+The model fit, computed via `r format(Sys.time(), "%H:%M")`, is shown below.
+
+```{r fit}
+m <- gam(accel ~ s(times), data = mcycle)
+summary(m)
+```
+
+# Conclusion
+
+The results match the reference.

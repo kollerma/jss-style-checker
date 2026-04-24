@@ -114,7 +114,7 @@ def _group_plain_text(group: Any) -> str:
 def check_jss_typo_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, parent, idx, env in _iter_captions(tex):
             if env is None:
                 continue
@@ -142,7 +142,7 @@ def check_jss_typo_001(
 def check_jss_typo_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, parent, idx, env in _iter_captions(tex):
             if env is None:
                 continue
@@ -189,7 +189,7 @@ def _strip_trailing_punct(visible: list[Any]) -> list[Any]:
 def check_jss_typo_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors, _parent, _idx in _helpers._walk_with_context(
             tex.nodes
         ):
@@ -218,7 +218,7 @@ def check_jss_typo_003(
 def check_jss_typo_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node in _helpers._walk(tex.nodes):
             if not (
                 isinstance(node, LatexEnvironmentNode)

@@ -110,7 +110,7 @@ def _is_capitalised_word(word: str) -> bool:
 def check_jss_cap_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode) and node.macroname == "title"
@@ -146,7 +146,7 @@ def check_jss_cap_001(
 def check_jss_cap_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode)
@@ -171,7 +171,7 @@ def check_jss_cap_002(
 def check_jss_cap_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
         ):
@@ -231,7 +231,7 @@ def _check_sentence_style(
 def check_jss_cap_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode)

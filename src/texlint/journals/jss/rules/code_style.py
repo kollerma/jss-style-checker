@@ -65,7 +65,7 @@ def _violation(
 def check_jss_code_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node in _helpers._walk(tex.nodes):
             if not isinstance(node, LatexEnvironmentNode):
                 continue
@@ -97,7 +97,7 @@ def check_jss_code_001(
 def check_jss_code_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node in _helpers._walk(tex.nodes):
             if not isinstance(node, LatexEnvironmentNode):
                 continue
@@ -127,7 +127,7 @@ def check_jss_code_002(
 def check_jss_code_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode)

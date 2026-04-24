@@ -81,7 +81,7 @@ def _check_bare_terms(
     wrap_macro: str,
     skip_initials: bool,
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexCharsNode):
                 continue
@@ -134,7 +134,7 @@ _FUNCTION_CALL_RE = re.compile(r"\b[a-zA-Z][a-zA-Z0-9_.]*\(\s*\)")
 def check_jss_markup_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexCharsNode):
                 continue
@@ -161,7 +161,7 @@ def check_jss_markup_003(
 def check_jss_markup_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode)

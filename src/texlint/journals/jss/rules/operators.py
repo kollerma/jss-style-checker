@@ -74,7 +74,7 @@ def _violation(
 def check_jss_oper_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexCharsNode):
                 continue
@@ -102,7 +102,7 @@ def check_jss_oper_001(
 def check_jss_oper_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexCharsNode):
                 continue
@@ -126,7 +126,7 @@ def check_jss_oper_002(
 def check_jss_oper_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexEnvironmentNode)
@@ -174,7 +174,7 @@ def _chars_has_blank_lines(node: Any) -> bool:
 def check_jss_oper_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for tex in doc.tex_files:
+    for tex in doc.all_tex_like():
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
         ):

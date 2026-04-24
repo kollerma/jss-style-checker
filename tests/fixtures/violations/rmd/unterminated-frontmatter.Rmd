@@ -1,0 +1,6 @@
+---
+title: "Open
+author: never closes
+body never reached
+
+More text after the open but no closing marker.
