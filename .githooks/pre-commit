@@ -14,11 +14,31 @@
 # (useful for WIP / doc-only commits that don't merit the ~2s cost).
 set -euo pipefail
 
-if ! command -v ruff >/dev/null 2>&1; then
-    echo "pre-commit: ruff not found on PATH; skipping lint." >&2
+# Git invokes hooks without activating any virtualenv, so reach for the
+# project's .venv explicitly when it exists — otherwise fall back to
+# whatever is on PATH.
+repo_root="$(git rev-parse --show-toplevel)"
+venv_bin="$repo_root/.venv/bin"
+if [ -x "$venv_bin/ruff" ]; then
+    ruff_cmd="$venv_bin/ruff"
+elif command -v ruff >/dev/null 2>&1; then
+    ruff_cmd="$(command -v ruff)"
+else
+    ruff_cmd=""
+fi
+if [ -x "$venv_bin/pytest" ]; then
+    pytest_cmd="$venv_bin/pytest"
+elif command -v pytest >/dev/null 2>&1; then
+    pytest_cmd="$(command -v pytest)"
+else
+    pytest_cmd=""
+fi
+
+if [ -z "$ruff_cmd" ]; then
+    echo "pre-commit: ruff not found; skipping lint." >&2
     echo "           install with: pip install -e .[dev]" >&2
 else
-    ruff check .
+    "$ruff_cmd" check .
 fi
 
 if [ "${SKIP_PYTEST:-0}" = "1" ]; then
@@ -26,11 +46,11 @@ if [ "${SKIP_PYTEST:-0}" = "1" ]; then
     exit 0
 fi
 
-if ! command -v pytest >/dev/null 2>&1; then
-    echo "pre-commit: pytest not found on PATH; skipping tests." >&2
+if [ -z "$pytest_cmd" ]; then
+    echo "pre-commit: pytest not found; skipping tests." >&2
     echo "           install with: pip install -e .[dev]" >&2
     exit 0
 fi
 
 # -q keeps output scannable; -x fails fast on the first broken test.
-pytest -q -x
+"$pytest_cmd" -q -x
