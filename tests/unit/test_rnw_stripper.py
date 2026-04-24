@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from texlint.core.parser import strip_rnw_chunks
 
-
 # ---------------------------------------------------------------------------
 # S-1 line-count invariant
 # ---------------------------------------------------------------------------

@@ -7,12 +7,6 @@ from pathlib import Path
 from texlint.api import ParsedDocument, Severity, ToolConfig
 from texlint.journals.jss.rules.references import (
     check_jss_refs_001,
-    check_jss_refs_002,
-    check_jss_refs_003,
-    check_jss_refs_004,
-    check_jss_refs_005,
-    check_jss_refs_006,
-    check_jss_refs_007,
     jss_refs_001,
     jss_refs_002,
     jss_refs_003,

@@ -15,12 +15,11 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Any
 
-from pylatexenc.latexwalker import LatexCharsNode, LatexEnvironmentNode
+from pylatexenc.latexwalker import LatexEnvironmentNode
 
 from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
-
 
 # Code environments whose content is subject to the line-width rule.
 _CODE_ENVS: frozenset[str] = frozenset(

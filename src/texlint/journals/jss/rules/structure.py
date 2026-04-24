@@ -30,7 +30,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 # Words that mark a section as a summary / discussion / conclusion.
 _SUMMARY_WORDS_RE = re.compile(
     r"\b(summary|discussion|conclusion|conclusions|concluding)\b",
@@ -113,7 +112,7 @@ def check_jss_struct_001(
 
 
 def _find_bibliography_pos(tex: Any) -> int | None:
-    for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+    for _parent, _idx, node in _helpers._iter_with_parent(tex.nodes):
         if (
             isinstance(node, LatexMacroNode)
             and node.macroname == "bibliography"

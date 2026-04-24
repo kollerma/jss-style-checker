@@ -191,6 +191,7 @@ class TestTypo004:
 
 def test_group_visible_children_skips_label(parse_tex_source):
     from pylatexenc.latexwalker import LatexGroupNode
+
     from texlint.journals.jss.rules.typography import _group_visible_children
     # `\label{x} some text` — inside the caption group, \label and its arg
     # are skipped; 'some text' remains.
@@ -202,6 +203,7 @@ def test_group_visible_children_skips_label(parse_tex_source):
 
 def test_first_group_arg_no_nodeargd():
     from pylatexenc.latexwalker import LatexMacroNode
+
     from texlint.journals.jss.rules.typography import _first_group_arg
 
     class FakeMacro(LatexMacroNode):
@@ -216,6 +218,7 @@ def test_first_group_arg_from_argnlist(parse_tex_source):
     # \emph is known to pylatexenc — its arg lives in argnlist so
     # _first_group_arg returns at the argnlist branch.
     from pylatexenc.latexwalker import LatexMacroNode
+
     from texlint.journals.jss.rules.typography import _first_group_arg
     tex = parse_tex_source(r"\emph{x}")
     mac = next(n for n in tex.nodes if isinstance(n, LatexMacroNode))
@@ -226,6 +229,7 @@ def test_first_group_arg_from_argnlist(parse_tex_source):
 
 def test_strip_trailing_punct_keeps_real_text():
     from pylatexenc.latexwalker import LatexCharsNode
+
     from texlint.journals.jss.rules.typography import _strip_trailing_punct
 
     class FakeChars(LatexCharsNode):
@@ -246,6 +250,7 @@ def test_first_group_arg_skips_non_group_in_argnlist(parse_tex_source):
     # mandatory. Exercises the argnlist loop continuing past a non-group
     # entry to return the mandatory group.
     from pylatexenc.latexwalker import LatexMacroNode
+
     from texlint.journals.jss.rules.typography import _first_group_arg
     tex = parse_tex_source(r"\section[opts]{title}")
     mac = next(n for n in tex.nodes if isinstance(n, LatexMacroNode))

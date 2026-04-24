@@ -10,7 +10,6 @@ from importlib import import_module
 
 from texlint.api import JournalRuleModule, Rule, RuleCategory
 
-
 _TITLE_MAP: dict[str, str] = {
     "preamble": "Preamble",
     "structure": "Structure",

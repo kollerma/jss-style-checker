@@ -122,8 +122,8 @@ def test_no_top_level_import_side_effects():
     """J-1: importing texlint.journals.jss must not transitively import
     any category rule module. Lazy imports keep the JSS package cheap.
     """
-    import sys
     import importlib
+    import sys
 
     # Drop any already-loaded rule modules so this test is independent.
     for mod in list(sys.modules):

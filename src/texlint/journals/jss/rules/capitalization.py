@@ -30,7 +30,6 @@ from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
-
 _TITLE_STOPWORDS: frozenset[str] = frozenset(
     {"a", "an", "the", "and", "or", "but", "nor", "for", "so", "yet",
      "at", "by", "in", "of", "on", "to", "up", "via", "with", "as",

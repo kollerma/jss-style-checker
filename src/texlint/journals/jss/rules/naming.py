@@ -25,7 +25,6 @@ from texlint.journals.jss.terms import (
     PUBLISHER_CANONICAL,
 )
 
-
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9+\-]*")
 
 

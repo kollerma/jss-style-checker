@@ -18,7 +18,6 @@ from texlint.api import ParsedDocument, ToolConfig
 from texlint.core.parser import parse_bib_file, parse_tex_file
 from texlint.journals.jss import JSSJournal, _catalogue_data
 
-
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "violations"
 
 

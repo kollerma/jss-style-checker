@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texlint.api import ParsedDocument, ParsedTexFile, Severity, ToolConfig
+from texlint.api import ParsedDocument, ParsedTexFile, ToolConfig
 from texlint.journals.jss.rules.markup import (
     check_jss_markup_001,
     check_jss_markup_002,
@@ -180,6 +180,7 @@ class TestMarkup004:
 
     def test_has_optional_shim_without_nodeargd(self):
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.markup import _has_optional_shim
 
         class FakeMacro(LatexMacroNode):
@@ -190,6 +191,7 @@ class TestMarkup004:
 
     def test_mandatory_arg_contains_markup_without_nodeargd(self):
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.markup import (
             _mandatory_arg_contains_markup,
         )
@@ -202,6 +204,7 @@ class TestMarkup004:
 
     def test_mandatory_arg_empty_argnlist(self):
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.markup import (
             _mandatory_arg_contains_markup,
         )

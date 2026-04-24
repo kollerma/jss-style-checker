@@ -26,7 +26,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
-
 # Entry types that should carry a DOI per article.tex:421.
 _DOI_ENTRY_TYPES: frozenset[str] = frozenset(
     {"article", "inproceedings", "incollection", "book"}

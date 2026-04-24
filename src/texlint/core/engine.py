@@ -16,7 +16,6 @@ from __future__ import annotations
 import importlib.metadata as _im
 from collections import defaultdict
 from inspect import isclass
-
 from pathlib import Path
 
 from texlint import __version__ as _tool_version

@@ -17,7 +17,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 # "U.S.A.", "e.g.", "i.e." and similar two-or-more-letter abbreviations
 # with internal periods. We require at least two letters separated by
 # periods to avoid matching things like "vs." or one-letter initials.

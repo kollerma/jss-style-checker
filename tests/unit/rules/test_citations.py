@@ -7,7 +7,6 @@ from pathlib import Path
 from texlint.api import ParsedDocument, Severity, ToolConfig
 from texlint.journals.jss.rules.citations import (
     check_jss_cite_002,
-    check_jss_cite_003,
     check_jss_cite_004,
     jss_cite_002,
     jss_cite_003,
@@ -288,6 +287,7 @@ class TestCite004:
     def test_collect_ancestors_skips_macro_without_nodeargd(self):
         # Covers the `argd is None` branch in _collect_ancestors.
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.citations import _collect_ancestors
 
         class FakeMacro(LatexMacroNode):

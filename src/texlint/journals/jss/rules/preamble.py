@@ -34,7 +34,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 _VALID_CLASS_OPTIONS: frozenset[str] = frozenset(
     {"article", "codesnippet", "bookreview", "softwarereview", "shortnames", "nojss"}
 )

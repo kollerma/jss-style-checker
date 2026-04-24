@@ -176,8 +176,9 @@ class TestCode003:
     def test_first_group_arg_fallback(self, parse_tex_source):
         from texlint.journals.jss.rules.code_style import _first_group_arg
         tex = parse_tex_source(r"\someunknownmacro{inside}")
-        from texlint.journals.jss.rules._helpers import _iter_with_parent
         from pylatexenc.latexwalker import LatexMacroNode
+
+        from texlint.journals.jss.rules._helpers import _iter_with_parent
         for parent, idx, node in _iter_with_parent(tex.nodes):
             if isinstance(node, LatexMacroNode) and node.macroname == "someunknownmacro":
                 assert _first_group_arg(node, parent, idx) is not None
@@ -186,6 +187,7 @@ class TestCode003:
 
     def test_first_group_arg_no_nodeargd(self):
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.code_style import _first_group_arg
 
         class FakeMacro(LatexMacroNode):
@@ -198,6 +200,7 @@ class TestCode003:
         # Construct a fake macro whose argnlist has a non-group entry first,
         # then a real LatexGroupNode — exercises the `isinstance` false branch.
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.code_style import _first_group_arg
         tex = parse_tex_source(r"\emph{inside}")
         emph = next(n for n in tex.nodes if isinstance(n, LatexMacroNode))
@@ -218,6 +221,7 @@ class TestCode003:
     def test_first_group_arg_from_argnlist(self, parse_tex_source):
         # pylatexenc knows \emph → its arg is in argnlist as a LatexGroupNode.
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.code_style import _first_group_arg
         tex = parse_tex_source(r"\emph{inside}")
         emph = next(n for n in tex.nodes if isinstance(n, LatexMacroNode))

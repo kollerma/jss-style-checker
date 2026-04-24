@@ -286,7 +286,6 @@ def test_math_in_title_counts_as_markup(run_rule):
 
 
 def test_empty_tex_no_violations():
-    from texlint.journals.jss.rules.preamble import _class_and_options
     # _class_and_options returns None when there's no documentclass.
     # Build an empty ParsedTexFile directly.
     from pathlib import Path as P
@@ -327,6 +326,7 @@ def test_group_contains_markup_on_none():
 def test_first_group_arg_with_nodeargd_none():
     # Covers the `argd is None` branch in _first_group_arg.
     from pylatexenc.latexwalker import LatexMacroNode
+
     from texlint.journals.jss.rules.preamble import _first_group_arg
 
     class FakeMacro(LatexMacroNode):
@@ -355,10 +355,12 @@ def test_first_group_arg_argnlist_has_non_group(parse_tex_source):
 
 def test_class_and_options_argd_is_none():
     # Covers the `if argd is not None:` false branch in _class_and_options.
-    from pylatexenc.latexwalker import LatexMacroNode
-    from texlint.journals.jss.rules.preamble import _class_and_options
-    from texlint.api import ParsedTexFile
     from pathlib import Path as P
+
+    from pylatexenc.latexwalker import LatexMacroNode
+
+    from texlint.api import ParsedTexFile
+    from texlint.journals.jss.rules.preamble import _class_and_options
 
     class FakeMacro(LatexMacroNode):
         def __init__(self):  # type: ignore[no-untyped-def]
@@ -382,10 +384,12 @@ def test_class_and_options_argnlist_has_non_group(parse_tex_source):
     # arg as a CharsNode wrapped in brackets). pylatexenc's standard
     # documentclass spec always produces groups, but we exercise the
     # guard via a fabricated macro.
-    from pylatexenc.latexwalker import LatexMacroNode
-    from texlint.journals.jss.rules.preamble import _class_and_options
-    from texlint.api import ParsedTexFile
     from pathlib import Path as P
+
+    from pylatexenc.latexwalker import LatexMacroNode
+
+    from texlint.api import ParsedTexFile
+    from texlint.journals.jss.rules.preamble import _class_and_options
 
     class FakeArgd:
         argnlist = (object(),)  # not a LatexGroupNode

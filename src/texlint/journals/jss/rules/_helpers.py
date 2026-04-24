@@ -170,7 +170,7 @@ def _is_inside_math(ancestors: Sequence[Any]) -> bool:
     return False
 
 
-_BLANK_LINE_RE: "re.Pattern[str]" = re.compile(r"\n\s*\n")
+_BLANK_LINE_RE: re.Pattern[str] = re.compile(r"\n\s*\n")
 
 
 def _char_has_blank_line(node: Any) -> bool:

@@ -160,6 +160,7 @@ class TestCap004:
 
 def test_group_plain_text_unwraps_pkg(parse_tex_source):
     from pylatexenc.latexwalker import LatexGroupNode
+
     from texlint.journals.jss.rules.capitalization import _group_plain_text
     # \pkg{MASS} unwraps to 'MASS' via the group-recursion path.
     tex = parse_tex_source(r"{prefix \pkg{MASS} suffix}")
@@ -176,6 +177,7 @@ def test_is_capitalised_word_no_letters():
 
 def test_first_group_arg_no_nodeargd():
     from pylatexenc.latexwalker import LatexMacroNode
+
     from texlint.journals.jss.rules.capitalization import _first_group_arg
 
     class FakeMacro(LatexMacroNode):
@@ -188,6 +190,7 @@ def test_first_group_arg_no_nodeargd():
 
 def test_first_group_arg_skips_optional_bracket(parse_tex_source):
     from pylatexenc.latexwalker import LatexMacroNode
+
     from texlint.journals.jss.rules.capitalization import _first_group_arg
     tex = parse_tex_source(r"\section[opts]{title}")
     mac = next(n for n in tex.nodes if isinstance(n, LatexMacroNode))
@@ -198,8 +201,9 @@ def test_first_group_arg_skips_optional_bracket(parse_tex_source):
 
 
 def test_cap_001_title_no_group_silent():
-    from pylatexenc.latexwalker import LatexMacroNode
     from pathlib import Path as P
+
+    from pylatexenc.latexwalker import LatexMacroNode
 
     class FakeArgd:
         argnlist = ()
@@ -219,8 +223,9 @@ def test_cap_001_title_no_group_silent():
 
 
 def test_cap_002_section_no_group_silent():
-    from pylatexenc.latexwalker import LatexMacroNode
     from pathlib import Path as P
+
+    from pylatexenc.latexwalker import LatexMacroNode
 
     class FakeArgd:
         argnlist = ()

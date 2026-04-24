@@ -20,7 +20,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 # Required-field matrix per the catalogue's BIBTEX-003 notes.
 _REQUIRED_FIELDS: dict[str, tuple[frozenset[str], ...]] = {
     "article": (frozenset({"author"}), frozenset({"title"}),

@@ -25,7 +25,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 # "Figure 2", "Table 3", "Fig. 2", "Tab. 3" followed by a number (not
 # followed by a ref macro).
 _FIG_TAB_NUMBER_RE = re.compile(

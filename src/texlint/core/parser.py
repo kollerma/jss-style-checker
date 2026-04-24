@@ -50,7 +50,7 @@ def strip_rnw_chunks(src: str) -> str:
 
     Invariant: ``strip_rnw_chunks(src).count("\\n") == src.count("\\n")``.
     """
-    def _blank_chunk(m: "re.Match[str]") -> str:
+    def _blank_chunk(m: re.Match[str]) -> str:
         return "\n" * m.group(0).count("\n")
 
     stripped = _RNW_CHUNK.sub(_blank_chunk, src)

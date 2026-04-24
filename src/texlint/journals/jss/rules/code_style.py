@@ -23,7 +23,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 # Envs where code lives.
 _CODE_ENVS: frozenset[str] = frozenset(
     {"verbatim", "Verbatim", "Code", "CodeInput", "CodeOutput",
@@ -94,6 +93,12 @@ def check_jss_code_001(
 # ---------------------------------------------------------------------------
 
 
+def _code_002_suggestion(match: Any) -> str:
+    arg = match.group(1)
+    quoted = match.group(0).replace(arg, f'"{arg}"')
+    return f"Quote the argument: e.g., {quoted!r}."
+
+
 def check_jss_code_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -112,10 +117,7 @@ def check_jss_code_002(
                         tex=tex,
                         pos=abs_pos,
                         rule_id="JSS-CODE-002",
-                        suggestion=(
-                            f"Quote the argument: e.g., "
-                            f"{match.group(0).replace(match.group(1), chr(34)+match.group(1)+chr(34))!r}."
-                        ),
+                        suggestion=_code_002_suggestion(match),
                     )
 
 

@@ -21,13 +21,11 @@ from pylatexenc.latexwalker import (
     LatexCharsNode,
     LatexEnvironmentNode,
     LatexMacroNode,
-    LatexMathNode,
 )
 
 from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
-
 
 # Display-math envs subject to OPER-003.
 _DISPLAY_EQ_ENVS: frozenset[str] = frozenset(

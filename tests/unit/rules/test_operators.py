@@ -141,6 +141,7 @@ class TestOper003:
         # so the reversed iteration skips the whitespace-only last node
         # via the `continue` branch, then reads the period-terminated one.
         from pylatexenc.latexwalker import LatexCharsNode, LatexEnvironmentNode
+
         from texlint.journals.jss.rules.operators import (
             _equation_body_ends_with_period,
         )

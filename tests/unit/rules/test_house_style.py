@@ -150,6 +150,7 @@ class TestHouse003:
 
     def test_usepackage_no_nodeargd(self):
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.house_style import _usepackage_name
 
         class FakeMacro(LatexMacroNode):
@@ -172,6 +173,7 @@ class TestHouse003:
         # If nodeargd exists but argnlist is empty, the sibling-group
         # lookup kicks in (lines 167-169).
         from pylatexenc.latexwalker import LatexGroupNode, LatexMacroNode
+
         from texlint.journals.jss.rules.house_style import _usepackage_name
         tex2 = parse_tex_source(r"{hyperref}")
         group = next(
@@ -191,6 +193,7 @@ class TestHouse003:
 
     def test_group_chars_skips_non_chars(self):
         from pylatexenc.latexwalker import LatexGroupNode, LatexMacroNode
+
         from texlint.journals.jss.rules.house_style import _group_chars
 
         class FakeMacro(LatexMacroNode):

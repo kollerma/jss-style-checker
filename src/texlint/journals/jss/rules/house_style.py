@@ -24,7 +24,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 _EG_IE_RE = re.compile(r"\b(e\.g\.|i\.e\.)(?!,)")
 
 _WORDY_EDITION_RE = re.compile(

@@ -11,10 +11,11 @@ not automated — those are where human / Claude judgement belongs.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
-from eval import db, history, report as report_mod
+from eval import db, history
+from eval import report as report_mod
 from eval.report import PrecisionTable, RuleRow
 
 

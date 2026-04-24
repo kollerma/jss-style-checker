@@ -30,7 +30,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 _CITE_MACROS: frozenset[str] = frozenset(
     {"cite", "citet", "citep", "citealp", "citealt", "citeauthor", "citeyear"}
 )

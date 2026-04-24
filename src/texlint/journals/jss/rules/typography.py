@@ -25,7 +25,6 @@ from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-
 _FIGURE_TABLE_ENVS: frozenset[str] = frozenset(
     {"figure", "figure*", "table", "table*"}
 )

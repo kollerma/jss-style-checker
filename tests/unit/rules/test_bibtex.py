@@ -4,20 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from texlint.api import (
     ParsedBibFile,
     ParsedDocument,
-    ParsedTexFile,
     Severity,
     ToolConfig,
 )
-from texlint.core.parser import parse_bib_file, parse_tex_file
 from texlint.journals.jss.rules.bibtex import (
     check_jss_bibtex_001,
     check_jss_bibtex_002,
-    check_jss_bibtex_003,
     check_jss_bibtex_004,
     jss_bibtex_001,
     jss_bibtex_002,
@@ -263,6 +258,7 @@ class TestBibtex004:
         # nodeargd, but the helper guards against None — exercise the branch
         # via a dummy macro object.
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.bibtex import _has_shortnames_option
 
         class FakeMacro(LatexMacroNode):

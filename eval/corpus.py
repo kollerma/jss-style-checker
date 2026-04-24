@@ -460,7 +460,11 @@ def run_suggest(
             break
     picked.sort(key=lambda t: t[0].lower())
 
-    suffix = " (verified via CRAN landing-page probe)" if verify else " (unverified — coarse filter only)"
+    suffix = (
+        " (verified via CRAN landing-page probe)"
+        if verify
+        else " (unverified — coarse filter only)"
+    )
     print(
         f"# {len(picked)} suggestions of {len(candidates)} eligible; "
         f"{len(existing)} already pinned{suffix}"

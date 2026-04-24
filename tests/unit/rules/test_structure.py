@@ -214,6 +214,7 @@ class TestStruct005:
 
     def test_first_group_arg_no_nodeargd(self):
         from pylatexenc.latexwalker import LatexMacroNode
+
         from texlint.journals.jss.rules.structure import _first_group_arg
 
         class FakeMacro(LatexMacroNode):
