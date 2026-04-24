@@ -305,13 +305,13 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Goal**: Ship `rules/typography.py` with JSS-TYPO-001..004. No skip-list entries.
 
-- [ ] T117 [P] [US1] Create fixture pairs for 4 typography rules.
-- [ ] T118 [US1, US4] Write failing `tests/unit/rules/test_typography.py`.
-- [ ] T119 [US1] Create `src/texlint/journals/jss/rules/typography.py`.
-- [ ] T120 [US1] Remove xfail + wire.
-- [ ] T121 [US1] Verify 100% branch coverage.
-- [ ] T122 [US2] Run `scripts/eval-category.sh typography`.
-- [ ] T123 [US1, US2, US4] Commit typography PR.
+- [X] T117 [P] [US1] Create fixture pairs for 4 typography rules.
+- [X] T118 [US1, US4] Write failing `tests/unit/rules/test_typography.py`.
+- [X] T119 [US1] Create `src/texlint/journals/jss/rules/typography.py`.
+- [X] T120 [US1] Remove xfail + wire.
+- [X] T121 [US1] Verify 100% branch coverage.
+- [X] T122 [US2] Run `scripts/eval-category.sh typography`.
+- [X] T123 [US1, US2, US4] Commit typography PR.
 
 **Checkpoint**: typography category shipped.
 
