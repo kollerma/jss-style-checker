@@ -288,14 +288,14 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Goal**: Ship `rules/house_style.py` with JSS-HOUSE-001..003. Category owns 1 skip-list entry (JSS-HOUSE-001). One info-severity rule (HOUSE-003).
 
-- [ ] T109 [P] [US1] Create fixture pairs for 3 house_style rules.
-- [ ] T110 [US1, US4] Write failing `tests/unit/rules/test_house_style.py`.
-- [ ] T111 [US1] Create `src/texlint/journals/jss/rules/house_style.py`.
-- [ ] T112 [US1] Remove xfail + wire.
-- [ ] T113 [US1] Verify 100% branch coverage.
-- [ ] T114 [US2] Add `JSS-HOUSE-001` to `eval/review-skip-list.toml`.
-- [ ] T115 [US2] Run `scripts/eval-category.sh house_style`.
-- [ ] T116 [US1, US2, US4] Commit house_style PR.
+- [X] T109 [P] [US1] Create fixture pairs for 3 house_style rules.
+- [X] T110 [US1, US4] Write failing `tests/unit/rules/test_house_style.py`.
+- [X] T111 [US1] Create `src/texlint/journals/jss/rules/house_style.py`.
+- [X] T112 [US1] Remove xfail + wire.
+- [X] T113 [US1] Verify 100% branch coverage.
+- [X] T114 [US2] Add `JSS-HOUSE-001` to `eval/review-skip-list.toml`.
+- [X] T115 [US2] Run `scripts/eval-category.sh house_style`.
+- [X] T116 [US1, US2, US4] Commit house_style PR.
 
 **Checkpoint**: house_style category shipped.
 

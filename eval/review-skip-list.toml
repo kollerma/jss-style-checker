@@ -61,3 +61,8 @@ added_in_spec = "004"
 rule_id       = "JSS-ABBR-001"
 reason        = "Uppercase-abbreviation pattern; regex-over-morphology, AI rubber-stamps."
 added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-HOUSE-001"
+reason        = "e.g./i.e.-comma regex; LaTeX macro substring heuristic."
+added_in_spec = "004"
