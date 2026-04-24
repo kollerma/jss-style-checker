@@ -211,11 +211,14 @@ def _render_violation(
             )
         )
         if line is not None and column is not None and column > 0:
-            # rich.Syntax's line-number gutter is ` NNN │ ` — width is
-            # `len(str(end_line)) + 4`. Align a caret to the violation
-            # column so the starting character is visible at a glance.
+            # rich.Syntax renders a `  NN ` line-number gutter (two
+            # leading pad chars, right-justified line number, one
+            # trailing space; no vertical-bar separator while
+            # indent_guides is off). Width = `len(str(end_line)) + 3`.
+            # Align the caret to the violation column so the starting
+            # character is visible at a glance.
             end_line = start + snippet.count("\n")
-            gutter = len(str(end_line)) + 4
+            gutter = len(str(end_line)) + 3
             caret_prefix = " " * (gutter + column - 1)
             console.print(f"[bold yellow]{caret_prefix}^[/bold yellow]")
 
