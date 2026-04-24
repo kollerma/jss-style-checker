@@ -151,6 +151,7 @@ cython_debug/
 
 # Claude worktrees
 .claude/worktrees/
+.claude/scheduled_tasks.lock
 
 # eval-jss runtime state — corpus, manifest, skip-list, and precision history
 # are all checked in; only the live SQLite database and per-paper SHA256
