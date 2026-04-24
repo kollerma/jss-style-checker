@@ -38,6 +38,19 @@ _MISSING_SPACES_RE = re.compile(
     r"|(?:,[A-Za-z0-9_\.\(\[])"
 )
 
+# `\code{foo.bar}` / `\code{Ch-Intro}` / `\code{with-dash_and.dot}` —
+# content that's a single dotted/hyphenated identifier token. These are
+# names (demo names, helpfile ids, S4 method signatures), not R code,
+# and the operator-spacing check mis-fires on the internal hyphens.
+_IDENTIFIER_ONLY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.\-]*$")
+
+# Scientific number formats like 2.22e-16, 1.0E+9 — the exponent sign is
+# notation, not a subtraction operator, so mask it before the missing-
+# spaces check.
+_SCIENTIFIC_NOTATION_RE = re.compile(
+    r"\b\d+(?:\.\d+)?[eE][-+]?\d+\b"
+)
+
 
 def _violation(
     *, tex: Any, pos: int, rule_id: str, suggestion: str
@@ -142,7 +155,13 @@ def check_jss_code_003(
             text = _group_plain_text(group)
             if not text:
                 continue
-            if _MISSING_SPACES_RE.search(text):
+            # Single dotted/hyphenated identifier — treat as a name.
+            if _IDENTIFIER_ONLY_RE.match(text.strip()):
+                continue
+            # Mask scientific notation before the operator check so the
+            # exponent sign in 2.22e-16 doesn't look like subtraction.
+            cleaned = _SCIENTIFIC_NOTATION_RE.sub("", text)
+            if _MISSING_SPACES_RE.search(cleaned):
                 yield _violation(
                     tex=tex,
                     pos=node.pos,

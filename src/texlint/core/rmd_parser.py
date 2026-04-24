@@ -41,6 +41,17 @@ _HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 # in prose blocks only.
 _INLINE_R = re.compile(r"`r\s[^`]*`")
 
+# Plain Markdown inline code spans `` `…` `` — single-backtick, single-line.
+# These are the Markdown equivalent of LaTeX \code{…}: the author's own
+# signal that "this is an identifier / function / filename". Strip to
+# equivalent-length whitespace so downstream rules (MARKUP-001/002/003)
+# don't flag bare `R`, `dplyr`, or `foo()` tokens inside them.
+#
+# Conservative: matches only single-line spans. Does not match inside
+# double-backtick (`` ``code with ` backtick`` ``) or triple-backtick
+# fenced blocks (those are code fences handled by the tokenizer).
+_INLINE_CODE = re.compile(r"(?<!`)`([^`\n]+)`(?!`)")
+
 
 class _OffsetWalker:
     """Proxy around a ``pylatexenc.LatexWalker`` that shifts the line
@@ -202,13 +213,19 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
     else:
         _flush_prose()
 
-    # Strip inline R code from each prose block (FR-010).
+    # Strip inline R code (FR-010) and plain Markdown inline code spans
+    # from each prose block. Both are replaced with equivalent-length
+    # whitespace so line/column offsets stay source-accurate.
+    def _blank_match(m: Any) -> str:
+        return " " * len(m.group(0))
+
+    def _scrub_prose(text: str) -> str:
+        text = _INLINE_R.sub(_blank_match, text)
+        text = _INLINE_CODE.sub(_blank_match, text)
+        return text
+
     prose_blocks = [
-        RmdProse(
-            text=_INLINE_R.sub(lambda m: " " * len(m.group(0)), p.text),
-            line=p.line,
-            n_lines=p.n_lines,
-        )
+        RmdProse(text=_scrub_prose(p.text), line=p.line, n_lines=p.n_lines)
         for p in prose_blocks
     ]
 

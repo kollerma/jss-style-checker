@@ -115,10 +115,18 @@ class TestInlineR:
         # Width preserved: the span `r 1 + 1` has length 10.
         assert len(prose) == len(src.rstrip("\n"))
 
-    def test_non_r_backtick_untouched(self):
+    def test_generic_backtick_span_also_stripped(self):
+        # Plain Markdown inline code is the author's own "this is code"
+        # signal — the Rmd equivalent of LaTeX \code{…}. Strip to
+        # equivalent-length whitespace so MARKUP-001/002/003 don't fire
+        # on bare tokens inside backticks.
         src = "Just `code` inline.\n"
         r = _parse(src)
-        assert "`code`" in r.prose_blocks[0].text
+        prose = r.prose_blocks[0].text
+        assert "code" not in prose
+        assert "`" not in prose
+        # Width preserved so column offsets stay source-accurate.
+        assert len(prose) == len(src.rstrip("\n"))
 
 
 class TestProseBlocks:

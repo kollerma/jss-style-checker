@@ -34,6 +34,7 @@ LANGUAGES: frozenset[str] = frozenset(
         "Julia",
         "C",
         "C++",
+        "Stan",
     }
 )
 

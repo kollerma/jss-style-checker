@@ -332,7 +332,12 @@ _META_MACROS: frozenset[str] = frozenset(
      "documentclass", "usepackage", "include", "input",
      "label", "ref", "pageref", "cite", "citep", "citet",
      "citealp", "citealt", "citeauthor", "citeyear",
-     "bibliographystyle", "bibliography"}
+     "bibliographystyle", "bibliography",
+     # Sweave/Rnw directives — option lists, not prose.
+     "SweaveOpts", "SweaveInput", "SweaveSyntax",
+     "VignetteIndexEntry", "VignettePackage", "VignetteDepends",
+     "VignetteEngine", "VignetteKeywords", "VignetteEncoding",
+     "newcommand", "renewcommand", "providecommand", "def"}
 )
 
 

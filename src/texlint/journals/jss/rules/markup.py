@@ -68,6 +68,18 @@ def _is_initial(chars: str, offset: int) -> bool:
     return tail_start < len(chars) and chars[tail_start] == "."
 
 
+def _is_superscripted(chars: str, offset: int, token_len: int) -> bool:
+    """True when the token at ``offset`` is followed by a ``^`` exponent.
+
+    Captures ``R^2`` (R-squared) and the like — a letter used as a
+    mathematical symbol in prose, not a programming-language name.
+    """
+    tail_start = offset + token_len
+    if tail_start >= len(chars):
+        return False
+    return chars[tail_start] == "^"
+
+
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-001 / MARKUP-002 — language / package names in prose
 # ---------------------------------------------------------------------------
@@ -93,6 +105,8 @@ def _check_bare_terms(
                 if skip_initials and len(token) == 1 and _is_initial(
                     node.chars, offset
                 ):
+                    continue
+                if _is_superscripted(node.chars, offset, len(token)):
                     continue
                 abs_pos = node.pos + offset
                 yield _violation(
