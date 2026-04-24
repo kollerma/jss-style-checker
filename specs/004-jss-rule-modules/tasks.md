@@ -133,13 +133,13 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Note**: JSS-PRE-003/PRE-007/PRE-008 fire only when the target command (`\title`/`\author`/`\Keywords`) contains LaTeX markup; presence-only is silent (FR-019).
 
-- [ ] T041 [P] [US1] Create fixture pairs for all 8 preamble rules under `tests/fixtures/violations/preamble/`.
-- [ ] T042 [US1, US4] Write failing `tests/unit/rules/test_preamble.py`.
-- [ ] T043 [US1] Create `src/texlint/journals/jss/rules/preamble.py`. Honour the markup-only firing contract for PRE-003/007/008.
-- [ ] T044 [US1] Remove xfail + wire.
-- [ ] T045 [US1] Verify 100% branch coverage. Add auxiliary fixtures for the "no markup → no flag" branch on PRE-003/007/008.
-- [ ] T046 [US2] Run `scripts/eval-category.sh preamble`.
-- [ ] T047 [US1, US2, US4] Commit preamble PR.
+- [X] T041 [P] [US1] Create fixture pairs for all 8 preamble rules under `tests/fixtures/violations/preamble/`.
+- [X] T042 [US1, US4] Write failing `tests/unit/rules/test_preamble.py`.
+- [X] T043 [US1] Create `src/texlint/journals/jss/rules/preamble.py`. Honour the markup-only firing contract for PRE-003/007/008.
+- [X] T044 [US1] Remove xfail + wire.
+- [X] T045 [US1] Verify 100% branch coverage. Add auxiliary fixtures for the "no markup → no flag" branch on PRE-003/007/008.
+- [X] T046 [US2] Run `scripts/eval-category.sh preamble`.
+- [X] T047 [US1, US2, US4] Commit preamble PR.
 
 **Checkpoint**: preamble category shipped.
 
