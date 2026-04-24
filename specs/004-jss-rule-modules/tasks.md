@@ -271,14 +271,14 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Goal**: Ship `rules/abbreviations.py` with JSS-ABBR-001 (ABBR-002 retired in spec 003). Category owns 1 skip-list entry (JSS-ABBR-001).
 
-- [ ] T101 [P] [US1] Create fixture pair for JSS-ABBR-001.
-- [ ] T102 [US1, US4] Write failing `tests/unit/rules/test_abbreviations.py`.
-- [ ] T103 [US1] Create `src/texlint/journals/jss/rules/abbreviations.py`.
-- [ ] T104 [US1] Remove xfail + wire.
-- [ ] T105 [US1] Verify 100% branch coverage.
-- [ ] T106 [US2] Add `JSS-ABBR-001` to `eval/review-skip-list.toml`.
-- [ ] T107 [US2] Run `scripts/eval-category.sh abbreviations`.
-- [ ] T108 [US1, US2, US4] Commit abbreviations PR.
+- [X] T101 [P] [US1] Create fixture pair for JSS-ABBR-001.
+- [X] T102 [US1, US4] Write failing `tests/unit/rules/test_abbreviations.py`.
+- [X] T103 [US1] Create `src/texlint/journals/jss/rules/abbreviations.py`.
+- [X] T104 [US1] Remove xfail + wire.
+- [X] T105 [US1] Verify 100% branch coverage.
+- [X] T106 [US2] Add `JSS-ABBR-001` to `eval/review-skip-list.toml`.
+- [X] T107 [US2] Run `scripts/eval-category.sh abbreviations`.
+- [X] T108 [US1, US2, US4] Commit abbreviations PR.
 
 **Checkpoint**: abbreviations category shipped.
 

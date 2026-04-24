@@ -56,3 +56,8 @@ added_in_spec = "004"
 rule_id       = "JSS-OPER-001"
 reason        = "Symbol-tie regex ($p$~value); character-class match, AI labeller unreliable."
 added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-ABBR-001"
+reason        = "Uppercase-abbreviation pattern; regex-over-morphology, AI rubber-stamps."
+added_in_spec = "004"
