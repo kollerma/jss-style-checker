@@ -32,9 +32,6 @@ def journal_categories():
 
 
 # R-1, R-2
-@pytest.mark.xfail(
-    strict=False, reason="spec 004 rollout in progress; categories land incrementally"
-)
 def test_active_set_equals_catalogue(active_rules):
     catalogue_ids = set(_catalogue_data.RULES)
     active_ids = set(active_rules)
@@ -79,9 +76,6 @@ def test_rules_grouped_by_category(journal_categories):
 
 
 # R-6
-@pytest.mark.xfail(
-    strict=False, reason="spec 004 rollout in progress; categories land incrementally"
-)
 def test_rules_tuple_matches_catalogue_partition(journal_categories):
     registered_by_cat = {rc.id: {r.id for r in rc.rules} for rc in journal_categories}
     catalogue_by_cat: dict[str, set[str]] = {}

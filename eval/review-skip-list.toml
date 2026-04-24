@@ -66,3 +66,23 @@ added_in_spec = "004"
 rule_id       = "JSS-HOUSE-001"
 reason        = "e.g./i.e.-comma regex; LaTeX macro substring heuristic."
 added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-CAP-001"
+reason        = "Title-style heuristic; AI labeller lacks principal-word dictionary."
+added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-CAP-002"
+reason        = "Sentence-style heuristic on section titles; Qwen3 blind spot."
+added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-CAP-003"
+reason        = "Sentence-style heuristic on captions; Qwen3 blind spot."
+added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-CAP-004"
+reason        = "Keyword sentence-case heuristic; short fields with limited context — AI unreliable."
+added_in_spec = "004"

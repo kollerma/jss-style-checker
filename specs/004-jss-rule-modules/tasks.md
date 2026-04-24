@@ -321,14 +321,14 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Goal**: Ship `rules/capitalization.py` with JSS-CAP-001..004. Category owns 4 skip-list entries (JSS-CAP-001/002/003/004) — most of any category. Last category in the rollout.
 
-- [ ] T124 [P] [US1] Create fixture pairs for 4 capitalization rules.
-- [ ] T125 [US1, US4] Write failing `tests/unit/rules/test_capitalization.py`.
-- [ ] T126 [US1] Create `src/texlint/journals/jss/rules/capitalization.py`. Uses `terms.py`.
-- [ ] T127 [US1] Remove xfail + wire (this removes the last xfail from `test_catalogue_registration.py`).
-- [ ] T128 [US1] Verify 100% branch coverage.
-- [ ] T129 [US2] Add `JSS-CAP-001`, `JSS-CAP-002`, `JSS-CAP-003`, `JSS-CAP-004` to `eval/review-skip-list.toml`. With this update, all 13 pre-populated skip-list entries are in place per `contracts/ai-skip-list.md`.
-- [ ] T130 [US2] Run `scripts/eval-category.sh capitalization`.
-- [ ] T131 [US1, US2, US4] Commit capitalization PR.
+- [X] T124 [P] [US1] Create fixture pairs for 4 capitalization rules.
+- [X] T125 [US1, US4] Write failing `tests/unit/rules/test_capitalization.py`.
+- [X] T126 [US1] Create `src/texlint/journals/jss/rules/capitalization.py`. Uses `terms.py`.
+- [X] T127 [US1] Remove xfail + wire (this removes the last xfail from `test_catalogue_registration.py`).
+- [X] T128 [US1] Verify 100% branch coverage.
+- [X] T129 [US2] Add `JSS-CAP-001`, `JSS-CAP-002`, `JSS-CAP-003`, `JSS-CAP-004` to `eval/review-skip-list.toml`. With this update, all 13 pre-populated skip-list entries are in place per `contracts/ai-skip-list.md`.
+- [X] T130 [US2] Run `scripts/eval-category.sh capitalization`.
+- [X] T131 [US1, US2, US4] Commit capitalization PR.
 
 **Checkpoint**: all 15 categories shipped. `test_catalogue_registration.py` is fully green with no xfails. The catalogue-registered rule set equals the 58-rule active catalogue.
 

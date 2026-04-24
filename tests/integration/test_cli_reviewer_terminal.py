@@ -48,12 +48,12 @@ class TestReviewerMode:
         )
         assert result.exit_code == 1
         assert "FAIL" in result.output
-        # During spec-004 rollout, only implemented categories (currently:
-        # citations) have rules — others report SKIPPED until they ship.
-        assert "SKIPPED" in result.output
+        # Citations category fails; others (references, preamble, etc.) pass
+        # because the fixture has a valid preamble and bib.
+        assert "PASS" in result.output
 
     def test_ignored_category_shows_skipped(self, runner: CliRunner):
-        # Ignore the one rule in Citation → category is SKIPPED,
+        # Ignore every rule in the Citations category → category is SKIPPED,
         # excluded from compliance_percentage.
         result = runner.invoke(
             main,
@@ -61,7 +61,7 @@ class TestReviewerMode:
                 "--mode",
                 "reviewer",
                 "--ignore-rules",
-                "JSS-CITE-002",
+                "JSS-CITE-002,JSS-CITE-003,JSS-CITE-004",
                 str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
                 str(FIXTURES / "compliant" / "minimal.bib"),
             ],
