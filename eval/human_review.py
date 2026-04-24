@@ -78,10 +78,52 @@ _LEXER_BY_SUFFIX = {
 }
 
 
+def _bib_entry_span(lines: list[str], line: int) -> tuple[int, int] | None:
+    """Locate the `@type{...}` BibTeX entry enclosing line `line` (1-based).
+
+    Scans backwards for an entry header (`@<word>{` or `@<word>(`), then
+    forward with brace-depth tracking until the matching close. Returns
+    `(start, end)` 1-based inclusive, or `None` when the entry can't be
+    located (e.g., the line is whitespace between entries, or the file
+    is malformed).
+    """
+    header_re = __import__("re").compile(r"^\s*@[A-Za-z]+\s*[{(]")
+
+    start_idx: int | None = None
+    for i in range(line - 1, -1, -1):
+        if i >= len(lines):
+            continue
+        if header_re.match(lines[i]):
+            start_idx = i
+            break
+    if start_idx is None:
+        return None
+
+    depth = 0
+    for j in range(start_idx, len(lines)):
+        for ch in lines[j]:
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return (start_idx + 1, j + 1)
+    return None
+
+
 def source_snippet(
     paper_path: str, file: str | None, line: int | None, window: int = 3
-) -> str | None:
-    """Return a ±window line slice of the violation's source file."""
+) -> tuple[str, int] | None:
+    """Return `(text, start_line)` for a source context around `line`.
+
+    For `.bib` files, the snippet is the full enclosing `@entry{...}`
+    block — individual field values (`journal`, `year`, `publisher`)
+    often sit many lines from the entry header and the fixed ±window
+    truncates the relevant frame.
+
+    For every other suffix, the snippet is the usual ±`window` slice.
+    Returns `None` when no source can be read for the violation.
+    """
     src = _resolve_source(paper_path, file)
     if src is None or line is None:
         return None
@@ -92,9 +134,16 @@ def source_snippet(
     lines = text.splitlines()
     if not lines:
         return None
+
+    if src.suffix == ".bib":
+        span = _bib_entry_span(lines, line)
+        if span is not None:
+            start, end = span
+            return "\n".join(lines[start - 1 : end]), start
+
     start = max(1, line - window)
     end = min(len(lines), line + window)
-    return "\n".join(lines[start - 1 : end])
+    return "\n".join(lines[start - 1 : end]), start
 
 
 def _locator(
@@ -148,9 +197,9 @@ def _render_violation(
     table.add_row("Message", message)
     console.print(table)
 
-    snippet = source_snippet(paper_path, file, line)
-    if snippet:
-        start = max(1, (line or 1) - 3)
+    result = source_snippet(paper_path, file, line)
+    if result is not None:
+        snippet, start = result
         console.print(
             Syntax(
                 snippet,

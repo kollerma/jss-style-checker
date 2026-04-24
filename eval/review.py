@@ -307,9 +307,8 @@ def run(
                 "severity": row["severity"],
                 "paper_path": row["paper_path"],
             }
-            paper_context = (
-                source_snippet(row["paper_path"], row["file"], row["line"]) or ""
-            )
+            snippet = source_snippet(row["paper_path"], row["file"], row["line"])
+            paper_context = snippet[0] if snippet else ""
             result = client.classify(violation_dict, paper_context=paper_context)
 
             is_network_failure = (
