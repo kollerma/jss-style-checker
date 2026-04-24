@@ -27,11 +27,24 @@ categories:                  # the authoritative category list (FR-005)
   - operators
   - crossrefs
   - house_style
+retired_rule_ids:            # optional; structured field for retirements (spec 004 amendment 2026-04-23)
+  - JSS-CITE-001
+  - JSS-ABBR-002
 rules:                       # one entry per rule
   - rule_id: JSS-CITE-001
     category: citations
     # ... (fields below)
 ```
+
+**Top-level fields**:
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `version` | int | yes | Schema version, starts at `1`. Bump on backwards-incompatible change. |
+| `source_vendored_at` | str (ISO-8601 date) | yes | `\filedate` of the vendored `jss.cls`. Updated on annual refresh. |
+| `categories` | list[str] | yes | Pinned category list (FR-005). |
+| `rules` | list[mapping] | yes | Active rule rows (per-rule fields below). |
+| `retired_rule_ids` | list[str] | no | Optional; ids in this list are permanently reserved (FR-004). Each entry matches `^JSS-[A-Z]+-\d{3}$`; must be unique; MUST be disjoint from the set of `rule_id`s in `rules`. Added by spec 004 Session 2026-04-23 to make retirements machine-readable. |
 
 ### Per-rule fields
 
@@ -71,6 +84,7 @@ rules:                       # one entry per rule
 1. Every `rule_id` is globally unique.
 2. Every `category` listed on a rule appears in the top-level `categories` list.
 3. Every top-level `categories` entry has ≥ 1 rule (no dangling categories).
+3a. `retired_rule_ids` entries match `^JSS-[A-Z]+-\d{3}$`, are unique within the list, and are disjoint from the set of active `rule_id`s.
 4. `authority` is one of the four enum values (no free-form).
 5. `severity` is one of the three enum values.
 6. `inspects` is a non-empty list; every element is one of the three enum values.

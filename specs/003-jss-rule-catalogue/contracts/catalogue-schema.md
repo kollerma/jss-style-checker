@@ -34,10 +34,11 @@ rules:
 
 | Key | Type | Notes |
 |---|---|---|
-| `version` | int | Schema version. Starts at `1`. Bump on any backwards-incompatible field change. |
-| `source_vendored_at` | str (ISO-8601 date) | The vendored `docs/jss-template/jss.cls`'s `\filedate`. Updated when the annual re-fetch lands. |
-| `categories` | list[str] | The pinned category list (FR-005). A category may be added, merged, or dropped here; rule rows must then align. |
-| `rules` | list[mapping] | The rule rows. Order here is irrelevant — `render_catalogue.py` sorts on output. |
+| `version` | int | Required. Schema version. Starts at `1`. Bump on any backwards-incompatible field change. |
+| `source_vendored_at` | str (ISO-8601 date) | Required. The vendored `docs/jss-template/jss.cls`'s `\filedate`. Updated when the annual re-fetch lands. |
+| `categories` | list[str] | Required. The pinned category list (FR-005). A category may be added, merged, or dropped here; rule rows must then align. |
+| `rules` | list[mapping] | Required. The rule rows. Order here is irrelevant — `render_catalogue.py` sorts on output. |
+| `retired_rule_ids` | list[str] | Optional. Ids permanently reserved per FR-004 (never reused by any active rule). Each entry matches `^JSS-[A-Z]+-\d{3}$`, is unique within the list, and is disjoint from the set of active `rule_id`s. Added 2026-04-23 via a spec-004 amendment so the catalogue-consistency test in spec 004 can identify retirements programmatically rather than parsing a comment block. |
 
 ## Per-rule fields
 
@@ -164,8 +165,9 @@ Any key not in the required-or-optional sets above fails `test_catalogue.py`. Th
 
 Every invariant below is enforced by `tests/unit/journals/jss/test_catalogue.py`:
 
-1. Top-level keys are exactly `{version, source_vendored_at, categories, rules}`.
+1. Top-level keys are a subset of `{version, source_vendored_at, categories, rules, retired_rule_ids}` with all required keys present (required: `version, source_vendored_at, categories, rules`; optional: `retired_rule_ids`).
 2. `version == 1`.
+2a. If `retired_rule_ids` is present: every entry matches `^JSS-[A-Z]+-\d{3}$`, entries are unique within the list, and the set is disjoint from the active rule-id set.
 3. Every `rule_id` is globally unique.
 4. Every `rule_id` matches the category prefix table.
 5. Every `category` appears in the top-level `categories` list.

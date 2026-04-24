@@ -52,6 +52,10 @@ REQUIRED_TOP_KEYS: frozenset[str] = frozenset(
     {"version", "source_vendored_at", "categories", "rules"}
 )
 
+OPTIONAL_TOP_KEYS: frozenset[str] = frozenset({"retired_rule_ids"})
+
+ALL_TOP_KEYS: frozenset[str] = REQUIRED_TOP_KEYS | OPTIONAL_TOP_KEYS
+
 REQUIRED_RULE_KEYS: frozenset[str] = frozenset(
     {
         "rule_id",
@@ -121,7 +125,7 @@ def validate(
         return errors
 
     top_keys = set(doc)
-    extra = top_keys - REQUIRED_TOP_KEYS
+    extra = top_keys - ALL_TOP_KEYS
     missing = REQUIRED_TOP_KEYS - top_keys
     if extra:
         errors.append(
@@ -182,7 +186,54 @@ def validate(
             )
         )
 
+    # retired_rule_ids validation (optional top-level field, spec 004 Session 2026-04-23)
+    errors.extend(_validate_retired_rule_ids(doc.get("retired_rule_ids"), seen_ids))
+
     return errors
+
+
+def _validate_retired_rule_ids(
+    retired: Any,
+    active_ids: set[str],
+) -> Iterable[CatalogueError]:
+    """Validate the optional ``retired_rule_ids`` top-level field.
+
+    Contract (per spec 004 Session 2026-04-23 clarification):
+      * Field is optional; ``None`` / missing is valid.
+      * When present, must be a list of strings.
+      * Every entry matches the rule-id regex ``^JSS-[A-Z]+-\\d{3}$``.
+      * Every entry is unique within the list.
+      * No entry overlaps with the active rule-id set (a retired id must
+        not also appear as an active rule — FR-004).
+    """
+    if retired is None:
+        return
+    if not isinstance(retired, list):
+        yield CatalogueError("top-level", "retired_rule_ids must be a list")
+        return
+    if not all(isinstance(x, str) for x in retired):
+        yield CatalogueError(
+            "top-level", "retired_rule_ids entries must all be strings"
+        )
+        return
+    seen_here: set[str] = set()
+    for entry in retired:
+        if not _RULE_ID_RE.match(entry):
+            yield CatalogueError(
+                "top-level",
+                f"retired_rule_ids entry {entry!r} does not match JSS-<CAT>-NNN",
+            )
+        if entry in seen_here:
+            yield CatalogueError(
+                "top-level", f"retired_rule_ids entry {entry!r} is duplicated"
+            )
+        seen_here.add(entry)
+    overlap = set(retired) & active_ids
+    if overlap:
+        yield CatalogueError(
+            "top-level",
+            f"retired_rule_ids overlap with active rule ids: {sorted(overlap)}",
+        )
 
 
 # ---------------------------------------------------------------------------

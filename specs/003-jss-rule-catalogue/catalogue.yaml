@@ -22,6 +22,14 @@
 version: 1
 source_vendored_at: "2021-05-23"
 
+# Retired rule ids — structured field read by tools/_catalogue_validate.py and
+# the catalogue-consistency test. Every id here is permanently reserved per
+# FR-004 and MUST NOT appear in the active `rules:` list. The top-of-file
+# comment above carries the narrative rationale for each retirement.
+retired_rule_ids:
+  - JSS-CITE-001
+  - JSS-ABBR-002
+
 categories:
   - preamble
   - structure

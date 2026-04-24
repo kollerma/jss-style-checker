@@ -58,12 +58,139 @@ def test_validate_returns_no_errors(catalogue_doc: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_top_level_keys_exactly_required(catalogue_doc: dict) -> None:
-    assert set(catalogue_doc) == {"version", "source_vendored_at", "categories", "rules"}
+def test_top_level_keys_are_required_plus_optional(catalogue_doc: dict) -> None:
+    required = {"version", "source_vendored_at", "categories", "rules"}
+    optional = {"retired_rule_ids"}
+    assert required <= set(catalogue_doc), (
+        f"missing required keys: {sorted(required - set(catalogue_doc))}"
+    )
+    extra = set(catalogue_doc) - (required | optional)
+    assert not extra, f"unexpected top-level keys: {sorted(extra)}"
 
 
 def test_version_is_one(catalogue_doc: dict) -> None:
     assert catalogue_doc["version"] == 1
+
+
+def test_retired_rule_ids_are_valid_and_disjoint(catalogue_doc: dict) -> None:
+    """Spec 004 Session 2026-04-23: retired_rule_ids is a structured field."""
+    retired = catalogue_doc.get("retired_rule_ids", [])
+    assert isinstance(retired, list), "retired_rule_ids must be a list"
+    import re
+
+    pattern = re.compile(r"^JSS-[A-Z]+-\d{3}$")
+    for entry in retired:
+        assert isinstance(entry, str), f"retired_rule_ids entry {entry!r} must be str"
+        assert pattern.match(entry), (
+            f"retired_rule_ids entry {entry!r} does not match JSS-<CAT>-NNN"
+        )
+    assert len(retired) == len(set(retired)), (
+        "retired_rule_ids contains duplicates"
+    )
+    active_ids = {r["rule_id"] for r in catalogue_doc["rules"]}
+    overlap = set(retired) & active_ids
+    assert not overlap, (
+        f"retired_rule_ids overlap with active rule ids: {sorted(overlap)}"
+    )
+
+
+def test_known_retirements_are_recorded(catalogue_doc: dict) -> None:
+    """The two 2026-04-23 retirements are listed in the structured field."""
+    retired = set(catalogue_doc.get("retired_rule_ids", []))
+    assert "JSS-CITE-001" in retired, (
+        "JSS-CITE-001 was retired 2026-04-23; should appear in retired_rule_ids"
+    )
+    assert "JSS-ABBR-002" in retired, (
+        "JSS-ABBR-002 was retired 2026-04-23; should appear in retired_rule_ids"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Reject-path tests for retired_rule_ids validator
+# ---------------------------------------------------------------------------
+
+
+def _minimal_catalogue(**overrides) -> dict:
+    """Build a minimal valid catalogue doc for validator reject-path tests."""
+    base = {
+        "version": 1,
+        "source_vendored_at": "2021-05-23",
+        "categories": ["citations"],
+        "rules": [
+            {
+                "rule_id": "JSS-CITE-002",
+                "category": "citations",
+                "severity": "warning",
+                "description": "example",
+                "authority": "style_guide",
+                "authority_ref": "#example-anchor",
+                "example_violation": "bad\n",
+                "example_fix": "good\n",
+                "inspects": ["tex_files"],
+                "auto_fixable": False,
+            }
+        ],
+    }
+    base.update(overrides)
+    return base
+
+
+def test_retired_rule_ids_absent_is_valid() -> None:
+    """retired_rule_ids is optional; absent means no retirements recorded."""
+    from tools._catalogue_validate import validate
+
+    errors = validate(_minimal_catalogue())
+    assert errors == []
+
+
+def test_retired_rule_ids_must_be_list() -> None:
+    from tools._catalogue_validate import validate
+
+    errors = validate(_minimal_catalogue(retired_rule_ids="not-a-list"))
+    assert any("must be a list" in str(e) for e in errors)
+
+
+def test_retired_rule_ids_entries_must_be_strings() -> None:
+    from tools._catalogue_validate import validate
+
+    errors = validate(_minimal_catalogue(retired_rule_ids=["JSS-CITE-001", 42]))
+    assert any("must all be strings" in str(e) for e in errors)
+
+
+def test_retired_rule_ids_entries_must_match_regex() -> None:
+    from tools._catalogue_validate import validate
+
+    errors = validate(_minimal_catalogue(retired_rule_ids=["bad-id"]))
+    assert any("does not match JSS-<CAT>-NNN" in str(e) for e in errors)
+
+
+def test_retired_rule_ids_reject_duplicates() -> None:
+    from tools._catalogue_validate import validate
+
+    errors = validate(
+        _minimal_catalogue(retired_rule_ids=["JSS-CITE-001", "JSS-CITE-001"])
+    )
+    assert any("is duplicated" in str(e) for e in errors)
+
+
+def test_retired_rule_ids_reject_overlap_with_active() -> None:
+    """A rule id cannot be both active and retired simultaneously."""
+    from tools._catalogue_validate import validate
+
+    # The minimal catalogue has JSS-CITE-002 active; mark it retired too.
+    errors = validate(_minimal_catalogue(retired_rule_ids=["JSS-CITE-002"]))
+    assert any("overlap with active rule ids" in str(e) for e in errors)
+
+
+def test_retired_rule_ids_non_overlapping_list_passes() -> None:
+    """Retired ids disjoint from active set → no errors."""
+    from tools._catalogue_validate import validate
+
+    # JSS-CITE-001 not in active set (which has only JSS-CITE-002).
+    errors = validate(
+        _minimal_catalogue(retired_rule_ids=["JSS-CITE-001", "JSS-ABBR-002"])
+    )
+    assert errors == []
 
 
 def test_source_vendored_at_is_nonempty_string(catalogue_doc: dict) -> None:
