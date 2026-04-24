@@ -73,6 +73,16 @@ Helper scripts activate the project `.venv` and forward their arguments:
 - `scripts/vtest.sh` — run `pytest`. Supports `--tail=N` and `--grep=PATTERN`
   to replace `| tail` / `| grep` idioms.
 
+**Pre-commit hook** — `.githooks/pre-commit` runs `ruff check .` so the
+CI lint gate never sees a dirty commit. Activate it once per clone:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+The hook is lenient when `ruff` isn't on `PATH` (skips with a warning)
+so it doesn't block users who haven't yet run `pip install -e .[dev]`.
+
 Mandatory gate (Constitution §IX — 100% branch coverage on every rule module):
 
 ```sh
