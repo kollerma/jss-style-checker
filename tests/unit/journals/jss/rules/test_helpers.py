@@ -298,6 +298,24 @@ class TestWalkWithAncestors:
         assert out[0][1] == []
 
 
+class TestWalkWithContext:
+    def test_sibling_macro_becomes_ancestor(self):
+        # \pkg{MASS} — pkg is unknown to pylatexenc, so its arg is a sibling
+        # LatexGroupNode. _walk_with_context pushes the \pkg macro onto the
+        # ancestor stack when recursing into the group.
+        _, nodes = _parse(r"\pkg{MASS}")
+        triples = list(_helpers._walk_with_context(nodes))
+        chars_found = False
+        for node, ancestors, _parent, _idx in triples:
+            if isinstance(node, LatexCharsNode) and "MASS" in node.chars:
+                chars_found = True
+                assert any(
+                    isinstance(a, LatexMacroNode) and a.macroname == "pkg"
+                    for a in ancestors
+                )
+        assert chars_found
+
+
 class TestIsInProseContext:
     def test_empty_ancestors_is_prose(self):
         assert _helpers._is_in_prose_context([]) is True

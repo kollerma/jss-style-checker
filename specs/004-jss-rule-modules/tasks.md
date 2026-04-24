@@ -254,14 +254,14 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Note**: JSS-OPER-003 has a carve-out — no-blank-line-around-equation is SILENT when the equation body ends with a period (natural paragraph end; FR-019).
 
-- [ ] T093 [P] [US1] Create fixture pairs for 4 operators rules (auxiliary fixture for OPER-003's period carve-out).
-- [ ] T094 [US1, US4] Write failing `tests/unit/rules/test_operators.py`.
-- [ ] T095 [US1] Create `src/texlint/journals/jss/rules/operators.py`. Honour OPER-003 carve-out.
-- [ ] T096 [US1] Remove xfail + wire.
-- [ ] T097 [US1] Verify 100% branch coverage (OPER-003 period carve-out branch).
-- [ ] T098 [US2] Add `JSS-OPER-001` to `eval/review-skip-list.toml`.
-- [ ] T099 [US2] Run `scripts/eval-category.sh operators`.
-- [ ] T100 [US1, US2, US4] Commit operators PR.
+- [X] T093 [P] [US1] Create fixture pairs for 4 operators rules (auxiliary fixture for OPER-003's period carve-out).
+- [X] T094 [US1, US4] Write failing `tests/unit/rules/test_operators.py`.
+- [X] T095 [US1] Create `src/texlint/journals/jss/rules/operators.py`. Honour OPER-003 carve-out.
+- [X] T096 [US1] Remove xfail + wire.
+- [X] T097 [US1] Verify 100% branch coverage (OPER-003 period carve-out branch).
+- [X] T098 [US2] Add `JSS-OPER-001` to `eval/review-skip-list.toml`.
+- [X] T099 [US2] Run `scripts/eval-category.sh operators`.
+- [X] T100 [US1, US2, US4] Commit operators PR.
 
 **Checkpoint**: operators category shipped.
 

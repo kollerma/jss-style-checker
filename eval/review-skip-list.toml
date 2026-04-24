@@ -51,3 +51,8 @@ added_in_spec = "004"
 rule_id       = "JSS-CODE-003"
 reason        = "Spacing-around-operators regex; LaTeX macro substring heuristic; Qwen3 blind spot."
 added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-OPER-001"
+reason        = "Symbol-tie regex ($p$~value); character-class match, AI labeller unreliable."
+added_in_spec = "004"

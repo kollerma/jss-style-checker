@@ -184,12 +184,22 @@ def _walk_with_ancestors(
 ) -> Iterator[tuple[Any, list[Any]]]:
     """Pre-order walk yielding ``(node, ancestor_stack)`` — outermost first.
 
+    See :func:`_walk_with_context` for the sibling-aware variant that
+    additionally yields ``(parent, idx)`` for each node.
+    """
+    for node, anc, _p, _i in _walk_with_context(nodes, ancestors):
+        yield node, anc
+
+
+def _walk_with_context(
+    nodes: Sequence[Any] | None,
+    ancestors: list[Any] | None = None,
+) -> Iterator[tuple[Any, list[Any], Sequence[Any], int]]:
+    """Pre-order walk yielding ``(node, ancestors, parent, idx)``.
+
     Handles unknown-macro sibling semantics: when a :class:`LatexGroupNode`
     follows an unknown macro (no registered arg spec), the macro is
-    pushed onto the ancestor stack before recursing into the group. This
-    ensures rules that check "inside \\code{...}" or "inside \\pkg{...}"
-    work even though pylatexenc represents those macros' args as sibling
-    groups rather than child nodes.
+    pushed onto the ancestor stack before recursing into the group.
     """
     if ancestors is None:
         ancestors = []
@@ -197,7 +207,7 @@ def _walk_with_ancestors(
     for i, node in enumerate(seq):
         if node is None:
             continue
-        yield node, list(ancestors)
+        yield node, list(ancestors), seq, i
         children: Sequence[Any] = ()
         if isinstance(node, (LatexEnvironmentNode, LatexGroupNode, LatexMathNode)):
             children = node.nodelist or ()
@@ -217,7 +227,7 @@ def _walk_with_ancestors(
         if extra is not None:
             ancestors.append(extra)
         ancestors.append(node)
-        yield from _walk_with_ancestors(children, ancestors)
+        yield from _walk_with_context(children, ancestors)
         ancestors.pop()
         if extra is not None:
             ancestors.pop()
