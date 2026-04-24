@@ -264,6 +264,81 @@ class TestIsInsideMath:
         assert _helpers._is_inside_math([env]) is False
 
 
+class TestWalkWithAncestors:
+    def test_none_input_yields_nothing(self):
+        assert list(_helpers._walk_with_ancestors(None)) == []
+
+    def test_yields_outer_ancestors(self):
+        _, nodes = _parse(r"\begin{itemize}\item x\end{itemize}")
+        triples = list(_helpers._walk_with_ancestors(nodes))
+        # Find the chars node 'x' — ancestors include itemize env.
+        chars_entries = [
+            (node, anc) for node, anc in triples
+            if isinstance(node, LatexCharsNode)
+        ]
+        assert any(
+            any(isinstance(a, LatexEnvironmentNode) for a in anc)
+            for _n, anc in chars_entries
+        )
+
+    def test_skips_none_nodes(self):
+        _, nodes = _parse("x")
+        out = list(_helpers._walk_with_ancestors((None, *nodes)))
+        assert all(n is not None for n, _anc in out)
+
+    def test_macro_without_nodeargd_is_safe(self):
+        class FakeMacro(LatexMacroNode):
+            def __init__(self):  # type: ignore[no-untyped-def]
+                pass
+
+        fake = FakeMacro()
+        out = list(_helpers._walk_with_ancestors([fake]))
+        assert len(out) == 1
+        assert out[0][0] is fake
+        assert out[0][1] == []
+
+
+class TestIsInProseContext:
+    def test_empty_ancestors_is_prose(self):
+        assert _helpers._is_in_prose_context([]) is True
+
+    def test_inside_verbatim_not_prose(self):
+        _, nodes = _parse(r"\begin{verbatim}x\end{verbatim}")
+        env = next(n for n in nodes if isinstance(n, LatexEnvironmentNode))
+        assert _helpers._is_in_prose_context([env]) is False
+
+    def test_inside_math_not_prose(self):
+        _, nodes = _parse(r"$x$")
+        math = next(n for n in nodes if isinstance(n, LatexMathNode))
+        assert _helpers._is_in_prose_context([math]) is False
+
+    def test_inside_markup_macro_not_prose(self):
+        _, nodes = _parse(r"\pkg{x}")
+        mac = next(n for n in nodes if isinstance(n, LatexMacroNode))
+        assert _helpers._is_in_prose_context([mac]) is False
+
+    def test_inside_section_macro_not_prose(self):
+        _, nodes = _parse(r"\section{x}")
+        mac = next(n for n in nodes if isinstance(n, LatexMacroNode))
+        assert _helpers._is_in_prose_context([mac]) is False
+
+    def test_inside_meta_macro_not_prose(self):
+        _, nodes = _parse(r"\title{x}")
+        mac = next(n for n in nodes if isinstance(n, LatexMacroNode))
+        assert _helpers._is_in_prose_context([mac]) is False
+
+    def test_plain_env_is_prose(self):
+        _, nodes = _parse(r"\begin{itemize}\item x\end{itemize}")
+        env = next(n for n in nodes if isinstance(n, LatexEnvironmentNode))
+        assert _helpers._is_in_prose_context([env]) is True
+
+    def test_plain_macro_is_prose(self):
+        # A macro that is not in MARKUP / SECTION / META sets — \emph is prose.
+        _, nodes = _parse(r"\emph{x}")
+        mac = next(n for n in nodes if isinstance(n, LatexMacroNode))
+        assert _helpers._is_in_prose_context([mac]) is True
+
+
 class TestCharHasBlankLine:
     def test_true_for_blank_line(self):
         _, nodes = _parse("a\n\nb")

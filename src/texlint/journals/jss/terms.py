@@ -76,6 +76,36 @@ _CANONICAL_RAW: Mapping[str, str] = {
 CANONICAL: Mapping[str, str] = MappingProxyType(dict(_CANONICAL_RAW))
 
 
+# ---------------------------------------------------------------------------
+# Publisher / journal canonical forms (spec 004 FR-020 additive)
+# ---------------------------------------------------------------------------
+#
+# SG-048..SG-052 pin canonical forms for a handful of publishers and
+# journals that appear frequently in JSS references. JSS-NAME-002 looks
+# up BibTeX ``publisher`` and ``journal`` fields against this mapping.
+
+_PUBLISHER_CANONICAL_RAW: Mapping[str, str] = {
+    # SG-048: Springer is published by Springer-Verlag
+    "Springer": "Springer-Verlag",
+    # SG-049: Chapman & Hall / CRC
+    "Chapman and Hall": "Chapman & Hall/CRC",
+    "Chapman and Hall/CRC": "Chapman & Hall/CRC",
+    # SG-050: Wiley canonical
+    "John Wiley": "John Wiley & Sons",
+    "Wiley": "John Wiley & Sons",
+}
+
+_JOURNAL_CANONICAL_RAW: Mapping[str, str] = {
+    # SG-051: Annals of Statistics → "The Annals of Statistics"
+    "Annals of Statistics": "The Annals of Statistics",
+    # SG-052: JASA canonical
+    "JASA": "Journal of the American Statistical Association",
+}
+
+PUBLISHER_CANONICAL: Mapping[str, str] = MappingProxyType(dict(_PUBLISHER_CANONICAL_RAW))
+JOURNAL_CANONICAL: Mapping[str, str] = MappingProxyType(dict(_JOURNAL_CANONICAL_RAW))
+
+
 def canonical_form(token: str) -> str | None:
     """Resolve *token* to its canonical form.
 

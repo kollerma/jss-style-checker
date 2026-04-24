@@ -167,14 +167,14 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Note**: JSS-MARKUP-001 masks math-mode content (use `_helpers._is_inside_math`), skips "Pascal", and filters single-letter initials before token-match (FR-019).
 
-- [ ] T055 [P] [US1] Create fixture pairs for 4 markup rules (auxiliary fixtures expected for JSS-MARKUP-001's math/Pascal/initial branches).
-- [ ] T056 [US1, US4] Write failing `tests/unit/rules/test_markup.py`.
-- [ ] T057 [US1] Create `src/texlint/journals/jss/rules/markup.py`. Uses `terms.py`.
-- [ ] T058 [US1] Remove xfail + wire.
-- [ ] T059 [US1] Verify 100% branch coverage (math/Pascal/initial auxiliary fixtures).
-- [ ] T060 [US2] Add `JSS-MARKUP-001` to `eval/review-skip-list.toml`.
-- [ ] T061 [US2] Run `scripts/eval-category.sh markup`.
-- [ ] T062 [US1, US2, US4] Commit markup PR.
+- [X] T055 [P] [US1] Create fixture pairs for 4 markup rules (auxiliary fixtures expected for JSS-MARKUP-001's math/Pascal/initial branches).
+- [X] T056 [US1, US4] Write failing `tests/unit/rules/test_markup.py`.
+- [X] T057 [US1] Create `src/texlint/journals/jss/rules/markup.py`. Uses `terms.py`.
+- [X] T058 [US1] Remove xfail + wire.
+- [X] T059 [US1] Verify 100% branch coverage (math/Pascal/initial auxiliary fixtures).
+- [X] T060 [US2] Add `JSS-MARKUP-001` to `eval/review-skip-list.toml`.
+- [X] T061 [US2] Run `scripts/eval-category.sh markup`.
+- [X] T062 [US1, US2, US4] Commit markup PR.
 
 **Checkpoint**: markup category shipped.
 
@@ -236,13 +236,13 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Note (bundling)**: MAY ship with `markup` per the allowlist (both consume `terms.py`); if bundled, include two precision-gate reports.
 
-- [ ] T086 [P] [US1] Create fixture pairs for 2 naming rules.
-- [ ] T087 [US1, US4] Write failing `tests/unit/rules/test_naming.py`.
-- [ ] T088 [US1] Create `src/texlint/journals/jss/rules/naming.py`.
-- [ ] T089 [US1] Remove xfail + wire.
-- [ ] T090 [US1] Verify 100% branch coverage.
-- [ ] T091 [US2] Run `scripts/eval-category.sh naming`.
-- [ ] T092 [US1, US2, US4] Commit naming PR (or bundled markup+naming PR).
+- [X] T086 [P] [US1] Create fixture pairs for 2 naming rules.
+- [X] T087 [US1, US4] Write failing `tests/unit/rules/test_naming.py`.
+- [X] T088 [US1] Create `src/texlint/journals/jss/rules/naming.py`.
+- [X] T089 [US1] Remove xfail + wire.
+- [X] T090 [US1] Verify 100% branch coverage.
+- [X] T091 [US2] Run `scripts/eval-category.sh naming`.
+- [X] T092 [US1, US2, US4] Commit naming PR (or bundled markup+naming PR).
 
 **Checkpoint**: naming category shipped.
 

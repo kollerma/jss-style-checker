@@ -41,3 +41,8 @@ added_in_spec = "004"
 rule_id       = "JSS-REFS-006"
 reason        = "BibTeX title-case loose heuristic; same Qwen3 blind spot as REFS-002."
 added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-MARKUP-001"
+reason        = "Language-name substring match; AI labeller lacks context for math-mode / Pascal / initials."
+added_in_spec = "004"

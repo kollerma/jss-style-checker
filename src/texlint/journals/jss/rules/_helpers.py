@@ -176,3 +176,92 @@ _BLANK_LINE_RE: "re.Pattern[str]" = re.compile(r"\n\s*\n")
 def _char_has_blank_line(node: Any) -> bool:
     """True when a :class:`LatexCharsNode` contains a blank line."""
     return isinstance(node, LatexCharsNode) and bool(_BLANK_LINE_RE.search(node.chars))
+
+
+def _walk_with_ancestors(
+    nodes: Sequence[Any] | None,
+    ancestors: list[Any] | None = None,
+) -> Iterator[tuple[Any, list[Any]]]:
+    """Pre-order walk yielding ``(node, ancestor_stack)`` — outermost first.
+
+    Handles unknown-macro sibling semantics: when a :class:`LatexGroupNode`
+    follows an unknown macro (no registered arg spec), the macro is
+    pushed onto the ancestor stack before recursing into the group. This
+    ensures rules that check "inside \\code{...}" or "inside \\pkg{...}"
+    work even though pylatexenc represents those macros' args as sibling
+    groups rather than child nodes.
+    """
+    if ancestors is None:
+        ancestors = []
+    seq = tuple(nodes or ())
+    for i, node in enumerate(seq):
+        if node is None:
+            continue
+        yield node, list(ancestors)
+        children: Sequence[Any] = ()
+        if isinstance(node, (LatexEnvironmentNode, LatexGroupNode, LatexMathNode)):
+            children = node.nodelist or ()
+        elif isinstance(node, LatexMacroNode):
+            argd = getattr(node, "nodeargd", None)
+            if argd is not None:
+                children = argd.argnlist or ()
+        extra: Any = None
+        if (
+            isinstance(node, LatexGroupNode)
+            and i > 0
+            and isinstance(seq[i - 1], LatexMacroNode)
+        ):
+            extra = seq[i - 1]
+        if not children:
+            continue
+        if extra is not None:
+            ancestors.append(extra)
+        ancestors.append(node)
+        yield from _walk_with_ancestors(children, ancestors)
+        ancestors.pop()
+        if extra is not None:
+            ancestors.pop()
+
+
+# Section macros whose argument is a displayed title, not prose.
+_SECTION_MACROS: frozenset[str] = frozenset(
+    {"section", "section*", "subsection", "subsection*",
+     "subsubsection", "subsubsection*", "chapter", "chapter*",
+     "paragraph", "subparagraph"}
+)
+
+# Macros whose text arg is already JSS-wrapped markup.
+_MARKUP_MACROS: frozenset[str] = frozenset(
+    {"pkg", "proglang", "code", "verb", "url", "email", "fct"}
+)
+
+# Preamble / meta-data / citation macros whose arg is not prose to scan.
+_META_MACROS: frozenset[str] = frozenset(
+    {"title", "Plaintitle", "Shorttitle",
+     "author", "Plainauthor",
+     "Keywords", "Plainkeywords",
+     "Address", "Abstract",
+     "documentclass", "usepackage", "include", "input",
+     "label", "ref", "pageref", "cite", "citep", "citet",
+     "citealp", "citealt", "citeauthor", "citeyear",
+     "bibliographystyle", "bibliography"}
+)
+
+
+def _is_in_prose_context(ancestors: Sequence[Any]) -> bool:
+    """True when a char node at this position is prose — not inside JSS
+    markup wrappers, math mode, verbatim envs, section titles, or preamble
+    meta-data macros."""
+    if _is_inside_verbatim(ancestors):
+        return False
+    if _is_inside_math(ancestors):
+        return False
+    for anc in ancestors:
+        if isinstance(anc, LatexMacroNode):
+            if anc.macroname in _MARKUP_MACROS:
+                return False
+            if anc.macroname in _SECTION_MACROS:
+                return False
+            if anc.macroname in _META_MACROS:
+                return False
+    return True
