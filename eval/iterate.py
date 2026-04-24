@@ -1,0 +1,199 @@
+"""`eval-jss iterate record` — snapshot + log one iteration of the loop.
+
+The loop is a 9-step cycle (see `eval/README.md`). This module implements
+step 5: run the report twice (full and pinned) against `eval/eval.db`,
+persist both snapshots into `eval/precision-history.db`, and append a
+templated section to `eval/improvement-log.md`.
+
+The "suggest improvements" / "plan" / "implement" steps are deliberately
+not automated — those are where human / Claude judgement belongs.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Iterable
+
+from eval import db, history, report as report_mod
+from eval.report import PrecisionTable, RuleRow
+
+
+def _corpus_size(db_path: Path) -> int:
+    cx = db.connect(db_path)
+    try:
+        row = cx.execute("SELECT COUNT(*) AS c FROM papers").fetchone()
+    finally:
+        cx.close()
+    return int(row["c"]) if row else 0
+
+
+def _tool_version(db_path: Path) -> str:
+    cx = db.connect(db_path)
+    try:
+        row = cx.execute(
+            "SELECT tool_version FROM runs ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+    finally:
+        cx.close()
+    return row["tool_version"] if row else "unknown"
+
+
+def _format_rule_table(rows: Iterable[RuleRow]) -> str:
+    """Render overall rows as a GitHub-flavored Markdown table."""
+    lines = [
+        "| category | rule | tp | fp | pending | precision | status |",
+        "|---|---|---:|---:|---:|---:|---|",
+    ]
+    for r in sorted(rows, key=lambda x: (x.category, x.rule_id)):
+        if r.source != "overall":
+            continue
+        prec = f"{r.precision:.2%}" if r.precision is not None else "—"
+        lines.append(
+            f"| {r.category} | {r.rule_id} | {r.tp} | {r.fp} | "
+            f"{r.pending} | {prec} | {r.status} |"
+        )
+    return "\n".join(lines)
+
+
+def _format_delta(
+    current: PrecisionTable,
+    prev_map: dict[tuple[str, str], tuple[int, int, int]],
+    scope: str,
+) -> str:
+    """Render a compact delta vs. the previous iteration, in Markdown."""
+    if not prev_map:
+        return "_(no prior iteration — baseline)_"
+    entries: list[str] = []
+    for r in sorted(current.rows, key=lambda x: (x.category, x.rule_id)):
+        if r.source != "overall":
+            continue
+        key = (scope, r.rule_id)
+        prev = prev_map.get(key)
+        if prev is None:
+            entries.append(
+                f"- **new** `{r.rule_id}`: tp={r.tp} fp={r.fp} pending={r.pending}"
+            )
+            continue
+        p_tp, p_fp, p_pending = prev
+        d_tp, d_fp, d_pending = r.tp - p_tp, r.fp - p_fp, r.pending - p_pending
+        if (d_tp, d_fp, d_pending) == (0, 0, 0):
+            continue
+        entries.append(
+            f"- `{r.rule_id}`: "
+            f"tp {p_tp:+d}→{r.tp} ({d_tp:+d}), "
+            f"fp {p_fp:+d}→{r.fp} ({d_fp:+d}), "
+            f"pending {p_pending}→{r.pending} ({d_pending:+d})"
+        )
+    if not entries:
+        return "_(no rule-level changes)_"
+    return "\n".join(entries)
+
+
+def _markdown_section(
+    *,
+    iteration_id: int,
+    ts: str,
+    label: str,
+    note: str | None,
+    corpus_size: int,
+    tool_version: str,
+    full: PrecisionTable,
+    pinned: PrecisionTable,
+    prev_map: dict[tuple[str, str], tuple[int, int, int]],
+) -> str:
+    note_block = f"\n**Note:** {note}\n" if note else ""
+    return f"""
+## Iteration {iteration_id} — {ts} — {label}
+
+- **Corpus size:** {corpus_size} papers
+- **Tool version:** `{tool_version}`
+- **Parse failures:** full={full.parse_failures}, pinned={pinned.parse_failures}
+{note_block}
+### Stats — full corpus
+
+{_format_rule_table(full.rows)}
+
+### Stats — pinned only
+
+{_format_rule_table(pinned.rows)}
+
+### Delta vs. previous iteration
+
+**Full corpus**
+
+{_format_delta(full, prev_map, "full")}
+
+**Pinned only**
+
+{_format_delta(pinned, prev_map, "pinned")}
+
+### Findings / suggestions
+
+_(fill in)_
+
+### Plan
+
+_(fill in)_
+
+### Results (post-implementation)
+
+_(fill in after the next `eval-jss iterate record` run)_
+"""
+
+
+_LOG_PREAMBLE = """# Eval-improve log
+
+Each section below is one iteration of the eval-improve loop (see
+`eval/README.md`). Stats are snapshots taken at record time; the
+machine-readable copy lives in `eval/precision-history.db`.
+"""
+
+
+def _ensure_log_preamble(log_path: Path) -> None:
+    if log_path.exists():
+        return
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text(_LOG_PREAMBLE, encoding="utf-8")
+
+
+def run(
+    *,
+    eval_db: Path,
+    history_db: Path,
+    log_path: Path,
+    manifest_path: Path,
+    corpus_dir: Path,
+    label: str,
+    note: str | None,
+) -> int:
+    full = report_mod.compute_precision(eval_db)
+    pinned_pairs = report_mod._pinned_pairs(manifest_path, corpus_dir)
+    pinned = report_mod.compute_precision(eval_db, pinned=pinned_pairs)
+
+    ts = db.now_utc()
+    corpus_size = _corpus_size(eval_db)
+    tool_version = _tool_version(eval_db)
+
+    iteration_id = history.record(
+        history_db,
+        ts=ts, label=label, note=note,
+        corpus_size=corpus_size, tool_version=tool_version,
+        full=full, pinned=pinned,
+    )
+    prev_map = history.previous(history_db, iteration_id)
+
+    section = _markdown_section(
+        iteration_id=iteration_id,
+        ts=ts, label=label, note=note,
+        corpus_size=corpus_size, tool_version=tool_version,
+        full=full, pinned=pinned, prev_map=prev_map,
+    )
+    _ensure_log_preamble(log_path)
+    with log_path.open("a", encoding="utf-8") as f:
+        f.write(section)
+
+    print(
+        f"eval-jss: recorded iteration {iteration_id} "
+        f"({label}) into {history_db} and appended to {log_path}"
+    )
+    return 0

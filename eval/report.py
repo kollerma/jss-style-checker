@@ -74,16 +74,17 @@ class PrecisionTable:
 
 
 _PER_RULE_SQL = """
-    SELECT rule_id,
+    SELECT v.rule_id,
            -- Any rule should have one category; pick an arbitrary row's.
-           MIN(category) AS category,
-           SUM(CASE WHEN verdict = 'true_positive'  THEN 1 ELSE 0 END) AS tp,
-           SUM(CASE WHEN verdict = 'false_positive' THEN 1 ELSE 0 END) AS fp,
-           SUM(CASE WHEN verdict IS NULL OR verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
-      FROM violations
-     WHERE rule_id != 'JSS-PARSE-000'
-     GROUP BY rule_id
-     ORDER BY MIN(category), rule_id
+           MIN(v.category) AS category,
+           SUM(CASE WHEN v.verdict = 'true_positive'  THEN 1 ELSE 0 END) AS tp,
+           SUM(CASE WHEN v.verdict = 'false_positive' THEN 1 ELSE 0 END) AS fp,
+           SUM(CASE WHEN v.verdict IS NULL OR v.verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
+      FROM violations v JOIN papers p ON p.id = v.paper_id
+     {pinned_join}
+     WHERE v.rule_id != 'JSS-PARSE-000'
+     GROUP BY v.rule_id
+     ORDER BY MIN(v.category), v.rule_id
 """
 
 _PER_RULE_BY_SOURCE_SQL = """
@@ -94,27 +95,93 @@ _PER_RULE_BY_SOURCE_SQL = """
            SUM(CASE WHEN v.verdict = 'false_positive' THEN 1 ELSE 0 END) AS fp,
            SUM(CASE WHEN v.verdict IS NULL OR v.verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
       FROM violations v JOIN papers p ON p.id = v.paper_id
+     {pinned_join}
      WHERE v.rule_id != 'JSS-PARSE-000'
      GROUP BY v.rule_id, p.source
      ORDER BY MIN(v.category), v.rule_id, p.source
 """
 
 _PER_RULE_BY_FORMAT_SQL = """
-    SELECT rule_id,
-           MIN(category) AS category,
-           LOWER(LTRIM(COALESCE(file_suffix, ''), '.')) AS format,
-           SUM(CASE WHEN verdict = 'true_positive'  THEN 1 ELSE 0 END) AS tp,
-           SUM(CASE WHEN verdict = 'false_positive' THEN 1 ELSE 0 END) AS fp,
-           SUM(CASE WHEN verdict IS NULL OR verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
-      FROM violations
-     WHERE rule_id != 'JSS-PARSE-000'
-     GROUP BY rule_id, format
-     ORDER BY MIN(category), rule_id, format
+    SELECT v.rule_id,
+           MIN(v.category) AS category,
+           LOWER(LTRIM(COALESCE(v.file_suffix, ''), '.')) AS format,
+           SUM(CASE WHEN v.verdict = 'true_positive'  THEN 1 ELSE 0 END) AS tp,
+           SUM(CASE WHEN v.verdict = 'false_positive' THEN 1 ELSE 0 END) AS fp,
+           SUM(CASE WHEN v.verdict IS NULL OR v.verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
+      FROM violations v JOIN papers p ON p.id = v.paper_id
+     {pinned_join}
+     WHERE v.rule_id != 'JSS-PARSE-000'
+     GROUP BY v.rule_id, format
+     ORDER BY MIN(v.category), v.rule_id, format
 """
 
 _PARSE_FAILURE_COUNT_SQL = (
-    "SELECT COUNT(*) AS c FROM violations WHERE rule_id = 'JSS-PARSE-000'"
+    "SELECT COUNT(*) AS c FROM violations v JOIN papers p ON p.id = v.paper_id"
+    " {pinned_join} WHERE v.rule_id = 'JSS-PARSE-000'"
 )
+
+
+def _pinned_pairs(
+    manifest_path: Path, target_dir: Path
+) -> list[tuple[str, str]]:
+    """Return `(paper_path, source_file)` tuples matching DB columns.
+
+    `papers.path` stores the paper directory as written by `scan.py` (e.g.
+    `examples/cran_dplyr`); `violations.file` stores the paper-relative
+    POSIX path (e.g. `dplyr/vignettes/rowwise.Rmd`). The manifest's
+    `local_path` is the paper dir name (`cran_dplyr/`) under the corpus
+    root, and `vignette_file` is already paper-relative — so we join
+    `target_dir / local_path` to form the first column and pass
+    `vignette_file` verbatim as the second.
+
+    Pinning a vignette also pins every `.bib` file that sits in the
+    vignette's directory on disk — the LaTeX `\\bibliography{...}` lookup
+    resolves relative to the vignette, so any sibling bib is a candidate
+    reference and its violations belong with the vignette's.
+    """
+    from eval.corpus import load_manifest
+
+    rows = load_manifest(manifest_path)
+    pairs: list[tuple[str, str]] = []
+    for row in rows:
+        paper_abs = (target_dir / row.local_path).resolve()
+        paper_path = str(target_dir / row.local_path).rstrip("/")
+        pairs.append((paper_path, row.vignette_file))
+
+        vignette_rel = Path(row.vignette_file)
+        vignette_dir_abs = paper_abs / vignette_rel.parent
+        if not vignette_dir_abs.is_dir():
+            continue
+        for bib in sorted(vignette_dir_abs.glob("*.bib")):
+            bib_rel = bib.resolve().relative_to(paper_abs).as_posix()
+            pairs.append((paper_path, bib_rel))
+    return pairs
+
+
+def _pinned_join(pinned: list[tuple[str, str]] | None) -> tuple[str, list]:
+    """Return `(SQL fragment, params)` that restricts `v`/`p` rows to the
+    manifest-pinned `(papers.path, violations.file)` pairs. Empty strings
+    when `pinned is None`.
+
+    Uses SQLite's default `column1`/`column2` names for `VALUES` rows
+    because SQLite does not accept the `AS alias(col1, col2)` form on
+    derived tables (only on CTEs).
+    """
+    if pinned is None:
+        return "", []
+    if not pinned:
+        # Empty manifest → intentionally match nothing; 1=0 keeps SQL valid.
+        return (
+            " JOIN (SELECT NULL AS column1, NULL AS column2 WHERE 1=0) AS pinned ON 1=1 ",
+            [],
+        )
+    placeholders = ", ".join(["(?, ?)"] * len(pinned))
+    clause = (
+        f" JOIN (VALUES {placeholders}) AS pinned "
+        " ON pinned.column1 = p.path AND pinned.column2 = v.file "
+    )
+    params = [item for pair in pinned for item in pair]
+    return clause, params
 
 
 def _classify(tp: int, fp: int, pending: int) -> tuple[float | None, str]:
@@ -131,11 +198,18 @@ def _classify(tp: int, fp: int, pending: int) -> tuple[float | None, str]:
     return precision, "FAIL"
 
 
-def compute_precision(db_path: Path) -> PrecisionTable:
+def compute_precision(
+    db_path: Path,
+    *,
+    pinned: list[tuple[str, str]] | None = None,
+) -> PrecisionTable:
+    join_sql, join_params = _pinned_join(pinned)
+    per_rule = _PER_RULE_SQL.format(pinned_join=join_sql)
+    parse_count_sql = _PARSE_FAILURE_COUNT_SQL.format(pinned_join=join_sql)
     cx = db.connect(db_path)
     try:
         rows: list[RuleRow] = []
-        for r in cx.execute(_PER_RULE_SQL).fetchall():
+        for r in cx.execute(per_rule, join_params).fetchall():
             precision, status = _classify(r["tp"], r["fp"], r["pending"])
             rows.append(
                 RuleRow(
@@ -150,25 +224,31 @@ def compute_precision(db_path: Path) -> PrecisionTable:
                 )
             )
         parse_failures = int(
-            cx.execute(_PARSE_FAILURE_COUNT_SQL).fetchone()["c"]
+            cx.execute(parse_count_sql, join_params).fetchone()["c"]
         )
         return PrecisionTable(rows=rows, parse_failures=parse_failures)
     finally:
         cx.close()
 
 
-def compute_precision_by_format(db_path: Path) -> PrecisionTable:
+def compute_precision_by_format(
+    db_path: Path,
+    *,
+    pinned: list[tuple[str, str]] | None = None,
+) -> PrecisionTable:
     """Overall + per-format breakdown using `violations.file_suffix` (spec 005).
 
     Per-format rows carry the suffix in `.source` (`tex`, `rnw`, `rmd`,
     `bib`, or `""` for pre-migration rows). Only `overall` rows gate
     the CLI exit code.
     """
-    overall = compute_precision(db_path)
+    overall = compute_precision(db_path, pinned=pinned)
+    join_sql, join_params = _pinned_join(pinned)
+    per_format = _PER_RULE_BY_FORMAT_SQL.format(pinned_join=join_sql)
     cx = db.connect(db_path)
     try:
         per_format_rows: list[RuleRow] = []
-        for r in cx.execute(_PER_RULE_BY_FORMAT_SQL).fetchall():
+        for r in cx.execute(per_format, join_params).fetchall():
             precision, status = _classify(r["tp"], r["fp"], r["pending"])
             per_format_rows.append(
                 RuleRow(
@@ -191,18 +271,24 @@ def compute_precision_by_format(db_path: Path) -> PrecisionTable:
     )
 
 
-def compute_precision_by_source(db_path: Path) -> PrecisionTable:
+def compute_precision_by_source(
+    db_path: Path,
+    *,
+    pinned: list[tuple[str, str]] | None = None,
+) -> PrecisionTable:
     """Overall + per-source breakdown, one `PrecisionTable` with both layers.
 
     Rows with `source="overall"` are gated by the 90% threshold; rows with
     a concrete source value (`cran`, `arxiv`, ...) are informational only
     (see research.md §"Per-source breakdown").
     """
-    overall = compute_precision(db_path)
+    overall = compute_precision(db_path, pinned=pinned)
+    join_sql, join_params = _pinned_join(pinned)
+    per_source = _PER_RULE_BY_SOURCE_SQL.format(pinned_join=join_sql)
     cx = db.connect(db_path)
     try:
         per_source_rows: list[RuleRow] = []
-        for r in cx.execute(_PER_RULE_BY_SOURCE_SQL).fetchall():
+        for r in cx.execute(per_source, join_params).fetchall():
             precision, status = _classify(r["tp"], r["fp"], r["pending"])
             per_source_rows.append(
                 RuleRow(
@@ -377,13 +463,24 @@ def run(
     by_source: bool = False,
     by_format: bool = False,
     csv_path: str | None = None,
+    pinned_only: bool = False,
+    manifest_path: Path | None = None,
+    corpus_dir: Path | None = None,
 ) -> int:
+    pinned: list[tuple[str, str]] | None = None
+    if pinned_only:
+        if manifest_path is None or corpus_dir is None:
+            raise ValueError(
+                "pinned_only=True requires both manifest_path and corpus_dir."
+            )
+        pinned = _pinned_pairs(manifest_path, corpus_dir)
+
     if by_format:
-        table = compute_precision_by_format(db_path)
+        table = compute_precision_by_format(db_path, pinned=pinned)
     elif by_source:
-        table = compute_precision_by_source(db_path)
+        table = compute_precision_by_source(db_path, pinned=pinned)
     else:
-        table = compute_precision(db_path)
+        table = compute_precision(db_path, pinned=pinned)
     render_terminal(table)
 
     if csv_path and csv_path != "-":

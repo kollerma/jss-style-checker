@@ -98,13 +98,13 @@ def test_executemany_ignore_applies_or_ignore(tmp_db: Path) -> None:
         )
         paper_id = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
         rows = [
-            (paper_id, "JSS-CITE-001", "citation", 3, 5, "m", "warning", run_id),
-            (paper_id, "JSS-CITE-001", "citation", 3, 5, "m", "warning", run_id),
+            (paper_id, "JSS-CITE-001", "citation", 3, 5, "m", "warning", run_id, "a.tex"),
+            (paper_id, "JSS-CITE-001", "citation", 3, 5, "m", "warning", run_id, "a.tex"),
         ]
         db.executemany_ignore(
             cx,
             "INSERT OR IGNORE INTO violations (paper_id, rule_id, category, line, column,"
-            " message, severity, first_seen_run_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            " message, severity, first_seen_run_id, file) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             rows,
         )
         assert cx.execute("SELECT COUNT(*) FROM violations").fetchone()[0] == 1

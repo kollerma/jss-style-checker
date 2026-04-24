@@ -75,3 +75,43 @@ eval-jss corpus status                           # report corpus state
 Exit codes: `0` all rules at ≥90% precision · `1` at least one rule
 below threshold, or `scan` newly persisted violations, or `corpus fetch`
 logged a gap · `2` the harness itself could not run.
+
+## The eval-improve loop
+
+One iteration grows the corpus, surfaces rule defects, and shrinks them.
+The loop has 9 steps, each available as a custom slash command under
+`.claude/commands/eval/` (e.g. `/eval:scan`, `/eval:record`):
+
+1. **Add 50 manuscripts** — `/eval:add-corpus` (edits
+   `eval/corpus-manifest.csv`, then `eval-jss corpus fetch`).
+2. **Scan** — `/eval:scan` (`eval-jss scan --corpus examples/ --force`).
+3. **AI classifier** — `/eval:review`
+   (`eval-jss review --confidence-threshold 0.8`).
+4. **Human review** (optional) — `/eval:human-review`
+   (`eval-jss human-review` for the rows the classifier was unsure
+   about or the skip-list excluded).
+5. **Record** — `/eval:record <label>`
+   (`eval-jss iterate record <label> [--note …]`). Snapshots the
+   precision report twice — full corpus and `--pinned-only` — into
+   `eval/precision-history.db` and appends a templated section to
+   `eval/improvement-log.md`.
+6. **Suggest improvements** — `/eval:suggest` (edits the iteration's
+   "Findings / suggestions" block in `eval/improvement-log.md`).
+7. **Plan** — `/eval:plan` (fills in the "Plan" block with a checklist
+   of concrete todos).
+8. **Implement** — `/eval:implement` (works through the checklist on a
+   branch).
+9. **Re-scan + record** — `/eval:rescan <label>`
+   (`eval-jss scan --force && eval-jss iterate record post-<label>`).
+   The new section's "Delta" block diffs against the previous iteration
+   so before/after is visible inline.
+
+`--pinned-only` restricts precision stats to violations from the
+vignette named in `corpus-manifest.csv::vignette_file` (plus every
+sibling `.bib` in the vignette's directory, since `\bibliography{...}`
+resolves there). This isolates rule quality on canonical inputs from
+noise introduced by other vignettes in the tarball.
+
+`eval/precision-history.db` is append-only and independent of
+`eval/eval.db` — wiping the raw-violations DB does not erase the
+precision trend.

@@ -142,7 +142,28 @@ def review_cmd(
     default=False,
     help="Partition precision by violation file suffix (tex | bib | rnw | rmd).",
 )
-@click.pass_context
+@click.option(
+    "--pinned-only",
+    is_flag=True,
+    default=False,
+    help="Restrict to violations from the manifest's pinned vignette_file per paper.",
+)
+@click.option(
+    "--manifest",
+    "manifest_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/corpus-manifest.csv"),
+    show_default=True,
+    help="Manifest consulted when --pinned-only is set.",
+)
+@click.option(
+    "--corpus",
+    "corpus_dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=Path("examples"),
+    show_default=True,
+    help="Corpus root consulted when --pinned-only is set (must match the scan invocation).",
+)
 @click.option(
     "--csv",
     "csv_path",
@@ -150,10 +171,14 @@ def review_cmd(
     default=None,
     help="Append precision history to this CSV (Phase B default: eval/report.csv; '-' disables).",
 )
+@click.pass_context
 def report_cmd(
     ctx: click.Context,
     by_source: bool,
     by_format: bool,
+    pinned_only: bool,
+    manifest_path: Path,
+    corpus_dir: Path,
     csv_path: str | None,
 ) -> None:
     """Print the per-rule precision table."""
@@ -162,13 +187,87 @@ def report_cmd(
         ctx.exit(2)
 
     from eval import report as report_mod
+    from eval.corpus import ManifestError
 
-    code = report_mod.run(
-        db_path=ctx.obj["db"],
-        by_source=by_source,
-        by_format=by_format,
-        csv_path=csv_path,
-    )
+    try:
+        code = report_mod.run(
+            db_path=ctx.obj["db"],
+            by_source=by_source,
+            by_format=by_format,
+            csv_path=csv_path,
+            pinned_only=pinned_only,
+            manifest_path=manifest_path if pinned_only else None,
+            corpus_dir=corpus_dir if pinned_only else None,
+        )
+    except (FileNotFoundError, ManifestError) as err:
+        click.echo(f"eval-jss: {err}", err=True)
+        ctx.exit(2)
+    ctx.exit(code)
+
+
+@cli.group("iterate")
+def iterate_group() -> None:
+    """Eval-improve loop bookkeeping."""
+
+
+@iterate_group.command("record")
+@click.argument("label", type=str)
+@click.option("--note", type=str, default=None, help="Freeform annotation for this snapshot.")
+@click.option(
+    "--history-db",
+    "history_db",
+    type=click.Path(path_type=Path),
+    default=Path("eval/precision-history.db"),
+    show_default=True,
+)
+@click.option(
+    "--log",
+    "log_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/improvement-log.md"),
+    show_default=True,
+)
+@click.option(
+    "--manifest",
+    "manifest_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/corpus-manifest.csv"),
+    show_default=True,
+)
+@click.option(
+    "--corpus",
+    "corpus_dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=Path("examples"),
+    show_default=True,
+)
+@click.pass_context
+def iterate_record_cmd(
+    ctx: click.Context,
+    label: str,
+    note: str | None,
+    history_db: Path,
+    log_path: Path,
+    manifest_path: Path,
+    corpus_dir: Path,
+) -> None:
+    """Snapshot full + pinned stats into precision-history.db and the log."""
+    from eval import iterate as iterate_mod
+    from eval.corpus import ManifestError
+
+    try:
+        code = iterate_mod.run(
+            eval_db=ctx.obj["db"],
+            history_db=history_db,
+            log_path=log_path,
+            manifest_path=manifest_path,
+            corpus_dir=corpus_dir,
+            label=label,
+            note=note,
+        )
+    except (FileNotFoundError, ManifestError) as err:
+        click.echo(f"eval-jss: {err}", err=True)
+        ctx.exit(2)
     ctx.exit(code)
 
 
@@ -213,6 +312,47 @@ def corpus_fetch_cmd(
         manifest_path=manifest_path,
         target_dir=target_dir,
         gaps_path=gaps_path,
+    )
+    ctx.exit(code)
+
+
+@corpus_group.command("suggest")
+@click.option(
+    "--manifest",
+    "manifest_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/corpus-manifest.csv"),
+    show_default=True,
+)
+@click.option("--limit", type=int, default=50, show_default=True)
+@click.option(
+    "--seed",
+    type=int,
+    default=None,
+    help="Deterministic RNG seed for reproducible picks. Default: nondeterministic.",
+)
+@click.option(
+    "--verify/--no-verify",
+    default=True,
+    show_default=True,
+    help="Probe each candidate's CRAN landing page to confirm it ships a vignette.",
+)
+@click.pass_context
+def corpus_suggest_cmd(
+    ctx: click.Context,
+    manifest_path: Path,
+    limit: int,
+    seed: int | None,
+    verify: bool,
+) -> None:
+    """Print CRAN packages with vignettes that are not yet in the manifest."""
+    from eval import corpus as corpus_mod
+
+    code = corpus_mod.run_suggest(
+        manifest_path=manifest_path,
+        limit=limit,
+        seed=seed,
+        verify=verify,
     )
     ctx.exit(code)
 

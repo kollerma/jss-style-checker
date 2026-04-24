@@ -123,9 +123,29 @@ def _ensure_paper(cx, paper_dir: Path) -> int:
     return int(cx.execute("SELECT last_insert_rowid()").fetchone()[0])
 
 
+def _relative_file(raw: str | None, paper_dir: Path) -> str | None:
+    """Return `raw` as a POSIX path relative to `paper_dir` when it lives
+    beneath that directory; otherwise return the original string (or None).
+
+    The eval harness pins one `vignette_file` per paper but the scanner
+    walks every `vignettes/*` file for the paper. Storing a paper-relative
+    path — matching the format in `corpus-manifest.csv::vignette_file`
+    (e.g. `dplyr/vignettes/rowwise.Rmd`) — lets downstream slicing align
+    the two without string munging.
+    """
+    if not raw:
+        return None
+    p = Path(raw)
+    try:
+        return p.resolve().relative_to(paper_dir.resolve()).as_posix()
+    except ValueError:
+        return p.as_posix()
+
+
 def _persist_violations(
     cx,
     paper_id: int,
+    paper_dir: Path,
     run_id: int,
     violations: list[dict],
 ) -> int:
@@ -141,6 +161,7 @@ def _persist_violations(
             v.get("severity", "error"),
             run_id,
             Path(v["file"]).suffix if v.get("file") else None,
+            _relative_file(v.get("file"), paper_dir),
         )
         for v in violations
     ]
@@ -149,8 +170,8 @@ def _persist_violations(
     db.executemany_ignore(
         cx,
         "INSERT OR IGNORE INTO violations (paper_id, rule_id, category, line, column,"
-        " message, severity, first_seen_run_id, file_suffix)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " message, severity, first_seen_run_id, file_suffix, file)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         rows,
     )
     return len(violations)
@@ -190,13 +211,13 @@ def _handle_one_paper(
             f"{(result.stderr or result.stdout)[:200]}"
         )
         violations = _synthetic_parse_failure(msg)
-        count = _persist_violations(cx, paper_id, run_id, violations)
+        count = _persist_violations(cx, paper_id, paper_dir, run_id, violations)
         cx.execute("UPDATE papers SET status='scan_failed' WHERE id=?", (paper_id,))
         return count, "scan_failed", "unknown"
 
     tool_version = payload.get("tool_version", "unknown")
     violations = payload.get("violations", []) or []
-    count = _persist_violations(cx, paper_id, run_id, violations)
+    count = _persist_violations(cx, paper_id, paper_dir, run_id, violations)
 
     if result.exit_code == 2:
         # The linter reports exit 2 on invocation-level failure (e.g. missing

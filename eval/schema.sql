@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS violations (
     reviewer          TEXT,                 -- "ai:<model>" | "human:<user>" | NULL
     first_seen_run_id INTEGER NOT NULL REFERENCES runs(id),
     file_suffix       TEXT,                 -- '.tex' | '.bib' | '.Rnw' | '.Rmd' (spec 005) — NULL for pre-005 rows
-    UNIQUE(paper_id, rule_id, line, message)
+    file              TEXT,                 -- source file path relative to the paper dir (e.g. 'dplyr/vignettes/rowwise.Rmd'); NULL for pre-p8 rows
+    UNIQUE(paper_id, rule_id, line, message, file)
 );
 
 CREATE INDEX IF NOT EXISTS idx_viol_rule    ON violations(rule_id);

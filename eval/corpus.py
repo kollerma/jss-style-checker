@@ -331,6 +331,146 @@ def run_fetch(
     return 1 if gaps else 0
 
 
+_CRAN_PACKAGES_URL = "https://cran.r-project.org/src/contrib/PACKAGES"
+
+
+def _parse_dcf(text: str) -> list[dict[str, str]]:
+    """Parse CRAN DCF (Debian-Control-File) format.
+
+    Records are separated by blank lines; fields are `Key: value`;
+    continuation lines begin with whitespace and append to the previous
+    field. We flatten continuations to a single string per field.
+    """
+    records: list[dict[str, str]] = []
+    current: dict[str, str] = {}
+    last_key: str | None = None
+    for line in text.splitlines():
+        if not line.strip():
+            if current:
+                records.append(current)
+                current = {}
+                last_key = None
+            continue
+        if line[0] in (" ", "\t") and last_key is not None:
+            current[last_key] += " " + line.strip()
+            continue
+        if ":" not in line:
+            continue
+        key, _, val = line.partition(":")
+        key = key.strip()
+        current[key] = val.strip()
+        last_key = key
+    if current:
+        records.append(current)
+    return records
+
+
+_BUILDER_HINTS = ("knitr", "rmarkdown", "sweave")
+_VIGNETTE_MARKER = "Vignettes:"
+
+
+def _has_builder_hint(rec: dict[str, str]) -> bool:
+    blob = " ".join(rec.get(k, "") for k in ("Suggests", "Imports", "Depends"))
+    low = blob.lower()
+    return any(kw in low for kw in _BUILDER_HINTS)
+
+
+def _probe_has_vignette(pkg: str, timeout: float = 10.0) -> bool:
+    """Fetch the CRAN package landing page and check for a Vignettes row.
+
+    CRAN renders `https://cran.r-project.org/web/packages/<pkg>/` with a
+    stable summary table; the presence of a `Vignettes:` label cell
+    signals at least one source vignette. Falls back to `False` on any
+    transport error.
+    """
+    url = f"https://cran.r-project.org/web/packages/{pkg}/"
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url), timeout=timeout) as resp:
+            body = resp.read(131072).decode("utf-8", errors="replace")
+    except (urllib.error.URLError, TimeoutError):
+        return False
+    return _VIGNETTE_MARKER in body
+
+
+def run_suggest(
+    *,
+    manifest_path: Path,
+    limit: int,
+    seed: int | None,
+    verify: bool,
+    packages_url: str = _CRAN_PACKAGES_URL,
+) -> int:
+    """Print candidate CRAN packages not already in the manifest.
+
+    CRAN's PACKAGES index does not expose the `VignetteBuilder` field
+    directly, so the coarse filter checks for `knitr` / `rmarkdown` /
+    `Sweave` anywhere in `Suggests` / `Imports` / `Depends` — the common
+    signal that a package ships a vignette. With `verify=True`, each
+    candidate's CRAN landing page is probed for a `Vignettes:` row to
+    drop false positives before printing.
+
+    Output: `<package>\\t<version>\\t<builder_hint>` lines, one per
+    suggestion — the columns `/eval:add-corpus` consumes.
+
+    `seed` makes the selection deterministic for reproducibility. If
+    `None`, the OS random source picks.
+    """
+    import random
+
+    try:
+        existing = {row.source_id for row in load_manifest(manifest_path)}
+    except FileNotFoundError:
+        existing = set()
+
+    try:
+        body, _sha = _stream_fetch(packages_url)
+    except urllib.error.URLError as err:
+        print(f"eval-jss: failed to fetch CRAN PACKAGES: {err}")
+        return 2
+
+    candidates: list[tuple[str, str, str]] = []
+    for rec in _parse_dcf(body.decode("utf-8", errors="replace")):
+        name = rec.get("Package")
+        version = rec.get("Version")
+        if not (name and version):
+            continue
+        if name in existing:
+            continue
+        if not _has_builder_hint(rec):
+            continue
+        blob = " ".join(rec.get(k, "") for k in ("Suggests", "Imports", "Depends")).lower()
+        hit = next((kw for kw in _BUILDER_HINTS if kw in blob), "knitr")
+        candidates.append((name, version, hit))
+
+    if not candidates:
+        print("eval-jss: no new CRAN packages to suggest.")
+        return 0
+
+    rng = random.Random(seed)
+    # Over-sample so the verify step has room to drop false positives.
+    pool_size = min(limit * (4 if verify else 1), len(candidates))
+    pool = rng.sample(candidates, pool_size)
+
+    picked: list[tuple[str, str, str]] = []
+    for name, version, hit in pool:
+        if verify and not _probe_has_vignette(name):
+            continue
+        picked.append((name, version, hit))
+        if len(picked) >= limit:
+            break
+    picked.sort(key=lambda t: t[0].lower())
+
+    suffix = " (verified via CRAN landing-page probe)" if verify else " (unverified — coarse filter only)"
+    print(
+        f"# {len(picked)} suggestions of {len(candidates)} eligible; "
+        f"{len(existing)} already pinned{suffix}"
+    )
+    print("# columns: package\tversion\tbuilder_hint")
+    for name, version, hit in picked:
+        print(f"{name}\t{version}\t{hit}")
+    return 0
+
+
 def run_status(*, manifest_path: Path, target_dir: Path) -> int:
     """Report which manifest rows are materialised, pending, or mismatched."""
     try:
