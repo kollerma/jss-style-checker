@@ -200,14 +200,24 @@ def _render_violation(
     result = source_snippet(paper_path, file, line)
     if result is not None:
         snippet, start = result
+        highlight = {line} if line is not None else set()
         console.print(
             Syntax(
                 snippet,
                 _lexer_for(file, paper_path),
                 line_numbers=True,
                 start_line=start,
+                highlight_lines=highlight,
             )
         )
+        if line is not None and column is not None and column > 0:
+            # rich.Syntax's line-number gutter is ` NNN │ ` — width is
+            # `len(str(end_line)) + 4`. Align a caret to the violation
+            # column so the starting character is visible at a glance.
+            end_line = start + snippet.count("\n")
+            gutter = len(str(end_line)) + 4
+            caret_prefix = " " * (gutter + column - 1)
+            console.print(f"[bold yellow]{caret_prefix}^[/bold yellow]")
 
 
 def _select_violations(
