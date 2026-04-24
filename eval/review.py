@@ -232,7 +232,7 @@ def _select_unlabelled(
 ) -> list:
     sql = (
         "SELECT v.id, v.rule_id, v.category, v.line, v.column, v.message,"
-        " v.severity, p.path AS paper_path"
+        " v.severity, v.file, p.path AS paper_path"
         " FROM violations v JOIN papers p ON p.id = v.paper_id"
         " WHERE v.verdict IS NULL"
         " ORDER BY p.path, v.line, v.id"
@@ -308,7 +308,7 @@ def run(
                 "paper_path": row["paper_path"],
             }
             paper_context = (
-                source_snippet(Path(row["paper_path"]), row["line"]) or ""
+                source_snippet(row["paper_path"], row["file"], row["line"]) or ""
             )
             result = client.classify(violation_dict, paper_context=paper_context)
 

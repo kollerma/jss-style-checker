@@ -48,22 +48,46 @@ def _resolve_reviewer(reviewer: str | None) -> str:
 
 
 def _first_tex_file(paper_path: Path) -> Path | None:
+    """Legacy fallback — used only when `violations.file` is NULL
+    (pre-P8 rows) and no better source pointer is available.
+    """
     if not paper_path.exists() or not paper_path.is_dir():
         return None
     tex_files = sorted(paper_path.glob("*.tex"))
     return tex_files[0] if tex_files else None
 
 
-def source_snippet(paper_path: Path, line: int | None, window: int = 3) -> str | None:
-    """Return a ±window line slice of `paper_path`'s first `.tex` file, or None."""
-    tex = _first_tex_file(paper_path)
-    if tex is None:
+def _resolve_source(paper_path: str, file: str | None) -> Path | None:
+    """Return the absolute path of the violation's source file.
+
+    Prefers `violations.file` (paper-relative POSIX path captured at scan
+    time). Falls back to the legacy "first .tex at the paper root"
+    behaviour when `file` is NULL.
+    """
+    paper_dir = Path(paper_path)
+    if file:
+        return paper_dir / file
+    return _first_tex_file(paper_dir)
+
+
+_LEXER_BY_SUFFIX = {
+    ".tex": "latex",
+    ".Rnw": "latex",
+    ".Rmd": "markdown",
+    ".bib": "bibtex",
+}
+
+
+def source_snippet(
+    paper_path: str, file: str | None, line: int | None, window: int = 3
+) -> str | None:
+    """Return a ±window line slice of the violation's source file."""
+    src = _resolve_source(paper_path, file)
+    if src is None or line is None:
         return None
     try:
-        text = tex.read_text(encoding="utf-8", errors="replace")
+        text = src.read_text(encoding="utf-8", errors="replace")
     except OSError:
-        return None
-    if line is None:
         return None
     lines = text.splitlines()
     if not lines:
@@ -73,18 +97,16 @@ def source_snippet(paper_path: Path, line: int | None, window: int = 3) -> str |
     return "\n".join(lines[start - 1 : end])
 
 
-def _locator(paper_path: str, line: int | None, column: int | None) -> str:
-    """Return a VS-Code-clickable ``path:line:col`` string.
-
-    Falls back to the paper directory when no ``.tex`` file is found.
-    Path is made relative to the current working directory when possible.
+def _locator(
+    paper_path: str, file: str | None, line: int | None, column: int | None
+) -> str:
+    """Return a VS-Code-clickable ``path:line:col`` string, relative to CWD
+    when possible.
     """
-    paper_dir = Path(paper_path)
-    tex = _first_tex_file(paper_dir)
-    target = tex if tex is not None else paper_dir
+    src = _resolve_source(paper_path, file)
+    target = src if src is not None else Path(paper_path)
     try:
-        rel = target.resolve().relative_to(Path.cwd())
-        display = str(rel)
+        display = str(target.resolve().relative_to(Path.cwd()))
     except ValueError:
         display = str(target)
     if line is None:
@@ -94,12 +116,23 @@ def _locator(paper_path: str, line: int | None, column: int | None) -> str:
     return f"{display}:{line}:{column}"
 
 
+def _lexer_for(file: str | None, paper_path: str) -> str:
+    """Pick a Pygments lexer by file suffix. Default: latex."""
+    if file:
+        suffix = Path(file).suffix
+    else:
+        src = _resolve_source(paper_path, None)
+        suffix = src.suffix if src else ".tex"
+    return _LEXER_BY_SUFFIX.get(suffix, "latex")
+
+
 def _render_violation(
     console: Console,
     *,
     index: int,
     total: int,
     paper_path: str,
+    file: str | None,
     rule_id: str,
     category: str,
     severity: str,
@@ -108,18 +141,23 @@ def _render_violation(
     message: str,
 ) -> None:
     console.rule(f"[bold]{index}/{total}[/bold]")
-    locator = _locator(paper_path, line, column)
+    locator = _locator(paper_path, file, line, column)
     table = Table(show_header=False, box=None)
     table.add_row("Location", locator)
     table.add_row("Rule", f"{rule_id}  ({category}, {severity})")
     table.add_row("Message", message)
     console.print(table)
 
-    snippet = source_snippet(Path(paper_path), line)
+    snippet = source_snippet(paper_path, file, line)
     if snippet:
         start = max(1, (line or 1) - 3)
         console.print(
-            Syntax(snippet, "latex", line_numbers=True, start_line=start)
+            Syntax(
+                snippet,
+                _lexer_for(file, paper_path),
+                line_numbers=True,
+                start_line=start,
+            )
         )
 
 
@@ -132,7 +170,7 @@ def _select_violations(
     """Return a list of `sqlite3.Row` violations to review."""
     sql = (
         "SELECT v.id, v.paper_id, v.rule_id, v.category, v.line, v.column,"
-        " v.message, v.severity, p.path AS paper_path"
+        " v.message, v.severity, v.file, p.path AS paper_path"
         " FROM violations v JOIN papers p ON p.id = v.paper_id"
         " WHERE (v.verdict IS NULL OR v.verdict = 'uncertain')"
     )
@@ -205,6 +243,7 @@ def run(
                 index=idx + 1,
                 total=total,
                 paper_path=row["paper_path"],
+                file=row["file"],
                 rule_id=row["rule_id"],
                 category=row["category"],
                 severity=row["severity"],

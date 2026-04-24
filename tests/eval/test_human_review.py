@@ -220,29 +220,30 @@ def test_human_review_back_at_start_is_noop(monkeypatch, tmp_db: Path) -> None:
         cx.close()
 
 
-def test_locator_builds_clickable_path(tmp_path: Path) -> None:
+def test_locator_uses_file_column_when_present(tmp_path: Path) -> None:
     paper = tmp_path / "paperA"
-    paper.mkdir()
-    (paper / "article.tex").write_text("x\n", encoding="utf-8")
-    # When paper_path contains a .tex file, the locator points at it with
-    # line:col appended (VS-Code-style).
-    loc = human_review._locator(str(paper), 42, 7)
-    assert loc.endswith("article.tex:42:7")
+    (paper / "pkg" / "vignettes").mkdir(parents=True)
+    (paper / "pkg" / "vignettes" / "intro.Rmd").write_text("x\n", encoding="utf-8")
+    # When the violation row carries a file path, the locator points at the
+    # paper-relative file with line:col appended (VS-Code-style).
+    loc = human_review._locator(str(paper), "pkg/vignettes/intro.Rmd", 42, 7)
+    assert loc.endswith("pkg/vignettes/intro.Rmd:42:7")
 
 
 def test_locator_line_only_when_column_missing(tmp_path: Path) -> None:
     paper = tmp_path / "paperB"
     paper.mkdir()
     (paper / "article.tex").write_text("x\n", encoding="utf-8")
-    loc = human_review._locator(str(paper), 42, None)
+    # Legacy path: no `file` column (pre-P8 row) but a top-level .tex exists.
+    loc = human_review._locator(str(paper), None, 42, None)
     assert loc.endswith("article.tex:42")
 
 
 def test_locator_falls_back_to_dir_without_tex(tmp_path: Path) -> None:
     empty = tmp_path / "empty"
     empty.mkdir()
-    loc = human_review._locator(str(empty), 42, 7)
-    # No .tex file → locator points at the dir with line:col.
+    loc = human_review._locator(str(empty), None, 42, 7)
+    # No `file` column and no top-level .tex → locator points at the dir.
     assert loc.endswith("empty:42:7")
 
 
