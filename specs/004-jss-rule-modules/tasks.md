@@ -217,14 +217,14 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Goal**: Ship `rules/code_width.py` with JSS-WIDTH-001. Retire `src_001_width.py`; WIDTH-001 retrofits it with a configurable column limit via `ToolConfig` (FR-017, FR-019). This is the only rule that inspects `raw_source`.
 
-- [ ] T078 [P] [US1] Create fixture pair `tests/fixtures/violations/code_width/JSS-WIDTH-001-{bad,good}.tex` plus an auxiliary fixture exercising the configurable-limit path (e.g., `JSS-WIDTH-001-custom-limit.tex`).
-- [ ] T079 [US1, US4] Write failing `tests/unit/rules/test_code_width.py` including a test that passes a custom `ToolConfig` column limit (e.g., 100) and asserts the rule respects it.
-- [ ] T080 [US1, US3] Create `src/texlint/journals/jss/rules/code_width.py`. Default limit 80 columns; read override from `ToolConfig` per FR-019. Reads `raw_source` per catalogue's `inspects: [raw_source]` declaration — must skip comment lines and verbatim blocks via `_helpers._is_inside_verbatim`/`_is_inside_comment`.
-- [ ] T081 [US3] Delete `src/texlint/journals/jss/rules/src_001_width.py` and `tests/unit/journals/jss/test_src_001_width.py` (FR-017) in the same commit.
-- [ ] T082 [US1] Remove xfail + wire into `JSSJournal.categories()`.
-- [ ] T083 [US1] Verify 100% branch coverage.
-- [ ] T084 [US2] Run `scripts/eval-category.sh code_width`.
-- [ ] T085 [US1, US2, US3, US4] Commit code_width PR.
+- [X] T078 [P] [US1] Create fixture pair `tests/fixtures/violations/code_width/JSS-WIDTH-001-{bad,good}.tex` plus an auxiliary fixture exercising the configurable-limit path (e.g., `JSS-WIDTH-001-custom-limit.tex`).
+- [X] T079 [US1, US4] Write failing `tests/unit/rules/test_code_width.py` including a test that passes a custom `ToolConfig` column limit (e.g., 100) and asserts the rule respects it.
+- [X] T080 [US1, US3] Create `src/texlint/journals/jss/rules/code_width.py`. Default limit 80 columns; read override from `ToolConfig` per FR-019. Reads `raw_source` per catalogue's `inspects: [raw_source]` declaration — must skip comment lines and verbatim blocks via `_helpers._is_inside_verbatim`/`_is_inside_comment`.
+- [X] T081 [US3] Delete `src/texlint/journals/jss/rules/src_001_width.py` and `tests/unit/journals/jss/test_src_001_width.py` (FR-017) in the same commit.
+- [X] T082 [US1] Remove xfail + wire into `JSSJournal.categories()`.
+- [X] T083 [US1] Verify 100% branch coverage.
+- [X] T084 [US2] Run `scripts/eval-category.sh code_width`.
+- [X] T085 [US1, US2, US3, US4] Commit code_width PR.
 
 **Checkpoint**: code_width category shipped. `src_001_width.py` retrofit complete. All three Step 1 smoke rules are now retired (citations, references, code_width phases done).
 
