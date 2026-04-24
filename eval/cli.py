@@ -84,9 +84,28 @@ def scan_cmd(
 @click.option("--limit", type=int, default=None)
 @click.option("--rule", "rule_id", type=str, default=None)
 @click.option("--reviewer", type=str, default=None)
+@click.option(
+    "--skip-listed",
+    is_flag=True,
+    default=False,
+    help="Review only rules on the AI skip list (rules whose violations bypass the classifier).",
+)
+@click.option(
+    "--skip-list",
+    "skip_list_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/review-skip-list.toml"),
+    show_default=True,
+    help="Skip-list TOML consulted when --skip-listed is set.",
+)
 @click.pass_context
 def human_review_cmd(
-    ctx: click.Context, limit: int | None, rule_id: str | None, reviewer: str | None
+    ctx: click.Context,
+    limit: int | None,
+    rule_id: str | None,
+    reviewer: str | None,
+    skip_listed: bool,
+    skip_list_path: Path,
 ) -> None:
     """Interactively label unlabelled and uncertain violations."""
     from eval import human_review as human_review_mod
@@ -96,6 +115,8 @@ def human_review_cmd(
         limit=limit,
         rule_id=rule_id,
         reviewer=reviewer,
+        skip_listed=skip_listed,
+        skip_list_path=skip_list_path,
     )
     ctx.exit(code)
 

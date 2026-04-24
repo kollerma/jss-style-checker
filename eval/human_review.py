@@ -213,10 +213,17 @@ def _render_violation(
 def _select_violations(
     cx,
     *,
-    rule_id: str | None,
+    rule_ids: set[str] | None,
     limit: int | None,
 ) -> list:
-    """Return a list of `sqlite3.Row` violations to review."""
+    """Return a list of `sqlite3.Row` violations to review.
+
+    `rule_ids=None` applies no rule filter; an empty set short-circuits
+    to no rows (the intended behaviour when two filters intersect to
+    nothing — e.g., `--rule X --skip-listed` with X not in the skip list).
+    """
+    if rule_ids is not None and not rule_ids:
+        return []
     sql = (
         "SELECT v.id, v.paper_id, v.rule_id, v.category, v.line, v.column,"
         " v.message, v.severity, v.file, p.path AS paper_path"
@@ -224,9 +231,10 @@ def _select_violations(
         " WHERE (v.verdict IS NULL OR v.verdict = 'uncertain')"
     )
     params: list = []
-    if rule_id:
-        sql += " AND v.rule_id = ?"
-        params.append(rule_id)
+    if rule_ids is not None:
+        placeholders = ", ".join("?" * len(rule_ids))
+        sql += f" AND v.rule_id IN ({placeholders})"
+        params.extend(sorted(rule_ids))
     sql += " ORDER BY p.path, v.line, v.id"
     if limit is not None:
         sql += " LIMIT ?"
@@ -264,14 +272,34 @@ def run(
     limit: int | None,
     rule_id: str | None,
     reviewer: str | None,
+    skip_listed: bool = False,
+    skip_list_path: Path | None = None,
 ) -> int:
-    """Interactive review loop. Returns the CLI exit code."""
+    """Interactive review loop. Returns the CLI exit code.
+
+    `skip_listed=True` restricts the review to rules listed in the AI
+    review skip-list (`eval/review-skip-list.toml` by default) — the
+    rules that bypass the AI classifier entirely and therefore can only
+    be labelled by a human. Combining with `--rule X` intersects: only
+    a skip-listed rule `X` survives.
+    """
     reviewer_str = _resolve_reviewer(reviewer)
     console = Console()
 
+    rule_ids: set[str] | None = None
+    if skip_listed:
+        from eval.review import load_skip_list
+        rule_ids = load_skip_list(skip_list_path)
+        if not rule_ids:
+            console.print(
+                "eval-jss: --skip-listed given but the skip list is empty."
+            )
+    if rule_id:
+        rule_ids = {rule_id} if rule_ids is None else rule_ids & {rule_id}
+
     cx = db.connect(db_path)
     try:
-        rows = _select_violations(cx, rule_id=rule_id, limit=limit)
+        rows = _select_violations(cx, rule_ids=rule_ids, limit=limit)
         if not rows:
             console.print("eval-jss: no pending violations to review.")
             return 0
