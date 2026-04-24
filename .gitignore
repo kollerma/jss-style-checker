@@ -164,3 +164,10 @@ examples/**/.sha256
 # `eval-jss corpus fetch`; SHA256-pinned, so we do not check in the payload.
 examples/cran_*/
 .claude/settings.local.json
+
+# `entire` CLI injects hooks (commit-msg, post-commit, pre-push,
+# prepare-commit-msg) into whichever directory core.hooksPath points at.
+# Only our tracked pre-commit hook belongs under .githooks/; everything
+# else is local state.
+.githooks/*
+!.githooks/pre-commit

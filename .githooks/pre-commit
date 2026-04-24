@@ -1,21 +1,36 @@
 #!/usr/bin/env bash
-# Pre-commit hook: run ruff on the staged snapshot so the CI lint
-# gate never sees a dirty commit.
+# Pre-commit hook: run ruff + pytest on the working copy so the CI
+# lint/test gates never see a dirty commit.
 #
 # Activate once per clone with:   git config core.hooksPath .githooks
 #
-# Fast path: if ruff isn't on PATH (e.g., dev dependencies not
-# installed), warn and pass — the commit proceeds and CI will catch
-# the miss. A hard fail here would block users who haven't yet done
-# `pip install -e .[dev]`.
+# Fast path: if a required tool isn't on PATH (e.g., dev dependencies
+# not installed), warn and pass — the commit proceeds and CI will
+# catch the miss. A hard fail here would block users who haven't yet
+# done `pip install -e .[dev]`.
+#
+# Opt out of the pytest leg for a single commit with:
+#     SKIP_PYTEST=1 git commit …
+# (useful for WIP / doc-only commits that don't merit the ~2s cost).
 set -euo pipefail
 
 if ! command -v ruff >/dev/null 2>&1; then
     echo "pre-commit: ruff not found on PATH; skipping lint." >&2
     echo "           install with: pip install -e .[dev]" >&2
+else
+    ruff check .
+fi
+
+if [ "${SKIP_PYTEST:-0}" = "1" ]; then
+    echo "pre-commit: SKIP_PYTEST=1 set; skipping pytest." >&2
     exit 0
 fi
 
-# Only lint tracked files matching the ruff target globs — avoids
-# wasting time on the CRAN tarball dump under examples/.
-ruff check .
+if ! command -v pytest >/dev/null 2>&1; then
+    echo "pre-commit: pytest not found on PATH; skipping tests." >&2
+    echo "           install with: pip install -e .[dev]" >&2
+    exit 0
+fi
+
+# -q keeps output scannable; -x fails fast on the first broken test.
+pytest -q -x

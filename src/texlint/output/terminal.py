@@ -10,11 +10,27 @@ from __future__ import annotations
 
 import sys
 from collections import defaultdict
+from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
 
 from texlint.api import CategoryStatus, ComplianceReport, Severity, ToolConfig, Violation
+
+
+def _display_path(raw: str) -> str:
+    """Return `raw` relative to CWD when possible.
+
+    `console.rule(title)` fits the title within the terminal width and
+    truncates with `…` when the title is too long, which drops the file
+    extension on long absolute paths (a real problem on CI where the
+    checkout lives under `/home/runner/work/<repo>/<repo>/…`). Relative
+    paths are both shorter and friendlier to eyes.
+    """
+    try:
+        return str(Path(raw).resolve().relative_to(Path.cwd()))
+    except (OSError, ValueError):
+        return raw
 
 _STATUS_STYLE = {
     CategoryStatus.PASS: "green",
@@ -65,7 +81,7 @@ def _render_author(report: ComplianceReport) -> None:
         return
 
     for file_path in sorted(by_file):
-        console.rule(f"[bold]{file_path}[/bold]")
+        console.rule(f"[bold]{_display_path(file_path)}[/bold]")
         table = Table(show_header=True, header_style="bold")
         table.add_column("Line:Col", no_wrap=True)
         table.add_column("Severity", no_wrap=True)
