@@ -1,6 +1,6 @@
 # Spec 005 — End-of-Spec Summary
 
-**Closed**: 2026-04-24 (Phases 1–5); Phase 6 (corpus + --by-format) deferred to follow-up.
+**Closed**: 2026-04-24 (Phases 1–6 all complete; corpus grown to 50 papers).
 **Branch**: `005-rnw-rmd-support`
 
 ## Scope delivered
@@ -28,65 +28,106 @@
   structure, typography, house_style, abbreviations, capitalization,
   operators migrated from `doc.tex_files` to `doc.all_tex_like()` so
   they lint Rmd prose fragments alongside native `.tex` files.
+- **Phase 6 (US4) — corpus expansion + `--by-format`:**
+  - `eval-jss report --by-format` partitions precision rows by the
+    violating file's suffix (`tex` / `rnw` / `rmd` / `bib`). Mutually
+    exclusive with `--by-source`. Per-format rows are informational;
+    only overall rows gate the 90% threshold.
+  - New `violations.file_suffix` column (idempotent migration in
+    `db.init`); `scan._persist_violations` populates it from the
+    linter JSON's `file` field.
+  - `eval.scan._tex_and_bib` → `_source_files`: now accepts
+    `.Rnw` / `.Rmd` and recurses into `vignettes/` when the paper
+    dir has no top-level source files (CRAN tarballs nest this way).
+  - Fragment-level `JSS-PARSE-000` emitted from Rmd prose blocks is
+    now silenced at parse time. pylatexenc is strict; prose that
+    discusses regex or shell syntax often contains stray `$` or `{`
+    that are not authoring errors. Tokenizer-level parse failures
+    (unterminated fence, malformed frontmatter) still fire.
+- **Corpus expansion (50 papers):** `eval/corpus-manifest.csv` grew
+  from 6 manual rows to 50 rows (6 manual + 44 CRAN; 18 `.Rnw` + 26
+  `.Rmd` on the CRAN side). All CRAN rows SHA256-pinned and
+  reproducible via `eval-jss corpus fetch`. Payloads are
+  `.gitignore`d under `examples/cran_*/`.
 
 ## Quality gates
 
 | Gate | Status | Evidence |
 |---|---|---|
 | 100% branch coverage across `src/texlint/journals/jss/rules/` | **PASS** | 1572 statements, 936 branches — 100%. |
-| Full test suite | **PASS** | 778 tests pass; 0 xfailed. |
+| Full test suite | **PASS** | 783 tests pass; 0 xfailed. |
 | Catalogue consistency (R-1..R-9) | **PASS** | Test R-7 updated to allow `frozenset({"tex", "rnw"})` in addition to `None`. |
 | Rnw line-count invariant (S-1) | **PASS** | `test_rnw_stripper.py::TestLineCountInvariant` — 6 cases. |
 | Rmd tokenizer invariants (M-1..M-7) | **PASS** | `test_rmd_parser.py` — 20 cases. |
-| FR-015 regression (.tex + .bib unchanged) | **PASS** | `jss-lint docs/jss-template/article.tex refs.bib` produces the same 9 findings as the spec-004 baseline. |
+| FR-015 regression (.tex + .bib unchanged) | **PASS** | On the 6-paper `.tex`-only corpus the violation set is byte-identical pre- and post-spec-005 (32 rows, zero delta). `jss-lint docs/jss-template/article.tex refs.bib` still produces the same 9 findings as the spec-004 baseline. |
 | SC-001 (Rnw prose hit / chunk silence) | **PASS** | `test_rnw_end_to_end.py::test_markup_rule_fires_on_prose_not_chunk`. |
 | SC-002 (Rmd prose hit / fence silence / frontmatter silence) | **PASS** | `test_rmd_end_to_end.py` — 4 cases. |
+| SC-006 (per-format precision partitioning) | **PASS** | `test_report.py` — 5 new by-format cases. |
 
 ## Rule-by-rule corpus status
 
-Unchanged from spec 004 end-of-spec summary on the `.tex`-only
-6-paper corpus — see
-`specs/004-jss-rule-modules/end-of-spec-summary.md`. No new
-`.Rnw` or `.Rmd` papers ship with this spec (Phase 6 deferred).
+The `.tex`-only 6-paper corpus behaves identically to the spec 004
+end-of-spec summary (see `specs/004-jss-rule-modules/end-of-spec-summary.md`).
+
+The corpus now also includes 44 CRAN vignettes (18 `.Rnw` + 26
+`.Rmd`) sourced from `lme4`, `Matrix`, `car`, `AER`, `partykit`,
+`betareg`, `sandwich`, `effects`, `lattice`, `survey`, `mvtnorm`,
+`np`, `xts`, `pls`, `multcomp`, `robustbase`, `strucchange`, `zoo`,
+`rpart`, `stringr`, `ggplot2`, `forecast`, `plm`, `dplyr`, `tidyr`,
+`purrr`, `tibble`, `readr`, `lubridate`, `broom`, `fs`, `knitr`,
+`DBI`, `forcats`, `glue`, `xml2`, `httr`, `rvest`, `data.table`,
+`brms`, `rstanarm`, `glmnet`, `caret`, `rstan`. A full
+`eval-jss scan --force` runs in ~11s and produces ~2,700 violations
+(1523 Rmd + 1186 Rnw + 966 bib + 28 tex). 39 papers scan cleanly;
+11 hit parser-level failures — see "Corpus-surfaced follow-ups" below.
+
+## Corpus-surfaced follow-ups
+
+The expanded corpus revealed 11 parse failures that are **not**
+spec-005 regressions but are worth tracking as separate backlog:
+
+- **`brms` — PyYAML `!r` custom tag rejection.** `brms` Rmd
+  vignettes declare `params: EVAL: !r identical(...)`. PyYAML's
+  `safe_load` rejects unknown tags by design. Fix: swap to a loader
+  that ignores unknown YAML tags (coerce to string). Low-effort.
+- **`rstanarm` — unterminated fenced code block.** Legitimate
+  tokenizer-level parse failure (the Rmd source itself has an
+  unclosed fence). May be a real author-side bug worth reporting
+  upstream.
+- **`sandwich` / `effects` / `robustbase` — Sweave `Sinput`/`Soutput`
+  environments.** These environments appear in raw `.Rnw` when
+  authors hand-edit verbatim output for demonstration. They are
+  absent from pylatexenc's macro spec. Fix: either strip them like
+  R chunks, or register them with pylatexenc's environment spec.
+- **`partykit` / `strucchange` / `zoo` / `betareg` — brace /
+  environment mismatches.** These compile under `pdflatex` but
+  pylatexenc's strict AST parser rejects them. Likely candidates
+  for `tolerant_parsing=True` on the Rnw path (or targeted macro
+  additions).
+- **`rpart` / `robustbase` — duplicate bib keys.** Real source-side
+  issues (`Chen07` duplicated in `rpart/refer.bib`; `url` field
+  duplicated in `robustbase/xtraR/refs.bib`). These are legitimate
+  findings the harness should surface — but they currently get
+  reported as `JSS-PARSE-000` rather than routed through a dedicated
+  bib-hygiene rule.
 
 ## Deferred / follow-up
 
-**Phase 6 (US4 corpus + by-format flag)** is deferred to a follow-up
-PR. The work items:
+All Phase 6 items (T038–T044) landed in this spec. No blocking
+follow-ups remain. The parser-level backlog above is tracked as
+independent low-priority work that doesn't affect shipping this
+spec.
 
-1. **Curate + fetch 3–5 `.Rnw` + 2–3 `.Rmd` CRAN vignettes.** Candidate
-   packages identified in `tasks.md` T038: `lme4`, `zoo`, `quantreg`,
-   `survival`, `mgcv` (Rnw); `ggplot2`, `brms` (Rmd). The
-   `eval-jss corpus fetch` mechanism from spec 002 materialises rows
-   and pins SHA256 per Constitution §XII.
-2. **`eval-jss report --by-format` flag.** Partitions the violation
-   set by `papers.path` suffix (`.tex` / `.Rnw` / `.Rmd`) and emits
-   per-format precision rows. The existing `--by-source` stub in
-   `eval/report.py` is a nearby sibling; `--by-format` reuses the
-   same dispatch-then-partition pattern. FR-016, SC-006.
-3. **FR-015 regression diff** on the 6-paper `.tex` corpus. The
-   `eval-jss report` output is currently byte-identical pre- and
-   post-feature on existing data (no corpus delta, no report-path
-   changes), but a formal snapshot diff should land in Phase 6's PR.
-
-Both items require either (a) live CRAN network access the devcontainer
-firewall needs to allowlist the relevant hosts for, or (b) offline
-pre-downloaded tarballs manually placed in `examples/`. The blocker
-is a judgment call about corpus curation more than a code engineering
-block. Per the spec 004 precedent (OQ-11 corpus growth), this is
-tracked as a follow-up rather than forcing a partial corpus in scope
-here.
-
-**Phase 7 polish (T045–T051)** partially delivered inline:
-- T045 Full test suite green — **done** (778 passed, 0 xfailed).
+**Phase 7 polish (T045–T051)** delivered inline:
+- T045 Full test suite green — **done** (783 passed, 0 xfailed).
 - T046 Branch-coverage gate across rules — **done** (100%).
 - T047 Golden-path demo — **done** (9 findings, matches baseline).
 - T048 Full-catalogue-coverage test — still **green** (every catalogue
   rule fires on its bad fixture, unchanged from spec 004).
 - T049 End-of-spec-summary.md — **done** (this file).
 - T050 Agent-context update — **done** in the plan phase.
-- T051 Checklist close — ready; see
-  `specs/005-rnw-rmd-support/checklists/requirements.md`.
+- T051 Checklist close — **done**;
+  `specs/005-rnw-rmd-support/checklists/requirements.md` — 0 open items.
 
 ## Spec drift reconciled
 
@@ -124,3 +165,15 @@ here.
 - `tests/integration/test_rmd_end_to_end.py` — 7 acceptance tests.
 - `tests/integration/test_skipped_rules.py` — 5 skipped-rule tests.
 - `pyproject.toml` — `PyYAML>=6.0` promoted to runtime dep.
+- `eval/corpus-manifest.csv` — 44 CRAN rows added (SHA256-pinned).
+- `eval/schema.sql` + `eval/db.py` — `violations.file_suffix` column
+  with idempotent `ALTER TABLE ... ADD COLUMN` migration.
+- `eval/scan.py` — `_source_files` accepts `.Rnw` / `.Rmd` with
+  `vignettes/` subdir fallback; persists `file_suffix`.
+- `eval/report.py` — `compute_precision_by_format`, `--by-format`
+  rendering, `PrecisionTable.breakdown` field.
+- `eval/cli.py` — `--by-format` flag (mutually exclusive with
+  `--by-source`).
+- `tests/eval/test_report.py` — 5 new by-format tests.
+- `.gitignore` — `examples/cran_*/` (payloads reproducible from
+  manifest), `.claude/scheduled_tasks.lock`.
