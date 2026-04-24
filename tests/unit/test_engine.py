@@ -56,7 +56,7 @@ def _rule(rule_id: str, *, category: str = "x", fires_on: Iterable[str] = ()) ->
         message_template="",
         authority="",
         check=_check,
-        formats=frozenset({".tex"}),
+        formats=frozenset({"tex"}),
     )
 
 
@@ -231,7 +231,7 @@ class TestDeterministicOrdering:
             message_template="",
             authority="",
             check=_check,
-            formats=frozenset({".tex"}),
+            formats=frozenset({"tex"}),
         )
         journal = _Journal("j", (RuleCategory(id="z", title="Z", rules=(rule,)),))
         report = run(ToolConfig(), doc, journal)

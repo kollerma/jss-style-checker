@@ -1,21 +1,61 @@
-"""File parsers for ``.tex`` and ``.bib`` inputs.
+"""File parsers for ``.tex``, ``.bib``, ``.Rnw`` and ``.Rmd`` inputs.
 
-Both parsers are non-raising: any failure to read or parse produces a
+All parsers are non-raising: any failure to read or parse produces a
 ``JSS-PARSE-000`` violation on the returned object instead of propagating
-an exception. See spec FR-005 and research.md §pylatexenc / §bibtexparser.
+an exception. See spec FR-005, spec 005 FR-014.
+
+``.Rnw`` handling (spec 005 §US1): :func:`strip_rnw_chunks` replaces R
+code chunks with equivalent-length whitespace, then
+:func:`parse_rnw_file` delegates to :func:`parse_tex_source`. Line
+numbers remain source-authoritative.
+
+``.Rmd`` handling (spec 005 §US2): :func:`parse_rmd_file` delegates to
+:mod:`texlint.core.rmd_parser`.
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import bibtexparser
 from pylatexenc.latexwalker import LatexWalker, LatexWalkerError
 
-from texlint.api import ParsedBibFile, ParsedTexFile, Severity, Violation
+from texlint.api import (
+    ParsedBibFile,
+    ParsedRmdFile,
+    ParsedTexFile,
+    Severity,
+    Violation,
+)
 
 _PARSE_RULE_ID = "JSS-PARSE-000"
 _UTF8_BOM = "﻿"
+
+# Spec 005 FR-001: line-preserving regex substitution over Sweave / knitr
+# R code chunks. Handles `<<>>=` (no label) and `<<lbl, opts>>=` forms.
+_RNW_CHUNK = re.compile(
+    r"<<[^>]*>>=\n.*?^@\s*$",
+    re.DOTALL | re.MULTILINE,
+)
+
+# Inline `\Sexpr{...}` (single-line only; nested braces unsupported).
+_RNW_SEXPR = re.compile(r"\\Sexpr\{[^{}]*\}")
+
+
+def strip_rnw_chunks(src: str) -> str:
+    """Replace R code chunks and inline ``\\Sexpr`` calls with
+    equivalent-length whitespace so the residue parses as normal LaTeX
+    and line numbers remain source-authoritative.
+
+    Invariant: ``strip_rnw_chunks(src).count("\\n") == src.count("\\n")``.
+    """
+    def _blank_chunk(m: "re.Match[str]") -> str:
+        return "\n" * m.group(0).count("\n")
+
+    stripped = _RNW_CHUNK.sub(_blank_chunk, src)
+    stripped = _RNW_SEXPR.sub(lambda m: " " * len(m.group(0)), stripped)
+    return stripped
 
 
 def _parse_error(
@@ -64,10 +104,16 @@ def parse_tex_file(path: Path) -> ParsedTexFile:
         return ParsedTexFile(
             path=path, source="", nodes=(), walker=None, violations=(read_err,)
         )
+    return parse_tex_source(source, path)
 
-    # tolerant_parsing=False so malformed input surfaces as LatexWalkerError
-    # instead of silently producing a partial AST (which would let rules
-    # fire against half-parsed documents and report false positives).
+
+def parse_tex_source(source: str, path: Path) -> ParsedTexFile:
+    """Parse already-read TeX source into a :class:`ParsedTexFile`.
+
+    Used by :func:`parse_rnw_file` (which pre-processes Sweave chunks)
+    and by :mod:`texlint.core.rmd_parser` (which parses raw-LaTeX
+    islands extracted from Rmd prose blocks).
+    """
     walker = LatexWalker(source, tolerant_parsing=False)
     try:
         nodes, _pos, _length = walker.get_latex_nodes()
@@ -86,6 +132,20 @@ def parse_tex_file(path: Path) -> ParsedTexFile:
     return ParsedTexFile(
         path=path, source=source, nodes=tuple(nodes), walker=walker, violations=()
     )
+
+
+def parse_rnw_file(path: Path) -> ParsedTexFile:
+    """Parse a Sweave / knitr ``.Rnw`` file by stripping R code chunks
+    and then delegating to :func:`parse_tex_source`. Line numbers stay
+    source-authoritative (spec 005 FR-003).
+    """
+    source, read_err = _read_utf8(path)
+    if read_err is not None:
+        return ParsedTexFile(
+            path=path, source="", nodes=(), walker=None, violations=(read_err,)
+        )
+    stripped = strip_rnw_chunks(source)
+    return parse_tex_source(stripped, path)
 
 
 def _extract_line(exc: LatexWalkerError) -> int | None:
@@ -116,3 +176,20 @@ def parse_bib_file(path: Path) -> ParsedBibFile:
     return ParsedBibFile(
         path=path, source=source, library=library, violations=tuple(violations)
     )
+
+
+def parse_rmd_file(path: Path) -> ParsedRmdFile:
+    """Parse an R Markdown ``.Rmd`` file into a structured
+    :class:`ParsedRmdFile`. Delegates to :mod:`texlint.core.rmd_parser`.
+    """
+    from texlint.core.rmd_parser import parse_rmd_source
+
+    source, read_err = _read_utf8(path)
+    if read_err is not None:
+        return ParsedRmdFile(
+            path=path,
+            source="",
+            yaml_frontmatter={},
+            violations=(read_err,),
+        )
+    return parse_rmd_source(source, path)

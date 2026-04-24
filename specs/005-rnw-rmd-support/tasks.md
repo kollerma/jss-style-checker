@@ -34,8 +34,8 @@ description: "Task breakdown for spec 005: Rnw / Rmd manuscript support"
 
 **Purpose**: Runtime dependency update and baseline capture.
 
-- [ ] T001 Add `pyyaml>=6.0` to the runtime dependency list in `pyproject.toml` (move from `[project.optional-dependencies].dev` to `[project].dependencies` if it is currently dev-only). Run `pip install -e '.[dev]'` to sync the devcontainer.
-- [ ] T002 Capture a baseline snapshot of `eval-jss report` on the current 6-paper corpus to `/tmp/report-before-005.txt` so US4's regression diff has a reference point. `scripts/eval-category.sh` requires no changes at this stage.
+- [X] T001 Add `pyyaml>=6.0` to the runtime dependency list in `pyproject.toml` (move from `[project.optional-dependencies].dev` to `[project].dependencies` if it is currently dev-only). Run `pip install -e '.[dev]'` to sync the devcontainer.
+- [X] T002 Capture a baseline snapshot of `eval-jss report` on the current 6-paper corpus to `/tmp/report-before-005.txt` so US4's regression diff has a reference point. `scripts/eval-category.sh` requires no changes at this stage.
 
 ---
 
@@ -45,29 +45,29 @@ description: "Task breakdown for spec 005: Rnw / Rmd manuscript support"
 
 **⚠️ CRITICAL**: These tasks modify `src/texlint/api.py` and `src/texlint/core/`. Keep patches tight — Constitution §IV amendment tracking requires each core edit to stay narrow.
 
-- [ ] T003 Add `ParsedRmdFile`, `RmdHeading`, `RmdProse`, `RmdCode` frozen dataclasses to `src/texlint/api.py` per `data-model.md §2`. Fields exactly as documented; all frozen; type-annotated.
-- [ ] T004 [P] Add `SkippedRule` frozen dataclass to `src/texlint/api.py` and extend `ComplianceReport` with `skipped_rules: tuple[SkippedRule, ...] = ()` per `data-model.md §4`.
-- [ ] T005 Extend `ParsedDocument` in `src/texlint/api.py`: add `rmd_files: tuple[ParsedRmdFile, ...] = ()`, extend `all_files()` to yield from `rmd_files`, and add new `all_tex_like()` helper per `data-model.md §3`. Also update `files_for_rule()` to filter by input-format instead of file-suffix per `research.md §4` and `contracts/rule-format-filter.md`. Depends on T003.
-- [ ] T006 Update the `Rule.formats` docstring in `src/texlint/api.py` to reflect the input-format filter semantics (valid values: `None`, `frozenset({"tex", "rnw", "rmd"})` subset). No signature change. Add the `R-1` invariant note as a doctring comment.
-- [ ] T007 [P] Extend `tests/unit/test_api.py` with:
+- [X] T003 Add `ParsedRmdFile`, `RmdHeading`, `RmdProse`, `RmdCode` frozen dataclasses to `src/texlint/api.py` per `data-model.md §2`. Fields exactly as documented; all frozen; type-annotated.
+- [X] T004 [P] Add `SkippedRule` frozen dataclass to `src/texlint/api.py` and extend `ComplianceReport` with `skipped_rules: tuple[SkippedRule, ...] = ()` per `data-model.md §4`.
+- [X] T005 Extend `ParsedDocument` in `src/texlint/api.py`: add `rmd_files: tuple[ParsedRmdFile, ...] = ()`, extend `all_files()` to yield from `rmd_files`, and add new `all_tex_like()` helper per `data-model.md §3`. Also update `files_for_rule()` to filter by input-format instead of file-suffix per `research.md §4` and `contracts/rule-format-filter.md`. Depends on T003.
+- [X] T006 Update the `Rule.formats` docstring in `src/texlint/api.py` to reflect the input-format filter semantics (valid values: `None`, `frozenset({"tex", "rnw", "rmd"})` subset). No signature change. Add the `R-1` invariant note as a doctring comment.
+- [X] T007 [P] Extend `tests/unit/test_api.py` with:
   - Round-trip test for each new dataclass (`ParsedRmdFile`, `RmdHeading`, `RmdProse`, `RmdCode`, `SkippedRule`).
   - `all_tex_like()` invariants P-1 / P-2 from `data-model.md`.
   - `Rule.formats` well-formed invariant R-1.
   - `ComplianceReport.skipped_rules` default-empty + immutable.
-- [ ] T008 Implement `parse_document(paths)` in `src/texlint/core/engine.py` per `contracts/engine-dispatch.md`: extension-dispatch map, case-insensitive suffix matching, `UnsupportedSuffixError` → CLI exit 2. Each parser sets a private `_input_format` attribute on the returned object.
-- [ ] T009 Extend `engine.run(doc, journal_id, cfg)` in `src/texlint/core/engine.py` to:
+- [X] T008 Implement `parse_document(paths)` in `src/texlint/core/engine.py` per `contracts/engine-dispatch.md`: extension-dispatch map, case-insensitive suffix matching, `UnsupportedSuffixError` → CLI exit 2. Each parser sets a private `_input_format` attribute on the returned object.
+- [X] T009 Extend `engine.run(doc, journal_id, cfg)` in `src/texlint/core/engine.py` to:
   - Derive `input_formats = {f._input_format for f in doc.all_files()}`.
   - For each rule, apply the filter: `if rule.formats is not None and not (rule.formats & input_formats): append a SkippedRule and continue`.
   - Populate `ComplianceReport.skipped_rules` on return.
   - Ensure `CategorySummary.rules_applied` excludes skipped rules (invariant F-2).
-- [ ] T010 [P] Extend `tests/unit/test_engine.py` to cover:
+- [X] T010 [P] Extend `tests/unit/test_engine.py` to cover:
   - `parse_document` dispatch per `contracts/engine-dispatch.md` test-matrix.
   - `UnsupportedSuffixError` → exit 2.
   - Invariants F-1 (no rule both violated and skipped), F-2 (rules_applied excludes skipped), F-4 (non-verbose output byte-identical to pre-feature on `.tex + .bib` input).
-- [ ] T011 [P] Update the terminal renderer (`src/texlint/output/terminal.py`): render a "Skipped rules" table after violations when `cfg.verbose` is true AND `skipped_rules` is non-empty. Default (non-verbose) output unchanged. Per `contracts/rule-format-filter.md`.
-- [ ] T012 [P] Update the JSON renderer (`src/texlint/output/json_output.py`): always include a top-level `skipped_rules` key (possibly empty list) in the output. Additive, back-compat.
-- [ ] T013 [P] Update the HTML renderer (`src/texlint/output/html_output.py`): render a "Skipped rules" section only when non-empty.
-- [ ] T014 [P] Extend the renderer tests (`tests/integration/test_cli_author_terminal.py`, `test_cli_json.py`, `test_cli_html.py`) with a skipped-rules scenario: feed an `.Rmd` fixture, assert the preamble rules appear in `skipped_rules` (JSON) / in the verbose table (terminal) / in the HTML section.
+- [X] T011 [P] Update the terminal renderer (`src/texlint/output/terminal.py`): render a "Skipped rules" table after violations when `cfg.verbose` is true AND `skipped_rules` is non-empty. Default (non-verbose) output unchanged. Per `contracts/rule-format-filter.md`.
+- [X] T012 [P] Update the JSON renderer (`src/texlint/output/json_output.py`): always include a top-level `skipped_rules` key (possibly empty list) in the output. Additive, back-compat.
+- [X] T013 [P] Update the HTML renderer (`src/texlint/output/html_output.py`): render a "Skipped rules" section only when non-empty.
+- [X] T014 [P] Extend the renderer tests (`tests/integration/test_cli_author_terminal.py`, `test_cli_json.py`, `test_cli_html.py`) with a skipped-rules scenario: feed an `.Rmd` fixture, assert the preamble rules appear in `skipped_rules` (JSON) / in the verbose table (terminal) / in the HTML section.
 
 **Checkpoint**: Foundation ready. API extensions, engine dispatch, renderer wiring all green. Per-category user stories can begin.
 
@@ -81,20 +81,20 @@ description: "Task breakdown for spec 005: Rnw / Rmd manuscript support"
 
 ### Fixtures + failing tests first (TDD)
 
-- [ ] T015 [P] [US1] Create fixture `tests/fixtures/compliant/minimal.Rnw` — a Sweave document with valid preamble, one R chunk, and clean prose. Fixture must cover ≥2 chunk types (plain `<<>>=`, options `<<label, fig.width=5>>=`) and ≥1 `\Sexpr{…}` call.
-- [ ] T016 [P] [US1] Create fixture `tests/fixtures/violations/rnw/JSS-MARKUP-002-bad.Rnw` — prose paragraph says "the MASS package" unwrapped; embedded R chunk contains `library(MASS)` at a different line. This is the canonical leak-test fixture.
-- [ ] T017 [P] [US1] Write failing `tests/unit/test_rnw_stripper.py` per `contracts/rnw-stripper.md §Test matrix`: 11 test cases covering the `S-1..S-6` invariants plus the empty-string / no-chunk / multi-chunk / unclosed / bare-`@` / inline-`\Sexpr{…}` edges.
+- [X] T015 [P] [US1] Create fixture `tests/fixtures/compliant/minimal.Rnw` — a Sweave document with valid preamble, one R chunk, and clean prose. Fixture must cover ≥2 chunk types (plain `<<>>=`, options `<<label, fig.width=5>>=`) and ≥1 `\Sexpr{…}` call.
+- [X] T016 [P] [US1] Create fixture `tests/fixtures/violations/rnw/JSS-MARKUP-002-bad.Rnw` — prose paragraph says "the MASS package" unwrapped; embedded R chunk contains `library(MASS)` at a different line. This is the canonical leak-test fixture.
+- [X] T017 [P] [US1] Write failing `tests/unit/test_rnw_stripper.py` per `contracts/rnw-stripper.md §Test matrix`: 11 test cases covering the `S-1..S-6` invariants plus the empty-string / no-chunk / multi-chunk / unclosed / bare-`@` / inline-`\Sexpr{…}` edges.
 
 ### Implementation
 
-- [ ] T018 [US1] Implement `strip_rnw_chunks(src)` and `_RNW_CHUNK` / `_RNW_SEXPR` regexes in `src/texlint/core/parser.py` per `contracts/rnw-stripper.md`. Pure function; no I/O.
-- [ ] T019 [US1] Implement `parse_rnw_file(path)` in `src/texlint/core/parser.py`: read file, call `strip_rnw_chunks`, pass to existing `parse_tex_file` via a source-override parameter (extend `parse_tex_file` if needed to accept pre-read source text). Returned `ParsedTexFile._input_format = "rnw"`.
-- [ ] T020 [US1] Wire `.rnw` into the dispatch map from T008. Verify `scripts/vtest.sh tests/unit/test_rnw_stripper.py tests/unit/test_engine.py` is green.
+- [X] T018 [US1] Implement `strip_rnw_chunks(src)` and `_RNW_CHUNK` / `_RNW_SEXPR` regexes in `src/texlint/core/parser.py` per `contracts/rnw-stripper.md`. Pure function; no I/O.
+- [X] T019 [US1] Implement `parse_rnw_file(path)` in `src/texlint/core/parser.py`: read file, call `strip_rnw_chunks`, pass to existing `parse_tex_file` via a source-override parameter (extend `parse_tex_file` if needed to accept pre-read source text). Returned `ParsedTexFile._input_format = "rnw"`.
+- [X] T020 [US1] Wire `.rnw` into the dispatch map from T008. Verify `scripts/vtest.sh tests/unit/test_rnw_stripper.py tests/unit/test_engine.py` is green.
 
 ### Integration + invariants
 
-- [ ] T021 [US1] Add integration tests `tests/integration/test_rnw_end_to_end.py`: run `jss-lint` on each fixture from T015 / T016 and assert the acceptance scenarios from spec §US1 (rule fires on prose line; does not fire on chunk lines; preamble rules fire on `.Rnw` with missing `\Address{}`).
-- [ ] T022 [US1] Verify the line-count invariant `S-1` holds on the real `docs/jss-template/article.Rnw` (if present) via a one-off smoke test. Skippable if the file is absent.
+- [X] T021 [US1] Add integration tests `tests/integration/test_rnw_end_to_end.py`: run `jss-lint` on each fixture from T015 / T016 and assert the acceptance scenarios from spec §US1 (rule fires on prose line; does not fire on chunk lines; preamble rules fire on `.Rnw` with missing `\Address{}`).
+- [X] T022 [US1] Verify the line-count invariant `S-1` holds on the real `docs/jss-template/article.Rnw` (if present) via a one-off smoke test. Skippable if the file is absent.
 
 **Checkpoint**: US1 shipped. `jss-lint paper.Rnw` lints Sweave manuscripts end-to-end.
 

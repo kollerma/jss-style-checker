@@ -40,6 +40,19 @@ def render(report: ComplianceReport, config: ToolConfig) -> None:
         _render_reviewer(report)
     else:
         _render_author(report)
+    if config.verbose and report.skipped_rules:
+        _render_skipped_rules(report)
+
+
+def _render_skipped_rules(report: ComplianceReport) -> None:
+    console = _console()
+    console.rule("[bold]Skipped rules[/bold]")
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Rule", no_wrap=True)
+    table.add_column("Reason")
+    for skip in report.skipped_rules:
+        table.add_row(skip.rule_id, skip.reason)
+    console.print(table)
 
 
 def _render_author(report: ComplianceReport) -> None:

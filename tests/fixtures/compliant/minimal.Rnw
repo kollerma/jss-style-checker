@@ -1,0 +1,22 @@
+\documentclass[article]{jss}
+\title{A Short Demo}
+\Abstract{Demo.}
+\Keywords{demo}
+\Address{Demo}
+\begin{document}
+
+Some prose about \proglang{R} with \Sexpr{1 + 1} inline.
+
+<<setup, echo=FALSE>>=
+library("MASS")
+data("quine")
+m <- glm(Days ~ Age, data = quine, family = poisson)
+@
+
+More prose after the chunk.
+
+<<fig1, fig.width=5>>=
+plot(fitted(m), residuals(m))
+@
+
+\end{document}

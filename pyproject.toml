@@ -27,6 +27,7 @@ dependencies = [
     "click>=8.1",
     "rich>=13.0",
     "jinja2>=3.1",
+    "PyYAML>=6.0",
     "tomli>=2.0; python_version<\"3.11\"",
 ]
 
@@ -35,7 +36,6 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
-    "PyYAML>=6.0",
 ]
 
 [project.scripts]

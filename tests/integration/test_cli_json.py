@@ -38,6 +38,7 @@ class TestJsonShape:
             "compliance_percentage",
             "categories",
             "violations",
+            "skipped_rules",
         }
         assert payload["tool_version"] == __version__
         assert payload["journal_id"] == "jss"

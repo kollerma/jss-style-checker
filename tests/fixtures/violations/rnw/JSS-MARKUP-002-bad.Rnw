@@ -1,0 +1,16 @@
+\documentclass[article]{jss}
+\title{A Short Demo}
+\Abstract{Demo.}
+\Keywords{demo}
+\Address{Demo}
+\begin{document}
+
+The MASS package is used throughout the analysis.
+
+<<setup>>=
+library("MASS")
+data("quine")
+m <- glm(Days ~ Age, data = quine, family = poisson)
+@
+
+\end{document}

@@ -231,6 +231,8 @@ class TestParsedDocument:
         assert len(files) == 2
 
     def test_files_for_rule_formats_filter(self):
+        # Spec 005: formats is now an input-format filter ('tex', 'rnw',
+        # 'rmd', 'bib') rather than a file-suffix filter ({'.tex', '.bib'}).
         tex = ParsedTexFile(path=Path("x.tex"), source="", nodes=(), walker=None, violations=())
         bib = ParsedBibFile(path=Path("x.bib"), source="", library=None, violations=())
         doc = ParsedDocument(tex_files=(tex,), bib_files=(bib,))
@@ -242,7 +244,7 @@ class TestParsedDocument:
             message_template="",
             authority="",
             check=lambda d, c: iter(()),
-            formats=frozenset({".tex"}),
+            formats=frozenset({"tex"}),
         )
         files = list(doc.files_for_rule(tex_only))
         assert [f.path.suffix for f in files] == [".tex"]
@@ -254,6 +256,79 @@ class TestParsedDocument:
         bib = ParsedBibFile(path=Path("b.bib"), source="", library=None, violations=(v2,))
         doc = ParsedDocument(tex_files=(tex,), bib_files=(bib,))
         assert set(doc.all_violations()) == {v1, v2}
+
+
+class TestSpec005Dataclasses:
+    """Spec 005 extensions: ParsedRmdFile + SkippedRule + new helpers."""
+
+    def test_skipped_rule_round_trip(self):
+        from texlint.api import SkippedRule
+        sr = SkippedRule(rule_id="JSS-PRE-001", reason="format mismatch")
+        assert sr.rule_id == "JSS-PRE-001"
+        assert sr.reason == "format mismatch"
+
+    def test_rmd_heading_round_trip(self):
+        from texlint.api import RmdHeading
+        h = RmdHeading(level=2, text="Results", line=10)
+        assert h.level == 2 and h.text == "Results" and h.line == 10
+
+    def test_rmd_prose_round_trip(self):
+        from texlint.api import RmdProse
+        p = RmdProse(text="hello", line=3, n_lines=1)
+        assert p.text == "hello" and p.line == 3 and p.n_lines == 1
+
+    def test_rmd_code_round_trip(self):
+        from texlint.api import RmdCode
+        c = RmdCode(lang="r", body="x <- 1", open_line=5, close_line=7)
+        assert c.lang == "r" and c.open_line == 5 and c.close_line == 7
+
+    def test_parsed_rmd_defaults(self):
+        from texlint.api import ParsedRmdFile
+        rmd = ParsedRmdFile(path=Path("x.Rmd"), source="")
+        assert rmd.yaml_frontmatter == {}
+        assert rmd.headings == ()
+        assert rmd.prose_blocks == ()
+        assert rmd.code_blocks == ()
+        assert rmd.latex_fragments == ()
+        assert rmd.violations == ()
+
+    def test_compliance_report_skipped_rules_default_empty(self):
+        r = ComplianceReport(
+            tool_version="0.0.0",
+            journal_id="jss",
+            violations=(),
+            categories=(),
+            compliance_percentage=None,
+        )
+        assert r.skipped_rules == ()
+
+    def test_all_tex_like_yields_tex_then_fragments(self):
+        from texlint.api import ParsedRmdFile
+        tex_a = ParsedTexFile(path=Path("a.tex"), source="", nodes=(), walker=None)
+        frag = ParsedTexFile(path=Path("b.Rmd:block@5"), source="", nodes=(), walker=None)
+        rmd = ParsedRmdFile(path=Path("b.Rmd"), source="", latex_fragments=(frag,))
+        doc = ParsedDocument(tex_files=(tex_a,), rmd_files=(rmd,))
+        out = list(doc.all_tex_like())
+        assert out == [tex_a, frag]
+
+    def test_all_tex_like_empty_when_no_tex(self):
+        doc = ParsedDocument()
+        assert list(doc.all_tex_like()) == []
+
+    def test_rule_formats_input_format_filter(self):
+        tex = ParsedTexFile(path=Path("x.tex"), source="", nodes=(), walker=None)
+        bib = ParsedBibFile(path=Path("x.bib"), source="", library=None)
+        doc = ParsedDocument(tex_files=(tex,), bib_files=(bib,))
+
+        r_tex_rnw = Rule(
+            id="R", category="c", severity=Severity.WARNING,
+            message_template="", authority="",
+            check=lambda d, c: iter(()),
+            formats=frozenset({"tex", "rnw"}),
+        )
+        # tex input → matches; bib input (format tag 'bib') → no match.
+        files = list(doc.files_for_rule(r_tex_rnw))
+        assert [f.path.suffix for f in files] == [".tex"]
 
 
 class TestJournalRuleModule:

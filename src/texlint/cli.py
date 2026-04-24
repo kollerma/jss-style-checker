@@ -22,10 +22,9 @@ from .api import (
     ToolConfig,
 )
 from .config import load as load_config
-from .core.engine import load_journal, run
-from .core.parser import parse_bib_file, parse_tex_file
+from .core.engine import UnsupportedSuffixError, load_journal, parse_document, run
 
-_SUPPORTED_SUFFIXES = {".tex", ".bib"}
+_SUPPORTED_SUFFIXES = {".tex", ".bib", ".rnw", ".rmd"}
 _PARSE_RULE_ID = "JSS-PARSE-000"
 
 _JOURNAL_CHOICES: tuple[str, ...] | None = None  # resolved lazily; click accepts any string
@@ -38,33 +37,30 @@ def _eprint(message: str) -> None:
 def _parse_inputs(paths: tuple[str, ...]) -> tuple[ParsedDocument | None, int]:
     """Parse each input file. Return (document, exit_code_if_any).
 
-    The exit-code is 2 when any path is missing, unreadable, or has an
-    unsupported suffix — the document is returned only when every path was
-    at least processable (missing file still produces a JSS-PARSE-000
-    violation on the corresponding parsed object, but that's counted at
-    the engine level).
+    The exit-code is 2 when any path is missing or has an unsupported
+    suffix. Delegates to :func:`texlint.core.engine.parse_document` for
+    actual parsing; extension dispatch supports ``.tex``, ``.bib``,
+    ``.Rnw``, and ``.Rmd`` (spec 005).
     """
-    tex_files = []
-    bib_files = []
-
+    path_objs: list[Path] = []
     for raw in paths:
         path = Path(raw)
-        suffix = path.suffix.lower()
-        if suffix not in _SUPPORTED_SUFFIXES:
+        if path.suffix.lower() not in _SUPPORTED_SUFFIXES:
             _eprint(
-                f"jss-lint: unsupported file extension '{suffix}' for {path} "
+                f"jss-lint: unsupported file extension '{path.suffix}' for {path} "
                 f"(expected one of: {', '.join(sorted(_SUPPORTED_SUFFIXES))})"
             )
             return None, 2
         if not path.exists():
             _eprint(f"jss-lint: file not found: {path}")
             return None, 2
-        if suffix == ".bib":
-            bib_files.append(parse_bib_file(path))
-        else:
-            tex_files.append(parse_tex_file(path))
+        path_objs.append(path)
 
-    return ParsedDocument(tex_files=tuple(tex_files), bib_files=tuple(bib_files)), 0
+    try:
+        return parse_document(path_objs), 0
+    except UnsupportedSuffixError as exc:
+        _eprint(f"jss-lint: {exc}")
+        return None, 2
 
 
 def _dispatch_renderer(output: str, report: Any, cfg: ToolConfig) -> None:

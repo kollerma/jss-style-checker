@@ -50,6 +50,10 @@ def to_payload(report: ComplianceReport) -> dict[str, Any]:
         "compliance_percentage": report.compliance_percentage,
         "categories": [_category_dict(c) for c in report.categories],
         "violations": [_violation_dict(v) for v in report.violations],
+        "skipped_rules": [
+            {"rule_id": s.rule_id, "reason": s.reason}
+            for s in report.skipped_rules
+        ],
     }
 
 

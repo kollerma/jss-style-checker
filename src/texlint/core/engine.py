@@ -17,6 +17,8 @@ import importlib.metadata as _im
 from collections import defaultdict
 from inspect import isclass
 
+from pathlib import Path
+
 from texlint import __version__ as _tool_version
 from texlint.api import (
     CategorySummary,
@@ -24,10 +26,64 @@ from texlint.api import (
     InvalidJournalError,
     JournalNotFoundError,
     JournalRuleModule,
+    ParsedBibFile,
     ParsedDocument,
+    ParsedRmdFile,
+    ParsedTexFile,
+    SkippedRule,
     ToolConfig,
     Violation,
+    _file_format,
 )
+
+
+class UnsupportedSuffixError(ValueError):
+    """Raised when ``parse_document`` encounters a path with an extension
+    outside the dispatch map. Caller (CLI) translates to exit code 2.
+    """
+
+    def __init__(self, path: Path) -> None:
+        super().__init__(
+            f"unsupported file extension: {path.name!r}. "
+            f"Supported: .tex, .bib, .Rnw, .Rmd (case-insensitive)."
+        )
+        self.path = path
+
+
+def parse_document(paths) -> ParsedDocument:
+    """Dispatch ``paths`` to the appropriate parsers by extension and
+    assemble a :class:`ParsedDocument`.
+
+    Raises :class:`UnsupportedSuffixError` on unknown extensions.
+    """
+    from texlint.core.parser import (
+        parse_bib_file,
+        parse_rmd_file,
+        parse_rnw_file,
+        parse_tex_file,
+    )
+
+    tex_files: list[ParsedTexFile] = []
+    bib_files: list[ParsedBibFile] = []
+    rmd_files: list[ParsedRmdFile] = []
+    for raw in paths:
+        path = Path(raw) if not isinstance(raw, Path) else raw
+        suffix = path.suffix.lower()
+        if suffix == ".tex":
+            tex_files.append(parse_tex_file(path))
+        elif suffix == ".bib":
+            bib_files.append(parse_bib_file(path))
+        elif suffix == ".rnw":
+            tex_files.append(parse_rnw_file(path))
+        elif suffix == ".rmd":
+            rmd_files.append(parse_rmd_file(path))
+        else:
+            raise UnsupportedSuffixError(path)
+    return ParsedDocument(
+        tex_files=tuple(tex_files),
+        bib_files=tuple(bib_files),
+        rmd_files=tuple(rmd_files),
+    )
 
 _ENTRY_POINT_GROUP = "texlint.journals"
 _PARSE_RULE_ID = "JSS-PARSE-000"
@@ -71,12 +127,27 @@ def run(
     violations_by_category: dict[str, list[Violation]] = defaultdict(list)
     applied_by_category: dict[str, int] = defaultdict(int)
     passed_by_category: dict[str, int] = defaultdict(int)
+    skipped: list[SkippedRule] = []
+
+    # Derive input formats present in the document. Empty doc → empty set.
+    input_formats = {_file_format(f) for f in parsed_document.all_files()}
 
     categories = journal.categories()
 
     for category in categories:
         for rule in category.rules:
             if rule.id in ignore:
+                continue
+            # Format filter: skip rules whose formats don't intersect the
+            # document's input formats (spec 005 FR-008).
+            if rule.formats is not None and not (rule.formats & input_formats):
+                skipped.append(SkippedRule(
+                    rule_id=rule.id,
+                    reason=(
+                        f"format mismatch (rule formats={sorted(rule.formats)}; "
+                        f"inputs={sorted(input_formats)})"
+                    ),
+                ))
                 continue
             # A rule is "applied" only if at least one input file matches.
             matched_files = list(parsed_document.files_for_rule(rule))
@@ -148,4 +219,5 @@ def run(
         violations=sorted_violations,
         categories=tuple(summaries),
         compliance_percentage=percentage,
+        skipped_rules=tuple(skipped),
     )
