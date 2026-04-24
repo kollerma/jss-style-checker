@@ -184,13 +184,13 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Goal**: Ship `rules/crossrefs.py` with JSS-XREF-001..004. Two info-severity rules (XREF-002, XREF-004).
 
-- [ ] T063 [P] [US1] Create fixture pairs for 4 crossrefs rules.
-- [ ] T064 [US1, US4] Write failing `tests/unit/rules/test_crossrefs.py`.
-- [ ] T065 [US1] Create `src/texlint/journals/jss/rules/crossrefs.py`.
-- [ ] T066 [US1] Remove xfail + wire.
-- [ ] T067 [US1] Verify 100% branch coverage.
-- [ ] T068 [US2] Run `scripts/eval-category.sh crossrefs`.
-- [ ] T069 [US1, US2, US4] Commit crossrefs PR.
+- [X] T063 [P] [US1] Create fixture pairs for 4 crossrefs rules.
+- [X] T064 [US1, US4] Write failing `tests/unit/rules/test_crossrefs.py`.
+- [X] T065 [US1] Create `src/texlint/journals/jss/rules/crossrefs.py`.
+- [X] T066 [US1] Remove xfail + wire.
+- [X] T067 [US1] Verify 100% branch coverage.
+- [X] T068 [US2] Run `scripts/eval-category.sh crossrefs`.
+- [X] T069 [US1, US2, US4] Commit crossrefs PR.
 
 **Checkpoint**: crossrefs category shipped.
 
