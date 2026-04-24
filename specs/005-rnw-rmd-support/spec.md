@@ -9,7 +9,7 @@
 
 ### Session 2026-04-24
 
-- Q: Markdown parser for `.Rmd` → A: `markdown-it-py` (CommonMark-compliant, token-stream API matches the spec's segment model).
+- Q: Markdown parser for `.Rmd` → A (initial): `markdown-it-py`. **Superseded by plan drift-reconciliation (2026-04-24)**: hand-roll a small state-machine tokenizer instead; `markdown-it-py`'s CommonMark AST is surface we'd immediately flatten. See `research.md §2`.
 - Q: Which existing rules' `formats` narrow at launch? → A: Preamble category only (PRE-001..008) narrow to `{"tex", "rnw"}`; all other categories stay `formats=None`.
 - Q: Inline LaTeX in `.Rmd` prose — raw-LaTeX island or plain text? → A: Raw-LaTeX island. Inline `$math$` / `\macro{...}` / bare `\macro` spans are tex-parsed with source-accurate line numbers so math-masking and citation rules fire on Rmd prose.
 
@@ -322,10 +322,13 @@ per-rule violation counts before and after this feature merges.
 - **pyyaml as a runtime dependency**: acceptable — already a dev
   extra, now promoted. Downstream consumers who `pip install texlint`
   without the `[rmd]` extra get Rmd support unconditionally.
-- **`markdown-it-py` as a runtime dependency**: the `.Rmd` body parser
-  uses `markdown-it-py` (CommonMark-compliant, token-stream API that
-  maps cleanly to the ordered segment model described in the Key
-  Entities section). No `[rmd]` extra; the dep ships unconditionally.
+- **No new Markdown-parser dep**: the `.Rmd` body parser is a
+  hand-rolled line-based state machine in `core/rmd_parser.py`
+  (~50 lines). `markdown-it-py` / `mistune` were considered and
+  rejected per Constitution §X (small surface) — their CommonMark
+  AST is surface we'd immediately flatten to our shallow (frontmatter
+  → heading | prose | fenced-code) token model. See Clarifications
+  Session 2026-04-24 drift-reconciliation note and `research.md §2`.
 - **Corpus expansion for Rnw / Rmd**: this feature ships a small real
   batch of CRAN-vignette sources alongside the synthetic unit-test
   fixtures. Target: **3–5 `.Rnw` vignettes + 2–3 `.Rmd` vignettes**
