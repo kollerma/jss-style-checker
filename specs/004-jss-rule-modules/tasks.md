@@ -338,13 +338,13 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Purpose**: Final cross-cutting validation per `quickstart.md §5` end-of-spec checkpoint.
 
-- [ ] T132 Run the full test suite: `scripts/vtest.sh tests/`. All tests green including `test_catalogue_registration.py` (R-1..R-9 all passing), `test_catalogue_data_fresh.py`, every `tests/unit/rules/test_<category>.py`.
-- [ ] T133 [P] Run repo-wide branch-coverage gate: `pytest --cov=src/texlint/journals/jss/rules --cov-branch --cov-fail-under=100`. Must be green across every rule module.
-- [ ] T134 [P] Run the golden-path demo: `jss-lint docs/jss-template/article.tex docs/jss-template/refs.bib`. Expect zero violations (or only violations whose rules are on the template-allowlist per SC-002). Any unexpected violation → open a follow-up issue; do NOT suppress in the template.
-- [ ] T135 [P] Run a synthetic "one-bad-fixture-per-rule" aggregate and assert that every catalogue rule id appears at least once in the output, with the catalogue-declared severity (SC-001). This test can live under `tests/integration/test_full_catalogue_coverage.py`.
-- [ ] T136 Produce the end-of-spec summary: every rule above the N=10 floor clears 90% precision; every rule still at "not yet measured" has a documented re-measurement plan (issue id, corpus milestone, or scheduled refresh per FR-013). Close the spec against SC-010.
-- [ ] T137 [P] Update `docs/` contributor pointers (if any) to reference the new rule-module layout. `quickstart.md` is the authoritative contributor onboarding; minimise doc duplication.
-- [ ] T138 Fill in the final sign-off in `specs/003-jss-rule-catalogue/checklists/rule-catalogue-review.md` OQ-11 (corpus growth to ~50 papers), now satisfied by the rollout corpus expansion.
+- [X] T132 Run the full test suite: `scripts/vtest.sh tests/`. All tests green including `test_catalogue_registration.py` (R-1..R-9 all passing), `test_catalogue_data_fresh.py`, every `tests/unit/rules/test_<category>.py`.
+- [X] T133 [P] Run repo-wide branch-coverage gate: `pytest --cov=src/texlint/journals/jss/rules --cov-branch --cov-fail-under=100`. Must be green across every rule module.
+- [X] T134 [P] Run the golden-path demo: `jss-lint docs/jss-template/article.tex docs/jss-template/refs.bib`. Expect zero violations (or only violations whose rules are on the template-allowlist per SC-002). Any unexpected violation → open a follow-up issue; do NOT suppress in the template.
+- [X] T135 [P] Run a synthetic "one-bad-fixture-per-rule" aggregate and assert that every catalogue rule id appears at least once in the output, with the catalogue-declared severity (SC-001). This test can live under `tests/integration/test_full_catalogue_coverage.py`.
+- [X] T136 Produce the end-of-spec summary: every rule above the N=10 floor clears 90% precision; every rule still at "not yet measured" has a documented re-measurement plan (issue id, corpus milestone, or scheduled refresh per FR-013). Close the spec against SC-010.
+- [X] T137 [P] Update `docs/` contributor pointers (if any) to reference the new rule-module layout. `quickstart.md` is the authoritative contributor onboarding; minimise doc duplication.
+- [X] T138 Fill in the final sign-off in `specs/003-jss-rule-catalogue/checklists/rule-catalogue-review.md` OQ-11 (corpus growth to ~50 papers), now satisfied by the rollout corpus expansion.
 
 **Checkpoint**: spec 004 closes when T132–T138 are all done and SC-010 is satisfied.
 

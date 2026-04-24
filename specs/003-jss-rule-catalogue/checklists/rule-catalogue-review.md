@@ -449,7 +449,7 @@ Items `/speckit.clarify` could not auto-resolve, or that surfaced during catalog
 ### Scope / target reality checks
 
 - [x] OQ-10 Total rule count. **Closed 2026-04-23**: 48 rules across 15 categories — well within the factor-of-two bound around the ~50 planning anchor (spec.md FR-006). No scope-creep clarify pass required.
-- [ ] OQ-11 Corpus has grown toward the ~50-paper target. **Deferred to implementation phase**: corpus is still at Phase A (~10 papers from spec 002 `examples/`). The N=10-labelled-violation floor for the precision gate is therefore advisory for most rules at present. The corpus grows alongside US2 category rollout (see `tasks.md` Phase 5+); re-check before sign-off on individual categories.
+- [ ] OQ-11 Corpus has grown toward the ~50-paper target. **Still open at close of spec 004 rollout (2026-04-24)**: corpus remains at 6 example papers (`examples/` from spec 002). All 58 rules shipped flagged "not yet measured" per spec 004 FR-013 because N=10 is unachievable on this corpus for every rule (the top firer is JSS-REFS-003 at 8 hits, still below the floor). JSS-archive fetch mechanism was investigated (URL pattern validated: `/index.php/jss/article/download/<vol>/<galleyId>` for source tarballs; paper `.ltx` at `<pkg>/inst/doc/*.ltx`) and deferred to a follow-up PR. Corpus expansion is the unblocking step for precision-gate measurements on every rule in the catalogue; track as a separate work item.
 - [x] OQ-12 SG-032..035 and SG-036..043 out-of-scope confirmation. **Closed 2026-04-23**: §1.3 marks all of SG-032..035 (graphics rendering) and SG-036..043 (`.Rnw` vignette territory) as `out-of-scope` with one-line rationales. Linter cannot render graphics; `.Rnw` is deferred per FR-021.
 
 ### Authority-ref resolvability
