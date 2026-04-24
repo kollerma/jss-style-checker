@@ -50,11 +50,9 @@ _AUTHOR_THRESHOLD = 6
 
 
 def _iter_entries(doc: ParsedDocument) -> Iterator[tuple[Any, Any]]:
-    for bib in doc.bib_files:
-        if bib.library is None:
-            continue
-        for entry in getattr(bib.library, "entries", ()) or ():
-            yield bib, entry
+    """Yield referenced ``(bib_file, entry)`` pairs. See
+    ``_helpers._iter_referenced_entries`` for scope semantics."""
+    yield from _helpers._iter_referenced_entries(doc)
 
 
 def _entry_line(entry: Any) -> int:

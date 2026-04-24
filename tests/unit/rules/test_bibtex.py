@@ -221,9 +221,12 @@ class TestBibtex004:
         self, parse_tex_source, parse_bib_source
     ):
         # Empty-key entries still fire (no key to match against shortcites).
+        # \nocite{*} widens scope so the empty-key entry is evaluated even
+        # though it can't be \cite'd by name.
         tex_src = (
             r"\documentclass[article]{jss}" "\n"
             r"\shortcites{foo}" "\n"
+            r"\nocite{*}" "\n"
             r"\begin{document}" r"\end{document}" "\n"
         )
         bib_src = (
@@ -243,7 +246,7 @@ class TestBibtex004:
     ):
         tex_src = (
             r"\documentclass{jss}" "\n"
-            r"\begin{document}" r"\end{document}" "\n"
+            r"\begin{document}" r"\cite{Many}" r"\end{document}" "\n"
         )
         bib_src = _bib_from_fixture("JSS-BIBTEX-004-bad.bib")
         doc = ParsedDocument(
@@ -304,8 +307,10 @@ class TestBibtex004:
     def test_empty_tex_file_falls_through(
         self, parse_tex_source, parse_bib_source
     ):
-        # tex file with no nodes at all → for-loop exits immediately.
-        tex_src = ""
+        # No \documentclass in the tex → _mitigation_present's preamble
+        # walk exits immediately. \cite{Many} is still enough to bring
+        # the entry into scope so the violation fires.
+        tex_src = r"\cite{Many}"
         bib_src = _bib_from_fixture("JSS-BIBTEX-004-bad.bib")
         doc = ParsedDocument(
             tex_files=(parse_tex_source(tex_src),),

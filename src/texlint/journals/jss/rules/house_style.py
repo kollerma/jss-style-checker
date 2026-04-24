@@ -88,11 +88,9 @@ def check_jss_house_001(
 
 
 def _iter_bib_entries(doc: ParsedDocument) -> Iterator[tuple[Any, Any]]:
-    for bib in doc.bib_files:
-        if bib.library is None:
-            continue
-        for entry in getattr(bib.library, "entries", ()) or ():
-            yield bib, entry
+    """Yield referenced ``(bib_file, entry)`` pairs. See
+    ``_helpers._iter_referenced_entries`` for scope semantics."""
+    yield from _helpers._iter_referenced_entries(doc)
 
 
 def check_jss_house_002(

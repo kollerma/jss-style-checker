@@ -37,6 +37,16 @@ _VERBATIM_ENVS: frozenset[str] = frozenset(
 
 _VERBATIM_MACROS: frozenset[str] = frozenset({"verb", "code"})
 
+# natbib + amsrefs + base LaTeX citation macros. `nocite` is included
+# because `\nocite{*}` forces the bibliography to render every entry,
+# so it widens the "referenced" scope to all-of-them.
+_CITE_MACROS_FOR_SCOPE: frozenset[str] = frozenset({
+    "cite", "Cite", "citet", "Citet", "citep", "Citep",
+    "citealp", "Citealp", "citealt", "Citealt",
+    "citeauthor", "Citeauthor", "citeyear", "citeyearpar",
+    "nocite",
+})
+
 
 def _walk(nodes: Sequence[Any] | None) -> Iterator[Any]:
     """Pre-order traversal of a pylatexenc node list.
@@ -122,6 +132,74 @@ def _group_text(group: Any) -> str:
         if isinstance(child, LatexCharsNode):
             chars.append(child.chars)
     return "".join(chars).strip()
+
+
+def _collect_cited_keys(doc: Any) -> tuple[set[str], bool]:
+    """Return ``(keys, include_all)`` from all ``\\cite*`` / ``\\nocite``
+    macros across every tex-like island in ``doc``.
+
+    - ``keys`` is the set of bibkey strings collected from macro
+      arguments; multi-key args like ``{foo,bar}`` are split on commas
+      and stripped.
+    - ``include_all`` flips to ``True`` if any ``\\nocite{*}`` is seen
+      — that pattern forces BibTeX to render every entry in the
+      bibliography, so the "referenced" scope widens to all of them.
+
+    Uses :func:`_macro_args_text` so macros unknown to pylatexenc
+    (``\\nocite``, ``\\shortcites``) resolve their arg via the
+    next-sibling-group fallback rather than through ``nodeargd``.
+    """
+    keys: set[str] = set()
+    include_all = False
+    for tex in doc.all_tex_like():
+        for parent, idx, node in _iter_with_parent(tex.nodes):
+            if not isinstance(node, LatexMacroNode):
+                continue
+            if node.macroname not in _CITE_MACROS_FOR_SCOPE:
+                continue
+            text = _macro_args_text(node, parent, idx)
+            for raw in text.split(","):
+                key = raw.strip()
+                if key == "*":
+                    include_all = True
+                elif key:
+                    keys.add(key)
+    return keys, include_all
+
+
+def _iter_referenced_entries(doc: Any) -> Iterator[tuple[Any, Any]]:
+    """Yield ``(bib_file, entry)`` pairs for entries that are cited from
+    the paper's tex-like surface.
+
+    Rationale: authors often drop a shared ``.bib`` collection into the
+    paper dir even though only a subset of entries is cited; rule
+    violations on unreferenced entries are noise for the author.
+
+    Scope widening:
+    - Bib-only lint (no tex/rnw/rmd input present) → include every
+      entry (we have no way to know scope, and the user explicitly
+      asked to lint the bib).
+    - ``\\nocite{*}`` present anywhere in the tex surface → include
+      every entry (that's the semantic of the macro).
+    """
+    bib_files = list(doc.bib_files)
+    if not bib_files:
+        return
+    tex_like_present = any(True for _ in doc.all_tex_like())
+    if not tex_like_present:
+        for bib in bib_files:
+            if bib.library is None:
+                continue
+            for entry in getattr(bib.library, "entries", ()) or ():
+                yield bib, entry
+        return
+    cited, include_all = _collect_cited_keys(doc)
+    for bib in bib_files:
+        if bib.library is None:
+            continue
+        for entry in getattr(bib.library, "entries", ()) or ():
+            if include_all or entry.key in cited:
+                yield bib, entry
 
 
 def _lineno_col(tex: Any, pos: int) -> tuple[int, int]:

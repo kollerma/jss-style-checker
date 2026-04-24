@@ -24,6 +24,7 @@ from typing import Any
 
 from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
+from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
 # Entry types that should carry a DOI per article.tex:421.
@@ -63,12 +64,13 @@ def _entry_line(entry: Any) -> int:
 
 
 def _iter_entries(doc: ParsedDocument) -> Iterator[tuple[Any, Any]]:
-    """Yield ``(bib_file, entry)`` for every BibTeX entry in ``doc``."""
-    for bib in doc.bib_files:
-        if bib.library is None:
-            continue
-        for entry in getattr(bib.library, "entries", ()) or ():
-            yield bib, entry
+    """Yield ``(bib_file, entry)`` for every referenced BibTeX entry.
+
+    Scope: entries cited from the tex surface (see
+    ``_helpers._iter_referenced_entries``). Widens to all entries when
+    the lint target is bib-only or the paper uses ``\\nocite{*}``.
+    """
+    yield from _helpers._iter_referenced_entries(doc)
 
 
 def _violation(

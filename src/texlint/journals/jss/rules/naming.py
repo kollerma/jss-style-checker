@@ -97,34 +97,31 @@ def _entry_line(entry: Any) -> int:
 def check_jss_name_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    for bib in doc.bib_files:
-        if bib.library is None:
-            continue
-        for entry in getattr(bib.library, "entries", ()) or ():
-            publisher = _field_value(entry, "publisher")
-            if publisher and publisher in PUBLISHER_CANONICAL:
-                yield _violation(
-                    file=bib.path,
-                    line=_entry_line(entry),
-                    column=None,
-                    rule_id="JSS-NAME-002",
-                    suggestion=(
-                        f"Replace publisher {publisher!r} with "
-                        f"{PUBLISHER_CANONICAL[publisher]!r}."
-                    ),
-                )
-            journal = _field_value(entry, "journal")
-            if journal and journal in JOURNAL_CANONICAL:
-                yield _violation(
-                    file=bib.path,
-                    line=_entry_line(entry),
-                    column=None,
-                    rule_id="JSS-NAME-002",
-                    suggestion=(
-                        f"Replace journal {journal!r} with "
-                        f"{JOURNAL_CANONICAL[journal]!r}."
-                    ),
-                )
+    for bib, entry in _helpers._iter_referenced_entries(doc):
+        publisher = _field_value(entry, "publisher")
+        if publisher and publisher in PUBLISHER_CANONICAL:
+            yield _violation(
+                file=bib.path,
+                line=_entry_line(entry),
+                column=None,
+                rule_id="JSS-NAME-002",
+                suggestion=(
+                    f"Replace publisher {publisher!r} with "
+                    f"{PUBLISHER_CANONICAL[publisher]!r}."
+                ),
+            )
+        journal = _field_value(entry, "journal")
+        if journal and journal in JOURNAL_CANONICAL:
+            yield _violation(
+                file=bib.path,
+                line=_entry_line(entry),
+                column=None,
+                rule_id="JSS-NAME-002",
+                suggestion=(
+                    f"Replace journal {journal!r} with "
+                    f"{JOURNAL_CANONICAL[journal]!r}."
+                ),
+            )
 
 
 # ---------------------------------------------------------------------------
