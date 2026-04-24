@@ -163,3 +163,4 @@ examples/**/.sha256
 # CRAN-sourced vignettes — reproducible from eval/corpus-manifest.csv via
 # `eval-jss corpus fetch`; SHA256-pinned, so we do not check in the payload.
 examples/cran_*/
+.claude/settings.local.json
