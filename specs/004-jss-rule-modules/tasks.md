@@ -149,13 +149,13 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Goal**: Ship `rules/structure.py` with JSS-STRUCT-001..006. No retrofit. No skip-list entries.
 
-- [ ] T048 [P] [US1] Create fixture pairs for 6 structure rules.
-- [ ] T049 [US1, US4] Write failing `tests/unit/rules/test_structure.py`.
-- [ ] T050 [US1] Create `src/texlint/journals/jss/rules/structure.py`.
-- [ ] T051 [US1] Remove xfail + wire.
-- [ ] T052 [US1] Verify 100% branch coverage.
-- [ ] T053 [US2] Run `scripts/eval-category.sh structure`.
-- [ ] T054 [US1, US2, US4] Commit structure PR.
+- [X] T048 [P] [US1] Create fixture pairs for 6 structure rules.
+- [X] T049 [US1, US4] Write failing `tests/unit/rules/test_structure.py`.
+- [X] T050 [US1] Create `src/texlint/journals/jss/rules/structure.py`.
+- [X] T051 [US1] Remove xfail + wire.
+- [X] T052 [US1] Verify 100% branch coverage.
+- [X] T053 [US2] Run `scripts/eval-category.sh structure`.
+- [X] T054 [US1, US2, US4] Commit structure PR.
 
 **Checkpoint**: structure category shipped.
 

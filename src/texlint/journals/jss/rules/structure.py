@@ -1,0 +1,361 @@
+"""Structure rules for the JSS journal plugin.
+
+Rules in this module:
+  - JSS-STRUCT-001 — document ends with a summary/discussion section
+    before the bibliography.
+  - JSS-STRUCT-002 — "Acknowledgments" uses American spelling.
+  - JSS-STRUCT-003 — appendix sections have descriptive titles, not a
+    bare ``Appendix``.
+  - JSS-STRUCT-004 — references use ``\\bibliography{}``, not a
+    hand-written ``thebibliography`` environment.
+  - JSS-STRUCT-005 — ``\\author{}`` separates authors with ``\\And`` /
+    ``\\AND`` (not lowercase ``\\and``).
+  - JSS-STRUCT-006 — appendix follows the bibliography with a page
+    separator (``\\newpage`` / ``\\clearpage`` / ``\\pagebreak``).
+"""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Iterator
+from typing import Any
+
+from pylatexenc.latexwalker import (
+    LatexEnvironmentNode,
+    LatexGroupNode,
+    LatexMacroNode,
+)
+
+from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.journals.jss import _catalogue_data
+from texlint.journals.jss.rules import _helpers
+
+
+# Words that mark a section as a summary / discussion / conclusion.
+_SUMMARY_WORDS_RE = re.compile(
+    r"\b(summary|discussion|conclusion|conclusions|concluding)\b",
+    flags=re.IGNORECASE,
+)
+
+# Page-break macros accepted by STRUCT-006.
+_PAGEBREAK_MACROS: frozenset[str] = frozenset(
+    {"newpage", "clearpage", "cleardoublepage", "pagebreak"}
+)
+
+# Section macros whose titles we inspect.
+_SECTION_MACROS: frozenset[str] = frozenset(
+    {"section", "section*", "subsection", "subsection*",
+     "chapter", "chapter*"}
+)
+
+
+def _first_arg_text(macro: Any, parent: Any, idx: int) -> str:
+    return _helpers._macro_args_text(macro, parent, idx)
+
+
+def _violation(
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+) -> Violation:
+    meta = _catalogue_data.RULES[rule_id]
+    line, col = _helpers._lineno_col(tex, pos)
+    return Violation(
+        file=tex.path,
+        line=line,
+        column=col,
+        rule_id=rule_id,
+        severity=meta["severity"],
+        message=meta["message_template"],
+        suggestion=suggestion,
+        fix=None,
+    )
+
+
+# ---------------------------------------------------------------------------
+# JSS-STRUCT-001 — ends with summary / discussion
+# ---------------------------------------------------------------------------
+
+
+def check_jss_struct_001(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    for tex in doc.tex_files:
+        bib_pos = _find_bibliography_pos(tex)
+        if bib_pos is None:
+            continue  # no bibliography → out of scope
+        last_section: tuple[Any, Any, int] | None = None
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+            if node.pos >= bib_pos:
+                continue
+            if (
+                isinstance(node, LatexMacroNode)
+                and node.macroname in _SECTION_MACROS
+            ):
+                last_section = (node, parent, idx)
+        if last_section is None:
+            continue
+        node, parent, idx = last_section
+        title = _first_arg_text(node, parent, idx)
+        if _SUMMARY_WORDS_RE.search(title):
+            continue
+        yield _violation(
+            tex=tex,
+            pos=node.pos,
+            rule_id="JSS-STRUCT-001",
+            suggestion=(
+                "Add a 'Summary and discussion' (or similar) section "
+                "before the bibliography."
+            ),
+        )
+
+
+def _find_bibliography_pos(tex: Any) -> int | None:
+    for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+        if (
+            isinstance(node, LatexMacroNode)
+            and node.macroname == "bibliography"
+        ):
+            return node.pos
+        if (
+            isinstance(node, LatexEnvironmentNode)
+            and node.environmentname == "thebibliography"
+        ):
+            return node.pos
+    return None
+
+
+# ---------------------------------------------------------------------------
+# JSS-STRUCT-002 — "Acknowledgments" (AE spelling)
+# ---------------------------------------------------------------------------
+
+
+def check_jss_struct_002(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    for tex in doc.tex_files:
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+            if not (
+                isinstance(node, LatexMacroNode)
+                and node.macroname in _SECTION_MACROS
+            ):
+                continue
+            title = _first_arg_text(node, parent, idx)
+            if re.search(r"\backnowledgement[s]?\b", title, flags=re.IGNORECASE):
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-STRUCT-002",
+                    suggestion=(
+                        "Use 'Acknowledgments' (American spelling) — "
+                        "not 'Acknowledgements'."
+                    ),
+                )
+
+
+# ---------------------------------------------------------------------------
+# JSS-STRUCT-003 — appendix sections have proper titles
+# ---------------------------------------------------------------------------
+
+
+def check_jss_struct_003(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    for tex in doc.tex_files:
+        for env in _walk_envs(tex.nodes, "appendix"):
+            for sub_parent, sub_idx, sub in _helpers._iter_with_parent(
+                env.nodelist or ()
+            ):
+                if not (
+                    isinstance(sub, LatexMacroNode)
+                    and sub.macroname in _SECTION_MACROS
+                ):
+                    continue
+                title = _first_arg_text(sub, sub_parent, sub_idx).strip()
+                if _is_bare_appendix(title):
+                    yield _violation(
+                        tex=tex,
+                        pos=sub.pos,
+                        rule_id="JSS-STRUCT-003",
+                        suggestion=(
+                            "Give the appendix section a descriptive title "
+                            "(e.g., 'More technical details'), not a bare "
+                            "'Appendix'."
+                        ),
+                    )
+
+
+def _walk_envs(nodes: Any, name: str) -> Iterator[Any]:
+    for node in _helpers._walk(nodes):
+        if (
+            isinstance(node, LatexEnvironmentNode)
+            and node.environmentname == name
+        ):
+            yield node
+
+
+def _is_bare_appendix(title: str) -> bool:
+    stripped = title.strip().lower()
+    return stripped in {"appendix", "appendices"}
+
+
+# ---------------------------------------------------------------------------
+# JSS-STRUCT-004 — no hand-written thebibliography
+# ---------------------------------------------------------------------------
+
+
+def check_jss_struct_004(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    for tex in doc.tex_files:
+        for env in _walk_envs(tex.nodes, "thebibliography"):
+            yield _violation(
+                tex=tex,
+                pos=env.pos,
+                rule_id="JSS-STRUCT-004",
+                suggestion=(
+                    "Replace \\begin{thebibliography}...\\end{thebibliography}"
+                    " with \\bibliography{<bib-file>}."
+                ),
+            )
+
+
+# ---------------------------------------------------------------------------
+# JSS-STRUCT-005 — \and separator in \author{}
+# ---------------------------------------------------------------------------
+
+
+def check_jss_struct_005(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    for tex in doc.tex_files:
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+            if not (
+                isinstance(node, LatexMacroNode)
+                and node.macroname == "author"
+            ):
+                continue
+            group = _first_group_arg(node, parent, idx)
+            if group is None:
+                continue
+            if _group_contains_lowercase_and(group):
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-STRUCT-005",
+                    suggestion=(
+                        "Separate authors with \\And (inline) or \\AND "
+                        "(line break), not lowercase \\and."
+                    ),
+                )
+
+
+def _first_group_arg(macro: Any, parent: Any, idx: int) -> Any:
+    argd = getattr(macro, "nodeargd", None)
+    if argd is not None:
+        for arg in argd.argnlist or ():
+            if isinstance(arg, LatexGroupNode):
+                return arg
+    return _helpers._next_group_arg(parent, idx)
+
+
+def _group_contains_lowercase_and(group: Any) -> bool:
+    for node in _helpers._walk(group.nodelist or ()):
+        if isinstance(node, LatexMacroNode) and node.macroname == "and":
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# JSS-STRUCT-006 — appendix follows bibliography with a page separator
+# ---------------------------------------------------------------------------
+
+
+def check_jss_struct_006(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    for tex in doc.tex_files:
+        bib_pos = _find_bibliography_macro_pos(tex)
+        if bib_pos is None:
+            continue
+        appendix_env = _find_first_appendix_env(tex)
+        if appendix_env is None:
+            continue
+        if appendix_env.pos <= bib_pos:
+            continue  # appendix precedes bibliography — different layout
+        if _has_pagebreak_between(tex, bib_pos, appendix_env.pos):
+            continue
+        yield _violation(
+            tex=tex,
+            pos=appendix_env.pos,
+            rule_id="JSS-STRUCT-006",
+            suggestion=(
+                "Insert \\newpage (or \\clearpage) between \\bibliography{}"
+                " and \\begin{appendix}."
+            ),
+        )
+
+
+def _find_bibliography_macro_pos(tex: Any) -> int | None:
+    for node in _helpers._walk(tex.nodes):
+        if (
+            isinstance(node, LatexMacroNode)
+            and node.macroname == "bibliography"
+        ):
+            return node.pos
+    return None
+
+
+def _find_first_appendix_env(tex: Any) -> Any:
+    for env in _walk_envs(tex.nodes, "appendix"):
+        return env
+    return None
+
+
+def _has_pagebreak_between(tex: Any, start: int, end: int) -> bool:
+    for node in _helpers._walk(tex.nodes):
+        if not isinstance(node, LatexMacroNode):
+            continue
+        if node.macroname not in _PAGEBREAK_MACROS:
+            continue
+        if start < node.pos < end:
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Rule objects
+# ---------------------------------------------------------------------------
+
+
+def _rule(rule_id: str, check_fn) -> Rule:
+    meta = _catalogue_data.RULES[rule_id]
+    return Rule(
+        id=rule_id,
+        category=meta["category"],
+        severity=meta["severity"],
+        message_template=meta["message_template"],
+        authority=meta["authority"],
+        check=check_fn,
+        formats=None,
+    )
+
+
+jss_struct_001 = _rule("JSS-STRUCT-001", check_jss_struct_001)
+jss_struct_002 = _rule("JSS-STRUCT-002", check_jss_struct_002)
+jss_struct_003 = _rule("JSS-STRUCT-003", check_jss_struct_003)
+jss_struct_004 = _rule("JSS-STRUCT-004", check_jss_struct_004)
+jss_struct_005 = _rule("JSS-STRUCT-005", check_jss_struct_005)
+jss_struct_006 = _rule("JSS-STRUCT-006", check_jss_struct_006)
+
+
+rules: tuple[Rule, ...] = (
+    jss_struct_001,
+    jss_struct_002,
+    jss_struct_003,
+    jss_struct_004,
+    jss_struct_005,
+    jss_struct_006,
+)
