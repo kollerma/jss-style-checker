@@ -43,18 +43,26 @@ class RuleRow:
     pending: int
     precision: float | None  # None = "not yet measured"
     status: str              # PASS | FAIL | NOT MEASURED | NOT EXERCISED
-    source: str = "overall"  # overall | cran | bioc | arxiv | jss_archive | manual
+    # `overall` = all rows. Per-source values from papers.source:
+    # cran | bioc | arxiv | jss_archive | manual. Per-format values
+    # from violations.file_suffix (spec 005): tex | bib | rnw | rmd.
+    source: str = "overall"
 
 
 @dataclass
 class PrecisionTable:
     rows: list[RuleRow] = field(default_factory=list)
     parse_failures: int = 0
+    # Dimension of the non-overall rows: "source" (papers.source) or
+    # "format" (violations.file_suffix). Drives the breakdown column
+    # header in `render_terminal`. Irrelevant when there are no
+    # non-overall rows.
+    breakdown: str = "source"
 
     @property
     def any_below_threshold(self) -> bool:
-        # Only the overall rows gate the CLI exit code — per-source rows
-        # are a tuning aid, not a gate (research.md §"Per-source breakdown").
+        # Only the overall rows gate the CLI exit code — per-source/format
+        # rows are a tuning aid, not a gate (research.md §"Per-source breakdown").
         return any(
             r.status == "FAIL" and r.source == "overall" for r in self.rows
         )
@@ -89,6 +97,19 @@ _PER_RULE_BY_SOURCE_SQL = """
      WHERE v.rule_id != 'JSS-PARSE-000'
      GROUP BY v.rule_id, p.source
      ORDER BY MIN(v.category), v.rule_id, p.source
+"""
+
+_PER_RULE_BY_FORMAT_SQL = """
+    SELECT rule_id,
+           MIN(category) AS category,
+           LOWER(LTRIM(COALESCE(file_suffix, ''), '.')) AS format,
+           SUM(CASE WHEN verdict = 'true_positive'  THEN 1 ELSE 0 END) AS tp,
+           SUM(CASE WHEN verdict = 'false_positive' THEN 1 ELSE 0 END) AS fp,
+           SUM(CASE WHEN verdict IS NULL OR verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
+      FROM violations
+     WHERE rule_id != 'JSS-PARSE-000'
+     GROUP BY rule_id, format
+     ORDER BY MIN(category), rule_id, format
 """
 
 _PARSE_FAILURE_COUNT_SQL = (
@@ -136,6 +157,40 @@ def compute_precision(db_path: Path) -> PrecisionTable:
         cx.close()
 
 
+def compute_precision_by_format(db_path: Path) -> PrecisionTable:
+    """Overall + per-format breakdown using `violations.file_suffix` (spec 005).
+
+    Per-format rows carry the suffix in `.source` (`tex`, `rnw`, `rmd`,
+    `bib`, or `""` for pre-migration rows). Only `overall` rows gate
+    the CLI exit code.
+    """
+    overall = compute_precision(db_path)
+    cx = db.connect(db_path)
+    try:
+        per_format_rows: list[RuleRow] = []
+        for r in cx.execute(_PER_RULE_BY_FORMAT_SQL).fetchall():
+            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            per_format_rows.append(
+                RuleRow(
+                    rule_id=r["rule_id"],
+                    category=r["category"] or "unknown",
+                    tp=r["tp"],
+                    fp=r["fp"],
+                    pending=r["pending"],
+                    precision=precision,
+                    status=status,
+                    source=r["format"] or "unknown",
+                )
+            )
+    finally:
+        cx.close()
+    return PrecisionTable(
+        rows=overall.rows + per_format_rows,
+        parse_failures=overall.parse_failures,
+        breakdown="format",
+    )
+
+
 def compute_precision_by_source(db_path: Path) -> PrecisionTable:
     """Overall + per-source breakdown, one `PrecisionTable` with both layers.
 
@@ -166,6 +221,7 @@ def compute_precision_by_source(db_path: Path) -> PrecisionTable:
     return PrecisionTable(
         rows=overall.rows + per_source_rows,
         parse_failures=overall.parse_failures,
+        breakdown="source",
     )
 
 
@@ -214,8 +270,11 @@ def render_terminal(table: PrecisionTable, console: Console | None = None) -> No
         console.print(t)
 
     if per_source_rows:
-        t = Table(title="Per-source breakdown")
-        t.add_column("Source")
+        is_format = table.breakdown == "format"
+        title = "Per-format breakdown" if is_format else "Per-source breakdown"
+        col_label = "Format" if is_format else "Source"
+        t = Table(title=title)
+        t.add_column(col_label)
         t.add_column("Rule")
         t.add_column("TP", justify="right")
         t.add_column("FP", justify="right")
@@ -316,12 +375,15 @@ def run(
     *,
     db_path: Path,
     by_source: bool = False,
+    by_format: bool = False,
     csv_path: str | None = None,
 ) -> int:
-    table = (
-        compute_precision_by_source(db_path) if by_source
-        else compute_precision(db_path)
-    )
+    if by_format:
+        table = compute_precision_by_format(db_path)
+    elif by_source:
+        table = compute_precision_by_source(db_path)
+    else:
+        table = compute_precision(db_path)
     render_terminal(table)
 
     if csv_path and csv_path != "-":

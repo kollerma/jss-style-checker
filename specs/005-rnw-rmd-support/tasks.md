@@ -173,21 +173,21 @@ description: "Task breakdown for spec 005: Rnw / Rmd manuscript support"
 
 ### Corpus expansion
 
-- [ ] T038 [US4] Curate a short-list of CRAN packages with JSS-style vignettes: target 3–5 `.Rnw` (e.g. `lme4`, `zoo`, `quantreg`, `survival`, `mgcv`) and 2–3 `.Rmd` (e.g. `ggplot2`, `brms`). Verify each tarball is reachable and contains the expected `.Rnw` / `.Rmd` file at `<pkg>/vignettes/*.{Rnw,Rmd}` or `<pkg>/inst/doc/*.{Rnw,Rmd}`. Document package/version choices in `specs/005-rnw-rmd-support/end-of-spec-summary.md` (stub for Polish phase).
-- [ ] T039 [US4] Append rows to `eval/corpus-manifest.csv` for each curated package — one row per vignette file, `source=cran`, `vignette_file=<path-inside-tarball>`, `local_path=<slug>/`, `sha256=` left blank initially.
-- [ ] T040 [US4] Run `scripts/vpy.sh -m eval.cli corpus fetch` (or `eval-jss corpus fetch`) to materialise each row; the tool pins `sha256` into `eval/corpus-manifest.csv`. Commit the populated hashes.
-- [ ] T041 [US4] Run `eval-jss scan --force` over the expanded corpus. Confirm each new `.Rnw` / `.Rmd` paper scans without a `JSS-PARSE-000` violation; if any do, triage (malformed fixture? parser edge case?) and address.
+- [X] T038 [US4] Curate a short-list of CRAN packages with JSS-style vignettes: target 3–5 `.Rnw` (e.g. `lme4`, `zoo`, `quantreg`, `survival`, `mgcv`) and 2–3 `.Rmd` (e.g. `ggplot2`, `brms`). Verify each tarball is reachable and contains the expected `.Rnw` / `.Rmd` file at `<pkg>/vignettes/*.{Rnw,Rmd}` or `<pkg>/inst/doc/*.{Rnw,Rmd}`. Document package/version choices in `specs/005-rnw-rmd-support/end-of-spec-summary.md` (stub for Polish phase).
+- [X] T039 [US4] Append rows to `eval/corpus-manifest.csv` for each curated package — one row per vignette file, `source=cran`, `vignette_file=<path-inside-tarball>`, `local_path=<slug>/`, `sha256=` left blank initially.
+- [X] T040 [US4] Run `scripts/vpy.sh -m eval.cli corpus fetch` (or `eval-jss corpus fetch`) to materialise each row; the tool pins `sha256` into `eval/corpus-manifest.csv`. Commit the populated hashes.
+- [X] T041 [US4] Run `eval-jss scan --force` over the expanded corpus. Confirm each new `.Rnw` / `.Rmd` paper scans without a `JSS-PARSE-000` violation; if any do, triage (malformed fixture? parser edge case?) and address.
 
 ### Per-format precision slicing
 
-- [ ] T042 [US4] Implement `--by-format` on `eval-jss report` in `eval/report.py`: partition the violation set by `papers.path.suffix.lower()` and emit one row per rule per format (`tex` / `rnw` / `rmd`), with combined precision unchanged as the authoritative single-rule figure.
-- [ ] T043 [US4] Extend `tests/eval/test_report.py` with:
+- [X] T042 [US4] Implement `--by-format` on `eval-jss report` in `eval/report.py`: partition the violation set by `papers.path.suffix.lower()` and emit one row per rule per format (`tex` / `rnw` / `rmd`), with combined precision unchanged as the authoritative single-rule figure.
+- [X] T043 [US4] Extend `tests/eval/test_report.py` with:
   - A by-format partition test using synthetic rows for `.tex`, `.Rnw`, `.Rmd` papers.
   - A regression test asserting default (no-flag) output is byte-identical to pre-feature snapshot on the stock corpus.
 
 ### Regression diff
 
-- [ ] T044 [US4] Compare `eval-jss report` output on the 6-paper `.tex` corpus after T042 vs the snapshot from T002. Must match byte-for-byte for every `.tex`-only rule. FR-015 / SC-003.
+- [X] T044 [US4] Compare `eval-jss report` output on the 6-paper `.tex` corpus after T042 vs the snapshot from T002. Must match byte-for-byte for every `.tex`-only rule. FR-015 / SC-003.
 
 **Checkpoint**: US4 shipped. Corpus expanded; per-format precision slicing live; `.tex` baseline isolated.
 

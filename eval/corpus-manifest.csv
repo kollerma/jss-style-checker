@@ -5,3 +5,8 @@ jss_doi,source,source_id,version,vignette_file,local_path,sha256
 ,manual,placeholder_bib_violation,manual,article.tex,placeholder_bib_violation/,c82e524057339e4daff79b11c11487802524005e37e3e063c86a9deb57f7fd34
 ,manual,placeholder_parse_failure,manual,article.tex,placeholder_parse_failure/,d459cacfa9b2339833a8fed012e5a7ddef5d2d45023ced1dd22ac5eb932106a7
 ,manual,jss_template_article,manual,article.tex,jss_template_article/,0c6b8580a692decbcc9ea8e144f5de6a5963d31f6b18b4bb496368dfcfa755cf
+,cran,lme4,1.1-35.1,lme4/vignettes/lmer.Rnw,cran_lme4/,e4a411396f68bf93751dfd01c8cd431e2d4658340186c47d164ebb2b840afb5b
+,cran,zoo,1.8-12,zoo/vignettes/zoo.Rnw,cran_zoo/,e6c3862668f9e3422bced3b6fba485c76a1e91b48f5d6153822d6a61863b2fb8
+,cran,rpart,4.1.23,rpart/vignettes/longintro.Rnw,cran_rpart/,f9b89aed6aa6cea656a2dcb271574e969ce2b1c98beb07bd91e17339f6daabaf
+,cran,ggplot2,3.5.0,ggplot2/vignettes/ggplot2.Rmd,cran_ggplot2/,07fa1cd4e02d409ade32e69a9088d9209f864c6ddd70fa2f904769dec21090e2
+,cran,stringr,1.5.1,stringr/vignettes/stringr.Rmd,cran_stringr/,a4adec51bb3f04214b1d8ef40d3a58949f21b1497cbeaf2ba552e0891eef45de

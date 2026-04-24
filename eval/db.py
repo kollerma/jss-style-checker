@@ -35,14 +35,23 @@ def init(path: Path) -> None:
     """Idempotently create the schema at `path`.
 
     Creates parent directories as needed. Safe to call on an existing DB
-    (all DDL is `CREATE ... IF NOT EXISTS`).
+    (all DDL is `CREATE ... IF NOT EXISTS`). Also runs any in-place
+    column migrations (spec 005: `violations.file_suffix`).
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     cx = connect(path)
     try:
         cx.executescript(_SCHEMA_PATH.read_text(encoding="utf-8"))
+        _migrate_violations_file_suffix(cx)
     finally:
         cx.close()
+
+
+def _migrate_violations_file_suffix(cx: sqlite3.Connection) -> None:
+    """Add `violations.file_suffix` if the column is missing (spec 005)."""
+    cols = {r["name"] for r in cx.execute("PRAGMA table_info(violations)").fetchall()}
+    if "file_suffix" not in cols:
+        cx.execute("ALTER TABLE violations ADD COLUMN file_suffix TEXT")
 
 
 def now_utc() -> str:

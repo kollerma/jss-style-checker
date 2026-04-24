@@ -289,3 +289,158 @@ def test_by_source_skips_sources_without_data(tmp_db: Path) -> None:
     assert ("cran", "JSS-CITE-001") in sources_for_rule
     # arXiv should NOT be synthesised as a zero-data row.
     assert ("arxiv", "JSS-CITE-001") not in sources_for_rule
+
+
+# ---------------------------------------------------------------------------
+# Spec 005 US4: Per-format precision breakdown
+# ---------------------------------------------------------------------------
+
+
+def _seed_with_format(
+    cx, rule_id: str, category: str, file_suffix: str, tp: int, fp: int
+) -> None:
+    """Seed violations whose `file_suffix` is `file_suffix` (e.g. '.tex', '.Rnw')."""
+    cx.execute(
+        "INSERT INTO runs (ts, tool_version, papers_scanned, violations_found)"
+        " VALUES ('2026-04-23T00:00:00Z', '0.1.0', 1, ?)",
+        (tp + fp,),
+    )
+    run_id = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
+    cx.execute(
+        "INSERT INTO papers (path, source, status) VALUES (?, 'manual', 'scanned')",
+        (f"p_{rule_id}_{file_suffix}",),
+    )
+    paper_id = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
+    for i in range(tp):
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message, severity,"
+            " verdict, reviewer, first_seen_run_id, file_suffix) VALUES (?, ?, ?, ?, ?,"
+            " 'warning', 'true_positive', 'human:t', ?, ?)",
+            (paper_id, rule_id, category, 100 + i, f"{file_suffix}-tp-{i}",
+             run_id, file_suffix),
+        )
+    for i in range(fp):
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message, severity,"
+            " verdict, reviewer, first_seen_run_id, file_suffix) VALUES (?, ?, ?, ?, ?,"
+            " 'warning', 'false_positive', 'human:t', ?, ?)",
+            (paper_id, rule_id, category, 200 + i, f"{file_suffix}-fp-{i}",
+             run_id, file_suffix),
+        )
+
+
+def test_by_format_partitions_tex_rnw_rmd(tmp_db: Path) -> None:
+    cx = db.connect(tmp_db)
+    try:
+        _seed_with_format(cx, "JSS-CITE-001", "citation", ".tex", tp=9, fp=1)
+        _seed_with_format(cx, "JSS-CITE-001", "citation", ".Rnw", tp=4, fp=0)
+        _seed_with_format(cx, "JSS-CITE-001", "citation", ".Rmd", tp=2, fp=3)
+    finally:
+        cx.close()
+
+    table = report.compute_precision_by_format(tmp_db)
+    per = {(r.rule_id, r.source): r for r in table.rows}
+
+    # Overall merges all three formats: 15 TP / 19 total ≈ 78.9% → FAIL
+    assert per[("JSS-CITE-001", "overall")].tp == 15
+    assert per[("JSS-CITE-001", "overall")].fp == 4
+    assert per[("JSS-CITE-001", "overall")].status == "FAIL"
+
+    # Per-format rows reflect each suffix's own precision.
+    assert per[("JSS-CITE-001", "tex")].precision == 0.9
+    assert per[("JSS-CITE-001", "rnw")].precision == 1.0
+    assert per[("JSS-CITE-001", "rmd")].precision == 0.4
+    # breakdown label is "format" so the renderer uses "Per-format breakdown".
+    assert table.breakdown == "format"
+
+
+def test_by_format_csv_emits_overall_plus_per_format(
+    tmp_db: Path, tmp_path: Path
+) -> None:
+    cx = db.connect(tmp_db)
+    try:
+        _seed_with_format(cx, "JSS-CITE-001", "citation", ".tex", tp=9, fp=1)
+        _seed_with_format(cx, "JSS-CITE-001", "citation", ".Rmd", tp=1, fp=4)
+    finally:
+        cx.close()
+
+    csv_path = tmp_path / "by_format.csv"
+    runner = CliRunner()
+    r = runner.invoke(
+        cli_mod.cli,
+        ["--db", str(tmp_db), "report", "--by-format", "--csv", str(csv_path)],
+    )
+    # Overall: 10 TP / 15 total ≈ 66% → FAIL → exit 1
+    assert r.exit_code == 1, r.output
+
+    import csv as _csv
+    with csv_path.open(encoding="utf-8") as f:
+        rows = list(_csv.DictReader(f))
+
+    sources = {r["source"] for r in rows if r["rule_id"] == "JSS-CITE-001"}
+    assert sources == {"overall", "tex", "rmd"}
+
+    per = {(r["rule_id"], r["source"]): r for r in rows}
+    assert per[("JSS-CITE-001", "tex")]["precision"] == "0.9000"
+    assert per[("JSS-CITE-001", "rmd")]["precision"] == "0.2000"
+    # tex passes the threshold; rmd does not.
+    assert per[("JSS-CITE-001", "tex")]["below_threshold"] == "0"
+    assert per[("JSS-CITE-001", "rmd")]["below_threshold"] == "1"
+
+
+def test_by_format_null_suffix_bucketed_as_unknown(tmp_db: Path) -> None:
+    # Pre-005 violations (no file_suffix) bucket as "unknown" in the
+    # per-format breakdown. They still count toward overall precision.
+    cx = db.connect(tmp_db)
+    try:
+        _seed_with_format(cx, "JSS-CITE-001", "citation", ".tex", tp=5, fp=0)
+        # Legacy row without file_suffix (simulated via NULL).
+        cx.execute(
+            "INSERT INTO runs (ts, tool_version, papers_scanned, violations_found)"
+            " VALUES ('2026-04-23T00:00:00Z', '0.1.0', 1, 1)"
+        )
+        run_id = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
+        cx.execute(
+            "INSERT INTO papers (path, source, status)"
+            " VALUES ('p_legacy', 'manual', 'scanned')"
+        )
+        paper_id = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message, severity,"
+            " verdict, reviewer, first_seen_run_id) VALUES (?, 'JSS-CITE-001', 'citation',"
+            " 1, 'legacy', 'warning', 'true_positive', 'human:t', ?)",
+            (paper_id, run_id),
+        )
+    finally:
+        cx.close()
+
+    table = report.compute_precision_by_format(tmp_db)
+    by_source = {r.source for r in table.rows if r.rule_id == "JSS-CITE-001"}
+    assert "tex" in by_source
+    assert "unknown" in by_source
+
+
+def test_by_format_default_report_unchanged(tmp_db: Path) -> None:
+    # Regression: `eval-jss report` (no flag) output is byte-identical
+    # before and after the --by-format feature on the same inputs.
+    cx = db.connect(tmp_db)
+    try:
+        _seed_with_format(cx, "JSS-CITE-001", "citation", ".tex", tp=9, fp=1)
+        _seed_with_format(cx, "JSS-CITE-001", "citation", ".Rnw", tp=4, fp=0)
+    finally:
+        cx.close()
+
+    default_table = report.compute_precision(tmp_db)
+    # No breakdown rows, default dimension flag is "source".
+    assert all(r.source == "overall" for r in default_table.rows)
+    assert default_table.breakdown == "source"
+
+
+def test_by_format_and_by_source_mutually_exclusive(tmp_db: Path) -> None:
+    runner = CliRunner()
+    r = runner.invoke(
+        cli_mod.cli,
+        ["--db", str(tmp_db), "report", "--by-format", "--by-source"],
+    )
+    assert r.exit_code == 2
+    assert "mutually exclusive" in r.output

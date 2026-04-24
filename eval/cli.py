@@ -137,20 +137,36 @@ def review_cmd(
 @cli.command("report")
 @click.option("--by-source", is_flag=True, default=False)
 @click.option(
+    "--by-format",
+    is_flag=True,
+    default=False,
+    help="Partition precision by violation file suffix (tex | bib | rnw | rmd).",
+)
+@click.pass_context
+@click.option(
     "--csv",
     "csv_path",
     type=str,
     default=None,
     help="Append precision history to this CSV (Phase B default: eval/report.csv; '-' disables).",
 )
-@click.pass_context
-def report_cmd(ctx: click.Context, by_source: bool, csv_path: str | None) -> None:
+def report_cmd(
+    ctx: click.Context,
+    by_source: bool,
+    by_format: bool,
+    csv_path: str | None,
+) -> None:
     """Print the per-rule precision table."""
+    if by_source and by_format:
+        click.echo("eval-jss: --by-source and --by-format are mutually exclusive", err=True)
+        ctx.exit(2)
+
     from eval import report as report_mod
 
     code = report_mod.run(
         db_path=ctx.obj["db"],
         by_source=by_source,
+        by_format=by_format,
         csv_path=csv_path,
     )
     ctx.exit(code)

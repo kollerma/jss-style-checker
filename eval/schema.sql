@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS violations (
     verdict_reason    TEXT,
     reviewer          TEXT,                 -- "ai:<model>" | "human:<user>" | NULL
     first_seen_run_id INTEGER NOT NULL REFERENCES runs(id),
+    file_suffix       TEXT,                 -- '.tex' | '.bib' | '.Rnw' | '.Rmd' (spec 005) — NULL for pre-005 rows
     UNIQUE(paper_id, rule_id, line, message)
 );
 

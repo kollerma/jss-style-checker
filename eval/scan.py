@@ -61,16 +61,32 @@ def _discover_papers(corpus_dir: Path) -> list[Path]:
     return sorted(p for p in corpus_dir.iterdir() if p.is_dir())
 
 
-def _tex_and_bib(paper_dir: Path) -> list[Path]:
-    """Return the `.tex` and `.bib` files in a paper dir, in a stable order."""
-    return sorted(
-        p for p in paper_dir.iterdir() if p.suffix in {".tex", ".bib"}
+_SOURCE_SUFFIXES = {".tex", ".bib", ".Rnw", ".Rmd"}
+
+
+def _source_files(paper_dir: Path) -> list[Path]:
+    """Return the source files in a paper dir, in a stable order.
+
+    Top-level files win (manual/placeholder corpora). If the paper dir
+    has none, fall back to any `vignettes/` subdirectory — CRAN
+    tarballs nest vignettes under `<pkg>/vignettes/`.
+    """
+    top = sorted(
+        p for p in paper_dir.iterdir() if p.is_file() and p.suffix in _SOURCE_SUFFIXES
     )
+    if top:
+        return top
+    nested = sorted(
+        p
+        for p in paper_dir.rglob("vignettes/*")
+        if p.is_file() and p.suffix in _SOURCE_SUFFIXES
+    )
+    return nested
 
 
 def _invoke_linter(paper_dir: Path, jss_lint: str) -> api.LinterResult:
     """Shell out to `jss-lint --output json`. This is the tested seam."""
-    files = _tex_and_bib(paper_dir)
+    files = _source_files(paper_dir)
     t0 = time.perf_counter()
     proc = subprocess.run(
         [jss_lint, "--output", "json", "--", *(str(p) for p in files)],
@@ -124,6 +140,7 @@ def _persist_violations(
             v["message"],
             v.get("severity", "error"),
             run_id,
+            Path(v["file"]).suffix if v.get("file") else None,
         )
         for v in violations
     ]
@@ -132,7 +149,8 @@ def _persist_violations(
     db.executemany_ignore(
         cx,
         "INSERT OR IGNORE INTO violations (paper_id, rule_id, category, line, column,"
-        " message, severity, first_seen_run_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        " message, severity, first_seen_run_id, file_suffix)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         rows,
     )
     return len(violations)

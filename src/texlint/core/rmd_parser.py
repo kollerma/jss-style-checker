@@ -222,7 +222,13 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
         offset = prose.line - 1
         fragment = parse_tex_source(prose.text, path)
         wrapped = _OffsetWalker(fragment.walker, offset) if fragment.walker else None
-        # Offset parse-error violations from the fragment.
+        # Offset non-parse-error violations from the fragment. Raw
+        # prose often contains `$` or `{` in regex/shell-example
+        # contexts that pylatexenc rejects; those are not authoring
+        # errors in the Rmd, so fragment-level JSS-PARSE-000 is
+        # swallowed. Real parse errors at the Rmd tokenizer level
+        # (unterminated fence, malformed frontmatter) are emitted
+        # separately and are unaffected.
         offset_viol = tuple(
             Violation(
                 file=path,
@@ -235,6 +241,7 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
                 fix=v.fix,
             )
             for v in fragment.violations
+            if v.rule_id != "JSS-PARSE-000"
         )
         if offset_viol:
             violations.extend(offset_viol)
