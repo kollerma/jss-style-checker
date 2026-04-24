@@ -157,4 +157,5 @@ cython_debug/
 # marker files (`.sha256` left by `corpus fetch`) are ephemeral.
 eval/eval.db
 eval/eval.db-*
+eval/*.bak
 examples/**/.sha256
