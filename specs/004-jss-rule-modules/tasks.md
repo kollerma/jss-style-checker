@@ -200,14 +200,14 @@ description: "Task breakdown for spec 004: JSS Rule Modules — 15-category roll
 
 **Goal**: Ship `rules/code_style.py` with JSS-CODE-001..003. Category owns 1 skip-list entry (JSS-CODE-003).
 
-- [ ] T070 [P] [US1] Create fixture pairs for 3 code_style rules.
-- [ ] T071 [US1, US4] Write failing `tests/unit/rules/test_code_style.py`.
-- [ ] T072 [US1] Create `src/texlint/journals/jss/rules/code_style.py`.
-- [ ] T073 [US1] Remove xfail + wire.
-- [ ] T074 [US1] Verify 100% branch coverage.
-- [ ] T075 [US2] Add `JSS-CODE-003` to `eval/review-skip-list.toml`.
-- [ ] T076 [US2] Run `scripts/eval-category.sh code_style`.
-- [ ] T077 [US1, US2, US4] Commit code_style PR.
+- [X] T070 [P] [US1] Create fixture pairs for 3 code_style rules.
+- [X] T071 [US1, US4] Write failing `tests/unit/rules/test_code_style.py`.
+- [X] T072 [US1] Create `src/texlint/journals/jss/rules/code_style.py`.
+- [X] T073 [US1] Remove xfail + wire.
+- [X] T074 [US1] Verify 100% branch coverage.
+- [X] T075 [US2] Add `JSS-CODE-003` to `eval/review-skip-list.toml`.
+- [X] T076 [US2] Run `scripts/eval-category.sh code_style`.
+- [X] T077 [US1, US2, US4] Commit code_style PR.
 
 **Checkpoint**: code_style category shipped.
 

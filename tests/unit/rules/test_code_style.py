@@ -1,0 +1,242 @@
+"""Tests for JSS code_style rules — 100% branch coverage target."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from texlint.api import ParsedDocument, ParsedTexFile, ToolConfig
+from texlint.journals.jss.rules.code_style import (
+    check_jss_code_001,
+    check_jss_code_002,
+    check_jss_code_003,
+    jss_code_001,
+    jss_code_002,
+    jss_code_003,
+    rules,
+)
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "violations" / "code_style"
+
+
+def _tex(name: str) -> str:
+    return (FIXTURE_DIR / name).read_text(encoding="utf-8")
+
+
+def test_rules_tuple_has_three_rules():
+    assert len(rules) == 3
+
+
+def test_rules_tuple_ids():
+    assert {r.id for r in rules} == {f"JSS-CODE-00{i}" for i in range(1, 4)}
+
+
+# ---------------------------------------------------------------------------
+# JSS-CODE-001 — comments inside code envs
+# ---------------------------------------------------------------------------
+
+
+class TestCode001:
+    def test_positive(self, run_rule):
+        violations = run_rule(jss_code_001, _tex("JSS-CODE-001-bad.tex"))
+        assert len(violations) == 1
+
+    def test_good_silent(self, run_rule):
+        assert run_rule(jss_code_001, _tex("JSS-CODE-001-good.tex")) == []
+
+    def test_comment_outside_codeinput_silent(self, run_rule):
+        # A '#' in prose is not a code comment.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}See issue #5 later.\end{document}"
+        )
+        assert run_rule(jss_code_001, src) == []
+
+    def test_non_code_env_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{itemize}\item x\end{itemize}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_code_001, src) == []
+
+    def test_only_first_comment_per_block(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}" "\n"
+            r"# one" "\n"
+            r"# two" "\n"
+            r"\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_code_001, src)
+        # Only one violation per code block (break after first hit).
+        assert len(violations) == 1
+
+    def test_non_chars_children_silent(self, run_rule):
+        # CodeInput wrapping a macro (unusual) — no chars, no comments.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}\relax\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_code_001, src) == []
+
+
+# ---------------------------------------------------------------------------
+# JSS-CODE-002 — unquoted library() / data()
+# ---------------------------------------------------------------------------
+
+
+class TestCode002:
+    def test_positive(self, run_rule):
+        violations = run_rule(jss_code_002, _tex("JSS-CODE-002-bad.tex"))
+        # Both library(MASS) and data(quine) unquoted.
+        assert len(violations) == 2
+
+    def test_good_silent(self, run_rule):
+        assert run_rule(jss_code_002, _tex("JSS-CODE-002-good.tex")) == []
+
+    def test_require_also_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}require(MASS)\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_code_002, src)) == 1
+
+    def test_outside_code_env_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}library(MASS)\end{document}"
+        )
+        assert run_rule(jss_code_002, src) == []
+
+    def test_non_chars_in_code_env_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}\relax\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_code_002, src) == []
+
+    def test_non_code_env_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{itemize}\item x\end{itemize}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_code_002, src) == []
+
+
+# ---------------------------------------------------------------------------
+# JSS-CODE-003 — missing spaces in \code{}
+# ---------------------------------------------------------------------------
+
+
+class TestCode003:
+    def test_positive(self, run_rule):
+        violations = run_rule(jss_code_003, _tex("JSS-CODE-003-bad.tex"))
+        assert len(violations) == 1
+
+    def test_good_silent(self, run_rule):
+        assert run_rule(jss_code_003, _tex("JSS-CODE-003-good.tex")) == []
+
+    def test_code_with_no_arg_silent(self, run_rule):
+        src = r"\code"
+        assert run_rule(jss_code_003, src) == []
+
+    def test_empty_code_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{}\end{document}"
+        )
+        assert run_rule(jss_code_003, src) == []
+
+    def test_code_with_comma_no_space_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{f(a,b)}\end{document}"
+        )
+        assert len(run_rule(jss_code_003, src)) == 1
+
+    def test_code_with_only_chars_well_spaced(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{abc}\end{document}"
+        )
+        assert run_rule(jss_code_003, src) == []
+
+    def test_first_group_arg_fallback(self, parse_tex_source):
+        from texlint.journals.jss.rules.code_style import _first_group_arg
+        tex = parse_tex_source(r"\someunknownmacro{inside}")
+        from texlint.journals.jss.rules._helpers import _iter_with_parent
+        from pylatexenc.latexwalker import LatexMacroNode
+        for parent, idx, node in _iter_with_parent(tex.nodes):
+            if isinstance(node, LatexMacroNode) and node.macroname == "someunknownmacro":
+                assert _first_group_arg(node, parent, idx) is not None
+                return
+        raise AssertionError("macro not found")
+
+    def test_first_group_arg_no_nodeargd(self):
+        from pylatexenc.latexwalker import LatexMacroNode
+        from texlint.journals.jss.rules.code_style import _first_group_arg
+
+        class FakeMacro(LatexMacroNode):
+            def __init__(self):  # type: ignore[no-untyped-def]
+                pass
+
+        assert _first_group_arg(FakeMacro(), (FakeMacro(),), 0) is None
+
+    def test_first_group_arg_skips_non_group_before_group(self, parse_tex_source):
+        # Construct a fake macro whose argnlist has a non-group entry first,
+        # then a real LatexGroupNode — exercises the `isinstance` false branch.
+        from pylatexenc.latexwalker import LatexMacroNode
+        from texlint.journals.jss.rules.code_style import _first_group_arg
+        tex = parse_tex_source(r"\emph{inside}")
+        emph = next(n for n in tex.nodes if isinstance(n, LatexMacroNode))
+        group = emph.nodeargd.argnlist[0]
+
+        class FakeArgd:
+            def __init__(self, items):  # type: ignore[no-untyped-def]
+                self.argnlist = items
+
+        class FakeMacro(LatexMacroNode):
+            def __init__(self, argd):  # type: ignore[no-untyped-def]
+                self.nodeargd = argd
+
+        # First arg is a non-group object; second is a real group.
+        fake = FakeMacro(FakeArgd([object(), group]))
+        assert _first_group_arg(fake, (fake,), 0) is group
+
+    def test_first_group_arg_from_argnlist(self, parse_tex_source):
+        # pylatexenc knows \emph → its arg is in argnlist as a LatexGroupNode.
+        from pylatexenc.latexwalker import LatexMacroNode
+        from texlint.journals.jss.rules.code_style import _first_group_arg
+        tex = parse_tex_source(r"\emph{inside}")
+        emph = next(n for n in tex.nodes if isinstance(n, LatexMacroNode))
+        idx = tex.nodes.index(emph)
+        arg = _first_group_arg(emph, tex.nodes, idx)
+        assert arg is not None
+
+    def test_group_plain_text_skips_non_chars(self, run_rule):
+        # \code{\emph{x}} — nested macro child; _group_plain_text returns ''
+        # after skipping the non-CharsNode, so the rule stays silent.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{\emph{x}}\end{document}"
+        )
+        assert run_rule(jss_code_003, src) == []
+
+
+def test_all_silent_on_empty_tex():
+    tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)
+    doc = ParsedDocument(tex_files=(tex,))
+    for check in (check_jss_code_001, check_jss_code_002, check_jss_code_003):
+        assert list(check(doc, ToolConfig())) == []

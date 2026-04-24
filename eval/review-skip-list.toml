@@ -46,3 +46,8 @@ added_in_spec = "004"
 rule_id       = "JSS-MARKUP-001"
 reason        = "Language-name substring match; AI labeller lacks context for math-mode / Pascal / initials."
 added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-CODE-003"
+reason        = "Spacing-around-operators regex; LaTeX macro substring heuristic; Qwen3 blind spot."
+added_in_spec = "004"
