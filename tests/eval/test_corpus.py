@@ -169,6 +169,13 @@ class _FakeResponse:
 def _patch_urlopen(monkeypatch, url_to_bytes: dict[str, bytes]) -> None:
     def fake_urlopen(req, timeout=None):  # noqa: ARG001 — signature compat
         url = req.full_url if hasattr(req, "full_url") else req
+        if url not in url_to_bytes:
+            # Mirror real-world behaviour: unmapped URLs return 404.
+            # This lets the cran-fetch fallback (current URL → Archive
+            # URL) walk through both options when only one is mapped.
+            raise corpus.urllib.error.HTTPError(
+                url, 404, "Not Found", hdrs=None, fp=None,
+            )
         return _FakeResponse(url_to_bytes[url])
 
     monkeypatch.setattr(corpus.urllib.request, "urlopen", fake_urlopen)

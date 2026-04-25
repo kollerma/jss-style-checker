@@ -125,6 +125,10 @@ def _resolve_url(row: ManifestRow) -> str | None:
 
     Returns `None` for rows whose source requires manual placement
     (`jss_archive`, `manual`) or is otherwise not auto-fetchable.
+
+    For ``cran`` sources the call site fetches via ``_resolve_cran_urls``
+    instead so it can try both the current and Archive locations; this
+    returns the Archive URL for callers that take a single string.
     """
     if row.source == "cran":
         return (
@@ -244,24 +248,54 @@ def _fetch_one(row: ManifestRow, target_dir: Path) -> _Gap | None:
             reason=f"manual: {row.vignette_file} missing at {paper_dir}",
         )
 
-    url = _resolve_url(row)
-    if url is None:
-        return _Gap(
-            manifest_row=0, source=row.source, source_id=row.source_id,
-            version=row.version, reason=f"no fetcher for source {row.source!r}",
-        )
+    if row.source == "cran":
+        # CRAN keeps the current version at `src/contrib/<pkg>_<v>.tar.gz`
+        # and superseded versions under `src/contrib/Archive/<pkg>/`.
+        # Try current first; fall back to Archive on 404. The version
+        # pin keeps either URL effectively immutable.
+        urls: list[str] = [
+            f"https://cran.r-project.org/src/contrib/"
+            f"{row.source_id}_{row.version}.tar.gz",
+            f"https://cran.r-project.org/src/contrib/Archive/"
+            f"{row.source_id}/{row.source_id}_{row.version}.tar.gz",
+        ]
+    else:
+        url = _resolve_url(row)
+        if url is None:
+            return _Gap(
+                manifest_row=0, source=row.source, source_id=row.source_id,
+                version=row.version,
+                reason=f"no fetcher for source {row.source!r}",
+            )
+        urls = [url]
 
-    try:
-        data, actual_sha = _stream_fetch(url)
-    except urllib.error.HTTPError as err:
+    last_err: Exception | None = None
+    data: bytes | None = None
+    actual_sha = ""
+    for u in urls:
+        try:
+            data, actual_sha = _stream_fetch(u)
+            break
+        except urllib.error.HTTPError as err:
+            last_err = err
+            if err.code != 404:
+                # 4xx other than 404 is a real failure — don't bother
+                # trying the fallback.
+                break
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
+            last_err = err
+            break
+
+    if data is None:
+        if isinstance(last_err, urllib.error.HTTPError):
+            return _Gap(
+                manifest_row=0, source=row.source, source_id=row.source_id,
+                version=row.version, reason=f"http {last_err.code}",
+            )
         return _Gap(
             manifest_row=0, source=row.source, source_id=row.source_id,
-            version=row.version, reason=f"http {err.code}",
-        )
-    except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
-        return _Gap(
-            manifest_row=0, source=row.source, source_id=row.source_id,
-            version=row.version, reason=f"network: {type(err).__name__}",
+            version=row.version,
+            reason=f"network: {type(last_err).__name__ if last_err else 'unknown'}",
         )
 
     if row.sha256 and actual_sha != row.sha256:
