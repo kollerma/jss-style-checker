@@ -45,7 +45,35 @@ _FIGURE_TABLE_ENVS: frozenset[str] = frozenset(
     {"figure", "figure*", "table", "table*"}
 )
 
-_PROPER_NOUNS: frozenset[str] = LANGUAGES | R_PACKAGES
+# Proper nouns that recur in JSS-adjacent prose: nationality
+# adjectives, common eponyms (statistical methods named after people),
+# and a handful of place / vendor / product names. Curated rather than
+# exhaustive — extend as new corpus FPs surface. Style-guide rationale:
+# JSS sentence-case captions DO retain capitalisation on proper nouns.
+_EXTRA_PROPER_NOUNS: frozenset[str] = frozenset(
+    {
+        # Nationality / region adjectives
+        "American", "Asian", "Australian", "Austrian", "Belgian",
+        "British", "Canadian", "Chinese", "Czech", "Dutch", "English",
+        "European", "Finnish", "French", "German", "Greek", "Indian",
+        "Iranian", "Irish", "Italian", "Japanese", "Korean", "Latin",
+        "Mexican", "Norwegian", "Polish", "Portuguese", "Russian",
+        "Scottish", "Spanish", "Swedish", "Swiss", "Turkish", "Welsh",
+        # Statistical / mathematical eponyms
+        "Bayes", "Bayesian", "Bernoulli", "Boole", "Boolean",
+        "Cauchy", "Cox", "Dirichlet", "Euclidean", "Fisher",
+        "Gauss", "Gaussian", "Lagrange", "Laplace", "Markov",
+        "Maxwell", "Monte", "Carlo", "Newton", "Pareto", "Pearson",
+        "Poisson", "Riemann", "Shannon", "Wald", "Weibull", "Wishart",
+        # Place / vendor / product names commonly mentioned
+        "Apple", "Google", "Linux", "Microsoft", "Oracle", "Unix",
+        "Windows",
+        # Diseases / corpora often named after places or people
+        "Alzheimer", "Faithful", "Indians", "Pima",
+    }
+)
+
+_PROPER_NOUNS: frozenset[str] = LANGUAGES | R_PACKAGES | _EXTRA_PROPER_NOUNS
 
 
 def _violation(
@@ -78,15 +106,33 @@ def _first_group_arg(macro: Any, parent: Any, idx: int) -> Any:
 
 
 def _group_plain_text(group: Any) -> str:
-    """Plain text of a group — strips wrapped macros like \\pkg{X} to X."""
+    """Plain text of a group with markup-macro contents excluded.
+
+    pylatexenc, with no macro DB entry for ``\\pkg``/``\\proglang``/
+    ``\\code``, parses ``\\pkg{zoo}`` as a bare macro followed by a
+    separate ``{zoo}`` LatexGroupNode sibling. Naively recursing into
+    every group would re-introduce the package name into plain text
+    even though the author marked it as wrapped — and that's exactly
+    the content the capitalisation rules should NOT scan (package
+    names, language names, code identifiers all have their own
+    case conventions). Skip a sibling group when the previous child
+    was a markup macro.
+    """
     parts: list[str] = []
+    skip_next_group = False
     for child in group.nodelist or ():
         if isinstance(child, LatexCharsNode):
+            skip_next_group = False
             parts.append(child.chars)
         elif isinstance(child, LatexGroupNode):
+            if skip_next_group:
+                skip_next_group = False
+                continue
             parts.append(_group_plain_text(child))
-        elif isinstance(child, LatexMacroNode) and child.macroname == "label":
-            continue
+        elif isinstance(child, LatexMacroNode):
+            if child.macroname == "label":
+                continue
+            skip_next_group = child.macroname in _helpers._MARKUP_MACROS
     return "".join(parts)
 
 
@@ -99,21 +145,32 @@ _SENTENCE_BOUNDARY_RE = re.compile(r"[.:?!]\s+(\S+)")
 
 def _words_with_boundary(text: str) -> list[tuple[str, bool]]:
     """Like ``_words`` but each entry carries a flag for whether the word
-    starts a new sub-sentence — i.e., the previous token ended with
-    ``.``, ``:``, ``?``, or ``!``. Sub-sentence-initial words are
+    starts a new sub-sentence — i.e., the previous source token ended
+    with ``.``, ``:``, ``?``, or ``!``. Sub-sentence-initial words are
     allowed to be capitalised under JSS sentence style.
+
+    Splits on whitespace AND on hyphens (matching the old ``_words``)
+    so compound terms like ``Logistic-regression-based`` decompose
+    into individual tokens for the capitalisation check. The
+    sub-sentence boundary is anchored to the first piece after a
+    boundary punctuator.
     """
     boundary_offsets: set[int] = set()
     for m in _SENTENCE_BOUNDARY_RE.finditer(text):
         boundary_offsets.add(m.start(1))
     out: list[tuple[str, bool]] = []
-    for m in re.finditer(r"\S+", text):
-        word = m.group(0)
-        # Strip trailing punctuation for the word view but keep the offset.
-        clean = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "", word)
-        if not clean:
-            continue
-        out.append((clean, m.start() in boundary_offsets))
+    # Tokenize whitespace-delimited "source words" first to anchor the
+    # boundary flag, then split each source word on hyphens.
+    for source_match in re.finditer(r"\S+", text):
+        source_word = source_match.group(0)
+        is_boundary = source_match.start() in boundary_offsets
+        for piece_idx, piece in enumerate(re.split(r"-+", source_word)):
+            clean = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "", piece)
+            if not clean:
+                continue
+            # Only the first hyphen-piece inherits the sub-sentence
+            # boundary flag; subsequent pieces are interior.
+            out.append((clean, is_boundary and piece_idx == 0))
     return out
 
 
@@ -146,9 +203,17 @@ def _is_capitalised_word(word: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
+_FUNCTION_CALL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.]*\(\)?$")
+
+
+def _word_letters_lower(word: str) -> str:
+    return re.sub(r"[^A-Za-z]", "", word).lower()
+
+
 def check_jss_cap_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    proper_lower = {n.lower() for n in _PROPER_NOUNS}
     for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
@@ -162,7 +227,29 @@ def check_jss_cap_001(
             words = _words(text)
             if not words:
                 continue
+            # Skip when no principal word remains after stripping
+            # stopwords — title is effectively just markup macros plus
+            # connectives like "and" / "the".
+            principal = [
+                w for w in words
+                if _word_letters_lower(w)
+                and _word_letters_lower(w) not in _TITLE_STOPWORDS
+            ]
+            if not principal:
+                continue
             first = words[0]
+            first_lower = _word_letters_lower(first)
+            # Skip when the first word is a known package / language /
+            # corpus-observed proper noun; these have their own case
+            # conventions (lowercase package names, mixed-case method
+            # names) and shouldn't trigger the title-case check.
+            if first_lower in proper_lower:
+                continue
+            # Skip when the first word looks like a function call
+            # (`covMcd()`, `data.frame()`); these are code identifiers
+            # the author intentionally left unwrapped.
+            if _FUNCTION_CALL_RE.match(first):
+                continue
             if not _is_capitalised_word(first) or all(
                 w == w.lower() for w in words
             ):
@@ -235,32 +322,40 @@ def check_jss_cap_003(
             )
 
 
+def _is_capitalised_offender(word: str) -> bool:
+    """True if ``word`` is a capitalised non-stopword non-proper-noun
+    that's NOT an abbreviation or single-letter math symbol — i.e.,
+    the kind of capitalisation sentence style penalises.
+    """
+    bare = re.sub(r"[^A-Za-z]", "", word)
+    if not bare:
+        return False
+    if len(bare) == 1:
+        # Single capital letters in prose are math/stat symbols
+        # (X, M, F, t, p) — JSS doesn't penalise them.
+        return False
+    if not bare[0].isupper():
+        return False
+    if bare in _PROPER_NOUNS:
+        return False
+    if bare.lower() in _TITLE_STOPWORDS:
+        return False
+    if _looks_like_abbrev(bare):
+        return False
+    return True
+
+
 def _check_sentence_style(
     tex: Any, pos: int, group: Any, rule_id: str, suggestion: str
 ) -> Iterator[Violation]:
     text = _group_plain_text(group)
     words = _words_with_boundary(text)
-    # Flag when two or more capitalised words break sentence style.
-    # Exemptions: the first word of the caption, words that follow a
-    # `.`/`:`/`?`/`!` (sub-sentence start), known proper nouns, title
-    # stopwords ("a", "the", ...), and abbreviations / scientific
-    # shorthands like "PDF" or "mRNA".
     offenders = 0
     for idx, (word, follows_boundary) in enumerate(words):
         if idx == 0 or follows_boundary:
             continue
-        bare = re.sub(r"[^A-Za-z]", "", word)
-        if not bare:
-            continue
-        if not bare[0].isupper():
-            continue
-        if bare in _PROPER_NOUNS:
-            continue
-        if bare.lower() in _TITLE_STOPWORDS:
-            continue
-        if _looks_like_abbrev(bare):
-            continue
-        offenders += 1
+        if _is_capitalised_offender(word):
+            offenders += 1
     if offenders >= 2:
         yield _violation(
             tex=tex, pos=pos, rule_id=rule_id, suggestion=suggestion

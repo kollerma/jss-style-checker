@@ -158,15 +158,19 @@ class TestCap004:
         assert run_rule(jss_cap_004, src) == []
 
 
-def test_group_plain_text_unwraps_pkg(parse_tex_source):
+def test_group_plain_text_skips_markup_macros(parse_tex_source):
     from pylatexenc.latexwalker import LatexGroupNode
 
     from texlint.journals.jss.rules.capitalization import _group_plain_text
-    # \pkg{MASS} unwraps to 'MASS' via the group-recursion path.
+    # \pkg{MASS} is excluded — package names have their own case
+    # convention and shouldn't be scanned for title/sentence style.
+    # See docstring on _group_plain_text.
     tex = parse_tex_source(r"{prefix \pkg{MASS} suffix}")
     group = next(n for n in tex.nodes if isinstance(n, LatexGroupNode))
     text = _group_plain_text(group)
-    assert "MASS" in text
+    assert "MASS" not in text
+    assert "prefix" in text
+    assert "suffix" in text
 
 
 def test_is_capitalised_word_no_letters():
