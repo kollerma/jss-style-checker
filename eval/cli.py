@@ -164,6 +164,29 @@ def review_cmd(
     help="Partition precision by violation file suffix (tex | bib | rnw | rmd).",
 )
 @click.option(
+    "--diff",
+    is_flag=True,
+    default=False,
+    help=(
+        "Render per-rule TP/FP/precision deltas between the two latest "
+        "iterations in precision-history.db."
+    ),
+)
+@click.option(
+    "--against",
+    type=int,
+    default=None,
+    help="With --diff: compare against this iteration id (default: previous).",
+)
+@click.option(
+    "--history-db",
+    "history_db",
+    type=click.Path(path_type=Path),
+    default=Path("eval/precision-history.db"),
+    show_default=True,
+    help="Precision-history DB consulted for --diff.",
+)
+@click.option(
     "--pinned-only",
     is_flag=True,
     default=False,
@@ -197,6 +220,9 @@ def report_cmd(
     ctx: click.Context,
     by_source: bool,
     by_format: bool,
+    diff: bool,
+    against: int | None,
+    history_db: Path,
     pinned_only: bool,
     manifest_path: Path,
     corpus_dir: Path,
@@ -219,6 +245,9 @@ def report_cmd(
             pinned_only=pinned_only,
             manifest_path=manifest_path if pinned_only else None,
             corpus_dir=corpus_dir if pinned_only else None,
+            diff=diff,
+            history_db=history_db,
+            against=against,
         )
     except (FileNotFoundError, ManifestError) as err:
         click.echo(f"eval-jss: {err}", err=True)
@@ -333,6 +362,42 @@ def iterate_record_cmd(
     except (FileNotFoundError, ManifestError) as err:
         click.echo(f"eval-jss: {err}", err=True)
         ctx.exit(2)
+    ctx.exit(code)
+
+
+@iterate_group.command("refresh")
+@click.option(
+    "--corpus",
+    "corpus_dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=Path("examples"),
+    show_default=True,
+)
+@click.option(
+    "--save-orphans",
+    "orphans_path",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="JSON dump of labels whose matching violation no longer fires.",
+)
+@click.pass_context
+def iterate_refresh_cmd(
+    ctx: click.Context, corpus_dir: Path, orphans_path: Path | None,
+) -> None:
+    """Wipe + rescan the corpus and restore labelled verdicts.
+
+    Use after a rule-logic change so the precision report reflects
+    the new behaviour without losing existing TP/FP labels. Labels
+    whose violation no longer fires are reported (and optionally
+    dumped to JSON via --save-orphans).
+    """
+    from eval import iterate as iterate_mod
+
+    code = iterate_mod.run_refresh(
+        eval_db=ctx.obj["db"],
+        corpus_dir=corpus_dir,
+        orphans_path=orphans_path,
+    )
     ctx.exit(code)
 
 

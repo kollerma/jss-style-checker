@@ -157,6 +157,90 @@ def _ensure_log_preamble(log_path: Path) -> None:
     log_path.write_text(_LOG_PREAMBLE, encoding="utf-8")
 
 
+def run_refresh(
+    *,
+    eval_db: Path,
+    corpus_dir: Path,
+    orphans_path: Path | None,
+) -> int:
+    """Re-scan the corpus while preserving labelled verdicts.
+
+    The wipe-and-rescan dance — DELETE FROM violations, run
+    `eval-jss scan --force`, then UPDATE the labels back onto matching
+    rows — has run by hand once per rule-fix iteration. This bakes it
+    into one command and surfaces the orphaned-label count (rows whose
+    matching violation no longer fires post-fix).
+
+    `orphans_path` (optional): JSON dump of every label that lost its
+    home, suitable for human re-review or a future
+    `human-review --reverify <orphans.json>` flow.
+    """
+    import json
+
+    from eval import scan as scan_mod
+
+    cx = db.connect(eval_db)
+    try:
+        labels = cx.execute(
+            "SELECT paper_id, rule_id, line, message, verdict, "
+            "verdict_reason, reviewer, file FROM violations "
+            "WHERE verdict IS NOT NULL"
+        ).fetchall()
+        before = len(labels)
+        labels_dicts = [
+            dict(zip(
+                ["paper_id", "rule_id", "line", "message", "verdict",
+                 "verdict_reason", "reviewer", "file"],
+                tuple(r),
+                strict=True,
+            ))
+            for r in labels
+        ]
+        cx.execute("DELETE FROM violations")
+        print(f"eval-jss refresh: backed up {before} labelled rows; rescanning…")
+    finally:
+        cx.close()
+
+    scan_code = scan_mod.run(
+        db_path=eval_db, corpus_dir=corpus_dir,
+        batch_size=None, force=True,
+    )
+    if scan_code == 2:
+        print("eval-jss refresh: scan failed; labels are still in memory but DB is empty.")
+        return 2
+
+    cx = db.connect(eval_db)
+    try:
+        restored = 0
+        orphans: list[dict] = []
+        for row in labels_dicts:
+            r = cx.execute(
+                "UPDATE violations SET verdict=?, verdict_reason=?, reviewer=? "
+                "WHERE paper_id=? AND rule_id=? AND line IS ? "
+                "AND message=? AND (file IS ? OR file=?)",
+                (
+                    row["verdict"], row["verdict_reason"], row["reviewer"],
+                    row["paper_id"], row["rule_id"], row["line"], row["message"],
+                    row["file"], row["file"],
+                ),
+            )
+            if r.rowcount:
+                restored += 1
+            else:
+                orphans.append(row)
+    finally:
+        cx.close()
+
+    print(f"eval-jss refresh: restored {restored}/{before} labels; "
+          f"{len(orphans)} orphaned (violation no longer fires).")
+    if orphans_path is not None and orphans:
+        orphans_path.parent.mkdir(parents=True, exist_ok=True)
+        with orphans_path.open("w", encoding="utf-8") as f:
+            json.dump(orphans, f, indent=2)
+        print(f"eval-jss refresh: orphan dump → {orphans_path}")
+    return 0
+
+
 def run(
     *,
     eval_db: Path,

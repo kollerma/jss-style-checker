@@ -444,6 +444,132 @@ def _table_to_csv_rows(
     return rows
 
 
+def render_diff(
+    history_db: Path,
+    against: int | None,
+    console: Console | None = None,
+) -> None:
+    """Render a per-rule TP/FP/precision delta between two iterations.
+
+    Compares the latest iteration in `precision-history.db` against the
+    one specified by `against` (id), or the immediately-preceding one
+    when `against is None`. The table only shows rules whose TP, FP,
+    or status changed between the two iterations.
+    """
+    import sqlite3
+    console = console or Console()
+    if not history_db.exists():
+        console.print(
+            f"eval-jss: precision-history DB not found at {history_db}. "
+            f"Run `eval-jss iterate record …` first."
+        )
+        return
+    cx = sqlite3.connect(history_db)
+    cx.row_factory = sqlite3.Row
+    try:
+        ids = [r["id"] for r in cx.execute("SELECT id FROM iterations ORDER BY id")]
+        if len(ids) < 2:
+            console.print(
+                "eval-jss: need at least two iterations recorded "
+                "to render a diff."
+            )
+            return
+        cur_id = ids[-1]
+        prev_id = against if against is not None else ids[-2]
+
+        def _load(it_id: int) -> dict[str, sqlite3.Row]:
+            rows = cx.execute(
+                "SELECT rule_id, tp, fp, pending, precision, status "
+                "FROM iteration_rule_stats "
+                "WHERE iteration_id=? AND scope='full'",
+                (it_id,),
+            ).fetchall()
+            return {r["rule_id"]: r for r in rows}
+
+        prev_map = _load(prev_id)
+        cur_map = _load(cur_id)
+
+        prev_label = cx.execute(
+            "SELECT label FROM iterations WHERE id=?", (prev_id,)
+        ).fetchone()["label"]
+        cur_label = cx.execute(
+            "SELECT label FROM iterations WHERE id=?", (cur_id,)
+        ).fetchone()["label"]
+    finally:
+        cx.close()
+
+    table = Table(
+        title=(
+            f"Per-rule diff — iter {prev_id} ({prev_label}) "
+            f"→ iter {cur_id} ({cur_label})"
+        )
+    )
+    table.add_column("Rule")
+    table.add_column("TP", justify="right")
+    table.add_column("FP", justify="right")
+    table.add_column("Precision", justify="right")
+    table.add_column("Status")
+
+    rule_ids = sorted(set(prev_map) | set(cur_map))
+    rendered = 0
+    for rid in rule_ids:
+        a = prev_map.get(rid)
+        b = cur_map.get(rid)
+        a_tp = a["tp"] if a else 0
+        a_fp = a["fp"] if a else 0
+        b_tp = b["tp"] if b else 0
+        b_fp = b["fp"] if b else 0
+        a_p = a["precision"] if a else None
+        b_p = b["precision"] if b else None
+        a_s = a["status"] if a else "—"
+        b_s = b["status"] if b else "—"
+        if a_tp == b_tp and a_fp == b_fp and a_s == b_s:
+            continue
+        rendered += 1
+
+        def _delta(prev: int, now: int) -> str:
+            d = now - prev
+            sign = f"{d:+d}" if d else "0"
+            return f"{prev}→{now} ({sign})"
+
+        def _delta_p(prev: float | None, now: float | None) -> str:
+            if prev is None and now is None:
+                return "—"
+            ps = f"{prev:.1%}" if prev is not None else "—"
+            ns = f"{now:.1%}" if now is not None else "—"
+            if prev is not None and now is not None:
+                pp = (now - prev) * 100
+                return f"{ps}→{ns} ({pp:+.1f}pp)"
+            return f"{ps}→{ns}"
+
+        if a_s != b_s:
+            status_cell = f"{a_s}→{b_s}"
+        else:
+            status_cell = a_s
+
+        style = ""
+        if b_s == "PASS" and a_s != "PASS":
+            style = "green"
+        elif b_s == "FAIL" and a_s == "PASS":
+            style = "red"
+
+        cells = [
+            rid,
+            _delta(a_tp, b_tp),
+            _delta(a_fp, b_fp),
+            _delta_p(a_p, b_p),
+            f"[{style}]{status_cell}[/{style}]" if style else status_cell,
+        ]
+        table.add_row(*cells)
+
+    if rendered == 0:
+        console.print(
+            f"No per-rule changes between iter {prev_id} and iter {cur_id}."
+        )
+    else:
+        console.print(table)
+
+
 def append_csv(path: Path, rows: list[dict]) -> None:
     """Append `rows` to `path`; write the header if the file didn't exist."""
     write_header = not path.exists()
@@ -466,7 +592,17 @@ def run(
     pinned_only: bool = False,
     manifest_path: Path | None = None,
     corpus_dir: Path | None = None,
+    diff: bool = False,
+    history_db: Path | None = None,
+    against: int | None = None,
 ) -> int:
+    if diff:
+        render_diff(
+            history_db or Path("eval/precision-history.db"),
+            against=against,
+        )
+        return 0
+
     pinned: list[tuple[str, str]] | None = None
     if pinned_only:
         if manifest_path is None or corpus_dir is None:

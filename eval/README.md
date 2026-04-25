@@ -79,32 +79,34 @@ logged a gap · `2` the harness itself could not run.
 ## The eval-improve loop
 
 One iteration grows the corpus, surfaces rule defects, and shrinks them.
-The loop has 9 steps, each available as a custom slash command under
-`.claude/commands/` (e.g. `/eval-scan`, `/eval-record`):
+Slash commands live under `.claude/commands/`:
 
-1. **Add 50 manuscripts** — `/eval-add-corpus` (edits
+1. **Add manuscripts** — `/eval-add-corpus` (edits
    `eval/corpus-manifest.csv`, then `eval-jss corpus fetch`).
 2. **Scan** — `/eval-scan` (`eval-jss scan --corpus examples/ --force`).
-3. **AI classifier** — `/eval-review`
-   (`eval-jss review --confidence-threshold 0.8`).
-4. **Human review** (optional) — `/eval-human-review`
-   (`eval-jss human-review` for the rows the classifier was unsure
-   about or the skip-list excluded).
-5. **Record** — `/eval-record <label>`
-   (`eval-jss iterate record <label> [--note …]`). Snapshots the
-   precision report twice — full corpus and `--pinned-only` — into
-   `eval/precision-history.db` and appends a templated section to
+3. **AI classifier** — `/eval-review`.
+4. **Human review** — `/eval-human-review` (uncertain + skip-listed).
+5. **Record baseline** — `/eval-record <label>` snapshots full +
+   pinned precision into `eval/precision-history.db` and appends to
    `eval/improvement-log.md`.
-6. **Suggest improvements** — `/eval-suggest` (edits the iteration's
-   "Findings / suggestions" block in `eval/improvement-log.md`).
-7. **Plan** — `/eval-plan` (fills in the "Plan" block with a checklist
-   of concrete todos).
-8. **Implement** — `/eval-implement` (works through the checklist on a
-   branch).
-9. **Re-scan + record** — `/eval-rescan <label>`
-   (`eval-jss scan --force && eval-jss iterate record post-<label>`).
-   The new section's "Delta" block diffs against the previous iteration
-   so before/after is visible inline.
+6. **Investigate failing rules** — `/eval-investigate <JSS-XXX-NNN>`
+   delegates the FP-pattern discovery to a subagent (clean context),
+   then implements the fix in the main thread, runs `pytest` + `ruff`,
+   and finishes with `eval-jss iterate refresh && eval-jss report
+   --diff` to surface the precision delta. Replaces the earlier
+   `/eval-suggest` + `/eval-plan` + `/eval-implement` trio.
+7. **Re-scan + record** — `/eval-rescan <label>` (or directly
+   `eval-jss iterate record post-<label>`). The post-snapshot's
+   "Delta" block diffs against the previous iteration.
+
+Two harness commands the loop relies on:
+
+- `eval-jss iterate refresh` — wipe, rescan, and restore labels onto
+  the new violation rows. Reports orphans (labels whose violation no
+  longer fires); `--save-orphans <path>` dumps them to JSON.
+- `eval-jss report --diff` — per-rule TP/FP/precision deltas between
+  the two latest iterations in `precision-history.db`. Add
+  `--against <id>` to compare against an older iteration.
 
 `--pinned-only` restricts precision stats to violations from the
 vignette named in `corpus-manifest.csv::vignette_file` (plus every
