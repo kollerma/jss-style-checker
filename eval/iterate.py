@@ -162,6 +162,7 @@ def run_refresh(
     eval_db: Path,
     corpus_dir: Path,
     orphans_path: Path | None,
+    no_save_orphans: bool = False,
 ) -> int:
     """Re-scan the corpus while preserving labelled verdicts.
 
@@ -171,13 +172,19 @@ def run_refresh(
     into one command and surfaces the orphaned-label count (rows whose
     matching violation no longer fires post-fix).
 
-    `orphans_path` (optional): JSON dump of every label that lost its
-    home, suitable for human re-review or a future
-    `human-review --reverify <orphans.json>` flow.
+    Orphan dumping defaults to ON because rolling back a rule fix that
+    suppressed N violations otherwise loses N labels permanently —
+    they'd need human re-adjudication on the rebuilt rows. The default
+    path is ``eval/orphans/<utc-timestamp>.json``; ``orphans_path``
+    overrides; ``no_save_orphans=True`` disables.
     """
     import json
 
     from eval import scan as scan_mod
+
+    if not no_save_orphans and orphans_path is None:
+        ts = db.now_utc().replace(":", "").replace("-", "")
+        orphans_path = Path("eval/orphans") / f"{ts}.json"
 
     cx = db.connect(eval_db)
     try:
@@ -238,6 +245,51 @@ def run_refresh(
         with orphans_path.open("w", encoding="utf-8") as f:
             json.dump(orphans, f, indent=2)
         print(f"eval-jss refresh: orphan dump → {orphans_path}")
+    return 0
+
+
+def run_apply_orphans(*, eval_db: Path, orphans_path: Path) -> int:
+    """Re-apply labels from an orphan dump onto current violations.
+
+    Pair with ``run_refresh`` after rolling back a rule fix: the rule
+    starts firing on rows again, the orphan dump still has their labels
+    from before the (now-reverted) fix, and this command stitches them
+    back together.
+    """
+    import json
+
+    if not orphans_path.is_file():
+        print(f"eval-jss apply-orphans: file not found at {orphans_path}")
+        return 2
+    with orphans_path.open("r", encoding="utf-8") as f:
+        orphans = json.load(f)
+
+    cx = db.connect(eval_db)
+    try:
+        applied = 0
+        still_orphaned = 0
+        for row in orphans:
+            r = cx.execute(
+                "UPDATE violations SET verdict=?, verdict_reason=?, reviewer=? "
+                "WHERE paper_id=? AND rule_id=? AND line IS ? "
+                "AND message=? AND (file IS ? OR file=?)",
+                (
+                    row["verdict"], row["verdict_reason"], row["reviewer"],
+                    row["paper_id"], row["rule_id"], row["line"], row["message"],
+                    row["file"], row["file"],
+                ),
+            )
+            if r.rowcount:
+                applied += 1
+            else:
+                still_orphaned += 1
+    finally:
+        cx.close()
+
+    print(
+        f"eval-jss apply-orphans: re-applied {applied} of {len(orphans)} "
+        f"labels from {orphans_path}; {still_orphaned} still orphaned."
+    )
     return 0
 
 

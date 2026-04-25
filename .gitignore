@@ -171,3 +171,4 @@ examples/cran_*/
 # else is local state.
 .githooks/*
 !.githooks/pre-commit
+eval/orphans/

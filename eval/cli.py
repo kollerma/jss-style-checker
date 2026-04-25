@@ -378,18 +378,33 @@ def iterate_record_cmd(
     "orphans_path",
     type=click.Path(path_type=Path),
     default=None,
-    help="JSON dump of labels whose matching violation no longer fires.",
+    help=(
+        "JSON dump path for labels whose matching violation no longer fires. "
+        "Default: `eval/orphans/<utc-timestamp>.json` (set automatically). "
+        "Use --no-save-orphans to disable."
+    ),
+)
+@click.option(
+    "--no-save-orphans",
+    is_flag=True,
+    default=False,
+    help="Disable the default orphan dump.",
 )
 @click.pass_context
 def iterate_refresh_cmd(
-    ctx: click.Context, corpus_dir: Path, orphans_path: Path | None,
+    ctx: click.Context,
+    corpus_dir: Path,
+    orphans_path: Path | None,
+    no_save_orphans: bool,
 ) -> None:
     """Wipe + rescan the corpus and restore labelled verdicts.
 
     Use after a rule-logic change so the precision report reflects
     the new behaviour without losing existing TP/FP labels. Labels
-    whose violation no longer fires are reported (and optionally
-    dumped to JSON via --save-orphans).
+    whose violation no longer fires are reported and dumped to
+    `eval/orphans/<utc-timestamp>.json` by default — that file is
+    the only way to recover labels if the rule change is later rolled
+    back.
     """
     from eval import iterate as iterate_mod
 
@@ -397,6 +412,29 @@ def iterate_refresh_cmd(
         eval_db=ctx.obj["db"],
         corpus_dir=corpus_dir,
         orphans_path=orphans_path,
+        no_save_orphans=no_save_orphans,
+    )
+    ctx.exit(code)
+
+
+@iterate_group.command("apply-orphans")
+@click.argument(
+    "orphans_path",
+    type=click.Path(path_type=Path, dir_okay=False),
+)
+@click.pass_context
+def iterate_apply_orphans_cmd(
+    ctx: click.Context, orphans_path: Path,
+) -> None:
+    """Re-apply labels from an orphan dump onto current violations.
+
+    Use after rolling back a rule fix so labels whose violations
+    re-appear in the current scan get their verdicts restored.
+    """
+    from eval import iterate as iterate_mod
+
+    code = iterate_mod.run_apply_orphans(
+        eval_db=ctx.obj["db"], orphans_path=orphans_path,
     )
     ctx.exit(code)
 
