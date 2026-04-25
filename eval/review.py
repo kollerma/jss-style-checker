@@ -189,6 +189,57 @@ _RULE_HINTS: dict[str, str] = {
         "each \\pkg{X} needs a same-paragraph citation. Subsequent "
         "mentions of the same X are not violations."
     ),
+    "JSS-MARKUP-001": (
+        "Rule scope: fires on bare programming-language NAMES (R, Java, "
+        "Python, MATLAB, S-PLUS, Stan, Julia, C, C++, SAS, Stata, "
+        "Fortran) appearing in prose. TRUE POSITIVE: the marked token "
+        "is one of those names and is not wrapped in \\proglang{}. "
+        "FALSE POSITIVE: it's a filename (foo.R), a math symbol (R^2), "
+        "an initial in a name (J. R. Smith), or already inside "
+        "\\proglang{}, \\code{}, \\verb, or a section/title macro."
+    ),
+    "JSS-HOUSE-001": (
+        "Rule polarity: TRUE POSITIVE when the marked 'e.g.' or 'i.e.' "
+        "is NOT immediately followed by a comma (e.g., 'e.g. apples'). "
+        "FALSE POSITIVE when the comma is already present "
+        "('e.g., apples')."
+    ),
+    "JSS-OPER-001": (
+        "Rule scope: lowercase-letter-hyphen-{value,statistic,values,"
+        "statistics} patterns like 'p-value' or 't-statistic'. TRUE "
+        "POSITIVE: marked text contains such a pattern and the symbol "
+        "is not already typeset as math (e.g., '$p$~value' is fine)."
+    ),
+    "JSS-CODE-003": (
+        "Rule polarity: TRUE POSITIVE when the marked \\code{...} "
+        "content has an operator (=, +, -, *, /) or comma without "
+        "surrounding spaces ('a=b', 'foo,bar'). FALSE POSITIVE when "
+        "spaces are present, OR the content is a single dotted/"
+        "hyphenated identifier ('data.frame', 'Ch-Intro'), OR "
+        "scientific notation (1.0e-10, 2.22e-16)."
+    ),
+    "JSS-ABBR-001": (
+        "Rule scope: UPPERCASE multi-letter abbreviations using "
+        "internal periods, like 'U.S.A.' or 'U.K.'. TRUE POSITIVE: "
+        "the marked text contains such an abbreviation. The fix is "
+        "to remove the periods (USA, UK)."
+    ),
+    "JSS-REFS-005": (
+        "Rule scope: a BibTeX `journal` field whose tokens look like "
+        "abbreviations ('J.', 'Stat.', 'Softw.', 'Trans.', 'Math.'). "
+        "TRUE POSITIVE: the marked entry's `journal =` line contains "
+        "such abbreviations. FALSE POSITIVE: the journal name is "
+        "fully spelled out."
+    ),
+    "JSS-REFS-006": (
+        "Rule scope: BibTeX title-case loose heuristic. TRUE POSITIVE "
+        "when the entry's `title =` field starts with a lowercase word "
+        "(or the word after ':' is lowercase) and the lowercase token "
+        "is plain English. FALSE POSITIVE: the title starts with a "
+        "package name wrapped in \\pkg{...} (e.g. '\\pkg{partykit}: A "
+        "Modular Toolkit ...') — package names are intentionally "
+        "lowercase. Treat \\pkg{...} as already-correct markup."
+    ),
 }
 
 

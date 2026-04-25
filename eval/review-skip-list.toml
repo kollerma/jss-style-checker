@@ -32,40 +32,25 @@ rule_id       = "JSS-REFS-002"
 reason        = "BibTeX title-case tight heuristic; Qwen3 rubber-stamps 'looks-like-a-title' cases (spec 002 note)."
 added_in_spec = "004"
 
-[[rules]]
-rule_id       = "JSS-REFS-005"
-reason        = "Journal-abbreviation heuristic over English morphology; AI labeller unreliable."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-REFS-006"
-reason        = "BibTeX title-case loose heuristic; same Qwen3 blind spot as REFS-002."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-MARKUP-001"
-reason        = "Language-name substring match; AI labeller lacks context for math-mode / Pascal / initials."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-CODE-003"
-reason        = "Spacing-around-operators regex; LaTeX macro substring heuristic; Qwen3 blind spot."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-OPER-001"
-reason        = "Symbol-tie regex ($p$~value); character-class match, AI labeller unreliable."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-ABBR-001"
-reason        = "Uppercase-abbreviation pattern; regex-over-morphology, AI rubber-stamps."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-HOUSE-001"
-reason        = "e.g./i.e.-comma regex; LaTeX macro substring heuristic."
-added_in_spec = "004"
+# Removed 2026-04-24 (iteration 2): with the new prompt that anchors
+# the violation line/column ('>>'/'^' markers) and the per-rule
+# polarity hints in eval/review.py::_RULE_HINTS, these pattern-match
+# rules should be tractable for the AI. Verify via `eval-jss benchmark`
+# before removing more.
+#
+# - JSS-MARKUP-001 (language names) — caret marks the bare token; hints
+#   exclude filenames / math / initials.
+# - JSS-HOUSE-001 (e.g./i.e. comma) — caret marks the period; trivial
+#   substring check after the marker.
+# - JSS-OPER-001 ($p$~value) — caret marks the lowercase letter; hint
+#   names the trigger nouns explicitly.
+# - JSS-CODE-003 (operator spacing) — caret in \code{...}; hint
+#   excludes single dotted/hyphenated identifiers and scientific
+#   notation.
+# - JSS-ABBR-001 (uppercase abbreviation) — caret on the multi-letter
+#   dotted token.
+# - JSS-REFS-005 (journal abbreviation) — full bib entry rendered as
+#   the snippet (`.bib` files show the whole @entry block).
 
 [[rules]]
 rule_id       = "JSS-CAP-001"
