@@ -62,6 +62,14 @@ def check_jss_name_001(
                 token = match.group(0)
                 if token not in CANONICAL:
                     continue
+                # Skip function calls — `ggplot(` is the R function
+                # invocation, not the package name. The lookahead for
+                # `(` (with optional whitespace) catches `ggplot(`,
+                # `ggplot (...)`.
+                end = match.end()
+                trailing = node.chars[end:end + 4]
+                if trailing.lstrip().startswith("("):
+                    continue
                 canonical = CANONICAL[token]
                 abs_pos = node.pos + match.start()
                 line, col = _helpers._lineno_col(tex, abs_pos)

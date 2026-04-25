@@ -28,7 +28,13 @@ LANGUAGES: frozenset[str] = frozenset(
         "Java",
         "Fortran",
         "MATLAB",
+        # Accept "Matlab" alongside "MATLAB" — MathWorks' own materials
+        # use both. JSS has historically accepted both spellings.
+        "Matlab",
         "S-PLUS",
+        # Accept "S-Plus" alongside "S-PLUS" — Insightful / TIBCO
+        # branding used the mixed-case form in product documentation.
+        "S-Plus",
         "Stata",
         "SAS",
         "Julia",
@@ -64,14 +70,22 @@ _CANONICAL_RAW: Mapping[str, str] = {
     # SG-045: Java
     "java": "Java",
     "JAVA": "Java",
-    # SG-046: MATLAB
-    "Matlab": "MATLAB",
+    # SG-046: MATLAB. MathWorks accepts both "MATLAB" and "Matlab" in
+    # their own materials; only catch the all-lowercase form.
     "matlab": "MATLAB",
-    # SG-047: S-PLUS
-    "Splus": "S-PLUS",
-    "S-Plus": "S-PLUS",
-    # corpus-observed R package spellings
-    "ggplot": "ggplot2",
+    # SG-047: S-PLUS. The vendor (Insightful, then TIBCO) used "S-Plus"
+    # as the brand spelling; "S-PLUS" is also seen in JSS papers but
+    # both are accepted. Catch only the clearly-wrong "Splus" /
+    # "splus" / "SPLUS" forms.
+    "Splus": "S-Plus",
+    "splus": "S-Plus",
+    "SPLUS": "S-Plus",
+    # `ggplot` (without trailing 2) was previously mapped to "ggplot2"
+    # but is widely used as casual shorthand for the package and as
+    # the name of grob objects (`ggplot object`); the rule's
+    # function-call exemption already covers `ggplot(` invocations.
+    # Reviewers consistently labelled bare-prose mentions as FP, so
+    # the mapping is removed.
 }
 
 CANONICAL: Mapping[str, str] = MappingProxyType(dict(_CANONICAL_RAW))
