@@ -8,9 +8,10 @@ argument-hint: "<JSS-XXX-NNN>"
 Target rule: `$ARGUMENTS`
 
 Replaces the previous `/eval-suggest` + `/eval-plan` + `/eval-implement`
-trio. Delegate the FP investigation to a subagent (clean context for
-the discovery phase), then implement the fix in the main thread (so
-session-level continuity stays with the human).
+trio. The discovery phase can be delegated to a subagent (clean context
++ parallelizable) OR done inline in the main thread when the FP pattern
+is already visible — see Step 2's heuristic. Either way the
+implementation phase stays in the main thread for session continuity.
 
 ## Procedure
 
@@ -24,8 +25,39 @@ session-level continuity stays with the human).
    If 0, abort and tell the user; the rule is either passing or
    unmeasured.
 
-2. **Spawn an Explore subagent** (single tool call). Brief it
-   verbatim, NOT in summary:
+2. **Decide whether to spawn a subagent.** The subagent buys you a
+   clean context and parallel work, but adds coordination cost and a
+   verification round. It pays off when the FP pattern is *not yet
+   visible*; it's pure overhead when the pattern is already there
+   for the reading.
+
+   **Skip the subagent — investigate inline — when at least one of:**
+   - **AI verdict_reason texts already cluster.** Pull a sample:
+
+     ```bash
+     python3 -c "import sqlite3; cx = sqlite3.connect('eval/eval.db'); [print(r[0]) for r in cx.execute(\"SELECT verdict_reason FROM violations WHERE rule_id='$ARGUMENTS' AND verdict='false_positive' AND reviewer LIKE 'ai:%' LIMIT 8\").fetchall()]"
+     ```
+
+     If three or more of these reasons name the same diagnostic
+     phrase ("function call", "scientific notation", "filename",
+     "casual shorthand", "already-marked-up"), the cluster is
+     already named. Read 3–4 source contexts to confirm and write
+     the fix.
+   - **FP count ≤ 10.** Inspect them all by hand; faster than the
+     round-trip.
+   - **The fix touches more than one rule module.** Subagents return
+     a 250-word summary; cross-module fixes are easier to land with
+     full session context.
+
+   **Spawn the subagent when:**
+   - **FP count > 15** AND the verdict_reasons disagree or are
+     missing.
+   - **Multiple distinct mechanisms** are suspected (e.g., the rule
+     touches both .Rnw and .Rmd surfaces).
+   - **The rule's check function is long** (> 60 lines) and you
+     need someone to map it before proposing changes.
+
+   In subagent mode, brief verbatim (NOT in summary):
 
    > Investigate false positives for the JSS rule `$ARGUMENTS` in this
    > repo. Pull every row where `rule_id='$ARGUMENTS' AND
@@ -43,7 +75,8 @@ session-level continuity stays with the human).
    > proposed diff outline (no need for exact code), (d) risk to
    > existing TPs and how to mitigate.
 
-3. **Read the subagent's report.** Decide:
+3. **Either way — read the report (your own or the subagent's)
+   and decide:**
 
    - **High-confidence, single-pattern fix**: implement it inline.
      Run `pytest tests -q` AND `ruff check .` before declaring done.
