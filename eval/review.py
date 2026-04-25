@@ -151,13 +151,14 @@ _SYSTEM_PROMPT = (
     "  - false_positive: the rule mis-fired; the manuscript is compliant.\n"
     "  - uncertain: the surrounding context is genuinely insufficient.\n"
     "Anchor your judgement on the line marked with '>>' and the column "
-    "marked with '^' in the source-context block. Quote the exact "
-    "substring at that location in your reason. Do not describe text "
+    "marked with '^' in the source-context block. Do not describe text "
     "elsewhere in the file unless the rule's logic explicitly requires it.\n"
     "Return ONLY a JSON object of shape:\n"
     '  {"verdict": "true_positive" | "false_positive" | "uncertain",\n'
     '   "confidence": 0.0 to 1.0,\n'
-    '   "reason": "<one short sentence quoting the offending substring>"}\n'
+    '   "reason": "<the offending substring or 4-6 words MAX>"}\n'
+    "Be terse. The reason MUST be at most 8 words; quote the offending "
+    "substring if possible. Do not restate the rule. Do not narrate. "
     'Your "confidence" is YOUR self-reported confidence — NOT a sampler '
     "probability."
 )
@@ -303,6 +304,11 @@ class LlamaServerClient:
             ],
             "temperature": 0.1,
             "top_p": 1.0,
+            # Generation is the slow phase; cap output so a chatty model
+            # can't bloat latency. A complete JSON like
+            # `{"verdict":"true_positive","confidence":0.9,"reason":"`
+            # ...8-word quote ...`"}` fits in ~70 tokens.
+            "max_tokens": 96,
             "response_format": {"type": "json_object"},
             "stream": False,
         }
