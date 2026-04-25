@@ -52,6 +52,18 @@ _INLINE_R = re.compile(r"`r\s[^`]*`")
 # fenced blocks (those are code fences handled by the tokenizer).
 _INLINE_CODE = re.compile(r"(?<!`)`([^`\n]+)`(?!`)")
 
+# Markdown bold `**knitr**` and italic `*dplyr*` spans — the Rmd
+# equivalent of LaTeX \pkg{} / \emph{} for emphasis and naming.
+# Authors who don't reach for `\pkg{}` in Rmd commonly use bold
+# instead, so MARKUP-001/002/003 fire spuriously on the bare token
+# inside the asterisks. Strip to equivalent-length whitespace.
+#
+# Order matters: bold (`**…**`) before italic (`*…*`) so the italic
+# regex doesn't eat one asterisk from a bold pair. Both restricted to
+# single-line spans without internal asterisks.
+_BOLD_SPAN = re.compile(r"\*\*([^*\n]+)\*\*")
+_ITALIC_SPAN = re.compile(r"(?<![*\w])\*([^*\n]+)\*(?!\w)")
+
 
 class _OffsetWalker:
     """Proxy around a ``pylatexenc.LatexWalker`` that shifts the line
@@ -222,6 +234,8 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
     def _scrub_prose(text: str) -> str:
         text = _INLINE_R.sub(_blank_match, text)
         text = _INLINE_CODE.sub(_blank_match, text)
+        text = _BOLD_SPAN.sub(_blank_match, text)
+        text = _ITALIC_SPAN.sub(_blank_match, text)
         return text
 
     prose_blocks = [

@@ -36,6 +36,19 @@ _SUMMARY_WORDS_RE = re.compile(
     flags=re.IGNORECASE,
 )
 
+# Section titles that conventionally appear AFTER the conclusion but
+# before the bibliography — they're back-matter, not the document's
+# main-content endpoint, so STRUCT-001 ignores them when picking the
+# "last content section".
+_BACKMATTER_TITLE_RE = re.compile(
+    # Prefix matching — \b at the start only, since the trailing
+    # boundary would refuse "Acknowledgments" (the prefix is
+    # "acknowledg" but the word continues into "ments").
+    r"\b(acknowledg|funding?|session\s*info|computational\s*details|"
+    r"appendix|appendices|references)",
+    flags=re.IGNORECASE,
+)
+
 # Page-break macros accepted by STRUCT-006.
 _PAGEBREAK_MACROS: frozenset[str] = frozenset(
     {"newpage", "clearpage", "cleardoublepage", "pagebreak"}
@@ -45,6 +58,13 @@ _PAGEBREAK_MACROS: frozenset[str] = frozenset(
 _SECTION_MACROS: frozenset[str] = frozenset(
     {"section", "section*", "subsection", "subsection*",
      "chapter", "chapter*"}
+)
+
+# STRUCT-001 considers only top-level sectioning — a `\subsection*{New
+# Features}` at the very end of a long section shouldn't masquerade as
+# the document's last section.
+_TOP_LEVEL_SECTION_MACROS: frozenset[str] = frozenset(
+    {"section", "section*", "chapter", "chapter*"}
 )
 
 
@@ -85,19 +105,28 @@ def check_jss_struct_001(
         bib_pos = _find_bibliography_pos(tex)
         if bib_pos is None:
             continue  # no bibliography → out of scope
-        last_section: tuple[Any, Any, int] | None = None
+        # Collect every top-level section before the bibliography; the
+        # "last content section" is the last one whose title isn't
+        # back-matter (Acknowledgments, Funding, Session Info, etc.).
+        sections: list[tuple[Any, Any, int, str]] = []
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if node.pos >= bib_pos:
                 continue
             if (
                 isinstance(node, LatexMacroNode)
-                and node.macroname in _SECTION_MACROS
+                and node.macroname in _TOP_LEVEL_SECTION_MACROS
             ):
-                last_section = (node, parent, idx)
-        if last_section is None:
+                title = _first_arg_text(node, parent, idx)
+                sections.append((node, parent, idx, title))
+        # Walk from the end and skip back-matter sections.
+        last_content = next(
+            (s for s in reversed(sections)
+             if not _BACKMATTER_TITLE_RE.search(s[3])),
+            None,
+        )
+        if last_content is None:
             continue
-        node, parent, idx = last_section
-        title = _first_arg_text(node, parent, idx)
+        node, _parent, _idx, title = last_content
         if _SUMMARY_WORDS_RE.search(title):
             continue
         yield _violation(
