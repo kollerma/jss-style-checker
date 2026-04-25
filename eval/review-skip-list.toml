@@ -28,6 +28,11 @@ reason        = "Regex-over-prose with code/verbatim masking; AI labeller rubber
 added_in_spec = "004"
 
 [[rules]]
+rule_id       = "JSS-OPER-002"
+reason        = "Polarity inversion: Qwen3 systematically labels manuscripts that use '^T' as FP, claiming '^T complies with the rule'. The rule says use '\\top' NOT '^T'. Even with the per-rule polarity hint in eval/review.py::_RULE_HINTS, 22/22 AI verdicts during iter-2 review were wrong-direction."
+added_in_iter = "5"
+
+[[rules]]
 rule_id       = "JSS-REFS-002"
 reason        = "BibTeX title-case tight heuristic; Qwen3 rubber-stamps 'looks-like-a-title' cases (spec 002 note)."
 added_in_spec = "004"
