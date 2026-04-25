@@ -311,6 +311,66 @@ def benchmark_cmd(
     ctx.exit(code)
 
 
+@cli.group("jss-archive")
+def jss_archive_group() -> None:
+    """Scrape and consult the JSS archive (OAI-PMH)."""
+
+
+@jss_archive_group.command("sync")
+@click.option(
+    "--cache",
+    "cache_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/jss-archive.json"),
+    show_default=True,
+)
+@click.option(
+    "--since",
+    type=str,
+    default=None,
+    help="ISO-8601 date (YYYY-MM-DD); incremental refresh from this date.",
+)
+@click.pass_context
+def jss_archive_sync_cmd(
+    ctx: click.Context, cache_path: Path, since: str | None,
+) -> None:
+    """Fetch every JSS paper's metadata via OAI-PMH and cache it."""
+    from eval import jss_archive
+
+    code = jss_archive.run_sync(cache_path=cache_path, since=since)
+    ctx.exit(code)
+
+
+@jss_archive_group.command("packages")
+@click.option(
+    "--cache",
+    "cache_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/jss-archive.json"),
+    show_default=True,
+)
+@click.option(
+    "--cran-matched/--all-candidates",
+    default=True,
+    help=(
+        "Filter to candidates that actually exist on CRAN's PACKAGES "
+        "index (default), or print every candidate the heuristic "
+        "extracted (includes false positives like 'A-optimality')."
+    ),
+)
+@click.pass_context
+def jss_archive_packages_cmd(
+    ctx: click.Context, cache_path: Path, cran_matched: bool,
+) -> None:
+    """List CRAN package candidates extracted from the JSS archive."""
+    from eval import jss_archive
+
+    code = jss_archive.run_packages(
+        cache_path=cache_path, cran_matched=cran_matched,
+    )
+    ctx.exit(code)
+
+
 @cli.group("iterate")
 def iterate_group() -> None:
     """Eval-improve loop bookkeeping."""
@@ -518,6 +578,25 @@ def corpus_fetch_cmd(
     help="Probe each candidate's CRAN landing page to confirm it ships a vignette.",
 )
 @click.option(
+    "--from-jss-archive/--no-from-jss-archive",
+    default=True,
+    show_default=True,
+    help=(
+        "Restrict the candidate pool to JSS-archive-matched packages "
+        "(eval/jss-archive.json). Run `eval-jss jss-archive sync` "
+        "first to populate the cache. With --no-from-jss-archive, "
+        "fall back to a random sample over CRAN's PACKAGES index."
+    ),
+)
+@click.option(
+    "--jss-archive-cache",
+    "jss_archive_cache",
+    type=click.Path(path_type=Path),
+    default=Path("eval/jss-archive.json"),
+    show_default=True,
+    help="JSS-archive cache file (used when --from-jss-archive is on).",
+)
+@click.option(
     "--jss-only/--no-jss-only",
     default=True,
     show_default=True,
@@ -536,6 +615,8 @@ def corpus_suggest_cmd(
     seed: int | None,
     verify: bool,
     jss_only: bool,
+    from_jss_archive: bool,
+    jss_archive_cache: Path,
 ) -> None:
     """Print CRAN packages with vignettes that are not yet in the manifest."""
     from eval import corpus as corpus_mod
@@ -544,6 +625,8 @@ def corpus_suggest_cmd(
         manifest_path=manifest_path,
         limit=limit,
         seed=seed,
+        from_jss_archive=from_jss_archive,
+        jss_archive_cache=jss_archive_cache,
         verify=verify,
         jss_only=jss_only,
     )

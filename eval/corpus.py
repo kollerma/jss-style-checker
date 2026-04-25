@@ -490,6 +490,8 @@ def run_suggest(
     seed: int | None,
     verify: bool,
     jss_only: bool = True,
+    from_jss_archive: bool = True,
+    jss_archive_cache: Path = Path("eval/jss-archive.json"),
     packages_url: str = _CRAN_PACKAGES_URL,
 ) -> int:
     """Print candidate CRAN packages not already in the manifest.
@@ -529,6 +531,22 @@ def run_suggest(
         print(f"eval-jss: failed to fetch CRAN PACKAGES: {err}")
         return 2
 
+    archive_pool: set[str] | None = None
+    if from_jss_archive:
+        from eval.jss_archive import candidate_packages, load_cache
+        if not jss_archive_cache.is_file():
+            print(
+                f"eval-jss: --from-jss-archive given but cache not at "
+                f"{jss_archive_cache}. Run `eval-jss jss-archive sync` first, "
+                f"or pass --no-from-jss-archive to fall back to the random "
+                f"CRAN sample."
+            )
+            return 2
+        archive_pool = candidate_packages(jss_archive_cache)
+        if not load_cache(jss_archive_cache):
+            print("eval-jss: jss-archive cache is empty; nothing to suggest.")
+            return 0
+
     candidates: list[tuple[str, str, str]] = []
     for rec in _parse_dcf(body.decode("utf-8", errors="replace")):
         name = rec.get("Package")
@@ -536,6 +554,12 @@ def run_suggest(
         if not (name and version):
             continue
         if name in existing:
+            continue
+        # When seeding from the JSS archive, only consider packages that
+        # the archive's title/subject heuristic surfaced as a candidate;
+        # this is the highest-yield path because JSS-counterpart packages
+        # are <2% of vignette-bearing CRAN packages.
+        if archive_pool is not None and name not in archive_pool:
             continue
         if not _has_builder_hint(rec):
             continue
