@@ -517,6 +517,17 @@ def corpus_fetch_cmd(
     show_default=True,
     help="Probe each candidate's CRAN landing page to confirm it ships a vignette.",
 )
+@click.option(
+    "--jss-only/--no-jss-only",
+    default=True,
+    show_default=True,
+    help=(
+        "Only suggest packages whose source tarball ships a vignette that "
+        "loads the `jss` LaTeX class AND cites Journal of Statistical "
+        "Software (in the vignette or a sibling .bib). Future corpus rows "
+        "must satisfy this — see memory/feedback_corpus_jss_only.md."
+    ),
+)
 @click.pass_context
 def corpus_suggest_cmd(
     ctx: click.Context,
@@ -524,6 +535,7 @@ def corpus_suggest_cmd(
     limit: int,
     seed: int | None,
     verify: bool,
+    jss_only: bool,
 ) -> None:
     """Print CRAN packages with vignettes that are not yet in the manifest."""
     from eval import corpus as corpus_mod
@@ -533,6 +545,7 @@ def corpus_suggest_cmd(
         limit=limit,
         seed=seed,
         verify=verify,
+        jss_only=jss_only,
     )
     ctx.exit(code)
 

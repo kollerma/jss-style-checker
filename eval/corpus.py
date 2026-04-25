@@ -18,7 +18,9 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import re
 import shutil
+import sys
 import tarfile
 import urllib.error
 import urllib.request
@@ -392,12 +394,102 @@ def _probe_has_vignette(pkg: str, timeout: float = 10.0) -> bool:
     return _VIGNETTE_MARKER in body
 
 
+# JSS LaTeX-class signal: any of these substrings indicates a vignette
+# loads the `jss` document class. Match is case-sensitive (jss filenames
+# in published vignettes are always lowercase) and whitespace-tolerant
+# via a regex.
+_JSS_CLASS_RE = re.compile(
+    r"\\(?:documentclass(?:\[[^\]]*\])?|usepackage)\s*\{\s*jss\s*\}"
+)
+# Bibliography signal: a JSS bibtex entry — checked case-insensitively
+# against the vignette source itself and against any .bib files that
+# ship alongside it under `vignettes/`.
+_JSS_BIB_MARKER = "journal of statistical software"
+
+
+def _vignette_text_signals_jss(text: str) -> tuple[bool, bool]:
+    """Return (has_jss_class, mentions_jss_journal) for one vignette body."""
+    has_class = bool(_JSS_CLASS_RE.search(text))
+    mentions_journal = _JSS_BIB_MARKER in text.lower()
+    return has_class, mentions_journal
+
+
+def _probe_jss_vignette(
+    pkg: str, version: str, timeout: float = 30.0
+) -> str | None:
+    """Fetch `pkg`'s CRAN source tarball and look for a JSS-counterpart vignette.
+
+    Returns the relative path (inside the tarball, e.g.
+    `pkg/vignettes/foo.Rnw`) of the first vignette under `vignettes/`
+    whose text both (a) loads the `jss` LaTeX class and (b) cites a JSS
+    paper — either inline `Journal of Statistical Software` substring in
+    the vignette source itself, or in any sibling `.bib` file under
+    `vignettes/`. Returns `None` when no such vignette is found, the
+    fetch times out, or the archive is unreadable.
+    """
+    url = f"https://cran.r-project.org/src/contrib/{pkg}_{version}.tar.gz"
+    try:
+        data, _sha = _stream_fetch(url, timeout=timeout)
+    except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
+        print(
+            f"eval-jss: skip {pkg} {version}: fetch failed ({type(err).__name__})",
+            file=sys.stderr,
+        )
+        return None
+
+    try:
+        buf = io.BytesIO(data)
+        with tarfile.open(fileobj=buf, mode="r:*") as tar:
+            members = tar.getmembers()
+            # Collect vignette source files and sibling .bib files.
+            vignette_members: list[tarfile.TarInfo] = []
+            bib_texts: list[str] = []
+            for m in members:
+                if not m.isfile():
+                    continue
+                name_lower = m.name.lower()
+                if "/vignettes/" not in name_lower and not name_lower.startswith(
+                    "vignettes/"
+                ):
+                    continue
+                if name_lower.endswith((".rnw", ".rmd", ".snw", ".rtex", ".ltx", ".tex")):
+                    vignette_members.append(m)
+                elif name_lower.endswith(".bib"):
+                    f = tar.extractfile(m)
+                    if f is None:
+                        continue
+                    bib_texts.append(
+                        f.read().decode("utf-8", errors="replace")
+                    )
+
+            bib_blob_lower = " ".join(bib_texts).lower()
+            bib_mentions_jss = _JSS_BIB_MARKER in bib_blob_lower
+
+            for m in vignette_members:
+                f = tar.extractfile(m)
+                if f is None:
+                    continue
+                text = f.read().decode("utf-8", errors="replace")
+                has_class, self_cites = _vignette_text_signals_jss(text)
+                if has_class and (self_cites or bib_mentions_jss):
+                    return m.name
+    except tarfile.TarError as err:
+        print(
+            f"eval-jss: skip {pkg} {version}: unreadable tarball ({err})",
+            file=sys.stderr,
+        )
+        return None
+
+    return None
+
+
 def run_suggest(
     *,
     manifest_path: Path,
     limit: int,
     seed: int | None,
     verify: bool,
+    jss_only: bool = True,
     packages_url: str = _CRAN_PACKAGES_URL,
 ) -> int:
     """Print candidate CRAN packages not already in the manifest.
@@ -409,8 +501,17 @@ def run_suggest(
     candidate's CRAN landing page is probed for a `Vignettes:` row to
     drop false positives before printing.
 
-    Output: `<package>\\t<version>\\t<builder_hint>` lines, one per
-    suggestion — the columns `/eval:add-corpus` consumes.
+    With `jss_only=True` (default), candidates undergo a stricter
+    verification: the source tarball is fetched and each vignette under
+    `vignettes/` is checked for the `jss` LaTeX class plus a citation to
+    Journal of Statistical Software (in the vignette itself or any
+    sibling `.bib`). This enforces the corpus criterion that only
+    JSS-paper counterparts are admissible.
+
+    Output: with `jss_only=False`, `<package>\\t<version>\\t<builder_hint>`
+    lines (3 columns, backward-compatible). With `jss_only=True`, a
+    fourth `<vignette_file>` column carries the matching vignette path
+    relative to the tarball root.
 
     `seed` makes the selection deterministic for reproducibility. If
     `None`, the OS random source picks.
@@ -448,30 +549,48 @@ def run_suggest(
 
     rng = random.Random(seed)
     # Over-sample so the verify step has room to drop false positives.
-    pool_size = min(limit * (4 if verify else 1), len(candidates))
+    # Both --verify (landing-page probe) and --jss-only (tarball probe)
+    # are drop-style filters; the 4x cap keeps the verify cost bounded.
+    needs_oversample = verify or jss_only
+    pool_size = min(limit * (4 if needs_oversample else 1), len(candidates))
     pool = rng.sample(candidates, pool_size)
 
-    picked: list[tuple[str, str, str]] = []
+    picked: list[tuple[str, str, str, str]] = []
     for name, version, hit in pool:
         if verify and not _probe_has_vignette(name):
             continue
-        picked.append((name, version, hit))
+        vignette_file = ""
+        if jss_only:
+            match = _probe_jss_vignette(name, version)
+            if match is None:
+                continue
+            vignette_file = match
+        picked.append((name, version, hit, vignette_file))
         if len(picked) >= limit:
             break
     picked.sort(key=lambda t: t[0].lower())
 
-    suffix = (
-        " (verified via CRAN landing-page probe)"
-        if verify
-        else " (unverified — coarse filter only)"
-    )
+    suffixes: list[str] = []
+    if verify:
+        suffixes.append("CRAN landing-page probe")
+    if jss_only:
+        suffixes.append("JSS vignette tarball probe")
+    if suffixes:
+        suffix = f" (verified via {' + '.join(suffixes)})"
+    else:
+        suffix = " (unverified — coarse filter only)"
     print(
         f"# {len(picked)} suggestions of {len(candidates)} eligible; "
         f"{len(existing)} already pinned{suffix}"
     )
-    print("# columns: package\tversion\tbuilder_hint")
-    for name, version, hit in picked:
-        print(f"{name}\t{version}\t{hit}")
+    if jss_only:
+        print("# columns: package\tversion\tbuilder_hint\tvignette_file")
+        for name, version, hit, vf in picked:
+            print(f"{name}\t{version}\t{hit}\t{vf}")
+    else:
+        print("# columns: package\tversion\tbuilder_hint")
+        for name, version, hit, _vf in picked:
+            print(f"{name}\t{version}\t{hit}")
     return 0
 
 

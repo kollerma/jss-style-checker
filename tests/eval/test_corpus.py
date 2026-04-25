@@ -318,3 +318,152 @@ def test_tarslip_is_refused(monkeypatch, tmp_path: Path) -> None:
     assert "tarslip" in gaps_text.lower() or "unsafe" in gaps_text.lower()
     # Nothing outside the target dir.
     assert not (tmp_path / "escaped.tex").exists()
+
+
+# -----------------------------------------------------------------------------
+# JSS-only suggestion filter
+# -----------------------------------------------------------------------------
+
+
+def _packages_dcf(records: list[dict[str, str]]) -> bytes:
+    """Render a minimal CRAN PACKAGES blob from in-memory records."""
+    chunks: list[str] = []
+    for rec in records:
+        chunks.append("\n".join(f"{k}: {v}" for k, v in rec.items()))
+    return ("\n\n".join(chunks) + "\n").encode("utf-8")
+
+
+def test_probe_jss_vignette_accepts_class_plus_inline_journal(
+    monkeypatch, tmp_path: Path
+) -> None:
+    rnw = (
+        b"\\documentclass[nojss]{jss}\n"
+        b"% see Journal of Statistical Software, Smith (2020)\n"
+        b"\\begin{document}\\end{document}\n"
+    )
+    tar_bytes = _build_fake_tar([("foo/vignettes/foo.Rnw", rnw)])
+    url = "https://cran.r-project.org/src/contrib/foo_1.0.tar.gz"
+    _patch_urlopen(monkeypatch, {url: tar_bytes})
+
+    match = corpus._probe_jss_vignette("foo", "1.0")
+    assert match == "foo/vignettes/foo.Rnw"
+
+
+def test_probe_jss_vignette_accepts_sibling_bib(monkeypatch, tmp_path: Path) -> None:
+    rnw = b"\\documentclass{jss}\n\\cite{smith2020}\n"
+    bib = b"@article{smith2020, journal = {Journal of Statistical Software}}\n"
+    tar_bytes = _build_fake_tar(
+        [("bar/vignettes/bar.Rnw", rnw), ("bar/vignettes/refs.bib", bib)]
+    )
+    url = "https://cran.r-project.org/src/contrib/bar_2.0.tar.gz"
+    _patch_urlopen(monkeypatch, {url: tar_bytes})
+
+    match = corpus._probe_jss_vignette("bar", "2.0")
+    assert match == "bar/vignettes/bar.Rnw"
+
+
+def test_probe_jss_vignette_rejects_plain_cran_vignette(
+    monkeypatch, tmp_path: Path
+) -> None:
+    # No `jss` class loaded — must be rejected even with a JSS-ish bib.
+    rmd = b"---\ntitle: My Package\n---\n# intro\n"
+    bib = b"@article{x, journal = {Journal of Statistical Software}}\n"
+    tar_bytes = _build_fake_tar(
+        [("baz/vignettes/baz.Rmd", rmd), ("baz/vignettes/refs.bib", bib)]
+    )
+    url = "https://cran.r-project.org/src/contrib/baz_3.0.tar.gz"
+    _patch_urlopen(monkeypatch, {url: tar_bytes})
+
+    assert corpus._probe_jss_vignette("baz", "3.0") is None
+
+
+def test_probe_jss_vignette_rejects_jss_class_without_citation(
+    monkeypatch, tmp_path: Path
+) -> None:
+    # `jss` class loaded but no JSS reference in vignette or any .bib.
+    rnw = b"\\documentclass{jss}\n% no journal mention\n"
+    tar_bytes = _build_fake_tar([("qux/vignettes/qux.Rnw", rnw)])
+    url = "https://cran.r-project.org/src/contrib/qux_4.0.tar.gz"
+    _patch_urlopen(monkeypatch, {url: tar_bytes})
+
+    assert corpus._probe_jss_vignette("qux", "4.0") is None
+
+
+def test_probe_jss_vignette_handles_fetch_error(monkeypatch) -> None:
+    import urllib.error
+
+    def fake_urlopen(req, timeout=None):  # noqa: ARG001
+        raise urllib.error.URLError("boom")
+
+    monkeypatch.setattr(corpus.urllib.request, "urlopen", fake_urlopen)
+    assert corpus._probe_jss_vignette("nope", "0.1") is None
+
+
+def test_run_suggest_jss_only_filters_and_emits_vignette_column(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
+    # Two candidates from PACKAGES: only `goodpkg` carries a JSS vignette.
+    packages_blob = _packages_dcf(
+        [
+            {"Package": "goodpkg", "Version": "1.0", "Suggests": "knitr"},
+            {"Package": "badpkg", "Version": "2.0", "Suggests": "knitr"},
+        ]
+    )
+    good_rnw = (
+        b"\\documentclass[nojss]{jss}\n"
+        b"% Journal of Statistical Software\n"
+    )
+    bad_rmd = b"---\ntitle: Plain\n---\n# intro\n"
+    good_tar = _build_fake_tar([("goodpkg/vignettes/good.Rnw", good_rnw)])
+    bad_tar = _build_fake_tar([("badpkg/vignettes/bad.Rmd", bad_rmd)])
+
+    url_to_bytes = {
+        "https://cran.r-project.org/src/contrib/PACKAGES": packages_blob,
+        "https://cran.r-project.org/src/contrib/goodpkg_1.0.tar.gz": good_tar,
+        "https://cran.r-project.org/src/contrib/badpkg_2.0.tar.gz": bad_tar,
+    }
+    _patch_urlopen(monkeypatch, url_to_bytes)
+
+    mp = tmp_path / "manifest.csv"
+    _write_manifest(mp, [])
+
+    code = corpus.run_suggest(
+        manifest_path=mp,
+        limit=5,
+        seed=0,
+        verify=False,
+        jss_only=True,
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "vignette_file" in out  # 4-column header
+    assert "goodpkg\t1.0\tknitr\tgoodpkg/vignettes/good.Rnw" in out
+    assert "badpkg" not in out
+
+
+def test_run_suggest_no_jss_only_keeps_three_column_format(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
+    packages_blob = _packages_dcf(
+        [{"Package": "anypkg", "Version": "9.9", "Suggests": "knitr"}]
+    )
+    _patch_urlopen(
+        monkeypatch,
+        {"https://cran.r-project.org/src/contrib/PACKAGES": packages_blob},
+    )
+
+    mp = tmp_path / "manifest.csv"
+    _write_manifest(mp, [])
+
+    code = corpus.run_suggest(
+        manifest_path=mp,
+        limit=5,
+        seed=0,
+        verify=False,
+        jss_only=False,
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "# columns: package\tversion\tbuilder_hint\n" in out
+    assert "vignette_file" not in out
+    assert "anypkg\t9.9\tknitr\n" in out
