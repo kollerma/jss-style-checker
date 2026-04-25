@@ -69,8 +69,13 @@ def check_jss_cite_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     meta = _catalogue_data.RULES["JSS-CITE-002"]
+    # `seen` spans the entire document, NOT each tex-like fragment. In
+    # .Rmd input, each prose block becomes its own ParsedTexFile island;
+    # a per-fragment `seen` would re-ask for a citation on every prose
+    # block that mentions \pkg{X}, even when X was already cited
+    # earlier in the document.
+    seen: set[str] = set()
     for tex in doc.all_tex_like():
-        seen: set[str] = set()
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode) and node.macroname == "pkg"

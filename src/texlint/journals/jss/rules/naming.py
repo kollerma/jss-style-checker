@@ -83,7 +83,7 @@ def check_jss_name_001(
 
 
 def _field_value(entry: Any, name: str) -> str:
-    f = entry.fields_dict.get(name)
+    f = _helpers._lc_fields(entry).get(name.lower())
     if f is None:
         return ""
     return str(f.value).strip()

@@ -138,7 +138,7 @@ def check_jss_bibtex_003(
         requirements = _REQUIRED_FIELDS.get(entry.entry_type.lower())
         if requirements is None:
             continue  # unknown or 'misc' — no requirements
-        have = set(entry.fields_dict)
+        have = set(_helpers._lc_fields(entry))
         missing_groups: list[frozenset[str]] = [
             g for g in requirements if have.isdisjoint(g)
         ]
@@ -164,7 +164,7 @@ def check_jss_bibtex_003(
 
 
 def _author_count(entry: Any) -> int:
-    f = entry.fields_dict.get("author")
+    f = _helpers._lc_fields(entry).get("author")
     if f is None:
         return 0
     # BibTeX separates authors with ' and '; splitting is safe for JSS style.

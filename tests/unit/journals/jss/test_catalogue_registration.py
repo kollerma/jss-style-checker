@@ -87,19 +87,22 @@ def test_rules_tuple_matches_catalogue_partition(journal_categories):
         )
 
 
-# R-7 (updated by spec 005 FR-020): formats is None for all rules
-# except the preamble category, which narrows to {"tex", "rnw"}.
+# R-7 (updated by spec 005 FR-020): formats is None for most rules,
+# narrows to {"tex", "rnw"} for the preamble category, and narrows to
+# {"tex"} for rules that depend on figure/equation environment bodies
+# being present (the Rnw stripper blanks them — see OPER-003 / TYPO-004).
 _ALLOWED_FORMATS = {
     None,
     frozenset({"tex", "rnw"}),
+    frozenset({"tex"}),
 }
 
 
 def test_rule_formats_is_none(active_rules):
     for rule_id, rule in active_rules.items():
         assert rule.formats in _ALLOWED_FORMATS, (
-            f"{rule_id} has formats={rule.formats}; expected None or "
-            f"frozenset({{'tex', 'rnw'}})"
+            f"{rule_id} has formats={rule.formats}; expected one of "
+            f"{_ALLOWED_FORMATS!r}"
         )
 
 

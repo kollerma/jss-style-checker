@@ -134,6 +134,18 @@ def _group_text(group: Any) -> str:
     return "".join(chars).strip()
 
 
+def _lc_fields(entry: Any) -> dict[str, Any]:
+    """Return ``entry.fields_dict`` with field-name keys lower-cased.
+
+    BibTeX field names are case-insensitive (`AUTHOR`, `Author`, and
+    `author` mean the same thing per the BibTeX spec). bibtexparser 2.x
+    keeps the source casing in ``fields_dict``, which made every
+    ``entry.fields_dict.get("year")`` miss entries that wrote ``YEAR``
+    or ``Year``. Use this helper to normalise once at the call site.
+    """
+    return {k.lower(): v for k, v in (entry.fields_dict or {}).items()}
+
+
 def _collect_cited_keys(doc: Any) -> tuple[set[str], bool]:
     """Return ``(keys, include_all)`` from all ``\\cite*`` / ``\\nocite``
     macros across every tex-like island in ``doc``.

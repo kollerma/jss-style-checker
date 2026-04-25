@@ -209,7 +209,7 @@ def check_jss_oper_004(
 # ---------------------------------------------------------------------------
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
+def _rule(rule_id: str, check_fn, formats: frozenset[str] | None = None) -> Rule:
     meta = _catalogue_data.RULES[rule_id]
     return Rule(
         id=rule_id,
@@ -218,13 +218,22 @@ def _rule(rule_id: str, check_fn) -> Rule:
         message_template=meta["message_template"],
         authority=meta["authority"],
         check=check_fn,
-        formats=None,
+        formats=formats,
     )
 
 
 jss_oper_001 = _rule("JSS-OPER-001", check_jss_oper_001)
 jss_oper_002 = _rule("JSS-OPER-002", check_jss_oper_002)
-jss_oper_003 = _rule("JSS-OPER-003", check_jss_oper_003)
+# OPER-003 is structural: it walks tex_like sibling nodes around a
+# display-equation env and checks for blank-line text between them. In
+# .Rnw input the Rnw stripper replaces R chunks with whitespace, which
+# manufactures spurious blank-line text immediately before/after the
+# equation env even when the source had a chunk there. Narrow to the
+# native LaTeX surface only until we have a "pre-stripped whitespace
+# is figure content" signal.
+jss_oper_003 = _rule(
+    "JSS-OPER-003", check_jss_oper_003, formats=frozenset({"tex"})
+)
 jss_oper_004 = _rule("JSS-OPER-004", check_jss_oper_004)
 
 

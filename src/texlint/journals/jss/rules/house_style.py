@@ -97,7 +97,7 @@ def check_jss_house_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for bib, entry in _iter_bib_entries(doc):
-        field = entry.fields_dict.get("edition")
+        field = _helpers._lc_fields(entry).get("edition")
         if field is None:
             continue
         value = str(field.value).strip()

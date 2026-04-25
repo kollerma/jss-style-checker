@@ -94,6 +94,46 @@ def _words(text: str) -> list[str]:
     return [w for w in re.split(r"[\s\-]+", text.strip()) if w]
 
 
+_SENTENCE_BOUNDARY_RE = re.compile(r"[.:?!]\s+(\S+)")
+
+
+def _words_with_boundary(text: str) -> list[tuple[str, bool]]:
+    """Like ``_words`` but each entry carries a flag for whether the word
+    starts a new sub-sentence — i.e., the previous token ended with
+    ``.``, ``:``, ``?``, or ``!``. Sub-sentence-initial words are
+    allowed to be capitalised under JSS sentence style.
+    """
+    boundary_offsets: set[int] = set()
+    for m in _SENTENCE_BOUNDARY_RE.finditer(text):
+        boundary_offsets.add(m.start(1))
+    out: list[tuple[str, bool]] = []
+    for m in re.finditer(r"\S+", text):
+        word = m.group(0)
+        # Strip trailing punctuation for the word view but keep the offset.
+        clean = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "", word)
+        if not clean:
+            continue
+        out.append((clean, m.start() in boundary_offsets))
+    return out
+
+
+def _looks_like_abbrev(token: str) -> bool:
+    """True for abbreviations that are conventionally capitalised even
+    in sentence style — all-caps 2–6 letter tokens (PDF, NIH, NACP),
+    or mixed-case scientific shorthands like mRNA / iPad.
+    """
+    letters = re.sub(r"[^A-Za-z]", "", token)
+    if not letters:
+        return False
+    if 2 <= len(letters) <= 6 and letters.isupper():
+        return True
+    # Mixed-case with an interior uppercase that follows a lowercase
+    # (mRNA, iPad, gRPC). Single capital at the start is NOT a match.
+    if any(letters[i].isupper() and letters[i - 1].islower() for i in range(1, len(letters))):
+        return True
+    return False
+
+
 def _is_capitalised_word(word: str) -> bool:
     letters = re.sub(r"[^A-Za-z]", "", word)
     if not letters:
@@ -199,12 +239,15 @@ def _check_sentence_style(
     tex: Any, pos: int, group: Any, rule_id: str, suggestion: str
 ) -> Iterator[Violation]:
     text = _group_plain_text(group)
-    words = _words(text)
-    # Flag when two or more non-first, non-proper, non-stopword words
-    # are capitalised (sentence-style violation).
+    words = _words_with_boundary(text)
+    # Flag when two or more capitalised words break sentence style.
+    # Exemptions: the first word of the caption, words that follow a
+    # `.`/`:`/`?`/`!` (sub-sentence start), known proper nouns, title
+    # stopwords ("a", "the", ...), and abbreviations / scientific
+    # shorthands like "PDF" or "mRNA".
     offenders = 0
-    for idx, word in enumerate(words):
-        if idx == 0:
+    for idx, (word, follows_boundary) in enumerate(words):
+        if idx == 0 or follows_boundary:
             continue
         bare = re.sub(r"[^A-Za-z]", "", word)
         if not bare:
@@ -214,6 +257,8 @@ def _check_sentence_style(
         if bare in _PROPER_NOUNS:
             continue
         if bare.lower() in _TITLE_STOPWORDS:
+            continue
+        if _looks_like_abbrev(bare):
             continue
         offenders += 1
     if offenders >= 2:

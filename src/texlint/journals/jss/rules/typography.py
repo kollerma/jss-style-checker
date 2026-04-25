@@ -267,7 +267,7 @@ def _has_content_before(children: list[Any], cap_idx: int) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
+def _rule(rule_id: str, check_fn, formats: frozenset[str] | None = None) -> Rule:
     meta = _catalogue_data.RULES[rule_id]
     return Rule(
         id=rule_id,
@@ -276,14 +276,22 @@ def _rule(rule_id: str, check_fn) -> Rule:
         message_template=meta["message_template"],
         authority=meta["authority"],
         check=check_fn,
-        formats=None,
+        formats=formats,
     )
 
 
 jss_typo_001 = _rule("JSS-TYPO-001", check_jss_typo_001)
 jss_typo_002 = _rule("JSS-TYPO-002", check_jss_typo_002)
 jss_typo_003 = _rule("JSS-TYPO-003", check_jss_typo_003)
-jss_typo_004 = _rule("JSS-TYPO-004", check_jss_typo_004)
+# TYPO-004 inspects the figure/table environment's child nodes to check
+# `\caption{}` ordering. The Rnw stripper blanks out R chunks, so the
+# figure body looks empty after stripping and \caption appears first
+# inside \begin{figure} regardless of where the author actually put
+# it. Narrow to native .tex until we can recognise stripped-chunk
+# whitespace as content.
+jss_typo_004 = _rule(
+    "JSS-TYPO-004", check_jss_typo_004, formats=frozenset({"tex"})
+)
 
 
 rules: tuple[Rule, ...] = (jss_typo_001, jss_typo_002, jss_typo_003, jss_typo_004)

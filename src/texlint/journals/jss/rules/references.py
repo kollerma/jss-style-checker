@@ -52,7 +52,7 @@ _TITLE_STOPWORDS: frozenset[str] = frozenset(
 
 
 def _field_value(entry: Any, name: str) -> str:
-    f = entry.fields_dict.get(name)
+    f = _helpers._lc_fields(entry).get(name.lower())
     if f is None:
         return ""
     return str(f.value)
@@ -102,7 +102,7 @@ def check_jss_refs_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for bib, entry in _iter_entries(doc):
-        if "year" in entry.fields_dict:
+        if "year" in _helpers._lc_fields(entry):
             continue
         key = entry.key or "<unknown>"
         yield _violation(
@@ -163,7 +163,7 @@ def check_jss_refs_003(
     for bib, entry in _iter_entries(doc):
         if entry.entry_type.lower() not in _DOI_ENTRY_TYPES:
             continue
-        if "doi" in entry.fields_dict:
+        if "doi" in _helpers._lc_fields(entry):
             continue
         key = entry.key or "<unknown>"
         yield _violation(
