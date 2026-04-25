@@ -72,6 +72,7 @@ def _resolve_source(paper_path: str, file: str | None) -> Path | None:
 
 _LEXER_BY_SUFFIX = {
     ".tex": "latex",
+    ".ltx": "latex",
     ".Rnw": "latex",
     ".Rmd": "markdown",
     ".bib": "bibtex",

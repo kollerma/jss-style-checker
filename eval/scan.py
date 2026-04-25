@@ -61,27 +61,35 @@ def _discover_papers(corpus_dir: Path) -> list[Path]:
     return sorted(p for p in corpus_dir.iterdir() if p.is_dir())
 
 
-_SOURCE_SUFFIXES = {".tex", ".bib", ".Rnw", ".Rmd"}
+_SOURCE_SUFFIXES = {".tex", ".ltx", ".bib", ".Rnw", ".Rmd"}
+
+# Subdirectories where CRAN packages keep JSS-paper sources. Order
+# matters only for stable traversal — both are walked.
+_VIGNETTE_DIRS = ("vignettes", "inst/doc")
 
 
 def _source_files(paper_dir: Path) -> list[Path]:
     """Return the source files in a paper dir, in a stable order.
 
     Top-level files win (manual/placeholder corpora). If the paper dir
-    has none, fall back to any `vignettes/` subdirectory — CRAN
-    tarballs nest vignettes under `<pkg>/vignettes/`.
+    has none, fall back to any of `vignettes/` or `inst/doc/`
+    subdirectories — CRAN tarballs nest vignettes under
+    `<pkg>/vignettes/`, but some JSS-paper packages place their
+    canonical paper under `inst/doc/` instead.
     """
     top = sorted(
         p for p in paper_dir.iterdir() if p.is_file() and p.suffix in _SOURCE_SUFFIXES
     )
     if top:
         return top
-    nested = sorted(
-        p
-        for p in paper_dir.rglob("vignettes/*")
-        if p.is_file() and p.suffix in _SOURCE_SUFFIXES
-    )
-    return nested
+    nested: list[Path] = []
+    for sub in _VIGNETTE_DIRS:
+        nested.extend(
+            p
+            for p in paper_dir.rglob(f"{sub}/*")
+            if p.is_file() and p.suffix in _SOURCE_SUFFIXES
+        )
+    return sorted(nested)
 
 
 def _invoke_linter(paper_dir: Path, jss_lint: str) -> api.LinterResult:

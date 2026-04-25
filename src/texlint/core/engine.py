@@ -44,7 +44,7 @@ class UnsupportedSuffixError(ValueError):
     def __init__(self, path: Path) -> None:
         super().__init__(
             f"unsupported file extension: {path.name!r}. "
-            f"Supported: .tex, .bib, .Rnw, .Rmd (case-insensitive)."
+            f"Supported: .tex, .ltx, .bib, .Rnw, .Rmd (case-insensitive)."
         )
         self.path = path
 
@@ -68,7 +68,9 @@ def parse_document(paths) -> ParsedDocument:
     for raw in paths:
         path = Path(raw) if not isinstance(raw, Path) else raw
         suffix = path.suffix.lower()
-        if suffix == ".tex":
+        if suffix in (".tex", ".ltx"):
+            # `.ltx` is just LaTeX with a different convention; some
+            # JSS vignettes (e.g., shrinkTVP) ship under that name.
             tex_files.append(parse_tex_file(path))
         elif suffix == ".bib":
             bib_files.append(parse_bib_file(path))

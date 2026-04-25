@@ -24,7 +24,7 @@ from .api import (
 from .config import load as load_config
 from .core.engine import UnsupportedSuffixError, load_journal, parse_document, run
 
-_SUPPORTED_SUFFIXES = {".tex", ".bib", ".rnw", ".rmd"}
+_SUPPORTED_SUFFIXES = {".tex", ".ltx", ".bib", ".rnw", ".rmd"}
 _PARSE_RULE_ID = "JSS-PARSE-000"
 
 _JOURNAL_CHOICES: tuple[str, ...] | None = None  # resolved lazily; click accepts any string
@@ -39,8 +39,8 @@ def _parse_inputs(paths: tuple[str, ...]) -> tuple[ParsedDocument | None, int]:
 
     The exit-code is 2 when any path is missing or has an unsupported
     suffix. Delegates to :func:`texlint.core.engine.parse_document` for
-    actual parsing; extension dispatch supports ``.tex``, ``.bib``,
-    ``.Rnw``, and ``.Rmd`` (spec 005).
+    actual parsing; extension dispatch supports ``.tex``, ``.ltx``,
+    ``.bib``, ``.Rnw``, and ``.Rmd``.
     """
     path_objs: list[Path] = []
     for raw in paths:

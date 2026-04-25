@@ -414,17 +414,24 @@ def _vignette_text_signals_jss(text: str) -> tuple[bool, bool]:
     return has_class, mentions_journal
 
 
+# Sub-paths inside a CRAN package tarball where the JSS-paper source
+# may live. `vignettes/` is the canonical home; `inst/doc/` is the
+# secondary home that older packages and some larger JSS papers use.
+_PROBE_SUBPATHS = ("/vignettes/", "/inst/doc/")
+
+
 def _probe_jss_vignette(
     pkg: str, version: str, timeout: float = 30.0
 ) -> str | None:
     """Fetch `pkg`'s CRAN source tarball and look for a JSS-counterpart vignette.
 
     Returns the relative path (inside the tarball, e.g.
-    `pkg/vignettes/foo.Rnw`) of the first vignette under `vignettes/`
-    whose text both (a) loads the `jss` LaTeX class and (b) cites a JSS
-    paper — either inline `Journal of Statistical Software` substring in
-    the vignette source itself, or in any sibling `.bib` file under
-    `vignettes/`. Returns `None` when no such vignette is found, the
+    `pkg/vignettes/foo.Rnw` or `pkg/inst/doc/foo.tex`) of the first
+    vignette under `vignettes/` or `inst/doc/` whose text both
+    (a) loads the `jss` LaTeX class and (b) cites a JSS paper —
+    either inline `Journal of Statistical Software` substring in the
+    vignette source itself, or in any sibling `.bib` file in either
+    directory. Returns `None` when no such vignette is found, the
     fetch times out, or the archive is unreadable.
     """
     url = f"https://cran.r-project.org/src/contrib/{pkg}_{version}.tar.gz"
@@ -437,6 +444,13 @@ def _probe_jss_vignette(
         )
         return None
 
+    def _is_in_probe_subpath(name_lower: str) -> bool:
+        for sub in _PROBE_SUBPATHS:
+            stripped = sub.lstrip("/")
+            if sub in name_lower or name_lower.startswith(stripped):
+                return True
+        return False
+
     try:
         buf = io.BytesIO(data)
         with tarfile.open(fileobj=buf, mode="r:*") as tar:
@@ -448,9 +462,7 @@ def _probe_jss_vignette(
                 if not m.isfile():
                     continue
                 name_lower = m.name.lower()
-                if "/vignettes/" not in name_lower and not name_lower.startswith(
-                    "vignettes/"
-                ):
+                if not _is_in_probe_subpath(name_lower):
                     continue
                 if name_lower.endswith((".rnw", ".rmd", ".snw", ".rtex", ".ltx", ".tex")):
                     vignette_members.append(m)
