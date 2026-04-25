@@ -98,6 +98,16 @@ def scan_cmd(
     show_default=True,
     help="Skip-list TOML consulted when --skip-listed is set.",
 )
+@click.option(
+    "--reverify-ai",
+    is_flag=True,
+    default=False,
+    help=(
+        "Widen the review queue to AI-labelled rows so the human can "
+        "spot-check or override AI verdicts. Use for rules whose "
+        "precision currently depends entirely on AI labels."
+    ),
+)
 @click.pass_context
 def human_review_cmd(
     ctx: click.Context,
@@ -106,6 +116,7 @@ def human_review_cmd(
     reviewer: str | None,
     skip_listed: bool,
     skip_list_path: Path,
+    reverify_ai: bool,
 ) -> None:
     """Interactively label unlabelled and uncertain violations."""
     from eval import human_review as human_review_mod
@@ -117,6 +128,7 @@ def human_review_cmd(
         reviewer=reviewer,
         skip_listed=skip_listed,
         skip_list_path=skip_list_path,
+        reverify_ai=reverify_ai,
     )
     ctx.exit(code)
 

@@ -228,12 +228,18 @@ def _select_violations(
     *,
     rule_ids: set[str] | None,
     limit: int | None,
+    include_ai_labelled: bool = False,
 ) -> list:
     """Return a list of `sqlite3.Row` violations to review.
 
     `rule_ids=None` applies no rule filter; an empty set short-circuits
     to no rows (the intended behaviour when two filters intersect to
     nothing — e.g., `--rule X --skip-listed` with X not in the skip list).
+
+    `include_ai_labelled=True` widens the queue to AI-labelled rows so
+    a human can spot-check or override the AI's verdict — useful when
+    `eval-jss report` shows a rule passing but every label came from
+    the model with no human anchor.
     """
     if rule_ids is not None and not rule_ids:
         return []
@@ -241,8 +247,14 @@ def _select_violations(
         "SELECT v.id, v.paper_id, v.rule_id, v.category, v.line, v.column,"
         " v.message, v.severity, v.file, p.path AS paper_path"
         " FROM violations v JOIN papers p ON p.id = v.paper_id"
-        " WHERE (v.verdict IS NULL OR v.verdict = 'uncertain')"
     )
+    if include_ai_labelled:
+        sql += (
+            " WHERE (v.verdict IS NULL OR v.verdict = 'uncertain'"
+            "        OR v.reviewer LIKE 'ai:%')"
+        )
+    else:
+        sql += " WHERE (v.verdict IS NULL OR v.verdict = 'uncertain')"
     params: list = []
     if rule_ids is not None:
         placeholders = ", ".join("?" * len(rule_ids))
@@ -287,6 +299,7 @@ def run(
     reviewer: str | None,
     skip_listed: bool = False,
     skip_list_path: Path | None = None,
+    reverify_ai: bool = False,
 ) -> int:
     """Interactive review loop. Returns the CLI exit code.
 
@@ -295,6 +308,11 @@ def run(
     rules that bypass the AI classifier entirely and therefore can only
     be labelled by a human. Combining with `--rule X` intersects: only
     a skip-listed rule `X` survives.
+
+    `reverify_ai=True` widens the queue to AI-labelled rows so the
+    human can spot-check / override AI verdicts. Recommended for rules
+    whose precision number depends entirely on AI labels with no
+    human anchor.
     """
     reviewer_str = _resolve_reviewer(reviewer)
     console = Console()
@@ -312,7 +330,12 @@ def run(
 
     cx = db.connect(db_path)
     try:
-        rows = _select_violations(cx, rule_ids=rule_ids, limit=limit)
+        rows = _select_violations(
+            cx,
+            rule_ids=rule_ids,
+            limit=limit,
+            include_ai_labelled=reverify_ai,
+        )
         if not rows:
             console.print("eval-jss: no pending violations to review.")
             return 0
