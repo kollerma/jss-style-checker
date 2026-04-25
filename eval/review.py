@@ -304,11 +304,14 @@ class LlamaServerClient:
             ],
             "temperature": 0.1,
             "top_p": 1.0,
-            # Generation is the slow phase; cap output so a chatty model
-            # can't bloat latency. A complete JSON like
-            # `{"verdict":"true_positive","confidence":0.9,"reason":"`
-            # ...8-word quote ...`"}` fits in ~70 tokens.
-            "max_tokens": 96,
+            # Cap kept generous because thinking models (Qwen3,
+            # DeepSeek-R1) emit a long chain-of-thought into
+            # reasoning_content BEFORE writing the final JSON to
+            # content. A 96-token cap was eating Qwen3's reasoning
+            # budget and leaving content empty. The system prompt
+            # still asks for an 8-word reason, so non-thinking models
+            # stop well before this ceiling.
+            "max_tokens": 1024,
             "response_format": {"type": "json_object"},
             "stream": False,
         }
