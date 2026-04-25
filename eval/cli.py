@@ -226,6 +226,50 @@ def report_cmd(
     ctx.exit(code)
 
 
+@cli.command("benchmark")
+@click.option(
+    "--model",
+    "models",
+    multiple=True,
+    help="Model spec as `name:http://host:port`. Repeat for multiple models.",
+)
+@click.option(
+    "--limit",
+    type=int,
+    default=None,
+    help="Cap the gold set size (for quick smoke runs).",
+)
+@click.option(
+    "--write-json",
+    "write_json",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Append per-row outcomes (one JSON line per model) to this file.",
+)
+@click.pass_context
+def benchmark_cmd(
+    ctx: click.Context,
+    models: tuple[str, ...],
+    limit: int | None,
+    write_json: Path | None,
+) -> None:
+    """Score AI models against the human-labelled gold set."""
+    from eval import benchmark as bench_mod
+
+    try:
+        specs = [bench_mod.ModelSpec.parse(m) for m in models]
+    except ValueError as err:
+        click.echo(f"eval-jss: {err}", err=True)
+        ctx.exit(2)
+    code = bench_mod.run(
+        db_path=ctx.obj["db"],
+        models=specs,
+        limit=limit,
+        write_json=write_json,
+    )
+    ctx.exit(code)
+
+
 @cli.group("iterate")
 def iterate_group() -> None:
     """Eval-improve loop bookkeeping."""

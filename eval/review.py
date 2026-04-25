@@ -143,19 +143,74 @@ def _parse_client_response(content: str) -> api.ClassifyResult:
 
 
 _SYSTEM_PROMPT = (
-    "You are a reviewer of static-analysis findings on LaTeX manuscripts "
-    "submitted to the Journal of Statistical Software. A finding is either "
-    "a true positive (a real style violation the author should fix) or a "
-    "false positive (the finding is spurious; the manuscript is compliant "
-    "here).\n"
+    "You are a reviewer of static-analysis findings on LaTeX/Sweave/"
+    "R-Markdown manuscripts submitted to the Journal of Statistical "
+    "Software. Each finding is one of:\n"
+    "  - true_positive: the manuscript really violates the rule at the "
+    "marked location; the author should fix it.\n"
+    "  - false_positive: the rule mis-fired; the manuscript is compliant.\n"
+    "  - uncertain: the surrounding context is genuinely insufficient.\n"
+    "Anchor your judgement on the line marked with '>>' and the column "
+    "marked with '^' in the source-context block. Quote the exact "
+    "substring at that location in your reason. Do not describe text "
+    "elsewhere in the file unless the rule's logic explicitly requires it.\n"
     "Return ONLY a JSON object of shape:\n"
     '  {"verdict": "true_positive" | "false_positive" | "uncertain",\n'
     '   "confidence": 0.0 to 1.0,\n'
-    '   "reason": "<one short sentence>"}\n'
-    'Use "uncertain" when the surrounding context is insufficient. Your '
-    '"confidence" is YOUR self-reported confidence — it is NOT a '
-    "probability emitted by a sampler."
+    '   "reason": "<one short sentence quoting the offending substring>"}\n'
+    'Your "confidence" is YOUR self-reported confidence — NOT a sampler '
+    "probability."
 )
+
+
+# Rule-specific clarifications for rules whose pass/fail polarity has
+# tripped the model in past runs. Each entry is one or two lines of
+# extra guidance appended to the user prompt for that rule.
+_RULE_HINTS: dict[str, str] = {
+    "JSS-OPER-002": (
+        "Rule polarity: TRUE POSITIVE when the manuscript uses '^T', "
+        "'^\\prime', or a literal superscript T for transpose. "
+        "FALSE POSITIVE when it already uses '\\top'."
+    ),
+    "JSS-OPER-003": (
+        "Rule polarity: TRUE POSITIVE when there IS a blank line "
+        "immediately before or after the display equation environment. "
+        "An equation body ending in a period is exempt — that's a "
+        "FALSE POSITIVE if the rule fires anyway."
+    ),
+    "JSS-NAME-001": (
+        "Rule scope: this fires only on programming-language NAMES "
+        "(R, Java, MATLAB, S-PLUS, etc.) and a small list of R-package "
+        "spellings (ggplot vs ggplot2). It does NOT fire on capitalisation "
+        "of arbitrary identifiers, function names, or English words."
+    ),
+    "JSS-CITE-002": (
+        "Rule scope: per tex-like surface, only the FIRST occurrence of "
+        "each \\pkg{X} needs a same-paragraph citation. Subsequent "
+        "mentions of the same X are not violations."
+    ),
+}
+
+
+def _format_marked_context(
+    snippet: str, start_line: int, line: int | None, column: int | None
+) -> str:
+    """Render the snippet with line numbers; mark the violation line with
+    a leading '>>' and underline the column with a '^' caret on the
+    next line. Mirrors the human-review TUI's visual cue.
+    """
+    lines = snippet.splitlines()
+    width = max(2, len(str(start_line + len(lines))))
+    out: list[str] = []
+    for i, text in enumerate(lines):
+        n = start_line + i
+        prefix = ">>" if n == line else "  "
+        out.append(f"{prefix}{n:>{width}}: {text}")
+        if n == line and column is not None and column > 0:
+            # Caret column: width of the prefix+gutter + (column-1) spaces.
+            pad = 2 + width + 2  # prefix + line-no + ": "
+            out.append(" " * (pad + column - 1) + "^")
+    return "\n".join(out)
 
 
 @dataclass
@@ -175,11 +230,18 @@ class LlamaServerClient:
     def classify(
         self, violation: dict, paper_context: str
     ) -> api.ClassifyResult:
+        rule_id = violation.get("rule_id", "")
+        hint = _RULE_HINTS.get(rule_id, "")
+        hint_block = f"\nRule guidance:\n{hint}\n" if hint else ""
         user_prompt = (
-            f"Rule: {violation.get('rule_id')}\n"
+            f"Rule: {rule_id}\n"
             f"Category: {violation.get('category')}\n"
-            f"Message: {violation.get('message')}\n\n"
-            f"Source context (paper: {violation.get('paper_path','')}):\n"
+            f"Message: {violation.get('message')}\n"
+            f"Location: line {violation.get('line')}, "
+            f"column {violation.get('column')}\n"
+            f"{hint_block}"
+            f"\nSource context (paper: {violation.get('paper_path','')}; "
+            f"violation line marked '>>', column marked '^'):\n"
             f"---\n{paper_context}\n---\n"
         )
         body = {
@@ -308,7 +370,13 @@ def run(
                 "paper_path": row["paper_path"],
             }
             snippet = source_snippet(row["paper_path"], row["file"], row["line"])
-            paper_context = snippet[0] if snippet else ""
+            if snippet is None:
+                paper_context = ""
+            else:
+                text, start = snippet
+                paper_context = _format_marked_context(
+                    text, start, row["line"], row["column"]
+                )
             result = client.classify(violation_dict, paper_context=paper_context)
 
             is_network_failure = (
