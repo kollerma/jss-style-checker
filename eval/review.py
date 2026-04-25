@@ -337,7 +337,15 @@ class LlamaServerClient:
             return api.ClassifyResult(
                 api.Verdict.UNCERTAIN, 0.0, "empty response"
             )
-        content = (choices[0].get("message") or {}).get("content", "")
+        message = choices[0].get("message") or {}
+        # Reasoning models (Bonsai, DeepSeek-R1, OpenAI o-series) split
+        # the chain-of-thought into `reasoning_content` and the final
+        # answer into `content`. Bonsai 8B in particular routes the
+        # whole JSON object into `reasoning_content` and leaves
+        # `content` empty. Fall back to whichever has substance.
+        content = message.get("content") or ""
+        if not content.strip():
+            content = message.get("reasoning_content") or ""
         return _parse_client_response(content)
 
 
