@@ -270,14 +270,38 @@ class LlamaServerClient:
     """Production `ReviewClient` — speaks OpenAI-style JSON to llama-server.
 
     Default base URL is `http://localhost:8080`. The `model` string is
-    stored in `reviewer = f"ai:{model}"` on labelled rows and sent in the
-    request body's `model` field (llama-server ignores the model name
-    but client-side we keep it for audit visibility).
+    stored in `reviewer = f"ai:{model}"` on labelled rows and is the
+    audit label. The actual id sent in the request body is auto-
+    discovered via `/v1/models` on first use — llama-server happily
+    accepts any string but `mlx_lm.server` validates it against the
+    loaded model and 401s on a mismatch.
     """
 
     model: str = "qwen3-30b-a3b"
     base_url: str = "http://localhost:8080"
     timeout: float = 60.0
+    _resolved_model_id: str | None = None
+
+    def _resolve_model_id(self) -> str:
+        if self._resolved_model_id is not None:
+            return self._resolved_model_id
+        try:
+            req = urllib.request.Request(
+                f"{self.base_url.rstrip('/')}/v1/models", method="GET"
+            )
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            entries = data.get("data") or []
+            if entries and isinstance(entries[0], dict):
+                self._resolved_model_id = entries[0].get("id") or self.model
+            else:
+                self._resolved_model_id = self.model
+        except (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError):
+            # Fall back to the user-supplied label; llama-server ignores
+            # it anyway and we'll get a clearer error from /chat/completions
+            # if the backend really cared.
+            self._resolved_model_id = self.model
+        return self._resolved_model_id
 
     def classify(
         self, violation: dict, paper_context: str
@@ -297,7 +321,7 @@ class LlamaServerClient:
             f"---\n{paper_context}\n---\n"
         )
         body = {
-            "model": self.model,
+            "model": self._resolve_model_id(),
             "messages": [
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
