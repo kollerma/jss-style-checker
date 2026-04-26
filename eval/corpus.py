@@ -449,8 +449,11 @@ def _vignette_text_signals_jss(text: str) -> tuple[bool, bool]:
 
 
 # Sub-paths inside a CRAN package tarball where the JSS-paper source
-# may live. `vignettes/` is the canonical home; `inst/doc/` is the
-# secondary home that older packages and some larger JSS papers use.
+# may live, in preference order. `vignettes/` is the canonical home;
+# `R CMD build` then COPIES those files to `inst/doc/` for the
+# installed package, so the two paths usually carry the same source.
+# Prefer the first subpath that has any candidate file and skip the
+# rest to avoid scanning duplicates.
 _PROBE_SUBPATHS = ("/vignettes/", "/inst/doc/")
 
 
@@ -478,35 +481,40 @@ def _probe_jss_vignette(
         )
         return None
 
-    def _is_in_probe_subpath(name_lower: str) -> bool:
-        for sub in _PROBE_SUBPATHS:
-            stripped = sub.lstrip("/")
-            if sub in name_lower or name_lower.startswith(stripped):
-                return True
-        return False
+    def _matches_subpath(name_lower: str, sub: str) -> bool:
+        stripped = sub.lstrip("/")
+        return sub in name_lower or name_lower.startswith(stripped)
 
     try:
         buf = io.BytesIO(data)
         with tarfile.open(fileobj=buf, mode="r:*") as tar:
             members = tar.getmembers()
-            # Collect vignette source files and sibling .bib files.
+            # Walk subpaths in preference order; use the first one that
+            # has any candidate file. Skipping the rest avoids the
+            # vignettes/ vs inst/doc/ near-duplicate that R CMD build
+            # creates at package-build time.
             vignette_members: list[tarfile.TarInfo] = []
             bib_texts: list[str] = []
-            for m in members:
-                if not m.isfile():
-                    continue
-                name_lower = m.name.lower()
-                if not _is_in_probe_subpath(name_lower):
-                    continue
-                if name_lower.endswith((".rnw", ".rmd", ".snw", ".rtex", ".ltx", ".tex")):
-                    vignette_members.append(m)
-                elif name_lower.endswith(".bib"):
-                    f = tar.extractfile(m)
-                    if f is None:
+            for sub in _PROBE_SUBPATHS:
+                for m in members:
+                    if not m.isfile():
                         continue
-                    bib_texts.append(
-                        f.read().decode("utf-8", errors="replace")
-                    )
+                    name_lower = m.name.lower()
+                    if not _matches_subpath(name_lower, sub):
+                        continue
+                    if name_lower.endswith(
+                        (".rnw", ".rmd", ".snw", ".rtex", ".ltx", ".tex")
+                    ):
+                        vignette_members.append(m)
+                    elif name_lower.endswith(".bib"):
+                        f = tar.extractfile(m)
+                        if f is None:
+                            continue
+                        bib_texts.append(
+                            f.read().decode("utf-8", errors="replace")
+                        )
+                if vignette_members or bib_texts:
+                    break
 
             bib_blob_lower = " ".join(bib_texts).lower()
             bib_mentions_jss = _JSS_BIB_MARKER in bib_blob_lower
