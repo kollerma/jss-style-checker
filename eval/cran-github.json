@@ -1,0 +1,4799 @@
+{
+  "fetched_at": "2026-04-26T17:39:28Z",
+  "candidates": [
+    {
+      "package": "arules",
+      "vignette": "inst/doc/arules.Rnw",
+      "repo": "cran/arules",
+      "html_url": "https://github.com/cran/arules/blob/9bfcd9e849d7ff512993c98034fa2cf08de8a3b5/inst/doc/arules.Rnw"
+    },
+    {
+      "package": "QZ",
+      "vignette": "inst/doc/QZ-guide.Rnw",
+      "repo": "cran/QZ",
+      "html_url": "https://github.com/cran/QZ/blob/43365941238df6474f45516e0b13c4caa222ffe8/inst/doc/QZ-guide.Rnw"
+    },
+    {
+      "package": "BARD",
+      "vignette": "inst/doc/article.tex",
+      "repo": "cran/BARD",
+      "html_url": "https://github.com/cran/BARD/blob/5265b6114d91064679d7fbf1a6e21663f886f136/inst/doc/article.tex"
+    },
+    {
+      "package": "rscala",
+      "vignette": "inst/doc/rscala.Rnw",
+      "repo": "cran/rscala",
+      "html_url": "https://github.com/cran/rscala/blob/d6b962d0f297c865e93d5c33ed216659e550d0d1/inst/doc/rscala.Rnw"
+    },
+    {
+      "package": "TDA",
+      "vignette": "inst/doc/article.Rnw",
+      "repo": "cran/TDA",
+      "html_url": "https://github.com/cran/TDA/blob/0e300018d16e8b805d31adf618b64a424166a698/inst/doc/article.Rnw"
+    },
+    {
+      "package": "depmixS4",
+      "vignette": "inst/doc/depmixS4.Rnw",
+      "repo": "cran/depmixS4",
+      "html_url": "https://github.com/cran/depmixS4/blob/ac7784c35e8708878f2369ecfd8f2153373ffbac/inst/doc/depmixS4.Rnw"
+    },
+    {
+      "package": "pbdZMQ",
+      "vignette": "inst/doc/pbdZMQ-guide.Rnw",
+      "repo": "cran/pbdZMQ",
+      "html_url": "https://github.com/cran/pbdZMQ/blob/abd9dee68386e05730390cfedf50a106ad5cc269/inst/doc/pbdZMQ-guide.Rnw"
+    },
+    {
+      "package": "EMCluster",
+      "vignette": "inst/doc/EMCluster-guide.Rnw",
+      "repo": "cran/EMCluster",
+      "html_url": "https://github.com/cran/EMCluster/blob/a402a474e1a3d54246d02518b0b4abafefc67db0/inst/doc/EMCluster-guide.Rnw"
+    },
+    {
+      "package": "frbs",
+      "vignette": "inst/doc/lala2015frbs.ltx",
+      "repo": "cran/frbs",
+      "html_url": "https://github.com/cran/frbs/blob/3aba8824eed1b98c55757a50195a946caaf549ee/inst/doc/lala2015frbs.ltx"
+    },
+    {
+      "package": "surveillance",
+      "vignette": "inst/doc/hhh4_spacetime.Rnw",
+      "repo": "cran/surveillance",
+      "html_url": "https://github.com/cran/surveillance/blob/d26270bc63d66c6f0ed0da11318e3be703cfeea5/inst/doc/hhh4_spacetime.Rnw"
+    },
+    {
+      "package": "phyclust",
+      "vignette": "inst/doc/phyclust-guide.Rnw",
+      "repo": "cran/phyclust",
+      "html_url": "https://github.com/cran/phyclust/blob/674b65b5df64f676e1c8c797548eb30f0180edf6/inst/doc/phyclust-guide.Rnw"
+    },
+    {
+      "package": "scoringutils",
+      "vignette": "inst/manuscript/manuscript.tex",
+      "repo": "cran/scoringutils",
+      "html_url": "https://github.com/cran/scoringutils/blob/ac35f6a825d3dfe7db9fab7c54478233d18596b7/inst/manuscript/manuscript.tex"
+    },
+    {
+      "package": "magic",
+      "vignette": "inst/doc/magic.Rnw",
+      "repo": "cran/magic",
+      "html_url": "https://github.com/cran/magic/blob/47f7036f8c5fe3171c1c888b634b2c9b76fd6507/inst/doc/magic.Rnw"
+    },
+    {
+      "package": "CompModels",
+      "vignette": "inst/doc/CompModels.ltx",
+      "repo": "cran/CompModels",
+      "html_url": "https://github.com/cran/CompModels/blob/11902cfed12bcaad9b88b4a979d1e87616094d6c/inst/doc/CompModels.ltx"
+    },
+    {
+      "package": "MixAll",
+      "vignette": "inst/doc/Learning-Mixtures.Rnw",
+      "repo": "cran/MixAll",
+      "html_url": "https://github.com/cran/MixAll/blob/438e0e0fbef612622c1f05265e9bf0f047f9f27a/inst/doc/Learning-Mixtures.Rnw"
+    },
+    {
+      "package": "partitions",
+      "vignette": "inst/doc/scrabble.Rnw",
+      "repo": "cran/partitions",
+      "html_url": "https://github.com/cran/partitions/blob/de2f532992e09b1ad5c148e919c0d437d79ab50d/inst/doc/scrabble.Rnw"
+    },
+    {
+      "package": "network",
+      "vignette": "inst/doc/networkVignette.Rnw",
+      "repo": "cran/network",
+      "html_url": "https://github.com/cran/network/blob/2ffca4f69550f7f1e74e4b95fd35ac5bcff5cc60/inst/doc/networkVignette.Rnw"
+    },
+    {
+      "package": "RcppEigen",
+      "vignette": "inst/doc/RcppEigen-Introduction.Rnw",
+      "repo": "cran/RcppEigen",
+      "html_url": "https://github.com/cran/RcppEigen/blob/79a4e57807600c4184f2d4503ea979f560ac9d64/inst/doc/RcppEigen-Introduction.Rnw"
+    },
+    {
+      "package": "msSurv",
+      "vignette": "inst/doc/msSurv.Rnw",
+      "repo": "cran/msSurv",
+      "html_url": "https://github.com/cran/msSurv/blob/c29a1af9a4385bc58b380e3dcdfc063d29b70c92/inst/doc/msSurv.Rnw"
+    },
+    {
+      "package": "psychotree",
+      "vignette": "inst/doc/raschtree.Rnw",
+      "repo": "cran/psychotree",
+      "html_url": "https://github.com/cran/psychotree/blob/850b38a141d2ec9b93cd6d7a55e0b53c57fe4f60/inst/doc/raschtree.Rnw"
+    },
+    {
+      "package": "glmertree",
+      "vignette": "inst/doc/glmertree.Rnw",
+      "repo": "cran/glmertree",
+      "html_url": "https://github.com/cran/glmertree/blob/ea4340bdb1074b5dc07f6b52f3fffd6df259a02f/inst/doc/glmertree.Rnw"
+    },
+    {
+      "package": "robustlmm",
+      "vignette": "inst/doc/simulationStudies.Rnw",
+      "repo": "cran/robustlmm",
+      "html_url": "https://github.com/cran/robustlmm/blob/aa2b46d87d5b74d11d8a046a2bd5d1e765a02e1a/inst/doc/simulationStudies.Rnw"
+    },
+    {
+      "package": "SpatioTemporal",
+      "vignette": "inst/doc/ST_intro.Rnw",
+      "repo": "cran/SpatioTemporal",
+      "html_url": "https://github.com/cran/SpatioTemporal/blob/3149f4a6ba0359d5b9c1a8fd599ce1bcdb855b1b/inst/doc/ST_intro.Rnw"
+    },
+    {
+      "package": "CUB",
+      "vignette": "inst/doc/CUBvignette-knitr.Rnw",
+      "repo": "cran/CUB",
+      "html_url": "https://github.com/cran/CUB/blob/9fbe20783e6d0dca04ef4392e0f0fe53ce3e56ef/inst/doc/CUBvignette-knitr.Rnw"
+    },
+    {
+      "package": "lmSubsets",
+      "vignette": "inst/doc/lmSubsets.Rnw",
+      "repo": "cran/lmSubsets",
+      "html_url": "https://github.com/cran/lmSubsets/blob/5e64b3b78c5d31cdbb8bd8e5df95f81a3e057fa0/inst/doc/lmSubsets.Rnw"
+    },
+    {
+      "package": "aylmer",
+      "vignette": "inst/doc/fishervig.Rnw",
+      "repo": "cran/aylmer",
+      "html_url": "https://github.com/cran/aylmer/blob/d44d30aec06ef845aa3e82b24503282b82b7623f/inst/doc/fishervig.Rnw"
+    },
+    {
+      "package": "streamMOA",
+      "vignette": "vignettes/head.tex",
+      "repo": "cran/streamMOA",
+      "html_url": "https://github.com/cran/streamMOA/blob/1e7b3d7757ff3e908de6918cf0d2202a2e4a6e11/vignettes/head.tex"
+    },
+    {
+      "package": "psychotools",
+      "vignette": "inst/doc/toolbox-simulation.Rnw",
+      "repo": "cran/psychotools",
+      "html_url": "https://github.com/cran/psychotools/blob/9056643fc6da1248259c1b6cdc004bacbd5b54bb/inst/doc/toolbox-simulation.Rnw"
+    },
+    {
+      "package": "clues",
+      "vignette": "inst/doc/vignettes/clues.Rnw",
+      "repo": "cran/clues",
+      "html_url": "https://github.com/cran/clues/blob/54669e4a873389e5b281bed4114f76e40f4eb138/inst/doc/vignettes/clues.Rnw"
+    },
+    {
+      "package": "equateIRT",
+      "vignette": "inst/doc/equateIRT_paper.Rnw",
+      "repo": "cran/equateIRT",
+      "html_url": "https://github.com/cran/equateIRT/blob/009cc1f25ef4ea39f87c50f9add9580b29031ba3/inst/doc/equateIRT_paper.Rnw"
+    },
+    {
+      "package": "homals",
+      "vignette": "inst/doc/vignettes/homals.Rnw",
+      "repo": "cran/homals",
+      "html_url": "https://github.com/cran/homals/blob/276ceb3ebdd980b45f88bec8e3bd1b30a53a3c4f/inst/doc/vignettes/homals.Rnw"
+    },
+    {
+      "package": "glmnetcr",
+      "vignette": "inst/doc/glmnetcr.Rnw",
+      "repo": "cran/glmnetcr",
+      "html_url": "https://github.com/cran/glmnetcr/blob/93cc3ea40974811c1ee32fb94b9f2f2f65aa4a04/inst/doc/glmnetcr.Rnw"
+    },
+    {
+      "package": "spacetime",
+      "vignette": "inst/doc/jss816.Rnw",
+      "repo": "cran/spacetime",
+      "html_url": "https://github.com/cran/spacetime/blob/f61d31570936fa3324636d833cc96b051b0406c5/inst/doc/jss816.Rnw"
+    },
+    {
+      "package": "nnc",
+      "vignette": "inst/doc/nncVignette.Rnw",
+      "repo": "cran/nnc",
+      "html_url": "https://github.com/cran/nnc/blob/c169abb91528bc69dd5c9c4b18d9ce5d0c4c5781/inst/doc/nncVignette.Rnw"
+    },
+    {
+      "package": "rrcov",
+      "vignette": "inst/doc/rrcov.Rnw",
+      "repo": "cran/rrcov",
+      "html_url": "https://github.com/cran/rrcov/blob/21b1a555edb25910ce6d57d11877aff32cf51e51/inst/doc/rrcov.Rnw"
+    },
+    {
+      "package": "copula",
+      "vignette": "inst/doc/nacopula-pkg.Rnw",
+      "repo": "cran/copula",
+      "html_url": "https://github.com/cran/copula/blob/d0ddd79049170bad2dfd243f86bb483e91c3108f/inst/doc/nacopula-pkg.Rnw"
+    },
+    {
+      "package": "Myrrix",
+      "vignette": "inst/doc/packageShowCase.Rnw",
+      "repo": "cran/Myrrix",
+      "html_url": "https://github.com/cran/Myrrix/blob/5871e614c2cf1d3aebf75348c1ff094678de1bb0/inst/doc/packageShowCase.Rnw"
+    },
+    {
+      "package": "coin",
+      "vignette": "inst/doc/coin.Rnw",
+      "repo": "cran/coin",
+      "html_url": "https://github.com/cran/coin/blob/4f813a5f635d62178763b975c32f68fce30097c5/inst/doc/coin.Rnw"
+    },
+    {
+      "package": "mada",
+      "vignette": "inst/doc/mada.Rnw",
+      "repo": "cran/mada",
+      "html_url": "https://github.com/cran/mada/blob/5fcad80643905aebd28909d8ba0191465e5772a1/inst/doc/mada.Rnw"
+    },
+    {
+      "package": "SimInf",
+      "vignette": "inst/doc/SimInf.Rnw",
+      "repo": "cran/SimInf",
+      "html_url": "https://github.com/cran/SimInf/blob/2b3fb32c3891b69abbe33930df8c8de8c980bccd/inst/doc/SimInf.Rnw"
+    },
+    {
+      "package": "causaleffect",
+      "vignette": "inst/doc/causaleffect.ltx",
+      "repo": "cran/causaleffect",
+      "html_url": "https://github.com/cran/causaleffect/blob/687d5177aa178cb89782fd496523c0e1f3ceb9f5/inst/doc/causaleffect.ltx"
+    },
+    {
+      "package": "mvtnorm",
+      "vignette": "inst/doc/MVT_Rnews.Rnw",
+      "repo": "cran/mvtnorm",
+      "html_url": "https://github.com/cran/mvtnorm/blob/81e1d8cc83f8c5e2e0b89e87c39beb5760690716/inst/doc/MVT_Rnews.Rnw"
+    },
+    {
+      "package": "creditr",
+      "vignette": "inst/doc/creditr.Rnw",
+      "repo": "cran/creditr",
+      "html_url": "https://github.com/cran/creditr/blob/8dbecb9725e150fce12fe72b3d2f1f4e4b5db21a/inst/doc/creditr.Rnw"
+    },
+    {
+      "package": "mnlogit",
+      "vignette": "inst/doc/mnlogit.Rnw",
+      "repo": "cran/mnlogit",
+      "html_url": "https://github.com/cran/mnlogit/blob/77bc391ad60bd3a6c8de94df3780017369f92fc0/inst/doc/mnlogit.Rnw"
+    },
+    {
+      "package": "geosample",
+      "vignette": "inst/doc/geosample-vignette.Rnw",
+      "repo": "cran/geosample",
+      "html_url": "https://github.com/cran/geosample/blob/d81f8b28997da13f5ddb6934f536008dcc893f05/inst/doc/geosample-vignette.Rnw"
+    },
+    {
+      "package": "zoo",
+      "vignette": "inst/doc/zoo-design.Rnw",
+      "repo": "cran/zoo",
+      "html_url": "https://github.com/cran/zoo/blob/954566761f1daee174bb1fe0837164f6fb9b1353/inst/doc/zoo-design.Rnw"
+    },
+    {
+      "package": "np",
+      "vignette": "inst/doc/np.Rnw",
+      "repo": "cran/np",
+      "html_url": "https://github.com/cran/np/blob/327137b58dbb2cace62f008027215cfe9cb280b9/inst/doc/np.Rnw"
+    },
+    {
+      "package": "em",
+      "vignette": "inst/doc/em_intro.Rnw",
+      "repo": "cran/em",
+      "html_url": "https://github.com/cran/em/blob/28b053c3df2898cabbe679b9804b9f936ae10fb2/inst/doc/em_intro.Rnw"
+    },
+    {
+      "package": "eventstudies",
+      "vignette": "inst/doc/replications.Rnw",
+      "repo": "cran/eventstudies",
+      "html_url": "https://github.com/cran/eventstudies/blob/23a911f60aa2f6adaadcafef8e7471ce71a706e5/inst/doc/replications.Rnw"
+    },
+    {
+      "package": "archetypes",
+      "vignette": "inst/doc/archetypes.Rnw",
+      "repo": "cran/archetypes",
+      "html_url": "https://github.com/cran/archetypes/blob/13a690371d57b2c304e7c0ea85d93a6a717a7d0c/inst/doc/archetypes.Rnw"
+    },
+    {
+      "package": "protViz",
+      "vignette": "inst/doc/PTM_MarkerFinder.Rnw",
+      "repo": "cran/protViz",
+      "html_url": "https://github.com/cran/protViz/blob/f667d617fcb33bab55ecbf110622155688b181fb/inst/doc/PTM_MarkerFinder.Rnw"
+    },
+    {
+      "package": "eventstudies",
+      "vignette": "inst/doc/eventstudies.Rnw",
+      "repo": "cran/eventstudies",
+      "html_url": "https://github.com/cran/eventstudies/blob/23a911f60aa2f6adaadcafef8e7471ce71a706e5/inst/doc/eventstudies.Rnw"
+    },
+    {
+      "package": "StMoMo",
+      "vignette": "inst/doc/StMoMoVignette.Rnw",
+      "repo": "cran/StMoMo",
+      "html_url": "https://github.com/cran/StMoMo/blob/54745ee59d8a6007d15c5b0bb3a204065991b070/inst/doc/StMoMoVignette.Rnw"
+    },
+    {
+      "package": "plot3logit",
+      "vignette": "inst/doc/plot3logit-main.Rnw",
+      "repo": "cran/plot3logit",
+      "html_url": "https://github.com/cran/plot3logit/blob/cd1952554304e644517eef4d84aa7a085ec01697/inst/doc/plot3logit-main.Rnw"
+    },
+    {
+      "package": "FAOSTAT",
+      "vignette": "inst/doc/FAOSTAT.Rnw",
+      "repo": "cran/FAOSTAT",
+      "html_url": "https://github.com/cran/FAOSTAT/blob/faa900273cc293ce36ef279dd12291f0fa887ec8/inst/doc/FAOSTAT.Rnw"
+    },
+    {
+      "package": "coenocliner",
+      "vignette": "inst/doc/coenocliner.Rnw",
+      "repo": "cran/coenocliner",
+      "html_url": "https://github.com/cran/coenocliner/blob/2af42c7310e28215586c70ce907c231e3e0670b5/inst/doc/coenocliner.Rnw"
+    },
+    {
+      "package": "rstpm2",
+      "vignette": "inst/doc/SimpleGuide.Rnw",
+      "repo": "cran/rstpm2",
+      "html_url": "https://github.com/cran/rstpm2/blob/a9a6f23612c911d11917b680aa4a3bc2acd7d215/inst/doc/SimpleGuide.Rnw"
+    },
+    {
+      "package": "oglmx",
+      "vignette": "inst/doc/oglmxVignette.Rnw",
+      "repo": "cran/oglmx",
+      "html_url": "https://github.com/cran/oglmx/blob/b9ed05d31ce0c1f61ac79f246f39ea98f665d615/inst/doc/oglmxVignette.Rnw"
+    },
+    {
+      "package": "permutations",
+      "vignette": "inst/doc/permutations.Rnw",
+      "repo": "cran/permutations",
+      "html_url": "https://github.com/cran/permutations/blob/1e43806453621fcb4b9ad76b7eb6e1641774fbbf/inst/doc/permutations.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "inst/doc/linear.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/inst/doc/linear.Rnw"
+    },
+    {
+      "package": "rstpm2",
+      "vignette": "inst/doc/predictnl.Rnw",
+      "repo": "cran/rstpm2",
+      "html_url": "https://github.com/cran/rstpm2/blob/a9a6f23612c911d11917b680aa4a3bc2acd7d215/inst/doc/predictnl.Rnw"
+    },
+    {
+      "package": "dtw",
+      "vignette": "inst/doc/dtw.Rnw",
+      "repo": "cran/dtw",
+      "html_url": "https://github.com/cran/dtw/blob/824b0571800c12ca7b51faee2789582803e1b42c/inst/doc/dtw.Rnw"
+    },
+    {
+      "package": "wflo",
+      "vignette": "inst/doc/wflo.Rnw",
+      "repo": "cran/wflo",
+      "html_url": "https://github.com/cran/wflo/blob/05588d703cc5c797ad40cbc0a479d15e14f07ea3/inst/doc/wflo.Rnw"
+    },
+    {
+      "package": "CARBayesST",
+      "vignette": "inst/doc/CARBayesST.Rnw",
+      "repo": "cran/CARBayesST",
+      "html_url": "https://github.com/cran/CARBayesST/blob/7aff7ae1353d2cc433bcaf36db01519de79d4e97/inst/doc/CARBayesST.Rnw"
+    },
+    {
+      "package": "recommenderlab",
+      "vignette": "inst/doc/recommenderlab.Rnw",
+      "repo": "cran/recommenderlab",
+      "html_url": "https://github.com/cran/recommenderlab/blob/35734725afada2a1ca5a333268495810c07d053d/inst/doc/recommenderlab.Rnw"
+    },
+    {
+      "package": "partykit",
+      "vignette": "inst/doc/constparty.Rnw",
+      "repo": "cran/partykit",
+      "html_url": "https://github.com/cran/partykit/blob/89bf18824a1a6c8f072239b6971ca24dbe1f3546/inst/doc/constparty.Rnw"
+    },
+    {
+      "package": "mixtools",
+      "vignette": "inst/doc/mixtools.Rnw",
+      "repo": "cran/mixtools",
+      "html_url": "https://github.com/cran/mixtools/blob/ead45058670f3bafd30575c6380837c09dab5e98/inst/doc/mixtools.Rnw"
+    },
+    {
+      "package": "micEconAids",
+      "vignette": "inst/doc/micEconAids_vignette.Rnw",
+      "repo": "cran/micEconAids",
+      "html_url": "https://github.com/cran/micEconAids/blob/e52cbd8d6cf540e2b073db19959b5126021d1335/inst/doc/micEconAids_vignette.Rnw"
+    },
+    {
+      "package": "ICS",
+      "vignette": "inst/doc/ICS.Rnw",
+      "repo": "cran/ICS",
+      "html_url": "https://github.com/cran/ICS/blob/e5eb4f57cd588e9e1daa007d34310b6f662f63c4/inst/doc/ICS.Rnw"
+    },
+    {
+      "package": "longmemo",
+      "vignette": "inst/doc/BspecFGN.Rnw",
+      "repo": "cran/longmemo",
+      "html_url": "https://github.com/cran/longmemo/blob/9591602368ba3aea74489e35e3bb341e1525f7e0/inst/doc/BspecFGN.Rnw"
+    },
+    {
+      "package": "semPLS",
+      "vignette": "inst/doc/semPLS-intro.Rnw",
+      "repo": "cran/semPLS",
+      "html_url": "https://github.com/cran/semPLS/blob/96f0d593d824078adaff386fc3a5a4c6bf0683d2/inst/doc/semPLS-intro.Rnw"
+    },
+    {
+      "package": "JOUSBoost",
+      "vignette": "inst/doc/JOUS.Rnw",
+      "repo": "cran/JOUSBoost",
+      "html_url": "https://github.com/cran/JOUSBoost/blob/6a2f31785cb7129333d09191859276dc39e32962/inst/doc/JOUS.Rnw"
+    },
+    {
+      "package": "lbfgs",
+      "vignette": "inst/doc/Vignette.Rnw",
+      "repo": "cran/lbfgs",
+      "html_url": "https://github.com/cran/lbfgs/blob/2fb6e0258a7cd3592fc5c9de4ff8782a19d081f6/inst/doc/Vignette.Rnw"
+    },
+    {
+      "package": "vcd",
+      "vignette": "inst/doc/strucplot.Rnw",
+      "repo": "cran/vcd",
+      "html_url": "https://github.com/cran/vcd/blob/6ed8b9f8f0ca3abd9482bcc9cb92ad934a9cb9fd/inst/doc/strucplot.Rnw"
+    },
+    {
+      "package": "Rdpack",
+      "vignette": "inst/doc/Inserting_figures_and_evaluated_examples.Rnw",
+      "repo": "cran/Rdpack",
+      "html_url": "https://github.com/cran/Rdpack/blob/466515b3a9639c3fff9d0c36bca9b14ed5c9205e/inst/doc/Inserting_figures_and_evaluated_examples.Rnw"
+    },
+    {
+      "package": "gamboostLSS",
+      "vignette": "inst/doc/gamboostLSS_Tutorial.Rnw",
+      "repo": "cran/gamboostLSS",
+      "html_url": "https://github.com/cran/gamboostLSS/blob/59aeb41c5d1acd072539da7ec0ff7b85cc657c95/inst/doc/gamboostLSS_Tutorial.Rnw"
+    },
+    {
+      "package": "partykit",
+      "vignette": "inst/doc/mob.Rnw",
+      "repo": "cran/partykit",
+      "html_url": "https://github.com/cran/partykit/blob/89bf18824a1a6c8f072239b6971ca24dbe1f3546/inst/doc/mob.Rnw"
+    },
+    {
+      "package": "BVAR",
+      "vignette": "inst/doc/article.Rnw",
+      "repo": "cran/BVAR",
+      "html_url": "https://github.com/cran/BVAR/blob/aeb14b44b1ab037b3c00aa1d2b0b7035dead11dc/inst/doc/article.Rnw"
+    },
+    {
+      "package": "freegroup",
+      "vignette": "inst/doc/freegroup.Rnw",
+      "repo": "cran/freegroup",
+      "html_url": "https://github.com/cran/freegroup/blob/320058575e8be863c7a27486bd45a1dd72589ee6/inst/doc/freegroup.Rnw"
+    },
+    {
+      "package": "mfx",
+      "vignette": "inst/doc/mfxarticle.Rnw",
+      "repo": "cran/mfx",
+      "html_url": "https://github.com/cran/mfx/blob/1e83d4238821296df40ead20fcfa8746d2994dee/inst/doc/mfxarticle.Rnw"
+    },
+    {
+      "package": "tram",
+      "vignette": "inst/doc/mtram.Rnw",
+      "repo": "cran/tram",
+      "html_url": "https://github.com/cran/tram/blob/4ecaa7fe34a10cb0bb3ea3fcb75158a079e6682d/inst/doc/mtram.Rnw"
+    },
+    {
+      "package": "MfUSampler",
+      "vignette": "inst/doc/MfUSampler.Rnw",
+      "repo": "cran/MfUSampler",
+      "html_url": "https://github.com/cran/MfUSampler/blob/810765479b1163600fb790f1692e73550e44ba92/inst/doc/MfUSampler.Rnw"
+    },
+    {
+      "package": "knitr",
+      "vignette": "inst/examples/knitr-manual.Rnw",
+      "repo": "cran/knitr",
+      "html_url": "https://github.com/cran/knitr/blob/a0f2a9aa51b40be173b6ae249d683cf493157291/inst/examples/knitr-manual.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "inst/doc/skewnormal.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/inst/doc/skewnormal.Rnw"
+    },
+    {
+      "package": "tscount",
+      "vignette": "inst/doc/tsglm.Rnw",
+      "repo": "cran/tscount",
+      "html_url": "https://github.com/cran/tscount/blob/e804ef82017773f515570a19de424919d3e44797/inst/doc/tsglm.Rnw"
+    },
+    {
+      "package": "diffEq",
+      "vignette": "inst/doc/PDEinR.Rnw",
+      "repo": "cran/diffEq",
+      "html_url": "https://github.com/cran/diffEq/blob/882aff4c2d3a21cccfa51e8980856dc596b3fdfb/inst/doc/PDEinR.Rnw"
+    },
+    {
+      "package": "RMOA",
+      "vignette": "inst/doc/packageShowCase.Rnw",
+      "repo": "cran/RMOA",
+      "html_url": "https://github.com/cran/RMOA/blob/c92e804194f26793e02eb193d3717f8144302338/inst/doc/packageShowCase.Rnw"
+    },
+    {
+      "package": "arules",
+      "vignette": "vignettes/arules.Rnw",
+      "repo": "cran/arules",
+      "html_url": "https://github.com/cran/arules/blob/9bfcd9e849d7ff512993c98034fa2cf08de8a3b5/vignettes/arules.Rnw"
+    },
+    {
+      "package": "QZ",
+      "vignette": "vignettes/QZ-guide.Rnw",
+      "repo": "cran/QZ",
+      "html_url": "https://github.com/cran/QZ/blob/43365941238df6474f45516e0b13c4caa222ffe8/vignettes/QZ-guide.Rnw"
+    },
+    {
+      "package": "rscala",
+      "vignette": "vignettes/rscala.Rnw",
+      "repo": "cran/rscala",
+      "html_url": "https://github.com/cran/rscala/blob/d6b962d0f297c865e93d5c33ed216659e550d0d1/vignettes/rscala.Rnw"
+    },
+    {
+      "package": "TDA",
+      "vignette": "vignettes/article.Rnw",
+      "repo": "cran/TDA",
+      "html_url": "https://github.com/cran/TDA/blob/0e300018d16e8b805d31adf618b64a424166a698/vignettes/article.Rnw"
+    },
+    {
+      "package": "depmixS4",
+      "vignette": "vignettes/depmixS4.Rnw",
+      "repo": "cran/depmixS4",
+      "html_url": "https://github.com/cran/depmixS4/blob/ac7784c35e8708878f2369ecfd8f2153373ffbac/vignettes/depmixS4.Rnw"
+    },
+    {
+      "package": "pbdZMQ",
+      "vignette": "vignettes/pbdZMQ-guide.Rnw",
+      "repo": "cran/pbdZMQ",
+      "html_url": "https://github.com/cran/pbdZMQ/blob/abd9dee68386e05730390cfedf50a106ad5cc269/vignettes/pbdZMQ-guide.Rnw"
+    },
+    {
+      "package": "EMCluster",
+      "vignette": "vignettes/EMCluster-guide.Rnw",
+      "repo": "cran/EMCluster",
+      "html_url": "https://github.com/cran/EMCluster/blob/a402a474e1a3d54246d02518b0b4abafefc67db0/vignettes/EMCluster-guide.Rnw"
+    },
+    {
+      "package": "frbs",
+      "vignette": "vignettes/lala2015frbs.ltx",
+      "repo": "cran/frbs",
+      "html_url": "https://github.com/cran/frbs/blob/3aba8824eed1b98c55757a50195a946caaf549ee/vignettes/lala2015frbs.ltx"
+    },
+    {
+      "package": "surveillance",
+      "vignette": "vignettes/hhh4_spacetime.Rnw",
+      "repo": "cran/surveillance",
+      "html_url": "https://github.com/cran/surveillance/blob/d26270bc63d66c6f0ed0da11318e3be703cfeea5/vignettes/hhh4_spacetime.Rnw"
+    },
+    {
+      "package": "phyclust",
+      "vignette": "vignettes/phyclust-guide.Rnw",
+      "repo": "cran/phyclust",
+      "html_url": "https://github.com/cran/phyclust/blob/674b65b5df64f676e1c8c797548eb30f0180edf6/vignettes/phyclust-guide.Rnw"
+    },
+    {
+      "package": "magic",
+      "vignette": "vignettes/magic.Rnw",
+      "repo": "cran/magic",
+      "html_url": "https://github.com/cran/magic/blob/47f7036f8c5fe3171c1c888b634b2c9b76fd6507/vignettes/magic.Rnw"
+    },
+    {
+      "package": "CompModels",
+      "vignette": "vignettes/CompModels.ltx",
+      "repo": "cran/CompModels",
+      "html_url": "https://github.com/cran/CompModels/blob/11902cfed12bcaad9b88b4a979d1e87616094d6c/vignettes/CompModels.ltx"
+    },
+    {
+      "package": "MixAll",
+      "vignette": "vignettes/Learning-Mixtures.Rnw",
+      "repo": "cran/MixAll",
+      "html_url": "https://github.com/cran/MixAll/blob/438e0e0fbef612622c1f05265e9bf0f047f9f27a/vignettes/Learning-Mixtures.Rnw"
+    },
+    {
+      "package": "partitions",
+      "vignette": "vignettes/scrabble.Rnw",
+      "repo": "cran/partitions",
+      "html_url": "https://github.com/cran/partitions/blob/de2f532992e09b1ad5c148e919c0d437d79ab50d/vignettes/scrabble.Rnw"
+    },
+    {
+      "package": "network",
+      "vignette": "vignettes/networkVignette.Rnw",
+      "repo": "cran/network",
+      "html_url": "https://github.com/cran/network/blob/2ffca4f69550f7f1e74e4b95fd35ac5bcff5cc60/vignettes/networkVignette.Rnw"
+    },
+    {
+      "package": "RcppEigen",
+      "vignette": "vignettes/RcppEigen-Introduction.Rnw",
+      "repo": "cran/RcppEigen",
+      "html_url": "https://github.com/cran/RcppEigen/blob/79a4e57807600c4184f2d4503ea979f560ac9d64/vignettes/RcppEigen-Introduction.Rnw"
+    },
+    {
+      "package": "msSurv",
+      "vignette": "vignettes/msSurv.Rnw",
+      "repo": "cran/msSurv",
+      "html_url": "https://github.com/cran/msSurv/blob/c29a1af9a4385bc58b380e3dcdfc063d29b70c92/vignettes/msSurv.Rnw"
+    },
+    {
+      "package": "psychotree",
+      "vignette": "vignettes/raschtree.Rnw",
+      "repo": "cran/psychotree",
+      "html_url": "https://github.com/cran/psychotree/blob/850b38a141d2ec9b93cd6d7a55e0b53c57fe4f60/vignettes/raschtree.Rnw"
+    },
+    {
+      "package": "glmertree",
+      "vignette": "vignettes/glmertree.Rnw",
+      "repo": "cran/glmertree",
+      "html_url": "https://github.com/cran/glmertree/blob/ea4340bdb1074b5dc07f6b52f3fffd6df259a02f/vignettes/glmertree.Rnw"
+    },
+    {
+      "package": "robustlmm",
+      "vignette": "vignettes/simulationStudies.Rnw",
+      "repo": "cran/robustlmm",
+      "html_url": "https://github.com/cran/robustlmm/blob/aa2b46d87d5b74d11d8a046a2bd5d1e765a02e1a/vignettes/simulationStudies.Rnw"
+    },
+    {
+      "package": "SpatioTemporal",
+      "vignette": "vignettes/ST_intro.Rnw",
+      "repo": "cran/SpatioTemporal",
+      "html_url": "https://github.com/cran/SpatioTemporal/blob/3149f4a6ba0359d5b9c1a8fd599ce1bcdb855b1b/vignettes/ST_intro.Rnw"
+    },
+    {
+      "package": "CUB",
+      "vignette": "vignettes/CUBvignette-knitr.Rnw",
+      "repo": "cran/CUB",
+      "html_url": "https://github.com/cran/CUB/blob/9fbe20783e6d0dca04ef4392e0f0fe53ce3e56ef/vignettes/CUBvignette-knitr.Rnw"
+    },
+    {
+      "package": "lmSubsets",
+      "vignette": "vignettes/lmSubsets.Rnw",
+      "repo": "cran/lmSubsets",
+      "html_url": "https://github.com/cran/lmSubsets/blob/5e64b3b78c5d31cdbb8bd8e5df95f81a3e057fa0/vignettes/lmSubsets.Rnw"
+    },
+    {
+      "package": "aylmer",
+      "vignette": "vignettes/fishervig.Rnw",
+      "repo": "cran/aylmer",
+      "html_url": "https://github.com/cran/aylmer/blob/d44d30aec06ef845aa3e82b24503282b82b7623f/vignettes/fishervig.Rnw"
+    },
+    {
+      "package": "psychotools",
+      "vignette": "vignettes/toolbox-simulation.Rnw",
+      "repo": "cran/psychotools",
+      "html_url": "https://github.com/cran/psychotools/blob/9056643fc6da1248259c1b6cdc004bacbd5b54bb/vignettes/toolbox-simulation.Rnw"
+    },
+    {
+      "package": "equateIRT",
+      "vignette": "vignettes/equateIRT_paper.Rnw",
+      "repo": "cran/equateIRT",
+      "html_url": "https://github.com/cran/equateIRT/blob/009cc1f25ef4ea39f87c50f9add9580b29031ba3/vignettes/equateIRT_paper.Rnw"
+    },
+    {
+      "package": "glmnetcr",
+      "vignette": "vignettes/glmnetcr.Rnw",
+      "repo": "cran/glmnetcr",
+      "html_url": "https://github.com/cran/glmnetcr/blob/93cc3ea40974811c1ee32fb94b9f2f2f65aa4a04/vignettes/glmnetcr.Rnw"
+    },
+    {
+      "package": "spacetime",
+      "vignette": "vignettes/jss816.Rnw",
+      "repo": "cran/spacetime",
+      "html_url": "https://github.com/cran/spacetime/blob/f61d31570936fa3324636d833cc96b051b0406c5/vignettes/jss816.Rnw"
+    },
+    {
+      "package": "rrcov",
+      "vignette": "vignettes/rrcov.Rnw",
+      "repo": "cran/rrcov",
+      "html_url": "https://github.com/cran/rrcov/blob/21b1a555edb25910ce6d57d11877aff32cf51e51/vignettes/rrcov.Rnw"
+    },
+    {
+      "package": "copula",
+      "vignette": "vignettes/nacopula-pkg.Rnw",
+      "repo": "cran/copula",
+      "html_url": "https://github.com/cran/copula/blob/d0ddd79049170bad2dfd243f86bb483e91c3108f/vignettes/nacopula-pkg.Rnw"
+    },
+    {
+      "package": "Myrrix",
+      "vignette": "vignettes/packageShowCase.Rnw",
+      "repo": "cran/Myrrix",
+      "html_url": "https://github.com/cran/Myrrix/blob/5871e614c2cf1d3aebf75348c1ff094678de1bb0/vignettes/packageShowCase.Rnw"
+    },
+    {
+      "package": "coin",
+      "vignette": "vignettes/coin.Rnw",
+      "repo": "cran/coin",
+      "html_url": "https://github.com/cran/coin/blob/4f813a5f635d62178763b975c32f68fce30097c5/vignettes/coin.Rnw"
+    },
+    {
+      "package": "mada",
+      "vignette": "vignettes/mada.Rnw",
+      "repo": "cran/mada",
+      "html_url": "https://github.com/cran/mada/blob/5fcad80643905aebd28909d8ba0191465e5772a1/vignettes/mada.Rnw"
+    },
+    {
+      "package": "SimInf",
+      "vignette": "vignettes/SimInf.Rnw",
+      "repo": "cran/SimInf",
+      "html_url": "https://github.com/cran/SimInf/blob/2b3fb32c3891b69abbe33930df8c8de8c980bccd/vignettes/SimInf.Rnw"
+    },
+    {
+      "package": "causaleffect",
+      "vignette": "vignettes/causaleffect.ltx",
+      "repo": "cran/causaleffect",
+      "html_url": "https://github.com/cran/causaleffect/blob/687d5177aa178cb89782fd496523c0e1f3ceb9f5/vignettes/causaleffect.ltx"
+    },
+    {
+      "package": "mvtnorm",
+      "vignette": "vignettes/MVT_Rnews.Rnw",
+      "repo": "cran/mvtnorm",
+      "html_url": "https://github.com/cran/mvtnorm/blob/81e1d8cc83f8c5e2e0b89e87c39beb5760690716/vignettes/MVT_Rnews.Rnw"
+    },
+    {
+      "package": "creditr",
+      "vignette": "vignettes/creditr.Rnw",
+      "repo": "cran/creditr",
+      "html_url": "https://github.com/cran/creditr/blob/8dbecb9725e150fce12fe72b3d2f1f4e4b5db21a/vignettes/creditr.Rnw"
+    },
+    {
+      "package": "mnlogit",
+      "vignette": "vignettes/mnlogit.Rnw",
+      "repo": "cran/mnlogit",
+      "html_url": "https://github.com/cran/mnlogit/blob/77bc391ad60bd3a6c8de94df3780017369f92fc0/vignettes/mnlogit.Rnw"
+    },
+    {
+      "package": "geosample",
+      "vignette": "vignettes/geosample-vignette.Rnw",
+      "repo": "cran/geosample",
+      "html_url": "https://github.com/cran/geosample/blob/d81f8b28997da13f5ddb6934f536008dcc893f05/vignettes/geosample-vignette.Rnw"
+    },
+    {
+      "package": "zoo",
+      "vignette": "vignettes/zoo-design.Rnw",
+      "repo": "cran/zoo",
+      "html_url": "https://github.com/cran/zoo/blob/954566761f1daee174bb1fe0837164f6fb9b1353/vignettes/zoo-design.Rnw"
+    },
+    {
+      "package": "np",
+      "vignette": "vignettes/np.Rnw",
+      "repo": "cran/np",
+      "html_url": "https://github.com/cran/np/blob/327137b58dbb2cace62f008027215cfe9cb280b9/vignettes/np.Rnw"
+    },
+    {
+      "package": "em",
+      "vignette": "vignettes/em_intro.Rnw",
+      "repo": "cran/em",
+      "html_url": "https://github.com/cran/em/blob/28b053c3df2898cabbe679b9804b9f936ae10fb2/vignettes/em_intro.Rnw"
+    },
+    {
+      "package": "eventstudies",
+      "vignette": "vignettes/replications.Rnw",
+      "repo": "cran/eventstudies",
+      "html_url": "https://github.com/cran/eventstudies/blob/23a911f60aa2f6adaadcafef8e7471ce71a706e5/vignettes/replications.Rnw"
+    },
+    {
+      "package": "archetypes",
+      "vignette": "vignettes/archetypes.Rnw",
+      "repo": "cran/archetypes",
+      "html_url": "https://github.com/cran/archetypes/blob/13a690371d57b2c304e7c0ea85d93a6a717a7d0c/vignettes/archetypes.Rnw"
+    },
+    {
+      "package": "protViz",
+      "vignette": "vignettes/PTM_MarkerFinder.Rnw",
+      "repo": "cran/protViz",
+      "html_url": "https://github.com/cran/protViz/blob/f667d617fcb33bab55ecbf110622155688b181fb/vignettes/PTM_MarkerFinder.Rnw"
+    },
+    {
+      "package": "eventstudies",
+      "vignette": "vignettes/eventstudies.Rnw",
+      "repo": "cran/eventstudies",
+      "html_url": "https://github.com/cran/eventstudies/blob/23a911f60aa2f6adaadcafef8e7471ce71a706e5/vignettes/eventstudies.Rnw"
+    },
+    {
+      "package": "StMoMo",
+      "vignette": "vignettes/StMoMoVignette.Rnw",
+      "repo": "cran/StMoMo",
+      "html_url": "https://github.com/cran/StMoMo/blob/54745ee59d8a6007d15c5b0bb3a204065991b070/vignettes/StMoMoVignette.Rnw"
+    },
+    {
+      "package": "plot3logit",
+      "vignette": "vignettes/plot3logit-main.Rnw",
+      "repo": "cran/plot3logit",
+      "html_url": "https://github.com/cran/plot3logit/blob/cd1952554304e644517eef4d84aa7a085ec01697/vignettes/plot3logit-main.Rnw"
+    },
+    {
+      "package": "FAOSTAT",
+      "vignette": "vignettes/FAOSTAT.Rnw",
+      "repo": "cran/FAOSTAT",
+      "html_url": "https://github.com/cran/FAOSTAT/blob/faa900273cc293ce36ef279dd12291f0fa887ec8/vignettes/FAOSTAT.Rnw"
+    },
+    {
+      "package": "coenocliner",
+      "vignette": "vignettes/coenocliner.Rnw",
+      "repo": "cran/coenocliner",
+      "html_url": "https://github.com/cran/coenocliner/blob/2af42c7310e28215586c70ce907c231e3e0670b5/vignettes/coenocliner.Rnw"
+    },
+    {
+      "package": "rstpm2",
+      "vignette": "vignettes/SimpleGuide.Rnw",
+      "repo": "cran/rstpm2",
+      "html_url": "https://github.com/cran/rstpm2/blob/a9a6f23612c911d11917b680aa4a3bc2acd7d215/vignettes/SimpleGuide.Rnw"
+    },
+    {
+      "package": "oglmx",
+      "vignette": "vignettes/oglmxVignette.Rnw",
+      "repo": "cran/oglmx",
+      "html_url": "https://github.com/cran/oglmx/blob/b9ed05d31ce0c1f61ac79f246f39ea98f665d615/vignettes/oglmxVignette.Rnw"
+    },
+    {
+      "package": "permutations",
+      "vignette": "vignettes/permutations.Rnw",
+      "repo": "cran/permutations",
+      "html_url": "https://github.com/cran/permutations/blob/1e43806453621fcb4b9ad76b7eb6e1641774fbbf/vignettes/permutations.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "vignettes/linear.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/vignettes/linear.Rnw"
+    },
+    {
+      "package": "rstpm2",
+      "vignette": "vignettes/predictnl.Rnw",
+      "repo": "cran/rstpm2",
+      "html_url": "https://github.com/cran/rstpm2/blob/a9a6f23612c911d11917b680aa4a3bc2acd7d215/vignettes/predictnl.Rnw"
+    },
+    {
+      "package": "dtw",
+      "vignette": "vignettes/dtw.Rnw",
+      "repo": "cran/dtw",
+      "html_url": "https://github.com/cran/dtw/blob/824b0571800c12ca7b51faee2789582803e1b42c/vignettes/dtw.Rnw"
+    },
+    {
+      "package": "wflo",
+      "vignette": "vignettes/wflo.Rnw",
+      "repo": "cran/wflo",
+      "html_url": "https://github.com/cran/wflo/blob/05588d703cc5c797ad40cbc0a479d15e14f07ea3/vignettes/wflo.Rnw"
+    },
+    {
+      "package": "CARBayesST",
+      "vignette": "vignettes/CARBayesST.Rnw",
+      "repo": "cran/CARBayesST",
+      "html_url": "https://github.com/cran/CARBayesST/blob/7aff7ae1353d2cc433bcaf36db01519de79d4e97/vignettes/CARBayesST.Rnw"
+    },
+    {
+      "package": "recommenderlab",
+      "vignette": "vignettes/recommenderlab.Rnw",
+      "repo": "cran/recommenderlab",
+      "html_url": "https://github.com/cran/recommenderlab/blob/35734725afada2a1ca5a333268495810c07d053d/vignettes/recommenderlab.Rnw"
+    },
+    {
+      "package": "partykit",
+      "vignette": "vignettes/constparty.Rnw",
+      "repo": "cran/partykit",
+      "html_url": "https://github.com/cran/partykit/blob/89bf18824a1a6c8f072239b6971ca24dbe1f3546/vignettes/constparty.Rnw"
+    },
+    {
+      "package": "mixtools",
+      "vignette": "vignettes/mixtools.Rnw",
+      "repo": "cran/mixtools",
+      "html_url": "https://github.com/cran/mixtools/blob/ead45058670f3bafd30575c6380837c09dab5e98/vignettes/mixtools.Rnw"
+    },
+    {
+      "package": "micEconAids",
+      "vignette": "vignettes/micEconAids_vignette.Rnw",
+      "repo": "cran/micEconAids",
+      "html_url": "https://github.com/cran/micEconAids/blob/e52cbd8d6cf540e2b073db19959b5126021d1335/vignettes/micEconAids_vignette.Rnw"
+    },
+    {
+      "package": "ICS",
+      "vignette": "vignettes/ICS.Rnw",
+      "repo": "cran/ICS",
+      "html_url": "https://github.com/cran/ICS/blob/e5eb4f57cd588e9e1daa007d34310b6f662f63c4/vignettes/ICS.Rnw"
+    },
+    {
+      "package": "longmemo",
+      "vignette": "vignettes/BspecFGN.Rnw",
+      "repo": "cran/longmemo",
+      "html_url": "https://github.com/cran/longmemo/blob/9591602368ba3aea74489e35e3bb341e1525f7e0/vignettes/BspecFGN.Rnw"
+    },
+    {
+      "package": "semPLS",
+      "vignette": "vignettes/semPLS-intro.Rnw",
+      "repo": "cran/semPLS",
+      "html_url": "https://github.com/cran/semPLS/blob/96f0d593d824078adaff386fc3a5a4c6bf0683d2/vignettes/semPLS-intro.Rnw"
+    },
+    {
+      "package": "JOUSBoost",
+      "vignette": "vignettes/JOUS.Rnw",
+      "repo": "cran/JOUSBoost",
+      "html_url": "https://github.com/cran/JOUSBoost/blob/6a2f31785cb7129333d09191859276dc39e32962/vignettes/JOUS.Rnw"
+    },
+    {
+      "package": "lbfgs",
+      "vignette": "vignettes/Vignette.Rnw",
+      "repo": "cran/lbfgs",
+      "html_url": "https://github.com/cran/lbfgs/blob/2fb6e0258a7cd3592fc5c9de4ff8782a19d081f6/vignettes/Vignette.Rnw"
+    },
+    {
+      "package": "vcd",
+      "vignette": "vignettes/strucplot.Rnw",
+      "repo": "cran/vcd",
+      "html_url": "https://github.com/cran/vcd/blob/6ed8b9f8f0ca3abd9482bcc9cb92ad934a9cb9fd/vignettes/strucplot.Rnw"
+    },
+    {
+      "package": "Rdpack",
+      "vignette": "vignettes/Inserting_figures_and_evaluated_examples.Rnw",
+      "repo": "cran/Rdpack",
+      "html_url": "https://github.com/cran/Rdpack/blob/466515b3a9639c3fff9d0c36bca9b14ed5c9205e/vignettes/Inserting_figures_and_evaluated_examples.Rnw"
+    },
+    {
+      "package": "gamboostLSS",
+      "vignette": "vignettes/gamboostLSS_Tutorial.Rnw",
+      "repo": "cran/gamboostLSS",
+      "html_url": "https://github.com/cran/gamboostLSS/blob/59aeb41c5d1acd072539da7ec0ff7b85cc657c95/vignettes/gamboostLSS_Tutorial.Rnw"
+    },
+    {
+      "package": "partykit",
+      "vignette": "vignettes/mob.Rnw",
+      "repo": "cran/partykit",
+      "html_url": "https://github.com/cran/partykit/blob/89bf18824a1a6c8f072239b6971ca24dbe1f3546/vignettes/mob.Rnw"
+    },
+    {
+      "package": "BVAR",
+      "vignette": "vignettes/article.Rnw",
+      "repo": "cran/BVAR",
+      "html_url": "https://github.com/cran/BVAR/blob/aeb14b44b1ab037b3c00aa1d2b0b7035dead11dc/vignettes/article.Rnw"
+    },
+    {
+      "package": "freegroup",
+      "vignette": "vignettes/freegroup.Rnw",
+      "repo": "cran/freegroup",
+      "html_url": "https://github.com/cran/freegroup/blob/320058575e8be863c7a27486bd45a1dd72589ee6/vignettes/freegroup.Rnw"
+    },
+    {
+      "package": "mfx",
+      "vignette": "vignettes/mfxarticle.Rnw",
+      "repo": "cran/mfx",
+      "html_url": "https://github.com/cran/mfx/blob/1e83d4238821296df40ead20fcfa8746d2994dee/vignettes/mfxarticle.Rnw"
+    },
+    {
+      "package": "tram",
+      "vignette": "vignettes/mtram.Rnw",
+      "repo": "cran/tram",
+      "html_url": "https://github.com/cran/tram/blob/4ecaa7fe34a10cb0bb3ea3fcb75158a079e6682d/vignettes/mtram.Rnw"
+    },
+    {
+      "package": "MfUSampler",
+      "vignette": "vignettes/MfUSampler.Rnw",
+      "repo": "cran/MfUSampler",
+      "html_url": "https://github.com/cran/MfUSampler/blob/810765479b1163600fb790f1692e73550e44ba92/vignettes/MfUSampler.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "vignettes/skewnormal.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/vignettes/skewnormal.Rnw"
+    },
+    {
+      "package": "tscount",
+      "vignette": "vignettes/tsglm.Rnw",
+      "repo": "cran/tscount",
+      "html_url": "https://github.com/cran/tscount/blob/e804ef82017773f515570a19de424919d3e44797/vignettes/tsglm.Rnw"
+    },
+    {
+      "package": "diffEq",
+      "vignette": "vignettes/PDEinR.Rnw",
+      "repo": "cran/diffEq",
+      "html_url": "https://github.com/cran/diffEq/blob/882aff4c2d3a21cccfa51e8980856dc596b3fdfb/vignettes/PDEinR.Rnw"
+    },
+    {
+      "package": "RMOAjars",
+      "vignette": "inst/doc/packageShowCase.Rnw",
+      "repo": "cran/RMOAjars",
+      "html_url": "https://github.com/cran/RMOAjars/blob/25ab1a8c86e4613525e2bef7c68b0def585d1ba2/inst/doc/packageShowCase.Rnw"
+    },
+    {
+      "package": "RMOA",
+      "vignette": "vignettes/packageShowCase.Rnw",
+      "repo": "cran/RMOA",
+      "html_url": "https://github.com/cran/RMOA/blob/c92e804194f26793e02eb193d3717f8144302338/vignettes/packageShowCase.Rnw"
+    },
+    {
+      "package": "RMOAjars",
+      "vignette": "vignettes/packageShowCase.Rnw",
+      "repo": "cran/RMOAjars",
+      "html_url": "https://github.com/cran/RMOAjars/blob/25ab1a8c86e4613525e2bef7c68b0def585d1ba2/vignettes/packageShowCase.Rnw"
+    },
+    {
+      "package": "MixfMRI",
+      "vignette": "inst/doc/MixfMRI-guide.Rnw",
+      "repo": "cran/MixfMRI",
+      "html_url": "https://github.com/cran/MixfMRI/blob/ed0b0e4cbd890c1b6b9f48ffaf98187d2624bc4d/inst/doc/MixfMRI-guide.Rnw"
+    },
+    {
+      "package": "stemmatology",
+      "vignette": "inst/doc/stemmatology.Rnw",
+      "repo": "cran/stemmatology",
+      "html_url": "https://github.com/cran/stemmatology/blob/448e4cf2859759c28ec7269c163d01b6b1845c32/inst/doc/stemmatology.Rnw"
+    },
+    {
+      "package": "deSolve",
+      "vignette": "inst/doc/deSolve.Rnw",
+      "repo": "cran/deSolve",
+      "html_url": "https://github.com/cran/deSolve/blob/88c7a7836d1a361020de355dcec26468d935e143/inst/doc/deSolve.Rnw"
+    },
+    {
+      "package": "onion",
+      "vignette": "inst/doc/onionpaper.Rnw",
+      "repo": "cran/onion",
+      "html_url": "https://github.com/cran/onion/blob/99cf9dd170402c19c60f0b2311213f26cdb41635/inst/doc/onionpaper.Rnw"
+    },
+    {
+      "package": "ReacTran",
+      "vignette": "inst/doc/PDE.Rnw",
+      "repo": "cran/ReacTran",
+      "html_url": "https://github.com/cran/ReacTran/blob/32b0f30689bc6b814a3231f057c8f2ac9f80291d/inst/doc/PDE.Rnw"
+    },
+    {
+      "package": "interp",
+      "vignette": "inst/doc/interp.Rnw",
+      "repo": "cran/interp",
+      "html_url": "https://github.com/cran/interp/blob/37daa5f8691ed2d23c41d1c79ebad777fe423bac/inst/doc/interp.Rnw"
+    },
+    {
+      "package": "coin",
+      "vignette": "inst/doc/MAXtest.Rnw",
+      "repo": "cran/coin",
+      "html_url": "https://github.com/cran/coin/blob/4f813a5f635d62178763b975c32f68fce30097c5/inst/doc/MAXtest.Rnw"
+    },
+    {
+      "package": "cusp",
+      "vignette": "inst/doc/Cusp-JSS.Rnw",
+      "repo": "cran/cusp",
+      "html_url": "https://github.com/cran/cusp/blob/f30850efeb0820e6a8b76577c22478fb29fd2c3b/inst/doc/Cusp-JSS.Rnw"
+    },
+    {
+      "package": "meboot",
+      "vignette": "inst/doc/meboot.Rnw",
+      "repo": "cran/meboot",
+      "html_url": "https://github.com/cran/meboot/blob/8709a139d08bc8e57e29735cff79e7a2a60b2022/inst/doc/meboot.Rnw"
+    },
+    {
+      "package": "WeightedCluster",
+      "vignette": "inst/doc/WeightedClusterFR.Rnw",
+      "repo": "cran/WeightedCluster",
+      "html_url": "https://github.com/cran/WeightedCluster/blob/336d9042a09d98fa62adf06adc9ce625eebc7c97/inst/doc/WeightedClusterFR.Rnw"
+    },
+    {
+      "package": "SRPM",
+      "vignette": "inst/doc/SRPM.Rnw",
+      "repo": "cran/SRPM",
+      "html_url": "https://github.com/cran/SRPM/blob/1cb8227fb589d6969635729e8418fa3ae98ba471/inst/doc/SRPM.Rnw"
+    },
+    {
+      "package": "elliptic",
+      "vignette": "inst/doc/elliptic.Rnw",
+      "repo": "cran/elliptic",
+      "html_url": "https://github.com/cran/elliptic/blob/0b061a923a46490da22ad8665f442c1b5ec2295b/inst/doc/elliptic.Rnw"
+    },
+    {
+      "package": "uGMAR",
+      "vignette": "inst/doc/uGMARpaper.Rnw",
+      "repo": "cran/uGMAR",
+      "html_url": "https://github.com/cran/uGMAR/blob/0199ee05c2dafcb5fdd278eec9b49f0b26157215/inst/doc/uGMARpaper.Rnw"
+    },
+    {
+      "package": "evtree",
+      "vignette": "inst/doc/evtree.Rnw",
+      "repo": "cran/evtree",
+      "html_url": "https://github.com/cran/evtree/blob/e0d856a2a20e9e3f516b48a69b96719a226f5941/inst/doc/evtree.Rnw"
+    },
+    {
+      "package": "glarma",
+      "vignette": "inst/doc/glarma.Rnw",
+      "repo": "cran/glarma",
+      "html_url": "https://github.com/cran/glarma/blob/f0fc0541b8b45a1eaf6c96342e0f94161f96e936/inst/doc/glarma.Rnw"
+    },
+    {
+      "package": "flexmix",
+      "vignette": "inst/doc/bootstrapping.Rnw",
+      "repo": "cran/flexmix",
+      "html_url": "https://github.com/cran/flexmix/blob/d352332eb4e1589bf4c3fc27577bc4106d1c16d2/inst/doc/bootstrapping.Rnw"
+    },
+    {
+      "package": "EnQuireR",
+      "vignette": "inst/Sweave/sty/softwarereview.tex",
+      "repo": "cran/EnQuireR",
+      "html_url": "https://github.com/cran/EnQuireR/blob/ba533d00565a20fc92b716b5c51430c3b8a400dd/inst/Sweave/sty/softwarereview.tex"
+    },
+    {
+      "package": "shape",
+      "vignette": "inst/doc/shape.Rnw",
+      "repo": "cran/shape",
+      "html_url": "https://github.com/cran/shape/blob/398818969b4503a2b4435ddb1ace081985e402f4/inst/doc/shape.Rnw"
+    },
+    {
+      "package": "ruimtehol",
+      "vignette": "inst/doc/ground-control-to-ruimtehol.Rnw",
+      "repo": "cran/ruimtehol",
+      "html_url": "https://github.com/cran/ruimtehol/blob/351d4989a0caf801e2a2b4ed0c4f0c391f2fb1f3/inst/doc/ground-control-to-ruimtehol.Rnw"
+    },
+    {
+      "package": "lme4",
+      "vignette": "inst/doc/lmer.Rnw",
+      "repo": "cran/lme4",
+      "html_url": "https://github.com/cran/lme4/blob/06d95ac15d3b0c4e29fda4efbec11861c46cea7e/inst/doc/lmer.Rnw"
+    },
+    {
+      "package": "calibrator",
+      "vignette": "inst/doc/calex.Rnw",
+      "repo": "cran/calibrator",
+      "html_url": "https://github.com/cran/calibrator/blob/5ef9fad94d433fedd2f8084210492cfe2150bfdf/inst/doc/calex.Rnw"
+    },
+    {
+      "package": "hyper2",
+      "vignette": "inst/doc/hyper2.Rnw",
+      "repo": "cran/hyper2",
+      "html_url": "https://github.com/cran/hyper2/blob/3a600de3071fbc7c5e5e2249c45cea990c02431a/inst/doc/hyper2.Rnw"
+    },
+    {
+      "package": "hapassoc",
+      "vignette": "inst/doc/hapassoc.Rnw",
+      "repo": "cran/hapassoc",
+      "html_url": "https://github.com/cran/hapassoc/blob/e844507d05200f8d818ef8b6d6f3ceb6f0d9a2d9/inst/doc/hapassoc.Rnw"
+    },
+    {
+      "package": "iGraphMatch",
+      "vignette": "inst/doc/iGraphMatch.Rmd",
+      "repo": "cran/iGraphMatch",
+      "html_url": "https://github.com/cran/iGraphMatch/blob/a19d30db4762ec2af78ba4056e0b5bb8f811bd84/inst/doc/iGraphMatch.Rmd"
+    },
+    {
+      "package": "protViz",
+      "vignette": "inst/doc/protViz.Rnw",
+      "repo": "cran/protViz",
+      "html_url": "https://github.com/cran/protViz/blob/f667d617fcb33bab55ecbf110622155688b181fb/inst/doc/protViz.Rnw"
+    },
+    {
+      "package": "amei",
+      "vignette": "inst/doc/amei.Rnw",
+      "repo": "cran/amei",
+      "html_url": "https://github.com/cran/amei/blob/6ec4dc1abc827534b1920db6d4911e38cd16224c/inst/doc/amei.Rnw"
+    },
+    {
+      "package": "ricu",
+      "vignette": "vignettes/jss-no.tex",
+      "repo": "cran/ricu",
+      "html_url": "https://github.com/cran/ricu/blob/b20add6df99b73c25e6ecd51af6afa3aae5ce860/vignettes/jss-no.tex"
+    },
+    {
+      "package": "ordinalgmifs",
+      "vignette": "inst/doc/ordinalgmifs.Rnw",
+      "repo": "cran/ordinalgmifs",
+      "html_url": "https://github.com/cran/ordinalgmifs/blob/a925863f64dfcc6f9b2bf327729fdcaccd4e4704/inst/doc/ordinalgmifs.Rnw"
+    },
+    {
+      "package": "rwm",
+      "vignette": "inst/doc/UsingRwm.Rnw",
+      "repo": "cran/rwm",
+      "html_url": "https://github.com/cran/rwm/blob/a50c37462f7890dec2e13cf7706318a4f50f6548/inst/doc/UsingRwm.Rnw"
+    },
+    {
+      "package": "mclcar",
+      "vignette": "inst/doc/mclcar_vignette.Rnw",
+      "repo": "cran/mclcar",
+      "html_url": "https://github.com/cran/mclcar/blob/a38e8a7d9a8900425af9e0b701a2ce9d577553a7/inst/doc/mclcar_vignette.Rnw"
+    },
+    {
+      "package": "flexsurv",
+      "vignette": "inst/doc/multistate.Rnw",
+      "repo": "cran/flexsurv",
+      "html_url": "https://github.com/cran/flexsurv/blob/2aae4c8ac56823d0eac30c1a9ad654ac599b5938/inst/doc/multistate.Rnw"
+    },
+    {
+      "package": "CARBayes",
+      "vignette": "inst/doc/CARBayes.Rnw",
+      "repo": "cran/CARBayes",
+      "html_url": "https://github.com/cran/CARBayes/blob/4dcb0c9a35d454fcd280455ae570d6dad367089c/inst/doc/CARBayes.Rnw"
+    },
+    {
+      "package": "plink",
+      "vignette": "inst/doc/plink-UD.Rnw",
+      "repo": "cran/plink",
+      "html_url": "https://github.com/cran/plink/blob/d4ce5351b4dafbb5391a672d8ad27117bec16cfb/inst/doc/plink-UD.Rnw"
+    },
+    {
+      "package": "cmvnorm",
+      "vignette": "inst/doc/cmvnorm.Rnw",
+      "repo": "cran/cmvnorm",
+      "html_url": "https://github.com/cran/cmvnorm/blob/4df4a6e6db6af26981ead49cea73ed159b0bcee2/inst/doc/cmvnorm.Rnw"
+    },
+    {
+      "package": "lifecontingencies",
+      "vignette": "inst/doc/mortality_projection.Rnw",
+      "repo": "cran/lifecontingencies",
+      "html_url": "https://github.com/cran/lifecontingencies/blob/e63e3a931e40fbae1f335b8be93cb2195d00ed16/inst/doc/mortality_projection.Rnw"
+    },
+    {
+      "package": "clifford",
+      "vignette": "inst/doc/clifford.Rnw",
+      "repo": "cran/clifford",
+      "html_url": "https://github.com/cran/clifford/blob/cff29c521ca863ed17b9fbcacb8ef65f9418fb7b/inst/doc/clifford.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "inst/doc/survival.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/inst/doc/survival.Rnw"
+    },
+    {
+      "package": "pmclust",
+      "vignette": "inst/doc/pmclust-guide.Rnw",
+      "repo": "cran/pmclust",
+      "html_url": "https://github.com/cran/pmclust/blob/4a2531733b90d505eb075c40c4d136cbca3e447e/inst/doc/pmclust-guide.Rnw"
+    },
+    {
+      "package": "BEST",
+      "vignette": "inst/doc/BEST.Rnw",
+      "repo": "cran/BEST",
+      "html_url": "https://github.com/cran/BEST/blob/e9b8380fb70a02f97bf6fefee4d61ffaa4b8cceb/inst/doc/BEST.Rnw"
+    },
+    {
+      "package": "Countr",
+      "vignette": "inst/doc/Rnw/Countr_guide_paper.Rnw",
+      "repo": "cran/Countr",
+      "html_url": "https://github.com/cran/Countr/blob/2c8f2384982075ee545cb28f24fd95fdd8166635/inst/doc/Rnw/Countr_guide_paper.Rnw"
+    },
+    {
+      "package": "bartMachine",
+      "vignette": "inst/doc/bartMachine.Rnw",
+      "repo": "cran/bartMachine",
+      "html_url": "https://github.com/cran/bartMachine/blob/823d99df209ddfad73371a6f185425a8035f4fed/inst/doc/bartMachine.Rnw"
+    },
+    {
+      "package": "LinRegInteractive",
+      "vignette": "inst/doc/LinRegInteractive.Rnw",
+      "repo": "cran/LinRegInteractive",
+      "html_url": "https://github.com/cran/LinRegInteractive/blob/954b7b3f651ddd1bca3562f4014900a2064df2aa/inst/doc/LinRegInteractive.Rnw"
+    },
+    {
+      "package": "RcppDE",
+      "vignette": "inst/doc/RcppDE.Rnw",
+      "repo": "cran/RcppDE",
+      "html_url": "https://github.com/cran/RcppDE/blob/a2b16aa57f8d4a8ef6425b6e782f3e51946f0e3c/inst/doc/RcppDE.Rnw"
+    },
+    {
+      "package": "Rmpfr",
+      "vignette": "inst/doc/Maechler_useR_2011-abstr.Rnw",
+      "repo": "cran/Rmpfr",
+      "html_url": "https://github.com/cran/Rmpfr/blob/5beb894d6249dd8ec57ab5d9c34202afd6300736/inst/doc/Maechler_useR_2011-abstr.Rnw"
+    },
+    {
+      "package": "plotKML",
+      "vignette": "inst/doc/jss1079.Rnw",
+      "repo": "cran/plotKML",
+      "html_url": "https://github.com/cran/plotKML/blob/068aaaf06a1976d202222142a95f2e951da0f604/inst/doc/jss1079.Rnw"
+    },
+    {
+      "package": "SharpeR",
+      "vignette": "inst/doc/SharpeR.Rnw",
+      "repo": "cran/SharpeR",
+      "html_url": "https://github.com/cran/SharpeR/blob/5e01a7d870b6f0bc7e9720bc1fecc9ffc72e1c4d/inst/doc/SharpeR.Rnw"
+    },
+    {
+      "package": "stream",
+      "vignette": "inst/doc/stream.Rnw",
+      "repo": "cran/stream",
+      "html_url": "https://github.com/cran/stream/blob/3a0e19f932e555110e4e24ec5a99e1ca5d2b33b2/inst/doc/stream.Rnw"
+    },
+    {
+      "package": "vegan",
+      "vignette": "inst/doc/decision-vegan.Rnw",
+      "repo": "cran/vegan",
+      "html_url": "https://github.com/cran/vegan/blob/7424d65e139c700ad64b2448db6176d48024002e/inst/doc/decision-vegan.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "inst/doc/fic.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/inst/doc/fic.Rnw"
+    },
+    {
+      "package": "cardidates",
+      "vignette": "inst/doc/vignette.Rnw",
+      "repo": "cran/cardidates",
+      "html_url": "https://github.com/cran/cardidates/blob/0e13e35bcd56d6b92d9280677afb5ad8dd79daba/inst/doc/vignette.Rnw"
+    },
+    {
+      "package": "frailtyEM",
+      "vignette": "inst/doc/frailtyEM_manual.Rnw",
+      "repo": "cran/frailtyEM",
+      "html_url": "https://github.com/cran/frailtyEM/blob/fa22281159f9540526a40baf28b9848d6a007858/inst/doc/frailtyEM_manual.Rnw"
+    },
+    {
+      "package": "robustlmm",
+      "vignette": "inst/doc/rlmer.Rnw",
+      "repo": "cran/robustlmm",
+      "html_url": "https://github.com/cran/robustlmm/blob/aa2b46d87d5b74d11d8a046a2bd5d1e765a02e1a/inst/doc/rlmer.Rnw"
+    },
+    {
+      "package": "proftools",
+      "vignette": "inst/doc/proftools.Rnw",
+      "repo": "cran/proftools",
+      "html_url": "https://github.com/cran/proftools/blob/2e6d0111efbff47e240569ef3c6785b1a8c2fbae/inst/doc/proftools.Rnw"
+    },
+    {
+      "package": "TPmsm",
+      "vignette": "inst/doc/TPmsm.Rnw",
+      "repo": "cran/TPmsm",
+      "html_url": "https://github.com/cran/TPmsm/blob/3c7b0981944646c0d3cc54f4216dbb751f2a65dc/inst/doc/TPmsm.Rnw"
+    },
+    {
+      "package": "sarima",
+      "vignette": "inst/doc/garch_tests_example.Rnw",
+      "repo": "cran/sarima",
+      "html_url": "https://github.com/cran/sarima/blob/7365853a0f88745bcca05994a752af79262293d3/inst/doc/garch_tests_example.Rnw"
+    },
+    {
+      "package": "nestfs",
+      "vignette": "tests/paper/paper.tex",
+      "repo": "cran/nestfs",
+      "html_url": "https://github.com/cran/nestfs/blob/b3902b7a9ffdfaca6e58ee07a1e92a84b30a2c5f/tests/paper/paper.tex"
+    },
+    {
+      "package": "MixfMRI",
+      "vignette": "vignettes/MixfMRI-guide.Rnw",
+      "repo": "cran/MixfMRI",
+      "html_url": "https://github.com/cran/MixfMRI/blob/ed0b0e4cbd890c1b6b9f48ffaf98187d2624bc4d/vignettes/MixfMRI-guide.Rnw"
+    },
+    {
+      "package": "stemmatology",
+      "vignette": "vignettes/stemmatology.Rnw",
+      "repo": "cran/stemmatology",
+      "html_url": "https://github.com/cran/stemmatology/blob/448e4cf2859759c28ec7269c163d01b6b1845c32/vignettes/stemmatology.Rnw"
+    },
+    {
+      "package": "deSolve",
+      "vignette": "vignettes/deSolve.Rnw",
+      "repo": "cran/deSolve",
+      "html_url": "https://github.com/cran/deSolve/blob/88c7a7836d1a361020de355dcec26468d935e143/vignettes/deSolve.Rnw"
+    },
+    {
+      "package": "onion",
+      "vignette": "vignettes/onionpaper.Rnw",
+      "repo": "cran/onion",
+      "html_url": "https://github.com/cran/onion/blob/99cf9dd170402c19c60f0b2311213f26cdb41635/vignettes/onionpaper.Rnw"
+    },
+    {
+      "package": "ReacTran",
+      "vignette": "vignettes/PDE.Rnw",
+      "repo": "cran/ReacTran",
+      "html_url": "https://github.com/cran/ReacTran/blob/32b0f30689bc6b814a3231f057c8f2ac9f80291d/vignettes/PDE.Rnw"
+    },
+    {
+      "package": "interp",
+      "vignette": "vignettes/interp.Rnw",
+      "repo": "cran/interp",
+      "html_url": "https://github.com/cran/interp/blob/37daa5f8691ed2d23c41d1c79ebad777fe423bac/vignettes/interp.Rnw"
+    },
+    {
+      "package": "coin",
+      "vignette": "vignettes/MAXtest.Rnw",
+      "repo": "cran/coin",
+      "html_url": "https://github.com/cran/coin/blob/4f813a5f635d62178763b975c32f68fce30097c5/vignettes/MAXtest.Rnw"
+    },
+    {
+      "package": "meboot",
+      "vignette": "vignettes/meboot.Rnw",
+      "repo": "cran/meboot",
+      "html_url": "https://github.com/cran/meboot/blob/8709a139d08bc8e57e29735cff79e7a2a60b2022/vignettes/meboot.Rnw"
+    },
+    {
+      "package": "WeightedCluster",
+      "vignette": "vignettes/WeightedClusterFR.Rnw",
+      "repo": "cran/WeightedCluster",
+      "html_url": "https://github.com/cran/WeightedCluster/blob/336d9042a09d98fa62adf06adc9ce625eebc7c97/vignettes/WeightedClusterFR.Rnw"
+    },
+    {
+      "package": "SRPM",
+      "vignette": "vignettes/SRPM.Rnw",
+      "repo": "cran/SRPM",
+      "html_url": "https://github.com/cran/SRPM/blob/1cb8227fb589d6969635729e8418fa3ae98ba471/vignettes/SRPM.Rnw"
+    },
+    {
+      "package": "elliptic",
+      "vignette": "vignettes/elliptic.Rnw",
+      "repo": "cran/elliptic",
+      "html_url": "https://github.com/cran/elliptic/blob/0b061a923a46490da22ad8665f442c1b5ec2295b/vignettes/elliptic.Rnw"
+    },
+    {
+      "package": "uGMAR",
+      "vignette": "vignettes/uGMARpaper.Rnw",
+      "repo": "cran/uGMAR",
+      "html_url": "https://github.com/cran/uGMAR/blob/0199ee05c2dafcb5fdd278eec9b49f0b26157215/vignettes/uGMARpaper.Rnw"
+    },
+    {
+      "package": "evtree",
+      "vignette": "vignettes/evtree.Rnw",
+      "repo": "cran/evtree",
+      "html_url": "https://github.com/cran/evtree/blob/e0d856a2a20e9e3f516b48a69b96719a226f5941/vignettes/evtree.Rnw"
+    },
+    {
+      "package": "glarma",
+      "vignette": "vignettes/glarma.Rnw",
+      "repo": "cran/glarma",
+      "html_url": "https://github.com/cran/glarma/blob/f0fc0541b8b45a1eaf6c96342e0f94161f96e936/vignettes/glarma.Rnw"
+    },
+    {
+      "package": "flexmix",
+      "vignette": "vignettes/bootstrapping.Rnw",
+      "repo": "cran/flexmix",
+      "html_url": "https://github.com/cran/flexmix/blob/d352332eb4e1589bf4c3fc27577bc4106d1c16d2/vignettes/bootstrapping.Rnw"
+    },
+    {
+      "package": "shape",
+      "vignette": "vignettes/shape.Rnw",
+      "repo": "cran/shape",
+      "html_url": "https://github.com/cran/shape/blob/398818969b4503a2b4435ddb1ace081985e402f4/vignettes/shape.Rnw"
+    },
+    {
+      "package": "ruimtehol",
+      "vignette": "vignettes/ground-control-to-ruimtehol.Rnw",
+      "repo": "cran/ruimtehol",
+      "html_url": "https://github.com/cran/ruimtehol/blob/351d4989a0caf801e2a2b4ed0c4f0c391f2fb1f3/vignettes/ground-control-to-ruimtehol.Rnw"
+    },
+    {
+      "package": "lme4",
+      "vignette": "vignettes/lmer.Rnw",
+      "repo": "cran/lme4",
+      "html_url": "https://github.com/cran/lme4/blob/06d95ac15d3b0c4e29fda4efbec11861c46cea7e/vignettes/lmer.Rnw"
+    },
+    {
+      "package": "calibrator",
+      "vignette": "vignettes/calex.Rnw",
+      "repo": "cran/calibrator",
+      "html_url": "https://github.com/cran/calibrator/blob/5ef9fad94d433fedd2f8084210492cfe2150bfdf/vignettes/calex.Rnw"
+    },
+    {
+      "package": "hyper2",
+      "vignette": "vignettes/hyper2.Rnw",
+      "repo": "cran/hyper2",
+      "html_url": "https://github.com/cran/hyper2/blob/3a600de3071fbc7c5e5e2249c45cea990c02431a/vignettes/hyper2.Rnw"
+    },
+    {
+      "package": "hapassoc",
+      "vignette": "vignettes/hapassoc.Rnw",
+      "repo": "cran/hapassoc",
+      "html_url": "https://github.com/cran/hapassoc/blob/e844507d05200f8d818ef8b6d6f3ceb6f0d9a2d9/vignettes/hapassoc.Rnw"
+    },
+    {
+      "package": "iGraphMatch",
+      "vignette": "vignettes/iGraphMatch.Rmd",
+      "repo": "cran/iGraphMatch",
+      "html_url": "https://github.com/cran/iGraphMatch/blob/a19d30db4762ec2af78ba4056e0b5bb8f811bd84/vignettes/iGraphMatch.Rmd"
+    },
+    {
+      "package": "protViz",
+      "vignette": "vignettes/protViz.Rnw",
+      "repo": "cran/protViz",
+      "html_url": "https://github.com/cran/protViz/blob/f667d617fcb33bab55ecbf110622155688b181fb/vignettes/protViz.Rnw"
+    },
+    {
+      "package": "amei",
+      "vignette": "vignettes/amei.Rnw",
+      "repo": "cran/amei",
+      "html_url": "https://github.com/cran/amei/blob/6ec4dc1abc827534b1920db6d4911e38cd16224c/vignettes/amei.Rnw"
+    },
+    {
+      "package": "mclcar",
+      "vignette": "vignettes/mclcar_vignette.Rnw",
+      "repo": "cran/mclcar",
+      "html_url": "https://github.com/cran/mclcar/blob/a38e8a7d9a8900425af9e0b701a2ce9d577553a7/vignettes/mclcar_vignette.Rnw"
+    },
+    {
+      "package": "flexsurv",
+      "vignette": "vignettes/multistate.Rnw",
+      "repo": "cran/flexsurv",
+      "html_url": "https://github.com/cran/flexsurv/blob/2aae4c8ac56823d0eac30c1a9ad654ac599b5938/vignettes/multistate.Rnw"
+    },
+    {
+      "package": "CARBayes",
+      "vignette": "vignettes/CARBayes.Rnw",
+      "repo": "cran/CARBayes",
+      "html_url": "https://github.com/cran/CARBayes/blob/4dcb0c9a35d454fcd280455ae570d6dad367089c/vignettes/CARBayes.Rnw"
+    },
+    {
+      "package": "plink",
+      "vignette": "vignettes/plink-UD.Rnw",
+      "repo": "cran/plink",
+      "html_url": "https://github.com/cran/plink/blob/d4ce5351b4dafbb5391a672d8ad27117bec16cfb/vignettes/plink-UD.Rnw"
+    },
+    {
+      "package": "cmvnorm",
+      "vignette": "vignettes/cmvnorm.Rnw",
+      "repo": "cran/cmvnorm",
+      "html_url": "https://github.com/cran/cmvnorm/blob/4df4a6e6db6af26981ead49cea73ed159b0bcee2/vignettes/cmvnorm.Rnw"
+    },
+    {
+      "package": "lifecontingencies",
+      "vignette": "vignettes/mortality_projection.Rnw",
+      "repo": "cran/lifecontingencies",
+      "html_url": "https://github.com/cran/lifecontingencies/blob/e63e3a931e40fbae1f335b8be93cb2195d00ed16/vignettes/mortality_projection.Rnw"
+    },
+    {
+      "package": "clifford",
+      "vignette": "vignettes/clifford.Rnw",
+      "repo": "cran/clifford",
+      "html_url": "https://github.com/cran/clifford/blob/cff29c521ca863ed17b9fbcacb8ef65f9418fb7b/vignettes/clifford.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "vignettes/survival.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/vignettes/survival.Rnw"
+    },
+    {
+      "package": "pmclust",
+      "vignette": "vignettes/pmclust-guide.Rnw",
+      "repo": "cran/pmclust",
+      "html_url": "https://github.com/cran/pmclust/blob/4a2531733b90d505eb075c40c4d136cbca3e447e/vignettes/pmclust-guide.Rnw"
+    },
+    {
+      "package": "BEST",
+      "vignette": "vignettes/BEST.Rnw",
+      "repo": "cran/BEST",
+      "html_url": "https://github.com/cran/BEST/blob/e9b8380fb70a02f97bf6fefee4d61ffaa4b8cceb/vignettes/BEST.Rnw"
+    },
+    {
+      "package": "bartMachine",
+      "vignette": "vignettes/bartMachine.Rnw",
+      "repo": "cran/bartMachine",
+      "html_url": "https://github.com/cran/bartMachine/blob/823d99df209ddfad73371a6f185425a8035f4fed/vignettes/bartMachine.Rnw"
+    },
+    {
+      "package": "LinRegInteractive",
+      "vignette": "vignettes/LinRegInteractive.Rnw",
+      "repo": "cran/LinRegInteractive",
+      "html_url": "https://github.com/cran/LinRegInteractive/blob/954b7b3f651ddd1bca3562f4014900a2064df2aa/vignettes/LinRegInteractive.Rnw"
+    },
+    {
+      "package": "RcppDE",
+      "vignette": "vignettes/RcppDE.Rnw",
+      "repo": "cran/RcppDE",
+      "html_url": "https://github.com/cran/RcppDE/blob/a2b16aa57f8d4a8ef6425b6e782f3e51946f0e3c/vignettes/RcppDE.Rnw"
+    },
+    {
+      "package": "Rmpfr",
+      "vignette": "vignettes/Maechler_useR_2011-abstr.Rnw",
+      "repo": "cran/Rmpfr",
+      "html_url": "https://github.com/cran/Rmpfr/blob/5beb894d6249dd8ec57ab5d9c34202afd6300736/vignettes/Maechler_useR_2011-abstr.Rnw"
+    },
+    {
+      "package": "plotKML",
+      "vignette": "vignettes/jss1079.Rnw",
+      "repo": "cran/plotKML",
+      "html_url": "https://github.com/cran/plotKML/blob/068aaaf06a1976d202222142a95f2e951da0f604/vignettes/jss1079.Rnw"
+    },
+    {
+      "package": "SharpeR",
+      "vignette": "vignettes/SharpeR.Rnw",
+      "repo": "cran/SharpeR",
+      "html_url": "https://github.com/cran/SharpeR/blob/5e01a7d870b6f0bc7e9720bc1fecc9ffc72e1c4d/vignettes/SharpeR.Rnw"
+    },
+    {
+      "package": "stream",
+      "vignette": "vignettes/stream.Rnw",
+      "repo": "cran/stream",
+      "html_url": "https://github.com/cran/stream/blob/3a0e19f932e555110e4e24ec5a99e1ca5d2b33b2/vignettes/stream.Rnw"
+    },
+    {
+      "package": "vegan",
+      "vignette": "vignettes/decision-vegan.Rnw",
+      "repo": "cran/vegan",
+      "html_url": "https://github.com/cran/vegan/blob/7424d65e139c700ad64b2448db6176d48024002e/vignettes/decision-vegan.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "vignettes/fic.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/vignettes/fic.Rnw"
+    },
+    {
+      "package": "cardidates",
+      "vignette": "vignettes/vignette.Rnw",
+      "repo": "cran/cardidates",
+      "html_url": "https://github.com/cran/cardidates/blob/0e13e35bcd56d6b92d9280677afb5ad8dd79daba/vignettes/vignette.Rnw"
+    },
+    {
+      "package": "frailtyEM",
+      "vignette": "vignettes/frailtyEM_manual.Rnw",
+      "repo": "cran/frailtyEM",
+      "html_url": "https://github.com/cran/frailtyEM/blob/fa22281159f9540526a40baf28b9848d6a007858/vignettes/frailtyEM_manual.Rnw"
+    },
+    {
+      "package": "robustlmm",
+      "vignette": "vignettes/rlmer.Rnw",
+      "repo": "cran/robustlmm",
+      "html_url": "https://github.com/cran/robustlmm/blob/aa2b46d87d5b74d11d8a046a2bd5d1e765a02e1a/vignettes/rlmer.Rnw"
+    },
+    {
+      "package": "proftools",
+      "vignette": "vignettes/proftools.Rnw",
+      "repo": "cran/proftools",
+      "html_url": "https://github.com/cran/proftools/blob/2e6d0111efbff47e240569ef3c6785b1a8c2fbae/vignettes/proftools.Rnw"
+    },
+    {
+      "package": "TPmsm",
+      "vignette": "vignettes/TPmsm.Rnw",
+      "repo": "cran/TPmsm",
+      "html_url": "https://github.com/cran/TPmsm/blob/3c7b0981944646c0d3cc54f4216dbb751f2a65dc/vignettes/TPmsm.Rnw"
+    },
+    {
+      "package": "sarima",
+      "vignette": "vignettes/garch_tests_example.Rnw",
+      "repo": "cran/sarima",
+      "html_url": "https://github.com/cran/sarima/blob/7365853a0f88745bcca05994a752af79262293d3/vignettes/garch_tests_example.Rnw"
+    },
+    {
+      "package": "exams",
+      "vignette": "inst/doc/exams.Rnw",
+      "repo": "cran/exams",
+      "html_url": "https://github.com/cran/exams/blob/7db924c22ed1a53e16e3000f961423283579a5d9/inst/doc/exams.Rnw"
+    },
+    {
+      "package": "pbdSLAP",
+      "vignette": "inst/doc/pbdSLAP-guide.Rnw",
+      "repo": "cran/pbdSLAP",
+      "html_url": "https://github.com/cran/pbdSLAP/blob/f59e55286490122ffbbffd197e388c02de238cde/inst/doc/pbdSLAP-guide.Rnw"
+    },
+    {
+      "package": "laGP",
+      "vignette": "inst/doc/laGP.Rnw",
+      "repo": "cran/laGP",
+      "html_url": "https://github.com/cran/laGP/blob/e2ad6bdf6bf9864571a4cce063be3fe10b842848/inst/doc/laGP.Rnw"
+    },
+    {
+      "package": "gems",
+      "vignette": "inst/doc/gems.Rnw",
+      "repo": "cran/gems",
+      "html_url": "https://github.com/cran/gems/blob/26288ef55d5220f338563eedd825e3a6c987dadd/inst/doc/gems.Rnw"
+    },
+    {
+      "package": "zoo",
+      "vignette": "inst/doc/zoo-read.Rnw",
+      "repo": "cran/zoo",
+      "html_url": "https://github.com/cran/zoo/blob/954566761f1daee174bb1fe0837164f6fb9b1353/inst/doc/zoo-read.Rnw"
+    },
+    {
+      "package": "uiucthemes",
+      "vignette": "inst/rmarkdown/templates/latex_journal_format/resources/template.tex",
+      "repo": "cran/uiucthemes",
+      "html_url": "https://github.com/cran/uiucthemes/blob/ef0073c9d43596857875365815086f6d47280e00/inst/rmarkdown/templates/latex_journal_format/resources/template.tex"
+    },
+    {
+      "package": "Langevin",
+      "vignette": "inst/doc/Langevin.Rnw",
+      "repo": "cran/Langevin",
+      "html_url": "https://github.com/cran/Langevin/blob/8087172abc3651fa07bf44c49666ac184bdf59f4/inst/doc/Langevin.Rnw"
+    },
+    {
+      "package": "BARD",
+      "vignette": "inst/doc/JSSstyle/article.tex",
+      "repo": "cran/BARD",
+      "html_url": "https://github.com/cran/BARD/blob/5265b6114d91064679d7fbf1a6e21663f886f136/inst/doc/JSSstyle/article.tex"
+    },
+    {
+      "package": "diffEq",
+      "vignette": "inst/doc/ODEinR.Rnw",
+      "repo": "cran/diffEq",
+      "html_url": "https://github.com/cran/diffEq/blob/882aff4c2d3a21cccfa51e8980856dc596b3fdfb/inst/doc/ODEinR.Rnw"
+    },
+    {
+      "package": "RandomCoefficients",
+      "vignette": "inst/doc/RandomCoefficients.Rnw",
+      "repo": "cran/RandomCoefficients",
+      "html_url": "https://github.com/cran/RandomCoefficients/blob/aa0ab16659c606db7c084c856966b6b84a3c6181/inst/doc/RandomCoefficients.Rnw"
+    },
+    {
+      "package": "sstvars",
+      "vignette": "inst/doc/sstvars-vignette.Rnw",
+      "repo": "cran/sstvars",
+      "html_url": "https://github.com/cran/sstvars/blob/4bc9ca42a6a7cffd3b2056009f8049f6462830bf/inst/doc/sstvars-vignette.Rnw"
+    },
+    {
+      "package": "cacher",
+      "vignette": "inst/doc/cacher.Rnw",
+      "repo": "cran/cacher",
+      "html_url": "https://github.com/cran/cacher/blob/f8a0141cac51d9c48abe35be88fafe682fec3972/inst/doc/cacher.Rnw"
+    },
+    {
+      "package": "flexsurv",
+      "vignette": "inst/doc/flexsurv-examples.Rnw",
+      "repo": "cran/flexsurv",
+      "html_url": "https://github.com/cran/flexsurv/blob/2aae4c8ac56823d0eac30c1a9ad654ac599b5938/inst/doc/flexsurv-examples.Rnw"
+    },
+    {
+      "package": "mme",
+      "vignette": "inst/doc/mme_vignette.Rnw",
+      "repo": "cran/mme",
+      "html_url": "https://github.com/cran/mme/blob/3acfdec03fccdace46d3a0c68abe1e89569b6b5d/inst/doc/mme_vignette.Rnw"
+    },
+    {
+      "package": "dbscan",
+      "vignette": "inst/doc/dbscan.Rnw",
+      "repo": "cran/dbscan",
+      "html_url": "https://github.com/cran/dbscan/blob/247ab7d3ea0c1711c6b9b5e14295d21693403f16/inst/doc/dbscan.Rnw"
+    },
+    {
+      "package": "boxcoxmix",
+      "vignette": "inst/doc/boxcoxmix.Rnw",
+      "repo": "cran/boxcoxmix",
+      "html_url": "https://github.com/cran/boxcoxmix/blob/0236366fbccb2d908010bee00558f79d57d731a4/inst/doc/boxcoxmix.Rnw"
+    },
+    {
+      "package": "interp",
+      "vignette": "inst/doc/tri.Rnw",
+      "repo": "cran/interp",
+      "html_url": "https://github.com/cran/interp/blob/37daa5f8691ed2d23c41d1c79ebad777fe423bac/inst/doc/tri.Rnw"
+    },
+    {
+      "package": "WRS2",
+      "vignette": "inst/doc/WRS2.Rnw",
+      "repo": "cran/WRS2",
+      "html_url": "https://github.com/cran/WRS2/blob/9081817da05fafe1aa122e553070ed889dcf8241/inst/doc/WRS2.Rnw"
+    },
+    {
+      "package": "cacheSweave",
+      "vignette": "inst/doc/cacheSweave.Rnw",
+      "repo": "cran/cacheSweave",
+      "html_url": "https://github.com/cran/cacheSweave/blob/3464e6a5d5696c4260d890380e649c2f8bb80a40/inst/doc/cacheSweave.Rnw"
+    },
+    {
+      "package": "KFAS",
+      "vignette": "inst/doc/KFAS.Rnw",
+      "repo": "cran/KFAS",
+      "html_url": "https://github.com/cran/KFAS/blob/66aab472a9d29c08c52a8ebcd3da531c9daadba3/inst/doc/KFAS.Rnw"
+    },
+    {
+      "package": "smmR",
+      "vignette": "vignettes/smmR.tex",
+      "repo": "cran/smmR",
+      "html_url": "https://github.com/cran/smmR/blob/8fdf003b7162b9d7381c4032a18fbad584a5e93a/vignettes/smmR.tex"
+    },
+    {
+      "package": "xts",
+      "vignette": "inst/doc/xts-faq.Rnw",
+      "repo": "cran/xts",
+      "html_url": "https://github.com/cran/xts/blob/13ce117395d471c005a88c357043727752e7b419/inst/doc/xts-faq.Rnw"
+    },
+    {
+      "package": "LDheatmap",
+      "vignette": "inst/doc/LDheatmap.Rnw",
+      "repo": "cran/LDheatmap",
+      "html_url": "https://github.com/cran/LDheatmap/blob/d65416cb9839252cd8bdcc72e47d465d7736e755/inst/doc/LDheatmap.Rnw"
+    },
+    {
+      "package": "scoringRules",
+      "vignette": "inst/doc/article.Rnw",
+      "repo": "cran/scoringRules",
+      "html_url": "https://github.com/cran/scoringRules/blob/a885f199a516dd1ee75290b6e28220fe4c39fdc7/inst/doc/article.Rnw"
+    },
+    {
+      "package": "zoo",
+      "vignette": "inst/doc/zoo.Rnw",
+      "repo": "cran/zoo",
+      "html_url": "https://github.com/cran/zoo/blob/954566761f1daee174bb1fe0837164f6fb9b1353/inst/doc/zoo.Rnw"
+    },
+    {
+      "package": "basicspace",
+      "vignette": "inst/doc/basicspace.Rnw",
+      "repo": "cran/basicspace",
+      "html_url": "https://github.com/cran/basicspace/blob/12458f039e3cc36f0661ef41dd0831807f31d0e4/inst/doc/basicspace.Rnw"
+    },
+    {
+      "package": "DBR",
+      "vignette": "inst/doc/DBR.Rnw",
+      "repo": "cran/DBR",
+      "html_url": "https://github.com/cran/DBR/blob/457780458f43f282d2dba6465ddc0e6c2278e410/inst/doc/DBR.Rnw"
+    },
+    {
+      "package": "bvpSolve",
+      "vignette": "inst/doc/bvpSolve.Rnw",
+      "repo": "cran/bvpSolve",
+      "html_url": "https://github.com/cran/bvpSolve/blob/b84737c74650954fe1bc469b3478585a79a2d901/inst/doc/bvpSolve.Rnw"
+    },
+    {
+      "package": "mixor",
+      "vignette": "inst/doc/mixor.Rnw",
+      "repo": "cran/mixor",
+      "html_url": "https://github.com/cran/mixor/blob/2a9a67672767c6c2c38173711a600286e9d3e5ee/inst/doc/mixor.Rnw"
+    },
+    {
+      "package": "genMOSS",
+      "vignette": "inst/doc/User_manual.Rnw",
+      "repo": "cran/genMOSS",
+      "html_url": "https://github.com/cran/genMOSS/blob/3752ae44517f5b68392de6893544738357945620/inst/doc/User_manual.Rnw"
+    },
+    {
+      "package": "trajectories",
+      "vignette": "inst/doc/article.Rnw",
+      "repo": "cran/trajectories",
+      "html_url": "https://github.com/cran/trajectories/blob/91ea4d258f886202681b63748b9e8b663139f87e/inst/doc/article.Rnw"
+    },
+    {
+      "package": "HistogramTools",
+      "vignette": "inst/doc/HistogramTools.Rnw",
+      "repo": "cran/HistogramTools",
+      "html_url": "https://github.com/cran/HistogramTools/blob/c05071b2ae9f760c6da4e9a886ab85aa679091e5/inst/doc/HistogramTools.Rnw"
+    },
+    {
+      "package": "orsk",
+      "vignette": "inst/doc/orsk_demo.Rnw",
+      "repo": "cran/orsk",
+      "html_url": "https://github.com/cran/orsk/blob/f0ccd04787e61aa7b9d518405a8936d74a85e0ed/inst/doc/orsk_demo.Rnw"
+    },
+    {
+      "package": "partitions",
+      "vignette": "inst/doc/setpartitions.Rnw",
+      "repo": "cran/partitions",
+      "html_url": "https://github.com/cran/partitions/blob/de2f532992e09b1ad5c148e919c0d437d79ab50d/inst/doc/setpartitions.Rnw"
+    },
+    {
+      "package": "dtwclust",
+      "vignette": "inst/doc/dtwclust.Rnw",
+      "repo": "cran/dtwclust",
+      "html_url": "https://github.com/cran/dtwclust/blob/89d34105e1d3f2e4fca2ef9ed22c4fd1fd06cacc/inst/doc/dtwclust.Rnw"
+    },
+    {
+      "package": "kequate",
+      "vignette": "inst/doc/irtguide.Rnw",
+      "repo": "cran/kequate",
+      "html_url": "https://github.com/cran/kequate/blob/4be8d73452922daef21ff1109e63f407ffa3b16b/inst/doc/irtguide.Rnw"
+    },
+    {
+      "package": "evclust",
+      "vignette": "inst/doc/evclust_vignette.Rnw",
+      "repo": "cran/evclust",
+      "html_url": "https://github.com/cran/evclust/blob/db11b91c67df32b4d2584f9d06cc4e2c7681c5fa/inst/doc/evclust_vignette.Rnw"
+    },
+    {
+      "package": "interval",
+      "vignette": "inst/doc/intervalCensoring.Rnw",
+      "repo": "cran/interval",
+      "html_url": "https://github.com/cran/interval/blob/0b6ec1560e853719d17623f07462b02afdd4dd9f/inst/doc/intervalCensoring.Rnw"
+    },
+    {
+      "package": "BayesRGMM",
+      "vignette": "inst/doc/BayesRGMM.Rnw",
+      "repo": "cran/BayesRGMM",
+      "html_url": "https://github.com/cran/BayesRGMM/blob/63df167ec363a9a0210d8afd7f54f832aeb33d78/inst/doc/BayesRGMM.Rnw"
+    },
+    {
+      "package": "beanplot",
+      "vignette": "inst/doc/beanplot.Rnw",
+      "repo": "cran/beanplot",
+      "html_url": "https://github.com/cran/beanplot/blob/3cef789caa524dbb10316ffefaa734b81c58752d/inst/doc/beanplot.Rnw"
+    },
+    {
+      "package": "isotone",
+      "vignette": "inst/doc/isotone.Rnw",
+      "repo": "cran/isotone",
+      "html_url": "https://github.com/cran/isotone/blob/5295bef1992d4756d1e42561dce8aa860312f6c0/inst/doc/isotone.Rnw"
+    },
+    {
+      "package": "DPQ",
+      "vignette": "inst/doc/log1pmx-etc.Rnw",
+      "repo": "cran/DPQ",
+      "html_url": "https://github.com/cran/DPQ/blob/d476d596a985b7bafb7929a2594a6d728901271a/inst/doc/log1pmx-etc.Rnw"
+    },
+    {
+      "package": "lefko3",
+      "vignette": "inst/doc/Chapter1.Rmd",
+      "repo": "cran/lefko3",
+      "html_url": "https://github.com/cran/lefko3/blob/de19398d84fe6fee2f10421a1904c0a7673cdfd9/inst/doc/Chapter1.Rmd"
+    },
+    {
+      "package": "lagged",
+      "vignette": "inst/doc/Guide_lagged.Rnw",
+      "repo": "cran/lagged",
+      "html_url": "https://github.com/cran/lagged/blob/2a082d552d4beaf402227b70625d347ac3aa4da6/inst/doc/Guide_lagged.Rnw"
+    },
+    {
+      "package": "movMF",
+      "vignette": "inst/doc/movMF.Rnw",
+      "repo": "cran/movMF",
+      "html_url": "https://github.com/cran/movMF/blob/543a29c76d8425dd902fb4612481696076b5f317/inst/doc/movMF.Rnw"
+    },
+    {
+      "package": "party",
+      "vignette": "inst/doc/MOB.Rnw",
+      "repo": "cran/party",
+      "html_url": "https://github.com/cran/party/blob/f64737fce974c5c0b0f0b282c91608f700ba35f4/inst/doc/MOB.Rnw"
+    },
+    {
+      "package": "OneTwoSamples",
+      "vignette": "inst/doc/OneTwoSamples.Rnw",
+      "repo": "cran/OneTwoSamples",
+      "html_url": "https://github.com/cran/OneTwoSamples/blob/7fc001bbfadff8cd4316b630e576f0d53594e0cc/inst/doc/OneTwoSamples.Rnw"
+    },
+    {
+      "package": "SharpeR",
+      "vignette": "inst/doc/AsymptoticMarkowitz.Rnw",
+      "repo": "cran/SharpeR",
+      "html_url": "https://github.com/cran/SharpeR/blob/5e01a7d870b6f0bc7e9720bc1fecc9ffc72e1c4d/inst/doc/AsymptoticMarkowitz.Rnw"
+    },
+    {
+      "package": "simrec",
+      "vignette": "inst/extras/simrec-vignette-Rhelp.Rnw",
+      "repo": "cran/simrec",
+      "html_url": "https://github.com/cran/simrec/blob/8265a332b13f7c672afb5017fb98e1beb78b515b/inst/extras/simrec-vignette-Rhelp.Rnw"
+    },
+    {
+      "package": "partitions",
+      "vignette": "inst/doc/partitions.Rnw",
+      "repo": "cran/partitions",
+      "html_url": "https://github.com/cran/partitions/blob/de2f532992e09b1ad5c148e919c0d437d79ab50d/inst/doc/partitions.Rnw"
+    },
+    {
+      "package": "gmvarkit",
+      "vignette": "inst/doc/gmvarkit-vignette.Rnw",
+      "repo": "cran/gmvarkit",
+      "html_url": "https://github.com/cran/gmvarkit/blob/a9847053cdd1988f10e05733e85cb3c3c72f4395/inst/doc/gmvarkit-vignette.Rnw"
+    },
+    {
+      "package": "snplinkage",
+      "vignette": "inst/doc/snplinkage.Rnw",
+      "repo": "cran/snplinkage",
+      "html_url": "https://github.com/cran/snplinkage/blob/8eb75d5831a76ada4c5a29d09d224440d6ce7cd6/inst/doc/snplinkage.Rnw"
+    },
+    {
+      "package": "WeightedCluster",
+      "vignette": "inst/doc/WeightedClusterPreview.Rnw",
+      "repo": "cran/WeightedCluster",
+      "html_url": "https://github.com/cran/WeightedCluster/blob/336d9042a09d98fa62adf06adc9ce625eebc7c97/inst/doc/WeightedClusterPreview.Rnw"
+    },
+    {
+      "package": "trackeR",
+      "vignette": "inst/doc/trackeR.Rnw",
+      "repo": "cran/trackeR",
+      "html_url": "https://github.com/cran/trackeR/blob/d76a22ec58a67d21850d7f81e862f0f542668590/inst/doc/trackeR.Rnw"
+    },
+    {
+      "package": "multcomp",
+      "vignette": "inst/doc/chfls1.Rnw",
+      "repo": "cran/multcomp",
+      "html_url": "https://github.com/cran/multcomp/blob/07a10657c983be9357bca079dbb66572eb0b5bcd/inst/doc/chfls1.Rnw"
+    },
+    {
+      "package": "coin",
+      "vignette": "inst/doc/Implementation.Rnw",
+      "repo": "cran/coin",
+      "html_url": "https://github.com/cran/coin/blob/4f813a5f635d62178763b975c32f68fce30097c5/inst/doc/Implementation.Rnw"
+    },
+    {
+      "package": "party",
+      "vignette": "inst/doc/party.Rnw",
+      "repo": "cran/party",
+      "html_url": "https://github.com/cran/party/blob/f64737fce974c5c0b0f0b282c91608f700ba35f4/inst/doc/party.Rnw"
+    },
+    {
+      "package": "hdlm",
+      "vignette": "inst/doc/article.Rnw",
+      "repo": "cran/hdlm",
+      "html_url": "https://github.com/cran/hdlm/blob/8f6a01e2014b623cc9d2b1e78898358d104c0f1c/inst/doc/article.Rnw"
+    },
+    {
+      "package": "bbl",
+      "vignette": "inst/doc/article.Rnw",
+      "repo": "cran/bbl",
+      "html_url": "https://github.com/cran/bbl/blob/d9195ab16399825d290191908023e1517af87631/inst/doc/article.Rnw"
+    },
+    {
+      "package": "AcceptanceSampling",
+      "vignette": "inst/doc/acceptance_sampling_manual.Rnw",
+      "repo": "cran/AcceptanceSampling",
+      "html_url": "https://github.com/cran/AcceptanceSampling/blob/06741b3fef822ca045b910d41c4c1b80eb9458d7/inst/doc/acceptance_sampling_manual.Rnw"
+    },
+    {
+      "package": "fdANOVA",
+      "vignette": "inst/doc/fdANOVA.Rnw",
+      "repo": "cran/fdANOVA",
+      "html_url": "https://github.com/cran/fdANOVA/blob/1837583901e97469cca11ec7d47ec98b0a501a7d/inst/doc/fdANOVA.Rnw"
+    },
+    {
+      "package": "multivator",
+      "vignette": "inst/doc/cias.Rnw",
+      "repo": "cran/multivator",
+      "html_url": "https://github.com/cran/multivator/blob/8301cfb94d50301379cbc30d89ce0a89841e41b5/inst/doc/cias.Rnw"
+    },
+    {
+      "package": "exams",
+      "vignette": "vignettes/exams.Rnw",
+      "repo": "cran/exams",
+      "html_url": "https://github.com/cran/exams/blob/7db924c22ed1a53e16e3000f961423283579a5d9/vignettes/exams.Rnw"
+    },
+    {
+      "package": "pbdSLAP",
+      "vignette": "vignettes/pbdSLAP-guide.Rnw",
+      "repo": "cran/pbdSLAP",
+      "html_url": "https://github.com/cran/pbdSLAP/blob/f59e55286490122ffbbffd197e388c02de238cde/vignettes/pbdSLAP-guide.Rnw"
+    },
+    {
+      "package": "laGP",
+      "vignette": "vignettes/laGP.Rnw",
+      "repo": "cran/laGP",
+      "html_url": "https://github.com/cran/laGP/blob/e2ad6bdf6bf9864571a4cce063be3fe10b842848/vignettes/laGP.Rnw"
+    },
+    {
+      "package": "gems",
+      "vignette": "vignettes/gems.Rnw",
+      "repo": "cran/gems",
+      "html_url": "https://github.com/cran/gems/blob/26288ef55d5220f338563eedd825e3a6c987dadd/vignettes/gems.Rnw"
+    },
+    {
+      "package": "zoo",
+      "vignette": "vignettes/zoo-read.Rnw",
+      "repo": "cran/zoo",
+      "html_url": "https://github.com/cran/zoo/blob/954566761f1daee174bb1fe0837164f6fb9b1353/vignettes/zoo-read.Rnw"
+    },
+    {
+      "package": "Langevin",
+      "vignette": "vignettes/Langevin.Rnw",
+      "repo": "cran/Langevin",
+      "html_url": "https://github.com/cran/Langevin/blob/8087172abc3651fa07bf44c49666ac184bdf59f4/vignettes/Langevin.Rnw"
+    },
+    {
+      "package": "diffEq",
+      "vignette": "vignettes/ODEinR.Rnw",
+      "repo": "cran/diffEq",
+      "html_url": "https://github.com/cran/diffEq/blob/882aff4c2d3a21cccfa51e8980856dc596b3fdfb/vignettes/ODEinR.Rnw"
+    },
+    {
+      "package": "RandomCoefficients",
+      "vignette": "vignettes/RandomCoefficients.Rnw",
+      "repo": "cran/RandomCoefficients",
+      "html_url": "https://github.com/cran/RandomCoefficients/blob/aa0ab16659c606db7c084c856966b6b84a3c6181/vignettes/RandomCoefficients.Rnw"
+    },
+    {
+      "package": "sstvars",
+      "vignette": "vignettes/sstvars-vignette.Rnw",
+      "repo": "cran/sstvars",
+      "html_url": "https://github.com/cran/sstvars/blob/4bc9ca42a6a7cffd3b2056009f8049f6462830bf/vignettes/sstvars-vignette.Rnw"
+    },
+    {
+      "package": "flexsurv",
+      "vignette": "vignettes/flexsurv-examples.Rnw",
+      "repo": "cran/flexsurv",
+      "html_url": "https://github.com/cran/flexsurv/blob/2aae4c8ac56823d0eac30c1a9ad654ac599b5938/vignettes/flexsurv-examples.Rnw"
+    },
+    {
+      "package": "mme",
+      "vignette": "vignettes/mme_vignette.Rnw",
+      "repo": "cran/mme",
+      "html_url": "https://github.com/cran/mme/blob/3acfdec03fccdace46d3a0c68abe1e89569b6b5d/vignettes/mme_vignette.Rnw"
+    },
+    {
+      "package": "dbscan",
+      "vignette": "vignettes/dbscan.Rnw",
+      "repo": "cran/dbscan",
+      "html_url": "https://github.com/cran/dbscan/blob/247ab7d3ea0c1711c6b9b5e14295d21693403f16/vignettes/dbscan.Rnw"
+    },
+    {
+      "package": "boxcoxmix",
+      "vignette": "vignettes/boxcoxmix.Rnw",
+      "repo": "cran/boxcoxmix",
+      "html_url": "https://github.com/cran/boxcoxmix/blob/0236366fbccb2d908010bee00558f79d57d731a4/vignettes/boxcoxmix.Rnw"
+    },
+    {
+      "package": "interp",
+      "vignette": "vignettes/tri.Rnw",
+      "repo": "cran/interp",
+      "html_url": "https://github.com/cran/interp/blob/37daa5f8691ed2d23c41d1c79ebad777fe423bac/vignettes/tri.Rnw"
+    },
+    {
+      "package": "WRS2",
+      "vignette": "vignettes/WRS2.Rnw",
+      "repo": "cran/WRS2",
+      "html_url": "https://github.com/cran/WRS2/blob/9081817da05fafe1aa122e553070ed889dcf8241/vignettes/WRS2.Rnw"
+    },
+    {
+      "package": "KFAS",
+      "vignette": "vignettes/KFAS.Rnw",
+      "repo": "cran/KFAS",
+      "html_url": "https://github.com/cran/KFAS/blob/66aab472a9d29c08c52a8ebcd3da531c9daadba3/vignettes/KFAS.Rnw"
+    },
+    {
+      "package": "xts",
+      "vignette": "vignettes/xts-faq.Rnw",
+      "repo": "cran/xts",
+      "html_url": "https://github.com/cran/xts/blob/13ce117395d471c005a88c357043727752e7b419/vignettes/xts-faq.Rnw"
+    },
+    {
+      "package": "LDheatmap",
+      "vignette": "vignettes/LDheatmap.Rnw",
+      "repo": "cran/LDheatmap",
+      "html_url": "https://github.com/cran/LDheatmap/blob/d65416cb9839252cd8bdcc72e47d465d7736e755/vignettes/LDheatmap.Rnw"
+    },
+    {
+      "package": "scoringRules",
+      "vignette": "vignettes/article.Rnw",
+      "repo": "cran/scoringRules",
+      "html_url": "https://github.com/cran/scoringRules/blob/a885f199a516dd1ee75290b6e28220fe4c39fdc7/vignettes/article.Rnw"
+    },
+    {
+      "package": "zoo",
+      "vignette": "vignettes/zoo.Rnw",
+      "repo": "cran/zoo",
+      "html_url": "https://github.com/cran/zoo/blob/954566761f1daee174bb1fe0837164f6fb9b1353/vignettes/zoo.Rnw"
+    },
+    {
+      "package": "basicspace",
+      "vignette": "vignettes/basicspace.Rnw",
+      "repo": "cran/basicspace",
+      "html_url": "https://github.com/cran/basicspace/blob/12458f039e3cc36f0661ef41dd0831807f31d0e4/vignettes/basicspace.Rnw"
+    },
+    {
+      "package": "DBR",
+      "vignette": "vignettes/DBR.Rnw",
+      "repo": "cran/DBR",
+      "html_url": "https://github.com/cran/DBR/blob/457780458f43f282d2dba6465ddc0e6c2278e410/vignettes/DBR.Rnw"
+    },
+    {
+      "package": "bvpSolve",
+      "vignette": "vignettes/bvpSolve.Rnw",
+      "repo": "cran/bvpSolve",
+      "html_url": "https://github.com/cran/bvpSolve/blob/b84737c74650954fe1bc469b3478585a79a2d901/vignettes/bvpSolve.Rnw"
+    },
+    {
+      "package": "mixor",
+      "vignette": "vignettes/mixor.Rnw",
+      "repo": "cran/mixor",
+      "html_url": "https://github.com/cran/mixor/blob/2a9a67672767c6c2c38173711a600286e9d3e5ee/vignettes/mixor.Rnw"
+    },
+    {
+      "package": "trajectories",
+      "vignette": "vignettes/article.Rnw",
+      "repo": "cran/trajectories",
+      "html_url": "https://github.com/cran/trajectories/blob/91ea4d258f886202681b63748b9e8b663139f87e/vignettes/article.Rnw"
+    },
+    {
+      "package": "HistogramTools",
+      "vignette": "vignettes/HistogramTools.Rnw",
+      "repo": "cran/HistogramTools",
+      "html_url": "https://github.com/cran/HistogramTools/blob/c05071b2ae9f760c6da4e9a886ab85aa679091e5/vignettes/HistogramTools.Rnw"
+    },
+    {
+      "package": "orsk",
+      "vignette": "vignettes/orsk_demo.Rnw",
+      "repo": "cran/orsk",
+      "html_url": "https://github.com/cran/orsk/blob/f0ccd04787e61aa7b9d518405a8936d74a85e0ed/vignettes/orsk_demo.Rnw"
+    },
+    {
+      "package": "partitions",
+      "vignette": "vignettes/setpartitions.Rnw",
+      "repo": "cran/partitions",
+      "html_url": "https://github.com/cran/partitions/blob/de2f532992e09b1ad5c148e919c0d437d79ab50d/vignettes/setpartitions.Rnw"
+    },
+    {
+      "package": "dtwclust",
+      "vignette": "vignettes/dtwclust.Rnw",
+      "repo": "cran/dtwclust",
+      "html_url": "https://github.com/cran/dtwclust/blob/89d34105e1d3f2e4fca2ef9ed22c4fd1fd06cacc/vignettes/dtwclust.Rnw"
+    },
+    {
+      "package": "kequate",
+      "vignette": "vignettes/irtguide.Rnw",
+      "repo": "cran/kequate",
+      "html_url": "https://github.com/cran/kequate/blob/4be8d73452922daef21ff1109e63f407ffa3b16b/vignettes/irtguide.Rnw"
+    },
+    {
+      "package": "evclust",
+      "vignette": "vignettes/evclust_vignette.Rnw",
+      "repo": "cran/evclust",
+      "html_url": "https://github.com/cran/evclust/blob/db11b91c67df32b4d2584f9d06cc4e2c7681c5fa/vignettes/evclust_vignette.Rnw"
+    },
+    {
+      "package": "interval",
+      "vignette": "vignettes/intervalCensoring.Rnw",
+      "repo": "cran/interval",
+      "html_url": "https://github.com/cran/interval/blob/0b6ec1560e853719d17623f07462b02afdd4dd9f/vignettes/intervalCensoring.Rnw"
+    },
+    {
+      "package": "BayesRGMM",
+      "vignette": "vignettes/BayesRGMM.Rnw",
+      "repo": "cran/BayesRGMM",
+      "html_url": "https://github.com/cran/BayesRGMM/blob/63df167ec363a9a0210d8afd7f54f832aeb33d78/vignettes/BayesRGMM.Rnw"
+    },
+    {
+      "package": "beanplot",
+      "vignette": "vignettes/beanplot.Rnw",
+      "repo": "cran/beanplot",
+      "html_url": "https://github.com/cran/beanplot/blob/3cef789caa524dbb10316ffefaa734b81c58752d/vignettes/beanplot.Rnw"
+    },
+    {
+      "package": "isotone",
+      "vignette": "vignettes/isotone.Rnw",
+      "repo": "cran/isotone",
+      "html_url": "https://github.com/cran/isotone/blob/5295bef1992d4756d1e42561dce8aa860312f6c0/vignettes/isotone.Rnw"
+    },
+    {
+      "package": "DPQ",
+      "vignette": "vignettes/log1pmx-etc.Rnw",
+      "repo": "cran/DPQ",
+      "html_url": "https://github.com/cran/DPQ/blob/d476d596a985b7bafb7929a2594a6d728901271a/vignettes/log1pmx-etc.Rnw"
+    },
+    {
+      "package": "lefko3",
+      "vignette": "vignettes/Chapter1.Rmd",
+      "repo": "cran/lefko3",
+      "html_url": "https://github.com/cran/lefko3/blob/de19398d84fe6fee2f10421a1904c0a7673cdfd9/vignettes/Chapter1.Rmd"
+    },
+    {
+      "package": "lagged",
+      "vignette": "vignettes/Guide_lagged.Rnw",
+      "repo": "cran/lagged",
+      "html_url": "https://github.com/cran/lagged/blob/2a082d552d4beaf402227b70625d347ac3aa4da6/vignettes/Guide_lagged.Rnw"
+    },
+    {
+      "package": "movMF",
+      "vignette": "vignettes/movMF.Rnw",
+      "repo": "cran/movMF",
+      "html_url": "https://github.com/cran/movMF/blob/543a29c76d8425dd902fb4612481696076b5f317/vignettes/movMF.Rnw"
+    },
+    {
+      "package": "party",
+      "vignette": "vignettes/MOB.Rnw",
+      "repo": "cran/party",
+      "html_url": "https://github.com/cran/party/blob/f64737fce974c5c0b0f0b282c91608f700ba35f4/vignettes/MOB.Rnw"
+    },
+    {
+      "package": "OneTwoSamples",
+      "vignette": "vignettes/OneTwoSamples.Rnw",
+      "repo": "cran/OneTwoSamples",
+      "html_url": "https://github.com/cran/OneTwoSamples/blob/7fc001bbfadff8cd4316b630e576f0d53594e0cc/vignettes/OneTwoSamples.Rnw"
+    },
+    {
+      "package": "SharpeR",
+      "vignette": "vignettes/AsymptoticMarkowitz.Rnw",
+      "repo": "cran/SharpeR",
+      "html_url": "https://github.com/cran/SharpeR/blob/5e01a7d870b6f0bc7e9720bc1fecc9ffc72e1c4d/vignettes/AsymptoticMarkowitz.Rnw"
+    },
+    {
+      "package": "partitions",
+      "vignette": "vignettes/partitions.Rnw",
+      "repo": "cran/partitions",
+      "html_url": "https://github.com/cran/partitions/blob/de2f532992e09b1ad5c148e919c0d437d79ab50d/vignettes/partitions.Rnw"
+    },
+    {
+      "package": "gmvarkit",
+      "vignette": "vignettes/gmvarkit-vignette.Rnw",
+      "repo": "cran/gmvarkit",
+      "html_url": "https://github.com/cran/gmvarkit/blob/a9847053cdd1988f10e05733e85cb3c3c72f4395/vignettes/gmvarkit-vignette.Rnw"
+    },
+    {
+      "package": "snplinkage",
+      "vignette": "vignettes/snplinkage.Rnw",
+      "repo": "cran/snplinkage",
+      "html_url": "https://github.com/cran/snplinkage/blob/8eb75d5831a76ada4c5a29d09d224440d6ce7cd6/vignettes/snplinkage.Rnw"
+    },
+    {
+      "package": "WeightedCluster",
+      "vignette": "vignettes/WeightedClusterPreview.Rnw",
+      "repo": "cran/WeightedCluster",
+      "html_url": "https://github.com/cran/WeightedCluster/blob/336d9042a09d98fa62adf06adc9ce625eebc7c97/vignettes/WeightedClusterPreview.Rnw"
+    },
+    {
+      "package": "trackeR",
+      "vignette": "vignettes/trackeR.Rnw",
+      "repo": "cran/trackeR",
+      "html_url": "https://github.com/cran/trackeR/blob/d76a22ec58a67d21850d7f81e862f0f542668590/vignettes/trackeR.Rnw"
+    },
+    {
+      "package": "multcomp",
+      "vignette": "vignettes/chfls1.Rnw",
+      "repo": "cran/multcomp",
+      "html_url": "https://github.com/cran/multcomp/blob/07a10657c983be9357bca079dbb66572eb0b5bcd/vignettes/chfls1.Rnw"
+    },
+    {
+      "package": "coin",
+      "vignette": "vignettes/Implementation.Rnw",
+      "repo": "cran/coin",
+      "html_url": "https://github.com/cran/coin/blob/4f813a5f635d62178763b975c32f68fce30097c5/vignettes/Implementation.Rnw"
+    },
+    {
+      "package": "party",
+      "vignette": "vignettes/party.Rnw",
+      "repo": "cran/party",
+      "html_url": "https://github.com/cran/party/blob/f64737fce974c5c0b0f0b282c91608f700ba35f4/vignettes/party.Rnw"
+    },
+    {
+      "package": "hdlm",
+      "vignette": "vignettes/article.Rnw",
+      "repo": "cran/hdlm",
+      "html_url": "https://github.com/cran/hdlm/blob/8f6a01e2014b623cc9d2b1e78898358d104c0f1c/vignettes/article.Rnw"
+    },
+    {
+      "package": "bbl",
+      "vignette": "vignettes/article.Rnw",
+      "repo": "cran/bbl",
+      "html_url": "https://github.com/cran/bbl/blob/d9195ab16399825d290191908023e1517af87631/vignettes/article.Rnw"
+    },
+    {
+      "package": "AcceptanceSampling",
+      "vignette": "vignettes/acceptance_sampling_manual.Rnw",
+      "repo": "cran/AcceptanceSampling",
+      "html_url": "https://github.com/cran/AcceptanceSampling/blob/06741b3fef822ca045b910d41c4c1b80eb9458d7/vignettes/acceptance_sampling_manual.Rnw"
+    },
+    {
+      "package": "fdANOVA",
+      "vignette": "vignettes/fdANOVA.Rnw",
+      "repo": "cran/fdANOVA",
+      "html_url": "https://github.com/cran/fdANOVA/blob/1837583901e97469cca11ec7d47ec98b0a501a7d/vignettes/fdANOVA.Rnw"
+    },
+    {
+      "package": "multivator",
+      "vignette": "vignettes/cias.Rnw",
+      "repo": "cran/multivator",
+      "html_url": "https://github.com/cran/multivator/blob/8301cfb94d50301379cbc30d89ce0a89841e41b5/vignettes/cias.Rnw"
+    },
+    {
+      "package": "copula",
+      "vignette": "inst/doc/rhoAMH-dilog.Rnw",
+      "repo": "cran/copula",
+      "html_url": "https://github.com/cran/copula/blob/d0ddd79049170bad2dfd243f86bb483e91c3108f/inst/doc/rhoAMH-dilog.Rnw"
+    },
+    {
+      "package": "BARD",
+      "vignette": "inst/doc/codesnippet.tex",
+      "repo": "cran/BARD",
+      "html_url": "https://github.com/cran/BARD/blob/5265b6114d91064679d7fbf1a6e21663f886f136/inst/doc/codesnippet.tex"
+    },
+    {
+      "package": "topicmodels",
+      "vignette": "inst/doc/topicmodels.Rnw",
+      "repo": "cran/topicmodels",
+      "html_url": "https://github.com/cran/topicmodels/blob/9f331d195581560fe3f39630834ae9e375de892b/inst/doc/topicmodels.Rnw"
+    },
+    {
+      "package": "eRm",
+      "vignette": "inst/doc/eRm.Rnw",
+      "repo": "cran/eRm",
+      "html_url": "https://github.com/cran/eRm/blob/3353b2b682929105ece4c08b1870dfedfdfbb614/inst/doc/eRm.Rnw"
+    },
+    {
+      "package": "interp",
+      "vignette": "inst/doc/partDeriv.Rnw",
+      "repo": "cran/interp",
+      "html_url": "https://github.com/cran/interp/blob/37daa5f8691ed2d23c41d1c79ebad777fe423bac/inst/doc/partDeriv.Rnw"
+    },
+    {
+      "package": "partykit",
+      "vignette": "inst/doc/partykit.Rnw",
+      "repo": "cran/partykit",
+      "html_url": "https://github.com/cran/partykit/blob/89bf18824a1a6c8f072239b6971ca24dbe1f3546/inst/doc/partykit.Rnw"
+    },
+    {
+      "package": "econet",
+      "vignette": "inst/doc/econet.tex",
+      "repo": "cran/econet",
+      "html_url": "https://github.com/cran/econet/blob/51c6ca5982cc1dc1a7c3250ed080ce107bf20484/inst/doc/econet.tex"
+    },
+    {
+      "package": "ordinal",
+      "vignette": "inst/doc/clm_article.Rnw",
+      "repo": "cran/ordinal",
+      "html_url": "https://github.com/cran/ordinal/blob/9bb5a633f0ed8306ba4b59b7ec12fc9028775952/inst/doc/clm_article.Rnw"
+    },
+    {
+      "package": "hyper2",
+      "vignette": "inst/doc/integration.Rnw",
+      "repo": "cran/hyper2",
+      "html_url": "https://github.com/cran/hyper2/blob/3a600de3071fbc7c5e5e2249c45cea990c02431a/inst/doc/integration.Rnw"
+    },
+    {
+      "package": "backtestGraphics",
+      "vignette": "inst/doc/backtestGraphics.Rnw",
+      "repo": "cran/backtestGraphics",
+      "html_url": "https://github.com/cran/backtestGraphics/blob/6be9b06f640857b2037cd611d8cb16bec7e1c62b/inst/doc/backtestGraphics.Rnw"
+    },
+    {
+      "package": "bimets",
+      "vignette": "inst/doc/frb2bimets.Rnw",
+      "repo": "cran/bimets",
+      "html_url": "https://github.com/cran/bimets/blob/61aa543f2c278ef1e02cfb40b89508b0ec947ede/inst/doc/frb2bimets.Rnw"
+    },
+    {
+      "package": "deSolve",
+      "vignette": "inst/doc/compiledCode.Rnw",
+      "repo": "cran/deSolve",
+      "html_url": "https://github.com/cran/deSolve/blob/88c7a7836d1a361020de355dcec26468d935e143/inst/doc/compiledCode.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "inst/doc/multistate.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/inst/doc/multistate.Rnw"
+    },
+    {
+      "package": "SightabilityModel",
+      "vignette": "inst/doc/a-SightabilityModel.Rnw",
+      "repo": "cran/SightabilityModel",
+      "html_url": "https://github.com/cran/SightabilityModel/blob/fd2dbd0260589d8850769669616a3b4134ed2194/inst/doc/a-SightabilityModel.Rnw"
+    },
+    {
+      "package": "qtbase",
+      "vignette": "inst/papers/jss-2010/qt-gui.Rnw",
+      "repo": "cran/qtbase",
+      "html_url": "https://github.com/cran/qtbase/blob/d1e773fc79e5dae7148d1e52ef70be54795e9c95/inst/papers/jss-2010/qt-gui.Rnw"
+    },
+    {
+      "package": "HardyWeinberg",
+      "vignette": "inst/doc/HardyWeinberg.Rnw",
+      "repo": "cran/HardyWeinberg",
+      "html_url": "https://github.com/cran/HardyWeinberg/blob/ab3e069bdffbe7ca6a9bcf0634db43e73fa19cf8/inst/doc/HardyWeinberg.Rnw"
+    },
+    {
+      "package": "vdg",
+      "vignette": "inst/doc/vdg.Rnw",
+      "repo": "cran/vdg",
+      "html_url": "https://github.com/cran/vdg/blob/036d6b8c5a236d427c29ab8e1d812dc19dd9f9be/inst/doc/vdg.Rnw"
+    },
+    {
+      "package": "DPQ",
+      "vignette": "inst/doc/qnorm-asymp.Rnw",
+      "repo": "cran/DPQ",
+      "html_url": "https://github.com/cran/DPQ/blob/d476d596a985b7bafb7929a2594a6d728901271a/inst/doc/qnorm-asymp.Rnw"
+    },
+    {
+      "package": "vcd",
+      "vignette": "inst/doc/residual-shadings.Rnw",
+      "repo": "cran/vcd",
+      "html_url": "https://github.com/cran/vcd/blob/6ed8b9f8f0ca3abd9482bcc9cb92ad934a9cb9fd/inst/doc/residual-shadings.Rnw"
+    },
+    {
+      "package": "deTestSet",
+      "vignette": "inst/doc/deTestSet.Rnw",
+      "repo": "cran/deTestSet",
+      "html_url": "https://github.com/cran/deTestSet/blob/d5c4cbe821920ad0a2ac36ec03c6175531316213/inst/doc/deTestSet.Rnw"
+    },
+    {
+      "package": "kobe",
+      "vignette": "inst/doc/kobe.Rnw",
+      "repo": "cran/kobe",
+      "html_url": "https://github.com/cran/kobe/blob/0a05c0d3965cd5476ae091959e3f44798dbd0a20/inst/doc/kobe.Rnw"
+    },
+    {
+      "package": "simPopulation",
+      "vignette": "inst/doc/simPopulation-eusilc.Rnw",
+      "repo": "cran/simPopulation",
+      "html_url": "https://github.com/cran/simPopulation/blob/fcd172cf8c91d1b23ee29fa4e52a111ed08fb72b/inst/doc/simPopulation-eusilc.Rnw"
+    },
+    {
+      "package": "diagram",
+      "vignette": "inst/doc/diagram.Rnw",
+      "repo": "cran/diagram",
+      "html_url": "https://github.com/cran/diagram/blob/cbd34289489eb22ca87b24139717affc1d1d446d/inst/doc/diagram.Rnw"
+    },
+    {
+      "package": "MarkowitzR",
+      "vignette": "inst/doc/AsymptoticMarkowitz.Rnw",
+      "repo": "cran/MarkowitzR",
+      "html_url": "https://github.com/cran/MarkowitzR/blob/50fc0de106d0d525e265f9e361dde47233401319/inst/doc/AsymptoticMarkowitz.Rnw"
+    },
+    {
+      "package": "dcemriS4",
+      "vignette": "inst/doc/dcemriS4.Rnw",
+      "repo": "cran/dcemriS4",
+      "html_url": "https://github.com/cran/dcemriS4/blob/c57d72f6c42dfb7869f614c35fffdf0eda8cdbd2/inst/doc/dcemriS4.Rnw"
+    },
+    {
+      "package": "LogConcDEAD",
+      "vignette": "inst/doc/LogConcDEAD.Rnw",
+      "repo": "cran/LogConcDEAD",
+      "html_url": "https://github.com/cran/LogConcDEAD/blob/ad8be88ffcdc1fbb79a77de5251fe66a652327ca/inst/doc/LogConcDEAD.Rnw"
+    },
+    {
+      "package": "qle",
+      "vignette": "inst/doc/qle_with_R.Rnw",
+      "repo": "cran/qle",
+      "html_url": "https://github.com/cran/qle/blob/857a96cfcf8dbbf116c944c23924f6cedb37abd8/inst/doc/qle_with_R.Rnw"
+    },
+    {
+      "package": "Formula",
+      "vignette": "inst/doc/Formula.Rnw",
+      "repo": "cran/Formula",
+      "html_url": "https://github.com/cran/Formula/blob/30a4220d41036bfa0ba9eafd904c83ed13d1e40d/inst/doc/Formula.Rnw"
+    },
+    {
+      "package": "gdistance",
+      "vignette": "inst/paper/gdistance1.Rnw",
+      "repo": "cran/gdistance",
+      "html_url": "https://github.com/cran/gdistance/blob/e96a5acf24121d7ed9273a4f01cf4ff931f52efd/inst/paper/gdistance1.Rnw"
+    },
+    {
+      "package": "zoo",
+      "vignette": "inst/doc/zoo-quickref.Rnw",
+      "repo": "cran/zoo",
+      "html_url": "https://github.com/cran/zoo/blob/954566761f1daee174bb1fe0837164f6fb9b1353/inst/doc/zoo-quickref.Rnw"
+    },
+    {
+      "package": "snht",
+      "vignette": "inst/doc/snht.Rnw",
+      "repo": "cran/snht",
+      "html_url": "https://github.com/cran/snht/blob/375251dc51d5b49c9ced3ad8021edb2119d74885/inst/doc/snht.Rnw"
+    },
+    {
+      "package": "ggmcmc",
+      "vignette": "inst/doc/v70i09.Rnw",
+      "repo": "cran/ggmcmc",
+      "html_url": "https://github.com/cran/ggmcmc/blob/7933418cb01ddfb41a5eb8962974812316650a8f/inst/doc/v70i09.Rnw"
+    },
+    {
+      "package": "madness",
+      "vignette": "inst/doc/introducing_madness.Rnw",
+      "repo": "cran/madness",
+      "html_url": "https://github.com/cran/madness/blob/a63d5fe1c887f0864fda7cb4800e989bb82e267f/inst/doc/introducing_madness.Rnw"
+    },
+    {
+      "package": "Bessel",
+      "vignette": "inst/doc/other-Bessels.Rnw",
+      "repo": "cran/Bessel",
+      "html_url": "https://github.com/cran/Bessel/blob/d3924b6bd8fbbe2b22faf7ced7ab36ac570d7cbb/inst/doc/other-Bessels.Rnw"
+    },
+    {
+      "package": "ecolMod",
+      "vignette": "inst/doc/ecolMod.Rnw",
+      "repo": "cran/ecolMod",
+      "html_url": "https://github.com/cran/ecolMod/blob/aefae6bde133811c843ab7e654b3bdfe1d6fc919/inst/doc/ecolMod.Rnw"
+    },
+    {
+      "package": "BPEC",
+      "vignette": "inst/doc/BPEC.Rnw",
+      "repo": "cran/BPEC",
+      "html_url": "https://github.com/cran/BPEC/blob/7467d262b51bcfb16802eb15c2cf9ba08cd0e5b6/inst/doc/BPEC.Rnw"
+    },
+    {
+      "package": "bujar",
+      "vignette": "inst/doc/dlbcl.Rnw",
+      "repo": "cran/bujar",
+      "html_url": "https://github.com/cran/bujar/blob/9dbf65067d18bd65681c51d167615b297860383e/inst/doc/dlbcl.Rnw"
+    },
+    {
+      "package": "emulator",
+      "vignette": "inst/doc/emulex.Rnw",
+      "repo": "cran/emulator",
+      "html_url": "https://github.com/cran/emulator/blob/c5f061ced3616398c549508e1568d9d3064fb4f8/inst/doc/emulex.Rnw"
+    },
+    {
+      "package": "bimets",
+      "vignette": "inst/doc/bimets.Rnw",
+      "repo": "cran/bimets",
+      "html_url": "https://github.com/cran/bimets/blob/61aa543f2c278ef1e02cfb40b89508b0ec947ede/inst/doc/bimets.Rnw"
+    },
+    {
+      "package": "stm",
+      "vignette": "inst/doc/stmVignette.Rnw",
+      "repo": "cran/stm",
+      "html_url": "https://github.com/cran/stm/blob/ff3efdeac577d114e75e812dc9a54cf18e603642/inst/doc/stmVignette.Rnw"
+    },
+    {
+      "package": "approximator",
+      "vignette": "inst/doc/apprex.Rnw",
+      "repo": "cran/approximator",
+      "html_url": "https://github.com/cran/approximator/blob/f80c3a714b4766ff37be1a657ba76af1c3c4d5bf/inst/doc/apprex.Rnw"
+    },
+    {
+      "package": "seriation",
+      "vignette": "inst/doc/seriation.Rnw",
+      "repo": "cran/seriation",
+      "html_url": "https://github.com/cran/seriation/blob/c46ad766c27b281716f03a7bb5004b82b2480bbb/inst/doc/seriation.Rnw"
+    },
+    {
+      "package": "lifecontingencies",
+      "vignette": "inst/doc/an_introduction_to_lifecontingencies_package.Rnw",
+      "repo": "cran/lifecontingencies",
+      "html_url": "https://github.com/cran/lifecontingencies/blob/e63e3a931e40fbae1f335b8be93cb2195d00ed16/inst/doc/an_introduction_to_lifecontingencies_package.Rnw"
+    },
+    {
+      "package": "RNetLogo",
+      "vignette": "inst/doc/parallelProcessing.Rnw",
+      "repo": "cran/RNetLogo",
+      "html_url": "https://github.com/cran/RNetLogo/blob/37f374ff56fe6e6f6acfdae38480eb6d085d6d5d/inst/doc/parallelProcessing.Rnw"
+    },
+    {
+      "package": "sadists",
+      "vignette": "inst/doc/sadists.Rnw",
+      "repo": "cran/sadists",
+      "html_url": "https://github.com/cran/sadists/blob/7941938a1576fa5cc308c2e5b7d6a0236f03d663/inst/doc/sadists.Rnw"
+    },
+    {
+      "package": "DSL",
+      "vignette": "inst/doc/DSL.Rnw",
+      "repo": "cran/DSL",
+      "html_url": "https://github.com/cran/DSL/blob/11307be346ab9e825d70151f6b4ea6f3945a7813/inst/doc/DSL.Rnw"
+    },
+    {
+      "package": "analogue",
+      "vignette": "inst/doc/analogue_methods.Rnw",
+      "repo": "cran/analogue",
+      "html_url": "https://github.com/cran/analogue/blob/dba6ed7802b868dc94337571a1610c484dae3b0d/inst/doc/analogue_methods.Rnw"
+    },
+    {
+      "package": "reporttools",
+      "vignette": "inst/doc/reporttools.Rnw",
+      "repo": "cran/reporttools",
+      "html_url": "https://github.com/cran/reporttools/blob/dbae2637081c691020bca4fdd2e00cdaa8ea24fa/inst/doc/reporttools.Rnw"
+    },
+    {
+      "package": "sparseHessianFD",
+      "vignette": "inst/doc/sparseHessianFD.Rnw",
+      "repo": "cran/sparseHessianFD",
+      "html_url": "https://github.com/cran/sparseHessianFD/blob/7b4b6dd30f8bb649187c2cb713d5a45c61bfef93/inst/doc/sparseHessianFD.Rnw"
+    },
+    {
+      "package": "brms",
+      "vignette": "inst/doc/brms_overview.ltx",
+      "repo": "cran/brms",
+      "html_url": "https://github.com/cran/brms/blob/b124949c14067aa658b176d26477ccf715881bf9/inst/doc/brms_overview.ltx"
+    },
+    {
+      "package": "diffEq",
+      "vignette": "inst/doc/BVPinR.Rnw",
+      "repo": "cran/diffEq",
+      "html_url": "https://github.com/cran/diffEq/blob/882aff4c2d3a21cccfa51e8980856dc596b3fdfb/inst/doc/BVPinR.Rnw"
+    },
+    {
+      "package": "multcomp",
+      "vignette": "inst/doc/generalsiminf.Rnw",
+      "repo": "cran/multcomp",
+      "html_url": "https://github.com/cran/multcomp/blob/07a10657c983be9357bca079dbb66572eb0b5bcd/inst/doc/generalsiminf.Rnw"
+    },
+    {
+      "package": "fsdaR",
+      "vignette": "inst/doc/fsdaR.Rnw",
+      "repo": "cran/fsdaR",
+      "html_url": "https://github.com/cran/fsdaR/blob/22cdf96a4e3f66c08b1856b26bf446a032ad25d1/inst/doc/fsdaR.Rnw"
+    },
+    {
+      "package": "FME",
+      "vignette": "inst/doc/FMEsteady.Rnw",
+      "repo": "cran/FME",
+      "html_url": "https://github.com/cran/FME/blob/4d740a0e21264edccda1f50e4a40718165aa76c3/inst/doc/FMEsteady.Rnw"
+    },
+    {
+      "package": "BioMedR",
+      "vignette": "inst/doc/BioMedR.Rnw",
+      "repo": "cran/BioMedR",
+      "html_url": "https://github.com/cran/BioMedR/blob/d7389383b4c84a9fc4e203bf05f4f4312aa75a72/inst/doc/BioMedR.Rnw"
+    },
+    {
+      "package": "mediation",
+      "vignette": "inst/doc/mediation.Rnw",
+      "repo": "cran/mediation",
+      "html_url": "https://github.com/cran/mediation/blob/7c69452b53da0c270ae28ee60a00c6ca1730654b/inst/doc/mediation.Rnw"
+    },
+    {
+      "package": "opticskxi",
+      "vignette": "inst/doc/opticskxi.Rnw",
+      "repo": "cran/opticskxi",
+      "html_url": "https://github.com/cran/opticskxi/blob/db29bebfbe33609f1ca35c33e2df7eae8db06801/inst/doc/opticskxi.Rnw"
+    },
+    {
+      "package": "fromo",
+      "vignette": "inst/doc/fromo.Rnw",
+      "repo": "cran/fromo",
+      "html_url": "https://github.com/cran/fromo/blob/16f654c6616877475ba6314f8a081bc9bfbe7ea1/inst/doc/fromo.Rnw"
+    },
+    {
+      "package": "flexsurv",
+      "vignette": "inst/doc/distributions.Rnw",
+      "repo": "cran/flexsurv",
+      "html_url": "https://github.com/cran/flexsurv/blob/2aae4c8ac56823d0eac30c1a9ad654ac599b5938/inst/doc/distributions.Rnw"
+    },
+    {
+      "package": "poweRlaw",
+      "vignette": "inst/doc/d_jss_paper.Rnw",
+      "repo": "cran/poweRlaw",
+      "html_url": "https://github.com/cran/poweRlaw/blob/1650c1d938d9df68411e2b889665d681860e1733/inst/doc/d_jss_paper.Rnw"
+    },
+    {
+      "package": "DPQ",
+      "vignette": "inst/doc/Noncentral-Chisq.Rnw",
+      "repo": "cran/DPQ",
+      "html_url": "https://github.com/cran/DPQ/blob/d476d596a985b7bafb7929a2594a6d728901271a/inst/doc/Noncentral-Chisq.Rnw"
+    },
+    {
+      "package": "dslice",
+      "vignette": "inst/doc/dslice.Rnw",
+      "repo": "cran/dslice",
+      "html_url": "https://github.com/cran/dslice/blob/33cd96105a0ac1b13e459a54ffaaef775680b3d8/inst/doc/dslice.Rnw"
+    },
+    {
+      "package": "nestfs",
+      "vignette": "tests/paper/JSSstyle/bookreview.tex",
+      "repo": "cran/nestfs",
+      "html_url": "https://github.com/cran/nestfs/blob/b3902b7a9ffdfaca6e58ee07a1e92a84b30a2c5f/tests/paper/JSSstyle/bookreview.tex"
+    },
+    {
+      "package": "copula",
+      "vignette": "vignettes/rhoAMH-dilog.Rnw",
+      "repo": "cran/copula",
+      "html_url": "https://github.com/cran/copula/blob/d0ddd79049170bad2dfd243f86bb483e91c3108f/vignettes/rhoAMH-dilog.Rnw"
+    },
+    {
+      "package": "topicmodels",
+      "vignette": "vignettes/topicmodels.Rnw",
+      "repo": "cran/topicmodels",
+      "html_url": "https://github.com/cran/topicmodels/blob/9f331d195581560fe3f39630834ae9e375de892b/vignettes/topicmodels.Rnw"
+    },
+    {
+      "package": "eRm",
+      "vignette": "vignettes/eRm.Rnw",
+      "repo": "cran/eRm",
+      "html_url": "https://github.com/cran/eRm/blob/3353b2b682929105ece4c08b1870dfedfdfbb614/vignettes/eRm.Rnw"
+    },
+    {
+      "package": "interp",
+      "vignette": "vignettes/partDeriv.Rnw",
+      "repo": "cran/interp",
+      "html_url": "https://github.com/cran/interp/blob/37daa5f8691ed2d23c41d1c79ebad777fe423bac/vignettes/partDeriv.Rnw"
+    },
+    {
+      "package": "partykit",
+      "vignette": "vignettes/partykit.Rnw",
+      "repo": "cran/partykit",
+      "html_url": "https://github.com/cran/partykit/blob/89bf18824a1a6c8f072239b6971ca24dbe1f3546/vignettes/partykit.Rnw"
+    },
+    {
+      "package": "econet",
+      "vignette": "vignettes/econet.tex",
+      "repo": "cran/econet",
+      "html_url": "https://github.com/cran/econet/blob/51c6ca5982cc1dc1a7c3250ed080ce107bf20484/vignettes/econet.tex"
+    },
+    {
+      "package": "ordinal",
+      "vignette": "vignettes/clm_article.Rnw",
+      "repo": "cran/ordinal",
+      "html_url": "https://github.com/cran/ordinal/blob/9bb5a633f0ed8306ba4b59b7ec12fc9028775952/vignettes/clm_article.Rnw"
+    },
+    {
+      "package": "hyper2",
+      "vignette": "vignettes/integration.Rnw",
+      "repo": "cran/hyper2",
+      "html_url": "https://github.com/cran/hyper2/blob/3a600de3071fbc7c5e5e2249c45cea990c02431a/vignettes/integration.Rnw"
+    },
+    {
+      "package": "backtestGraphics",
+      "vignette": "vignettes/backtestGraphics.Rnw",
+      "repo": "cran/backtestGraphics",
+      "html_url": "https://github.com/cran/backtestGraphics/blob/6be9b06f640857b2037cd611d8cb16bec7e1c62b/vignettes/backtestGraphics.Rnw"
+    },
+    {
+      "package": "bimets",
+      "vignette": "vignettes/frb2bimets.Rnw",
+      "repo": "cran/bimets",
+      "html_url": "https://github.com/cran/bimets/blob/61aa543f2c278ef1e02cfb40b89508b0ec947ede/vignettes/frb2bimets.Rnw"
+    },
+    {
+      "package": "deSolve",
+      "vignette": "vignettes/compiledCode.Rnw",
+      "repo": "cran/deSolve",
+      "html_url": "https://github.com/cran/deSolve/blob/88c7a7836d1a361020de355dcec26468d935e143/vignettes/compiledCode.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "vignettes/multistate.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/vignettes/multistate.Rnw"
+    },
+    {
+      "package": "SightabilityModel",
+      "vignette": "vignettes/a-SightabilityModel.Rnw",
+      "repo": "cran/SightabilityModel",
+      "html_url": "https://github.com/cran/SightabilityModel/blob/fd2dbd0260589d8850769669616a3b4134ed2194/vignettes/a-SightabilityModel.Rnw"
+    },
+    {
+      "package": "HardyWeinberg",
+      "vignette": "vignettes/HardyWeinberg.Rnw",
+      "repo": "cran/HardyWeinberg",
+      "html_url": "https://github.com/cran/HardyWeinberg/blob/ab3e069bdffbe7ca6a9bcf0634db43e73fa19cf8/vignettes/HardyWeinberg.Rnw"
+    },
+    {
+      "package": "vdg",
+      "vignette": "vignettes/vdg.Rnw",
+      "repo": "cran/vdg",
+      "html_url": "https://github.com/cran/vdg/blob/036d6b8c5a236d427c29ab8e1d812dc19dd9f9be/vignettes/vdg.Rnw"
+    },
+    {
+      "package": "DPQ",
+      "vignette": "vignettes/qnorm-asymp.Rnw",
+      "repo": "cran/DPQ",
+      "html_url": "https://github.com/cran/DPQ/blob/d476d596a985b7bafb7929a2594a6d728901271a/vignettes/qnorm-asymp.Rnw"
+    },
+    {
+      "package": "vcd",
+      "vignette": "vignettes/residual-shadings.Rnw",
+      "repo": "cran/vcd",
+      "html_url": "https://github.com/cran/vcd/blob/6ed8b9f8f0ca3abd9482bcc9cb92ad934a9cb9fd/vignettes/residual-shadings.Rnw"
+    },
+    {
+      "package": "deTestSet",
+      "vignette": "vignettes/deTestSet.Rnw",
+      "repo": "cran/deTestSet",
+      "html_url": "https://github.com/cran/deTestSet/blob/d5c4cbe821920ad0a2ac36ec03c6175531316213/vignettes/deTestSet.Rnw"
+    },
+    {
+      "package": "kobe",
+      "vignette": "vignettes/kobe.Rnw",
+      "repo": "cran/kobe",
+      "html_url": "https://github.com/cran/kobe/blob/0a05c0d3965cd5476ae091959e3f44798dbd0a20/vignettes/kobe.Rnw"
+    },
+    {
+      "package": "simPopulation",
+      "vignette": "vignettes/simPopulation-eusilc.Rnw",
+      "repo": "cran/simPopulation",
+      "html_url": "https://github.com/cran/simPopulation/blob/fcd172cf8c91d1b23ee29fa4e52a111ed08fb72b/vignettes/simPopulation-eusilc.Rnw"
+    },
+    {
+      "package": "diagram",
+      "vignette": "vignettes/diagram.Rnw",
+      "repo": "cran/diagram",
+      "html_url": "https://github.com/cran/diagram/blob/cbd34289489eb22ca87b24139717affc1d1d446d/vignettes/diagram.Rnw"
+    },
+    {
+      "package": "MarkowitzR",
+      "vignette": "vignettes/AsymptoticMarkowitz.Rnw",
+      "repo": "cran/MarkowitzR",
+      "html_url": "https://github.com/cran/MarkowitzR/blob/50fc0de106d0d525e265f9e361dde47233401319/vignettes/AsymptoticMarkowitz.Rnw"
+    },
+    {
+      "package": "dcemriS4",
+      "vignette": "vignettes/dcemriS4.Rnw",
+      "repo": "cran/dcemriS4",
+      "html_url": "https://github.com/cran/dcemriS4/blob/c57d72f6c42dfb7869f614c35fffdf0eda8cdbd2/vignettes/dcemriS4.Rnw"
+    },
+    {
+      "package": "LogConcDEAD",
+      "vignette": "vignettes/LogConcDEAD.Rnw",
+      "repo": "cran/LogConcDEAD",
+      "html_url": "https://github.com/cran/LogConcDEAD/blob/ad8be88ffcdc1fbb79a77de5251fe66a652327ca/vignettes/LogConcDEAD.Rnw"
+    },
+    {
+      "package": "qle",
+      "vignette": "vignettes/qle_with_R.Rnw",
+      "repo": "cran/qle",
+      "html_url": "https://github.com/cran/qle/blob/857a96cfcf8dbbf116c944c23924f6cedb37abd8/vignettes/qle_with_R.Rnw"
+    },
+    {
+      "package": "Formula",
+      "vignette": "vignettes/Formula.Rnw",
+      "repo": "cran/Formula",
+      "html_url": "https://github.com/cran/Formula/blob/30a4220d41036bfa0ba9eafd904c83ed13d1e40d/vignettes/Formula.Rnw"
+    },
+    {
+      "package": "zoo",
+      "vignette": "vignettes/zoo-quickref.Rnw",
+      "repo": "cran/zoo",
+      "html_url": "https://github.com/cran/zoo/blob/954566761f1daee174bb1fe0837164f6fb9b1353/vignettes/zoo-quickref.Rnw"
+    },
+    {
+      "package": "snht",
+      "vignette": "vignettes/snht.Rnw",
+      "repo": "cran/snht",
+      "html_url": "https://github.com/cran/snht/blob/375251dc51d5b49c9ced3ad8021edb2119d74885/vignettes/snht.Rnw"
+    },
+    {
+      "package": "ggmcmc",
+      "vignette": "vignettes/v70i09.Rnw",
+      "repo": "cran/ggmcmc",
+      "html_url": "https://github.com/cran/ggmcmc/blob/7933418cb01ddfb41a5eb8962974812316650a8f/vignettes/v70i09.Rnw"
+    },
+    {
+      "package": "madness",
+      "vignette": "vignettes/introducing_madness.Rnw",
+      "repo": "cran/madness",
+      "html_url": "https://github.com/cran/madness/blob/a63d5fe1c887f0864fda7cb4800e989bb82e267f/vignettes/introducing_madness.Rnw"
+    },
+    {
+      "package": "Bessel",
+      "vignette": "vignettes/other-Bessels.Rnw",
+      "repo": "cran/Bessel",
+      "html_url": "https://github.com/cran/Bessel/blob/d3924b6bd8fbbe2b22faf7ced7ab36ac570d7cbb/vignettes/other-Bessels.Rnw"
+    },
+    {
+      "package": "ecolMod",
+      "vignette": "vignettes/ecolMod.Rnw",
+      "repo": "cran/ecolMod",
+      "html_url": "https://github.com/cran/ecolMod/blob/aefae6bde133811c843ab7e654b3bdfe1d6fc919/vignettes/ecolMod.Rnw"
+    },
+    {
+      "package": "BPEC",
+      "vignette": "vignettes/BPEC.Rnw",
+      "repo": "cran/BPEC",
+      "html_url": "https://github.com/cran/BPEC/blob/7467d262b51bcfb16802eb15c2cf9ba08cd0e5b6/vignettes/BPEC.Rnw"
+    },
+    {
+      "package": "bujar",
+      "vignette": "vignettes/dlbcl.Rnw",
+      "repo": "cran/bujar",
+      "html_url": "https://github.com/cran/bujar/blob/9dbf65067d18bd65681c51d167615b297860383e/vignettes/dlbcl.Rnw"
+    },
+    {
+      "package": "emulator",
+      "vignette": "vignettes/emulex.Rnw",
+      "repo": "cran/emulator",
+      "html_url": "https://github.com/cran/emulator/blob/c5f061ced3616398c549508e1568d9d3064fb4f8/vignettes/emulex.Rnw"
+    },
+    {
+      "package": "bimets",
+      "vignette": "vignettes/bimets.Rnw",
+      "repo": "cran/bimets",
+      "html_url": "https://github.com/cran/bimets/blob/61aa543f2c278ef1e02cfb40b89508b0ec947ede/vignettes/bimets.Rnw"
+    },
+    {
+      "package": "stm",
+      "vignette": "vignettes/stmVignette.Rnw",
+      "repo": "cran/stm",
+      "html_url": "https://github.com/cran/stm/blob/ff3efdeac577d114e75e812dc9a54cf18e603642/vignettes/stmVignette.Rnw"
+    },
+    {
+      "package": "approximator",
+      "vignette": "vignettes/apprex.Rnw",
+      "repo": "cran/approximator",
+      "html_url": "https://github.com/cran/approximator/blob/f80c3a714b4766ff37be1a657ba76af1c3c4d5bf/vignettes/apprex.Rnw"
+    },
+    {
+      "package": "seriation",
+      "vignette": "vignettes/seriation.Rnw",
+      "repo": "cran/seriation",
+      "html_url": "https://github.com/cran/seriation/blob/c46ad766c27b281716f03a7bb5004b82b2480bbb/vignettes/seriation.Rnw"
+    },
+    {
+      "package": "lifecontingencies",
+      "vignette": "vignettes/an_introduction_to_lifecontingencies_package.Rnw",
+      "repo": "cran/lifecontingencies",
+      "html_url": "https://github.com/cran/lifecontingencies/blob/e63e3a931e40fbae1f335b8be93cb2195d00ed16/vignettes/an_introduction_to_lifecontingencies_package.Rnw"
+    },
+    {
+      "package": "RNetLogo",
+      "vignette": "vignettes/parallelProcessing.Rnw",
+      "repo": "cran/RNetLogo",
+      "html_url": "https://github.com/cran/RNetLogo/blob/37f374ff56fe6e6f6acfdae38480eb6d085d6d5d/vignettes/parallelProcessing.Rnw"
+    },
+    {
+      "package": "sadists",
+      "vignette": "vignettes/sadists.Rnw",
+      "repo": "cran/sadists",
+      "html_url": "https://github.com/cran/sadists/blob/7941938a1576fa5cc308c2e5b7d6a0236f03d663/vignettes/sadists.Rnw"
+    },
+    {
+      "package": "DSL",
+      "vignette": "vignettes/DSL.Rnw",
+      "repo": "cran/DSL",
+      "html_url": "https://github.com/cran/DSL/blob/11307be346ab9e825d70151f6b4ea6f3945a7813/vignettes/DSL.Rnw"
+    },
+    {
+      "package": "analogue",
+      "vignette": "vignettes/analogue_methods.Rnw",
+      "repo": "cran/analogue",
+      "html_url": "https://github.com/cran/analogue/blob/dba6ed7802b868dc94337571a1610c484dae3b0d/vignettes/analogue_methods.Rnw"
+    },
+    {
+      "package": "reporttools",
+      "vignette": "vignettes/reporttools.Rnw",
+      "repo": "cran/reporttools",
+      "html_url": "https://github.com/cran/reporttools/blob/dbae2637081c691020bca4fdd2e00cdaa8ea24fa/vignettes/reporttools.Rnw"
+    },
+    {
+      "package": "sparseHessianFD",
+      "vignette": "vignettes/sparseHessianFD.Rnw",
+      "repo": "cran/sparseHessianFD",
+      "html_url": "https://github.com/cran/sparseHessianFD/blob/7b4b6dd30f8bb649187c2cb713d5a45c61bfef93/vignettes/sparseHessianFD.Rnw"
+    },
+    {
+      "package": "brms",
+      "vignette": "vignettes/brms_overview.ltx",
+      "repo": "cran/brms",
+      "html_url": "https://github.com/cran/brms/blob/b124949c14067aa658b176d26477ccf715881bf9/vignettes/brms_overview.ltx"
+    },
+    {
+      "package": "diffEq",
+      "vignette": "vignettes/BVPinR.Rnw",
+      "repo": "cran/diffEq",
+      "html_url": "https://github.com/cran/diffEq/blob/882aff4c2d3a21cccfa51e8980856dc596b3fdfb/vignettes/BVPinR.Rnw"
+    },
+    {
+      "package": "multcomp",
+      "vignette": "vignettes/generalsiminf.Rnw",
+      "repo": "cran/multcomp",
+      "html_url": "https://github.com/cran/multcomp/blob/07a10657c983be9357bca079dbb66572eb0b5bcd/vignettes/generalsiminf.Rnw"
+    },
+    {
+      "package": "fsdaR",
+      "vignette": "vignettes/fsdaR.Rnw",
+      "repo": "cran/fsdaR",
+      "html_url": "https://github.com/cran/fsdaR/blob/22cdf96a4e3f66c08b1856b26bf446a032ad25d1/vignettes/fsdaR.Rnw"
+    },
+    {
+      "package": "FME",
+      "vignette": "vignettes/FMEsteady.Rnw",
+      "repo": "cran/FME",
+      "html_url": "https://github.com/cran/FME/blob/4d740a0e21264edccda1f50e4a40718165aa76c3/vignettes/FMEsteady.Rnw"
+    },
+    {
+      "package": "BioMedR",
+      "vignette": "vignettes/BioMedR.Rnw",
+      "repo": "cran/BioMedR",
+      "html_url": "https://github.com/cran/BioMedR/blob/d7389383b4c84a9fc4e203bf05f4f4312aa75a72/vignettes/BioMedR.Rnw"
+    },
+    {
+      "package": "mediation",
+      "vignette": "vignettes/mediation.Rnw",
+      "repo": "cran/mediation",
+      "html_url": "https://github.com/cran/mediation/blob/7c69452b53da0c270ae28ee60a00c6ca1730654b/vignettes/mediation.Rnw"
+    },
+    {
+      "package": "opticskxi",
+      "vignette": "vignettes/opticskxi.Rnw",
+      "repo": "cran/opticskxi",
+      "html_url": "https://github.com/cran/opticskxi/blob/db29bebfbe33609f1ca35c33e2df7eae8db06801/vignettes/opticskxi.Rnw"
+    },
+    {
+      "package": "fromo",
+      "vignette": "vignettes/fromo.Rnw",
+      "repo": "cran/fromo",
+      "html_url": "https://github.com/cran/fromo/blob/16f654c6616877475ba6314f8a081bc9bfbe7ea1/vignettes/fromo.Rnw"
+    },
+    {
+      "package": "flexsurv",
+      "vignette": "vignettes/distributions.Rnw",
+      "repo": "cran/flexsurv",
+      "html_url": "https://github.com/cran/flexsurv/blob/2aae4c8ac56823d0eac30c1a9ad654ac599b5938/vignettes/distributions.Rnw"
+    },
+    {
+      "package": "poweRlaw",
+      "vignette": "vignettes/d_jss_paper.Rnw",
+      "repo": "cran/poweRlaw",
+      "html_url": "https://github.com/cran/poweRlaw/blob/1650c1d938d9df68411e2b889665d681860e1733/vignettes/d_jss_paper.Rnw"
+    },
+    {
+      "package": "DPQ",
+      "vignette": "vignettes/Noncentral-Chisq.Rnw",
+      "repo": "cran/DPQ",
+      "html_url": "https://github.com/cran/DPQ/blob/d476d596a985b7bafb7929a2594a6d728901271a/vignettes/Noncentral-Chisq.Rnw"
+    },
+    {
+      "package": "dslice",
+      "vignette": "vignettes/dslice.Rnw",
+      "repo": "cran/dslice",
+      "html_url": "https://github.com/cran/dslice/blob/33cd96105a0ac1b13e459a54ffaaef775680b3d8/vignettes/dslice.Rnw"
+    },
+    {
+      "package": "BART",
+      "vignette": "inst/doc/the-BART-R-package.Rnw",
+      "repo": "cran/BART",
+      "html_url": "https://github.com/cran/BART/blob/7da906e4dbacf6e27ecebdfdd7e5ff72b1631fb1/inst/doc/the-BART-R-package.Rnw"
+    },
+    {
+      "package": "surveillance",
+      "vignette": "inst/doc/twinSIR.Rnw",
+      "repo": "cran/surveillance",
+      "html_url": "https://github.com/cran/surveillance/blob/d26270bc63d66c6f0ed0da11318e3be703cfeea5/inst/doc/twinSIR.Rnw"
+    },
+    {
+      "package": "BARD",
+      "vignette": "inst/doc/bookreview.tex",
+      "repo": "cran/BARD",
+      "html_url": "https://github.com/cran/BARD/blob/5265b6114d91064679d7fbf1a6e21663f886f136/inst/doc/bookreview.tex"
+    },
+    {
+      "package": "pbdMPI",
+      "vignette": "inst/doc/pbdMPI-guide.Rnw",
+      "repo": "cran/pbdMPI",
+      "html_url": "https://github.com/cran/pbdMPI/blob/53bedcb5cdb0ccf65013cd58c68349473c74e2e8/inst/doc/pbdMPI-guide.Rnw"
+    },
+    {
+      "package": "diptest",
+      "vignette": "inst/doc/diptest-issues.Rnw",
+      "repo": "cran/diptest",
+      "html_url": "https://github.com/cran/diptest/blob/f7806b8f5cffb79efcd191bbdd4282b4ae7b68ec/inst/doc/diptest-issues.Rnw"
+    },
+    {
+      "package": "stochvol",
+      "vignette": "inst/doc/article2.Rnw",
+      "repo": "cran/stochvol",
+      "html_url": "https://github.com/cran/stochvol/blob/d4360bdd78d87673f05b7da8717642c0f0241b8e/inst/doc/article2.Rnw"
+    },
+    {
+      "package": "HAC",
+      "vignette": "inst/doc/HAC.Rnw",
+      "repo": "cran/HAC",
+      "html_url": "https://github.com/cran/HAC/blob/b0b9c7ad938ff0a1908e4c19b3b763a839d82db9/inst/doc/HAC.Rnw"
+    },
+    {
+      "package": "tbm",
+      "vignette": "inst/doc/tbm_supplement.Rnw",
+      "repo": "cran/tbm",
+      "html_url": "https://github.com/cran/tbm/blob/b76751b0db4247a242536e2be3f07de2cd78247e/inst/doc/tbm_supplement.Rnw"
+    },
+    {
+      "package": "untb",
+      "vignette": "inst/doc/untb.Rnw",
+      "repo": "cran/untb",
+      "html_url": "https://github.com/cran/untb/blob/869f82f18d09fd79fab091f60f4e2a8812f0ed25/inst/doc/untb.Rnw"
+    },
+    {
+      "package": "svars",
+      "vignette": "inst/doc/svars.Rnw",
+      "repo": "cran/svars",
+      "html_url": "https://github.com/cran/svars/blob/6fa6b8536a6c3a53b0f0c0beaf43c7659bf1e2a5/inst/doc/svars.Rnw"
+    },
+    {
+      "package": "pscl",
+      "vignette": "inst/doc/countreg.Rnw",
+      "repo": "cran/pscl",
+      "html_url": "https://github.com/cran/pscl/blob/8220d032b199d0a9ce625c6c48a0f714e07bc432/inst/doc/countreg.Rnw"
+    },
+    {
+      "package": "synthpop",
+      "vignette": "inst/doc/utility.Rnw",
+      "repo": "cran/synthpop",
+      "html_url": "https://github.com/cran/synthpop/blob/36413c3eeeb1a4f2f0d6e5ef527f796a1f6c9eed/inst/doc/utility.Rnw"
+    },
+    {
+      "package": "hyper2",
+      "vignette": "inst/jss_hyper3_real.Rnw",
+      "repo": "cran/hyper2",
+      "html_url": "https://github.com/cran/hyper2/blob/3a600de3071fbc7c5e5e2249c45cea990c02431a/inst/jss_hyper3_real.Rnw"
+    },
+    {
+      "package": "partDSA",
+      "vignette": "inst/doc/partDSAvig.Rnw",
+      "repo": "cran/partDSA",
+      "html_url": "https://github.com/cran/partDSA/blob/2ccc836d61817c037b175a29565fa2089672b3ca/inst/doc/partDSAvig.Rnw"
+    },
+    {
+      "package": "BNPmix",
+      "vignette": "inst/doc/BNPmix.ltx",
+      "repo": "cran/BNPmix",
+      "html_url": "https://github.com/cran/BNPmix/blob/e8c0babb0c69cd7c7478405c9cab01648d0bc112/inst/doc/BNPmix.ltx"
+    },
+    {
+      "package": "mefa",
+      "vignette": "inst/tmp/mefa.Rnw",
+      "repo": "cran/mefa",
+      "html_url": "https://github.com/cran/mefa/blob/07413eaa26dcb30a818ae4ccacc30e176701d425/inst/tmp/mefa.Rnw"
+    },
+    {
+      "package": "pcse",
+      "vignette": "inst/doc/pcse.Rnw",
+      "repo": "cran/pcse",
+      "html_url": "https://github.com/cran/pcse/blob/0845ffdba52b19b363f01f2fa76eab60b9982fdd/inst/doc/pcse.Rnw"
+    },
+    {
+      "package": "LIM",
+      "vignette": "inst/doc/LIMecoli.Rnw",
+      "repo": "cran/LIM",
+      "html_url": "https://github.com/cran/LIM/blob/41e25372cc45644677391cd27eff5b5d8c4623de/inst/doc/LIMecoli.Rnw"
+    },
+    {
+      "package": "shrinkTVP",
+      "vignette": "inst/doc/shrinkTVP.ltx",
+      "repo": "cran/shrinkTVP",
+      "html_url": "https://github.com/cran/shrinkTVP/blob/413fb3ad38a3cef2a073f5dacd5ae9683b42d87d/inst/doc/shrinkTVP.ltx"
+    },
+    {
+      "package": "sphet",
+      "vignette": "inst/doc/sphet.Rnw",
+      "repo": "cran/sphet",
+      "html_url": "https://github.com/cran/sphet/blob/4f9784f9a7e1fb85aa6c36c36f1eec7986323b48/inst/doc/sphet.Rnw"
+    },
+    {
+      "package": "ptsuite",
+      "vignette": "inst/doc/ptsuite_vignette.Rnw",
+      "repo": "cran/ptsuite",
+      "html_url": "https://github.com/cran/ptsuite/blob/3b6ced4de9dbb934a939ddb90e21dcc1e2bea0eb/inst/doc/ptsuite_vignette.Rnw"
+    },
+    {
+      "package": "arulesViz",
+      "vignette": "inst/doc/arulesViz.Rnw",
+      "repo": "cran/arulesViz",
+      "html_url": "https://github.com/cran/arulesViz/blob/7207fe5ef60a544bedd5c962ae04a91da87213b5/inst/doc/arulesViz.Rnw"
+    },
+    {
+      "package": "genMOSS",
+      "vignette": "vignettes/User_manual.Rnw",
+      "repo": "cran/genMOSS",
+      "html_url": "https://github.com/cran/genMOSS/blob/3752ae44517f5b68392de6893544738357945620/vignettes/User_manual.Rnw"
+    },
+    {
+      "package": "rstpm2",
+      "vignette": "inst/doc/Introduction.Rnw",
+      "repo": "cran/rstpm2",
+      "html_url": "https://github.com/cran/rstpm2/blob/a9a6f23612c911d11917b680aa4a3bc2acd7d215/inst/doc/Introduction.Rnw"
+    },
+    {
+      "package": "npRmpi",
+      "vignette": "inst/doc/npRmpi.Rnw",
+      "repo": "cran/npRmpi",
+      "html_url": "https://github.com/cran/npRmpi/blob/e1dcae0c1b6b5c1fcfaf78069a40374fc79eac87/inst/doc/npRmpi.Rnw"
+    },
+    {
+      "package": "Brobdingnag",
+      "vignette": "inst/doc/S4_brob.Rnw",
+      "repo": "cran/Brobdingnag",
+      "html_url": "https://github.com/cran/Brobdingnag/blob/f057ca62bd065bb76ee24712767272ac8e1621bb/inst/doc/S4_brob.Rnw"
+    },
+    {
+      "package": "r2spss",
+      "vignette": "inst/doc/r2spss-intro.Rnw",
+      "repo": "cran/r2spss",
+      "html_url": "https://github.com/cran/r2spss/blob/d5ac1a3f23345c0fc5d04926e66ca8586c827585/inst/doc/r2spss-intro.Rnw"
+    },
+    {
+      "package": "spray",
+      "vignette": "inst/doc/spray.Rnw",
+      "repo": "cran/spray",
+      "html_url": "https://github.com/cran/spray/blob/1eb28e69004f4b120719e7f49e2b113cc5f722e9/inst/doc/spray.Rnw"
+    },
+    {
+      "package": "psychomix",
+      "vignette": "inst/doc/scores.Rnw",
+      "repo": "cran/psychomix",
+      "html_url": "https://github.com/cran/psychomix/blob/e2a0e8947e2eed6bb9d62a686d8707656c39a0d6/inst/doc/scores.Rnw"
+    },
+    {
+      "package": "synthACS",
+      "vignette": "inst/doc/jss_synthACS.ltx",
+      "repo": "cran/synthACS",
+      "html_url": "https://github.com/cran/synthACS/blob/2213d8988dc6261a078c51fdb6b6f3b42259935d/inst/doc/jss_synthACS.ltx"
+    },
+    {
+      "package": "medflex",
+      "vignette": "inst/doc/medflex.Rnw",
+      "repo": "cran/medflex",
+      "html_url": "https://github.com/cran/medflex/blob/8699ea24da75a8e0c2830edb8c1a55ddc50a5bd2/inst/doc/medflex.Rnw"
+    },
+    {
+      "package": "simecol",
+      "vignette": "inst/doc/a-simecol-introduction.Rnw",
+      "repo": "cran/simecol",
+      "html_url": "https://github.com/cran/simecol/blob/d0347a24303798faea8a9b1b57ca3cb1c33e8dc6/inst/doc/a-simecol-introduction.Rnw"
+    },
+    {
+      "package": "mdsOpt",
+      "vignette": "inst/doc/mdsOpt.ltx",
+      "repo": "cran/mdsOpt",
+      "html_url": "https://github.com/cran/mdsOpt/blob/4f84a3f74f1e6cf543377a3e3bca3fdfc3647f75/inst/doc/mdsOpt.ltx"
+    },
+    {
+      "package": "gdpc",
+      "vignette": "inst/doc/paper_vignette.ltx",
+      "repo": "cran/gdpc",
+      "html_url": "https://github.com/cran/gdpc/blob/7321f3041a2c224ed2f1cc79dc48aa407a17b946/inst/doc/paper_vignette.ltx"
+    },
+    {
+      "package": "colorspace",
+      "vignette": "inst/doc/hcl-colors.Rnw",
+      "repo": "cran/colorspace",
+      "html_url": "https://github.com/cran/colorspace/blob/29fd3fc67e02d02dddadd3866dd5e618405a7e51/inst/doc/hcl-colors.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "inst/doc/loss.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/inst/doc/loss.Rnw"
+    },
+    {
+      "package": "bbefkr",
+      "vignette": "inst/doc/bbefkr.Rnw",
+      "repo": "cran/bbefkr",
+      "html_url": "https://github.com/cran/bbefkr/blob/0cf34eca9058e627400b17bf539d4035e87b1f46/inst/doc/bbefkr.Rnw"
+    },
+    {
+      "package": "rstpm2",
+      "vignette": "inst/doc/multistate.Rnw",
+      "repo": "cran/rstpm2",
+      "html_url": "https://github.com/cran/rstpm2/blob/a9a6f23612c911d11917b680aa4a3bc2acd7d215/inst/doc/multistate.Rnw"
+    },
+    {
+      "package": "flexmix",
+      "vignette": "inst/doc/mixture-regressions.Rnw",
+      "repo": "cran/flexmix",
+      "html_url": "https://github.com/cran/flexmix/blob/d352332eb4e1589bf4c3fc27577bc4106d1c16d2/inst/doc/mixture-regressions.Rnw"
+    },
+    {
+      "package": "vipor",
+      "vignette": "inst/doc/methodComparison.Rnw",
+      "repo": "cran/vipor",
+      "html_url": "https://github.com/cran/vipor/blob/21c24f92d1446f860e50c94261875553b74703da/inst/doc/methodComparison.Rnw"
+    },
+    {
+      "package": "multcomp",
+      "vignette": "inst/doc/multcomp-examples.Rnw",
+      "repo": "cran/multcomp",
+      "html_url": "https://github.com/cran/multcomp/blob/07a10657c983be9357bca079dbb66572eb0b5bcd/inst/doc/multcomp-examples.Rnw"
+    },
+    {
+      "package": "mcpd",
+      "vignette": "inst/jss/article.tex",
+      "repo": "cran/mcpd",
+      "html_url": "https://github.com/cran/mcpd/blob/3c6f387cf5440e5dc2dcd2e2415aad8626729076/inst/jss/article.tex"
+    },
+    {
+      "package": "modTempEff",
+      "vignette": "inst/doc/modTempEff.Rnw",
+      "repo": "cran/modTempEff",
+      "html_url": "https://github.com/cran/modTempEff/blob/99c513441d32104d6090437d235f346f218980c8/inst/doc/modTempEff.Rnw"
+    },
+    {
+      "package": "clValid",
+      "vignette": "inst/doc/clValid.Rnw",
+      "repo": "cran/clValid",
+      "html_url": "https://github.com/cran/clValid/blob/92b8a8219f7ffcedf5988adf4c6d87fc6f2f8fc0/inst/doc/clValid.Rnw"
+    },
+    {
+      "package": "mfbvar",
+      "vignette": "inst/doc/mfbvar_jss.Rnw",
+      "repo": "cran/mfbvar",
+      "html_url": "https://github.com/cran/mfbvar/blob/1716cebb4c659a2cdd6e1c430278638f48132393/inst/doc/mfbvar_jss.Rnw"
+    },
+    {
+      "package": "SharpeR",
+      "vignette": "inst/doc/SharpeRatio.Rnw",
+      "repo": "cran/SharpeR",
+      "html_url": "https://github.com/cran/SharpeR/blob/5e01a7d870b6f0bc7e9720bc1fecc9ffc72e1c4d/inst/doc/SharpeRatio.Rnw"
+    },
+    {
+      "package": "rDNAse",
+      "vignette": "inst/doc/rDNAse.Rnw",
+      "repo": "cran/rDNAse",
+      "html_url": "https://github.com/cran/rDNAse/blob/bd38b7a051f92ec0403be5540c8aa22f9a458822/inst/doc/rDNAse.Rnw"
+    },
+    {
+      "package": "MXM",
+      "vignette": "inst/doc/article.ltx",
+      "repo": "cran/MXM",
+      "html_url": "https://github.com/cran/MXM/blob/46a61706172ba81272b80abf25b862c38d580d76/inst/doc/article.ltx"
+    },
+    {
+      "package": "synthpop",
+      "vignette": "inst/doc/synthpop.Rnw",
+      "repo": "cran/synthpop",
+      "html_url": "https://github.com/cran/synthpop/blob/36413c3eeeb1a4f2f0d6e5ef527f796a1f6c9eed/inst/doc/synthpop.Rnw"
+    },
+    {
+      "package": "scoringRules",
+      "vignette": "inst/doc/article_weighted_scores.Rnw",
+      "repo": "cran/scoringRules",
+      "html_url": "https://github.com/cran/scoringRules/blob/a885f199a516dd1ee75290b6e28220fe4c39fdc7/inst/doc/article_weighted_scores.Rnw"
+    },
+    {
+      "package": "simcausal",
+      "vignette": "inst/doc/simcausalVignette.Rnw",
+      "repo": "cran/simcausal",
+      "html_url": "https://github.com/cran/simcausal/blob/1be2793e7069c15c893d2a16da4d5eae0f43a324/inst/doc/simcausalVignette.Rnw"
+    },
+    {
+      "package": "FME",
+      "vignette": "inst/doc/FMEmcmc.Rnw",
+      "repo": "cran/FME",
+      "html_url": "https://github.com/cran/FME/blob/4d740a0e21264edccda1f50e4a40718165aa76c3/inst/doc/FMEmcmc.Rnw"
+    },
+    {
+      "package": "animation",
+      "vignette": "inst/articles/jss725.Rnw",
+      "repo": "cran/animation",
+      "html_url": "https://github.com/cran/animation/blob/c92a47f4f6a094fac4e22bfe32c70a8c8fabdf36/inst/articles/jss725.Rnw"
+    },
+    {
+      "package": "freealg",
+      "vignette": "inst/doc/adjoint.Rnw",
+      "repo": "cran/freealg",
+      "html_url": "https://github.com/cran/freealg/blob/565c0d94fb03b750b6370790cb6095a873924eca/inst/doc/adjoint.Rnw"
+    },
+    {
+      "package": "BACCO",
+      "vignette": "inst/doc/both_papers.Rnw",
+      "repo": "cran/BACCO",
+      "html_url": "https://github.com/cran/BACCO/blob/43ba9c948170cc9d31773a99de32772d675ca098/inst/doc/both_papers.Rnw"
+    },
+    {
+      "package": "smacof",
+      "vignette": "inst/doc/smacof.Rnw",
+      "repo": "cran/smacof",
+      "html_url": "https://github.com/cran/smacof/blob/b1ba1a9d95aedf6e922229bc4453f9a6efefb889/inst/doc/smacof.Rnw"
+    },
+    {
+      "package": "upclass",
+      "vignette": "inst/doc/upclass.Rnw",
+      "repo": "cran/upclass",
+      "html_url": "https://github.com/cran/upclass/blob/a85c1abbea766d7b536d2ac40157c6e80310756b/inst/doc/upclass.Rnw"
+    },
+    {
+      "package": "exams",
+      "vignette": "inst/doc/exams2.Rnw",
+      "repo": "cran/exams",
+      "html_url": "https://github.com/cran/exams/blob/7db924c22ed1a53e16e3000f961423283579a5d9/inst/doc/exams2.Rnw"
+    },
+    {
+      "package": "profdpm",
+      "vignette": "inst/doc/profdpm.Rnw",
+      "repo": "cran/profdpm",
+      "html_url": "https://github.com/cran/profdpm/blob/207ec1b7d8057e4edb1c119810d9e44616d07537/inst/doc/profdpm.Rnw"
+    },
+    {
+      "package": "laeken",
+      "vignette": "inst/doc/laeken-intro.Rnw",
+      "repo": "cran/laeken",
+      "html_url": "https://github.com/cran/laeken/blob/b68d7cd5e97fcc9879ea1767c72c4c0ef125e9c1/inst/doc/laeken-intro.Rnw"
+    },
+    {
+      "package": "RationalExp",
+      "vignette": "inst/doc/RationalExp.Rnw",
+      "repo": "cran/RationalExp",
+      "html_url": "https://github.com/cran/RationalExp/blob/30c08e220dd95018a0034288711695af21097464/inst/doc/RationalExp.Rnw"
+    },
+    {
+      "package": "simode",
+      "vignette": "inst/R_package_simode.Rnw",
+      "repo": "cran/simode",
+      "html_url": "https://github.com/cran/simode/blob/f175750651390b611bf0da8916004196b127b89a/inst/R_package_simode.Rnw"
+    },
+    {
+      "package": "Brobdingnag",
+      "vignette": "inst/doc/Brobdingnag.Rnw",
+      "repo": "cran/Brobdingnag",
+      "html_url": "https://github.com/cran/Brobdingnag/blob/f057ca62bd065bb76ee24712767272ac8e1621bb/inst/doc/Brobdingnag.Rnw"
+    },
+    {
+      "package": "FFD",
+      "vignette": "inst/doc/FFD-intro.Rnw",
+      "repo": "cran/FFD",
+      "html_url": "https://github.com/cran/FFD/blob/78eefbd15c03bf7362d9f39aca0be1c0d3d02c98/inst/doc/FFD-intro.Rnw"
+    },
+    {
+      "package": "oro.dicom",
+      "vignette": "inst/doc/dicom.Rnw",
+      "repo": "cran/oro.dicom",
+      "html_url": "https://github.com/cran/oro.dicom/blob/e97981f364d9cd684cf07d8b11473cd495b51712/inst/doc/dicom.Rnw"
+    },
+    {
+      "package": "trend",
+      "vignette": "inst/doc/trend.Rnw",
+      "repo": "cran/trend",
+      "html_url": "https://github.com/cran/trend/blob/24eb79ff1d4c1ce3f3596f2771d88ff21de790e6/inst/doc/trend.Rnw"
+    },
+    {
+      "package": "np",
+      "vignette": "inst/doc/entropy_np.Rnw",
+      "repo": "cran/np",
+      "html_url": "https://github.com/cran/np/blob/327137b58dbb2cace62f008027215cfe9cb280b9/inst/doc/entropy_np.Rnw"
+    },
+    {
+      "package": "MM",
+      "vignette": "inst/doc/MM.Rnw",
+      "repo": "cran/MM",
+      "html_url": "https://github.com/cran/MM/blob/61665c27d5c178391789961e3e9c1b275708defe/inst/doc/MM.Rnw"
+    },
+    {
+      "package": "proto",
+      "vignette": "vignettes/proto.tex",
+      "repo": "cran/proto",
+      "html_url": "https://github.com/cran/proto/blob/b3e1a98cf0b0e9f0dcf0310f5656600822ced11d/vignettes/proto.tex"
+    },
+    {
+      "package": "SEI",
+      "vignette": "inst/doc/SEI_vignette.Rnw",
+      "repo": "cran/SEI",
+      "html_url": "https://github.com/cran/SEI/blob/514b399d19a363af1aadafb6fb07f25f27ce856e/inst/doc/SEI_vignette.Rnw"
+    },
+    {
+      "package": "surveillance",
+      "vignette": "inst/doc/twinstim.Rnw",
+      "repo": "cran/surveillance",
+      "html_url": "https://github.com/cran/surveillance/blob/d26270bc63d66c6f0ed0da11318e3be703cfeea5/inst/doc/twinstim.Rnw"
+    },
+    {
+      "package": "surveillance",
+      "vignette": "inst/doc/monitoringCounts.Rnw",
+      "repo": "cran/surveillance",
+      "html_url": "https://github.com/cran/surveillance/blob/d26270bc63d66c6f0ed0da11318e3be703cfeea5/inst/doc/monitoringCounts.Rnw"
+    },
+    {
+      "package": "distrMod",
+      "vignette": "inst/doc/distrMod.Rnw",
+      "repo": "cran/distrMod",
+      "html_url": "https://github.com/cran/distrMod/blob/5c47d91e086f75262ddb3c298ef21d48e2d46888/inst/doc/distrMod.Rnw"
+    },
+    {
+      "package": "MPTinR",
+      "vignette": "inst/doc/mptinr_introduction.Rnw",
+      "repo": "cran/MPTinR",
+      "html_url": "https://github.com/cran/MPTinR/blob/51e244f2ae31e3ee38e1bf4804ebea1e80223d41/inst/doc/mptinr_introduction.Rnw"
+    },
+    {
+      "package": "MatchingFrontier",
+      "vignette": "inst/doc/Using_MatchingFrontier.Rnw",
+      "repo": "cran/MatchingFrontier",
+      "html_url": "https://github.com/cran/MatchingFrontier/blob/c0e81846e2a24f49066f5610656daa73f404f7e7/inst/doc/Using_MatchingFrontier.Rnw"
+    },
+    {
+      "package": "rrcov3way",
+      "vignette": "inst/doc/rrcov3way.Rnw",
+      "repo": "cran/rrcov3way",
+      "html_url": "https://github.com/cran/rrcov3way/blob/cd71ff31dfaac88be9e57ef1ce3544a986c6bab7/inst/doc/rrcov3way.Rnw"
+    },
+    {
+      "package": "nestfs",
+      "vignette": "tests/paper/JSSstyle/codesnippet.tex",
+      "repo": "cran/nestfs",
+      "html_url": "https://github.com/cran/nestfs/blob/b3902b7a9ffdfaca6e58ee07a1e92a84b30a2c5f/tests/paper/JSSstyle/codesnippet.tex"
+    },
+    {
+      "package": "nestfs",
+      "vignette": "tests/paper/JSSstyle/softwarereview.tex",
+      "repo": "cran/nestfs",
+      "html_url": "https://github.com/cran/nestfs/blob/b3902b7a9ffdfaca6e58ee07a1e92a84b30a2c5f/tests/paper/JSSstyle/softwarereview.tex"
+    },
+    {
+      "package": "BART",
+      "vignette": "vignettes/the-BART-R-package.Rnw",
+      "repo": "cran/BART",
+      "html_url": "https://github.com/cran/BART/blob/7da906e4dbacf6e27ecebdfdd7e5ff72b1631fb1/vignettes/the-BART-R-package.Rnw"
+    },
+    {
+      "package": "surveillance",
+      "vignette": "vignettes/twinSIR.Rnw",
+      "repo": "cran/surveillance",
+      "html_url": "https://github.com/cran/surveillance/blob/d26270bc63d66c6f0ed0da11318e3be703cfeea5/vignettes/twinSIR.Rnw"
+    },
+    {
+      "package": "pbdMPI",
+      "vignette": "vignettes/pbdMPI-guide.Rnw",
+      "repo": "cran/pbdMPI",
+      "html_url": "https://github.com/cran/pbdMPI/blob/53bedcb5cdb0ccf65013cd58c68349473c74e2e8/vignettes/pbdMPI-guide.Rnw"
+    },
+    {
+      "package": "diptest",
+      "vignette": "vignettes/diptest-issues.Rnw",
+      "repo": "cran/diptest",
+      "html_url": "https://github.com/cran/diptest/blob/f7806b8f5cffb79efcd191bbdd4282b4ae7b68ec/vignettes/diptest-issues.Rnw"
+    },
+    {
+      "package": "stochvol",
+      "vignette": "vignettes/article2.Rnw",
+      "repo": "cran/stochvol",
+      "html_url": "https://github.com/cran/stochvol/blob/d4360bdd78d87673f05b7da8717642c0f0241b8e/vignettes/article2.Rnw"
+    },
+    {
+      "package": "HAC",
+      "vignette": "vignettes/HAC.Rnw",
+      "repo": "cran/HAC",
+      "html_url": "https://github.com/cran/HAC/blob/b0b9c7ad938ff0a1908e4c19b3b763a839d82db9/vignettes/HAC.Rnw"
+    },
+    {
+      "package": "tbm",
+      "vignette": "vignettes/tbm_supplement.Rnw",
+      "repo": "cran/tbm",
+      "html_url": "https://github.com/cran/tbm/blob/b76751b0db4247a242536e2be3f07de2cd78247e/vignettes/tbm_supplement.Rnw"
+    },
+    {
+      "package": "untb",
+      "vignette": "vignettes/untb.Rnw",
+      "repo": "cran/untb",
+      "html_url": "https://github.com/cran/untb/blob/869f82f18d09fd79fab091f60f4e2a8812f0ed25/vignettes/untb.Rnw"
+    },
+    {
+      "package": "svars",
+      "vignette": "vignettes/svars.Rnw",
+      "repo": "cran/svars",
+      "html_url": "https://github.com/cran/svars/blob/6fa6b8536a6c3a53b0f0c0beaf43c7659bf1e2a5/vignettes/svars.Rnw"
+    },
+    {
+      "package": "pscl",
+      "vignette": "vignettes/countreg.Rnw",
+      "repo": "cran/pscl",
+      "html_url": "https://github.com/cran/pscl/blob/8220d032b199d0a9ce625c6c48a0f714e07bc432/vignettes/countreg.Rnw"
+    },
+    {
+      "package": "synthpop",
+      "vignette": "vignettes/utility.Rnw",
+      "repo": "cran/synthpop",
+      "html_url": "https://github.com/cran/synthpop/blob/36413c3eeeb1a4f2f0d6e5ef527f796a1f6c9eed/vignettes/utility.Rnw"
+    },
+    {
+      "package": "partDSA",
+      "vignette": "vignettes/partDSAvig.Rnw",
+      "repo": "cran/partDSA",
+      "html_url": "https://github.com/cran/partDSA/blob/2ccc836d61817c037b175a29565fa2089672b3ca/vignettes/partDSAvig.Rnw"
+    },
+    {
+      "package": "BNPmix",
+      "vignette": "vignettes/BNPmix.ltx",
+      "repo": "cran/BNPmix",
+      "html_url": "https://github.com/cran/BNPmix/blob/e8c0babb0c69cd7c7478405c9cab01648d0bc112/vignettes/BNPmix.ltx"
+    },
+    {
+      "package": "pcse",
+      "vignette": "vignettes/pcse.Rnw",
+      "repo": "cran/pcse",
+      "html_url": "https://github.com/cran/pcse/blob/0845ffdba52b19b363f01f2fa76eab60b9982fdd/vignettes/pcse.Rnw"
+    },
+    {
+      "package": "LIM",
+      "vignette": "vignettes/LIMecoli.Rnw",
+      "repo": "cran/LIM",
+      "html_url": "https://github.com/cran/LIM/blob/41e25372cc45644677391cd27eff5b5d8c4623de/vignettes/LIMecoli.Rnw"
+    },
+    {
+      "package": "shrinkTVP",
+      "vignette": "vignettes/shrinkTVP.ltx",
+      "repo": "cran/shrinkTVP",
+      "html_url": "https://github.com/cran/shrinkTVP/blob/413fb3ad38a3cef2a073f5dacd5ae9683b42d87d/vignettes/shrinkTVP.ltx"
+    },
+    {
+      "package": "sphet",
+      "vignette": "vignettes/sphet.Rnw",
+      "repo": "cran/sphet",
+      "html_url": "https://github.com/cran/sphet/blob/4f9784f9a7e1fb85aa6c36c36f1eec7986323b48/vignettes/sphet.Rnw"
+    },
+    {
+      "package": "ptsuite",
+      "vignette": "vignettes/ptsuite_vignette.Rnw",
+      "repo": "cran/ptsuite",
+      "html_url": "https://github.com/cran/ptsuite/blob/3b6ced4de9dbb934a939ddb90e21dcc1e2bea0eb/vignettes/ptsuite_vignette.Rnw"
+    },
+    {
+      "package": "arulesViz",
+      "vignette": "vignettes/arulesViz.Rnw",
+      "repo": "cran/arulesViz",
+      "html_url": "https://github.com/cran/arulesViz/blob/7207fe5ef60a544bedd5c962ae04a91da87213b5/vignettes/arulesViz.Rnw"
+    },
+    {
+      "package": "rstpm2",
+      "vignette": "vignettes/Introduction.Rnw",
+      "repo": "cran/rstpm2",
+      "html_url": "https://github.com/cran/rstpm2/blob/a9a6f23612c911d11917b680aa4a3bc2acd7d215/vignettes/Introduction.Rnw"
+    },
+    {
+      "package": "npRmpi",
+      "vignette": "vignettes/npRmpi.Rnw",
+      "repo": "cran/npRmpi",
+      "html_url": "https://github.com/cran/npRmpi/blob/e1dcae0c1b6b5c1fcfaf78069a40374fc79eac87/vignettes/npRmpi.Rnw"
+    },
+    {
+      "package": "Brobdingnag",
+      "vignette": "vignettes/S4_brob.Rnw",
+      "repo": "cran/Brobdingnag",
+      "html_url": "https://github.com/cran/Brobdingnag/blob/f057ca62bd065bb76ee24712767272ac8e1621bb/vignettes/S4_brob.Rnw"
+    },
+    {
+      "package": "r2spss",
+      "vignette": "vignettes/r2spss-intro.Rnw",
+      "repo": "cran/r2spss",
+      "html_url": "https://github.com/cran/r2spss/blob/d5ac1a3f23345c0fc5d04926e66ca8586c827585/vignettes/r2spss-intro.Rnw"
+    },
+    {
+      "package": "spray",
+      "vignette": "vignettes/spray.Rnw",
+      "repo": "cran/spray",
+      "html_url": "https://github.com/cran/spray/blob/1eb28e69004f4b120719e7f49e2b113cc5f722e9/vignettes/spray.Rnw"
+    },
+    {
+      "package": "psychomix",
+      "vignette": "vignettes/scores.Rnw",
+      "repo": "cran/psychomix",
+      "html_url": "https://github.com/cran/psychomix/blob/e2a0e8947e2eed6bb9d62a686d8707656c39a0d6/vignettes/scores.Rnw"
+    },
+    {
+      "package": "synthACS",
+      "vignette": "vignettes/jss_synthACS.ltx",
+      "repo": "cran/synthACS",
+      "html_url": "https://github.com/cran/synthACS/blob/2213d8988dc6261a078c51fdb6b6f3b42259935d/vignettes/jss_synthACS.ltx"
+    },
+    {
+      "package": "medflex",
+      "vignette": "vignettes/medflex.Rnw",
+      "repo": "cran/medflex",
+      "html_url": "https://github.com/cran/medflex/blob/8699ea24da75a8e0c2830edb8c1a55ddc50a5bd2/vignettes/medflex.Rnw"
+    },
+    {
+      "package": "simecol",
+      "vignette": "vignettes/a-simecol-introduction.Rnw",
+      "repo": "cran/simecol",
+      "html_url": "https://github.com/cran/simecol/blob/d0347a24303798faea8a9b1b57ca3cb1c33e8dc6/vignettes/a-simecol-introduction.Rnw"
+    },
+    {
+      "package": "mdsOpt",
+      "vignette": "vignettes/mdsOpt.ltx",
+      "repo": "cran/mdsOpt",
+      "html_url": "https://github.com/cran/mdsOpt/blob/4f84a3f74f1e6cf543377a3e3bca3fdfc3647f75/vignettes/mdsOpt.ltx"
+    },
+    {
+      "package": "gdpc",
+      "vignette": "vignettes/paper_vignette.ltx",
+      "repo": "cran/gdpc",
+      "html_url": "https://github.com/cran/gdpc/blob/7321f3041a2c224ed2f1cc79dc48aa407a17b946/vignettes/paper_vignette.ltx"
+    },
+    {
+      "package": "colorspace",
+      "vignette": "vignettes/hcl-colors.Rnw",
+      "repo": "cran/colorspace",
+      "html_url": "https://github.com/cran/colorspace/blob/29fd3fc67e02d02dddadd3866dd5e618405a7e51/vignettes/hcl-colors.Rnw"
+    },
+    {
+      "package": "fic",
+      "vignette": "vignettes/loss.Rnw",
+      "repo": "cran/fic",
+      "html_url": "https://github.com/cran/fic/blob/794e702882c9e83f98a28ef58857ac0cec3cacb7/vignettes/loss.Rnw"
+    },
+    {
+      "package": "bbefkr",
+      "vignette": "vignettes/bbefkr.Rnw",
+      "repo": "cran/bbefkr",
+      "html_url": "https://github.com/cran/bbefkr/blob/0cf34eca9058e627400b17bf539d4035e87b1f46/vignettes/bbefkr.Rnw"
+    },
+    {
+      "package": "rstpm2",
+      "vignette": "vignettes/multistate.Rnw",
+      "repo": "cran/rstpm2",
+      "html_url": "https://github.com/cran/rstpm2/blob/a9a6f23612c911d11917b680aa4a3bc2acd7d215/vignettes/multistate.Rnw"
+    },
+    {
+      "package": "flexmix",
+      "vignette": "vignettes/mixture-regressions.Rnw",
+      "repo": "cran/flexmix",
+      "html_url": "https://github.com/cran/flexmix/blob/d352332eb4e1589bf4c3fc27577bc4106d1c16d2/vignettes/mixture-regressions.Rnw"
+    },
+    {
+      "package": "vipor",
+      "vignette": "vignettes/methodComparison.Rnw",
+      "repo": "cran/vipor",
+      "html_url": "https://github.com/cran/vipor/blob/21c24f92d1446f860e50c94261875553b74703da/vignettes/methodComparison.Rnw"
+    },
+    {
+      "package": "multcomp",
+      "vignette": "vignettes/multcomp-examples.Rnw",
+      "repo": "cran/multcomp",
+      "html_url": "https://github.com/cran/multcomp/blob/07a10657c983be9357bca079dbb66572eb0b5bcd/vignettes/multcomp-examples.Rnw"
+    },
+    {
+      "package": "modTempEff",
+      "vignette": "vignettes/modTempEff.Rnw",
+      "repo": "cran/modTempEff",
+      "html_url": "https://github.com/cran/modTempEff/blob/99c513441d32104d6090437d235f346f218980c8/vignettes/modTempEff.Rnw"
+    },
+    {
+      "package": "clValid",
+      "vignette": "vignettes/clValid.Rnw",
+      "repo": "cran/clValid",
+      "html_url": "https://github.com/cran/clValid/blob/92b8a8219f7ffcedf5988adf4c6d87fc6f2f8fc0/vignettes/clValid.Rnw"
+    },
+    {
+      "package": "mfbvar",
+      "vignette": "vignettes/mfbvar_jss.Rnw",
+      "repo": "cran/mfbvar",
+      "html_url": "https://github.com/cran/mfbvar/blob/1716cebb4c659a2cdd6e1c430278638f48132393/vignettes/mfbvar_jss.Rnw"
+    },
+    {
+      "package": "SharpeR",
+      "vignette": "vignettes/SharpeRatio.Rnw",
+      "repo": "cran/SharpeR",
+      "html_url": "https://github.com/cran/SharpeR/blob/5e01a7d870b6f0bc7e9720bc1fecc9ffc72e1c4d/vignettes/SharpeRatio.Rnw"
+    },
+    {
+      "package": "rDNAse",
+      "vignette": "vignettes/rDNAse.Rnw",
+      "repo": "cran/rDNAse",
+      "html_url": "https://github.com/cran/rDNAse/blob/bd38b7a051f92ec0403be5540c8aa22f9a458822/vignettes/rDNAse.Rnw"
+    },
+    {
+      "package": "MXM",
+      "vignette": "vignettes/article.ltx",
+      "repo": "cran/MXM",
+      "html_url": "https://github.com/cran/MXM/blob/46a61706172ba81272b80abf25b862c38d580d76/vignettes/article.ltx"
+    },
+    {
+      "package": "synthpop",
+      "vignette": "vignettes/synthpop.Rnw",
+      "repo": "cran/synthpop",
+      "html_url": "https://github.com/cran/synthpop/blob/36413c3eeeb1a4f2f0d6e5ef527f796a1f6c9eed/vignettes/synthpop.Rnw"
+    },
+    {
+      "package": "scoringRules",
+      "vignette": "vignettes/article_weighted_scores.Rnw",
+      "repo": "cran/scoringRules",
+      "html_url": "https://github.com/cran/scoringRules/blob/a885f199a516dd1ee75290b6e28220fe4c39fdc7/vignettes/article_weighted_scores.Rnw"
+    },
+    {
+      "package": "simcausal",
+      "vignette": "vignettes/simcausalVignette.Rnw",
+      "repo": "cran/simcausal",
+      "html_url": "https://github.com/cran/simcausal/blob/1be2793e7069c15c893d2a16da4d5eae0f43a324/vignettes/simcausalVignette.Rnw"
+    },
+    {
+      "package": "FME",
+      "vignette": "vignettes/FMEmcmc.Rnw",
+      "repo": "cran/FME",
+      "html_url": "https://github.com/cran/FME/blob/4d740a0e21264edccda1f50e4a40718165aa76c3/vignettes/FMEmcmc.Rnw"
+    },
+    {
+      "package": "freealg",
+      "vignette": "vignettes/adjoint.Rnw",
+      "repo": "cran/freealg",
+      "html_url": "https://github.com/cran/freealg/blob/565c0d94fb03b750b6370790cb6095a873924eca/vignettes/adjoint.Rnw"
+    },
+    {
+      "package": "BACCO",
+      "vignette": "vignettes/both_papers.Rnw",
+      "repo": "cran/BACCO",
+      "html_url": "https://github.com/cran/BACCO/blob/43ba9c948170cc9d31773a99de32772d675ca098/vignettes/both_papers.Rnw"
+    },
+    {
+      "package": "smacof",
+      "vignette": "vignettes/smacof.Rnw",
+      "repo": "cran/smacof",
+      "html_url": "https://github.com/cran/smacof/blob/b1ba1a9d95aedf6e922229bc4453f9a6efefb889/vignettes/smacof.Rnw"
+    },
+    {
+      "package": "upclass",
+      "vignette": "vignettes/upclass.Rnw",
+      "repo": "cran/upclass",
+      "html_url": "https://github.com/cran/upclass/blob/a85c1abbea766d7b536d2ac40157c6e80310756b/vignettes/upclass.Rnw"
+    },
+    {
+      "package": "exams",
+      "vignette": "vignettes/exams2.Rnw",
+      "repo": "cran/exams",
+      "html_url": "https://github.com/cran/exams/blob/7db924c22ed1a53e16e3000f961423283579a5d9/vignettes/exams2.Rnw"
+    },
+    {
+      "package": "profdpm",
+      "vignette": "vignettes/profdpm.Rnw",
+      "repo": "cran/profdpm",
+      "html_url": "https://github.com/cran/profdpm/blob/207ec1b7d8057e4edb1c119810d9e44616d07537/vignettes/profdpm.Rnw"
+    },
+    {
+      "package": "laeken",
+      "vignette": "vignettes/laeken-intro.Rnw",
+      "repo": "cran/laeken",
+      "html_url": "https://github.com/cran/laeken/blob/b68d7cd5e97fcc9879ea1767c72c4c0ef125e9c1/vignettes/laeken-intro.Rnw"
+    },
+    {
+      "package": "RationalExp",
+      "vignette": "vignettes/RationalExp.Rnw",
+      "repo": "cran/RationalExp",
+      "html_url": "https://github.com/cran/RationalExp/blob/30c08e220dd95018a0034288711695af21097464/vignettes/RationalExp.Rnw"
+    },
+    {
+      "package": "Brobdingnag",
+      "vignette": "vignettes/Brobdingnag.Rnw",
+      "repo": "cran/Brobdingnag",
+      "html_url": "https://github.com/cran/Brobdingnag/blob/f057ca62bd065bb76ee24712767272ac8e1621bb/vignettes/Brobdingnag.Rnw"
+    },
+    {
+      "package": "FFD",
+      "vignette": "vignettes/FFD-intro.Rnw",
+      "repo": "cran/FFD",
+      "html_url": "https://github.com/cran/FFD/blob/78eefbd15c03bf7362d9f39aca0be1c0d3d02c98/vignettes/FFD-intro.Rnw"
+    },
+    {
+      "package": "oro.dicom",
+      "vignette": "vignettes/dicom.Rnw",
+      "repo": "cran/oro.dicom",
+      "html_url": "https://github.com/cran/oro.dicom/blob/e97981f364d9cd684cf07d8b11473cd495b51712/vignettes/dicom.Rnw"
+    },
+    {
+      "package": "trend",
+      "vignette": "vignettes/trend.Rnw",
+      "repo": "cran/trend",
+      "html_url": "https://github.com/cran/trend/blob/24eb79ff1d4c1ce3f3596f2771d88ff21de790e6/vignettes/trend.Rnw"
+    },
+    {
+      "package": "np",
+      "vignette": "vignettes/entropy_np.Rnw",
+      "repo": "cran/np",
+      "html_url": "https://github.com/cran/np/blob/327137b58dbb2cace62f008027215cfe9cb280b9/vignettes/entropy_np.Rnw"
+    },
+    {
+      "package": "MM",
+      "vignette": "vignettes/MM.Rnw",
+      "repo": "cran/MM",
+      "html_url": "https://github.com/cran/MM/blob/61665c27d5c178391789961e3e9c1b275708defe/vignettes/MM.Rnw"
+    },
+    {
+      "package": "SEI",
+      "vignette": "vignettes/SEI_vignette.Rnw",
+      "repo": "cran/SEI",
+      "html_url": "https://github.com/cran/SEI/blob/514b399d19a363af1aadafb6fb07f25f27ce856e/vignettes/SEI_vignette.Rnw"
+    },
+    {
+      "package": "surveillance",
+      "vignette": "vignettes/twinstim.Rnw",
+      "repo": "cran/surveillance",
+      "html_url": "https://github.com/cran/surveillance/blob/d26270bc63d66c6f0ed0da11318e3be703cfeea5/vignettes/twinstim.Rnw"
+    },
+    {
+      "package": "surveillance",
+      "vignette": "vignettes/monitoringCounts.Rnw",
+      "repo": "cran/surveillance",
+      "html_url": "https://github.com/cran/surveillance/blob/d26270bc63d66c6f0ed0da11318e3be703cfeea5/vignettes/monitoringCounts.Rnw"
+    },
+    {
+      "package": "distrMod",
+      "vignette": "vignettes/distrMod.Rnw",
+      "repo": "cran/distrMod",
+      "html_url": "https://github.com/cran/distrMod/blob/5c47d91e086f75262ddb3c298ef21d48e2d46888/vignettes/distrMod.Rnw"
+    },
+    {
+      "package": "MPTinR",
+      "vignette": "vignettes/mptinr_introduction.Rnw",
+      "repo": "cran/MPTinR",
+      "html_url": "https://github.com/cran/MPTinR/blob/51e244f2ae31e3ee38e1bf4804ebea1e80223d41/vignettes/mptinr_introduction.Rnw"
+    },
+    {
+      "package": "MatchingFrontier",
+      "vignette": "vignettes/Using_MatchingFrontier.Rnw",
+      "repo": "cran/MatchingFrontier",
+      "html_url": "https://github.com/cran/MatchingFrontier/blob/c0e81846e2a24f49066f5610656daa73f404f7e7/vignettes/Using_MatchingFrontier.Rnw"
+    },
+    {
+      "package": "rrcov3way",
+      "vignette": "vignettes/rrcov3way.Rnw",
+      "repo": "cran/rrcov3way",
+      "html_url": "https://github.com/cran/rrcov3way/blob/cd71ff31dfaac88be9e57ef1ce3544a986c6bab7/vignettes/rrcov3way.Rnw"
+    },
+    {
+      "package": "pbdNCDF4",
+      "vignette": "inst/doc/pbdNCDF4-guide.Rnw",
+      "repo": "cran/pbdNCDF4",
+      "html_url": "https://github.com/cran/pbdNCDF4/blob/01cb612d5d95595c162d16291eb0b862d8ca4005/inst/doc/pbdNCDF4-guide.Rnw"
+    },
+    {
+      "package": "matchingMarkets",
+      "vignette": "inst/doc/matching.Rnw",
+      "repo": "cran/matchingMarkets",
+      "html_url": "https://github.com/cran/matchingMarkets/blob/7ca50fb754fe6e72b61dede28b12b90594f98104/inst/doc/matching.Rnw"
+    },
+    {
+      "package": "sandwich",
+      "vignette": "inst/doc/sandwich-OOP.Rnw",
+      "repo": "cran/sandwich",
+      "html_url": "https://github.com/cran/sandwich/blob/8c1131d5c6c32a4d161f71a6005501e711ba1386/inst/doc/sandwich-OOP.Rnw"
+    },
+    {
+      "package": "Rmpfr",
+      "vignette": "inst/doc/Rmpfr-pkg.Rnw",
+      "repo": "cran/Rmpfr",
+      "html_url": "https://github.com/cran/Rmpfr/blob/5beb894d6249dd8ec57ab5d9c34202afd6300736/inst/doc/Rmpfr-pkg.Rnw"
+    },
+    {
+      "package": "rbibutils",
+      "vignette": "inst/doc/rbibutils.Rnw",
+      "repo": "cran/rbibutils",
+      "html_url": "https://github.com/cran/rbibutils/blob/98bab7be0e6fdf6e00fac131d585e90f6abe796f/inst/doc/rbibutils.Rnw"
+    },
+    {
+      "package": "TSP",
+      "vignette": "inst/doc/TSP.Rnw",
+      "repo": "cran/TSP",
+      "html_url": "https://github.com/cran/TSP/blob/b038e091a80ae91fdf0b7d7678ff179d86040c33/inst/doc/TSP.Rnw"
+    },
+    {
+      "package": "melt",
+      "vignette": "inst/doc/article.Rnw",
+      "repo": "cran/melt",
+      "html_url": "https://github.com/cran/melt/blob/1f0a23934c4b13db05753e1d86324a927461fa16/inst/doc/article.Rnw"
+    },
+    {
+      "package": "msBP",
+      "vignette": "inst/doc/msbpjss.ltx",
+      "repo": "cran/msBP",
+      "html_url": "https://github.com/cran/msBP/blob/0435f096cb1fae264cb2051e97eff84b0145d13f/inst/doc/msbpjss.ltx"
+    },
+    {
+      "package": "brms",
+      "vignette": "inst/doc/brms_multilevel.ltx",
+      "repo": "cran/brms",
+      "html_url": "https://github.com/cran/brms/blob/b124949c14067aa658b176d26477ccf715881bf9/inst/doc/brms_multilevel.ltx"
+    },
+    {
+      "package": "mvord",
+      "vignette": "inst/doc/vignette_mvord.Rnw",
+      "repo": "cran/mvord",
+      "html_url": "https://github.com/cran/mvord/blob/81eb894d72de2614d57bcd7171dbf49715c3f5a6/inst/doc/vignette_mvord.Rnw"
+    },
+    {
+      "package": "multitable",
+      "vignette": "inst/doc/multitable.Rnw",
+      "repo": "cran/multitable",
+      "html_url": "https://github.com/cran/multitable/blob/02b15163e80bdd3f59098f424bbd31c5613eb161/inst/doc/multitable.Rnw"
+    },
+    {
+      "package": "grImport",
+      "vignette": "inst/doc/import.Rnw",
+      "repo": "cran/grImport",
+      "html_url": "https://github.com/cran/grImport/blob/2c54f79cde111005659229ec7b22b5c124776654/inst/doc/import.Rnw"
+    },
+    {
+      "package": "multipol",
+      "vignette": "inst/doc/multipol.Rnw",
+      "repo": "cran/multipol",
+      "html_url": "https://github.com/cran/multipol/blob/ecba44eafcd3fb2846c90b027ca353dbf0b82e5d/inst/doc/multipol.Rnw"
+    },
+    {
+      "package": "hyperdirichlet",
+      "vignette": "inst/doc/correspondence.Rnw",
+      "repo": "cran/hyperdirichlet",
+      "html_url": "https://github.com/cran/hyperdirichlet/blob/72b5fc3d7768f7fa8213cb29f8cf6ea6caac842e/inst/doc/correspondence.Rnw"
+    },
+    {
+      "package": "TraMineR",
+      "vignette": "inst/doc/TraMineR-state-sequence.Rnw",
+      "repo": "cran/TraMineR",
+      "html_url": "https://github.com/cran/TraMineR/blob/18e8a68a1598b8cd8ea2b223e034f4732d39e7ec/inst/doc/TraMineR-state-sequence.Rnw"
+    },
+    {
+      "package": "WeightedCluster",
+      "vignette": "inst/doc/WeightedCluster.Rnw",
+      "repo": "cran/WeightedCluster",
+      "html_url": "https://github.com/cran/WeightedCluster/blob/336d9042a09d98fa62adf06adc9ce625eebc7c97/inst/doc/WeightedCluster.Rnw"
+    },
+    {
+      "package": "partDSA",
+      "vignette": "inst/doc/survival.Rnw",
+      "repo": "cran/partDSA",
+      "html_url": "https://github.com/cran/partDSA/blob/2ccc836d61817c037b175a29565fa2089672b3ca/inst/doc/survival.Rnw"
+    },
+    {
+      "package": "RMETAR",
+      "vignette": "inst/doc/packageShowCase.Rnw",
+      "repo": "cran/RMETAR",
+      "html_url": "https://github.com/cran/RMETAR/blob/b7d6616b69558a20a1fd505856d7fb7210bf0640/inst/doc/packageShowCase.Rnw"
+    },
+    {
+      "package": "Rdpack",
+      "vignette": "inst/doc/Inserting_bibtex_references.Rnw",
+      "repo": "cran/Rdpack",
+      "html_url": "https://github.com/cran/Rdpack/blob/466515b3a9639c3fff9d0c36bca9b14ed5c9205e/inst/doc/Inserting_bibtex_references.Rnw"
+    },
+    {
+      "package": "flexmix",
+      "vignette": "inst/doc/flexmix-intro.Rnw",
+      "repo": "cran/flexmix",
+      "html_url": "https://github.com/cran/flexmix/blob/d352332eb4e1589bf4c3fc27577bc4106d1c16d2/inst/doc/flexmix-intro.Rnw"
+    },
+    {
+      "package": "logcondens",
+      "vignette": "inst/doc/logcondens.Rnw",
+      "repo": "cran/logcondens",
+      "html_url": "https://github.com/cran/logcondens/blob/d41fae65c820f8690efaa1533b0ff68b99bf901e/inst/doc/logcondens.Rnw"
+    },
+    {
+      "package": "cvar",
+      "vignette": "inst/doc/Guide_cvar.Rnw",
+      "repo": "cran/cvar",
+      "html_url": "https://github.com/cran/cvar/blob/9230a64053d37899524ce913898d6385ad404a55/inst/doc/Guide_cvar.Rnw"
+    },
+    {
+      "package": "sns",
+      "vignette": "inst/doc/SNS.Rnw",
+      "repo": "cran/sns",
+      "html_url": "https://github.com/cran/sns/blob/766b6821a98ea206fe461d23237bc4a4589c24af/inst/doc/SNS.Rnw"
+    },
+    {
+      "package": "seqHMM",
+      "vignette": "inst/doc/seqHMM.Rnw",
+      "repo": "cran/seqHMM",
+      "html_url": "https://github.com/cran/seqHMM/blob/1a1c950c882426739ac2040f5740353f75ffaa82/inst/doc/seqHMM.Rnw"
+    },
+    {
+      "package": "simecol",
+      "vignette": "inst/doc/b-simecol-howtos.Rnw",
+      "repo": "cran/simecol",
+      "html_url": "https://github.com/cran/simecol/blob/d0347a24303798faea8a9b1b57ca3cb1c33e8dc6/inst/doc/b-simecol-howtos.Rnw"
+    },
+    {
+      "package": "ReacTran",
+      "vignette": "inst/doc/ReacTran.Rnw",
+      "repo": "cran/ReacTran",
+      "html_url": "https://github.com/cran/ReacTran/blob/32b0f30689bc6b814a3231f057c8f2ac9f80291d/inst/doc/ReacTran.Rnw"
+    },
+    {
+      "package": "elliptic",
+      "vignette": "inst/doc/residuetheorem.Rnw",
+      "repo": "cran/elliptic",
+      "html_url": "https://github.com/cran/elliptic/blob/0b061a923a46490da22ad8665f442c1b5ec2295b/inst/doc/residuetheorem.Rnw"
+    },
+    {
+      "package": "flexsurv",
+      "vignette": "inst/doc/flexsurv.Rnw",
+      "repo": "cran/flexsurv",
+      "html_url": "https://github.com/cran/flexsurv/blob/2aae4c8ac56823d0eac30c1a9ad654ac599b5938/inst/doc/flexsurv.Rnw"
+    },
+    {
+      "package": "robmed",
+      "vignette": "inst/doc/robmed-intro.Rnw",
+      "repo": "cran/robmed",
+      "html_url": "https://github.com/cran/robmed/blob/5ec916be074e417c0e74fca17ef42bed0684a217/inst/doc/robmed-intro.Rnw"
+    },
+    {
+      "package": "SamplerCompare",
+      "vignette": "inst/doc/sc-intro.Rnw",
+      "repo": "cran/SamplerCompare",
+      "html_url": "https://github.com/cran/SamplerCompare/blob/a0c229fb56aeafcdfdaef7826dca0526be88e724/inst/doc/sc-intro.Rnw"
+    },
+    {
+      "package": "ordinalgmifs",
+      "vignette": "vignettes/ordinalgmifs.Rnw",
+      "repo": "cran/ordinalgmifs",
+      "html_url": "https://github.com/cran/ordinalgmifs/blob/a925863f64dfcc6f9b2bf327729fdcaccd4e4704/vignettes/ordinalgmifs.Rnw"
+    },
+    {
+      "package": "magree",
+      "vignette": "inst/doc/landis.Rnw",
+      "repo": "cran/magree",
+      "html_url": "https://github.com/cran/magree/blob/3f1ba26f8f2600e2a306417c8e84a2cf59569ef2/inst/doc/landis.Rnw"
+    },
+    {
+      "package": "HDBRR",
+      "vignette": "inst/doc/HDBRR.Rnw",
+      "repo": "cran/HDBRR",
+      "html_url": "https://github.com/cran/HDBRR/blob/b672266198b88b3019b5693f817f41b233674489/inst/doc/HDBRR.Rnw"
+    },
+    {
+      "package": "multivator",
+      "vignette": "inst/doc/multivator.Rnw",
+      "repo": "cran/multivator",
+      "html_url": "https://github.com/cran/multivator/blob/8301cfb94d50301379cbc30d89ce0a89841e41b5/inst/doc/multivator.Rnw"
+    },
+    {
+      "package": "rEMM",
+      "vignette": "inst/doc/rEMM.Rnw",
+      "repo": "cran/rEMM",
+      "html_url": "https://github.com/cran/rEMM/blob/94573ca3a3787d79a877f8e0536cdf4c7ffea19e/inst/doc/rEMM.Rnw"
+    },
+    {
+      "package": "sets",
+      "vignette": "inst/doc/sets.Rnw",
+      "repo": "cran/sets",
+      "html_url": "https://github.com/cran/sets/blob/3f0d492f84f01b4f6849c82dcf6613e9a575feb0/inst/doc/sets.Rnw"
+    },
+    {
+      "package": "textplot",
+      "vignette": "inst/doc/textplot-examples.Rnw",
+      "repo": "cran/textplot",
+      "html_url": "https://github.com/cran/textplot/blob/1fcbd5111f0b6adb7690ec88c4292fa5edfbb396/inst/doc/textplot-examples.Rnw"
+    },
+    {
+      "package": "MarkowitzR",
+      "vignette": "inst/doc/MarkowitzR.Rnw",
+      "repo": "cran/MarkowitzR",
+      "html_url": "https://github.com/cran/MarkowitzR/blob/50fc0de106d0d525e265f9e361dde47233401319/inst/doc/MarkowitzR.Rnw"
+    },
+    {
+      "package": "CADFtest",
+      "vignette": "inst/doc/CADFtest.Rnw",
+      "repo": "cran/CADFtest",
+      "html_url": "https://github.com/cran/CADFtest/blob/405d9d90df237f6c5dbaa4da644172c178c1f8ef/inst/doc/CADFtest.Rnw"
+    },
+    {
+      "package": "seasonal",
+      "vignette": "inst/doc/seas.Rnw",
+      "repo": "cran/seasonal",
+      "html_url": "https://github.com/cran/seasonal/blob/331c37a5e17f2f484171dc1d92ccd2830849451a/inst/doc/seas.Rnw"
+    },
+    {
+      "package": "fechner",
+      "vignette": "inst/doc/sourcefiles/fechner.tex",
+      "repo": "cran/fechner",
+      "html_url": "https://github.com/cran/fechner/blob/2090419a84b0c92887dd674f240142e639934f7c/inst/doc/sourcefiles/fechner.tex"
+    },
+    {
+      "package": "LIM",
+      "vignette": "inst/doc/LIM.Rnw",
+      "repo": "cran/LIM",
+      "html_url": "https://github.com/cran/LIM/blob/41e25372cc45644677391cd27eff5b5d8c4623de/inst/doc/LIM.Rnw"
+    },
+    {
+      "package": "marelac",
+      "vignette": "inst/doc/marelac.Rnw",
+      "repo": "cran/marelac",
+      "html_url": "https://github.com/cran/marelac/blob/52e2d465abcc40d10ad1b7d1024fdf413657d8c8/inst/doc/marelac.Rnw"
+    },
+    {
+      "package": "rgenoud",
+      "vignette": "inst/doc/rgenoud.Rnw",
+      "repo": "cran/rgenoud",
+      "html_url": "https://github.com/cran/rgenoud/blob/f2ec164b7a4baf36ac35786320ba22b6b07cc185/inst/doc/rgenoud.Rnw"
+    },
+    {
+      "package": "diffEq",
+      "vignette": "inst/doc/DAEinR.Rnw",
+      "repo": "cran/diffEq",
+      "html_url": "https://github.com/cran/diffEq/blob/882aff4c2d3a21cccfa51e8980856dc596b3fdfb/inst/doc/DAEinR.Rnw"
+    },
+    {
+      "package": "vegan",
+      "vignette": "inst/doc/diversity-vegan.Rnw",
+      "repo": "cran/vegan",
+      "html_url": "https://github.com/cran/vegan/blob/7424d65e139c700ad64b2448db6176d48024002e/inst/doc/diversity-vegan.Rnw"
+    },
+    {
+      "package": "mlt.docreg",
+      "vignette": "inst/doc/mlt.Rnw",
+      "repo": "cran/mlt.docreg",
+      "html_url": "https://github.com/cran/mlt.docreg/blob/c2adb8278fbc5c8669a4d3458c6b6d7064245147/inst/doc/mlt.Rnw"
+    },
+    {
+      "package": "dosresmeta",
+      "vignette": "inst/doc/dosresmeta.Rnw",
+      "repo": "cran/dosresmeta",
+      "html_url": "https://github.com/cran/dosresmeta/blob/38dfe7827473eb9c23e2ce8ba7601400f4e040a4/inst/doc/dosresmeta.Rnw"
+    },
+    {
+      "package": "systemfit",
+      "vignette": "inst/doc/systemfit.Rnw",
+      "repo": "cran/systemfit",
+      "html_url": "https://github.com/cran/systemfit/blob/afdaac90ad7cae90ac842236de1b29dfb0ea394b/inst/doc/systemfit.Rnw"
+    },
+    {
+      "package": "opticskxi",
+      "vignette": "inst/doc/ensemble_metrics.Rnw",
+      "repo": "cran/opticskxi",
+      "html_url": "https://github.com/cran/opticskxi/blob/db29bebfbe33609f1ca35c33e2df7eae8db06801/inst/doc/ensemble_metrics.Rnw"
+    },
+    {
+      "package": "hyperdirichlet",
+      "vignette": "inst/doc/hyperdirichlet.Rnw",
+      "repo": "cran/hyperdirichlet",
+      "html_url": "https://github.com/cran/hyperdirichlet/blob/72b5fc3d7768f7fa8213cb29f8cf6ea6caac842e/inst/doc/hyperdirichlet.Rnw"
+    },
+    {
+      "package": "tram",
+      "vignette": "inst/doc/survtram.Rnw",
+      "repo": "cran/tram",
+      "html_url": "https://github.com/cran/tram/blob/4ecaa7fe34a10cb0bb3ea3fcb75158a079e6682d/inst/doc/survtram.Rnw"
+    },
+    {
+      "package": "gnm",
+      "vignette": "inst/doc/gnmOverview.Rnw",
+      "repo": "cran/gnm",
+      "html_url": "https://github.com/cran/gnm/blob/9aa622ee41c504353ff2cc665688d61387f2360c/inst/doc/gnmOverview.Rnw"
+    },
+    {
+      "package": "pks",
+      "vignette": "inst/doc/EstimationStepByStep.Rnw",
+      "repo": "cran/pks",
+      "html_url": "https://github.com/cran/pks/blob/6a08e06f4d96fb088b36b88e72af3197424fe67f/inst/doc/EstimationStepByStep.Rnw"
+    },
+    {
+      "package": "FME",
+      "vignette": "inst/doc/FMEdyna.Rnw",
+      "repo": "cran/FME",
+      "html_url": "https://github.com/cran/FME/blob/4d740a0e21264edccda1f50e4a40718165aa76c3/inst/doc/FMEdyna.Rnw"
+    },
+    {
+      "package": "kequate",
+      "vignette": "inst/doc/kequate.Rnw",
+      "repo": "cran/kequate",
+      "html_url": "https://github.com/cran/kequate/blob/4be8d73452922daef21ff1109e63f407ffa3b16b/inst/doc/kequate.Rnw"
+    },
+    {
+      "package": "RobPer",
+      "vignette": "inst/doc/RobPer_vignette.Rnw",
+      "repo": "cran/RobPer",
+      "html_url": "https://github.com/cran/RobPer/blob/7c8b1298da69771d0f4df657f1d3cff38ae5e36e/inst/doc/RobPer_vignette.Rnw"
+    },
+    {
+      "package": "robustfa",
+      "vignette": "inst/doc/robustfa-knitr.Rnw",
+      "repo": "cran/robustfa",
+      "html_url": "https://github.com/cran/robustfa/blob/036527b6c6854ec6b6c9ae983bb4be5e97900161/inst/doc/robustfa-knitr.Rnw"
+    },
+    {
+      "package": "quantspec",
+      "vignette": "inst/doc/quantspec.Rnw",
+      "repo": "cran/quantspec",
+      "html_url": "https://github.com/cran/quantspec/blob/a0b004467e03cb102e846d4b573ff9abb39f84a5/inst/doc/quantspec.Rnw"
+    },
+    {
+      "package": "partykit",
+      "vignette": "inst/doc/ctree.Rnw",
+      "repo": "cran/partykit",
+      "html_url": "https://github.com/cran/partykit/blob/89bf18824a1a6c8f072239b6971ca24dbe1f3546/inst/doc/ctree.Rnw"
+    },
+    {
+      "package": "Rmpfr",
+      "vignette": "inst/doc/log1mexp-note.Rnw",
+      "repo": "cran/Rmpfr",
+      "html_url": "https://github.com/cran/Rmpfr/blob/5beb894d6249dd8ec57ab5d9c34202afd6300736/inst/doc/log1mexp-note.Rnw"
+    },
+    {
+      "package": "nestfs",
+      "vignette": "tests/paper/JSSstyle/article.tex",
+      "repo": "cran/nestfs",
+      "html_url": "https://github.com/cran/nestfs/blob/b3902b7a9ffdfaca6e58ee07a1e92a84b30a2c5f/tests/paper/JSSstyle/article.tex"
+    },
+    {
+      "package": "sarima",
+      "vignette": "inst/doc/white_noise_tests.Rnw",
+      "repo": "cran/sarima",
+      "html_url": "https://github.com/cran/sarima/blob/7365853a0f88745bcca05994a752af79262293d3/inst/doc/white_noise_tests.Rnw"
+    },
+    {
+      "package": "pbdNCDF4",
+      "vignette": "vignettes/pbdNCDF4-guide.Rnw",
+      "repo": "cran/pbdNCDF4",
+      "html_url": "https://github.com/cran/pbdNCDF4/blob/01cb612d5d95595c162d16291eb0b862d8ca4005/vignettes/pbdNCDF4-guide.Rnw"
+    },
+    {
+      "package": "matchingMarkets",
+      "vignette": "vignettes/matching.Rnw",
+      "repo": "cran/matchingMarkets",
+      "html_url": "https://github.com/cran/matchingMarkets/blob/7ca50fb754fe6e72b61dede28b12b90594f98104/vignettes/matching.Rnw"
+    },
+    {
+      "package": "sandwich",
+      "vignette": "vignettes/sandwich-OOP.Rnw",
+      "repo": "cran/sandwich",
+      "html_url": "https://github.com/cran/sandwich/blob/8c1131d5c6c32a4d161f71a6005501e711ba1386/vignettes/sandwich-OOP.Rnw"
+    },
+    {
+      "package": "Rmpfr",
+      "vignette": "vignettes/Rmpfr-pkg.Rnw",
+      "repo": "cran/Rmpfr",
+      "html_url": "https://github.com/cran/Rmpfr/blob/5beb894d6249dd8ec57ab5d9c34202afd6300736/vignettes/Rmpfr-pkg.Rnw"
+    },
+    {
+      "package": "rbibutils",
+      "vignette": "vignettes/rbibutils.Rnw",
+      "repo": "cran/rbibutils",
+      "html_url": "https://github.com/cran/rbibutils/blob/98bab7be0e6fdf6e00fac131d585e90f6abe796f/vignettes/rbibutils.Rnw"
+    },
+    {
+      "package": "TSP",
+      "vignette": "vignettes/TSP.Rnw",
+      "repo": "cran/TSP",
+      "html_url": "https://github.com/cran/TSP/blob/b038e091a80ae91fdf0b7d7678ff179d86040c33/vignettes/TSP.Rnw"
+    },
+    {
+      "package": "melt",
+      "vignette": "vignettes/article.Rnw",
+      "repo": "cran/melt",
+      "html_url": "https://github.com/cran/melt/blob/1f0a23934c4b13db05753e1d86324a927461fa16/vignettes/article.Rnw"
+    },
+    {
+      "package": "msBP",
+      "vignette": "vignettes/msbpjss.ltx",
+      "repo": "cran/msBP",
+      "html_url": "https://github.com/cran/msBP/blob/0435f096cb1fae264cb2051e97eff84b0145d13f/vignettes/msbpjss.ltx"
+    },
+    {
+      "package": "brms",
+      "vignette": "vignettes/brms_multilevel.ltx",
+      "repo": "cran/brms",
+      "html_url": "https://github.com/cran/brms/blob/b124949c14067aa658b176d26477ccf715881bf9/vignettes/brms_multilevel.ltx"
+    },
+    {
+      "package": "mvord",
+      "vignette": "vignettes/vignette_mvord.Rnw",
+      "repo": "cran/mvord",
+      "html_url": "https://github.com/cran/mvord/blob/81eb894d72de2614d57bcd7171dbf49715c3f5a6/vignettes/vignette_mvord.Rnw"
+    },
+    {
+      "package": "multitable",
+      "vignette": "vignettes/multitable.Rnw",
+      "repo": "cran/multitable",
+      "html_url": "https://github.com/cran/multitable/blob/02b15163e80bdd3f59098f424bbd31c5613eb161/vignettes/multitable.Rnw"
+    },
+    {
+      "package": "grImport",
+      "vignette": "vignettes/import.Rnw",
+      "repo": "cran/grImport",
+      "html_url": "https://github.com/cran/grImport/blob/2c54f79cde111005659229ec7b22b5c124776654/vignettes/import.Rnw"
+    },
+    {
+      "package": "multipol",
+      "vignette": "vignettes/multipol.Rnw",
+      "repo": "cran/multipol",
+      "html_url": "https://github.com/cran/multipol/blob/ecba44eafcd3fb2846c90b027ca353dbf0b82e5d/vignettes/multipol.Rnw"
+    },
+    {
+      "package": "hyperdirichlet",
+      "vignette": "vignettes/correspondence.Rnw",
+      "repo": "cran/hyperdirichlet",
+      "html_url": "https://github.com/cran/hyperdirichlet/blob/72b5fc3d7768f7fa8213cb29f8cf6ea6caac842e/vignettes/correspondence.Rnw"
+    },
+    {
+      "package": "TraMineR",
+      "vignette": "vignettes/TraMineR-state-sequence.Rnw",
+      "repo": "cran/TraMineR",
+      "html_url": "https://github.com/cran/TraMineR/blob/18e8a68a1598b8cd8ea2b223e034f4732d39e7ec/vignettes/TraMineR-state-sequence.Rnw"
+    },
+    {
+      "package": "WeightedCluster",
+      "vignette": "vignettes/WeightedCluster.Rnw",
+      "repo": "cran/WeightedCluster",
+      "html_url": "https://github.com/cran/WeightedCluster/blob/336d9042a09d98fa62adf06adc9ce625eebc7c97/vignettes/WeightedCluster.Rnw"
+    },
+    {
+      "package": "partDSA",
+      "vignette": "vignettes/survival.Rnw",
+      "repo": "cran/partDSA",
+      "html_url": "https://github.com/cran/partDSA/blob/2ccc836d61817c037b175a29565fa2089672b3ca/vignettes/survival.Rnw"
+    },
+    {
+      "package": "Rdpack",
+      "vignette": "vignettes/Inserting_bibtex_references.Rnw",
+      "repo": "cran/Rdpack",
+      "html_url": "https://github.com/cran/Rdpack/blob/466515b3a9639c3fff9d0c36bca9b14ed5c9205e/vignettes/Inserting_bibtex_references.Rnw"
+    },
+    {
+      "package": "flexmix",
+      "vignette": "vignettes/flexmix-intro.Rnw",
+      "repo": "cran/flexmix",
+      "html_url": "https://github.com/cran/flexmix/blob/d352332eb4e1589bf4c3fc27577bc4106d1c16d2/vignettes/flexmix-intro.Rnw"
+    },
+    {
+      "package": "logcondens",
+      "vignette": "vignettes/logcondens.Rnw",
+      "repo": "cran/logcondens",
+      "html_url": "https://github.com/cran/logcondens/blob/d41fae65c820f8690efaa1533b0ff68b99bf901e/vignettes/logcondens.Rnw"
+    },
+    {
+      "package": "cvar",
+      "vignette": "vignettes/Guide_cvar.Rnw",
+      "repo": "cran/cvar",
+      "html_url": "https://github.com/cran/cvar/blob/9230a64053d37899524ce913898d6385ad404a55/vignettes/Guide_cvar.Rnw"
+    },
+    {
+      "package": "sns",
+      "vignette": "vignettes/SNS.Rnw",
+      "repo": "cran/sns",
+      "html_url": "https://github.com/cran/sns/blob/766b6821a98ea206fe461d23237bc4a4589c24af/vignettes/SNS.Rnw"
+    },
+    {
+      "package": "seqHMM",
+      "vignette": "vignettes/seqHMM.Rnw",
+      "repo": "cran/seqHMM",
+      "html_url": "https://github.com/cran/seqHMM/blob/1a1c950c882426739ac2040f5740353f75ffaa82/vignettes/seqHMM.Rnw"
+    },
+    {
+      "package": "simecol",
+      "vignette": "vignettes/b-simecol-howtos.Rnw",
+      "repo": "cran/simecol",
+      "html_url": "https://github.com/cran/simecol/blob/d0347a24303798faea8a9b1b57ca3cb1c33e8dc6/vignettes/b-simecol-howtos.Rnw"
+    },
+    {
+      "package": "ReacTran",
+      "vignette": "vignettes/ReacTran.Rnw",
+      "repo": "cran/ReacTran",
+      "html_url": "https://github.com/cran/ReacTran/blob/32b0f30689bc6b814a3231f057c8f2ac9f80291d/vignettes/ReacTran.Rnw"
+    },
+    {
+      "package": "elliptic",
+      "vignette": "vignettes/residuetheorem.Rnw",
+      "repo": "cran/elliptic",
+      "html_url": "https://github.com/cran/elliptic/blob/0b061a923a46490da22ad8665f442c1b5ec2295b/vignettes/residuetheorem.Rnw"
+    },
+    {
+      "package": "flexsurv",
+      "vignette": "vignettes/flexsurv.Rnw",
+      "repo": "cran/flexsurv",
+      "html_url": "https://github.com/cran/flexsurv/blob/2aae4c8ac56823d0eac30c1a9ad654ac599b5938/vignettes/flexsurv.Rnw"
+    },
+    {
+      "package": "robmed",
+      "vignette": "vignettes/robmed-intro.Rnw",
+      "repo": "cran/robmed",
+      "html_url": "https://github.com/cran/robmed/blob/5ec916be074e417c0e74fca17ef42bed0684a217/vignettes/robmed-intro.Rnw"
+    },
+    {
+      "package": "SamplerCompare",
+      "vignette": "vignettes/sc-intro.Rnw",
+      "repo": "cran/SamplerCompare",
+      "html_url": "https://github.com/cran/SamplerCompare/blob/a0c229fb56aeafcdfdaef7826dca0526be88e724/vignettes/sc-intro.Rnw"
+    },
+    {
+      "package": "magree",
+      "vignette": "vignettes/landis.Rnw",
+      "repo": "cran/magree",
+      "html_url": "https://github.com/cran/magree/blob/3f1ba26f8f2600e2a306417c8e84a2cf59569ef2/vignettes/landis.Rnw"
+    },
+    {
+      "package": "HDBRR",
+      "vignette": "vignettes/HDBRR.Rnw",
+      "repo": "cran/HDBRR",
+      "html_url": "https://github.com/cran/HDBRR/blob/b672266198b88b3019b5693f817f41b233674489/vignettes/HDBRR.Rnw"
+    },
+    {
+      "package": "multivator",
+      "vignette": "vignettes/multivator.Rnw",
+      "repo": "cran/multivator",
+      "html_url": "https://github.com/cran/multivator/blob/8301cfb94d50301379cbc30d89ce0a89841e41b5/vignettes/multivator.Rnw"
+    },
+    {
+      "package": "rEMM",
+      "vignette": "vignettes/rEMM.Rnw",
+      "repo": "cran/rEMM",
+      "html_url": "https://github.com/cran/rEMM/blob/94573ca3a3787d79a877f8e0536cdf4c7ffea19e/vignettes/rEMM.Rnw"
+    },
+    {
+      "package": "sets",
+      "vignette": "vignettes/sets.Rnw",
+      "repo": "cran/sets",
+      "html_url": "https://github.com/cran/sets/blob/3f0d492f84f01b4f6849c82dcf6613e9a575feb0/vignettes/sets.Rnw"
+    },
+    {
+      "package": "textplot",
+      "vignette": "vignettes/textplot-examples.Rnw",
+      "repo": "cran/textplot",
+      "html_url": "https://github.com/cran/textplot/blob/1fcbd5111f0b6adb7690ec88c4292fa5edfbb396/vignettes/textplot-examples.Rnw"
+    },
+    {
+      "package": "MarkowitzR",
+      "vignette": "vignettes/MarkowitzR.Rnw",
+      "repo": "cran/MarkowitzR",
+      "html_url": "https://github.com/cran/MarkowitzR/blob/50fc0de106d0d525e265f9e361dde47233401319/vignettes/MarkowitzR.Rnw"
+    },
+    {
+      "package": "CADFtest",
+      "vignette": "vignettes/CADFtest.Rnw",
+      "repo": "cran/CADFtest",
+      "html_url": "https://github.com/cran/CADFtest/blob/405d9d90df237f6c5dbaa4da644172c178c1f8ef/vignettes/CADFtest.Rnw"
+    },
+    {
+      "package": "seasonal",
+      "vignette": "vignettes/seas.Rnw",
+      "repo": "cran/seasonal",
+      "html_url": "https://github.com/cran/seasonal/blob/331c37a5e17f2f484171dc1d92ccd2830849451a/vignettes/seas.Rnw"
+    },
+    {
+      "package": "LIM",
+      "vignette": "vignettes/LIM.Rnw",
+      "repo": "cran/LIM",
+      "html_url": "https://github.com/cran/LIM/blob/41e25372cc45644677391cd27eff5b5d8c4623de/vignettes/LIM.Rnw"
+    },
+    {
+      "package": "marelac",
+      "vignette": "vignettes/marelac.Rnw",
+      "repo": "cran/marelac",
+      "html_url": "https://github.com/cran/marelac/blob/52e2d465abcc40d10ad1b7d1024fdf413657d8c8/vignettes/marelac.Rnw"
+    },
+    {
+      "package": "rgenoud",
+      "vignette": "vignettes/rgenoud.Rnw",
+      "repo": "cran/rgenoud",
+      "html_url": "https://github.com/cran/rgenoud/blob/f2ec164b7a4baf36ac35786320ba22b6b07cc185/vignettes/rgenoud.Rnw"
+    },
+    {
+      "package": "diffEq",
+      "vignette": "vignettes/DAEinR.Rnw",
+      "repo": "cran/diffEq",
+      "html_url": "https://github.com/cran/diffEq/blob/882aff4c2d3a21cccfa51e8980856dc596b3fdfb/vignettes/DAEinR.Rnw"
+    },
+    {
+      "package": "vegan",
+      "vignette": "vignettes/diversity-vegan.Rnw",
+      "repo": "cran/vegan",
+      "html_url": "https://github.com/cran/vegan/blob/7424d65e139c700ad64b2448db6176d48024002e/vignettes/diversity-vegan.Rnw"
+    },
+    {
+      "package": "mlt.docreg",
+      "vignette": "vignettes/mlt.Rnw",
+      "repo": "cran/mlt.docreg",
+      "html_url": "https://github.com/cran/mlt.docreg/blob/c2adb8278fbc5c8669a4d3458c6b6d7064245147/vignettes/mlt.Rnw"
+    },
+    {
+      "package": "dosresmeta",
+      "vignette": "vignettes/dosresmeta.Rnw",
+      "repo": "cran/dosresmeta",
+      "html_url": "https://github.com/cran/dosresmeta/blob/38dfe7827473eb9c23e2ce8ba7601400f4e040a4/vignettes/dosresmeta.Rnw"
+    },
+    {
+      "package": "systemfit",
+      "vignette": "vignettes/systemfit.Rnw",
+      "repo": "cran/systemfit",
+      "html_url": "https://github.com/cran/systemfit/blob/afdaac90ad7cae90ac842236de1b29dfb0ea394b/vignettes/systemfit.Rnw"
+    },
+    {
+      "package": "opticskxi",
+      "vignette": "vignettes/ensemble_metrics.Rnw",
+      "repo": "cran/opticskxi",
+      "html_url": "https://github.com/cran/opticskxi/blob/db29bebfbe33609f1ca35c33e2df7eae8db06801/vignettes/ensemble_metrics.Rnw"
+    },
+    {
+      "package": "hyperdirichlet",
+      "vignette": "vignettes/hyperdirichlet.Rnw",
+      "repo": "cran/hyperdirichlet",
+      "html_url": "https://github.com/cran/hyperdirichlet/blob/72b5fc3d7768f7fa8213cb29f8cf6ea6caac842e/vignettes/hyperdirichlet.Rnw"
+    },
+    {
+      "package": "tram",
+      "vignette": "vignettes/survtram.Rnw",
+      "repo": "cran/tram",
+      "html_url": "https://github.com/cran/tram/blob/4ecaa7fe34a10cb0bb3ea3fcb75158a079e6682d/vignettes/survtram.Rnw"
+    },
+    {
+      "package": "gnm",
+      "vignette": "vignettes/gnmOverview.Rnw",
+      "repo": "cran/gnm",
+      "html_url": "https://github.com/cran/gnm/blob/9aa622ee41c504353ff2cc665688d61387f2360c/vignettes/gnmOverview.Rnw"
+    },
+    {
+      "package": "pks",
+      "vignette": "vignettes/EstimationStepByStep.Rnw",
+      "repo": "cran/pks",
+      "html_url": "https://github.com/cran/pks/blob/6a08e06f4d96fb088b36b88e72af3197424fe67f/vignettes/EstimationStepByStep.Rnw"
+    },
+    {
+      "package": "FME",
+      "vignette": "vignettes/FMEdyna.Rnw",
+      "repo": "cran/FME",
+      "html_url": "https://github.com/cran/FME/blob/4d740a0e21264edccda1f50e4a40718165aa76c3/vignettes/FMEdyna.Rnw"
+    },
+    {
+      "package": "kequate",
+      "vignette": "vignettes/kequate.Rnw",
+      "repo": "cran/kequate",
+      "html_url": "https://github.com/cran/kequate/blob/4be8d73452922daef21ff1109e63f407ffa3b16b/vignettes/kequate.Rnw"
+    },
+    {
+      "package": "RobPer",
+      "vignette": "vignettes/RobPer_vignette.Rnw",
+      "repo": "cran/RobPer",
+      "html_url": "https://github.com/cran/RobPer/blob/7c8b1298da69771d0f4df657f1d3cff38ae5e36e/vignettes/RobPer_vignette.Rnw"
+    },
+    {
+      "package": "robustfa",
+      "vignette": "vignettes/robustfa-knitr.Rnw",
+      "repo": "cran/robustfa",
+      "html_url": "https://github.com/cran/robustfa/blob/036527b6c6854ec6b6c9ae983bb4be5e97900161/vignettes/robustfa-knitr.Rnw"
+    },
+    {
+      "package": "quantspec",
+      "vignette": "vignettes/quantspec.Rnw",
+      "repo": "cran/quantspec",
+      "html_url": "https://github.com/cran/quantspec/blob/a0b004467e03cb102e846d4b573ff9abb39f84a5/vignettes/quantspec.Rnw"
+    },
+    {
+      "package": "partykit",
+      "vignette": "vignettes/ctree.Rnw",
+      "repo": "cran/partykit",
+      "html_url": "https://github.com/cran/partykit/blob/89bf18824a1a6c8f072239b6971ca24dbe1f3546/vignettes/ctree.Rnw"
+    },
+    {
+      "package": "Rmpfr",
+      "vignette": "vignettes/log1mexp-note.Rnw",
+      "repo": "cran/Rmpfr",
+      "html_url": "https://github.com/cran/Rmpfr/blob/5beb894d6249dd8ec57ab5d9c34202afd6300736/vignettes/log1mexp-note.Rnw"
+    },
+    {
+      "package": "sarima",
+      "vignette": "vignettes/white_noise_tests.Rnw",
+      "repo": "cran/sarima",
+      "html_url": "https://github.com/cran/sarima/blob/7365853a0f88745bcca05994a752af79262293d3/vignettes/white_noise_tests.Rnw"
+    },
+    {
+      "package": "pbdRPC",
+      "vignette": "inst/doc/pbdRPC-guide.Rnw",
+      "repo": "cran/pbdRPC",
+      "html_url": "https://github.com/cran/pbdRPC/blob/c498382dbe6483d15bba1998a94dec89ce30dbc1/inst/doc/pbdRPC-guide.Rnw"
+    },
+    {
+      "package": "sandwich",
+      "vignette": "inst/doc/sandwich-CL.Rnw",
+      "repo": "cran/sandwich",
+      "html_url": "https://github.com/cran/sandwich/blob/8c1131d5c6c32a4d161f71a6005501e711ba1386/inst/doc/sandwich-CL.Rnw"
+    },
+    {
+      "package": "FME",
+      "vignette": "inst/doc/FMEother.Rnw",
+      "repo": "cran/FME",
+      "html_url": "https://github.com/cran/FME/blob/4d740a0e21264edccda1f50e4a40718165aa76c3/inst/doc/FMEother.Rnw"
+    },
+    {
+      "package": "cusp",
+      "vignette": "vignettes/Cusp-JSS.Rnw",
+      "repo": "cran/cusp",
+      "html_url": "https://github.com/cran/cusp/blob/f30850efeb0820e6a8b76577c22478fb29fd2c3b/vignettes/Cusp-JSS.Rnw"
+    },
+    {
+      "package": "DAKS",
+      "vignette": "inst/doc/DAKS.Rnw",
+      "repo": "cran/DAKS",
+      "html_url": "https://github.com/cran/DAKS/blob/69b07357c8a377e7d5101190802a5e69e20a5681/inst/doc/DAKS.Rnw"
+    },
+    {
+      "package": "BARD",
+      "vignette": "inst/doc/JSSstyle/bookreview.tex",
+      "repo": "cran/BARD",
+      "html_url": "https://github.com/cran/BARD/blob/5265b6114d91064679d7fbf1a6e21663f886f136/inst/doc/JSSstyle/bookreview.tex"
+    },
+    {
+      "package": "knotR",
+      "vignette": "inst/doc/knotR.Rnw",
+      "repo": "cran/knotR",
+      "html_url": "https://github.com/cran/knotR/blob/04f5029a86c75e10f3b58264bf94991b1f4b9151/inst/doc/knotR.Rnw"
+    },
+    {
+      "package": "snht",
+      "vignette": "inst/doc/pairwiseSNHT.Rnw",
+      "repo": "cran/snht",
+      "html_url": "https://github.com/cran/snht/blob/375251dc51d5b49c9ced3ad8021edb2119d74885/inst/doc/pairwiseSNHT.Rnw"
+    },
+    {
+      "package": "SMM",
+      "vignette": "inst/doc/smm.Rnw",
+      "repo": "cran/SMM",
+      "html_url": "https://github.com/cran/SMM/blob/f3b14f0517376ee60ec23143994aa81a9e43658e/inst/doc/smm.Rnw"
+    },
+    {
+      "package": "tram",
+      "vignette": "inst/doc/tram.Rnw",
+      "repo": "cran/tram",
+      "html_url": "https://github.com/cran/tram/blob/4ecaa7fe34a10cb0bb3ea3fcb75158a079e6682d/inst/doc/tram.Rnw"
+    },
+    {
+      "package": "cna",
+      "vignette": "inst/doc/cna.Rnw",
+      "repo": "cran/cna",
+      "html_url": "https://github.com/cran/cna/blob/96968ff47aed0546798b136730b67757dd33db33/inst/doc/cna.Rnw"
+    },
+    {
+      "package": "glmpathcr",
+      "vignette": "inst/doc/glmpathcr.Rnw",
+      "repo": "cran/glmpathcr",
+      "html_url": "https://github.com/cran/glmpathcr/blob/f11c0d49a410131a37c297111d8d6596a8433620/inst/doc/glmpathcr.Rnw"
+    },
+    {
+      "package": "rootSolve",
+      "vignette": "inst/doc/rootSolve.Rnw",
+      "repo": "cran/rootSolve",
+      "html_url": "https://github.com/cran/rootSolve/blob/20215d6c6c76d8ef552964ddf451eddc0f5ffb8f/inst/doc/rootSolve.Rnw"
+    },
+    {
+      "package": "ggbeeswarm",
+      "vignette": "inst/doc/usageExamples.Rnw",
+      "repo": "cran/ggbeeswarm",
+      "html_url": "https://github.com/cran/ggbeeswarm/blob/34e665e56297abe44f214b418815a8533837affd/inst/doc/usageExamples.Rnw"
+    },
+    {
+      "package": "anacor",
+      "vignette": "inst/doc/vignettes/anacor.Rnw",
+      "repo": "cran/anacor",
+      "html_url": "https://github.com/cran/anacor/blob/97369dad6f310a25daf3a2cf720c1b627de2ab72/inst/doc/vignettes/anacor.Rnw"
+    },
+    {
+      "package": "DClusterm",
+      "vignette": "inst/doc/DClusterm.Rnw",
+      "repo": "cran/DClusterm",
+      "html_url": "https://github.com/cran/DClusterm/blob/c3a7f6852b02fc97abec44877cd708b0bc692a4f/inst/doc/DClusterm.Rnw"
+    },
+    {
+      "package": "CompModels",
+      "vignette": "inst/doc/PhysicsCompModels.ltx",
+      "repo": "cran/CompModels",
+      "html_url": "https://github.com/cran/CompModels/blob/11902cfed12bcaad9b88b4a979d1e87616094d6c/inst/doc/PhysicsCompModels.ltx"
+    },
+    {
+      "package": "hetGP",
+      "vignette": "inst/doc/hetGP_vignette.Rnw",
+      "repo": "cran/hetGP",
+      "html_url": "https://github.com/cran/hetGP/blob/6df210a8bdfccc52e795d418fd0f7f9f497a8ae7/inst/doc/hetGP_vignette.Rnw"
+    }
+  ]
+}
