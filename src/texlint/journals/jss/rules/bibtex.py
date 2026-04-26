@@ -215,26 +215,95 @@ def _iter_shortcites_keys(doc: ParsedDocument) -> Iterator[str]:
                         yield key
 
 
+def _entries_by_key(doc: ParsedDocument) -> dict[str, tuple[Any, Any]]:
+    """Return ``key -> (bib_file, entry)`` for every non-empty-keyed entry
+    in the document's bib databases. The first occurrence wins on duplicate
+    keys (BIBTEX-002 reports the dupes separately)."""
+    out: dict[str, tuple[Any, Any]] = {}
+    for bib in doc.bib_files:
+        if bib.library is None:
+            continue
+        for entry in getattr(bib.library, "entries", ()) or ():
+            if entry.key and entry.key not in out:
+                out[entry.key] = (bib, entry)
+    return out
+
+
+def _iter_cite_sites(
+    doc: ParsedDocument,
+) -> Iterator[tuple[Any, Any, Any, int, str]]:
+    """Yield ``(tex, node, parent, idx, key)`` for every key referenced
+    from a ``\\cite*`` / ``\\nocite`` macro in any tex-like island. The
+    ``*`` wildcard from ``\\nocite{*}`` is skipped — it has no key."""
+    for tex in doc.all_tex_like():
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+            if not isinstance(node, LatexMacroNode):
+                continue
+            if node.macroname not in _helpers._CITE_MACROS_FOR_SCOPE:
+                continue
+            text = _helpers._macro_args_text(node, parent, idx)
+            for raw in text.split(","):
+                key = raw.strip()
+                if key and key != "*":
+                    yield tex, node, parent, idx, key
+
+
 def check_jss_bibtex_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     shortnames_in_preamble = _mitigation_present(doc, set())
+    if shortnames_in_preamble:
+        return
     shortcited_keys = set(_iter_shortcites_keys(doc))
-    for bib, entry in _iter_entries(doc):
+    entries = _entries_by_key(doc)
+    meta = _catalogue_data.RULES["JSS-BIBTEX-004"]
+
+    tex_like_present = any(True for _ in doc.all_tex_like())
+    if not tex_like_present:
+        # Bare-bib invocation: no cite sites exist, fall back to flagging the
+        # bib entries themselves so the user still sees the warning.
+        for bib, entry in _iter_entries(doc):
+            if _author_count(entry) < _AUTHOR_THRESHOLD:
+                continue
+            if entry.key and entry.key in shortcited_keys:
+                continue
+            yield _violation(
+                bib=bib,
+                entry=entry,
+                rule_id="JSS-BIBTEX-004",
+                suggestion=(
+                    "Add the 'shortnames' option to \\documentclass{jss}, or "
+                    f"list this key in \\shortcites{{{entry.key}}}."
+                ),
+            )
+        return
+
+    seen_keys: set[str] = set()
+    for tex, node, _parent, _idx, key in _iter_cite_sites(doc):
+        if key in seen_keys:
+            continue
+        if key in shortcited_keys:
+            continue
+        bib_entry = entries.get(key)
+        if bib_entry is None:
+            continue
+        _bib, entry = bib_entry
         if _author_count(entry) < _AUTHOR_THRESHOLD:
             continue
-        if shortnames_in_preamble:
-            continue
-        if entry.key and entry.key in shortcited_keys:
-            continue
-        yield _violation(
-            bib=bib,
-            entry=entry,
+        seen_keys.add(key)
+        line, col = _helpers._lineno_col(tex, node.pos)
+        yield Violation(
+            file=tex.path,
+            line=line,
+            column=col,
             rule_id="JSS-BIBTEX-004",
+            severity=meta["severity"],
+            message=meta["message_template"],
             suggestion=(
                 "Add the 'shortnames' option to \\documentclass{jss}, or "
-                f"list this key in \\shortcites{{{entry.key}}}."
+                f"list this key in \\shortcites{{{key}}}."
             ),
+            fix=None,
         )
 
 

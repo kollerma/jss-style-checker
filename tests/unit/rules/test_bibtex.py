@@ -208,7 +208,7 @@ class TestBibtex004:
         tex_src = (
             r"\documentclass[article]{jss}" "\n"
             r"\shortcites{Many}" "\n"
-            r"\begin{document}" r"\end{document}" "\n"
+            r"\begin{document}\cite{Many}\end{document}" "\n"
         )
         bib_src = _bib_from_fixture("JSS-BIBTEX-004-bad.bib")
         doc = ParsedDocument(
@@ -217,17 +217,16 @@ class TestBibtex004:
         )
         assert list(check_jss_bibtex_004(doc, ToolConfig())) == []
 
-    def test_empty_key_not_shortcited(
+    def test_empty_key_entries_not_flagged(
         self, parse_tex_source, parse_bib_source
     ):
-        # Empty-key entries still fire (no key to match against shortcites).
-        # \nocite{*} widens scope so the empty-key entry is evaluated even
-        # though it can't be \cite'd by name.
+        # New behaviour: rule fires at the cite site, so an entry with an
+        # empty key cannot be referenced by name and therefore never fires.
+        # \nocite{*} no longer widens scope into the rule.
         tex_src = (
             r"\documentclass[article]{jss}" "\n"
-            r"\shortcites{foo}" "\n"
             r"\nocite{*}" "\n"
-            r"\begin{document}" r"\end{document}" "\n"
+            r"\begin{document}\end{document}" "\n"
         )
         bib_src = (
             "@article{,\n"
@@ -238,8 +237,62 @@ class TestBibtex004:
             tex_files=(parse_tex_source(tex_src),),
             bib_files=(parse_bib_source(bib_src),),
         )
+        assert list(check_jss_bibtex_004(doc, ToolConfig())) == []
+
+    def test_fires_at_cite_site_in_tex(
+        self, parse_tex_source, parse_bib_source
+    ):
+        tex_src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"See \citep{Many} for details." "\n"
+            r"\end{document}" "\n"
+        )
+        bib_src = _bib_from_fixture("JSS-BIBTEX-004-bad.bib")
+        tex = parse_tex_source(tex_src)
+        doc = ParsedDocument(
+            tex_files=(tex,),
+            bib_files=(parse_bib_source(bib_src),),
+        )
         violations = list(check_jss_bibtex_004(doc, ToolConfig()))
         assert len(violations) == 1
+        v = violations[0]
+        assert v.file == tex.path
+        assert v.line == 3  # the \citep line
+
+    def test_dedup_one_violation_per_key(
+        self, parse_tex_source, parse_bib_source
+    ):
+        # Same key cited five times → one warning at the first cite site.
+        tex_src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\citep{Many} \citep{Many} \citep{Many} \citep{Many} \citep{Many}" "\n"
+            r"\end{document}" "\n"
+        )
+        bib_src = _bib_from_fixture("JSS-BIBTEX-004-bad.bib")
+        doc = ParsedDocument(
+            tex_files=(parse_tex_source(tex_src),),
+            bib_files=(parse_bib_source(bib_src),),
+        )
+        violations = list(check_jss_bibtex_004(doc, ToolConfig()))
+        assert len(violations) == 1
+
+    def test_uncited_entry_not_flagged_when_tex_present(
+        self, parse_tex_source, parse_bib_source
+    ):
+        # Bib has the high-author entry but no .tex file cites it: with a
+        # tex file present (so cite scope is observable), no warning.
+        tex_src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\end{document}" "\n"
+        )
+        bib_src = _bib_from_fixture("JSS-BIBTEX-004-bad.bib")
+        doc = ParsedDocument(
+            tex_files=(parse_tex_source(tex_src),),
+            bib_files=(parse_bib_source(bib_src),),
+        )
+        assert list(check_jss_bibtex_004(doc, ToolConfig())) == []
 
     def test_documentclass_without_options_still_fires(
         self, parse_tex_source, parse_bib_source
