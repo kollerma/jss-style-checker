@@ -95,6 +95,42 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_pkg_inside_title_not_flagged(self, run_rule):
+        # JSS style forbids citations in titles, so a \pkg{X} inside \title{}
+        # can't satisfy CITE-002 — the rule should skip it. The first mention
+        # outside the title (in the body) is the one that needs a citation.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\title{Bayesian Inference with \pkg{rstan}}" "\n"
+            r"\begin{document}" "\n"
+            r"\maketitle" "\n"
+            r"We use \pkg{rstan} \citep{Stan:2024}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_inside_plaintitle_not_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\Plaintitle{Inference with rstan via \pkg{rstan}}" "\n"
+            r"\begin{document}" "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_in_body_after_title_mention_still_flagged(self, run_rule):
+        # The title mention is skipped, so the first BODY mention is the
+        # first-occurrence and must have a citation.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\title{Working with \pkg{rstan}}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \pkg{rstan} extensively." "\n"
+            r"\end{document}" "\n"
+        )
+        violations = run_rule(jss_cite_002, src)
+        assert len(violations) == 1
+
     def test_citation_in_prev_paragraph_still_flagged(self, run_rule):
         # Blank line BEFORE \pkg means the cite in the prior paragraph does
         # not satisfy the "same paragraph" rule.

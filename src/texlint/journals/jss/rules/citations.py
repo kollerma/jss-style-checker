@@ -37,6 +37,21 @@ _CITE_MACROS: frozenset[str] = frozenset(
 # Bibliography-rendering envs that should not trigger CITE-004.
 _BIB_ENVS: frozenset[str] = frozenset({"thebibliography"})
 
+# Title-like macros where citations are not allowed by JSS style — a
+# `\pkg{X}` mention inside one of these can never satisfy CITE-002, so
+# skip rather than flag it. Covers the standard `\title` plus the JSS
+# class's `\Plaintitle` / `\Shorttitle` siblings.
+_TITLE_MACROS: frozenset[str] = frozenset(
+    {"title", "Title", "Plaintitle", "Shorttitle"}
+)
+
+
+def _is_inside_title(ancestors: list[Any]) -> bool:
+    return any(
+        isinstance(node, LatexMacroNode) and node.macroname in _TITLE_MACROS
+        for node in ancestors
+    )
+
 
 # ---------------------------------------------------------------------------
 # JSS-CITE-002 — \pkg{X} needs a citation in the same paragraph.
@@ -76,13 +91,18 @@ def check_jss_cite_002(
     # earlier in the document.
     seen: set[str] = set()
     for tex in doc.all_tex_like():
-        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+        for node, ancestors, parent, idx in _helpers._walk_with_context(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode) and node.macroname == "pkg"
             ):
                 continue
             name = _helpers._macro_args_text(node, parent, idx)
             if not name:
+                continue
+            if _is_inside_title(ancestors):
+                # JSS style forbids citations in titles, so the rule cannot be
+                # satisfied here; treat as not-a-first-mention rather than
+                # flagging an unfixable violation.
                 continue
             if name in seen:
                 continue
