@@ -371,6 +371,45 @@ def jss_archive_packages_cmd(
     ctx.exit(code)
 
 
+@cli.group("cran-github")
+def cran_github_group() -> None:
+    """Scrape and consult the GitHub mirror of CRAN (`github.com/cran`)."""
+
+
+@cran_github_group.command("sync")
+@click.option(
+    "--cache",
+    "cache_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/cran-github.json"),
+    show_default=True,
+)
+@click.pass_context
+def cran_github_sync_cmd(ctx: click.Context, cache_path: Path) -> None:
+    """Fetch JSS-counterpart vignettes via GitHub Code Search and cache them."""
+    from eval import cran_github
+
+    code = cran_github.run_sync(cache_path=cache_path)
+    ctx.exit(code)
+
+
+@cran_github_group.command("packages")
+@click.option(
+    "--cache",
+    "cache_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/cran-github.json"),
+    show_default=True,
+)
+@click.pass_context
+def cran_github_packages_cmd(ctx: click.Context, cache_path: Path) -> None:
+    """List distinct package names from the cran-github cache."""
+    from eval import cran_github
+
+    code = cran_github.run_packages(cache_path=cache_path)
+    ctx.exit(code)
+
+
 @cli.group("iterate")
 def iterate_group() -> None:
     """Eval-improve loop bookkeeping."""
@@ -597,6 +636,25 @@ def corpus_fetch_cmd(
     help="JSS-archive cache file (used when --from-jss-archive is on).",
 )
 @click.option(
+    "--from-cran-github/--no-from-cran-github",
+    default=True,
+    show_default=True,
+    help=(
+        "Also consider candidates discovered via GitHub Code Search of "
+        "the cran org (eval/cran-github.json). Run `eval-jss cran-github "
+        "sync` first to populate the cache. Unioned with the jss-archive "
+        "pool when both flags are on."
+    ),
+)
+@click.option(
+    "--cran-github-cache",
+    "cran_github_cache",
+    type=click.Path(path_type=Path),
+    default=Path("eval/cran-github.json"),
+    show_default=True,
+    help="cran-github cache file (used when --from-cran-github is on).",
+)
+@click.option(
     "--jss-only/--no-jss-only",
     default=True,
     show_default=True,
@@ -617,6 +675,8 @@ def corpus_suggest_cmd(
     jss_only: bool,
     from_jss_archive: bool,
     jss_archive_cache: Path,
+    from_cran_github: bool,
+    cran_github_cache: Path,
 ) -> None:
     """Print CRAN packages with vignettes that are not yet in the manifest."""
     from eval import corpus as corpus_mod
@@ -627,6 +687,8 @@ def corpus_suggest_cmd(
         seed=seed,
         from_jss_archive=from_jss_archive,
         jss_archive_cache=jss_archive_cache,
+        from_cran_github=from_cran_github,
+        cran_github_cache=cran_github_cache,
         verify=verify,
         jss_only=jss_only,
     )

@@ -133,11 +133,25 @@ def _next_url_from_link(link_header: str) -> str | None:
     return None
 
 
-def _build_initial_url() -> str:
-    """Build the first-page URL for the single combined query.
+_BASE_QUERY = (
+    f"org:cran {_QUERY_LITERAL} "
+    "NOT language:HTML NOT language:R NOT path:*.cls"
+)
 
-    Code Search syntax: ``org:cran {jss} NOT language:HTML
-    NOT language:R NOT path:*.cls``.
+# Sub-queries that partition `org:cran` by the directory the vignette
+# lives in. JSS-counterpart vignettes overwhelmingly live in
+# ``vignettes/`` (the canonical source location) or ``inst/doc/`` (the
+# build-time copy). A single combined query saturates Code Search's
+# 1000-result-per-query cap; subdividing recovers the long tail.
+_PATH_PARTITIONS: tuple[str, ...] = ("vignettes", "inst/doc")
+
+
+def _build_initial_url(path_partition: str | None = None) -> str:
+    """Build the first-page URL for one path-partitioned query.
+
+    Code Search syntax (combined): ``org:cran {jss} NOT language:HTML
+    NOT language:R NOT path:*.cls`` — optionally with ``path:<dir>``
+    appended to subdivide the result set.
 
     - ``{jss}`` matches every JSS-class invocation (broad literal).
     - ``NOT language:HTML`` strips knit-rendered vignettes (the same
@@ -147,14 +161,15 @@ def _build_initial_url() -> str:
     - ``NOT path:*.cls`` strips ``jss.cls`` itself — the JSS class file
       defines the macros and would otherwise match every package that
       vendors it.
+    - ``path:<dir>`` (when set) restricts to a directory prefix; we
+      walk these per partition in :func:`fetch_all`.
 
     The ``cran`` mirror is an organisation, not a user — the legacy
     code-search backend 500s on ``user:cran``. Stick with ``org:``.
     """
-    q = (
-        f"org:cran {_QUERY_LITERAL} "
-        "NOT language:HTML NOT language:R NOT path:*.cls"
-    )
+    q = _BASE_QUERY
+    if path_partition is not None:
+        q = f"{q} path:{path_partition}"
     params = {"q": q, "per_page": str(_PER_PAGE)}
     return f"{_API_BASE}?{urllib.parse.urlencode(params)}"
 
@@ -183,25 +198,18 @@ def _candidate_from_item(item: dict) -> GhCandidate | None:
     )
 
 
-def fetch_all(*, token: str, max_pages: int = _MAX_PAGES) -> list[GhCandidate]:
-    """Walk all result pages for the single combined query and return
-    the matched, suffix-filtered candidates.
-
-    Stops at ``max_pages`` (1000 results, the API's per-query ceiling)
-    or when the ``Link`` header omits a ``rel=next``. Sleeps
-    ``_PAGE_SLEEP_SECONDS`` between pages to stay under the 30 req/min
-    code-search cap. Keeps only paths ending in
-    :data:`_KEEP_SUFFIXES`; dedupes on ``(repo, path)`` for stability.
-
-    On secondary-rate-limit 403 (which can fire mid-walk after several
-    successful pages), returns whatever was harvested so far and logs
-    a warning to stderr. A partial cache is still useful — the caller
-    can re-run later to top up — and is far better than losing every
-    candidate to a single mid-walk failure.
-    """
-    seen: set[tuple[str, str]] = set()
-    out: list[GhCandidate] = []
-    url: str | None = _build_initial_url()
+def _fetch_one_partition(
+    path_partition: str | None,
+    *,
+    token: str,
+    max_pages: int,
+    seen: set[tuple[str, str]],
+    out: list[GhCandidate],
+) -> bool:
+    """Walk pages for one ``path:<dir>`` query into shared ``seen`` /
+    ``out`` accumulators. Returns ``True`` on clean completion,
+    ``False`` if the secondary rate limit cut the walk short."""
+    url: str | None = _build_initial_url(path_partition)
     pages = 0
     while url and pages < max_pages:
         try:
@@ -209,13 +217,15 @@ def fetch_all(*, token: str, max_pages: int = _MAX_PAGES) -> list[GhCandidate]:
         except GhAuthError as err:
             if "rate limit" in str(err).lower():
                 import sys as _sys
+                label = f"path:{path_partition}" if path_partition else "all"
                 print(
-                    f"eval-jss cran-github: rate-limited at page {pages + 1}; "
-                    f"returning {len(out)} partial candidates. "
+                    f"eval-jss cran-github: rate-limited mid-walk on "
+                    f"{label} at page {pages + 1}; "
+                    f"keeping the {len(out)} candidates harvested so far. "
                     "Re-run later to top up.",
                     file=_sys.stderr,
                 )
-                return out
+                return False
             raise
         for item in body.get("items", []):
             cand = _candidate_from_item(item)
@@ -232,6 +242,36 @@ def fetch_all(*, token: str, max_pages: int = _MAX_PAGES) -> list[GhCandidate]:
         url = _next_url_from_link(link)
         if url:
             time.sleep(_PAGE_SLEEP_SECONDS)
+    return True
+
+
+def fetch_all(*, token: str, max_pages: int = _MAX_PAGES) -> list[GhCandidate]:
+    """Walk every path-partition's paginated query and merge results.
+
+    Iterates over :data:`_PATH_PARTITIONS` (currently ``vignettes`` and
+    ``inst/doc``), accumulating into a shared ``(repo, path)``-deduped
+    list. Each partition stops at ``max_pages`` or when the ``Link``
+    header omits ``rel=next``. Filters paths client-side to
+    :data:`_KEEP_SUFFIXES`. On a secondary-rate-limit 403, the current
+    partition stops early but later partitions are NOT attempted (the
+    rate limit applies per-token, not per-query).
+
+    A partial cache is still useful — the caller can re-run later and
+    the dedup keeps idempotence — and is far better than losing every
+    candidate to a single mid-walk failure.
+    """
+    seen: set[tuple[str, str]] = set()
+    out: list[GhCandidate] = []
+    for partition in _PATH_PARTITIONS:
+        ok = _fetch_one_partition(
+            partition,
+            token=token,
+            max_pages=max_pages,
+            seen=seen,
+            out=out,
+        )
+        if not ok:
+            break
     return out
 
 
@@ -286,28 +326,24 @@ def candidate_packages(cache_path: Path) -> set[str]:
 
 
 # -----------------------------------------------------------------------------
-# CLI entry point — invoked via ``python -m eval.cran_github``.
-# (CLI wiring into ``eval/cli.py`` is intentionally deferred — TODO:
-# add a ``cran-github sync/packages`` command group mirroring the
-# ``jss-archive`` group once this prototype is validated.)
+# CLI entry points (wired from eval/cli.py and ``python -m eval.cran_github``)
 # -----------------------------------------------------------------------------
 
 
-def main() -> int:
-    cache_path = Path("eval/cran-github.json")
+def run_sync(*, cache_path: Path) -> int:
+    """Sync the cran-github cache. Returns CLI exit code."""
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
         print(
             "eval-jss cran-github sync: GITHUB_TOKEN is not set. "
             "Export a PAT (public_repo scope) and re-run:\n"
-            "    export GITHUB_TOKEN=ghp_...\n"
-            "    python -m eval.cran_github"
+            "    export GITHUB_TOKEN=ghp_..."
         )
         return 2
     print(f"eval-jss cran-github sync: querying {_API_BASE} (org:cran) …")
     print(
         "eval-jss cran-github sync: first request URL = "
-        + _build_initial_url()
+        + _build_initial_url(_PATH_PARTITIONS[0])
     )
     try:
         n = sync_to_cache(cache_path, token=token)
@@ -322,6 +358,25 @@ def main() -> int:
         f"→ {cache_path}"
     )
     return 0
+
+
+def run_packages(*, cache_path: Path) -> int:
+    """Print distinct package names from the cache. Returns CLI exit code."""
+    cache = load_cache(cache_path)
+    if not cache.get("candidates"):
+        print(
+            f"eval-jss cran-github packages: no cache at {cache_path}. "
+            f"Run `eval-jss cran-github sync` first."
+        )
+        return 2
+    pkgs = sorted(candidate_packages(cache_path))
+    for name in pkgs:
+        print(name)
+    return 0
+
+
+def main() -> int:
+    return run_sync(cache_path=Path("eval/cran-github.json"))
 
 
 if __name__ == "__main__":

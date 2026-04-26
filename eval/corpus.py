@@ -546,6 +546,8 @@ def run_suggest(
     jss_only: bool = True,
     from_jss_archive: bool = True,
     jss_archive_cache: Path = Path("eval/jss-archive.json"),
+    from_cran_github: bool = True,
+    cran_github_cache: Path = Path("eval/cran-github.json"),
     packages_url: str = _CRAN_PACKAGES_URL,
 ) -> int:
     """Print candidate CRAN packages not already in the manifest.
@@ -585,7 +587,15 @@ def run_suggest(
         print(f"eval-jss: failed to fetch CRAN PACKAGES: {err}")
         return 2
 
-    archive_pool: set[str] | None = None
+    # Build the candidate pool: union of JSS-archive candidates (OAI-PMH
+    # title/subject heuristic) and cran-github candidates (Code Search
+    # for `\documentclass{jss}`). The two sources have only partial
+    # overlap — popular repos like dplyr/lme4 surface via OAI-PMH but
+    # not via the legacy code-search index, while the cran-github route
+    # surfaces several hundred lower-traffic JSS-counterpart packages
+    # the OAI-PMH heuristic misses. ``pool=None`` (both flags off) ⇒
+    # fall back to the random sample over CRAN's PACKAGES.
+    pool: set[str] | None = None
     if from_jss_archive:
         from eval.jss_archive import candidate_packages, load_cache
         if not jss_archive_cache.is_file():
@@ -596,10 +606,31 @@ def run_suggest(
                 f"CRAN sample."
             )
             return 2
-        archive_pool = candidate_packages(jss_archive_cache)
         if not load_cache(jss_archive_cache):
             print("eval-jss: jss-archive cache is empty; nothing to suggest.")
             return 0
+        pool = candidate_packages(jss_archive_cache)
+    if from_cran_github:
+        from eval.cran_github import (
+            candidate_packages as gh_candidate_packages,
+        )
+        from eval.cran_github import (
+            load_cache as gh_load_cache,
+        )
+        if not cran_github_cache.is_file():
+            print(
+                f"eval-jss: --from-cran-github given but cache not at "
+                f"{cran_github_cache}. Run `eval-jss cran-github sync` first, "
+                f"or pass --no-from-cran-github to skip that source."
+            )
+            return 2
+        gh_cache = gh_load_cache(cran_github_cache)
+        if not gh_cache.get("candidates"):
+            print("eval-jss: cran-github cache is empty; nothing to suggest.")
+            return 0
+        gh_pool = gh_candidate_packages(cran_github_cache)
+        pool = (pool | gh_pool) if pool is not None else gh_pool
+    archive_pool = pool
 
     candidates: list[tuple[str, str, str]] = []
     for rec in _parse_dcf(body.decode("utf-8", errors="replace")):

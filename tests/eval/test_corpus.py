@@ -441,6 +441,7 @@ def test_run_suggest_jss_only_filters_and_emits_vignette_column(
         verify=False,
         jss_only=True,
         from_jss_archive=False,
+        from_cran_github=False,
     )
     assert code == 0
     out = capsys.readouterr().out
@@ -470,6 +471,7 @@ def test_run_suggest_no_jss_only_keeps_three_column_format(
         verify=False,
         jss_only=False,
         from_jss_archive=False,
+        from_cran_github=False,
     )
     assert code == 0
     out = capsys.readouterr().out
