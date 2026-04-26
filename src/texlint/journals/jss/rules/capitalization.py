@@ -177,12 +177,21 @@ def _words_with_boundary(text: str) -> list[tuple[str, bool]]:
 def _looks_like_abbrev(token: str) -> bool:
     """True for abbreviations that are conventionally capitalised even
     in sentence style — all-caps 2–6 letter tokens (PDF, NIH, NACP),
-    or mixed-case scientific shorthands like mRNA / iPad.
+    plurals of those (SNPs, EOFs, IDs), or mixed-case scientific
+    shorthands like mRNA / iPad.
     """
     letters = re.sub(r"[^A-Za-z]", "", token)
     if not letters:
         return False
     if 2 <= len(letters) <= 6 and letters.isupper():
+        return True
+    # Plural of an all-caps abbreviation: 2-6 caps followed by a single 's'.
+    if (
+        3 <= len(letters) <= 7
+        and letters[-1] == "s"
+        and len(letters) - 1 >= 2
+        and letters[:-1].isupper()
+    ):
         return True
     # Mixed-case with an interior uppercase that follows a lowercase
     # (mRNA, iPad, gRPC). Single capital at the start is NOT a match.
@@ -319,6 +328,7 @@ def check_jss_cap_003(
                 tex, node.pos, group, "JSS-CAP-003",
                 "Use sentence style in the caption (capitalise only the "
                 "first word; proper names remain capitalised).",
+                collapse_runs=True,
             )
 
 
@@ -345,17 +355,112 @@ def _is_capitalised_offender(word: str) -> bool:
     return True
 
 
+def _is_run_eligible(word: str) -> bool:
+    """A capitalised non-single-letter token that can participate in a
+    proper-noun run. Single letters (``Q-Q``, ``X``) are math symbols
+    in research prose, not name fragments."""
+    bare = re.sub(r"[^A-Za-z]", "", word)
+    if not bare or len(bare) < 2:
+        return False
+    return bare[0].isupper()
+
+
+# Maximum length of a "proper-noun phrase" run; longer runs of
+# consecutive capitalised words signal title-case prose, not a name.
+_PROPER_NOUN_RUN_MAX = 3
+
+
 def _check_sentence_style(
-    tex: Any, pos: int, group: Any, rule_id: str, suggestion: str
+    tex: Any,
+    pos: int,
+    group: Any,
+    rule_id: str,
+    suggestion: str,
+    *,
+    collapse_runs: bool = False,
 ) -> Iterator[Violation]:
+    """Fire when ≥2 distinct offending capitalisations appear in ``group``.
+
+    ``collapse_runs=True`` (used for caption context) treats a short
+    multi-token capitalised compound — either hyphenated
+    (``Hardy-Weinberg``) or whitespace-separated with all pieces
+    capitalised (``Han Chinese``, ``Moby Dick``) — as a single
+    proper-noun phrase, counted at most once. Long runs (4+ caps in a
+    row, or runs containing a capitalised stopword like ``For`` /
+    ``Of``) are not collapsed: those signal title-case prose.
+
+    With ``collapse_runs=False`` (the default, used for section headings
+    where two-word capital runs ARE the title-case signature), each
+    capitalised non-proper-non-abbrev token contributes individually.
+    """
     text = _group_plain_text(group)
     words = _words_with_boundary(text)
+    if not words:
+        return
+
+    seen: set[str] = set()
     offenders = 0
-    for idx, (word, follows_boundary) in enumerate(words):
-        if idx == 0 or follows_boundary:
+    n = len(words)
+    i = 0
+    while i < n:
+        word, is_boundary = words[i]
+        is_start = (i == 0) or is_boundary
+        if not _is_run_eligible(word):
+            i += 1
             continue
-        if _is_capitalised_offender(word):
-            offenders += 1
+
+        # Greedily extend a run of consecutive eligible-capitalised tokens.
+        # _words_with_boundary doesn't mark non-sentence-boundary source-word
+        # starts, so a run can mix hyphen-pieces ("Hardy-Weinberg" → both
+        # pieces, second has boundary=False) with adjacent source words
+        # ("Han Chinese" → both pieces, second has boundary=False). For the
+        # purpose of compound-name recognition this is fine.
+        run_start = i
+        j = i + 1
+        while j < n:
+            nw, nb = words[j]
+            if nb or not _is_run_eligible(nw):
+                break
+            j += 1
+        run = [w for w, _ in words[run_start:j]]
+        run_text = "-".join(w.lower() for w in run)
+        any_known = any(
+            p in _PROPER_NOUNS or _looks_like_abbrev(p) for p in run
+        )
+        any_stopword = any(p.lower() in _TITLE_STOPWORDS for p in run)
+
+        is_compound = (
+            collapse_runs
+            and len(run) >= 2
+            and len(run) <= _PROPER_NOUN_RUN_MAX
+            and not any_stopword
+        )
+
+        if is_compound:
+            # Short run of consecutive caps with no stopwords → likely a
+            # multi-word proper noun. Anchored runs (containing a known
+            # proper noun or abbreviation) cost zero; un-anchored runs
+            # cost one (and only on first occurrence).
+            if not any_known and not is_start and run_text not in seen:
+                seen.add(run_text)
+                offenders += 1
+            i = j
+            continue
+
+        # Either a single-token cap, or a long run that's actually
+        # title-case. Fall back to the per-token offender check on each
+        # element of the run that wasn't already a sentence-start.
+        for k, w in enumerate(run):
+            if k == 0 and is_start:
+                continue
+            if _is_capitalised_offender(w):
+                key = w.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                offenders += 1
+        i = j
+
     if offenders >= 2:
         yield _violation(
             tex=tex, pos=pos, rule_id=rule_id, suggestion=suggestion

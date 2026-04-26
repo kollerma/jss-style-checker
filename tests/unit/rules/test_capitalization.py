@@ -126,6 +126,63 @@ class TestCap003:
         )
         assert run_rule(jss_cap_003, src) == []
 
+    def test_hyphen_compound_proper_noun_silent(self, run_rule):
+        # Hardy-Weinberg / Bradley-Terry: hyphenated capitalised compounds
+        # are treated as a single proper-noun phrase, so a single such
+        # compound in an otherwise-sentence-style caption never trips
+        # the ≥2-offender threshold.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{The parabola represents Hardy-Weinberg equilibrium.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        assert run_rule(jss_cap_003, src) == []
+
+    def test_adjacent_capitalised_pair_anchored_silent(self, run_rule):
+        # "Han Chinese" — Chinese is in the proper-noun list, anchoring
+        # the run so Han comes along for free.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{Plot of 225 SNPs from a Han Chinese population.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        assert run_rule(jss_cap_003, src) == []
+
+    def test_plural_abbreviation_silent(self, run_rule):
+        # Plurals like SNPs / EOFs / IDs (caps + lowercase 's') are
+        # recognised as abbreviations, not as offending capitalisation.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{Quality control on SNPs and EOFs across runs.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        assert run_rule(jss_cap_003, src) == []
+
+    def test_long_capital_run_still_fires(self, run_rule):
+        # 4+ consecutive capitalised words is the title-case signal — do
+        # NOT collapse to a "proper-noun phrase".
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{Distribution Of Random Sample Variables Here.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        assert len(run_rule(jss_cap_003, src)) == 1
+
+    def test_repeated_proper_noun_counted_once(self, run_rule):
+        # Same compound twice in a caption shouldn't double-count.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{Trajectories from the Rosenzweig-MacArthur model. " "\n"
+            r"Right: Rosenzweig-MacArthur model.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        assert run_rule(jss_cap_003, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-CAP-004 — Keywords sentence case
