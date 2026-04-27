@@ -64,6 +64,13 @@ _INLINE_CODE = re.compile(r"(?<!`)`([^`\n]+)`(?!`)")
 _BOLD_SPAN = re.compile(r"\*\*([^*\n]+)\*\*")
 _ITALIC_SPAN = re.compile(r"(?<![*\w])\*([^*\n]+)\*(?!\w)")
 
+# HTML comments `<!-- ... -->` — Markdown ships them as a way to hide
+# blocks of prose or commented-out code. The contents shouldn't be
+# linted (e.g., a commented-out R chunk's bare-package mentions are not
+# user-visible prose). Multi-line is common, so DOTALL; we preserve
+# newlines on substitution to keep line numbers source-accurate.
+_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+
 
 class _OffsetWalker:
     """Proxy around a ``pylatexenc.LatexWalker`` that shifts the line
@@ -227,11 +234,14 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
 
     # Strip inline R code (FR-010) and plain Markdown inline code spans
     # from each prose block. Both are replaced with equivalent-length
-    # whitespace so line/column offsets stay source-accurate.
+    # whitespace so line/column offsets stay source-accurate. Multi-line
+    # matches preserve newlines (otherwise stripped HTML comments would
+    # shrink the line count and rule-reported lines would shift).
     def _blank_match(m: Any) -> str:
-        return " " * len(m.group(0))
+        return "".join(c if c == "\n" else " " for c in m.group(0))
 
     def _scrub_prose(text: str) -> str:
+        text = _HTML_COMMENT.sub(_blank_match, text)
         text = _INLINE_R.sub(_blank_match, text)
         text = _INLINE_CODE.sub(_blank_match, text)
         text = _BOLD_SPAN.sub(_blank_match, text)

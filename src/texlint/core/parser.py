@@ -34,8 +34,12 @@ _UTF8_BOM = "﻿"
 
 # Spec 005 FR-001: line-preserving regex substitution over Sweave / knitr
 # R code chunks. Handles `<<>>=` (no label) and `<<lbl, opts>>=` forms.
+# CRLF tolerant: real CRAN vignettes (e.g., zoo-quickref.Rnw) ship with
+# `\r\n` line endings; without `\r?\n` the chunk-header line break never
+# matches and the entire chunk is left in the stripped source, exposing
+# code identifiers to MARKUP-001 / -003 etc.
 _RNW_CHUNK = re.compile(
-    r"<<[^>]*>>=\n.*?^@\s*$",
+    r"<<[^>]*>>=\r?\n.*?^@\s*$",
     re.DOTALL | re.MULTILINE,
 )
 

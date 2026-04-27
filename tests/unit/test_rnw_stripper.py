@@ -90,6 +90,19 @@ def test_inline_sexpr_replaced_with_spaces():
     assert len(out) == len(src)
 
 
+def test_crlf_chunk_is_blanked():
+    # Real CRAN vignettes (e.g., zoo-quickref.Rnw) ship with \r\n line
+    # endings. The chunk-header \n had to be made CRLF-tolerant; without
+    # `\r?\n` the regex misses entirely and the whole chunk leaks into
+    # the stripped output, exposing R code identifiers to markup rules.
+    src = "prose\r\n<<setup>>=\r\nlibrary(\"zoo\")\r\nx <- 1\r\n@\r\nmore\r\n"
+    out = strip_rnw_chunks(src)
+    assert "library" not in out
+    assert "<<setup>>=" not in out
+    # Newline count preserved (CRLF counts as one '\n' for splitlines).
+    assert out.count("\n") == src.count("\n")
+
+
 def test_multiline_sexpr_preserves_newlines():
     # `\Sexpr{round(coef(model),\n2)}` (line-broken arg) appears in real
     # JSS vignettes (e.g., cran_tram). The stripper must keep the

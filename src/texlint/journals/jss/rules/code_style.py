@@ -51,6 +51,12 @@ _SCIENTIFIC_NOTATION_RE = re.compile(
     r"\b\d+(?:\.\d+)?[eE][-+]?\d+\b"
 )
 
+# Bare string literals like "plot3logit-overview" or 'foo-bar' — the
+# dash inside is part of a filename / vignette id, not an operator.
+# Mask them before the missing-spaces check so `\code{vignette("a-b")}`
+# doesn't trip CODE-003. Conservative: single-line, no escape handling.
+_STRING_LITERAL_RE = re.compile(r"\"[^\"\n]*\"|'[^'\n]*'")
+
 
 def _violation(
     *, tex: Any, pos: int, rule_id: str, suggestion: str
@@ -158,9 +164,12 @@ def check_jss_code_003(
             # Single dotted/hyphenated identifier — treat as a name.
             if _IDENTIFIER_ONLY_RE.match(text.strip()):
                 continue
-            # Mask scientific notation before the operator check so the
-            # exponent sign in 2.22e-16 doesn't look like subtraction.
+            # Mask scientific notation and bare string literals before
+            # the operator check so the exponent sign in 2.22e-16
+            # doesn't look like subtraction and the dash in
+            # "plot3logit-overview" doesn't look like an operator.
             cleaned = _SCIENTIFIC_NOTATION_RE.sub("", text)
+            cleaned = _STRING_LITERAL_RE.sub("", cleaned)
             if _MISSING_SPACES_RE.search(cleaned):
                 yield _violation(
                     tex=tex,

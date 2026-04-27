@@ -128,6 +128,30 @@ class TestInlineR:
         # Width preserved so column offsets stay source-accurate.
         assert len(prose) == len(src.rstrip("\n"))
 
+    def test_html_comment_stripped(self):
+        # `<!-- ... -->` are commented-out blocks. Their contents are not
+        # user-visible prose, so MARKUP-001/002/003 should not fire on
+        # bare token names inside them.
+        src = "Visible.\n<!-- hidden \\pkg{secret} content -->\n\nMore.\n"
+        r = _parse(src)
+        joined = "".join(p.text for p in r.prose_blocks)
+        assert "secret" not in joined
+        assert "<!--" not in joined
+
+    def test_multiline_html_comment_preserves_newlines(self):
+        # Multi-line HTML comments must keep their interior newlines
+        # so subsequent rule firings report source-accurate lines.
+        src = (
+            "Visible above.\n"
+            "<!-- line 1\nline 2\nline 3 -->\n"
+            "Visible below.\n"
+        )
+        r = _parse(src)
+        # Confirm: the prose blocks together span the full line range
+        # (no shrinkage from the multi-line comment).
+        max_line = max((p.line + p.n_lines - 1) for p in r.prose_blocks)
+        assert max_line >= 5
+
 
 class TestProseBlocks:
     def test_blank_line_flushes_prose(self):

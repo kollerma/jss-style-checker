@@ -173,6 +173,24 @@ class TestCode003:
         )
         assert run_rule(jss_code_003, src) == []
 
+    def test_dash_inside_string_literal_silent(self, run_rule):
+        # \code{vignette("plot3logit-overview")} — the dash in the
+        # string literal is a vignette filename, not a subtraction
+        # operator. Mask string literals before the operator check.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r'\begin{document}\code{vignette("plot3logit-overview")}\end{document}'
+        )
+        assert run_rule(jss_code_003, src) == []
+
+    def test_dash_inside_single_quoted_string_silent(self, run_rule):
+        # Same exemption for single-quoted strings.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{f('a-b')}\end{document}"
+        )
+        assert run_rule(jss_code_003, src) == []
+
     def test_first_group_arg_fallback(self, parse_tex_source):
         from texlint.journals.jss.rules.code_style import _first_group_arg
         tex = parse_tex_source(r"\someunknownmacro{inside}")
