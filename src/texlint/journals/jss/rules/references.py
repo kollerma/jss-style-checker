@@ -259,6 +259,37 @@ def _word_is_uppercase_start(word: str) -> bool:
     return letters[0].isupper()
 
 
+# Markup macros whose argument has author-dictated case (package names,
+# language names, code identifiers). When a bib title's first word — or
+# the first word after a colon — is wrapped in one of these, the title
+# isn't violating title-case; the package author's chosen casing wins.
+_MARKUP_TITLE_MACROS = ("pkg", "proglang", "code", "fct", "verb")
+_MARKUP_TITLE_RE = re.compile(
+    r"\\(" + "|".join(_MARKUP_TITLE_MACROS) + r")\{"
+)
+
+
+def _starts_with_markup(title: str) -> bool:
+    """True if the source title starts with ``\\pkg{...}`` (or another
+    markup macro). Tolerates one optional outer brace from BibTeX
+    case-protection (`{\\pkg{X}: ...}`)."""
+    s = title.lstrip()
+    if s.startswith("{"):
+        s = s[1:].lstrip()
+    return bool(_MARKUP_TITLE_RE.match(s))
+
+
+def _after_colon_starts_with_markup(title: str) -> bool:
+    """True if the first non-space token after a colon is a markup macro."""
+    m = re.search(r":\s*(.+)", title, flags=re.DOTALL)
+    if not m:
+        return False
+    rest = m.group(1).lstrip()
+    if rest.startswith("{"):
+        rest = rest[1:].lstrip()
+    return bool(_MARKUP_TITLE_RE.match(rest))
+
+
 def check_jss_refs_006(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -273,8 +304,10 @@ def check_jss_refs_006(
         # REFS-002 already catches all-lowercase; don't double-fire.
         if all(w == w.lower() for w in words):
             continue
-        # First word must be capitalised.
-        if not _word_is_uppercase_start(words[0]):
+        # First word must be capitalised — unless the source wraps it in
+        # \pkg{...} / \proglang{...} / \code{...}, in which case the
+        # author-dictated case wins.
+        if not _starts_with_markup(title) and not _word_is_uppercase_start(words[0]):
             yield _violation(
                 bib=bib,
                 entry=entry,
@@ -282,9 +315,9 @@ def check_jss_refs_006(
                 suggestion="Capitalize the first word of the title.",
             )
             continue
-        # Word after ':' must be capitalised.
+        # Word after ':' must be capitalised — same markup exemption.
         m = re.search(r":\s*(\S+)", plain)
-        if m:
+        if m and not _after_colon_starts_with_markup(title):
             after = m.group(1)
             if not _word_is_uppercase_start(after):
                 yield _violation(

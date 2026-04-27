@@ -243,6 +243,33 @@ class TestRefs006:
         src = "@article{a, title={A Survey of Methods}, year={2020}}\n"
         assert run_rule(jss_refs_006, src, kind="bib") == []
 
+    def test_pkg_macro_first_word_silent(self, run_rule):
+        # \pkg{X} at title start — package author dictates the casing,
+        # not title-case rules. Don't fire even when the package name
+        # is conventionally lowercase.
+        src = (
+            r'@article{a, title={\pkg{ensembleBMA}: '
+            r'Probabilistic Forecasting}, year={2020}}'
+        ) + "\n"
+        assert run_rule(jss_refs_006, src, kind="bib") == []
+
+    def test_brace_wrapped_pkg_macro_first_word_silent(self, run_rule):
+        # BibTeX case-protection {\pkg{X}: ...} — same exemption.
+        src = (
+            r'@article{a, title={{\pkg{gunsales}: Statistical Analysis}}, '
+            r'year={2020}}'
+        ) + "\n"
+        assert run_rule(jss_refs_006, src, kind="bib") == []
+
+    def test_pkg_macro_after_colon_silent(self, run_rule):
+        # \pkg{} as the first token after ':' — exempt from after-colon
+        # capitalisation check.
+        src = (
+            r'@article{a, title={Unifying Optimization Algorithms: '
+            r'\pkg{optimx} for \proglang{R}}, year={2020}}'
+        ) + "\n"
+        assert run_rule(jss_refs_006, src, kind="bib") == []
+
     def test_title_no_letter_words(self, run_rule):
         src = "@article{a, title={1984}, year={2020}}\n"
         assert run_rule(jss_refs_006, src, kind="bib") == []
