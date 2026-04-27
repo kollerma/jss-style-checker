@@ -109,6 +109,35 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_pkg_inside_abstract_macro_not_flagged(self, run_rule):
+        # JSS convention: abstracts introduce package names by short
+        # reference; the actual \citep lands in §1 (Introduction). A
+        # \pkg{X} inside \Abstract{...} can never satisfy CITE-002,
+        # so don't fire here.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\title{Demo}" "\n"
+            r"\Abstract{We present \pkg{rstan} for Bayesian inference.}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \pkg{rstan} \citep{Stan:2024}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_inside_abstract_env_not_flagged(self, run_rule):
+        # Plain-LaTeX `abstract` environment (non-JSS class fallback) —
+        # same logic, environment ancestor instead of macro.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{abstract}" "\n"
+            r"We present \pkg{rstan} for Bayesian inference." "\n"
+            r"\end{abstract}" "\n"
+            r"We use \pkg{rstan} \citep{Stan:2024}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
     def test_pkg_inside_plaintitle_not_flagged(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"
