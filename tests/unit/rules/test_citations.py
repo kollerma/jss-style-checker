@@ -259,6 +259,29 @@ class TestCite004:
         good = (FIXTURE_DIR / "JSS-CITE-004-good.tex").read_text(encoding="utf-8")
         assert run_rule(jss_cite_004, good) == []
 
+    def test_month_name_date_not_flagged(self, run_rule):
+        # `(April, 1961)` is a point-in-time reference, not an
+        # author-year citation. The "surname" slot in the regex
+        # matches month names because they're "[A-Z][a-z]+", so
+        # we explicitly exempt month tokens.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The April, 1961 storm caused damage (April, 1961)." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_004, src) == []
+
+    def test_real_author_still_flagged_after_month_carveout(self, run_rule):
+        # Sanity-check: the carve-out is narrow.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"This was shown (Knuth, 1984)." "\n"
+            r"\end{document}" "\n"
+        )
+        assert len(run_rule(jss_cite_004, src)) == 1
+
     def test_masks_verbatim_env(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

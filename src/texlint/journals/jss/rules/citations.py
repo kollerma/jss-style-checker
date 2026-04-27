@@ -199,12 +199,23 @@ def check_jss_cite_003(
 
 _HARDCODED_CITE_RE = re.compile(
     r"\(\s*"
-    r"[A-Z][A-Za-z.'\-]+"               # Author surname
+    r"(?P<surname>[A-Z][A-Za-z.'\-]+)"   # Author-like first token
     r"(?:\s+(?:et\s+al\.?|and\s+[A-Z][A-Za-z.'\-]+))?"
     r",\s*"
     r"(?:19|20)\d{2}[a-z]?"
     r"\s*\)"
 )
+
+
+# Tokens that match the "[A-Z][A-Za-z.'-]+" surname slot but are
+# actually dates, not citations. ``(April, 1961)`` and friends are
+# point-in-time references, not author-year references.
+_NON_AUTHOR_TOKENS: frozenset[str] = frozenset({
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+    "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep", "Sept",
+    "Oct", "Nov", "Dec",
+})
 
 
 _MASK_MACROS: frozenset[str] = frozenset({"code", "url", "verb"})
@@ -282,6 +293,12 @@ def check_jss_cite_004(
             if not isinstance(node, LatexCharsNode):
                 continue
             for match in _HARDCODED_CITE_RE.finditer(node.chars):
+                if match.group("surname") in _NON_AUTHOR_TOKENS:
+                    # `(April, 1961)` etc. — a date, not an author-year
+                    # citation. Surname slot matches month names because
+                    # they're "[A-Z][a-z]+" but this isn't what the rule
+                    # is meant to flag.
+                    continue
                 ancestors = _collect_ancestors(tex.nodes, node) or []
                 if _is_masked(ancestors):
                     continue
