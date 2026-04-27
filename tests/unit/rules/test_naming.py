@@ -106,17 +106,32 @@ class TestName002:
         assert len(violations) == 1
 
     def test_both_publisher_and_journal_flagged(self, run_rule):
+        # `Chapman and Hall` is still mapped → "Chapman & Hall/CRC".
+        # `Springer` was dropped from the whitelist (modern JSS accepts
+        # the bare form), so only journal + publisher = 2 firings here.
         src = (
             "@article{x,\n"
             "  author    = {Doe},\n"
             "  title     = {T},\n"
             "  journal   = {JASA},\n"
-            "  publisher = {Springer},\n"
+            "  publisher = {Chapman and Hall},\n"
             "  year      = {2020}\n"
             "}\n"
         )
         violations = run_rule(jss_name_002, src, kind="bib")
         assert len(violations) == 2
+
+    def test_plain_springer_silent(self, run_rule):
+        # Modern JSS accepts plain "Springer" without "-Verlag".
+        src = (
+            "@book{x,\n"
+            "  author    = {Doe},\n"
+            "  title     = {T},\n"
+            "  publisher = {Springer},\n"
+            "  year      = {2020}\n"
+            "}\n"
+        )
+        assert run_rule(jss_name_002, src, kind="bib") == []
 
     def test_missing_publisher_silent(self, run_rule):
         src = "@article{x, title={T}, year={2020}}\n"
