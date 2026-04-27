@@ -78,6 +78,52 @@ class TestParseTexParseFailure:
         # Does not raise.
 
 
+class TestParseTexVerbatimMacroArgs:
+    """Pre-substitute TeX special chars inside \\code{...}, \\verb{...},
+    etc. so a literal ``$`` doesn't enter math mode and trip the parser
+    with a mismatched-brace error."""
+
+    def test_dollar_inside_code_does_not_parse_error(self, tmp_path: Path):
+        path = _write(
+            tmp_path,
+            "code-dollar.tex",
+            r"\documentclass{article}\begin{document}"
+            r"Use \code{$} for math.\end{document}",
+        )
+        parsed = parse_tex_file(path)
+        assert parsed.violations == ()
+
+    def test_percent_inside_code_does_not_parse_error(self, tmp_path: Path):
+        path = _write(
+            tmp_path,
+            "code-percent.tex",
+            r"\documentclass{article}\begin{document}\code{a%b}\end{document}",
+        )
+        parsed = parse_tex_file(path)
+        assert parsed.violations == ()
+
+    def test_underscore_inside_code_does_not_parse_error(self, tmp_path: Path):
+        path = _write(
+            tmp_path,
+            "code-underscore.tex",
+            r"\documentclass{article}\begin{document}\code{x_y}\end{document}",
+        )
+        parsed = parse_tex_file(path)
+        assert parsed.violations == ()
+
+    def test_normal_code_args_unchanged(self, tmp_path: Path):
+        path = _write(
+            tmp_path,
+            "code-normal.tex",
+            r"\documentclass{article}\begin{document}"
+            r"\code{normal_code()} works.\end{document}",
+        )
+        parsed = parse_tex_file(path)
+        assert parsed.violations == ()
+        # Length preservation: line/column positions stay accurate.
+        assert "normal" in parsed.source
+
+
 class TestParseTexMissingFile:
     def test_missing_path_produces_parse_error(self, tmp_path: Path):
         parsed = parse_tex_file(tmp_path / "nope.tex")

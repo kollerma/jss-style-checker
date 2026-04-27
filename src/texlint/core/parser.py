@@ -46,6 +46,41 @@ _RNW_CHUNK = re.compile(
 # Inline `\Sexpr{...}` (single-line only; nested braces unsupported).
 _RNW_SEXPR = re.compile(r"\\Sexpr\{[^{}]*\}")
 
+# Macros whose argument is conceptually verbatim: ``\code{$}``,
+# ``\verb{%}``, ``\url{...}`` etc. pylatexenc parses these as ordinary
+# LaTeX, so a literal ``$`` inside enters math mode and the trailing
+# ``}`` then mismatches. Pre-substitute the well-known TeX special
+# characters to ``?`` (length-preserving) so the parser stops choking.
+# Downstream rules don't rely on the literal special chars in these
+# macros' content — they're identifiers, file paths, or example tokens
+# whose case/spacing is what matters, not whether a ``$`` is literal.
+_VERBATIM_ARG_MACROS = re.compile(
+    r"\\(?:code|verb|url|email|fct|pkg|proglang)\{([^{}]*)\}"
+)
+_TEX_SPECIAL_CHARS = str.maketrans({
+    "$": "?", "%": "?", "&": "?", "_": "?",
+    "^": "?", "#": "?",
+})
+
+
+def _neutralize_verbatim_args(src: str) -> str:
+    """Replace TeX special characters inside ``\\code{...}`` and similar
+    macro arguments with ``?``, preserving length so line / column
+    positions stay source-authoritative. Without this pylatexenc enters
+    math mode on a stray ``$`` inside ``\\code{...}`` and emits
+    JSS-PARSE-000 on otherwise valid documents.
+    """
+    def _sub(m: re.Match[str]) -> str:
+        whole = m.group(0)
+        body = m.group(1)
+        safe = body.translate(_TEX_SPECIAL_CHARS)
+        # whole = "\\macro{body}" → splice the safe body back in at the
+        # same offset relative to the match start.
+        body_offset = m.start(1) - m.start(0)
+        return whole[:body_offset] + safe + whole[body_offset + len(body):]
+
+    return _VERBATIM_ARG_MACROS.sub(_sub, src)
+
 
 def strip_rnw_chunks(src: str) -> str:
     """Replace R code chunks and inline ``\\Sexpr`` calls with
@@ -127,6 +162,7 @@ def parse_tex_source(source: str, path: Path) -> ParsedTexFile:
     and by :mod:`texlint.core.rmd_parser` (which parses raw-LaTeX
     islands extracted from Rmd prose blocks).
     """
+    source = _neutralize_verbatim_args(source)
     walker = LatexWalker(source, tolerant_parsing=False)
     try:
         nodes, _pos, _length = walker.get_latex_nodes()
