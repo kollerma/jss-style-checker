@@ -90,6 +90,19 @@ def test_inline_sexpr_replaced_with_spaces():
     assert len(out) == len(src)
 
 
+def test_multiline_sexpr_preserves_newlines():
+    # `\Sexpr{round(coef(model),\n2)}` (line-broken arg) appears in real
+    # JSS vignettes (e.g., cran_tram). The stripper must keep the
+    # interior `\n` so downstream rules report source-authoritative
+    # line numbers — replacing it with a space dropped the newline and
+    # caused off-by-N positions for every rule firing after the Sexpr.
+    src = "Mean is \\Sexpr{round(coef(m),\n2)} approximately.\n"
+    out = strip_rnw_chunks(src)
+    assert "\\Sexpr" not in out
+    assert len(out) == len(src)
+    assert out.count("\n") == src.count("\n")
+
+
 # ---------------------------------------------------------------------------
 # S-5 unclosed chunk pass-through
 # ---------------------------------------------------------------------------

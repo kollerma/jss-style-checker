@@ -49,12 +49,21 @@ def strip_rnw_chunks(src: str) -> str:
     and line numbers remain source-authoritative.
 
     Invariant: ``strip_rnw_chunks(src).count("\\n") == src.count("\\n")``.
+
+    Note: an ``\\Sexpr{...}`` argument can contain a literal newline
+    (knitr accepts the line-broken form). We preserve those newlines —
+    replacing only non-``\\n`` characters with spaces — otherwise the
+    stripped output's line count would shrink and downstream rules
+    would report off-by-N positions in the original ``.Rnw``.
     """
     def _blank_chunk(m: re.Match[str]) -> str:
         return "\n" * m.group(0).count("\n")
 
+    def _blank_inline(m: re.Match[str]) -> str:
+        return "".join(c if c == "\n" else " " for c in m.group(0))
+
     stripped = _RNW_CHUNK.sub(_blank_chunk, src)
-    stripped = _RNW_SEXPR.sub(lambda m: " " * len(m.group(0)), stripped)
+    stripped = _RNW_SEXPR.sub(_blank_inline, stripped)
     return stripped
 
 
