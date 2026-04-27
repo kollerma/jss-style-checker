@@ -95,6 +95,14 @@ _ITALIC_SPAN = re.compile(r"(?<![*\w])\*([^*\n]+)\*(?!\w)")
 # newlines on substitution to keep line numbers source-accurate.
 _HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
+# Bare URLs (`<https://...>`, `[text](https://...)`, raw `https://...`)
+# in Rmd prose. Package names appearing inside a URL path are not
+# package references in prose and should not trip MARKUP-001/002 — the
+# author can't wrap them in \pkg{} without breaking the link.
+_AUTOLINK_URL = re.compile(r"<https?://[^>\s]+>")
+_LINK_URL = re.compile(r"\]\([^)\s]+\)")
+_BARE_URL = re.compile(r"https?://[^\s]+")
+
 
 class _OffsetWalker:
     """Proxy around a ``pylatexenc.LatexWalker`` that shifts the line
@@ -269,6 +277,9 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
 
     def _scrub_prose(text: str) -> str:
         text = _HTML_COMMENT.sub(_blank_match, text)
+        text = _AUTOLINK_URL.sub(_blank_match, text)
+        text = _LINK_URL.sub(_blank_match, text)
+        text = _BARE_URL.sub(_blank_match, text)
         text = _INLINE_R.sub(_blank_match, text)
         text = _INLINE_CODE.sub(_blank_match, text)
         text = _BOLD_SPAN.sub(_blank_match, text)

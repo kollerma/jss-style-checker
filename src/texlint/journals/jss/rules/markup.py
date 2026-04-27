@@ -85,6 +85,39 @@ def _is_superscripted(chars: str, offset: int, token_len: int) -> bool:
 # ---------------------------------------------------------------------------
 
 
+# Tokens whose immediate right-context turns the token from a package
+# reference into a domain-statistics term. ``sandwich estimator`` /
+# ``sandwich matrix`` / ``sandwich type`` are statistical-method usages
+# of "sandwich" — not references to the `sandwich` R package — and
+# wrapping them in `\pkg{}` would be wrong. Same for ``Stan model``
+# (the framework, not the model package), ``Stata syntax`` (other
+# software). Extend conservatively: only on direct adjacency.
+_PACKAGE_TERM_DISAMBIGUATORS: dict[str, frozenset[str]] = {
+    "sandwich": frozenset({
+        "estimator", "estimators", "matrix", "matrices", "type", "types",
+        "expression", "expressions", "method", "methods", "form", "forms",
+        "covariance", "construction",
+    }),
+}
+
+
+def _disambiguates_to_method(chars: str, offset: int, token: str) -> bool:
+    """True if the word(s) immediately AFTER ``token`` at ``offset`` in
+    ``chars`` indicate a non-package, statistical-method usage of the
+    token (e.g., ``sandwich estimator``).
+    """
+    followers = _PACKAGE_TERM_DISAMBIGUATORS.get(token)
+    if not followers:
+        return False
+    tail = chars[offset + len(token) :].lstrip()
+    if not tail:
+        return False
+    next_word_match = re.match(r"[A-Za-z]+", tail)
+    if next_word_match is None:
+        return False
+    return next_word_match.group(0).lower() in followers
+
+
 def _check_bare_terms(
     doc: ParsedDocument,
     *,
@@ -107,6 +140,8 @@ def _check_bare_terms(
                 ):
                     continue
                 if _is_superscripted(node.chars, offset, len(token)):
+                    continue
+                if _disambiguates_to_method(node.chars, offset, token):
                     continue
                 abs_pos = node.pos + offset
                 yield _violation(

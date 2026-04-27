@@ -138,6 +138,27 @@ class TestInlineR:
         assert "secret" not in joined
         assert "<!--" not in joined
 
+    def test_autolink_url_stripped(self):
+        # `<https://yihui.org/knitr/>` — the path contains "knitr"; the
+        # rule should not flag it as a bare package mention.
+        src = "See <https://yihui.org/knitr/> for docs.\n"
+        r = _parse(src)
+        prose = r.prose_blocks[0].text
+        assert "knitr" not in prose
+
+    def test_inline_link_url_stripped(self):
+        # `[text](url)` — the parenthesised URL portion gets blanked.
+        src = "[hooks](https://yihui.org/knitr/hooks/)\n"
+        r = _parse(src)
+        prose = r.prose_blocks[0].text
+        assert "knitr" not in prose
+
+    def test_bare_url_stripped(self):
+        src = "See https://github.com/yihui/knitr in source.\n"
+        r = _parse(src)
+        prose = r.prose_blocks[0].text
+        assert "knitr" not in prose
+
     def test_multiline_html_comment_preserves_newlines(self):
         # Multi-line HTML comments must keep their interior newlines
         # so subsequent rule firings report source-accurate lines.

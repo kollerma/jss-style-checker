@@ -120,6 +120,37 @@ class TestMarkup002:
         )
         assert run_rule(jss_markup_002, src) == []
 
+    def test_sandwich_estimator_not_flagged(self, run_rule):
+        # "sandwich estimator" is a statistical method, not the
+        # `sandwich` R package — disambiguate on the next word.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use the sandwich estimator for robust SEs." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_002, src) == []
+
+    def test_sandwich_method_not_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The sandwich method computes a robust covariance." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_002, src) == []
+
+    def test_sandwich_alone_still_flagged(self, run_rule):
+        # Bare "sandwich" not followed by a disambiguator IS the
+        # package reference — keep flagging it.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We rely on sandwich for robust inference." "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_markup_002, src)) == 1
+
 
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-003 — function / command names
