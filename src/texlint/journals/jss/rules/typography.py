@@ -251,9 +251,28 @@ def _first_caption_index(children: list[Any]) -> int | None:
 
 
 def _has_content_before(children: list[Any], cap_idx: int) -> bool:
+    """True if the figure / table body has visible content before the
+    first ``\\caption{}``.
+
+    A whitespace-only chars node with many newlines in a row is a
+    fingerprint of a stripped Sweave / knitr code chunk (the stripper
+    blanks the chunk to ``\\n``-only filler). Treat that as content,
+    since the chunk produces the figure (e.g., ``<<fig=TRUE>>=``). A
+    single ``\\n`` between ``\\begin{figure}`` and the next macro is
+    just normal source formatting and is NOT treated as content.
+    """
     for child in children[:cap_idx]:
-        if isinstance(child, LatexCharsNode) and not child.chars.strip():
-            continue
+        if isinstance(child, LatexCharsNode):
+            if not child.chars.strip():
+                # Many consecutive newlines → stripped knitr chunk; count
+                # as content. The threshold of 3 newlines is empirical:
+                # 1-2 newlines are normal source formatting (a blank
+                # line between \begin{figure} and \caption); 3+ implies
+                # a multi-line chunk body.
+                if child.chars.count("\n") >= 3:
+                    return True
+                continue
+            return True
         if isinstance(child, LatexMacroNode) and child.macroname in {
             "centering", "label", "small", "footnotesize", "scriptsize",
         }:
@@ -283,15 +302,12 @@ def _rule(rule_id: str, check_fn, formats: frozenset[str] | None = None) -> Rule
 jss_typo_001 = _rule("JSS-TYPO-001", check_jss_typo_001)
 jss_typo_002 = _rule("JSS-TYPO-002", check_jss_typo_002)
 jss_typo_003 = _rule("JSS-TYPO-003", check_jss_typo_003)
-# TYPO-004 inspects the figure/table environment's child nodes to check
-# `\caption{}` ordering. The Rnw stripper blanks out R chunks, so the
-# figure body looks empty after stripping and \caption appears first
-# inside \begin{figure} regardless of where the author actually put
-# it. Narrow to native .tex until we can recognise stripped-chunk
-# whitespace as content.
-jss_typo_004 = _rule(
-    "JSS-TYPO-004", check_jss_typo_004, formats=frozenset({"tex"})
-)
+# TYPO-004 now fires on any tex-like input. _has_content_before
+# recognises a chunk-shaped whitespace block (≥3 consecutive newlines)
+# as content, so the Rnw stripper's blanked chunks are treated as
+# figure source and the rule no longer false-positives on
+# `<<fig=TRUE>>=` chunks placed before `\caption{}`.
+jss_typo_004 = _rule("JSS-TYPO-004", check_jss_typo_004)
 
 
 rules: tuple[Rule, ...] = (jss_typo_001, jss_typo_002, jss_typo_003, jss_typo_004)

@@ -188,6 +188,34 @@ class TestTypo004:
         )
         assert len(run_rule(jss_typo_004, src)) == 1
 
+    def test_stripped_knitr_chunk_treated_as_content(self, run_rule):
+        # Many consecutive newlines (≥3) before \caption fingerprint a
+        # stripped Sweave / knitr code chunk that produces the figure
+        # via fig=TRUE; the rule should not fire.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}" "\n"
+            "\n\n\n\n\n"  # simulated stripped chunk: 5 blank lines
+            r"\caption{Caption after chunk-produced figure.}" "\n"
+            r"\end{figure}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_typo_004, src) == []
+
+    def test_single_newline_before_caption_still_flagged(self, run_rule):
+        # A single newline between \begin{figure} and \caption is
+        # normal source formatting, NOT a chunk fingerprint — rule
+        # still fires when there's no other content.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}" "\n"
+            r"\caption{Caption.}\includegraphics{x}\end{figure}" "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_typo_004, src)) == 1
+
 
 def test_group_visible_children_skips_label(parse_tex_source):
     from pylatexenc.latexwalker import LatexGroupNode
