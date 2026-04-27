@@ -124,6 +124,51 @@ class TestParseTexVerbatimMacroArgs:
         assert "normal" in parsed.source
 
 
+class TestParseTexVerbatimEnvironments:
+    """Sweave / knitr / JSS code-listing envs (Sinput, Soutput, Code,
+    CodeInput, alltt, …) aren't in pylatexenc's default DB, so a stray
+    ``$`` or ``%`` inside trips the parser. Pre-substitution makes
+    these envs parse-error-free."""
+
+    def test_sinput_with_dollar_silent(self, tmp_path: Path):
+        path = _write(
+            tmp_path,
+            "sinput.tex",
+            r"\documentclass{article}\begin{document}"
+            "\\begin{Sinput}\nfoo $bar baz%\n\\end{Sinput}\n"
+            r"\end{document}",
+        )
+        parsed = parse_tex_file(path)
+        assert parsed.violations == ()
+
+    def test_codeinput_with_underscore_silent(self, tmp_path: Path):
+        path = _write(
+            tmp_path,
+            "codeinput.tex",
+            r"\documentclass{article}\begin{document}"
+            "\\begin{CodeInput}\nx_y = 1\n\\end{CodeInput}\n"
+            r"\end{document}",
+        )
+        parsed = parse_tex_file(path)
+        assert parsed.violations == ()
+
+    def test_multiline_verbatim_env_preserves_line_count(self, tmp_path: Path):
+        # 5 lines of body — line numbers must stay source-authoritative
+        # so downstream rule firings report correct positions.
+        body = "line1 $a\nline2 %b\nline3\nline4\nline5"
+        src = (
+            r"\documentclass{article}" + "\n"
+            r"\begin{document}" + "\n"
+            "\\begin{Sinput}\n" + body + "\n\\end{Sinput}\n"
+            r"\end{document}" + "\n"
+        )
+        path = _write(tmp_path, "multi-sinput.tex", src)
+        parsed = parse_tex_file(path)
+        assert parsed.violations == ()
+        # Line count unchanged after neutralisation.
+        assert parsed.source.count("\n") == src.count("\n")
+
+
 class TestParseTexMissingFile:
     def test_missing_path_produces_parse_error(self, tmp_path: Path):
         parsed = parse_tex_file(tmp_path / "nope.tex")

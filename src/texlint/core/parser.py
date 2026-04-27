@@ -57,10 +57,11 @@ _RNW_SEXPR = re.compile(r"\\Sexpr\{[^{}]*\}")
 _VERBATIM_ARG_MACROS = re.compile(
     r"\\(?:code|verb|url|email|fct|pkg|proglang)\{([^{}]*)\}"
 )
-_TEX_SPECIAL_CHARS = str.maketrans({
-    "$": "?", "%": "?", "&": "?", "_": "?",
-    "^": "?", "#": "?",
-})
+# Only `$` (math-mode entry) and `%` (comment-to-end-of-line) actually
+# trip pylatexenc's strict parser. `_`, `^`, `&`, `#` are tolerated as
+# regular chars in text mode, so don't substitute them — leaving
+# CODE-001's # comment-detection inside CodeInput envs intact.
+_TEX_SPECIAL_CHARS = str.maketrans({"$": "?", "%": "?"})
 
 
 def _neutralize_verbatim_args(src: str) -> str:
@@ -80,6 +81,38 @@ def _neutralize_verbatim_args(src: str) -> str:
         return whole[:body_offset] + safe + whole[body_offset + len(body):]
 
     return _VERBATIM_ARG_MACROS.sub(_sub, src)
+
+
+# Sweave / knitr / JSS-style code-listing environments. pylatexenc
+# doesn't know they're verbatim, so any TeX special chars (`$`, `%`,
+# unbalanced `{` `}`, …) inside their bodies trips strict-parse with
+# either math-mode-entry or environment-mismatch errors. Pre-substitute
+# special chars to ``?`` so the body parses as innocuous chars while
+# line / column offsets stay source-authoritative.
+_VERBATIM_ENVS_RE = re.compile(
+    r"(\\begin\{(?P<name>Sinput|Soutput|Scode|Code|CodeInput|CodeOutput"
+    r"|CodeChunk|alltt|tabbing|verbatim\*|lstlisting)\}.*?\\end\{(?P=name)\})",
+    re.DOTALL,
+)
+
+
+def _neutralize_verbatim_envs(src: str) -> str:
+    """Replace TeX special chars inside Sweave/knitr/jss verbatim envs
+    with ``?``. Length-preserving (newlines preserved by the translation
+    table since ``\\n`` isn't in the map)."""
+    def _sub(m: re.Match[str]) -> str:
+        whole = m.group(0)
+        # Locate the env body (everything between \begin{...} and \end{...}).
+        head_re = re.match(r"\\begin\{[^}]+\}", whole)
+        if head_re is None:
+            return whole
+        head_end = head_re.end()
+        tail_start = whole.rfind(r"\end{")
+        body = whole[head_end:tail_start]
+        safe = body.translate(_TEX_SPECIAL_CHARS)
+        return whole[:head_end] + safe + whole[tail_start:]
+
+    return _VERBATIM_ENVS_RE.sub(_sub, src)
 
 
 def strip_rnw_chunks(src: str) -> str:
@@ -162,6 +195,7 @@ def parse_tex_source(source: str, path: Path) -> ParsedTexFile:
     and by :mod:`texlint.core.rmd_parser` (which parses raw-LaTeX
     islands extracted from Rmd prose blocks).
     """
+    source = _neutralize_verbatim_envs(source)
     source = _neutralize_verbatim_args(source)
     walker = LatexWalker(source, tolerant_parsing=False)
     try:
