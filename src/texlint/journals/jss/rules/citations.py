@@ -63,6 +63,42 @@ def _is_inside_no_cite_zone(ancestors: list[Any]) -> bool:
     return False
 
 
+# Macros whose body is a *definition* of new markup, not user-visible
+# prose. ``\pkg{X}`` inside ``\newcommand{\foo}{\pkg{X}}`` is a template
+# fragment; the actual mention happens at every ``\foo`` expansion. The
+# rule can't reliably flag the definition site (no surrounding
+# paragraph context applies) — defer to point-of-usage like BIBTEX-004.
+_DEFINITION_MACROS: frozenset[str] = frozenset(
+    {"newcommand", "renewcommand", "providecommand", "def", "edef",
+     "newcommand*", "renewcommand*", "providecommand*"}
+)
+
+
+def _is_inside_definition(ancestors: list[Any]) -> bool:
+    return any(
+        isinstance(node, LatexMacroNode) and node.macroname in _DEFINITION_MACROS
+        for node in ancestors
+    )
+
+
+# Pandoc-flavoured Rmd citation marker: `[@key]`, `[@key, p. 5]`,
+# `[@a; @b]`, or bare `@key`. The Rmd parser passes prose to LaTeX
+# parsing, but the `[@...]` syntax stays as bare characters; the LaTeX
+# walker doesn't recognise it as a citation. Detect it textually so
+# CITE-002 doesn't fire on a `\pkg{X}` whose Rmd-style citation is
+# adjacent.
+_RMD_AT_CITATION = re.compile(r"\[\s*@[A-Za-z][\w:.\-]*|(?<![A-Za-z])@[A-Za-z][\w:.\-]*")
+
+
+def _has_rmd_citation_in_span(parent: Any, start: int, end: int) -> bool:
+    for sibling in parent[start:end]:
+        if isinstance(sibling, LatexCharsNode) and _RMD_AT_CITATION.search(
+            sibling.chars
+        ):
+            return True
+    return False
+
+
 # ---------------------------------------------------------------------------
 # JSS-CITE-002 — \pkg{X} needs a citation in the same paragraph.
 # ---------------------------------------------------------------------------
@@ -116,6 +152,12 @@ def check_jss_cite_002(
                 # unfixable violation. The first mention in §1 will still
                 # be required to carry a citation.
                 continue
+            if _is_inside_definition(ancestors):
+                # `\pkg{X}` inside a `\newcommand{\foo}{\pkg{X}}` body is
+                # a template fragment, not a first-mention. The actual
+                # mention happens at every `\foo` use; CITE-002 can flag
+                # those instead.
+                continue
             if name in seen:
                 continue
             seen.add(name)
@@ -125,6 +167,12 @@ def check_jss_cite_002(
                 and sibling.macroname in _CITE_MACROS
                 for sibling in parent[start:end]
             ):
+                continue
+            if _has_rmd_citation_in_span(parent, start, end):
+                # Pandoc/Rmd `[@key]` or `@key` citation in the same
+                # paragraph satisfies CITE-002. The Rmd parser doesn't
+                # convert these to `\cite{}` macros, so we recognise
+                # them textually here.
                 continue
             line, col = _helpers._lineno_col(tex, node.pos)
             yield Violation(

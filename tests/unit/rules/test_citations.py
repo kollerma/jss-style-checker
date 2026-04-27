@@ -109,6 +109,39 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_pkg_inside_newcommand_not_flagged(self, run_rule):
+        # \pkg{X} in a \newcommand body is a definition fragment,
+        # not a first-mention; the actual mention is at expansion time.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\newcommand{\stochvol}{\pkg{stochvol}}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \stochvol\ \citep{Kastner:2016}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_with_rmd_at_citation_not_flagged(self, run_rule):
+        # Pandoc/Rmd cite syntax `[@key]` in the same paragraph as
+        # the first \pkg{X} mention satisfies CITE-002.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\pkg{Forecast Pro} [@ForecastPro00] is well-known." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_with_bare_at_citation_not_flagged(self, run_rule):
+        # Bare `@key` (Pandoc inline citation) also counts.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"@TRAMOSEATS98 implemented this in \pkg{TRAMO}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
     def test_pkg_inside_abstract_macro_not_flagged(self, run_rule):
         # JSS convention: abstracts introduce package names by short
         # reference; the actual \citep lands in §1 (Introduction). A
