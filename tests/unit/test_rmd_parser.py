@@ -153,6 +153,26 @@ class TestInlineR:
         assert max_line >= 5
 
 
+class TestKnitrYamlTag:
+    def test_r_tag_in_frontmatter_does_not_parse_error(self):
+        # knitr allows `!r ...` in YAML frontmatter to evaluate R at
+        # knit time. Default PyYAML SafeLoader rejects the unknown tag;
+        # our custom loader treats it as the underlying scalar value.
+        src = (
+            "---\n"
+            "title: \"Demo\"\n"
+            "params:\n"
+            "  threshold: !r 0.5\n"
+            "  cutoff: !r seq(0, 1, by = 0.1)\n"
+            "---\n"
+            "\nProse here.\n"
+        )
+        r = _parse(src)
+        # No parse errors.
+        parse_errs = [v for v in r.violations if v.rule_id == "JSS-PARSE-000"]
+        assert parse_errs == []
+
+
 class TestProseBlocks:
     def test_blank_line_flushes_prose(self):
         src = "Para one.\n\nPara two.\n"

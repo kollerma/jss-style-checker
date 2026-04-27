@@ -25,6 +25,30 @@ from texlint.api import (
     Violation,
 )
 
+
+class _KnitrYamlLoader(yaml.SafeLoader):
+    """SafeLoader that tolerates knitr's ``!r`` custom tag.
+
+    knitr lets authors write ``foo: !r expr()`` in YAML frontmatter to
+    have ``expr()`` evaluated as R at knit time. PyYAML's SafeLoader
+    rejects unknown tags with "could not determine a constructor". We
+    silently treat ``!r ...`` as the underlying literal — the linter
+    isn't going to evaluate R anyway.
+    """
+
+
+def _knitr_r_tag_constructor(loader: yaml.SafeLoader, node: yaml.Node):
+    if isinstance(node, yaml.ScalarNode):
+        return loader.construct_scalar(node)
+    if isinstance(node, yaml.SequenceNode):
+        return loader.construct_sequence(node)
+    if isinstance(node, yaml.MappingNode):
+        return loader.construct_mapping(node)
+    return None
+
+
+_KnitrYamlLoader.add_constructor("!r", _knitr_r_tag_constructor)
+
 _PARSE_RULE_ID = "JSS-PARSE-000"
 
 # Fenced-code open / close patterns. An opening fence may carry an info
@@ -173,7 +197,10 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
             if line.strip() == "---":
                 text = "\n".join(fm_buffer)
                 try:
-                    loaded = yaml.safe_load(text) if text.strip() else {}
+                    loaded = (
+                        yaml.load(text, Loader=_KnitrYamlLoader)
+                        if text.strip() else {}
+                    )
                     frontmatter = loaded if isinstance(loaded, dict) else {}
                 except yaml.YAMLError as exc:
                     violations.append(_parse_error(
