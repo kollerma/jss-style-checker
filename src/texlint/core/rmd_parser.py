@@ -55,8 +55,11 @@ _PARSE_RULE_ID = "JSS-PARSE-000"
 # string in curly braces (e.g. ```{r, fig.width=5}) or directly after
 # the backticks (```python). The closing fence is a bare ``` possibly
 # followed by trailing whitespace.
-_FENCE_OPEN = re.compile(r"^```(?:\{([^}]*)\}|\s*([A-Za-z0-9_.+-]+))?\s*$")
-_FENCE_CLOSE = re.compile(r"^```\s*$")
+# Leading whitespace tolerated so fences nested inside Markdown list
+# items (where the list-item context indents the fence by 4 spaces)
+# are still recognised as code blocks.
+_FENCE_OPEN = re.compile(r"^\s*```(?:\{([^}]*)\}|\s*([A-Za-z0-9_.+-]+))?\s*$")
+_FENCE_CLOSE = re.compile(r"^\s*```\s*$")
 
 # ATX heading: 1-6 '#' followed by space and text.
 _HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
