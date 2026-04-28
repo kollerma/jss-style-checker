@@ -100,11 +100,8 @@ CANONICAL: Mapping[str, str] = MappingProxyType(dict(_CANONICAL_RAW))
 # up BibTeX ``publisher`` and ``journal`` fields against this mapping.
 
 _PUBLISHER_CANONICAL_RAW: Mapping[str, str] = {
-    # SG-048 originally pinned "Springer" → "Springer-Verlag", but
-    # modern JSS bibliographies (post-2010) accept plain "Springer";
-    # human-review labels split ~50/50 on this rule firing, indicating
-    # reviewer disagreement rather than a clear convention. Dropped to
-    # avoid penalising the now-canonical short form.
+    # SG-048: Springer is published by Springer-Verlag
+    "Springer": "Springer-Verlag",
     # SG-049: Chapman & Hall / CRC
     "Chapman and Hall": "Chapman & Hall/CRC",
     "Chapman and Hall/CRC": "Chapman & Hall/CRC",
