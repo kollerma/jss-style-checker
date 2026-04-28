@@ -143,22 +143,24 @@ def _words(text: str) -> list[str]:
 _SENTENCE_BOUNDARY_RE = re.compile(r"[.:?!]\s+(\S+)")
 
 
-def _words_with_boundary(text: str) -> list[tuple[str, bool]]:
-    """Like ``_words`` but each entry carries a flag for whether the word
-    starts a new sub-sentence — i.e., the previous source token ended
-    with ``.``, ``:``, ``?``, or ``!``. Sub-sentence-initial words are
-    allowed to be capitalised under JSS sentence style.
+def _words_with_boundary(text: str) -> list[tuple[str, bool, bool]]:
+    """Like ``_words`` but each entry carries two flags:
 
-    Splits on whitespace AND on hyphens (matching the old ``_words``)
-    so compound terms like ``Logistic-regression-based`` decompose
-    into individual tokens for the capitalisation check. The
-    sub-sentence boundary is anchored to the first piece after a
-    boundary punctuator.
+    - ``is_boundary``: True if this word starts a new sub-sentence
+      (previous source token ended with ``.:?!``).
+    - ``is_hyphen_piece``: True if this is a non-first piece of a
+      hyphenated source word (e.g., ``Weinberg`` in
+      ``Hardy-Weinberg``). Sentence-style for section titles
+      treats hyphenated compounds as single proper-noun units.
+
+    Splits on whitespace AND on hyphens so compound terms like
+    ``Logistic-regression-based`` decompose into individual tokens
+    for the capitalisation check.
     """
     boundary_offsets: set[int] = set()
     for m in _SENTENCE_BOUNDARY_RE.finditer(text):
         boundary_offsets.add(m.start(1))
-    out: list[tuple[str, bool]] = []
+    out: list[tuple[str, bool, bool]] = []
     # Tokenize whitespace-delimited "source words" first to anchor the
     # boundary flag, then split each source word on hyphens.
     for source_match in re.finditer(r"\S+", text):
@@ -170,7 +172,7 @@ def _words_with_boundary(text: str) -> list[tuple[str, bool]]:
                 continue
             # Only the first hyphen-piece inherits the sub-sentence
             # boundary flag; subsequent pieces are interior.
-            out.append((clean, is_boundary and piece_idx == 0))
+            out.append((clean, is_boundary and piece_idx == 0, piece_idx > 0))
     return out
 
 
@@ -403,34 +405,41 @@ def _check_sentence_style(
     n = len(words)
     i = 0
     while i < n:
-        word, is_boundary = words[i]
+        word, is_boundary, _ = words[i]
         is_start = (i == 0) or is_boundary
         if not _is_run_eligible(word):
             i += 1
             continue
 
         # Greedily extend a run of consecutive eligible-capitalised tokens.
-        # _words_with_boundary doesn't mark non-sentence-boundary source-word
-        # starts, so a run can mix hyphen-pieces ("Hardy-Weinberg" → both
-        # pieces, second has boundary=False) with adjacent source words
-        # ("Han Chinese" → both pieces, second has boundary=False). For the
-        # purpose of compound-name recognition this is fine.
+        # _words_with_boundary marks each piece with is_hyphen_piece=True
+        # when it sits inside a single hyphenated source word
+        # (``Hardy-Weinberg`` → ``Weinberg`` is a hyphen-piece).
         run_start = i
         j = i + 1
+        all_hyphen_joined = True
         while j < n:
-            nw, nb = words[j]
+            nw, nb, nh = words[j]
             if nb or not _is_run_eligible(nw):
                 break
+            if not nh:
+                all_hyphen_joined = False
             j += 1
-        run = [w for w, _ in words[run_start:j]]
+        run = [w for w, _, _ in words[run_start:j]]
         run_text = "-".join(w.lower() for w in run)
         any_known = any(
             p in _PROPER_NOUNS or _looks_like_abbrev(p) for p in run
         )
         any_stopword = any(p.lower() in _TITLE_STOPWORDS for p in run)
 
+        # Hyphenated compounds (``Hardy-Weinberg``, ``Aalen-Johansen``,
+        # ``Newey-West``) are single proper-noun units — collapse them
+        # in section titles too. Whitespace-separated runs (``Linear
+        # Models``, ``Trade Statistics``) are still title-case markers
+        # under section-title sentence style and stay un-collapsed
+        # unless the caller opts in via ``collapse_runs=True``.
         is_compound = (
-            collapse_runs
+            (collapse_runs or all_hyphen_joined)
             and len(run) >= 2
             and len(run) <= _PROPER_NOUN_RUN_MAX
             and not any_stopword
