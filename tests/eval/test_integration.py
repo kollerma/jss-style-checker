@@ -52,11 +52,11 @@ def test_full_phase_a_pipeline_under_10s(
     _install_fake_linter(monkeypatch, fake_corpus)
 
     # Scripted answers for human-review: three violations in review order.
-    # Order is alphabetical by paper path, then line, so:
-    #   1. paper_parse_fail/  → JSS-PARSE-000 (line 1) → "t" TP
-    #   2. paper_violations/  → JSS-CITE-001  (line 3) → "f" FP, reason "noisy"
-    #   3. paper_violations/  → JSS-SRC-001   (line 42) → "t" TP
-    answers = deque(["t", "", "f", "noisy", "t", "", "q"])
+    # Order is alphabetical by rule_id, then paper path, then line, so:
+    #   1. JSS-CITE-001  (paper_violations/, line 3)  → "f" FP, reason "noisy"
+    #   2. JSS-PARSE-000 (paper_parse_fail/, line 1)  → "t" TP
+    #   3. JSS-SRC-001   (paper_violations/, line 42) → "t" TP
+    answers = deque(["f", "noisy", "t", "", "t", "", "q"])
     monkeypatch.setattr(
         human_review.Prompt,
         "ask",
