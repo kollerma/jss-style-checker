@@ -68,8 +68,12 @@ _EXTRA_PROPER_NOUNS: frozenset[str] = frozenset(
         # Place / vendor / product names commonly mentioned
         "Apple", "Google", "Linux", "Microsoft", "Oracle", "Unix",
         "Windows",
-        # Diseases / corpora often named after places or people
-        "Alzheimer", "Faithful", "Indians", "Pima",
+        # City and country names that appear in JSS captions
+        "Beijing", "Berlin", "Bavaria", "Boston", "China", "Germany",
+        "Ireland", "Spain", "Innsbruck", "Vienna", "Wien",
+        # Diseases, microbe genera, and named corpora
+        "Alzheimer", "Campylobacter", "Faithful", "Indians",
+        "Listeria", "Moby", "Newport", "Pima", "Salmonella",
     }
 )
 
