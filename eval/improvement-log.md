@@ -2021,4 +2021,554 @@ _(fill in)_
 
 ### Results (post-implementation)
 
+Closed by iteration 14, but iteration 14 was a corpus expansion
+(82 → 98 papers, +16 JSS-counterpart vignettes), not a continuation
+of the fix loop. The post-cleanup state was preserved on the existing
+82 papers; the iter-14 numbers reflect both that state and the new
+papers. New FP pressure surfaced by the larger corpus:
+
+- **JSS-MARKUP-001**: fp 58 → 89 (+31) — single-letter `R`/`C` ambiguity
+  resurfaces on the new manuscripts (math symbol, name initial in
+  `\bibitem`, `.r` filenames).
+- **JSS-CITE-002**: fp 7 → 29 (+22) — drove the iter-15 fix cycle.
+  Cluster split: heading/Keywords (3), `\citep[...]` optarg (~12),
+  bibliography (3), base-R packages (3), wrapper macros (5).
+- **JSS-CAP-003**: fp 18 → 29 (+11) — caption-style misfires multiplied;
+  many at column 1 of the `\caption{}` line with an "off by 2"
+  verdict-reason cluster.
+- **JSS-OPER-002**: 0 → 7 — `T` as upper bound of sums/products/
+  integrals mistaken for transpose; new pattern from the new corpus.
+- **JSS-TYPO-004**: 0 → 7 — caption-position policy fires in both
+  directions (3 "before content", 2 "after"); needs table-vs-figure
+  branching.
+- **JSS-CAP-002**: fp 14 → 21 (+7) — hyphenated proper names
+  (Hardy-Weinberg, Newey-West, etc.) tripping the second-word check.
+
+These clusters drove iter-14's Findings + Plan.
+
+## Iteration 14 — 2026-04-28T19:13:19Z — iter-14-baseline
+
+- **Corpus size:** 98 papers
+- **Tool version:** `0.1.0`
+- **Parse failures:** full=23, pinned=19
+
+### Stats — full corpus
+
+| category | rule | tp | fp | pending | precision | status |
+|---|---|---:|---:|---:|---:|---|
+| citation | JSS-CITE-002 | 163 | 29 | 0 | 84.90% | FAIL |
+| citation | JSS-CITE-003 | 8 | 0 | 0 | 100.00% | PASS |
+| citation | JSS-CITE-004 | 4 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-ABBR-001 | 10 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-002 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-003 | 8 | 1 | 0 | 88.89% | FAIL |
+| unknown | JSS-BIBTEX-004 | 25 | 3 | 0 | 89.29% | FAIL |
+| unknown | JSS-CAP-001 | 2 | 3 | 0 | 40.00% | FAIL |
+| unknown | JSS-CAP-002 | 157 | 21 | 0 | 88.20% | FAIL |
+| unknown | JSS-CAP-003 | 18 | 29 | 0 | 38.30% | FAIL |
+| unknown | JSS-CAP-004 | 10 | 4 | 0 | 71.43% | FAIL |
+| unknown | JSS-CODE-001 | 15 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-003 | 98 | 9 | 0 | 91.59% | PASS |
+| unknown | JSS-HOUSE-001 | 263 | 4 | 0 | 98.50% | PASS |
+| unknown | JSS-HOUSE-002 | 4 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-003 | 45 | 2 | 0 | 95.74% | PASS |
+| unknown | JSS-MARKUP-001 | 853 | 89 | 0 | 90.55% | PASS |
+| unknown | JSS-MARKUP-002 | 250 | 19 | 0 | 92.94% | PASS |
+| unknown | JSS-MARKUP-003 | 171 | 9 | 0 | 95.00% | PASS |
+| unknown | JSS-MARKUP-004 | 121 | 10 | 0 | 92.37% | PASS |
+| unknown | JSS-NAME-001 | 2 | 1 | 0 | 66.67% | FAIL |
+| unknown | JSS-NAME-002 | 33 | 10 | 0 | 76.74% | FAIL |
+| unknown | JSS-OPER-001 | 57 | 1 | 0 | 98.28% | PASS |
+| unknown | JSS-OPER-002 | 37 | 7 | 0 | 84.09% | FAIL |
+| unknown | JSS-OPER-003 | 12 | 2 | 0 | 85.71% | FAIL |
+| unknown | JSS-OPER-004 | 21 | 1 | 0 | 95.45% | PASS |
+| unknown | JSS-PRE-001 | 56 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-002 | 7 | 3 | 0 | 70.00% | FAIL |
+| unknown | JSS-PRE-003 | 25 | 1 | 0 | 96.15% | PASS |
+| unknown | JSS-PRE-006 | 24 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-007 | 28 | 5 | 0 | 84.85% | FAIL |
+| unknown | JSS-REFS-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-003 | 814 | 53 | 0 | 93.89% | PASS |
+| unknown | JSS-REFS-004 | 129 | 4 | 0 | 96.99% | PASS |
+| unknown | JSS-REFS-005 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-006 | 124 | 5 | 0 | 96.12% | PASS |
+| unknown | JSS-REFS-007 | 53 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-001 | 33 | 4 | 0 | 89.19% | FAIL |
+| unknown | JSS-STRUCT-002 | 8 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-004 | 3 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-005 | 4 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-006 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-001 | 41 | 1 | 0 | 97.62% | PASS |
+| unknown | JSS-TYPO-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-004 | 24 | 7 | 0 | 77.42% | FAIL |
+| unknown | JSS-WIDTH-001 | 10 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-001 | 33 | 3 | 0 | 91.67% | PASS |
+| unknown | JSS-XREF-002 | 152 | 9 | 0 | 94.41% | PASS |
+| unknown | JSS-XREF-004 | 123 | 3 | 0 | 97.62% | PASS |
+
+### Stats — pinned only
+
+| category | rule | tp | fp | pending | precision | status |
+|---|---|---:|---:|---:|---:|---|
+| citation | JSS-CITE-002 | 53 | 26 | 0 | 67.09% | FAIL |
+| citation | JSS-CITE-003 | 3 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-ABBR-001 | 7 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-002 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-003 | 8 | 1 | 0 | 88.89% | FAIL |
+| unknown | JSS-BIBTEX-004 | 18 | 1 | 0 | 94.74% | PASS |
+| unknown | JSS-CAP-001 | 0 | 1 | 0 | 0.00% | FAIL |
+| unknown | JSS-CAP-002 | 52 | 10 | 0 | 83.87% | FAIL |
+| unknown | JSS-CAP-003 | 13 | 15 | 0 | 46.43% | FAIL |
+| unknown | JSS-CAP-004 | 9 | 3 | 0 | 75.00% | FAIL |
+| unknown | JSS-CODE-001 | 12 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-003 | 51 | 5 | 0 | 91.07% | PASS |
+| unknown | JSS-HOUSE-001 | 59 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-002 | 4 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-003 | 15 | 1 | 0 | 93.75% | PASS |
+| unknown | JSS-MARKUP-001 | 314 | 47 | 0 | 86.98% | FAIL |
+| unknown | JSS-MARKUP-002 | 116 | 4 | 0 | 96.67% | PASS |
+| unknown | JSS-MARKUP-003 | 15 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-MARKUP-004 | 33 | 3 | 0 | 91.67% | PASS |
+| unknown | JSS-NAME-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-002 | 33 | 10 | 0 | 76.74% | FAIL |
+| unknown | JSS-OPER-001 | 12 | 1 | 0 | 92.31% | PASS |
+| unknown | JSS-OPER-002 | 27 | 6 | 0 | 81.82% | FAIL |
+| unknown | JSS-OPER-003 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-004 | 11 | 1 | 0 | 91.67% | PASS |
+| unknown | JSS-PRE-001 | 16 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-002 | 4 | 2 | 0 | 66.67% | FAIL |
+| unknown | JSS-PRE-003 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-006 | 13 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-007 | 10 | 2 | 0 | 83.33% | FAIL |
+| unknown | JSS-REFS-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-003 | 814 | 53 | 0 | 93.89% | PASS |
+| unknown | JSS-REFS-004 | 129 | 4 | 0 | 96.99% | PASS |
+| unknown | JSS-REFS-005 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-006 | 124 | 5 | 0 | 96.12% | PASS |
+| unknown | JSS-REFS-007 | 53 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-001 | 11 | 2 | 0 | 84.62% | FAIL |
+| unknown | JSS-STRUCT-002 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-004 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-005 | 3 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-006 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-001 | 27 | 1 | 0 | 96.43% | PASS |
+| unknown | JSS-TYPO-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-004 | 19 | 4 | 0 | 82.61% | FAIL |
+| unknown | JSS-WIDTH-001 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-001 | 25 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-002 | 76 | 5 | 0 | 93.83% | PASS |
+| unknown | JSS-XREF-004 | 86 | 3 | 0 | 96.63% | PASS |
+
+### Delta vs. previous iteration
+
+**Full corpus**
+
+- `JSS-CITE-002`: tp +54→163 (+109), fp +7→29 (+22), pending 107→0 (-107)
+- `JSS-CITE-003`: tp +5→8 (+3), fp +0→0 (+0), pending 3→0 (-3)
+- `JSS-ABBR-001`: tp +8→10 (+2), fp +0→0 (+0), pending 1→0 (-1)
+- `JSS-BIBTEX-002`: tp +1→2 (+1), fp +0→0 (+0), pending 0→0 (+0)
+- `JSS-BIBTEX-003`: tp +3→8 (+5), fp +1→1 (+0), pending 4→0 (-4)
+- `JSS-BIBTEX-004`: tp +13→25 (+12), fp +3→3 (+0), pending 10→0 (-10)
+- `JSS-CAP-001`: tp +1→2 (+1), fp +1→3 (+2), pending 2→0 (-2)
+- `JSS-CAP-002`: tp +124→157 (+33), fp +14→21 (+7), pending 17→0 (-17)
+- `JSS-CAP-003`: tp +4→18 (+14), fp +18→29 (+11), pending 9→0 (-9)
+- `JSS-CAP-004`: tp +6→10 (+4), fp +2→4 (+2), pending 3→0 (-3)
+- `JSS-CODE-001`: tp +1→15 (+14), fp +0→0 (+0), pending 14→0 (-14)
+- `JSS-CODE-003`: tp +71→98 (+27), fp +8→9 (+1), pending 18→0 (-18)
+- `JSS-HOUSE-001`: tp +216→263 (+47), fp +4→4 (+0), pending 45→0 (-45)
+- `JSS-HOUSE-002`: tp +3→4 (+1), fp +0→0 (+0), pending 0→0 (+0)
+- `JSS-HOUSE-003`: tp +27→45 (+18), fp +2→2 (+0), pending 13→0 (-13)
+- `JSS-MARKUP-001`: tp +788→853 (+65), fp +58→89 (+31), pending 64→0 (-64)
+- `JSS-MARKUP-002`: tp +177→250 (+73), fp +18→19 (+1), pending 74→0 (-74)
+- `JSS-MARKUP-003`: tp +160→171 (+11), fp +9→9 (+0), pending 10→0 (-10)
+- `JSS-MARKUP-004`: tp +109→121 (+12), fp +9→10 (+1), pending 13→0 (-13)
+- `JSS-NAME-001`: tp +1→2 (+1), fp +1→1 (+0), pending 0→0 (+0)
+- `JSS-NAME-002`: tp +12→33 (+21), fp +6→10 (+4), pending 20→0 (-20)
+- `JSS-OPER-001`: tp +56→57 (+1), fp +1→1 (+0), pending 0→0 (+0)
+- `JSS-OPER-002`: tp +37→37 (+0), fp +0→7 (+7), pending 7→0 (-7)
+- `JSS-OPER-003`: tp +3→12 (+9), fp +2→2 (+0), pending 4→0 (-4)
+- `JSS-OPER-004`: tp +13→21 (+8), fp +0→1 (+1), pending 8→0 (-8)
+- `JSS-PRE-001`: tp +43→56 (+13), fp +0→0 (+0), pending 11→0 (-11)
+- `JSS-PRE-002`: tp +4→7 (+3), fp +2→3 (+1), pending 3→0 (-3)
+- `JSS-PRE-003`: tp +21→25 (+4), fp +1→1 (+0), pending 4→0 (-4)
+- `JSS-PRE-006`: tp +15→24 (+9), fp +0→0 (+0), pending 8→0 (-8)
+- `JSS-PRE-007`: tp +24→28 (+4), fp +4→5 (+1), pending 4→0 (-4)
+- `JSS-REFS-003`: tp +383→814 (+431), fp +46→53 (+7), pending 311→0 (-311)
+- `JSS-REFS-004`: tp +72→129 (+57), fp +4→4 (+0), pending 44→0 (-44)
+- `JSS-REFS-005`: tp +2→5 (+3), fp +0→0 (+0), pending 3→0 (-3)
+- `JSS-REFS-006`: tp +42→124 (+82), fp +4→5 (+1), pending 55→0 (-55)
+- `JSS-REFS-007`: tp +21→53 (+32), fp +0→0 (+0), pending 22→0 (-22)
+- `JSS-STRUCT-001`: tp +22→33 (+11), fp +2→4 (+2), pending 11→0 (-11)
+- `JSS-STRUCT-002`: tp +3→8 (+5), fp +0→0 (+0), pending 4→0 (-4)
+- **new** `JSS-STRUCT-003`: tp=1 fp=0 pending=0
+- `JSS-STRUCT-004`: tp +2→3 (+1), fp +0→0 (+0), pending 0→0 (+0)
+- `JSS-STRUCT-005`: tp +3→4 (+1), fp +0→0 (+0), pending 0→0 (+0)
+- `JSS-TYPO-001`: tp +24→41 (+17), fp +1→1 (+0), pending 10→0 (-10)
+- `JSS-TYPO-004`: tp +1→24 (+23), fp +0→7 (+7), pending 23→0 (-23)
+- `JSS-WIDTH-001`: tp +4→10 (+6), fp +0→0 (+0), pending 6→0 (-6)
+- `JSS-XREF-001`: tp +18→33 (+15), fp +2→3 (+1), pending 8→0 (-8)
+- `JSS-XREF-002`: tp +111→152 (+41), fp +9→9 (+0), pending 29→0 (-29)
+- `JSS-XREF-004`: tp +77→123 (+46), fp +0→3 (+3), pending 32→0 (-32)
+
+**Pinned only**
+
+- `JSS-CITE-002`: tp +30→53 (+23), fp +5→26 (+21), pending 20→0 (-20)
+- `JSS-ABBR-001`: tp +5→7 (+2), fp +0→0 (+0), pending 1→0 (-1)
+- `JSS-BIBTEX-002`: tp +1→2 (+1), fp +0→0 (+0), pending 0→0 (+0)
+- `JSS-BIBTEX-003`: tp +3→8 (+5), fp +1→1 (+0), pending 4→0 (-4)
+- `JSS-BIBTEX-004`: tp +8→18 (+10), fp +1→1 (+0), pending 8→0 (-8)
+- **new** `JSS-CAP-001`: tp=0 fp=1 pending=0
+- `JSS-CAP-002`: tp +22→52 (+30), fp +7→10 (+3), pending 10→0 (-10)
+- `JSS-CAP-003`: tp +1→13 (+12), fp +8→15 (+7), pending 4→0 (-4)
+- `JSS-CAP-004`: tp +6→9 (+3), fp +1→3 (+2), pending 2→0 (-2)
+- `JSS-CODE-001`: tp +0→12 (+12), fp +0→0 (+0), pending 12→0 (-12)
+- `JSS-CODE-003`: tp +31→51 (+20), fp +4→5 (+1), pending 11→0 (-11)
+- `JSS-HOUSE-001`: tp +39→59 (+20), fp +0→0 (+0), pending 19→0 (-19)
+- `JSS-HOUSE-002`: tp +3→4 (+1), fp +0→0 (+0), pending 0→0 (+0)
+- `JSS-HOUSE-003`: tp +5→15 (+10), fp +1→1 (+0), pending 5→0 (-5)
+- `JSS-MARKUP-001`: tp +278→314 (+36), fp +24→47 (+23), pending 39→0 (-39)
+- `JSS-MARKUP-002`: tp +115→116 (+1), fp +4→4 (+0), pending 1→0 (-1)
+- `JSS-MARKUP-003`: tp +13→15 (+2), fp +0→0 (+0), pending 1→0 (-1)
+- `JSS-MARKUP-004`: tp +28→33 (+5), fp +3→3 (+0), pending 5→0 (-5)
+- **new** `JSS-NAME-001`: tp=1 fp=0 pending=0
+- `JSS-NAME-002`: tp +12→33 (+21), fp +6→10 (+4), pending 20→0 (-20)
+- `JSS-OPER-002`: tp +27→27 (+0), fp +0→6 (+6), pending 6→0 (-6)
+- `JSS-OPER-003`: tp +0→9 (+9), fp +0→0 (+0), pending 4→0 (-4)
+- `JSS-OPER-004`: tp +3→11 (+8), fp +0→1 (+1), pending 8→0 (-8)
+- `JSS-PRE-001`: tp +10→16 (+6), fp +0→0 (+0), pending 4→0 (-4)
+- `JSS-PRE-002`: tp +4→4 (+0), fp +1→2 (+1), pending 0→0 (+0)
+- `JSS-PRE-003`: tp +7→9 (+2), fp +0→0 (+0), pending 2→0 (-2)
+- `JSS-PRE-006`: tp +9→13 (+4), fp +0→0 (+0), pending 3→0 (-3)
+- `JSS-PRE-007`: tp +8→10 (+2), fp +1→2 (+1), pending 2→0 (-2)
+- `JSS-REFS-003`: tp +383→814 (+431), fp +46→53 (+7), pending 311→0 (-311)
+- `JSS-REFS-004`: tp +72→129 (+57), fp +4→4 (+0), pending 44→0 (-44)
+- `JSS-REFS-005`: tp +2→5 (+3), fp +0→0 (+0), pending 3→0 (-3)
+- `JSS-REFS-006`: tp +42→124 (+82), fp +4→5 (+1), pending 55→0 (-55)
+- `JSS-REFS-007`: tp +21→53 (+32), fp +0→0 (+0), pending 22→0 (-22)
+- `JSS-STRUCT-001`: tp +6→11 (+5), fp +1→2 (+1), pending 5→0 (-5)
+- `JSS-STRUCT-002`: tp +2→5 (+3), fp +0→0 (+0), pending 2→0 (-2)
+- **new** `JSS-STRUCT-003`: tp=1 fp=0 pending=0
+- `JSS-STRUCT-004`: tp +1→2 (+1), fp +0→0 (+0), pending 0→0 (+0)
+- `JSS-STRUCT-005`: tp +2→3 (+1), fp +0→0 (+0), pending 0→0 (+0)
+- `JSS-TYPO-001`: tp +15→27 (+12), fp +1→1 (+0), pending 9→0 (-9)
+- `JSS-TYPO-004`: tp +0→19 (+19), fp +0→4 (+4), pending 16→0 (-16)
+- `JSS-WIDTH-001`: tp +0→5 (+5), fp +0→0 (+0), pending 5→0 (-5)
+- `JSS-XREF-001`: tp +10→25 (+15), fp +0→0 (+0), pending 7→0 (-7)
+- `JSS-XREF-002`: tp +41→76 (+35), fp +5→5 (+0), pending 23→0 (-23)
+- `JSS-XREF-004`: tp +49→86 (+37), fp +0→3 (+3), pending 28→0 (-28)
+
+### Findings / suggestions
+
+The grown corpus (82 → 98) re-surfaced FP clusters that had
+shrunk in iter-13. Top targets for the next iteration, ranked by
+absolute FP count and ease of fix:
+
+| rank | rule | fp | sketch |
+|---|---|---:|---|
+| 1 | JSS-MARKUP-001 | 89 | single-letter `R`/`C` in math, initials, filenames; also fires inside `\bibitem` |
+| 2 | JSS-REFS-003 | 53 | DOI-presence check misses existing fields; also advisory-vs-mandatory policy |
+| 3 | JSS-CITE-002 | 29 | sub-clusters: heading/Keywords (3), `\citep[...]` optarg (12), bibitem (3), base-R (3), wrappers (5), abstract-cite-coverage (1) |
+| 4 | JSS-CAP-003 | 29 | caption-style "off by 2" + misfires at `\caption{}` col 1 |
+| 5 | JSS-CAP-002 | 21 | hyphenated proper names (Hardy-Weinberg, Newey-West) |
+| 6 | JSS-MARKUP-002 | 19 | already-wrapped `\pkg{}` re-flagged; code-block context not skipped |
+| 7 | JSS-NAME-002 | 10 | publisher-canonicalization heuristic disagrees with corpus |
+| 8 | JSS-MARKUP-004 | 10 | `\dots`, `\&`, accents treated as markup |
+| 9 | JSS-CODE-003 | 9 | bare-identifier code samples (no operators) |
+| 10 | JSS-XREF-002 | 9 | equation-ref check fires on section/model refs |
+| 11 | JSS-MARKUP-003 | 9 | rule fires inside Schunk/Code blocks |
+| 12 | JSS-TYPO-004 | 7 | caption position needs table-vs-figure branching |
+| 13 | JSS-OPER-002 | 7 | `T` as upper bound mistaken for transpose |
+
+Smaller clusters (1–5 FPs each) catalogued as todos
+#23–#37 — accent/markup edge cases, single-FP investigations,
+Discussion-as-summary detection, e.g./i.e. regex tightening.
+
+### Plan
+
+The lowest-effort, highest-payoff target is **JSS-CITE-002 sub-cluster
+1** (heading/Keywords) — three confirmed FPs with a clean shape. Pick
+that for the first fix this iteration.
+
+Order for follow-up cycles:
+
+1. **CITE-002 heading/Keywords** (this iter, ~3 FPs) — done.
+2. **CITE-002 `\citep[...]` optarg** (~12 FPs) — extend ancestor walk.
+3. **CITE-002 bibitem + base-R + wrappers** (~11 FPs) — add masks.
+4. **CAP-002 hyphenated proper names** (~6 FPs) — allowlist + hyphen-aware.
+5. **MARKUP-002 already-wrapped + code blocks** (~6 FPs) — mask logic.
+6. **MARKUP-001 single-letter** (~89 FPs) — biggest payoff but also
+   highest risk; defer until smaller fixes have shrunk noise.
+
+The single-FP rules (NAME-001, BIBTEX-003, OPER-001/004, PRE-003,
+TYPO-001) are tracked in todo #37 as a sweep-pass once the bigger
+clusters are closed.
+
+### Results (post-implementation)
+
+Closed by iteration 15. Headings/Keywords fix landed:
+
+- **JSS-CITE-002** (full): tp 163 → 161 (−2), fp 29 → 27 (−2),
+  precision **84.90% → 85.64% (+0.74pp)** — still FAIL.
+- **JSS-CITE-002** (pinned): tp 53 → 52 (−1), fp 26 → 24 (−2),
+  precision **67.09% → 68.42% (+1.33pp)** — still FAIL.
+- **5 orphans** dropped: 3 confirmed FPs in headings/Keywords
+  (dtwclust:1808, plot3logit:88, spacetime:1263), 2 mislabeled TPs
+  in `\Keywords{}` (ggmcmc:38, lifecontingencies/mortality_projection:40)
+  that were really FPs.
+- **1 new violation surfaced** at ggmcmc/v70i09.Rnw:76 — `\pkg{ggmcmc}`
+  in §1 body without same-paragraph `\citep`. Previously masked because
+  the `\Keywords{}` mention exhausted the `seen` set; the new fix lets
+  the body mention through. Labeled FP after the fact (citation lives
+  in `\Abstract{}`); recorded as a new sub-cluster (todo #39:
+  abstract-cite-coverage).
+
+Most of the iter-14 plan remains open — see iter-15 Findings/Plan
+for the full catalogue.
+
+
+## Iteration 15 — 2026-04-28T19:49:27Z — post-JSS-CITE-002-headings-keywords
+
+- **Corpus size:** 98 papers
+- **Tool version:** `0.1.0`
+- **Parse failures:** full=23, pinned=19
+
+### Stats — full corpus
+
+| category | rule | tp | fp | pending | precision | status |
+|---|---|---:|---:|---:|---:|---|
+| citation | JSS-CITE-002 | 161 | 27 | 0 | 85.64% | FAIL |
+| citation | JSS-CITE-003 | 8 | 0 | 0 | 100.00% | PASS |
+| citation | JSS-CITE-004 | 4 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-ABBR-001 | 10 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-002 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-003 | 8 | 1 | 0 | 88.89% | FAIL |
+| unknown | JSS-BIBTEX-004 | 25 | 3 | 0 | 89.29% | FAIL |
+| unknown | JSS-CAP-001 | 2 | 3 | 0 | 40.00% | FAIL |
+| unknown | JSS-CAP-002 | 157 | 21 | 0 | 88.20% | FAIL |
+| unknown | JSS-CAP-003 | 18 | 29 | 0 | 38.30% | FAIL |
+| unknown | JSS-CAP-004 | 10 | 4 | 0 | 71.43% | FAIL |
+| unknown | JSS-CODE-001 | 15 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-003 | 98 | 9 | 0 | 91.59% | PASS |
+| unknown | JSS-HOUSE-001 | 263 | 4 | 0 | 98.50% | PASS |
+| unknown | JSS-HOUSE-002 | 4 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-003 | 45 | 2 | 0 | 95.74% | PASS |
+| unknown | JSS-MARKUP-001 | 853 | 89 | 0 | 90.55% | PASS |
+| unknown | JSS-MARKUP-002 | 250 | 19 | 0 | 92.94% | PASS |
+| unknown | JSS-MARKUP-003 | 171 | 9 | 0 | 95.00% | PASS |
+| unknown | JSS-MARKUP-004 | 121 | 10 | 0 | 92.37% | PASS |
+| unknown | JSS-NAME-001 | 2 | 1 | 0 | 66.67% | FAIL |
+| unknown | JSS-NAME-002 | 33 | 10 | 0 | 76.74% | FAIL |
+| unknown | JSS-OPER-001 | 57 | 1 | 0 | 98.28% | PASS |
+| unknown | JSS-OPER-002 | 37 | 7 | 0 | 84.09% | FAIL |
+| unknown | JSS-OPER-003 | 12 | 2 | 0 | 85.71% | FAIL |
+| unknown | JSS-OPER-004 | 21 | 1 | 0 | 95.45% | PASS |
+| unknown | JSS-PRE-001 | 56 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-002 | 7 | 3 | 0 | 70.00% | FAIL |
+| unknown | JSS-PRE-003 | 25 | 1 | 0 | 96.15% | PASS |
+| unknown | JSS-PRE-006 | 24 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-007 | 28 | 5 | 0 | 84.85% | FAIL |
+| unknown | JSS-REFS-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-003 | 814 | 53 | 0 | 93.89% | PASS |
+| unknown | JSS-REFS-004 | 129 | 4 | 0 | 96.99% | PASS |
+| unknown | JSS-REFS-005 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-006 | 124 | 5 | 0 | 96.12% | PASS |
+| unknown | JSS-REFS-007 | 53 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-001 | 33 | 4 | 0 | 89.19% | FAIL |
+| unknown | JSS-STRUCT-002 | 8 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-004 | 3 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-005 | 4 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-006 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-001 | 41 | 1 | 0 | 97.62% | PASS |
+| unknown | JSS-TYPO-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-004 | 24 | 7 | 0 | 77.42% | FAIL |
+| unknown | JSS-WIDTH-001 | 10 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-001 | 33 | 3 | 0 | 91.67% | PASS |
+| unknown | JSS-XREF-002 | 152 | 9 | 0 | 94.41% | PASS |
+| unknown | JSS-XREF-004 | 123 | 3 | 0 | 97.62% | PASS |
+
+### Stats — pinned only
+
+| category | rule | tp | fp | pending | precision | status |
+|---|---|---:|---:|---:|---:|---|
+| citation | JSS-CITE-002 | 52 | 24 | 0 | 68.42% | FAIL |
+| citation | JSS-CITE-003 | 3 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-ABBR-001 | 7 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-002 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-003 | 8 | 1 | 0 | 88.89% | FAIL |
+| unknown | JSS-BIBTEX-004 | 18 | 1 | 0 | 94.74% | PASS |
+| unknown | JSS-CAP-001 | 0 | 1 | 0 | 0.00% | FAIL |
+| unknown | JSS-CAP-002 | 52 | 10 | 0 | 83.87% | FAIL |
+| unknown | JSS-CAP-003 | 13 | 15 | 0 | 46.43% | FAIL |
+| unknown | JSS-CAP-004 | 9 | 3 | 0 | 75.00% | FAIL |
+| unknown | JSS-CODE-001 | 12 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-003 | 51 | 5 | 0 | 91.07% | PASS |
+| unknown | JSS-HOUSE-001 | 59 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-002 | 4 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-003 | 15 | 1 | 0 | 93.75% | PASS |
+| unknown | JSS-MARKUP-001 | 314 | 47 | 0 | 86.98% | FAIL |
+| unknown | JSS-MARKUP-002 | 116 | 4 | 0 | 96.67% | PASS |
+| unknown | JSS-MARKUP-003 | 15 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-MARKUP-004 | 33 | 3 | 0 | 91.67% | PASS |
+| unknown | JSS-NAME-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-002 | 33 | 10 | 0 | 76.74% | FAIL |
+| unknown | JSS-OPER-001 | 12 | 1 | 0 | 92.31% | PASS |
+| unknown | JSS-OPER-002 | 27 | 6 | 0 | 81.82% | FAIL |
+| unknown | JSS-OPER-003 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-004 | 11 | 1 | 0 | 91.67% | PASS |
+| unknown | JSS-PRE-001 | 16 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-002 | 4 | 2 | 0 | 66.67% | FAIL |
+| unknown | JSS-PRE-003 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-006 | 13 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-007 | 10 | 2 | 0 | 83.33% | FAIL |
+| unknown | JSS-REFS-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-003 | 814 | 53 | 0 | 93.89% | PASS |
+| unknown | JSS-REFS-004 | 129 | 4 | 0 | 96.99% | PASS |
+| unknown | JSS-REFS-005 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-006 | 124 | 5 | 0 | 96.12% | PASS |
+| unknown | JSS-REFS-007 | 53 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-001 | 11 | 2 | 0 | 84.62% | FAIL |
+| unknown | JSS-STRUCT-002 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-004 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-005 | 3 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-006 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-001 | 27 | 1 | 0 | 96.43% | PASS |
+| unknown | JSS-TYPO-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-004 | 19 | 4 | 0 | 82.61% | FAIL |
+| unknown | JSS-WIDTH-001 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-001 | 25 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-002 | 76 | 5 | 0 | 93.83% | PASS |
+| unknown | JSS-XREF-004 | 86 | 3 | 0 | 96.63% | PASS |
+
+### Delta vs. previous iteration
+
+**Full corpus**
+
+- `JSS-CITE-002`: tp +163→161 (-2), fp +29→27 (-2), pending 0→0 (+0)
+
+**Pinned only**
+
+- `JSS-CITE-002`: tp +53→52 (-1), fp +26→24 (-2), pending 0→0 (+0)
+
+### Findings / suggestions
+
+A full sweep of the labelled FPs across every rule with at least
+one FP. Clusters surfaced for each rule, ranked by potential
+FP-elimination volume.
+
+**JSS-CITE-002** — 27 FPs split into 6 sub-clusters (only one
+addressed this iter):
+
+| sub-cluster | fp | sketch |
+|---|---:|---|
+| `\citep[...]` / `\citealp[...]` optional arg | ~12 | cite is ancestor of `\pkg{}`, not sibling — extend ancestor walk |
+| `\mbox{}` / `\caption{}` / list `\item{}` wrappers | ~5 | wrapper macro hides cite from sibling check |
+| `\bibitem` / `thebibliography` | ~3 | bib entry IS the citation — add to no-cite zone |
+| base-R packages (parallel, methods, stats) | ~3 | ship with R; allowlist |
+| `\footnote{}` cite-in-footnote | ~2 | cite + pkg both in footnote arg group |
+| abstract-cite-coverage (ggmcmc:76) | ~1 | abstract has both `\pkg{X}` and `\citep{}` but body mention still flagged |
+
+**JSS-MARKUP-001** — 89 FPs, biggest single source:
+
+- single-letter `R`/`C` ambiguity (~50): math symbol, name initial,
+  `.r` filename, version-string segment
+- inside `\bibitem` (subset of above; ~10 in GPareto bibliography)
+
+**JSS-REFS-003** — 53 FPs, two policy questions:
+
+- DOI present but rule fires anyway (~12) — bib-field detection bug
+- "advisory rule, missing DOI not a violation" (~10) — severity question
+
+**JSS-CAP-003** — 29 FPs, precision 38.3%:
+
+- "off by 2" line-number cluster + `\caption{}` sentence-style misfires
+  at column 1 (~21 empty-reason rows likely the same cluster)
+
+**JSS-CAP-002** — 21 FPs:
+
+- hyphenated proper names (Hardy-Weinberg, Newey-West, Klein-Spady,
+  Robert Koch) — second-word capitalisation rule trips compound nouns
+
+**JSS-MARKUP-002** — 19 FPs:
+
+- false-fire when `\pkg{}` already wraps (~6)
+- inside code blocks (~3)
+- ambiguous identifiers (sandwich-as-method, ggplot2 in code) (~3)
+
+**JSS-NAME-002** — 10 FPs:
+
+- publisher-canonicalization heuristic disagrees with corpus
+  (Springer vs Springer-Verlag remnants from reverted commit)
+
+**JSS-MARKUP-004** — 10 FPs:
+
+- `\dots`, `\&`, `\.`, accents treated as markup needing plain-text shim
+- `\subsection`/`\subsubsection` not handled by the `\section[plain]{markup}` check
+
+**JSS-CODE-003** — 9 FPs:
+
+- code samples without operators or commas (bare identifiers)
+
+**JSS-XREF-002** — 9 FPs:
+
+- equation-ref check fires on section/model refs (`sec:summary`, `mod:cox`)
+
+**JSS-MARKUP-003** — 9 FPs:
+
+- rule fires inside Schunk / Code blocks / verbatim envs
+
+**JSS-TYPO-004** — 7 FPs:
+
+- caption-position rule enforces single direction; JSS style is
+  table-captions-above + figure-captions-below
+
+**JSS-OPER-002** — 7 FPs:
+
+- `T` as upper bound of `\sum_{t=1}^T` etc. mistaken for transpose
+
+**Smaller clusters** (1–5 FPs each), tracked individually:
+
+- JSS-PARSE-000 (5, noisy parse errors), JSS-PRE-007 (5, accents in
+  `\author{}`), JSS-REFS-006 (5, leading `\pkg{}:` titles), JSS-CAP-004
+  (4, multi-line Keywords), JSS-STRUCT-001 (4, Discussion as summary),
+  JSS-REFS-004 (4, title markup detection), JSS-HOUSE-001 (4, e.g./i.e.
+  regex), JSS-CAP-001 (3, mislabeled-package), JSS-PRE-002 (3, missing
+  preamble macros), JSS-BIBTEX-004 (3, fires at definition site),
+  JSS-XREF-001 (3, cross-paper refs), JSS-XREF-004 (3, subequations),
+  JSS-OPER-003 (2, code-chunk paragraph break), JSS-HOUSE-003 (2,
+  package allowlist), and 6 single-FP rules swept together.
+
+Catalogued in `TaskList` as todos #4-#37, #39 (#38 was the
+post-fix human-review of the new ggmcmc:76 violation, completed).
+
+### Plan
+
+The 27 CITE-002 FPs split cleanly. After this iter's heading/Keywords
+fix (3 FPs), the next CITE-002 cycle should tackle the
+`\citep[...]` optarg cluster (~12 FPs, mechanical) — that alone takes
+CITE-002 from 24 → ~12 FPs and likely flips it to PASS.
+
+Recommended attack order across rules (bigger-first within similar
+risk tiers):
+
+1. **JSS-CITE-002 cite-optarg** (todo #4) — ~12 FPs, mechanical extension of the existing rule.
+2. **JSS-CITE-002 bibitem + base-R + abstract-coverage** (todos #5, #6, #39) — ~7 FPs, all add-to-mask-list shape.
+3. **JSS-MARKUP-002 already-wrapped + code-block context** (todo #15) — ~9 FPs, simple skip-already-wrapped check.
+4. **JSS-MARKUP-003 code-block context** (todo #16) — ~5 FPs, share env-list with #15.
+5. **JSS-CAP-002 hyphenated proper names** (todo #10) — ~6 FPs, allowlist or hyphen-aware capitalisation.
+6. **JSS-XREF-002 equation-only restriction** (todo #18) — ~7 FPs, label-prefix filter.
+7. **JSS-OPER-002 T-as-bound disambiguation** (todo #19) — ~7 FPs, math-context inspection.
+8. **JSS-TYPO-004 caption-position branching** (todo #20) — 7 FPs, simple env-name branch.
+9. **JSS-REFS-003 DOI presence detection** (todo #13) — ~12 FPs, bib-field parsing audit.
+10. **JSS-CAP-003 line-offset bug + caption-style** (todo #9) — ~29 FPs but needs investigation; do after smaller wins.
+11. **JSS-MARKUP-001 single-letter ambiguity** (todos #11, #12) — ~89 FPs, biggest payoff but highest regression risk; tackle after the smaller, cleaner rules have stabilised.
+
+Smaller-cluster sweeps (todos #17, #22-#37) bundled into a single
+"single-FP investigations" pass once the volume rules above have closed.
+
+### Results (post-implementation)
+
 _(fill in after the next `eval-jss iterate record` run)_

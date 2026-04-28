@@ -180,6 +180,46 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_pkg_inside_keywords_not_flagged(self, run_rule):
+        # JSS \Keywords{} is a no-cite zone — citations don't belong in
+        # the keywords list, so a \pkg{X} mention there can't satisfy
+        # CITE-002. The first body mention must still carry a citation.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\Keywords{plotting, \pkg{plot3logit}, \proglang{R}}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \pkg{plot3logit} \citep{plot3logit2021}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_inside_section_heading_not_flagged(self, run_rule):
+        # JSS style forbids citations in section headings — a \pkg{X}
+        # in a \section{} or \subsection{} title can't be satisfied
+        # there, so don't flag it. First body mention is the one that
+        # matters.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\subsection[Using doParallel]{Using \pkg{doParallel}}" "\n"
+            r"We use \pkg{doParallel} \citep{doParallel:2023}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_in_body_after_section_mention_still_flagged(self, run_rule):
+        # Section mention is skipped, so the first body mention is the
+        # first-occurrence and must have a citation.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\section{Using \pkg{rstan}}" "\n"
+            r"We use \pkg{rstan} extensively." "\n"
+            r"\end{document}" "\n"
+        )
+        violations = run_rule(jss_cite_002, src)
+        assert len(violations) == 1
+
     def test_pkg_in_body_after_title_mention_still_flagged(self, run_rule):
         # The title mention is skipped, so the first BODY mention is the
         # first-occurrence and must have a citation.

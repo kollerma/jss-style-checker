@@ -38,14 +38,18 @@ _CITE_MACROS: frozenset[str] = frozenset(
 _BIB_ENVS: frozenset[str] = frozenset({"thebibliography"})
 
 # Containers where ``\pkg{X}`` mentions cannot satisfy CITE-002 because
-# JSS convention forbids (titles) or discourages (abstracts) inline
-# citations there. The first mention typically lands in §1 (Introduction)
-# with the actual ``\citep{...}``. Suppressing here matches the published
-# JSS-paper conventions our corpus shows.
+# JSS convention forbids (titles, section headings, keywords) or
+# discourages (abstracts) inline citations there. The first mention
+# typically lands in §1 (Introduction) with the actual ``\citep{...}``.
+# Suppressing here matches the published JSS-paper conventions our
+# corpus shows.
 _NO_CITE_MACROS: frozenset[str] = frozenset(
     {
         "title", "Title", "Plaintitle", "Shorttitle",
         "Abstract", "Plainabstract",
+        "Keywords", "Plainkeywords",
+        "section", "subsection", "subsubsection",
+        "paragraph", "subparagraph",
     }
 )
 _NO_CITE_ENVS: frozenset[str] = frozenset({"abstract"})
