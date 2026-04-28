@@ -57,11 +57,12 @@ def test_full_phase_a_pipeline_under_10s(
     #   2. JSS-PARSE-000 (paper_parse_fail/, line 1)  → "t" TP
     #   3. JSS-SRC-001   (paper_violations/, line 42) → "t" TP
     answers = deque(["f", "noisy", "t", "", "t", "", "q"])
-    monkeypatch.setattr(
-        human_review.Prompt,
-        "ask",
-        staticmethod(lambda *a, **k: answers.popleft() if answers else "q"),
-    )
+
+    def _fake(*a, **k):
+        return answers.popleft() if answers else "q"
+
+    monkeypatch.setattr(human_review, "_ask_verdict", _fake)
+    monkeypatch.setattr(human_review, "_ask_reason", _fake)
 
     db_path = tmp_path / "eval.db"
     runner = CliRunner()

@@ -18,9 +18,18 @@ import re
 import textwrap
 from pathlib import Path
 
+# Loading `readline` is what gives `input()` (and therefore rich's
+# Prompt.ask) left/right cursor editing and up/down history recall —
+# nothing else here references the module. The import-only side effect
+# is intentional. Wrapped in a guard so non-readline platforms still
+# import cleanly.
+try:  # pragma: no cover - import side effect
+    import readline  # noqa: F401
+except ImportError:  # pragma: no cover
+    pass
+
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Prompt
 from rich.syntax import Syntax
 from rich.table import Table
 
@@ -256,6 +265,59 @@ def _lexer_for(file: str | None, paper_path: str) -> str:
         src = _resolve_source(paper_path, None)
         suffix = src.suffix if src else ".tex"
     return _LEXER_BY_SUFFIX.get(suffix, "latex")
+
+
+def _ask_verdict() -> str:
+    """Read a verdict character. Re-asks until the answer is in `_CHOICES`.
+
+    Uses plain `input()` (not rich's Prompt) so the prompt is passed to
+    readline directly — that way left/right editing works without
+    overwriting the prompt prefix on redraw. Up/down history is
+    suppressed here by snapshotting + clearing readline history before
+    the prompt and restoring afterwards: the reviewer should only cycle
+    through prior reasons at the reason prompt, not at the verdict
+    prompt where reasons aren't valid answers anyway.
+    """
+    try:
+        import readline as _rl
+    except ImportError:
+        _rl = None  # type: ignore[assignment]
+
+    saved: list[str] = []
+    if _rl is not None:
+        for i in range(1, _rl.get_current_history_length() + 1):
+            item = _rl.get_history_item(i)
+            if item is not None:
+                saved.append(item)
+        _rl.clear_history()
+
+    try:
+        while True:
+            try:
+                raw = input("Verdict [t/f/u/s/n/b/q] (u): ")
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return "q"
+            answer = raw.strip().lower() or "u"
+            if answer in _CHOICES:
+                return answer
+            print(f"Please pick one of: {', '.join(_CHOICES)}")
+    finally:
+        if _rl is not None:
+            _rl.clear_history()
+            for item in saved:
+                _rl.add_history(item)
+
+
+def _ask_reason() -> str:
+    """Read an optional free-text reason. Reasons stay in readline
+    history so the reviewer can up-arrow to recall a previous reason.
+    """
+    try:
+        return input("Reason (optional): ")
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return ""
 
 
 def _wrapped_caret_position(
@@ -564,9 +626,7 @@ def run(
                 column=row["column"],
                 message=row["message"],
             )
-            answer = Prompt.ask(
-                "Verdict [t/f/u/s/n/b/q]", choices=_CHOICES, default="u"
-            )
+            answer = _ask_verdict()
             if answer == "q":
                 break
             if answer == "s":
@@ -607,8 +667,7 @@ def run(
             verdict_str = _VERDICT[answer]
             reason = None
             if answer in ("t", "f"):
-                reason_input = Prompt.ask("Reason (optional)", default="")
-                reason = reason_input.strip() or None
+                reason = _ask_reason().strip() or None
             _write_verdict(
                 cx,
                 violation_id=row["id"],

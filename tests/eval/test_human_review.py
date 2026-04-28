@@ -43,18 +43,21 @@ def _seed_violations(cx, count: int = 3) -> list[int]:
 
 
 def _script_prompts(monkeypatch, answers: list[str]) -> list[str]:
-    """Make `rich.prompt.Prompt.ask` return answers from `answers` in order.
+    """Make the verdict and reason prompts return answers from `answers`
+    in order. Both helpers share one queue so tests script answers as a
+    flat list (verdict, optional reason, verdict, …).
 
     Returns the list itself so tests can check consumption.
     """
     queue = deque(answers)
 
-    def _fake_ask(*args, **kwargs):
+    def _fake(*args, **kwargs):
         if not queue:
             return "q"
         return queue.popleft()
 
-    monkeypatch.setattr(human_review.Prompt, "ask", staticmethod(_fake_ask))
+    monkeypatch.setattr(human_review, "_ask_verdict", _fake)
+    monkeypatch.setattr(human_review, "_ask_reason", _fake)
     return list(queue)
 
 
