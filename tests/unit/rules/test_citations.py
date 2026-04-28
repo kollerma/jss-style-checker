@@ -243,6 +243,73 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_pkg_inside_bibitem_not_flagged(self, run_rule):
+        # \pkg{X} inside a \bibitem in thebibliography IS the bibliography
+        # entry — that's the citation itself, not a prose mention that
+        # needs its own \citep.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{thebibliography}{}" "\n"
+            r"\bibitem[{Bendtsen(2012)}]{Bendtsen2012}" "\n"
+            r"Bendtsen C (2012). \emph{\pkg{pso}: Particle Swarm Optimization}." "\n"
+            r"\end{thebibliography}" "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_base_r_package_not_flagged(self, run_rule):
+        # \pkg{parallel}, \pkg{methods}, \pkg{stats} ship with R; their
+        # citation is covered by the R citation, so they don't trip
+        # CITE-002 even without a same-paragraph \citep.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \pkg{parallel} for multi-core support." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_base_r_package_seen_covers_later_mentions(self, run_rule):
+        # Even if a base-R package is mentioned multiple times, none of
+        # them should fire.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \pkg{stats} here." "\n\n"
+            r"Later we use \pkg{stats} again." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_abstract_with_cite_covers_body_mention(self, run_rule):
+        # If \Abstract{} contains both \pkg{X} and a \citep{} for it,
+        # the body mention is considered satisfied (the abstract IS the
+        # cite site for this paper, not a separate reference site).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\Abstract{We present \pkg{ggmcmc} for MCMC analysis "
+            r"\citep{xfim:2016:jss}.}" "\n"
+            r"\begin{document}" "\n"
+            r"We discuss \pkg{ggmcmc} extensively below." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_abstract_without_cite_does_not_cover_body_mention(self, run_rule):
+        # The existing convention: \Abstract{} alone (without an inline
+        # \citep) does NOT satisfy CITE-002 for the body. The body
+        # mention still needs its own citation.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\Abstract{We present \pkg{ggmcmc} for MCMC analysis.}" "\n"
+            r"\begin{document}" "\n"
+            r"We discuss \pkg{ggmcmc} extensively below." "\n"
+            r"\end{document}" "\n"
+        )
+        violations = run_rule(jss_cite_002, src)
+        assert len(violations) == 1
+
     def test_pkg_in_body_after_title_mention_still_flagged(self, run_rule):
         # The title mention is skipped, so the first BODY mention is the
         # first-occurrence and must have a citation.

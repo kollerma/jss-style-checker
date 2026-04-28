@@ -38,21 +38,34 @@ _CITE_MACROS: frozenset[str] = frozenset(
 _BIB_ENVS: frozenset[str] = frozenset({"thebibliography"})
 
 # Containers where ``\pkg{X}`` mentions cannot satisfy CITE-002 because
-# JSS convention forbids (titles, section headings, keywords) or
-# discourages (abstracts) inline citations there. The first mention
-# typically lands in §1 (Introduction) with the actual ``\citep{...}``.
-# Suppressing here matches the published JSS-paper conventions our
-# corpus shows.
+# JSS convention forbids (titles, section headings, keywords) inline
+# citations there. The first mention typically lands in §1 (Introduction)
+# with the actual ``\citep{...}``. Suppressing here matches the published
+# JSS-paper conventions our corpus shows.
 _NO_CITE_MACROS: frozenset[str] = frozenset(
     {
         "title", "Title", "Plaintitle", "Shorttitle",
-        "Abstract", "Plainabstract",
         "Keywords", "Plainkeywords",
         "section", "subsection", "subsubsection",
         "paragraph", "subparagraph",
     }
 )
-_NO_CITE_ENVS: frozenset[str] = frozenset({"abstract"})
+_NO_CITE_ENVS: frozenset[str] = frozenset()
+
+# Soft no-cite zones: places where citations *are* allowed but where
+# the JSS convention is to NOT require one (the §1 body mention is the
+# canonical citation site). Unlike hard no-cite zones, if the soft
+# zone happens to contain both ``\pkg{X}`` and a ``\citep{}`` for it,
+# we add ``X`` to ``seen`` so the body mention isn't re-flagged.
+_SOFT_NO_CITE_MACROS: frozenset[str] = frozenset(
+    {"Abstract", "Plainabstract"}
+)
+_SOFT_NO_CITE_ENVS: frozenset[str] = frozenset(
+    {"abstract", "thebibliography"}
+)
+# Bibliography entries are also soft — \pkg{X} inside a \bibitem IS
+# the citation; a body mention satisfies once seen.
+_SOFT_NO_CITE_MACROS_FULL = _SOFT_NO_CITE_MACROS | frozenset({"bibitem"})
 
 
 def _is_inside_no_cite_zone(ancestors: list[Any]) -> bool:
@@ -65,6 +78,35 @@ def _is_inside_no_cite_zone(ancestors: list[Any]) -> bool:
         ):
             return True
     return False
+
+
+def _is_inside_soft_no_cite_zone(ancestors: list[Any]) -> bool:
+    for node in ancestors:
+        if (
+            isinstance(node, LatexMacroNode)
+            and node.macroname in _SOFT_NO_CITE_MACROS_FULL
+        ):
+            return True
+        if (
+            isinstance(node, LatexEnvironmentNode)
+            and node.environmentname in _SOFT_NO_CITE_ENVS
+        ):
+            return True
+    return False
+
+
+# Packages bundled with the R distribution — their citation is
+# subsumed by the citation for R itself, so a bare ``\pkg{parallel}``
+# mention without a separate ``\citep`` does not violate CITE-002.
+# Source: ``rownames(installed.packages(priority = "base"))`` on a
+# stock R install.
+_BASE_R_PACKAGES: frozenset[str] = frozenset(
+    {
+        "base", "compiler", "datasets", "graphics", "grDevices",
+        "grid", "methods", "parallel", "splines", "stats", "stats4",
+        "tcltk", "tools", "utils",
+    }
+)
 
 
 # Macros whose body is a *definition* of new markup, not user-visible
@@ -98,6 +140,18 @@ def _has_rmd_citation_in_span(parent: Any, start: int, end: int) -> bool:
     for sibling in parent[start:end]:
         if isinstance(sibling, LatexCharsNode) and _RMD_AT_CITATION.search(
             sibling.chars
+        ):
+            return True
+    return False
+
+
+def _has_cite_in_span(parent: Any, start: int, end: int) -> bool:
+    """Return ``True`` if any cite macro lives in the paragraph span,
+    recursively (so cites wrapped in ``\\emph{...}`` etc. count)."""
+    for descendant in _helpers._walk(parent[start:end]):
+        if (
+            isinstance(descendant, LatexMacroNode)
+            and descendant.macroname in _CITE_MACROS
         ):
             return True
     return False
@@ -149,9 +203,16 @@ def check_jss_cite_002(
             name = _helpers._macro_args_text(node, parent, idx)
             if not name:
                 continue
+            if name in _BASE_R_PACKAGES:
+                # Packages shipped with R itself (parallel, methods,
+                # stats, ...) don't need a separate citation — citing
+                # R covers them. Mark seen so any later mention is also
+                # exempt.
+                seen.add(name)
+                continue
             if _is_inside_no_cite_zone(ancestors):
-                # JSS style forbids citations in titles and discourages
-                # them in abstracts; the rule cannot be satisfied here, so
+                # JSS style forbids citations in titles, section headings,
+                # and keywords; the rule cannot be satisfied here, so
                 # treat as not-a-first-mention rather than flagging an
                 # unfixable violation. The first mention in §1 will still
                 # be required to carry a citation.
@@ -161,6 +222,21 @@ def check_jss_cite_002(
                 # a template fragment, not a first-mention. The actual
                 # mention happens at every `\foo` use; CITE-002 can flag
                 # those instead.
+                continue
+            if _is_inside_soft_no_cite_zone(ancestors):
+                # \Abstract{}, abstract env, thebibliography, and
+                # \bibitem are places where citations are allowed but
+                # the body mention is the canonical citation site. If
+                # this soft zone happens to carry both \pkg{X} and a
+                # \citep{} for it, mark X as "seen" so the body mention
+                # isn't re-flagged.
+                start, end = _paragraph_span_in_parent(parent, idx)
+                if _has_cite_in_span(parent, start, end) or any(
+                    isinstance(anc, LatexMacroNode)
+                    and anc.macroname in _CITE_MACROS
+                    for anc in ancestors
+                ):
+                    seen.add(name)
                 continue
             if name in seen:
                 continue
@@ -177,11 +253,7 @@ def check_jss_cite_002(
                 # sibling.
                 continue
             start, end = _paragraph_span_in_parent(parent, idx)
-            if any(
-                isinstance(sibling, LatexMacroNode)
-                and sibling.macroname in _CITE_MACROS
-                for sibling in parent[start:end]
-            ):
+            if _has_cite_in_span(parent, start, end):
                 continue
             if _has_rmd_citation_in_span(parent, start, end):
                 # Pandoc/Rmd `[@key]` or `@key` citation in the same
