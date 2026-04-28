@@ -220,6 +220,29 @@ class TestCite002:
         violations = run_rule(jss_cite_002, src)
         assert len(violations) == 1
 
+    def test_pkg_inside_citep_optarg_not_flagged(self, run_rule):
+        # `\pkg{X}` in the optional argument of `\citep[...]{key}` is
+        # satisfied by the cite itself — the cite is an ancestor, not
+        # a sibling, so the paragraph-level sibling check would miss it.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We fit a Cox model "
+            r"\citep[package \pkg{survival},][]{Therneau,pkg:survival}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_inside_citealp_optarg_not_flagged(self, run_rule):
+        # Same as above, with \citealp.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"See \citealp[\pkg{coxinterval} package][]{pkg:coxinterval}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
     def test_pkg_in_body_after_title_mention_still_flagged(self, run_rule):
         # The title mention is skipped, so the first BODY mention is the
         # first-occurrence and must have a citation.

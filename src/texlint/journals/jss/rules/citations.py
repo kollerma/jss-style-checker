@@ -165,6 +165,17 @@ def check_jss_cite_002(
             if name in seen:
                 continue
             seen.add(name)
+            if any(
+                isinstance(anc, LatexMacroNode)
+                and anc.macroname in _CITE_MACROS
+                for anc in ancestors
+            ):
+                # `\pkg{X}` inside a cite macro's optional argument
+                # (e.g., `\citep[package \pkg{X},][]{key}`). The cite IS
+                # the package's citation — the sibling-paragraph check
+                # would miss it because the cite is an ancestor, not a
+                # sibling.
+                continue
             start, end = _paragraph_span_in_parent(parent, idx)
             if any(
                 isinstance(sibling, LatexMacroNode)
