@@ -140,7 +140,15 @@ def _words(text: str) -> list[str]:
     return [w for w in re.split(r"[\s\-]+", text.strip()) if w]
 
 
-_SENTENCE_BOUNDARY_RE = re.compile(r"[.:?!]\s+(\S+)")
+# Sentence boundary: a punctuator (``.:?!``) followed by whitespace
+# and a content word. An optional list-numbering stub like ``(1)``,
+# ``[2]``, ``1.``, or ``2)`` between the punctuator and the content
+# word is transparent — caption text such as ``... algorithms.
+# (2) Estimator consists ...`` should anchor the boundary to
+# ``Estimator``, not to ``(2)``.
+_SENTENCE_BOUNDARY_RE = re.compile(
+    r"[.:?!]\s+(?:(?:[(\[]\d+[)\]]|\d+[).])\s+)?(\S+)"
+)
 
 
 def _words_with_boundary(text: str) -> list[tuple[str, bool, bool]]:
