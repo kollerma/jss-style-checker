@@ -18,6 +18,7 @@ from typing import Any
 from pylatexenc.latexwalker import (
     LatexCharsNode,
     LatexEnvironmentNode,
+    LatexGroupNode,
     LatexMacroNode,
 )
 
@@ -103,6 +104,45 @@ def _chars_starts_with_close_paren(node: Any) -> bool:
     return text.startswith(")")
 
 
+# Label-prefix conventions that are clearly NOT equations: sectioning,
+# figure/table cross-refs, model/algorithm/appendix labels, etc. When a
+# parenthesised \ref points at one of these, the rule should not fire
+# (the "Equation~\\ref{...}" wording wouldn't make sense). Labels with
+# no colon, or with a colon prefix not in this set (eq:, eqn:, formula:,
+# def:, ...), still fire — those are predominantly equation refs in
+# the corpus.
+_NON_EQUATION_LABEL_PREFIXES: frozenset[str] = frozenset({
+    "sec", "subsec", "subsubsec", "ssec", "section",
+    "fig", "figure", "tab", "table",
+    "alg", "algorithm", "app", "appendix",
+    "chap", "chapter", "ch",
+    "mod", "model",
+    "lst", "listing", "code",
+})
+
+
+def _label_has_non_equation_prefix(node: Any) -> bool:
+    """True if the macro's first arg looks like ``foo:bar`` with ``foo`` in
+    the non-equation prefix set. Returns ``False`` when the label has no
+    prefix or an unknown prefix — those are still treated as
+    equation-like by the rule (matches corpus convention)."""
+    argd = getattr(node, "nodeargd", None)
+    if argd is None:
+        return False
+    label_text = ""
+    for arg in argd.argnlist or ():
+        if isinstance(arg, LatexGroupNode):
+            for child in arg.nodelist or ():
+                if isinstance(child, LatexCharsNode):
+                    label_text += child.chars
+            break
+    label_text = label_text.strip()
+    if ":" not in label_text:
+        return False
+    prefix = label_text.split(":", 1)[0].strip().lower()
+    return prefix in _NON_EQUATION_LABEL_PREFIXES
+
+
 def check_jss_xref_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -117,6 +157,8 @@ def check_jss_xref_002(
             if not _chars_ends_with_open_paren(before):
                 continue
             if not _chars_starts_with_close_paren(after):
+                continue
+            if _label_has_non_equation_prefix(node):
                 continue
             yield _violation(
                 tex=tex,
