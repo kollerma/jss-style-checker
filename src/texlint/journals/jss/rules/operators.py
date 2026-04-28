@@ -20,6 +20,7 @@ from typing import Any
 from pylatexenc.latexwalker import (
     LatexCharsNode,
     LatexEnvironmentNode,
+    LatexGroupNode,
     LatexMacroNode,
 )
 
@@ -97,16 +98,97 @@ def check_jss_oper_001(
 # ---------------------------------------------------------------------------
 
 
+# Big-operator macros whose ``^T`` is an upper bound, not a transpose:
+# ``\\sum_{t=1}^T``, ``\\prod_{i=2}^T``, ``\\int_0^T``, etc. The
+# transpose check should not fire on these.
+# Big-operator macros whose ``^T`` is an upper bound (``\\sum_{t=1}^T``,
+# ``\\prod_{i=2}^T``, ``\\int_0^T``) — not a transpose. The transpose
+# check should not fire on these.
+_BIG_OPERATORS: frozenset[str] = frozenset({
+    "sum", "prod", "int", "iint", "iiint", "oint", "coprod",
+    "bigcup", "bigcap", "bigvee", "bigwedge",
+    "bigoplus", "bigotimes", "bigodot",
+    "biguplus", "bigsqcup",
+})
+
+
+def _t_caret_follows_big_operator(
+    parent: Any, idx: int, match_start: int
+) -> bool:
+    """True when the ``^T`` at ``parent[idx].chars[match_start]`` is the
+    upper-bound caret of a preceding ``\\sum_{...}``, ``\\prod_{...}``,
+    ``\\int_{...}`` (or similar) — i.e., not a transpose marker.
+
+    pylatexenc fragments ``\\sum_{t=1}^T`` into a sibling chain like:
+      [LatexMacroNode \\sum, LatexCharsNode '_', LatexGroupNode {t=1},
+       LatexCharsNode '^T ...']
+    or, when the caret follows directly in the same chars node, into
+    a single LatexCharsNode following the ``\\sum``. Walk backwards
+    through subscript-shaped siblings to find the big-operator macro.
+    """
+    chars = parent[idx].chars
+    prefix = chars[:match_start].rstrip()
+    # Strip an optional ``_{...}`` or ``_X`` subscript at the end of
+    # the prefix (when caret and subscript share a chars node).
+    sub_match = re.search(r"_(?:\{[^{}]*\}|[A-Za-z0-9])\s*$", prefix)
+    if sub_match is not None:
+        prefix = prefix[: sub_match.start()].rstrip()
+    elif prefix.endswith("_"):
+        prefix = prefix[:-1].rstrip()
+    if prefix:
+        # Other math content between the operator and the caret.
+        return False
+    # Walk backwards through siblings, skipping a single subscript
+    # (``_`` chars + group, or ``_X`` chars) — at most one subscript
+    # may sit between the big operator and ``^T``.
+    j = idx - 1
+    saw_subscript_token = False
+    saw_subscript_group = False
+    while j >= 0:
+        sib = parent[j]
+        if isinstance(sib, LatexMacroNode) and sib.macroname in _BIG_OPERATORS:
+            return True
+        if isinstance(sib, LatexGroupNode) and not saw_subscript_group:
+            saw_subscript_group = True
+            j -= 1
+            continue
+        if isinstance(sib, LatexCharsNode):
+            text = sib.chars.strip()
+            if not text:
+                j -= 1
+                continue
+            if text == "_":
+                j -= 1
+                continue
+            if text.endswith("_") and not saw_subscript_token:
+                saw_subscript_token = True
+                j -= 1
+                continue
+            if re.fullmatch(r"_[A-Za-z0-9]", text) and not saw_subscript_token:
+                saw_subscript_token = True
+                j -= 1
+                continue
+            return False
+        return False
+    return False
+
+
 def check_jss_oper_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
-        for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
+        for node, ancestors, parent, idx in _helpers._walk_with_context(
+            tex.nodes
+        ):
             if not isinstance(node, LatexCharsNode):
                 continue
             if not _helpers._is_inside_math(ancestors):
                 continue
-            for match in re.finditer(r"\^\s*T\b", node.chars):
+            for match in re.finditer(r"\^\s*T(?![A-Za-z])", node.chars):
+                if _t_caret_follows_big_operator(
+                    parent, idx, match.start()
+                ):
+                    continue
                 abs_pos = node.pos + match.start()
                 yield _violation(
                     tex=tex,
