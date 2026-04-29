@@ -80,6 +80,14 @@ def check_jss_oper_001(
             if not _helpers._is_in_prose_context(ancestors):
                 continue
             for match in _SYMBOL_NOUN_RE.finditer(node.chars):
+                # Skip Markdown link labels — ``[r-statistics](url)`` —
+                # where the bracketed text is a site name, not a
+                # statistical symbol-plus-noun construct. The Rmd
+                # stripper preserves the ``[label]`` brackets but
+                # blanks the URL, so the immediately-preceding ``[``
+                # is a reliable signal.
+                if match.start() > 0 and node.chars[match.start() - 1] == "[":
+                    continue
                 abs_pos = node.pos + match.start()
                 sym, noun = match.group(1), match.group(2)
                 yield _violation(
