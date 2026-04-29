@@ -128,7 +128,15 @@ def check_jss_house_002(
 def check_jss_house_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    from texlint.journals.jss.rules.preamble import _has_jss_class
+
     for tex in doc.all_tex_like():
+        # The "already loaded" claim only applies when the document
+        # actually uses ``\\documentclass{jss}``. Non-jss vignettes that
+        # share JSS conventions (``article``/``report`` class) need to
+        # \\usepackage these themselves; the rule must not flag them.
+        if not _has_jss_class(tex):
+            continue
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode)
