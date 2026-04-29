@@ -250,6 +250,45 @@ def test_locator_falls_back_to_dir_without_tex(tmp_path: Path) -> None:
     assert loc.endswith("empty:42:7")
 
 
+def test_float_span_only_returned_when_line_inside_block() -> None:
+    # Manual figure reference at line 8 sits AFTER a closed figure block
+    # at lines 1-3. The earlier float doesn't enclose line 8, so the
+    # span helper must not return its bounds.
+    lines = [
+        r"\begin{figure}",                         # 1
+        r"\caption{first plot}",                   # 2
+        r"\end{figure}",                           # 3
+        r"",                                       # 4
+        r"Some prose text leading up to a figure", # 5
+        r"reference. We refer to it manually:",    # 6
+        r"",                                       # 7
+        r"See Figure 1b for further detail.",      # 8 — violation
+    ]
+    assert human_review._float_or_caption_span(lines, 8) is None
+
+
+def test_float_span_returned_when_line_inside_block() -> None:
+    lines = [
+        r"\begin{figure}",                # 1
+        r"\includegraphics{x}",           # 2 — violation here
+        r"\caption{Plot}",                # 3
+        r"\end{figure}",                  # 4
+        r"Some prose after.",             # 5
+    ]
+    span = human_review._float_or_caption_span(lines, 2)
+    assert span == (1, 4)
+
+
+def test_caption_span_only_returned_when_line_inside_caption() -> None:
+    lines = [
+        r"\caption{One short caption.}",   # 1
+        r"",                               # 2
+        r"Prose.",                         # 3
+        r"More prose at line 4.",          # 4 — violation outside
+    ]
+    assert human_review._float_or_caption_span(lines, 4) is None
+
+
 def test_human_review_reviewer_defaults_to_env(monkeypatch, tmp_db: Path) -> None:
     cx = db.connect(tmp_db)
     try:

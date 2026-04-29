@@ -114,7 +114,12 @@ def _float_or_caption_span(
 ) -> tuple[int, int] | None:
     """Locate the enclosing `\\begin{figure|table}…\\end{…}` block, or
     failing that the enclosing `\\caption{…}` block, around `line`
-    (1-based). Returns `(start, end)` 1-based inclusive, or `None`.
+    (1-based). Returns `(start, end)` 1-based inclusive, or `None`
+    when ``line`` doesn't sit inside any such block. The span MUST
+    contain ``line``: a manual figure reference at line N may sit
+    after a closed figure block (begin..end < N) — in that case the
+    rule's reviewer should see the prose context, not the unrelated
+    earlier figure.
     """
     n = len(lines)
     if line < 1 or line > n:
@@ -125,7 +130,12 @@ def _float_or_caption_span(
         if _FLOAT_BEGIN_RE.search(lines[i]):
             for j in range(i, n):
                 if _FLOAT_END_RE.search(lines[j]):
-                    return (i + 1, j + 1)
+                    if i + 1 <= line <= j + 1:
+                        return (i + 1, j + 1)
+                    # The matched float closed before `line` — keep
+                    # looking for an enclosing caption block, but
+                    # don't return this orphan span.
+                    break
             break
 
     # Fall back to the \caption{...} block — track brace depth forward
@@ -147,7 +157,9 @@ def _float_or_caption_span(
             elif ch == "}":
                 depth -= 1
                 if seen_open and depth == 0:
-                    return (cap_start + 1, j + 1)
+                    if cap_start + 1 <= line <= j + 1:
+                        return (cap_start + 1, j + 1)
+                    return None
     return None
 
 
