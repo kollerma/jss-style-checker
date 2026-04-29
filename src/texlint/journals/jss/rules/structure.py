@@ -31,8 +31,12 @@ from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
 # Words that mark a section as a summary / discussion / conclusion.
+# ``Illustrations`` / ``Examples`` / ``Applications`` are JSS-conventional
+# names for the closing examples-heavy section that doubles as a
+# discussion (papers from colorspace, mlogit, etc. follow this pattern).
 _SUMMARY_WORDS_RE = re.compile(
-    r"\b(summary|discussion|conclusion|conclusions|concluding)\b",
+    r"\b(summary|discussion|conclusion|conclusions|concluding|"
+    r"illustrations?|examples?|applications?|outlook)\b",
     flags=re.IGNORECASE,
 )
 
