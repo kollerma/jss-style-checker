@@ -32,6 +32,23 @@ _FIG_TAB_NUMBER_RE = re.compile(
     r"\b(?:Figure|Fig\.|Figures|Table|Tab\.|Tables)\s+\d+",
 )
 
+# Cite macros that mean "this figure/table number is in another
+# paper": ``Figure N in \cite{...}``, ``Table 2 of \citet{X}``,
+# ``Figure 1b in `\cite{X}`` (backtick punctuation between connector
+# and cite). Trailing punctuation (backticks, opening parens) before
+# the cite macro is tolerated.
+_CITE_FOLLOWERS_RE = re.compile(
+    r"\A\s*(?:in|of|from|on)\s*[`'(\[]?\s*\Z"
+)
+
+# Author-year inline cite preceding the match: ``(2010, Figure 3)``,
+# ``(McNeil 2009, Table 2)``. The number mention is the cited paper's
+# numbering, not a label in this manuscript.
+_INSIDE_AUTHOR_YEAR_PAREN_RE = re.compile(
+    r"\(\s*(?:[A-Z][A-Za-z\-']+(?:,\s*[A-Z][A-Za-z\-']+|\s+(?:and|&)\s+[A-Z][A-Za-z\-']+)*"
+    r"\s+)?(?:19|20)\d{2}[a-z]?(?:,\s*p\.?\s*\d+)?,\s*\Z"
+)
+
 # "Subsection 3.2" / "Subsection~3.2" — needs replacement with "Section".
 _SUBSECTION_RE = re.compile(r"\bSubsection[s]?\s*~?\s*\d", flags=re.ASCII)
 
@@ -63,16 +80,55 @@ def _violation(
 # ---------------------------------------------------------------------------
 
 
+def _is_cross_paper_reference(
+    chars: str, match_start: int, match_end: int,
+    parent: Any, idx: int,
+) -> bool:
+    """True when the ``Figure N`` / ``Table N`` mention is a reference
+    to a CITED external paper, not to a float in this manuscript.
+
+    Two shapes:
+    - ``Figure N {in|of|from|on} \\cite*{...}`` — the trailing prose
+      after the match contains a connector word and the next sibling
+      is a cite macro.
+    - ``({Author, }YYYY, Figure N)`` — the match sits inside a
+      hardcoded author-year parenthetical citation. (CITE-004 handles
+      flagging the parenthetical itself separately.)
+    """
+    # Trailing-cite shape: the immediate text after the match is
+    # connector-only ("in", "of", "from", "on"), followed by a cite
+    # macro sibling.
+    tail = chars[match_end:]
+    if _CITE_FOLLOWERS_RE.match(tail) and idx + 1 < len(parent):
+        nxt = parent[idx + 1]
+        if (
+            isinstance(nxt, LatexMacroNode)
+            and nxt.macroname in _helpers._CITE_MACROS_FOR_SCOPE
+        ):
+            return True
+    # Author-year preceding-paren shape — last 60 chars before match.
+    head = chars[max(0, match_start - 60) : match_start]
+    if _INSIDE_AUTHOR_YEAR_PAREN_RE.search(head):
+        return True
+    return False
+
+
 def check_jss_xref_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
-        for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
+        for node, ancestors, parent, idx in _helpers._walk_with_context(
+            tex.nodes
+        ):
             if not isinstance(node, LatexCharsNode):
                 continue
             if not _helpers._is_in_prose_context(ancestors):
                 continue
             for match in _FIG_TAB_NUMBER_RE.finditer(node.chars):
+                if _is_cross_paper_reference(
+                    node.chars, match.start(), match.end(), parent, idx
+                ):
+                    continue
                 abs_pos = node.pos + match.start()
                 yield _violation(
                     tex=tex,
