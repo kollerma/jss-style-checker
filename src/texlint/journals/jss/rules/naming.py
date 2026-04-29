@@ -27,6 +27,15 @@ from texlint.journals.jss.terms import (
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9+\-]*")
 
+# Bare URL spans in prose. NAME-001 should not fire on tokens inside
+# them — ``http://java.sun.com/docs`` contains the substring ``java``,
+# which CANONICAL would otherwise rewrite to ``Java`` (nonsensical
+# inside a URL).
+_BARE_URL_RE = re.compile(
+    r"\b(?:https?|ftp|ftps|file)://\S+",
+    flags=re.IGNORECASE,
+)
+
 
 def _violation(
     *, file: Any, line: int, column: int | None, rule_id: str, suggestion: str
@@ -58,9 +67,14 @@ def check_jss_name_001(
                 continue
             if not _helpers._is_in_prose_context(ancestors):
                 continue
+            url_spans = [m.span() for m in _BARE_URL_RE.finditer(node.chars)]
             for match in _TOKEN_RE.finditer(node.chars):
                 token = match.group(0)
                 if token not in CANONICAL:
+                    continue
+                # Skip tokens inside bare URLs — ``java.sun.com`` is
+                # not the language reference.
+                if any(s <= match.start() < e for s, e in url_spans):
                     continue
                 # Skip function calls — `ggplot(` is the R function
                 # invocation, not the package name. The lookahead for

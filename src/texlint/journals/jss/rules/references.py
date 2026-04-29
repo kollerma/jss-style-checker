@@ -102,7 +102,13 @@ def check_jss_refs_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for bib, entry in _iter_entries(doc):
-        if "year" in _helpers._lc_fields(entry):
+        fields = _helpers._lc_fields(entry)
+        if "year" in fields:
+            continue
+        # ``@incollection{X, crossref = {Y}}`` inherits all required
+        # fields (year included) from the cross-referenced entry. Don't
+        # flag X — its year IS effectively present via Y.
+        if "crossref" in fields:
             continue
         key = entry.key or "<unknown>"
         yield _violation(
