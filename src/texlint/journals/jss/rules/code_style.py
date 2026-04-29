@@ -44,6 +44,20 @@ _MISSING_SPACES_RE = re.compile(
 # and the operator-spacing check mis-fires on the internal hyphens.
 _IDENTIFIER_ONLY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.\-]*$")
 
+# `\code{0.8-0}`, `\code{l-95\% CI}` — version-number-shaped or
+# label-shaped strings that begin with a digit or contain percent /
+# whitespace. The hyphen here is part of the label, not a subtraction
+# operator.
+_VERSION_OR_LABEL_RE = re.compile(
+    r"^(?:[0-9][\w.\-]*|[A-Za-z][\w.\-]*\s*\\?%[\w.\-\s\\]*)$"
+)
+
+# `\code{inst/tex/}`, `\code{src/main.cpp}` — filesystem-like paths with
+# slashes between identifier-shaped pieces. The `/` is a path
+# separator, not a division operator.
+_PATH_LIKE_RE = re.compile(r"^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]*)+/?$")
+
+
 # Scientific number formats like 2.22e-16, 1.0E+9 — the exponent sign is
 # notation, not a subtraction operator, so mask it before the missing-
 # spaces check.
@@ -161,8 +175,16 @@ def check_jss_code_003(
             text = _group_plain_text(group)
             if not text:
                 continue
+            stripped = text.strip()
             # Single dotted/hyphenated identifier — treat as a name.
-            if _IDENTIFIER_ONLY_RE.match(text.strip()):
+            if _IDENTIFIER_ONLY_RE.match(stripped):
+                continue
+            # Version number / labelled string — hyphen is part of the
+            # label, not an operator.
+            if _VERSION_OR_LABEL_RE.match(stripped):
+                continue
+            # Filesystem path — slashes are separators, not division.
+            if _PATH_LIKE_RE.match(stripped):
                 continue
             # Mask scientific notation and bare string literals before
             # the operator check so the exponent sign in 2.22e-16
