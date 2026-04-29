@@ -205,7 +205,7 @@ def check_jss_pre_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.tex_files:
-        if _first_macro(tex, "Address") is None and _has_jss_class(tex):
+        if _first_macro(tex, "Address") is None and _has_strict_jss_class(tex):
             yield _violation_at_file_start(
                 tex=tex,
                 rule_id="JSS-PRE-002",
@@ -219,6 +219,21 @@ def check_jss_pre_002(
 def _has_jss_class(tex: Any) -> bool:
     info = _class_and_options(tex)
     return bool(info and info[1] == "jss")
+
+
+def _has_strict_jss_class(tex: Any) -> bool:
+    """True for ``\\documentclass{jss}`` *without* the ``nojss`` option.
+
+    The ``nojss`` option turns the JSS class into a draft-only mode
+    that intentionally omits the strict metadata (``\\Address{}``,
+    ``\\Plaintitle``, etc.). Rules that mandate that metadata should
+    skip ``[nojss]`` documents to avoid false positives on package
+    vignettes that share the JSS class but aren't full submissions.
+    """
+    info = _class_and_options(tex)
+    if not info or info[1] != "jss":
+        return False
+    return "nojss" not in info[2]
 
 
 # ---------------------------------------------------------------------------
