@@ -313,6 +313,36 @@ def test_display_eq_span_when_line_inside_body() -> None:
     assert span == (1, 6)
 
 
+def test_author_block_span_for_struct_005() -> None:
+    # \author{} can span many lines; STRUCT-005 fires at the macro
+    # line, but the reviewer needs the full block to verify whether
+    # \and / \And / \AND is used.
+    lines = [
+        r"\title{Demo}",                               # 1
+        r"\author{",                                   # 2 — violation
+        r"  Alice Smith \and",                         # 3
+        r"  Bob Jones \And",                           # 4
+        r"  Carol Patel\\ MIT",                        # 5
+        r"}",                                          # 6
+        r"\Plainauthor{Alice Smith, Bob Jones, Carol Patel}",  # 7
+    ]
+    span = human_review._macro_block_span(
+        lines, 2, human_review._AUTHOR_MACRO_RE
+    )
+    assert span == (2, 6)
+
+
+def test_macro_block_span_returns_none_when_line_outside() -> None:
+    lines = [
+        r"\author{Alice Smith}",   # 1
+        r"",                       # 2
+        r"prose at line 3",        # 3
+    ]
+    assert human_review._macro_block_span(
+        lines, 3, human_review._AUTHOR_MACRO_RE
+    ) is None
+
+
 def test_display_eq_span_returns_none_outside_block() -> None:
     lines = [
         r"\begin{eqnarray*}",   # 1

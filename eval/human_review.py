@@ -152,6 +152,49 @@ def _display_eq_span(
     return (max(1, begin + 1 - padding), min(n, end + 1 + padding))
 
 
+_AUTHOR_MACRO_RE = re.compile(r"\\author\b")
+
+
+def _macro_block_span(
+    lines: list[str], line: int, macro_re: re.Pattern[str]
+) -> tuple[int, int] | None:
+    """Locate a multi-line ``\\<macro>{...}`` block whose opening line
+    is at or before ``line`` and whose matching close brace is at or
+    after ``line``. Returns 1-based ``(start, end)`` inclusive.
+
+    Used for JSS-STRUCT-005 (full ``\\author{}``) — a reviewer
+    judging whether the author list correctly uses ``\\And``/``\\AND``
+    instead of lowercase ``\\and`` needs to see the entire
+    multi-author block, which can span 10+ lines for collaborative
+    papers.
+    """
+    n = len(lines)
+    if line < 1 or line > n:
+        return None
+    macro_start = None
+    for i in range(line - 1, -1, -1):
+        if macro_re.search(lines[i]):
+            macro_start = i
+            break
+    if macro_start is None:
+        return None
+    # Walk forward, balancing braces from the macro line.
+    depth = 0
+    seen_open = False
+    for j in range(macro_start, n):
+        for ch in lines[j]:
+            if ch == "{":
+                depth += 1
+                seen_open = True
+            elif ch == "}":
+                depth -= 1
+                if seen_open and depth == 0:
+                    if macro_start + 1 <= line <= j + 1:
+                        return (macro_start + 1, j + 1)
+                    return None
+    return None
+
+
 def _float_or_caption_span(
     lines: list[str], line: int
 ) -> tuple[int, int] | None:
@@ -293,6 +336,15 @@ def source_snippet(
         and src.suffix in {".tex", ".ltx", ".Rnw", ".Rmd"}
     ):
         span = _display_eq_span(lines, line)
+        if span is not None:
+            start, end = span
+            return "\n".join(lines[start - 1 : end]), start
+
+    if (
+        rule_id == "JSS-STRUCT-005"
+        and src.suffix in {".tex", ".ltx", ".Rnw", ".Rmd"}
+    ):
+        span = _macro_block_span(lines, line, _AUTHOR_MACRO_RE)
         if span is not None:
             start, end = span
             return "\n".join(lines[start - 1 : end]), start
