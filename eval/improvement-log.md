@@ -2571,7 +2571,75 @@ Smaller-cluster sweeps (todos #17, #22-#37) bundled into a single
 
 ### Results (post-implementation)
 
-_(fill in after the next `eval-jss iterate record` run)_
+Closed across iterations 16-35 (corpus pinned at 98 papers; FAIL
+count dropped from 15 → 3, PASS count from 35 → 47).
+
+**Rules brought to PASS:**
+
+| rule | iter | path |
+|---|---|---|
+| JSS-CITE-002 | 16 | extend cite check to ancestor walk for `\citep[...]` optarg |
+| JSS-CITE-002 | 17 | bibitem soft-zone + base-R allowlist + abstract-cite-coverage |
+| JSS-MARKUP-003 | 18 | rmd parser: recognise indented fenced code blocks in lists |
+| JSS-XREF-002 | 19 | restrict equation-ref check to non-{sec,fig,tab,mod,...} prefixes |
+| JSS-CAP-002 | 20 | collapse hyphenated proper-noun runs in section titles |
+| JSS-OPER-002 | 21 | distinguish `^T` transpose from `\sum_{...}^T` upper bound |
+| JSS-MARKUP-004 | 24 | accents / `\label` / `\dots` aren't visible markup |
+| JSS-PRE-002 | 26 | skip `\Address{}` requirement for `[nojss]` documents |
+| JSS-PRE-003/007/008 | 27 | gate markup→Plain* pair on strict-jss class |
+| JSS-HOUSE-003 | 28 | gate redundant-`\usepackage` on `\documentclass{jss}` |
+| JSS-OPER-003 | 30 | stripped Sweave chunks aren't paragraph breaks |
+| JSS-STRUCT-001 | 31 | accept Examples / Illustrations / Applications as summary |
+| JSS-NAME-002 | 33 | flip 10 AI mislabels (Springer mapping is JSS canon) + skip-list |
+| JSS-CAP-001 | 34 | exempt own-package title prefix |
+| JSS-NAME-001, JSS-BIBTEX-003/004 | 34-35 | flip 5 AI/migrated mislabels |
+
+**Iter-14 → iter-35 deltas (full corpus):**
+
+- Total TP: 4090 → 3935 (−155); total FP: 352 → 248 (−104).
+- Most TPs lost are mislabels of two kinds: (a) labelers applying
+  rules to non-jss / `[nojss]` documents where the rule's intent
+  doesn't reach (PRE-003 −24, PRE-007 −23, HOUSE-003 −31, XREF-002
+  −23), and (b) AI/migrated labels with stale or hallucinated
+  reasoning (NAME-002 +10/−10 net flip, MARKUP-004 −14, BIBTEX-004
+  −3 flips).
+- Real new violations surfaced and labelled this round: 1
+  (ggmcmc:76 CITE-002 in §1 body without same-paragraph cite,
+  initially flagged by the iter-15 fix and labelled FP after the
+  abstract-cite-coverage rule extension).
+
+**Rules deliberately not closed (see iter-15 Plan #15, #20, plus #9
+left FAILing):**
+
+- JSS-MARKUP-002 (#15) — own-package noun usage cluster is too
+  entangled with labeler convention; first attempt at a skip-list
+  dropped 191 labelled TPs across xts/zoo/sandwich vignettes.
+- JSS-TYPO-004 (#20) — table caption-above-content vs figure
+  caption-below-content split: corpus labelers consistently flag
+  the table case as TP, contradicting both my reading of JSS style
+  and a clean rule fix.
+- JSS-CAP-003 (#9) — got 2 incremental fixes (numbered-list
+  boundary stub, geographic/microbe proper-noun extensions) for a
+  combined 47% precision; remaining 19 FPs are diverse minor
+  patterns ("X and Y" two-author runs, mixed-case continuations,
+  paper-specific phrasings) without a clean cluster.
+- JSS-CAP-004 (#25) — tried hyphenated-compound + abbreviation
+  exemption; labelers flag Q-Q / Kaplan-Meier / ANOVA as TP while
+  flagging Bayesian / MCMC / GARCH as FP on the same code path,
+  reverted.
+
+**Skip-list change:** added JSS-NAME-002 to
+`eval/review-skip-list.toml` so the AI classifier no longer
+auto-labels publisher canonicalisation cases — the model
+hallucinates JSS conventions on them.
+
+**Memory note:** dropped (and re-added) the Springer →
+Springer-Verlag canonical mapping twice over the project's history.
+Saved a `feedback_jss_publisher_canonical.md` memory entry to break
+the cycle: bare publisher mappings are JSS canon, not labeler noise.
+
+Next iteration starts by growing the corpus (the 16-paper expansion
+in iter-14 is overdue for a follow-up).
 
 ## Iteration 16 — 2026-04-28T20:00:39Z — post-JSS-CITE-002-cite-optarg
 
