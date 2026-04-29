@@ -27,9 +27,12 @@ from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
 # "Figure 2", "Table 3", "Fig. 2", "Tab. 3" followed by a number (not
-# followed by a ref macro).
+# followed by a ref macro). The trailing ``[a-z]*`` captures
+# sub-figure / sub-table letters (``Figure 1b``, ``Table 2a``) so the
+# whole reference span is consumed before the cross-paper-cite check
+# inspects the tail.
 _FIG_TAB_NUMBER_RE = re.compile(
-    r"\b(?:Figure|Fig\.|Figures|Table|Tab\.|Tables)\s+\d+",
+    r"\b(?:Figure|Fig\.|Figures|Table|Tab\.|Tables)\s+\d+[a-z]*",
 )
 
 # Cite macros that mean "this figure/table number is in another
@@ -47,6 +50,18 @@ _CITE_FOLLOWERS_RE = re.compile(
 _INSIDE_AUTHOR_YEAR_PAREN_RE = re.compile(
     r"\(\s*(?:[A-Z][A-Za-z\-']+(?:,\s*[A-Z][A-Za-z\-']+|\s+(?:and|&)\s+[A-Z][A-Za-z\-']+)*"
     r"\s+)?(?:19|20)\d{2}[a-z]?(?:,\s*p\.?\s*\d+)?,\s*\Z"
+)
+
+# Anaphoric reference to a previously cited paper: ``Figure N from that
+# paper``, ``Table 2 of their study``. Narrow phrasing — matches only
+# when the trailing prose names the cited paper through ``that`` /
+# ``their`` (or ``the cited|referenced``), so generic "Table 2 of the
+# vignette" stays flagged.
+_ANAPHORIC_PAPER_REF_RE = re.compile(
+    r"\A\s*(?:in|of|from|on)\s+"
+    r"(?:that|their|the\s+(?:cited|referenced))\s+"
+    r"(?:paper|article|study|work)\b",
+    flags=re.IGNORECASE,
 )
 
 # "Subsection 3.2" / "Subsection~3.2" — needs replacement with "Section".
@@ -82,18 +97,22 @@ def _violation(
 
 def _is_cross_paper_reference(
     chars: str, match_start: int, match_end: int,
-    parent: Any, idx: int,
+    parent: Any, idx: int, ancestors: list[Any],
 ) -> bool:
     """True when the ``Figure N`` / ``Table N`` mention is a reference
     to a CITED external paper, not to a float in this manuscript.
 
-    Two shapes:
+    Three shapes:
     - ``Figure N {in|of|from|on} \\cite*{...}`` — the trailing prose
       after the match contains a connector word and the next sibling
       is a cite macro.
     - ``({Author, }YYYY, Figure N)`` — the match sits inside a
       hardcoded author-year parenthetical citation. (CITE-004 handles
       flagging the parenthetical itself separately.)
+    - ``\\footnote{... \\cite{...} ... Figure N ...}`` — figure
+      mention inside a footnote whose body cites another work; the
+      footnote is discussing the cited paper, so the figure number
+      refers to that paper's figure, not the current manuscript's.
     """
     # Trailing-cite shape: the immediate text after the match is
     # connector-only ("in", "of", "from", "on"), followed by a cite
@@ -110,6 +129,41 @@ def _is_cross_paper_reference(
     head = chars[max(0, match_start - 60) : match_start]
     if _INSIDE_AUTHOR_YEAR_PAREN_RE.search(head):
         return True
+    # Anaphoric-paper shape: ``Figure N from that paper``, ``Table 2
+    # of their study``.
+    if _ANAPHORIC_PAPER_REF_RE.match(tail):
+        return True
+    # Footnote-with-cite shape: the figure mention sits inside a
+    # \footnote whose body contains a \cite — likely discussing the
+    # cited paper.
+    if _is_in_cited_footnote(ancestors):
+        return True
+    return False
+
+
+def _is_in_cited_footnote(ancestors: list[Any]) -> bool:
+    for anc in reversed(ancestors):
+        if (
+            isinstance(anc, LatexMacroNode)
+            and anc.macroname == "footnote"
+        ):
+            return _macro_body_has_cite(anc)
+    return False
+
+
+def _macro_body_has_cite(macro: Any) -> bool:
+    argd = getattr(macro, "nodeargd", None)
+    if argd is None:
+        return False
+    for arg in argd.argnlist or ():
+        if not isinstance(arg, LatexGroupNode):
+            continue
+        for descendant in _helpers._walk(arg.nodelist or ()):
+            if (
+                isinstance(descendant, LatexMacroNode)
+                and descendant.macroname in _helpers._CITE_MACROS_FOR_SCOPE
+            ):
+                return True
     return False
 
 
@@ -126,7 +180,8 @@ def check_jss_xref_001(
                 continue
             for match in _FIG_TAB_NUMBER_RE.finditer(node.chars):
                 if _is_cross_paper_reference(
-                    node.chars, match.start(), match.end(), parent, idx
+                    node.chars, match.start(), match.end(),
+                    parent, idx, ancestors,
                 ):
                     continue
                 abs_pos = node.pos + match.start()
