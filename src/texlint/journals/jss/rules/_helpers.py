@@ -330,9 +330,17 @@ _SECTION_MACROS: frozenset[str] = frozenset(
      "paragraph", "subparagraph"}
 )
 
-# Macros whose text arg is already JSS-wrapped markup.
+# Macros whose text arg is already JSS-wrapped markup. Beyond the
+# canonical jss.cls macros (``\pkg``, ``\proglang``, ``\code``, ...),
+# this also includes common paper-defined ``\Rcmd``-family wrappers —
+# vignettes from multcomp, cotram, tram, mlt, tbm, etc. define
+# ``\newcommand{\Rcmd}[1]{\texttt{#1}}`` and friends, which render
+# code-style content. Treating them as markup avoids MARKUP-003 firing
+# on already-wrapped function calls like ``\Rcmd{glht()}``.
 _MARKUP_MACROS: frozenset[str] = frozenset(
-    {"pkg", "proglang", "code", "verb", "url", "email", "fct"}
+    {"pkg", "proglang", "code", "verb", "url", "email", "fct",
+     "Rcmd", "Rpackage", "Rclass", "Rfun", "Rfunction",
+     "Rargument", "Rstring", "Robject"}
 )
 
 # Preamble / meta-data / citation macros whose arg is not prose to scan.

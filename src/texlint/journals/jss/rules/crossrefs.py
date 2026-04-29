@@ -318,12 +318,18 @@ def check_jss_xref_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
-        for node in _helpers._walk(tex.nodes):
+        for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexEnvironmentNode):
                 continue
             if node.environmentname not in _NUMBERED_EQ_ENVS:
                 continue
             if _env_has_label(node):
+                continue
+            # Inner numbered envs of a ``subequations`` block share the
+            # outer block's ``\label{}`` and are referenced via
+            # ``\eqref{...}`` / ``\subref{...}`` against that label —
+            # they don't need their own.
+            if _inside_subequations(ancestors):
                 continue
             yield _violation(
                 tex=tex,
@@ -334,6 +340,16 @@ def check_jss_xref_004(
                     "be referenced from the text."
                 ),
             )
+
+
+def _inside_subequations(ancestors: list[Any]) -> bool:
+    for anc in ancestors:
+        if (
+            isinstance(anc, LatexEnvironmentNode)
+            and anc.environmentname == "subequations"
+        ):
+            return True
+    return False
 
 
 def _env_has_label(env: Any) -> bool:
