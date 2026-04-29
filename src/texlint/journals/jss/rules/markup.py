@@ -20,6 +20,7 @@ from typing import Any
 
 from pylatexenc.latexwalker import (
     LatexCharsNode,
+    LatexEnvironmentNode,
     LatexGroupNode,
     LatexMacroNode,
     LatexMathNode,
@@ -118,6 +119,24 @@ def _disambiguates_to_method(chars: str, offset: int, token: str) -> bool:
     return next_word_match.group(0).lower() in followers
 
 
+# Environments whose contents are bibliography entries: ``\\bibitem``
+# bodies, BibTeX-style hand-written entries. The author-name field
+# typically contains lone-letter initials (``Bendtsen C``, ``Gramacy
+# R``) that the LANGUAGES set treats as ``C`` / ``R`` mentions —
+# false-positive territory for MARKUP-001.
+_BIB_ENV_NAMES: frozenset[str] = frozenset({"thebibliography"})
+
+
+def _is_inside_bibliography(ancestors: list[Any]) -> bool:
+    for anc in ancestors:
+        if (
+            isinstance(anc, LatexEnvironmentNode)
+            and anc.environmentname in _BIB_ENV_NAMES
+        ):
+            return True
+    return False
+
+
 def _check_bare_terms(
     doc: ParsedDocument,
     *,
@@ -132,8 +151,18 @@ def _check_bare_terms(
                 continue
             if not _helpers._is_in_prose_context(ancestors):
                 continue
+            in_bib = _is_inside_bibliography(ancestors)
             for offset, token in _iter_tokens_in_chars(node.chars):
                 if token not in terms:
+                    continue
+                if in_bib and len(token) == 1:
+                    # Single-letter ``R`` / ``C`` / ``B`` inside the
+                    # bibliography is overwhelmingly an author
+                    # initial (``Bendtsen C``, ``Gramacy R``). Skip
+                    # those; multi-letter language/package names
+                    # (``Java``, ``Python``, ``zoo``) still fire so
+                    # that bibliographic prose stays linted for real
+                    # missing markup.
                     continue
                 if skip_initials and len(token) == 1 and _is_initial(
                     node.chars, offset
