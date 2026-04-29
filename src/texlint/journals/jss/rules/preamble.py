@@ -69,8 +69,59 @@ def _first_group_arg(macro: Any, parent: tuple[Any, ...], idx: int) -> Any:
     return _helpers._next_group_arg(parent, idx)
 
 
+# Macros that produce a single valid PDF-metadata-safe glyph (accents,
+# spacing controls, special characters) and structural commands that
+# get translated to plain text by JSS preprocessing (\\and, \\\\,
+# \\newline). They don't justify a parallel \\Plain* metadata twin —
+# the Plain* macro exists only to bypass macros that would break PDF
+# bookmarks, like \\pkg{}, \\code{}, \\proglang{}.
+_NON_MARKUP_PREAMBLE_MACROS: frozenset[str] = frozenset({
+    # Accents
+    "'", "`", '"', "^", "~", "=", ".", "u", "v", "H", "t", "c",
+    "d", "b", "r", "k",
+    # Spacing / kerning controls
+    " ", ",", ";", ":", "!",
+    # Quoted literal characters
+    "&", "_", "$", "#", "%", "{", "}",
+    # National / extended characters
+    "ss", "aa", "AA", "ae", "AE", "oe", "OE", "o", "O", "l", "L",
+    "i", "j", "S", "P",
+    # Multi-author and line-break structure
+    "and", "\\\\", "newline", "linebreak",
+})
+
+
 def _group_contains_markup(group: Any) -> bool:
-    """True when any descendant of ``group`` is a macro, math, or specials."""
+    """True when any descendant of ``group`` is a non-trivial macro,
+    math, or specials node. Accents (``\\'``, ``\\.``), spacing controls
+    (``\\,``), and structural separators (``\\and``, ``\\\\``) are
+    treated as plain text — they render cleanly in PDF metadata fields,
+    so they don't justify a ``\\Plain*`` parallel macro.
+
+    Used by PRE-003 / PRE-007 / PRE-008 to decide whether a ``\\title``
+    / ``\\author`` / ``\\Keywords`` group needs a ``\\Plain*`` twin.
+    """
+    if group is None:
+        return False
+    for node in _helpers._walk(group.nodelist or ()):
+        if isinstance(node, (LatexMathNode, LatexSpecialsNode)):
+            return True
+        if isinstance(node, LatexMacroNode):
+            if node.macroname in _NON_MARKUP_PREAMBLE_MACROS:
+                continue
+            return True
+    return False
+
+
+def _group_contains_any_macro(group: Any) -> bool:
+    """Strict counterpart of :func:`_group_contains_markup`.
+
+    JSS's ``\\Plaintitle`` / ``\\Plainauthor`` / ``\\Plainkeywords``
+    macros are designed to feed PDF metadata directly, where the JSS
+    class expects ASCII-only content (no accents, no math, no markup
+    of any kind). PRE-006 enforces that and so must NOT exempt the
+    accent / structural macros that PRE-007's lenient check ignores.
+    """
     if group is None:
         return False
     for node in _helpers._walk(group.nodelist or ()):
@@ -244,6 +295,12 @@ def _has_strict_jss_class(tex: Any) -> bool:
 def _check_markup_plain_pair(
     tex: Any, *, markup_macro: str, plain_macro: str, rule_id: str
 ) -> Iterator[Violation]:
+    if not _has_strict_jss_class(tex):
+        # ``\\Plainauthor`` / ``\\Plaintitle`` / ``\\Plainkeywords`` only
+        # exist as JSS-class macros, and ``[nojss]`` documents waive
+        # strict metadata. Outside that scope the rule has nothing to
+        # enforce.
+        return
     triple = _first_macro(tex, markup_macro)
     if triple is None:
         return
@@ -372,7 +429,7 @@ def check_jss_pre_006(
         for name in _PLAIN_MACROS:
             for macro, parent, idx in _iter_macros(tex, name):
                 group = _first_group_arg(macro, parent, idx)
-                if not _group_contains_markup(group):
+                if not _group_contains_any_macro(group):
                     continue
                 yield _violation(
                     tex=tex,
