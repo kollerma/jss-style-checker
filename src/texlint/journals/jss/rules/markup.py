@@ -244,6 +244,32 @@ def _has_optional_shim(macro: Any) -> bool:
     return False
 
 
+# Macros that may legally appear inside a section title without
+# triggering MARKUP-004's "needs plain-text shim" check. They render
+# as no visible glyph (``\label`` / ``\index``), as a single
+# accented character (``\'``, ``\.``, ``\^``, ``\&``, ...), or as a
+# typographic shortcut (``\dots``, ``\ldots``). None of them break a
+# table-of-contents entry, so a parallel plain-text optional argument
+# isn't needed solely on their account.
+_NON_MARKUP_TITLE_MACROS: frozenset[str] = frozenset({
+    # Invisible / structural commands
+    "label", "index", "nocite", "ignorespaces",
+    # Typographic shortcuts that render as plain glyphs
+    "dots", "ldots", "cdots", "vdots",
+    "textbackslash", "textunderscore",
+    # Accent commands — single non-ASCII character output
+    "'", "`", '"', "^", "~", "=", ".", "u", "v", "H", "t", "c",
+    "d", "b", "r", "k",
+    # Spacing / kerning controls (single backslash-space etc.)
+    " ", ",", ";", ":", "!",
+    # Quoted / national-character commands
+    "&", "_", "$", "#", "%", "{", "}",
+    # Common JSS-specific accent or symbol shortcuts
+    "ss", "aa", "AA", "ae", "AE", "oe", "OE", "o", "O", "l", "L",
+    "i", "j", "S", "P",
+})
+
+
 def _mandatory_arg_contains_markup(macro: Any) -> bool:
     argd = getattr(macro, "nodeargd", None)
     if argd is None:
@@ -255,7 +281,11 @@ def _mandatory_arg_contains_markup(macro: Any) -> bool:
         if not isinstance(arg, LatexGroupNode):
             continue
         for node in _helpers._walk(arg.nodelist or ()):
-            if isinstance(node, (LatexMacroNode, LatexMathNode)):
+            if isinstance(node, LatexMathNode):
+                return True
+            if isinstance(node, LatexMacroNode):
+                if node.macroname in _NON_MARKUP_TITLE_MACROS:
+                    continue
                 return True
         return False
     return False
