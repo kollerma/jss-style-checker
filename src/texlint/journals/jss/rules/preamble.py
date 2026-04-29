@@ -35,7 +35,15 @@ from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
 _VALID_CLASS_OPTIONS: frozenset[str] = frozenset(
-    {"article", "codesnippet", "bookreview", "softwarereview", "shortnames", "nojss"}
+    {
+        # Class-type primary options (mutually exclusive in spirit)
+        "article", "codesnippet", "bookreview", "softwarereview",
+        # JSS-specific toggles
+        "shortnames", "nojss", "nofooter", "noheadings",
+        # Generic LaTeX paper-size pass-throughs that vignette authors
+        # sometimes set on the JSS class.
+        "a4paper", "letterpaper",
+    }
 )
 
 # JSS sentinels that jss.cls uses as placeholder defaults.
