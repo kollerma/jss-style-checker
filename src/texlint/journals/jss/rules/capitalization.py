@@ -491,8 +491,19 @@ def _check_sentence_style(
         # Either a single-token cap, or a long run that's actually
         # title-case. Fall back to the per-token offender check on each
         # element of the run that wasn't already a sentence-start.
-        for k, w in enumerate(run):
+        # Hyphen-piece continuations whose leading sibling is itself in
+        # the run (``Thompson`` in ``Horvitz-Thompson``) inherit the
+        # offender status of that sibling — count the chain at most
+        # once so multi-piece hyphenated proper names like
+        # ``Aalen-Johansen`` / ``Ali-Mikhail-Haq`` aren't double-
+        # penalised. A solitary hyphen-piece whose preceding source
+        # piece wasn't run-eligible (``Mar`` in ``12-Mar-2023``) keeps
+        # contributing — that's a real title-case signal.
+        run_meta = words[run_start:j]
+        for k, (w, _, w_is_hyphen) in enumerate(run_meta):
             if k == 0 and is_start:
+                continue
+            if w_is_hyphen and k > 0:
                 continue
             if _is_capitalised_offender(w):
                 key = w.lower()
