@@ -243,7 +243,25 @@ def _equation_body_ends_with_period(env: Any) -> bool:
 
 
 def _chars_has_blank_lines(node: Any) -> bool:
-    return isinstance(node, LatexCharsNode) and _helpers._char_has_blank_line(node)
+    """True when ``node`` is a chars node with a blank-line separator
+    that's NOT the fingerprint of a stripped Sweave / knitr chunk.
+
+    The Rnw stripper blanks each chunk to ``\\n``-only filler; many
+    consecutive newlines (≥3) signal a multi-line chunk, not normal
+    paragraph spacing. A single blank line (``\\n\\n``) between
+    ``\\end{equation}`` and the next chunk would render as paragraph
+    break and trip the rule, but the chunk's own filler newlines are
+    structural — the equation actually sits adjacent to chunk content.
+    """
+    if not isinstance(node, LatexCharsNode):
+        return False
+    chars = node.chars
+    if not _helpers._BLANK_LINE_RE.search(chars):
+        return False
+    # Strip any chunk-shaped runs (3+ consecutive newlines, possibly
+    # with whitespace) and re-check for a real blank line.
+    stripped = re.sub(r"\n[ \t]*(?:\n[ \t]*){2,}", "\n", chars)
+    return bool(_helpers._BLANK_LINE_RE.search(stripped))
 
 
 # ---------------------------------------------------------------------------
