@@ -76,3 +76,8 @@ added_in_spec = "004"
 rule_id       = "JSS-CAP-004"
 reason        = "Keyword sentence-case heuristic; short fields with limited context — AI unreliable."
 added_in_spec = "004"
+
+[[rules]]
+rule_id       = "JSS-NAME-002"
+reason        = "Publisher / journal canonicalization. AI classifier hallucinates JSS conventions on bare 'Springer' / 'Wiley' / 'Chapman' entries — labelled 10/10 firings as FP at iter-15 with reasons like 'Springer aligns with JSS conventions' (it doesn't). All bare publisher matches are real violations; route to human-review. Added 2026-04-29 after the cluster was misclassified twice."
+added_in_iter = "32"
