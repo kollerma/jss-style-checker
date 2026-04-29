@@ -191,6 +191,11 @@ def _title_mentions_unwrapped(text: str, names: frozenset[str]) -> str | None:
     # Strip segments that are inside braces immediately after a backslash macro
     # (treat ``\pkg{MASS}`` as already wrapped).
     unwrapped = re.sub(r"\\[A-Za-z]+\s*\{[^{}]*\}", "", text)
+    # Unwrap BibTeX case-protection braces (``{C}arlo``, ``{Hardy}-Weinberg``,
+    # ``{R}``) so single-letter capitalisers don't masquerade as language /
+    # package mentions. Without this, ``Monte {C}arlo`` and ``{L}ycosidae``
+    # match the bare ``C`` / ``L`` token.
+    unwrapped = re.sub(r"\{([^{}\\]*)\}", r"\1", unwrapped)
     for name in names:
         # Match the name as a standalone token.
         if re.search(rf"\b{re.escape(name)}\b", unwrapped):
