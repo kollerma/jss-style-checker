@@ -29,7 +29,11 @@ _CODE_ENVS: frozenset[str] = frozenset(
      "Sinput", "Soutput", "Scode", "Schunk", "CodeChunk"}
 )
 
-_COMMENT_LINE_RE = re.compile(r"(?m)#[^\n]*")
+# Match ``#`` (or ``##``, ``###``) followed by at least one space then
+# non-whitespace content — the shape of an explanatory R / shell /
+# Python comment. This excludes template/placeholder markers like
+# ``##ID##`` inside example HTML and CSS hex colours like ``#fff``.
+_COMMENT_LINE_RE = re.compile(r"(?m)#+[^\S\n]+\S[^\n]*")
 _LIBRARY_UNQUOTED_RE = re.compile(
     r"\b(?:library|data|require|requireNamespace)\(\s*([A-Za-z][A-Za-z0-9_.]*)\s*\)"
 )
