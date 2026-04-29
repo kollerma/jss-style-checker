@@ -354,6 +354,32 @@ def test_display_eq_span_returns_none_outside_block() -> None:
     assert human_review._display_eq_span(lines, 5) is None
 
 
+def test_source_snippet_xref_004_uses_display_eq_span(tmp_path: Path) -> None:
+    rnw = tmp_path / "x.Rnw"
+    rnw.write_text(
+        "prose 1\n"
+        "prose 2\n"
+        r"\begin{equation}" "\n"
+        r"  a^2 + b^2 = c^2" "\n"
+        r"\end{equation}" "\n"
+        "prose 6\n"
+        "prose 7\n",
+        encoding="utf-8",
+    )
+    # XREF-004 fires on the env's opening line (line 3 here). Reviewer
+    # gets the full block plus 2 lines on each side.
+    result = human_review.source_snippet(
+        str(tmp_path), "x.Rnw", 3, rule_id="JSS-XREF-004",
+    )
+    assert result is not None
+    text, start = result
+    assert start == 1
+    assert r"\begin{equation}" in text
+    assert r"\end{equation}" in text
+    assert "prose 1" in text  # padding before
+    assert "prose 7" in text  # padding after
+
+
 def test_caption_span_only_returned_when_line_inside_caption() -> None:
     lines = [
         r"\caption{One short caption.}",   # 1

@@ -126,9 +126,14 @@ def _display_eq_span(
     """Locate the display-math env enclosing (or starting at) ``line``
     and return ``(begin_line - padding, end_line + padding)`` so the
     reviewer sees the complete equation plus a couple of lines on
-    either side. JSS-OPER-003 fires on the env's opening line and
-    its judgement requires seeing whether the lines immediately
-    before/after are blank.
+    either side. Used by:
+
+    - JSS-OPER-003 — fires on the env's opening line; judgement
+      requires seeing whether the lines immediately before/after
+      are blank.
+    - JSS-XREF-004 — fires on numbered equation envs that lack
+      ``\\label{}``; the reviewer needs to inspect the whole body
+      to verify there's no label hidden inside.
     """
     n = len(lines)
     if line < 1 or line > n:
@@ -332,7 +337,7 @@ def source_snippet(
             return "\n".join(lines[start - 1 : end]), start
 
     if (
-        rule_id == "JSS-OPER-003"
+        rule_id in {"JSS-OPER-003", "JSS-XREF-004"}
         and src.suffix in {".tex", ".ltx", ".Rnw", ".Rmd"}
     ):
         span = _display_eq_span(lines, line)
