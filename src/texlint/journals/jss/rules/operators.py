@@ -217,7 +217,10 @@ def check_jss_oper_003(
                 continue
             before = parent[idx - 1] if idx > 0 else None
             after = parent[idx + 1] if idx + 1 < len(parent) else None
-            if _chars_has_blank_lines(before) or _chars_has_blank_lines(after):
+            if (
+                _chars_ends_with_blank_line(before)
+                or _chars_starts_with_blank_line(after)
+            ):
                 yield _violation(
                     tex=tex,
                     pos=node.pos,
@@ -230,37 +233,87 @@ def check_jss_oper_003(
                 )
 
 
+# Macros that don't render a glyph in the equation body. Used by the
+# trailing-period scan: ``\\begin{equation} ... a + b. \\label{eq:x}
+# \\end{equation}`` should still count as period-terminated even
+# though ``\\label`` sits between the period and ``\\end{}``.
+_INVISIBLE_TRAILING_MACROS: frozenset[str] = frozenset({
+    "label", "nonumber", "notag", "tag", "tag*",
+    "ignorespaces", "ignorespacesafterend", "leavevmode",
+})
+
+
 def _equation_body_ends_with_period(env: Any) -> bool:
+    """True if the last visible character in the equation body is ``.``.
+
+    Walks ``env.nodelist`` in reverse, skipping whitespace and
+    invisible macros (``\\label``, ``\\nonumber``, ``\\notag``, ...).
+    Recurses into nested environments — the math body is often
+    wrapped in ``aligned`` / ``cases`` / ``split`` etc., and the
+    period sits inside the inner env.
+    """
     for child in reversed(env.nodelist or ()):
         if isinstance(child, LatexCharsNode):
             text = child.chars.rstrip()
             if not text:
                 continue
             return text.endswith(".")
-        # Non-chars node at the tail — we can't see a period ending.
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _INVISIBLE_TRAILING_MACROS
+        ):
+            # ``\\label{...}`` and friends don't render — the
+            # period-ending check should look past them.
+            continue
+        if isinstance(child, LatexEnvironmentNode):
+            # Recurse into ``aligned`` / ``cases`` / ``split`` /
+            # ``gathered`` / ``array`` etc. — the period typically
+            # ends the inner env's body.
+            return _equation_body_ends_with_period(child)
+        # Visible non-chars node at the tail — we can't see a period
+        # ending.
         return False
     return False
 
 
-def _chars_has_blank_lines(node: Any) -> bool:
-    """True when ``node`` is a chars node with a blank-line separator
-    that's NOT the fingerprint of a stripped Sweave / knitr chunk.
+def _chars_ends_with_blank_line(node: Any) -> bool:
+    """True when ``node``'s tail (the bit immediately before the next
+    sibling) contains a blank-line separator that's NOT the
+    fingerprint of a stripped Sweave / knitr chunk.
 
     The Rnw stripper blanks each chunk to ``\\n``-only filler; many
     consecutive newlines (≥3) signal a multi-line chunk, not normal
-    paragraph spacing. A single blank line (``\\n\\n``) between
-    ``\\end{equation}`` and the next chunk would render as paragraph
-    break and trip the rule, but the chunk's own filler newlines are
-    structural — the equation actually sits adjacent to chunk content.
+    paragraph spacing. We only care about a blank line in the LAST
+    line or two of the preceding chars node — a blank line buried
+    deep in the prose (e.g., between an earlier ``\\section{}`` and
+    the next sentence) doesn't mean the equation has a blank line
+    immediately before it.
     """
     if not isinstance(node, LatexCharsNode):
         return False
     chars = node.chars
-    if not _helpers._BLANK_LINE_RE.search(chars):
+    if not chars:
         return False
-    # Strip any chunk-shaped runs (3+ consecutive newlines, possibly
-    # with whitespace) and re-check for a real blank line.
-    stripped = re.sub(r"\n[ \t]*(?:\n[ \t]*){2,}", "\n", chars)
+    # Tail = everything after the last non-whitespace character.
+    tail_match = re.search(r"\S(\s*)\Z", chars)
+    tail = tail_match.group(1) if tail_match else chars
+    # Strip chunk-shaped runs before checking; a stripped chunk's
+    # filler is structural, not paragraph spacing.
+    stripped = re.sub(r"\n[ \t]*(?:\n[ \t]*){2,}", "\n", tail)
+    return bool(_helpers._BLANK_LINE_RE.search(stripped))
+
+
+def _chars_starts_with_blank_line(node: Any) -> bool:
+    """Mirror of :func:`_chars_ends_with_blank_line` for the chars
+    node immediately following the equation env."""
+    if not isinstance(node, LatexCharsNode):
+        return False
+    chars = node.chars
+    if not chars:
+        return False
+    head_match = re.match(r"(\s*)\S", chars)
+    head = head_match.group(1) if head_match else chars
+    stripped = re.sub(r"\n[ \t]*(?:\n[ \t]*){2,}", "\n", head)
     return bool(_helpers._BLANK_LINE_RE.search(stripped))
 
 
