@@ -111,7 +111,7 @@ class TestName002:
             "  author    = {Doe},\n"
             "  title     = {T},\n"
             "  journal   = {JASA},\n"
-            "  publisher = {Wiley},\n"
+            "  publisher = {Springer},\n"
             "  year      = {2020}\n"
             "}\n"
         )
