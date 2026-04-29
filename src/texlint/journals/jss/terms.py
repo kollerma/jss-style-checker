@@ -100,8 +100,9 @@ CANONICAL: Mapping[str, str] = MappingProxyType(dict(_CANONICAL_RAW))
 # up BibTeX ``publisher`` and ``journal`` fields against this mapping.
 
 _PUBLISHER_CANONICAL_RAW: Mapping[str, str] = {
-    # SG-048: Springer is published by Springer-Verlag
-    "Springer": "Springer-Verlag",
+    # SG-048: "Springer" / "Springer-Verlag" / "Springer New York" all
+    # appear in the corpus and the labeler review accepts every form;
+    # JSS no longer normalises this. Mapping intentionally omitted.
     # SG-049: Chapman & Hall / CRC
     "Chapman and Hall": "Chapman & Hall/CRC",
     "Chapman and Hall/CRC": "Chapman & Hall/CRC",
