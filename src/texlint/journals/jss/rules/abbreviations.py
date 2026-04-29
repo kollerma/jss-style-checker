@@ -34,6 +34,14 @@ _AUTHOR_INITIAL_FOLLOWER_RE = re.compile(
     r"[~ ][A-Z][a-z]+"
 )
 
+# Author-initial pattern in the OPPOSITE direction: bibliography-style
+# ``Cochran, W.G.`` — surname comes first, then a comma + space, then
+# the initials. Detects the immediate ``Surname, `` prefix so the
+# rule doesn't flag the trailing initials.
+_AUTHOR_SURNAME_PREFIX_RE = re.compile(
+    r"[A-Z][a-z]+(?:-[A-Z][a-z]+)*,\s+\Z"
+)
+
 
 def _violation(
     *, tex: Any, pos: int, rule_id: str, suggestion: str
@@ -53,14 +61,17 @@ def _violation(
 
 
 def _looks_like_author_initial(
-    chars: str, match_end: int, parent: Any, idx: int
+    chars: str, match_start: int, match_end: int, parent: Any, idx: int
 ) -> bool:
-    """Heuristic: a 2-letter dotted abbrev followed by a tie or space
-    plus a surname-shaped token is an author initial, not a generic
-    abbreviation. ``A.B.~Simas`` / ``W.G. Cochran`` / ``S.D. Dubois``.
+    """Heuristic: a 2-letter dotted abbrev that's part of an
+    author-name pattern, not a generic abbreviation. Three shapes:
 
-    Pylatexenc parses ``~`` as a :class:`LatexSpecialsNode`, splitting
-    the chars there — so we may need to look at the next sibling.
+    - ``A.B.~Simas`` / ``W.G. Cochran`` — initials BEFORE surname,
+      detected by tie/space + ``[A-Z][a-z]+`` follower.
+    - Pylatexenc parses ``~`` as a :class:`LatexSpecialsNode` that
+      splits chars; check the second-next sibling for the surname.
+    - ``Cochran, W.G.`` — surname BEFORE initials in a bibliography
+      list, detected by ``Surname,\\s+`` prefix.
     """
     tail = chars[match_end : match_end + 30]
     if _AUTHOR_INITIAL_FOLLOWER_RE.match(tail):
@@ -78,6 +89,10 @@ def _looks_like_author_initial(
             head = sib_two.chars[:30]
             if re.match(r"[A-Z][a-z]+", head):
                 return True
+    # ``Cochran, W.G.`` — bibliography-style with surname first.
+    head = chars[max(0, match_start - 60) : match_start]
+    if _AUTHOR_SURNAME_PREFIX_RE.search(head):
+        return True
     return False
 
 
@@ -98,7 +113,7 @@ def check_jss_abbr_001(
                 # 2-letter form (``X.Y.``); 3+-letter abbrevs
                 # (``U.S.A.``, ``Ph.D.``) are real abbreviations.
                 if match.group(3) is None and _looks_like_author_initial(
-                    node.chars, match.end(), parent, idx
+                    node.chars, match.start(), match.end(), parent, idx
                 ):
                     continue
                 collapsed = raw.replace(".", "")
