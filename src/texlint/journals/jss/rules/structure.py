@@ -43,13 +43,18 @@ _SUMMARY_WORDS_RE = re.compile(
 # Section titles that conventionally appear AFTER the conclusion but
 # before the bibliography — they're back-matter, not the document's
 # main-content endpoint, so STRUCT-001 ignores them when picking the
-# "last content section".
+# "last content section". Includes typical technical-appendix
+# patterns (``Code for Section ...``, ``Derivation of ...``,
+# ``Proof of ...``, ``Notations``, ``Glossary``) common in JSS
+# papers that put their summary mid-document.
 _BACKMATTER_TITLE_RE = re.compile(
-    # Prefix matching — \b at the start only, since the trailing
-    # boundary would refuse "Acknowledgments" (the prefix is
-    # "acknowledg" but the word continues into "ments").
-    r"\b(acknowledg|funding?|session\s*info|computational\s*details|"
-    r"appendix|appendices|references)",
+    # Anchored at title start (after optional leading whitespace).
+    # Prefix matching only: ``Acknowledgments`` matches via the
+    # "acknowledg" prefix; "General notation" mid-title doesn't.
+    r"^\s*(acknowledg|funding?|session\s*info|computational\s*details|"
+    r"appendix|appendices|references|"
+    r"notation|glossar|nomenclature|list\s+of\s+(?:symbols|figures|tables)|"
+    r"code\s+for\s+section|derivation\s+of|proof\s+of|proofs)",
     flags=re.IGNORECASE,
 )
 
