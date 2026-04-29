@@ -233,11 +233,24 @@ def _word_letters_lower(word: str) -> str:
     return re.sub(r"[^A-Za-z]", "", word).lower()
 
 
+# Match a vignette path's package home: ``examples/cran_<name>/<name>/...``.
+# The first word of a JSS title is conventionally the package name in
+# bare lowercase; without this hint we'd flag every ``\\title{flexsurv:
+# A Platform...}`` style title for "first word not capitalised".
+_OWN_PACKAGE_PATH_RE = re.compile(r"/cran_([^/]+)/(?:[^/]+/)?vignettes/")
+
+
+def _own_package_name(path: Any) -> str | None:
+    m = _OWN_PACKAGE_PATH_RE.search(str(path))
+    return m.group(1) if m else None
+
+
 def check_jss_cap_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     proper_lower = {n.lower() for n in _PROPER_NOUNS}
     for tex in doc.all_tex_like():
+        own_pkg_lower = (_own_package_name(tex.path) or "").lower()
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode) and node.macroname == "title"
@@ -267,6 +280,13 @@ def check_jss_cap_001(
             # conventions (lowercase package names, mixed-case method
             # names) and shouldn't trigger the title-case check.
             if first_lower in proper_lower:
+                continue
+            # Skip when the first word matches the vignette's home
+            # package name. JSS papers conventionally start the title
+            # with the package name (e.g., ``flexsurv: A Platform for
+            # ...``); whether to wrap it in ``\pkg{}`` is a separate
+            # MARKUP-002 / REFS-006 concern, not a title-case issue.
+            if own_pkg_lower and first_lower == own_pkg_lower:
                 continue
             # Skip when the first word looks like a function call
             # (`covMcd()`, `data.frame()`); these are code identifiers
