@@ -29,6 +29,15 @@ _FIGURE_TABLE_ENVS: frozenset[str] = frozenset(
     {"figure", "figure*", "table", "table*"}
 )
 
+# Sub-float environments whose ``\\caption{}`` is conventionally a
+# short non-sentence label (panel description, subplot title) — JSS
+# accepts these without a trailing period. The TYPO-001 / TYPO-002
+# rules should skip captions inside any of these.
+_SUBFLOAT_ENVS: frozenset[str] = frozenset(
+    {"subfigure", "subtable", "subfloat", "minipage", "wrapfigure",
+     "wraptable", "sidewaysfigure", "sidewaystable"}
+)
+
 _EMPHASIS_MACROS: frozenset[str] = frozenset(
     {"emph", "textbf", "textit", "textsl", "textsc"}
 )
@@ -51,13 +60,23 @@ def _violation(
     )
 
 
-def _iter_captions(tex: Any) -> Iterator[tuple[Any, Any, int, Any]]:
+def _iter_captions(
+    tex: Any, *, skip_subfloats: bool = False
+) -> Iterator[tuple[Any, Any, int, Any]]:
     """Yield ``(caption_macro, parent_nodelist, idx, enclosing_env_or_None)``
-    for every ``\\caption`` in ``tex``."""
+    for every ``\\caption`` in ``tex``.
+
+    With ``skip_subfloats=True``, captions inside ``subfigure`` /
+    ``subtable`` / ``minipage`` etc. are filtered out — those are
+    panel labels (often short non-sentence strings) and JSS-TYPO-001
+    / JSS-TYPO-002 don't apply.
+    """
     for node, ancestors, parent, idx in _helpers._walk_with_context(tex.nodes):
         if not (
             isinstance(node, LatexMacroNode) and node.macroname == "caption"
         ):
+            continue
+        if skip_subfloats and _nearest_env(ancestors, _SUBFLOAT_ENVS) is not None:
             continue
         env = _nearest_env(ancestors, _FIGURE_TABLE_ENVS)
         yield node, parent, idx, env
@@ -114,7 +133,7 @@ def check_jss_typo_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
-        for node, parent, idx, env in _iter_captions(tex):
+        for node, parent, idx, env in _iter_captions(tex, skip_subfloats=True):
             if env is None:
                 continue
             group = _first_group_arg(node, parent, idx)
