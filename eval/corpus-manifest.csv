@@ -97,3 +97,17 @@ jss_doi,source,source_id,version,vignette_file,local_path,sha256
 ,cran,StMoMo,0.4.1,StMoMo/vignettes/StMoMoVignette.Rnw,cran_StMoMo/,84f802b5734d2cdcd0634a265841a04b0056baf81b2fc332233ee01be5139bb0
 ,cran,trackeR,1.6.1,trackeR/vignettes/trackeR.Rnw,cran_trackeR/,61ae7adb5fc53b8342af9d263ba59d0d8006c5d3a41995e107dc6ac5d4dc24b6
 ,cran,trajectories,0.2-10,trajectories/vignettes/article.Rnw,cran_trajectories/,221cafd2e2be68fc8cfeb571ec32829a5b7c425479314483cc01cd26ad5ac1ff
+,cran,clifford,1.1-3,clifford/vignettes/clifford.Rnw,cran_clifford/,3ad0d56fc93a1f0e494a1d5247d4dc0fe3731f6662af706b9fd935ef8fe33560
+,cran,cmvnorm,1.1-1,cmvnorm/vignettes/cmvnorm.Rnw,cran_cmvnorm/,3c4738efb90cbb7c7b22ea271ba003c2c7d73f949991f24c91926d9cdd36920b
+,cran,emulator,1.2-24,emulator/vignettes/emulex.Rnw,cran_emulator/,91dc91eea7df9bf243d45db1bbf98aa72a1dafef789a6091f41180d5242fa469
+,cran,fic,1.0.1,fic/vignettes/skewnormal.Rnw,cran_fic/,e45a936d733e2a494241abb6411731615b29e21e90df67dcc6da87ea32ebff95
+,cran,GMCM,1.4,GMCM/vignettes/GMCM-JStatSoft.Rnw,cran_GMCM/,dd3870981b6da33759b573a165ff4db1ea642b048494f36ba87b627a5443ba8d
+,cran,gramEvol,2.1-4,gramEvol/vignettes/ge-intro.Rnw,cran_gramEvol/,e919a109bdedeabf8c7126d7fc9be66bb7069b234f811097a72472e52db5a5aa
+,cran,JOUSBoost,2.1.0,JOUSBoost/vignettes/JOUS.Rnw,cran_JOUSBoost/,87b2fc8353fbe97a30bef0f231216e989692ebfb7ce08c2faddb02c1d5c97938
+,cran,permutations,1.1-6,permutations/vignettes/permutations.Rnw,cran_permutations/,7defbca06b373248e99c5b98b4913e69092d4fdcd31b8f52b4f59ff622ab0487
+,cran,r2spss,0.3.2,r2spss/vignettes/r2spss-intro.Rnw,cran_r2spss/,14d218abdcf6a055b1c7c911bc87456320d862a5e87cded344f4d505f8b21fb4
+,cran,SEI,0.2.0,SEI/vignettes/SEI_vignette.Rnw,cran_SEI/,55ac099c9d0794e61c792c30dc340de655d05875fdd6e15c82b887c097900c93
+,cran,SightabilityModel,1.5.5,SightabilityModel/vignettes/a-SightabilityModel.Rnw,cran_SightabilityModel/,ac66b74b094b7d69765eeb394bce479582c8f4274fea519d6b63ab0a703848ba
+,cran,stemmatology,0.3.2,stemmatology/vignettes/stemmatology.Rnw,cran_stemmatology/,1ce24fbcdc570ca7c20ed7baff463c4047d99ec3980bda9cb22dfcafa9245ed0
+,cran,stream,2.0-3,stream/vignettes/stream.Rnw,cran_stream/,0a350b705d467926190a3674c96b2eb4cccf305b6c614dce874c252df78304a0
+,cran,tbm,0.3-10,tbm/vignettes/tbm_supplement.Rnw,cran_tbm/,677715e94febe9152001cb3a19e9e1ca6b5e8a956e42a696677cc5f746eee885
