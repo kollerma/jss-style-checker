@@ -279,6 +279,51 @@ def test_float_span_returned_when_line_inside_block() -> None:
     assert span == (1, 4)
 
 
+def test_display_eq_span_returns_full_block_with_padding() -> None:
+    # JSS-OPER-003 fires at line 4 (`\begin{eqnarray*}`); the reviewer
+    # needs the complete eqnarray plus a couple of lines on each side
+    # to judge whether the surrounding paragraph spacing is correct.
+    lines = [
+        r"prose line 1",                 # 1
+        r"prose line 2",                 # 2
+        r"",                             # 3
+        r"\begin{eqnarray*}",            # 4 — violation
+        r"a &=& b",                      # 5
+        r"&=& c",                        # 6
+        r"\end{eqnarray*}",              # 7
+        r"prose line 8",                 # 8
+        r"prose line 9",                 # 9
+    ]
+    span = human_review._display_eq_span(lines, 4)
+    assert span == (2, 9)
+
+
+def test_display_eq_span_when_line_inside_body() -> None:
+    # Violation reported in the middle of the eqnarray body; the helper
+    # should still grab the whole block plus padding.
+    lines = [
+        r"prose",                        # 1
+        r"\begin{eqnarray*}",            # 2
+        r"a &=& b\\",                    # 3 — violation here
+        r"&=& c",                        # 4
+        r"\end{eqnarray*}",              # 5
+        r"prose",                        # 6
+    ]
+    span = human_review._display_eq_span(lines, 3)
+    assert span == (1, 6)
+
+
+def test_display_eq_span_returns_none_outside_block() -> None:
+    lines = [
+        r"\begin{eqnarray*}",   # 1
+        r"a=b",                 # 2
+        r"\end{eqnarray*}",     # 3
+        r"",                    # 4
+        r"prose at line 5",     # 5
+    ]
+    assert human_review._display_eq_span(lines, 5) is None
+
+
 def test_caption_span_only_returned_when_line_inside_caption() -> None:
     lines = [
         r"\caption{One short caption.}",   # 1

@@ -108,6 +108,49 @@ _FLOAT_BEGIN_RE = re.compile(r"\\begin\{(?:figure|table)\*?\}")
 _FLOAT_END_RE = re.compile(r"\\end\{(?:figure|table)\*?\}")
 _CAPTION_RE = re.compile(r"\\caption\b")
 
+# Display-math envs that JSS-OPER-003 walks. Mirrors
+# `texlint.journals.jss.rules.operators._DISPLAY_EQ_ENVS`.
+_DISPLAY_EQ_BEGIN_RE = re.compile(
+    r"\\begin\{(?:equation|equation\*|align|align\*|eqnarray|eqnarray\*|"
+    r"gather|gather\*|multline|multline\*)\}"
+)
+_DISPLAY_EQ_END_RE = re.compile(
+    r"\\end\{(?:equation|equation\*|align|align\*|eqnarray|eqnarray\*|"
+    r"gather|gather\*|multline|multline\*)\}"
+)
+
+
+def _display_eq_span(
+    lines: list[str], line: int, *, padding: int = 2
+) -> tuple[int, int] | None:
+    """Locate the display-math env enclosing (or starting at) ``line``
+    and return ``(begin_line - padding, end_line + padding)`` so the
+    reviewer sees the complete equation plus a couple of lines on
+    either side. JSS-OPER-003 fires on the env's opening line and
+    its judgement requires seeing whether the lines immediately
+    before/after are blank.
+    """
+    n = len(lines)
+    if line < 1 or line > n:
+        return None
+    # Search backwards for the enclosing \begin{...}.
+    begin = None
+    for i in range(line - 1, -1, -1):
+        if _DISPLAY_EQ_BEGIN_RE.search(lines[i]):
+            begin = i
+            break
+    if begin is None:
+        return None
+    # Forward to the matching \end{...}.
+    end = None
+    for j in range(begin, n):
+        if _DISPLAY_EQ_END_RE.search(lines[j]):
+            end = j
+            break
+    if end is None or not (begin <= line - 1 <= end):
+        return None
+    return (max(1, begin + 1 - padding), min(n, end + 1 + padding))
+
 
 def _float_or_caption_span(
     lines: list[str], line: int
@@ -241,6 +284,15 @@ def source_snippet(
         and src.suffix in {".tex", ".ltx", ".Rnw", ".Rmd"}
     ):
         span = _float_or_caption_span(lines, line)
+        if span is not None:
+            start, end = span
+            return "\n".join(lines[start - 1 : end]), start
+
+    if (
+        rule_id == "JSS-OPER-003"
+        and src.suffix in {".tex", ".ltx", ".Rnw", ".Rmd"}
+    ):
+        span = _display_eq_span(lines, line)
         if span is not None:
             start, end = span
             return "\n".join(lines[start - 1 : end]), start
