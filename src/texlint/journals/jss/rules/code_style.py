@@ -17,6 +17,7 @@ from pylatexenc.latexwalker import (
     LatexEnvironmentNode,
     LatexGroupNode,
     LatexMacroNode,
+    LatexSpecialsNode,
 )
 
 from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
@@ -217,11 +218,42 @@ def _first_group_arg(macro: Any, parent: Any, idx: int) -> Any:
     return _helpers._next_group_arg(parent, idx)
 
 
+_SINGLE_CHAR_ESCAPE_MACROS: frozenset[str] = frozenset(
+    {"%", "&", "_", "#", "$", "{", "}", "\\"}
+)
+
+
 def _group_plain_text(group: Any) -> str:
+    """Reconstruct the plain text of ``\\code{...}`` content, preserving
+    LaTeX special escapes (``\\%`` → ``%``, ``\\&`` → ``&``, ``\\_`` →
+    ``_``) and macro arguments. Without this, ``\\code{l-95\\% CI}`` is
+    seen as ``l-95 CI`` and the missing-spaces check trips on the
+    label hyphen between ``l`` and ``95``.
+
+    The ``parser._neutralize_verbatim_args`` pre-pass rewrites ``%`` /
+    ``$`` inside ``\\code{...}`` to ``?`` (length-preserving) so
+    pylatexenc strict mode doesn't enter math mode on a stray ``$``
+    inside code. That turns the source ``\\%`` into ``\\?`` here,
+    which pylatexenc parses as a macro with macroname=``?``. Map it
+    back to a literal char (``%`` is by far the more common case in
+    JSS prose) so the version/label regex can recognise the label.
+    """
     parts: list[str] = []
     for child in group.nodelist or ():
         if isinstance(child, LatexCharsNode):
             parts.append(child.chars)
+        elif isinstance(child, LatexSpecialsNode):
+            parts.append(child.specials_chars)
+        elif isinstance(child, LatexMacroNode):
+            # Single-character escape macros (``\%`` / ``\&`` / ``\_`` /
+            # ``\#`` / ``\$``) emit the literal char in code prose.
+            if child.macroname in _SINGLE_CHAR_ESCAPE_MACROS:
+                parts.append(child.macroname)
+                continue
+            # ``\?`` is the parser-substituted form of ``\%`` (and very
+            # rarely ``\$``) inside ``\\code{...}``.
+            if child.macroname == "?":
+                parts.append("%")
     return "".join(parts).strip()
 
 
