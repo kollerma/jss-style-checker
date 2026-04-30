@@ -216,6 +216,23 @@ class TestTypo004:
         )
         assert len(run_rule(jss_typo_004, src)) == 1
 
+    def test_table_caption_above_silent(self, run_rule):
+        # JSS style: table captions go ABOVE the table content. The
+        # rule must not fire on table envs even when caption is at the
+        # top. Reproduces FPs from cran_WeightedCluster (and the
+        # table-env mislabel-TPs across the corpus).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{table}[htb]" "\n"
+            r"\caption{Caption above the table.}" "\n"
+            r"\label{tab:x}" "\n"
+            r"\begin{tabular}{ll}a & b\\\end{tabular}" "\n"
+            r"\end{table}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_typo_004, src) == []
+
 
 def test_group_visible_children_skips_label(parse_tex_source):
     from pylatexenc.latexwalker import LatexGroupNode
