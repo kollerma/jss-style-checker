@@ -110,7 +110,15 @@ _PACKAGE_TERM_DISAMBIGUATORS: dict[str, frozenset[str]] = {
     "sandwich": frozenset({
         "estimator", "estimators", "matrix", "matrices", "type", "types",
         "expression", "expressions", "method", "methods", "form", "forms",
-        "covariance", "construction",
+        "covariance", "covariances", "construction",
+        # Statistical-method follower vocabulary surfaced by reviewer
+        # feedback in cran_effects, cran_clifford, cran_sandwich (the
+        # vignette IS about the `sandwich` package, but bare prose
+        # mentions like "sandwich coefficient" / "sandwich product"
+        # / "sandwich formula" describe the *method*, not the package).
+        "coefficient", "coefficients", "variance", "variances",
+        "formula", "formulae", "formulas", "product", "products",
+        "meat", "bread",
     }),
 }
 

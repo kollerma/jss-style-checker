@@ -173,6 +173,25 @@ class TestMarkup002:
         )
         assert len(run_rule(jss_markup_002, src)) == 1
 
+    def test_sandwich_method_followers_not_flagged(self, run_rule):
+        # Reviewer-confirmed FPs from cran_effects, cran_sandwich,
+        # cran_clifford: "sandwich coefficient", "sandwich product",
+        # "sandwich formula", "sandwich variance" are statistical-method
+        # usages of the sandwich estimator, not references to the
+        # `sandwich` R package.
+        for follower in (
+            "coefficient", "coefficients", "covariances",
+            "variance", "variances", "formula", "formulae",
+            "formulas", "product", "products", "meat", "bread",
+        ):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                r"\begin{document}" "\n"
+                f"The sandwich {follower} is robust.\n"
+                r"\end{document}"
+            )
+            assert run_rule(jss_markup_002, src) == [], follower
+
 
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-003 — function / command names
