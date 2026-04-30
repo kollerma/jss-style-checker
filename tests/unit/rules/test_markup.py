@@ -97,6 +97,28 @@ class TestMarkup001:
         )
         assert run_rule(jss_markup_001, src) == []
 
+    def test_skip_filename_extension(self, run_rule):
+        # `foo.R` / `algo.tex` / `data.table.R` — the trailing letter
+        # is a file extension, not a bare language reference.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"See foo.R, algo.tex, and data.table.R for examples." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_real_R_mention_still_fires(self, run_rule):
+        # Sanity check: prev-char-of-{`.`,`/`} skip must not silence
+        # the canonical "use R for this" pattern.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use R for the analysis." "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_markup_001, src)) == 1
+
 
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-002 — package names

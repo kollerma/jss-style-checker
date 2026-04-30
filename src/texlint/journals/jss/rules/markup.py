@@ -81,6 +81,19 @@ def _is_superscripted(chars: str, offset: int, token_len: int) -> bool:
     return chars[tail_start] == "^"
 
 
+def _is_filename_context(chars: str, offset: int) -> bool:
+    """True when the token at ``offset`` is a file-extension or
+    path-segment suffix, not a bare language / package mention.
+
+    A leading ``.`` means the token is the extension of a filename
+    (``foo.R``, ``algo.tex``, ``data.table.R``). A leading ``/``
+    means it's a path-segment suffix (``include/R``).
+    """
+    if offset == 0:
+        return False
+    return chars[offset - 1] in {".", "/"}
+
+
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-001 / MARKUP-002 — language / package names in prose
 # ---------------------------------------------------------------------------
@@ -169,6 +182,8 @@ def _check_bare_terms(
                 ):
                     continue
                 if _is_superscripted(node.chars, offset, len(token)):
+                    continue
+                if _is_filename_context(node.chars, offset):
                     continue
                 if _disambiguates_to_method(node.chars, offset, token):
                     continue

@@ -340,7 +340,12 @@ _SECTION_MACROS: frozenset[str] = frozenset(
 _MARKUP_MACROS: frozenset[str] = frozenset(
     {"pkg", "proglang", "code", "verb", "url", "email", "fct",
      "Rcmd", "Rpackage", "Rclass", "Rfun", "Rfunction",
-     "Rargument", "Rstring", "Robject"}
+     "Rargument", "Rstring", "Robject",
+     # Paper-defined filename wrapper — robustlmm defines
+     # ``\script{...}`` (renders in \texttt) for filenames; treating
+     # it as markup avoids MARKUP-001 firing on ``R`` extensions
+     # inside ``\script{convergence.R}`` etc.
+     "script"}
 )
 
 # Preamble / meta-data / citation macros whose arg is not prose to scan.
