@@ -32,6 +32,12 @@ _DOI_ENTRY_TYPES: frozenset[str] = frozenset(
     {"article", "inproceedings", "incollection", "book"}
 )
 
+# CrossRef and the DOI system became the de-facto standard around 2000;
+# pre-2000 publications mostly never received a retroactive DOI. Don't
+# fault their bib entries for missing one — REFS-003 is an info-severity
+# advisory, not a hard rule.
+_DOI_ERA_CUTOFF_YEAR = 2000
+
 # Journal-abbreviation signals.
 _ABBREV_RE = re.compile(
     r"\b(?:"
@@ -169,8 +175,15 @@ def check_jss_refs_003(
     for bib, entry in _iter_entries(doc):
         if entry.entry_type.lower() not in _DOI_ENTRY_TYPES:
             continue
-        if "doi" in _helpers._lc_fields(entry):
+        fields = _helpers._lc_fields(entry)
+        if "doi" in fields:
             continue
+        # Pre-DOI-era entries: skip the advisory.
+        year_field = fields.get("year")
+        if year_field is not None:
+            year_match = re.search(r"\d{4}", str(year_field.value))
+            if year_match and int(year_match.group(0)) < _DOI_ERA_CUTOFF_YEAR:
+                continue
         key = entry.key or "<unknown>"
         yield _violation(
             bib=bib,

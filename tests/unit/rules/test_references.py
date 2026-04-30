@@ -141,6 +141,23 @@ class TestRefs003:
         assert len(violations) == 1
         assert "<unknown>" in violations[0].suggestion
 
+    def test_pre_doi_era_silent(self, run_rule):
+        # CrossRef and DOI registration began ~2000; pre-2000 entries
+        # mostly never received a retroactive DOI. The advisory should
+        # not fire on them.
+        src = "@article{a, author={x}, title={T}, journal={J}, year={1986}}\n"
+        assert run_rule(jss_refs_003, src, kind="bib") == []
+
+    def test_pre_doi_era_book_silent(self, run_rule):
+        src = "@book{a, author={x}, title={T}, publisher={Cambridge}, year={1998}}\n"
+        assert run_rule(jss_refs_003, src, kind="bib") == []
+
+    def test_pre_doi_era_with_year_in_other_field_format(self, run_rule):
+        # 'Sept 1995' style year strings — the 4-digit year is still
+        # extracted by the year regex.
+        src = "@article{a, author={x}, title={T}, journal={J}, year={Sept 1995}}\n"
+        assert run_rule(jss_refs_003, src, kind="bib") == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-REFS-004 — markup for package / language names
