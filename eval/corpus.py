@@ -646,10 +646,16 @@ def run_suggest(
         # are <2% of vignette-bearing CRAN packages.
         if archive_pool is not None and name not in archive_pool:
             continue
-        if not _has_builder_hint(rec):
-            continue
         blob = " ".join(rec.get(k, "") for k in ("Suggests", "Imports", "Depends")).lower()
-        hit = next((kw for kw in _BUILDER_HINTS if kw in blob), "knitr")
+        hit = next((kw for kw in _BUILDER_HINTS if kw in blob), "sweave")
+        # The DCF builder-hint filter drops Sweave-default packages that
+        # never declare `knitr`/`rmarkdown`/`sweave` in their dependencies
+        # (Sweave is R's built-in vignette engine, so packages like coin,
+        # vcd, arules don't need to declare it). When a curated pool is
+        # supplied, it is itself the signal — and the JSS-vignette
+        # tarball probe is the source of truth — so skip the pre-filter.
+        if archive_pool is None and not _has_builder_hint(rec):
+            continue
         candidates.append((name, version, hit))
 
     if not candidates:

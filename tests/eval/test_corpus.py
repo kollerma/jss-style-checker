@@ -478,3 +478,58 @@ def test_run_suggest_no_jss_only_keeps_three_column_format(
     assert "# columns: package\tversion\tbuilder_hint\n" in out
     assert "vignette_file" not in out
     assert "anypkg\t9.9\tknitr\n" in out
+
+
+def test_run_suggest_curated_pool_keeps_sweave_default_packages(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
+    """Regression: classic JSS-counterpart packages like ``coin`` ship
+    Sweave ``.Rnw`` vignettes without declaring ``knitr``/``rmarkdown``/
+    ``sweave`` in DCF deps (Sweave is R's built-in default). The DCF
+    builder-hint pre-filter must be skipped when a curated pool is
+    supplied; the curated pool plus the JSS vignette tarball probe are
+    the real filters in that mode.
+    """
+    packages_blob = _packages_dcf(
+        [
+            # Sweave default — no builder keyword anywhere in deps.
+            {"Package": "coinlike", "Version": "1.0", "Suggests": "xtable"},
+        ]
+    )
+    rnw = (
+        b"\\documentclass[nojss]{jss}\n"
+        b"% see Journal of Statistical Software, Smith (2020)\n"
+    )
+    tar_bytes = _build_fake_tar([("coinlike/vignettes/coinlike.Rnw", rnw)])
+
+    _patch_urlopen(
+        monkeypatch,
+        {
+            "https://cran.r-project.org/src/contrib/PACKAGES": packages_blob,
+            "https://cran.r-project.org/src/contrib/coinlike_1.0.tar.gz": tar_bytes,
+        },
+    )
+
+    # Stand in a fake jss-archive cache that surfaces ``coinlike``.
+    archive_cache = tmp_path / "jss-archive.json"
+    archive_cache.write_text(
+        '[{"doi": "10.18637/jss.v999.i01", "candidate_pkg": "coinlike"}]',
+        encoding="utf-8",
+    )
+
+    mp = tmp_path / "manifest.csv"
+    _write_manifest(mp, [])
+
+    code = corpus.run_suggest(
+        manifest_path=mp,
+        limit=5,
+        seed=0,
+        verify=False,
+        jss_only=True,
+        from_jss_archive=True,
+        jss_archive_cache=archive_cache,
+        from_cran_github=False,
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "coinlike\t1.0\tsweave\tcoinlike/vignettes/coinlike.Rnw" in out
