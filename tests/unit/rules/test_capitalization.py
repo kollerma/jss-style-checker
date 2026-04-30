@@ -229,6 +229,26 @@ class TestCap004:
         # The "And" is stopword → no offender; single-offender threshold not met.
         assert run_rule(jss_cap_004, src) == []
 
+    def test_allcaps_abbrev_in_keyword_silent(self, run_rule):
+        # Reviewer-confirmed FPs from cran_shrinkTVP, cran_stochvol,
+        # cran_simecol: parenthesised all-caps abbreviations like
+        # (MCMC), (TVP), (OOP), GARCH, SV are conventionally written
+        # upper-case even inside sentence-style keyword entries.
+        src = (
+            r"\Keywords{Bayesian inference, Markov chain Monte Carlo (MCMC),"
+            r" time-varying parameter (TVP) models, GARCH, SV}"
+        )
+        assert run_rule(jss_cap_004, src) == []
+
+    def test_hyphenated_proper_noun_keyword_silent(self, run_rule):
+        # Reviewer-confirmed FP from cran_hyper2: 'Bradley-Terry' (the
+        # ranking model named after Bradley and Terry) is a single
+        # proper-noun compound and shouldn't be split into two cap
+        # tokens by the keyword check.
+        src = r"\Keywords{Dirichlet distribution, Bradley-Terry}"
+        assert run_rule(jss_cap_004, src) == []
+
+
 def test_group_plain_text_skips_markup_macros(parse_tex_source):
     from pylatexenc.latexwalker import LatexGroupNode
 

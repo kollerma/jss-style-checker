@@ -560,8 +560,13 @@ def check_jss_cap_004(
 
 
 def _keyword_case_violation(entries: list[str]) -> bool:
+    # Split on whitespace only — hyphenated tokens like Bradley-Terry,
+    # Newey-West, or pre-trained are single conceptual units in keyword
+    # entries (proper-noun compounds and lowercase compounds alike) and
+    # shouldn't be torn apart into separately-evaluated pieces.
     for entry in entries:
-        words = _words(entry)
+        words = re.split(r"\s+", entry.strip())
+        words = [w for w in words if w]
         if len(words) < 2:
             continue
         offenders = 0
@@ -576,6 +581,12 @@ def _keyword_case_violation(entries: list[str]) -> bool:
             if bare in _PROPER_NOUNS:
                 continue
             if bare.lower() in _TITLE_STOPWORDS:
+                continue
+            # All-caps abbreviations (MCMC, TVP, OOP, GARCH, SV) are
+            # conventionally written upper-case even in sentence-style
+            # keywords — exempt them the same way CAP-003's
+            # _is_capitalised_offender does.
+            if _looks_like_abbrev(bare):
                 continue
             offenders += 1
         if offenders >= 1:
