@@ -172,6 +172,21 @@ class TestCap003:
         )
         assert len(run_rule(jss_cap_003, src)) == 1
 
+    def test_calendar_months_silent(self, run_rule):
+        # Months (full names + common abbreviations) are proper nouns;
+        # JSS sentence-style retains their capitalisation. Reproduces
+        # the cluster A FPs from cran_seasonal and similar time-series
+        # vignettes whose captions enumerate calendar months.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{Seasonal component over January, February, March,"
+            r" April, May, June, July, August, September, October, November,"
+            r" and December.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        assert run_rule(jss_cap_003, src) == []
+
     def test_repeated_proper_noun_counted_once(self, run_rule):
         # Same compound twice in a caption shouldn't double-count.
         src = (
@@ -213,7 +228,6 @@ class TestCap004:
         src = r"\Keywords{statistics And things}"
         # The "And" is stopword → no offender; single-offender threshold not met.
         assert run_rule(jss_cap_004, src) == []
-
 
 def test_group_plain_text_skips_markup_macros(parse_tex_source):
     from pylatexenc.latexwalker import LatexGroupNode

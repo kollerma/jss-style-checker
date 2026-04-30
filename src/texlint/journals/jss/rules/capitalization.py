@@ -74,6 +74,14 @@ _EXTRA_PROPER_NOUNS: frozenset[str] = frozenset(
         # Diseases, microbe genera, and named corpora
         "Alzheimer", "Campylobacter", "Faithful", "Indians",
         "Listeria", "Moby", "Newport", "Pima", "Salmonella",
+        # Calendar months (full + common abbreviations). They appear
+        # frequently in time-series captions ("seasonal component over
+        # January, March, June, July...") and are genuine proper nouns
+        # in English — sentence-style retains their capitalisation.
+        "January", "February", "March", "April", "May", "June", "July",
+        "August", "September", "October", "November", "December",
+        "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep",
+        "Sept", "Oct", "Nov", "Dec",
     }
 )
 
