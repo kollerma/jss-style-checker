@@ -223,6 +223,22 @@ class TestPre006:
         )
         assert run_rule(jss_pre_006, src) == []
 
+    def test_accents_and_control_space_silent(self, run_rule):
+        # Reviewer-confirmed FPs from cran_GMCM, cran_GPareto, cran_TPmsm,
+        # cran_WeightedCluster: PDF metadata fields tolerate accent
+        # commands and the control-space \ — hyperref's \pdfstringdef
+        # renders them cleanly. Only formatting macros like \proglang
+        # / \pkg / \textbf justify a complaint.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\Plainauthor{Bilgrau et.\ al., Micka\"el Binois,"
+            r" Artur Ara\'ujo, Lu\'{\i}s Meira-Machado}" "\n"
+            r"\Plaintitle{Le manuel: cr\'{e}ation de typologies}" "\n"
+            r"\Plainkeywords{Analyse de s\'{e}quences, pond\'{e}ration}" "\n"
+            r"\begin{document}\end{document}"
+        )
+        assert run_rule(jss_pre_006, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-PRE-007 — author markup ↔ Plainauthor

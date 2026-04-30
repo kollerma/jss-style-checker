@@ -103,11 +103,12 @@ def _group_contains_markup(group: Any) -> bool:
     """True when any descendant of ``group`` is a non-trivial macro,
     math, or specials node. Accents (``\\'``, ``\\.``), spacing controls
     (``\\,``), and structural separators (``\\and``, ``\\\\``) are
-    treated as plain text — they render cleanly in PDF metadata fields,
-    so they don't justify a ``\\Plain*`` parallel macro.
+    treated as plain text — they render cleanly in PDF metadata fields
+    via ``hyperref``'s ``\\pdfstringdef``, so they don't justify a
+    ``\\Plain*`` parallel macro and don't break the metadata when they
+    appear inside one.
 
-    Used by PRE-003 / PRE-007 / PRE-008 to decide whether a ``\\title``
-    / ``\\author`` / ``\\Keywords`` group needs a ``\\Plain*`` twin.
+    Used by PRE-003 / PRE-006 / PRE-007 / PRE-008.
     """
     if group is None:
         return False
@@ -117,23 +118,6 @@ def _group_contains_markup(group: Any) -> bool:
         if isinstance(node, LatexMacroNode):
             if node.macroname in _NON_MARKUP_PREAMBLE_MACROS:
                 continue
-            return True
-    return False
-
-
-def _group_contains_any_macro(group: Any) -> bool:
-    """Strict counterpart of :func:`_group_contains_markup`.
-
-    JSS's ``\\Plaintitle`` / ``\\Plainauthor`` / ``\\Plainkeywords``
-    macros are designed to feed PDF metadata directly, where the JSS
-    class expects ASCII-only content (no accents, no math, no markup
-    of any kind). PRE-006 enforces that and so must NOT exempt the
-    accent / structural macros that PRE-007's lenient check ignores.
-    """
-    if group is None:
-        return False
-    for node in _helpers._walk(group.nodelist or ()):
-        if isinstance(node, (LatexMacroNode, LatexMathNode, LatexSpecialsNode)):
             return True
     return False
 
@@ -437,7 +421,7 @@ def check_jss_pre_006(
         for name in _PLAIN_MACROS:
             for macro, parent, idx in _iter_macros(tex, name):
                 group = _first_group_arg(macro, parent, idx)
-                if not _group_contains_any_macro(group):
+                if not _group_contains_markup(group):
                     continue
                 yield _violation(
                     tex=tex,
