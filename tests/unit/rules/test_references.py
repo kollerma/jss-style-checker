@@ -291,6 +291,22 @@ class TestRefs006:
         src = "@article{a, title={1984}, year={2020}}\n"
         assert run_rule(jss_refs_006, src, kind="bib") == []
 
+    def test_lowercase_package_idiom_first_word_silent(self, run_rule):
+        # ``vegan: Community Ecology Package`` / ``nloptr: R interface
+        # to NLopt`` / ``latticeExtra: Extra Graphical Utilities Based
+        # on Lattice`` — bibtex titles for R packages conventionally
+        # open with the lowercase package name unwrapped. Reproduces
+        # FPs from cran_WeightedCluster, cran_seqHMM, cran_stm,
+        # cran_effects.
+        for title in (
+            "vegan: Community Ecology Package",
+            "nloptr: R interface to NLopt",
+            "latticeExtra: Extra Graphical Utilities Based on Lattice",
+            "topicmodels: An R Package for Fitting Topic Models",
+        ):
+            src = f'@manual{{a, title={{{title}}}, year={{2020}}}}\n'
+            assert run_rule(jss_refs_006, src, kind="bib") == [], title
+
     def test_word_is_uppercase_start_empty_letters(self):
         # A word with no letters (e.g., '1984') counts as "capitalised" for the
         # first-word check — exercise the empty-letters branch directly.

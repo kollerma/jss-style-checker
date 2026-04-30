@@ -303,6 +303,21 @@ def _starts_with_markup(title: str) -> bool:
     return bool(_MARKUP_TITLE_RE.match(s))
 
 
+# A bibtex title that opens with a lowercase identifier followed by ``:``
+# is conventionally an R-package citation in the form ``vegan: Community
+# Ecology Package`` / ``latticeExtra: Extra Graphical Utilities ...``.
+# CRAN package names are lowercase (or camelCase starting lowercase) by
+# convention, so this leading token is the package name itself, not a
+# title-case violation.
+_PACKAGE_LIKE_TITLE_RE = re.compile(
+    r"^\{?\s*[a-z][a-zA-Z0-9._]*\s*:"
+)
+
+
+def _starts_with_package_idiom(title: str) -> bool:
+    return bool(_PACKAGE_LIKE_TITLE_RE.match(title))
+
+
 def _after_colon_starts_with_markup(title: str) -> bool:
     """True if the first non-space token after a colon is a markup macro."""
     m = re.search(r":\s*(.+)", title, flags=re.DOTALL)
@@ -330,8 +345,14 @@ def check_jss_refs_006(
             continue
         # First word must be capitalised — unless the source wraps it in
         # \pkg{...} / \proglang{...} / \code{...}, in which case the
-        # author-dictated case wins.
-        if not _starts_with_markup(title) and not _word_is_uppercase_start(words[0]):
+        # author-dictated case wins. Also exempt the canonical
+        # ``vegan: Community Ecology Package`` idiom where the title
+        # opens with an unwrapped lowercase R-package identifier.
+        if (
+            not _starts_with_markup(title)
+            and not _starts_with_package_idiom(title)
+            and not _word_is_uppercase_start(words[0])
+        ):
             yield _violation(
                 bib=bib,
                 entry=entry,
