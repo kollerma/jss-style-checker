@@ -183,6 +183,36 @@ class TestCode003:
         )
         assert run_rule(jss_code_003, src) == []
 
+    def test_keyword_arg_silent(self, run_rule):
+        # Reviewer-confirmed FPs from cran_CARBayes, cran_CARBayesST:
+        # ``\code{n.cores=1}`` / ``\code{W.binary=TRUE}`` /
+        # ``\code{interaction=TRUE}`` are function-argument keywords;
+        # R/Python style omits spaces around ``=`` in this position.
+        for snippet in (
+            "n.cores=1",
+            "W.binary=TRUE",
+            "interaction=TRUE",
+            'method="exact"',
+            "n=100",
+            "x=NA",
+        ):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                r"\begin{document}"
+                f"\\code{{{snippet}}}"
+                r"\end{document}"
+            )
+            assert run_rule(jss_code_003, src) == [], snippet
+
+    def test_assignment_with_operator_still_flagged(self, run_rule):
+        # ``y=a+b`` — has multiple operators, not a keyword-arg form;
+        # the rule should still flag it.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{y=a+b}\end{document}"
+        )
+        assert len(run_rule(jss_code_003, src)) == 1
+
     def test_dash_inside_single_quoted_string_silent(self, run_rule):
         # Same exemption for single-quoted strings.
         src = (

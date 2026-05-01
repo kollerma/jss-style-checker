@@ -57,6 +57,16 @@ _VERSION_OR_LABEL_RE = re.compile(
     r"^(?:[0-9][\w.\-]*|[A-Za-z][\w.\-]*\s*\\?%[\w.\-\s\\]*)$"
 )
 
+# `\code{n.cores=1}`, `\code{W.binary=TRUE}`, `\code{interaction=TRUE}`
+# — single function-argument keyword form. R/Python conventions don't
+# put spaces around ``=`` inside function calls, so these aren't
+# operator-spacing violations.
+_KEYWORD_ARG_RE = re.compile(
+    r"^[A-Za-z][\w.]*\s*=\s*"
+    r"(?:[A-Za-z][\w.]*|TRUE|FALSE|NA|NULL|-?\d+(?:\.\d+)?|"
+    r'"[^"]*"|\'[^\']*\')$'
+)
+
 # `\code{inst/tex/}`, `\code{src/main.cpp}` — filesystem-like paths with
 # slashes between identifier-shaped pieces. The `/` is a path
 # separator, not a division operator.
@@ -190,6 +200,10 @@ def check_jss_code_003(
                 continue
             # Filesystem path — slashes are separators, not division.
             if _PATH_LIKE_RE.match(stripped):
+                continue
+            # Single function-argument keyword (``n.cores=1`` /
+            # ``interaction=TRUE``) — R/Python style omits spaces here.
+            if _KEYWORD_ARG_RE.match(stripped):
                 continue
             # Mask scientific notation and bare string literals before
             # the operator check so the exponent sign in 2.22e-16
