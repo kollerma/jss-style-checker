@@ -476,6 +476,69 @@ def iterate_record_cmd(
     ctx.exit(code)
 
 
+@iterate_group.command("guard")
+@click.option(
+    "--history-db",
+    "history_db",
+    type=click.Path(path_type=Path),
+    default=Path("eval/precision-history.db"),
+    show_default=True,
+)
+@click.option(
+    "--manifest",
+    "manifest_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/corpus-manifest.csv"),
+    show_default=True,
+)
+@click.option(
+    "--corpus",
+    "corpus_dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=Path("examples"),
+    show_default=True,
+)
+@click.option(
+    "--policy",
+    "policy_path",
+    type=click.Path(path_type=Path),
+    default=Path("eval/iteration-policy.toml"),
+    show_default=True,
+)
+@click.pass_context
+def iterate_guard_cmd(
+    ctx: click.Context,
+    history_db: Path,
+    manifest_path: Path,
+    corpus_dir: Path,
+    policy_path: Path,
+) -> None:
+    """Block on per-rule precision regressions vs. the last iteration.
+
+    Computes the current precision table, compares against the most
+    recently recorded iteration, and exits non-zero when one or more
+    previously-passing rules dropped past the
+    ``precision_drop_tolerance_pp`` threshold from
+    ``eval/iteration-policy.toml``. Wire into autonomous loops or
+    pre-commit hooks to refuse recording / committing a regression.
+    """
+    from eval import iterate as iterate_mod
+    from eval.corpus import ManifestError
+
+    try:
+        code = iterate_mod.run_guard(
+            eval_db=ctx.obj["db"],
+            history_db=history_db,
+            manifest_path=manifest_path,
+            corpus_dir=corpus_dir,
+            policy_path=policy_path,
+        )
+    except (FileNotFoundError, ManifestError) as err:
+        click.echo(f"eval-jss: {err}", err=True)
+        ctx.exit(2)
+    ctx.exit(code)
+
+
 @iterate_group.command("refresh")
 @click.option(
     "--corpus",

@@ -54,6 +54,11 @@ class ModelSpec:
 
 
 def _load_gold(db_path: Path) -> list[dict]:
+    # The gold set is rows labelled by a real human reviewer (TUI or
+    # bulk import). Proxy labels assigned by an LLM-acting-as-human
+    # ('human:claude-proxy', 'human:auto-fix-iter5') are excluded —
+    # benchmarking an AI labeller against another AI labeller's
+    # judgment doesn't bound the ground-truth error rate.
     cx = db.connect(db_path)
     try:
         rows = cx.execute(
@@ -61,6 +66,8 @@ def _load_gold(db_path: Path) -> list[dict]:
             " v.severity, v.file, v.verdict, p.path AS paper_path"
             " FROM violations v JOIN papers p ON p.id = v.paper_id"
             " WHERE v.reviewer LIKE 'human:%'"
+            " AND v.reviewer NOT LIKE 'human:claude-proxy%'"
+            " AND v.reviewer NOT LIKE 'human:auto-%'"
             " AND v.verdict IN ('true_positive','false_positive')"
             " ORDER BY v.rule_id, v.id"
         ).fetchall()

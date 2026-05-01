@@ -1,0 +1,121 @@
+# Iteration policy for the JSS lint precision-loop.
+#
+# Read by /eval-investigate, /eval-add-corpus, /eval-record (via the
+# `iterate guard` gate), and `eval-jss benchmark` to drive the loop
+# without per-step human input. Tweak conservatively — relaxing a
+# threshold here can let regressions land silently.
+#
+# Versioned alongside the rule catalogue: bumping the schema version
+# requires updating every consumer.
+
+schema_version = 1
+
+# ---------------------------------------------------------------------------
+# Pass / fail thresholds
+# ---------------------------------------------------------------------------
+
+[pass_criteria]
+# A rule "passes" the precision gate when both conditions hold.
+# Vacuous PASS at TP=0 is forbidden; a rule with no observed TPs
+# hasn't been validated by the corpus and shouldn't be considered
+# correct.
+precision_threshold = 0.90
+min_tp_for_pass = 10
+
+# ---------------------------------------------------------------------------
+# Fix-vs-revert decision
+# ---------------------------------------------------------------------------
+
+[fix_attempt]
+# When a fix attempt orphans more TPs than it clears FPs by this
+# ratio, auto-revert. Calibrated from observed sessions: 3:1 lets
+# legitimate "the orphaned TPs were mislabels" wins through (CAP-004
+# went 75 → 100% by orphaning 8 mislabel-TPs to clear 5 FPs, ratio
+# 1.6:1) but blocks "we just suppressed half the rule's signal"
+# regressions (the OPER-004 \Pr-removal that hit 47 TPs lost / 6 FPs
+# cleared, ratio 7.8:1, was correctly reverted).
+max_tp_loss_per_fp_cleared = 3.0
+
+# Per-rule precision floor: a fix MUST NOT take a rule below
+# `current_precision - tolerance_pp` if the rule was already passing.
+# Example: rule at 95% can drop to 92% (within 3pp tolerance) but
+# not to 89% (below the pass threshold AND past tolerance).
+precision_drop_tolerance_pp = 3.0
+
+# Cap on attempts per rule before the loop gives up and marks it
+# "needs human investigation".
+max_attempts_per_rule = 5
+
+# ---------------------------------------------------------------------------
+# Loop termination
+# ---------------------------------------------------------------------------
+
+[termination]
+# Stop the autonomous loop when this many consecutive iterations
+# improve overall corpus precision by less than `min_progress_pp`.
+max_consecutive_no_progress = 3
+min_progress_pp = 0.5
+
+# Hard cap regardless of progress — catches infinite-loop edge cases.
+max_iterations = 50
+
+# ---------------------------------------------------------------------------
+# Corpus growth
+# ---------------------------------------------------------------------------
+
+[corpus_growth]
+# /eval-add-corpus runs the suggester then auto-adds up to N new
+# packages. Set to 0 to require explicit human approval each round.
+auto_add_cap = 30
+
+# When the suggester returns 0, the corpus is exhausted and the loop
+# moves on (rule investigation only) without prompting.
+exhausted_action = "continue_rule_work"
+
+# ---------------------------------------------------------------------------
+# LLM cost guards
+# ---------------------------------------------------------------------------
+
+[llm_budget]
+# Per-iteration soft caps. Exceeded budget pauses the loop and prompts.
+# These are calibrated for local Bonsai (8B mlx) + Qwen3-30B; raise
+# proportionally for slower/remote endpoints.
+max_review_calls = 3000
+max_subagent_runs = 4
+max_wall_seconds = 7200  # 2h
+
+# ---------------------------------------------------------------------------
+# Gold-set health
+# ---------------------------------------------------------------------------
+
+[labeler_health]
+# Bound on AI labeller error rate vs. human gold set. If a model's
+# overall agreement drops below this, /eval-review must NOT use that
+# model alone — fall back to ensemble or human-review.
+min_overall_agreement = 0.85
+
+# Per-rule agreement floor — below this, /eval-review skips the rule
+# (handled today via eval/review-skip-list.toml; this floor lets the
+# benchmark suggest skip-list additions automatically).
+min_rule_agreement = 0.75
+
+# Re-benchmark cadence: re-run the gold-set benchmark after this many
+# corpus-growth iterations to catch labeller drift.
+rebenchmark_every_n_iterations = 5
+
+# ---------------------------------------------------------------------------
+# Recall guard
+# ---------------------------------------------------------------------------
+
+[recall]
+# Run the JSS-published-paper cohort as an FP recall proxy. A rule
+# that fires on a published JSS paper is either uncovering a style
+# nit JSS missed (good, rare) or a rule FP. The threshold is the max
+# tolerable per-rule fire rate on the published cohort.
+max_fires_per_published_paper = 0.5
+
+# Mutation-testing recall floor: per-rule
+# `caught_plants / total_plants`. Below this, the rule has poor
+# recall and the loop should NOT silence it further (FP fixes that
+# also lose TPs are blocked).
+min_recall = 0.70

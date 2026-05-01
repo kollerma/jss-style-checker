@@ -151,3 +151,36 @@ def previous(
         return out
     finally:
         cx.close()
+
+
+def latest_stats(
+    db_path: Path,
+) -> tuple[int | None, dict[tuple[str, str], tuple[int, int, int, float | None, str]]]:
+    """Return ``(iteration_id, {(scope, rule_id): (tp, fp, pending, precision, status)})``
+    from the most recent iteration. ``(None, {})`` when there's no history.
+
+    Used by ``iterate guard`` to check whether the current scan
+    introduces a precision regression vs. the last recorded snapshot.
+    """
+    if not db_path.exists():
+        return None, {}
+    cx = connect(db_path)
+    try:
+        row = cx.execute(
+            "SELECT id FROM iterations ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        if row is None:
+            return None, {}
+        iter_id = int(row["id"])
+        out: dict[tuple[str, str], tuple[int, int, int, float | None, str]] = {}
+        for r in cx.execute(
+            "SELECT scope, rule_id, tp, fp, pending, precision, status "
+            "FROM iteration_rule_stats WHERE iteration_id = ?",
+            (iter_id,),
+        ).fetchall():
+            out[(r["scope"], r["rule_id"])] = (
+                r["tp"], r["fp"], r["pending"], r["precision"], r["status"],
+            )
+        return iter_id, out
+    finally:
+        cx.close()

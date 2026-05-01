@@ -334,3 +334,133 @@ def run(
         f"({label}) into {history_db} and appended to {log_path}"
     )
     return 0
+
+
+def _load_policy(policy_path: Path) -> dict:
+    """Read iteration-policy.toml; fall back to a baked-in default."""
+    defaults = {
+        "precision_threshold": 0.90,
+        "min_tp_for_pass": 10,
+        "precision_drop_tolerance_pp": 3.0,
+    }
+    if not policy_path.exists():
+        return defaults
+    try:
+        import tomllib
+    except ImportError:
+        import tomli as tomllib  # type: ignore[no-redef]
+    raw = tomllib.loads(policy_path.read_text(encoding="utf-8"))
+    pass_cfg = raw.get("pass_criteria", {})
+    fix_cfg = raw.get("fix_attempt", {})
+    return {
+        "precision_threshold": float(
+            pass_cfg.get("precision_threshold", defaults["precision_threshold"])
+        ),
+        "min_tp_for_pass": int(
+            pass_cfg.get("min_tp_for_pass", defaults["min_tp_for_pass"])
+        ),
+        "precision_drop_tolerance_pp": float(
+            fix_cfg.get(
+                "precision_drop_tolerance_pp",
+                defaults["precision_drop_tolerance_pp"],
+            )
+        ),
+    }
+
+
+def run_guard(
+    *,
+    eval_db: Path,
+    history_db: Path,
+    manifest_path: Path,
+    corpus_dir: Path,
+    policy_path: Path,
+) -> int:
+    """Block recording when the current scan introduces a per-rule
+    precision regression past the iteration-policy tolerance.
+
+    Returns 0 when no regression is detected (recording is safe), 1
+    when one or more passing rules dropped below the threshold or by
+    more than ``precision_drop_tolerance_pp`` from their last
+    recorded value, 2 on usage / file errors.
+    """
+    if not eval_db.exists():
+        print(f"eval-jss guard: {eval_db} does not exist", flush=True)
+        return 2
+
+    policy = _load_policy(policy_path)
+    pp_tolerance = policy["precision_drop_tolerance_pp"] / 100.0
+    pass_threshold = policy["precision_threshold"]
+    min_tp = policy["min_tp_for_pass"]
+
+    prev_iter, prev_stats = history.latest_stats(history_db)
+    if prev_iter is None:
+        print("eval-jss guard: no prior iteration recorded — pass.")
+        return 0
+
+    full = report_mod.compute_precision(eval_db)
+    pinned_pairs = report_mod._pinned_pairs(manifest_path, corpus_dir)
+    pinned = report_mod.compute_precision(eval_db, pinned=pinned_pairs)
+
+    regressions: list[str] = []
+    for table, scope in ((full, "full"), (pinned, "pinned")):
+        for r in table.rows:
+            if r.source != "overall":
+                continue
+            prev = prev_stats.get((scope, r.rule_id))
+            if prev is None:
+                continue  # new rule, no baseline to compare to
+            p_tp, p_fp, p_pending, p_prec, p_status = prev
+            # Only guard rules that WERE passing — a fix on a FAIL rule
+            # is allowed to keep failing without blocking recording.
+            if p_status != "PASS":
+                continue
+            cur_prec = r.precision
+            # If precision is None (no fires), the rule is vacuously
+            # not regressing; skip.
+            if cur_prec is None or p_prec is None:
+                continue
+            # Block if (a) precision dropped past tolerance, (b) the
+            # rule fell below the global pass threshold from above, or
+            # (c) TP count collapsed from at-or-above min_tp to below.
+            # Pre-existing low-TP / low-precision rules don't count —
+            # this iteration must have caused the regression.
+            dropped_past_tolerance = (p_prec - cur_prec) > pp_tolerance
+            below_threshold_now = (
+                cur_prec < pass_threshold and p_prec >= pass_threshold
+            )
+            tp_collapsed = (
+                p_tp >= min_tp and (r.tp + r.pending) < min_tp
+            )
+            if dropped_past_tolerance or below_threshold_now or tp_collapsed:
+                if dropped_past_tolerance:
+                    why = f"dropped {(p_prec - cur_prec) * 100:.2f}pp past tolerance"
+                elif below_threshold_now:
+                    why = f"crossed below pass threshold {pass_threshold:.0%}"
+                else:
+                    why = f"tp collapsed from {p_tp} to {r.tp} (min_tp={min_tp})"
+                regressions.append(
+                    f"  [{scope}] {r.rule_id}: "
+                    f"{p_prec:.1%} → {cur_prec:.1%} "
+                    f"(tp {p_tp}→{r.tp}, fp {p_fp}→{r.fp}); {why}"
+                )
+
+    if regressions:
+        print(
+            f"eval-jss guard: REGRESSION vs iteration {prev_iter} — "
+            f"{len(regressions)} rule(s) dropped past policy:"
+        )
+        for line in regressions:
+            print(line)
+        print(
+            "\nResolve before recording: revert the offending change "
+            "(`git revert HEAD` after the fix commit) or relax the "
+            "policy in eval/iteration-policy.toml if intentional."
+        )
+        return 1
+
+    print(
+        f"eval-jss guard: no regression vs iteration {prev_iter} — "
+        f"recording is safe."
+    )
+    return 0
