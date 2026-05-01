@@ -66,6 +66,28 @@ class TestCap001:
         src = r"\title{regression Models in R}"
         assert len(run_rule(jss_cap_001, src)) == 1
 
+    def test_title_leading_markup_hyphen_compound_silent(self, run_rule):
+        # Reviewer-confirmed FP from cran_ReacTran: ``\proglang{R}-package``
+        # is a hyphen-glued compound; the plain-text strip leaves
+        # ``-package`` (lowercase) but author-dictated case inside the
+        # wrapper acts as the title's first word.
+        src = (
+            r"\title{\proglang{R}-package \rt: "
+            r"Reactive Transport Modelling in \R}"
+        )
+        assert run_rule(jss_cap_001, src) == []
+
+    def test_title_leading_markup_then_lowercase_still_fires(self, run_rule):
+        # Distinguish from cran_CARBayes: ``\pkg{CARBayes} version 6.1.1:
+        # ...`` — the post-markup word ``version`` is whitespace-glued,
+        # not hyphen-glued, so the title-case violation on ``version``
+        # remains a real fail.
+        src = (
+            r"\title{\pkg{CARBayes} version 6.1.1: "
+            r"An \proglang{R} Package for Modelling}"
+        )
+        assert len(run_rule(jss_cap_001, src)) == 1
+
 
 # ---------------------------------------------------------------------------
 # JSS-CAP-002 — sentence style on sections

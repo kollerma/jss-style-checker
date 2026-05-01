@@ -237,6 +237,39 @@ def _is_capitalised_word(word: str) -> bool:
 _FUNCTION_CALL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.]*\(\)?$")
 
 
+# Title-leading markup macro: ``\title{\proglang{R}-package ...}``,
+# ``\title{\pkg{foo} for X}``. The author-dictated case inside the
+# wrapper acts as the title's first word; the rule's first-word
+# capitalisation check should defer to it.
+_TITLE_LEADING_MARKUP_RE = re.compile(
+    r"^\{?\s*\\(pkg|proglang|code|fct|verb)\b"
+)
+
+
+def _title_source(group: Any) -> str:
+    """Return the raw LaTeX source of a title group, used for the
+    leading-markup probe. Concatenates char nodes plus a literal
+    serialisation of macros that pylatexenc surfaces inside the title.
+    Cheap approximation: we only need to know whether the first
+    visible token is a markup macro.
+    """
+    parts: list[str] = []
+    for child in group.nodelist or ():
+        if isinstance(child, LatexCharsNode):
+            parts.append(child.chars)
+            if child.chars.strip():
+                break
+        elif isinstance(child, LatexMacroNode):
+            parts.append(f"\\{child.macroname}")
+            break
+        elif isinstance(child, LatexGroupNode):
+            parts.append("{")
+            inner = _title_source(child)
+            parts.append(inner)
+            break
+    return "".join(parts)
+
+
 def _word_letters_lower(word: str) -> str:
     return re.sub(r"[^A-Za-z]", "", word).lower()
 
@@ -270,6 +303,18 @@ def check_jss_cap_001(
             text = _group_plain_text(group)
             words = _words(text)
             if not words:
+                continue
+            # Skip when the title source opens with a markup macro
+            # AND the plain-text continuation starts with ``-`` (the
+            # ``\proglang{R}-package ...`` compound idiom from
+            # cran_ReacTran). When the continuation starts with
+            # whitespace + lowercase word (e.g. ``\pkg{X} version Y``),
+            # that's a regular title-style failure on the post-markup
+            # word and the rule should fire.
+            if (
+                text.lstrip().startswith("-")
+                and _TITLE_LEADING_MARKUP_RE.match(_title_source(group))
+            ):
                 continue
             # Skip when no principal word remains after stripping
             # stopwords — title is effectively just markup macros plus
