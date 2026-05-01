@@ -345,7 +345,13 @@ _MARKUP_MACROS: frozenset[str] = frozenset(
      # ``\script{...}`` (renders in \texttt) for filenames; treating
      # it as markup avoids MARKUP-001 firing on ``R`` extensions
      # inside ``\script{convergence.R}`` etc.
-     "script"}
+     "script",
+     # ``highlight`` package code-highlighting macros — knitr / Rnw
+     # output uses ``\hlstd{}``, ``\hlkwa{}``, ``\hlopt{}``,
+     # ``\hlkwd{}``, ``\hlstr{}``, ``\hlcom{}`` to wrap tokens of
+     # syntax-highlighted code. Content is code, not prose.
+     "hlstd", "hlkwa", "hlopt", "hlkwd", "hlstr", "hlcom",
+     "hlnum", "hlsng", "hlslc", "hlppc", "hlpps"}
 )
 
 # Preamble / meta-data / citation macros whose arg is not prose to scan.
@@ -362,7 +368,11 @@ _META_MACROS: frozenset[str] = frozenset(
      "SweaveOpts", "SweaveInput", "SweaveSyntax",
      "VignetteIndexEntry", "VignettePackage", "VignetteDepends",
      "VignetteEngine", "VignetteKeywords", "VignetteEncoding",
-     "newcommand", "renewcommand", "providecommand", "def"}
+     "newcommand", "renewcommand", "providecommand", "def",
+     # Listings / minted / inputlisting directives — option lists like
+     # ``language=R``, not prose. Without this, MARKUP-001 fires on
+     # the ``R`` token inside ``\lstinputlisting[language=R, ...]``.
+     "lstinputlisting", "lstset", "inputminted", "VerbatimInput"}
 )
 
 

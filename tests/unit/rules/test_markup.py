@@ -119,6 +119,20 @@ class TestMarkup001:
         )
         assert len(run_rule(jss_markup_001, src)) == 1
 
+    def test_skip_listings_option_value(self, run_rule):
+        # Reviewer-confirmed FPs from cran_psychotools:
+        # ``\lstinputlisting[language=R, ...]`` — the ``R`` token is
+        # the value of the listings ``language=`` option, not a bare
+        # prose mention.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\lstinputlisting[firstline=9, lastline=34, "
+            r"basicstyle=\ttfamily, language=R, numbers=left]{file.R}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-002 — package names

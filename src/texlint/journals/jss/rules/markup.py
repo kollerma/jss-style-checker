@@ -94,6 +94,27 @@ def _is_filename_context(chars: str, offset: int) -> bool:
     return chars[offset - 1] in {".", "/"}
 
 
+# Option-list keys that take a language / package identifier as
+# their RHS — typically inside ``\lstinputlisting[language=R, ...]``,
+# ``\lstset{language=Python}``, ``\inputminted{R}``. Pylatexenc
+# parses ``[language=R]`` as plain chars, so the bare-token scan
+# would otherwise flag the ``R``.
+_OPTION_KEY_RE = re.compile(
+    r"\b(?:language|style|backgroundcolor|basicstyle|keywordstyle|"
+    r"commentstyle|stringstyle|columns|frame|caption|label|numbers|"
+    r"numberstyle|firstline|lastline|tabsize|breaklines|formatcom)"
+    r"\s*=\s*\Z"
+)
+
+
+def _is_option_list_value(chars: str, offset: int) -> bool:
+    """True when the token at ``offset`` is the RHS of a listings /
+    minted option-list key (``language=R``, ``style=python``).
+    """
+    head = chars[max(0, offset - 50) : offset]
+    return bool(_OPTION_KEY_RE.search(head))
+
+
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-001 / MARKUP-002 — language / package names in prose
 # ---------------------------------------------------------------------------
@@ -192,6 +213,8 @@ def _check_bare_terms(
                 if _is_superscripted(node.chars, offset, len(token)):
                     continue
                 if _is_filename_context(node.chars, offset):
+                    continue
+                if _is_option_list_value(node.chars, offset):
                     continue
                 if _disambiguates_to_method(node.chars, offset, token):
                     continue
