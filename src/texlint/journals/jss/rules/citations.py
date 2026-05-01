@@ -162,26 +162,99 @@ def _has_cite_in_span(parent: Any, start: int, end: int) -> bool:
 # ---------------------------------------------------------------------------
 
 
+# Tabular environments where rows are independent units — a citation
+# in one row's cell shouldn't satisfy CITE-002 for ``\pkg{X}`` in
+# another row. The paragraph span is narrowed to the surrounding row
+# (bounded by ``\\`` / ``\tabularnewline`` / ``\hline``).
+_TABULAR_ENVS: frozenset[str] = frozenset(
+    {"tabular", "tabular*", "tabularx", "tabbing", "longtable", "supertabular"}
+)
+_ROW_SEP_MACROS: frozenset[str] = frozenset(
+    {"\\", "tabularnewline", "hline", "midrule", "toprule", "bottomrule",
+     "cmidrule"}
+)
+
+
+def _is_in_tabular(ancestors: Any) -> bool:
+    for anc in ancestors:
+        if (
+            isinstance(anc, LatexEnvironmentNode)
+            and anc.environmentname in _TABULAR_ENVS
+        ):
+            return True
+    return False
+
+
 def _paragraph_span_in_parent(
-    parent: Any, idx: int
+    parent: Any, idx: int, *, in_tabular: bool = False,
 ) -> tuple[int, int]:
     """Return ``(start_idx, end_idx)`` inclusive-exclusive for the paragraph
     within ``parent`` that contains ``parent[idx]``.
 
     A paragraph boundary is any :class:`LatexCharsNode` whose text contains
-    a blank line; boundaries themselves are excluded from the span.
+    a blank line; boundaries themselves are excluded from the span. When
+    ``in_tabular`` is True, row-separator macros (``\\\\``, ``\\hline``,
+    etc.) also count as boundaries so a citation in one cell doesn't
+    satisfy ``\\pkg{X}`` in another row.
     """
     start = 0
     for i in range(idx - 1, -1, -1):
-        if _helpers._char_has_blank_line(parent[i]):
+        sib = parent[i]
+        if _helpers._char_has_blank_line(sib):
+            start = i + 1
+            break
+        if in_tabular and _is_row_sep(sib):
             start = i + 1
             break
     end = len(parent)
     for i in range(idx + 1, len(parent)):
-        if _helpers._char_has_blank_line(parent[i]):
+        sib = parent[i]
+        if _helpers._char_has_blank_line(sib):
+            end = i
+            break
+        if in_tabular and _is_row_sep(sib):
             end = i
             break
     return start, end
+
+
+def _is_row_sep(node: Any) -> bool:
+    return (
+        isinstance(node, LatexMacroNode)
+        and node.macroname in _ROW_SEP_MACROS
+    )
+
+
+# Free-form text-style citation: ``Henningsen (2008)`` /
+# ``Smith and Jones (2020)`` / ``Brown et al. (2019)``. Authors who
+# write a self-contained "Author (year)" string in the same paragraph
+# as ``\\pkg{X}`` have effectively cited the package without using
+# ``\\citep{}``. Restricted to ≥3-letter capitalised author tokens to
+# avoid matching short prose like ``In (2020)``; year is 18xx-20xx
+# to avoid every parenthesised number.
+_TEXTUAL_AUTHOR_YEAR = re.compile(
+    r"\b[A-Z][A-Za-z'À-ſ]{2,}"
+    r"(?:"
+    r"\s+(?:and|&)\s+[A-Z][A-Za-z'À-ſ]{2,}"
+    r"|\s+et\s+al\.?"
+    r")?"
+    r"\s*\((?:18|19|20)\d{2}\b"
+)
+
+
+def _has_textual_citation_in_span(
+    parent: Any, start: int, end: int,
+) -> bool:
+    """Return True if a paragraph carries an ``Author (year)`` string —
+    common in quote envs and footnote glosses where the citation is
+    spelled out rather than wrapped in ``\\citep{}``.
+    """
+    for sibling in parent[start:end]:
+        if isinstance(sibling, LatexCharsNode) and _TEXTUAL_AUTHOR_YEAR.search(
+            sibling.chars
+        ):
+            return True
+    return False
 
 
 def check_jss_cite_002(
@@ -223,6 +296,7 @@ def check_jss_cite_002(
                 # mention happens at every `\foo` use; CITE-002 can flag
                 # those instead.
                 continue
+            in_tab = _is_in_tabular(ancestors)
             if _is_inside_soft_no_cite_zone(ancestors):
                 # \Abstract{}, abstract env, thebibliography, and
                 # \bibitem are places where citations are allowed but
@@ -230,7 +304,9 @@ def check_jss_cite_002(
                 # this soft zone happens to carry both \pkg{X} and a
                 # \citep{} for it, mark X as "seen" so the body mention
                 # isn't re-flagged.
-                start, end = _paragraph_span_in_parent(parent, idx)
+                start, end = _paragraph_span_in_parent(
+                    parent, idx, in_tabular=in_tab,
+                )
                 if _has_cite_in_span(parent, start, end) or any(
                     isinstance(anc, LatexMacroNode)
                     and anc.macroname in _CITE_MACROS
@@ -252,7 +328,9 @@ def check_jss_cite_002(
                 # would miss it because the cite is an ancestor, not a
                 # sibling.
                 continue
-            start, end = _paragraph_span_in_parent(parent, idx)
+            start, end = _paragraph_span_in_parent(
+                parent, idx, in_tabular=in_tab,
+            )
             if _has_cite_in_span(parent, start, end):
                 continue
             if _has_rmd_citation_in_span(parent, start, end):
@@ -260,6 +338,14 @@ def check_jss_cite_002(
                 # paragraph satisfies CITE-002. The Rmd parser doesn't
                 # convert these to `\cite{}` macros, so we recognise
                 # them textually here.
+                continue
+            if _has_textual_citation_in_span(parent, start, end):
+                # Free-form ``Henningsen (2008)`` / ``Smith and Jones
+                # (2020)`` citation in the same paragraph (or table
+                # row, when ``in_tabular`` narrows the span). Common
+                # in quote envs and footnote glosses where the
+                # citation is spelled out rather than wrapped in
+                # ``\citep{}``.
                 continue
             line, col = _helpers._lineno_col(tex, node.pos)
             yield Violation(

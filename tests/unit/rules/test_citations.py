@@ -142,6 +142,56 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_pkg_with_textual_author_year_citation_not_flagged(self, run_rule):
+        # Reviewer-confirmed FPs from cran_aer (quote-env free-form
+        # citation), cran_zoo: a free-form ``Author (year)`` /
+        # ``Smith and Jones (year)`` / ``Brown et al. (year)`` string
+        # in the same paragraph as ``\pkg{X}`` is the citation,
+        # spelled out without a ``\citep{}`` macro.
+        for citation in (
+            "Henningsen (2008)",
+            "Tsay (2005)",
+            "Smith and Jones (2020)",
+            "Brown et al. (2019)",
+        ):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                r"\begin{document}" "\n"
+                f"See {citation} for the analysis using \\pkg{{xyz}}.\n"
+                r"\end{document}" "\n"
+            )
+            assert run_rule(jss_cite_002, src) == [], citation
+
+    def test_textual_year_alone_still_flags(self, run_rule):
+        # A bare year like "(2020)" without a leading ≥3-letter author
+        # name is NOT a citation — short capitalised words ('In',
+        # 'On', 'As') don't qualify. The rule should still fire.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"In (2020) we observed \pkg{xyz} in the analysis." "\n"
+            r"\end{document}" "\n"
+        )
+        assert len(run_rule(jss_cite_002, src)) == 1
+
+    def test_tabular_row_isolates_textual_citation(self, run_rule):
+        # Reviewer-confirmed FP shape from cran_zoo's CRAN-packages
+        # FAQ table: each row lists ``\pkg{X} & description`` and one
+        # row's description happens to contain ``Tsay (2005)``. The
+        # textual citation in that one row must NOT exempt OTHER rows.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{tabular}{ll}" "\n"
+            r"\pkg{Foo} & Companion to Tsay (2005) Analysis. \\" "\n"
+            r"\pkg{Bar} & Some description without a citation. \\" "\n"
+            r"\end{tabular}" "\n"
+            r"\end{document}" "\n"
+        )
+        violations = run_rule(jss_cite_002, src)
+        # Only \pkg{Bar} should fire — \pkg{Foo}'s row has the citation.
+        assert len(violations) == 1
+
     def test_pkg_inside_abstract_macro_not_flagged(self, run_rule):
         # JSS convention: abstracts introduce package names by short
         # reference; the actual \citep lands in §1 (Introduction). A
