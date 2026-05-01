@@ -185,10 +185,33 @@ class TestOper004:
     def test_good_silent(self, run_rule):
         assert run_rule(jss_oper_004, _tex("JSS-OPER-004-good.tex")) == []
 
-    def test_pr_flagged(self, run_rule):
+    def test_pr_alone_silent(self, run_rule):
+        # Papers that use \Pr exclusively (no \Prob) have chosen the
+        # LaTeX built-in as their canonical form. Reproduces the
+        # reviewer-confirmed FPs from cran_medflex (6 \Pr cases all
+        # marked FP).
         src = (
             "\\documentclass[article]{jss}\n"
             "\\begin{document}$\\Pr(X \\le x)$.\\end{document}\n"
+        )
+        assert run_rule(jss_oper_004, src) == []
+
+    def test_pr_with_prob_elsewhere_flagged(self, run_rule):
+        # Inconsistent notation: paper uses both \Pr and \Prob — flag
+        # the \Pr so the author can pick one.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}$\\Pr(X \\le x)$. Also $\\Prob(Y)$.\\end{document}\n"
+        )
+        assert len(run_rule(jss_oper_004, src)) == 1
+
+    def test_pr_with_redefining_newcommand_flagged(self, run_rule):
+        # \newcommand{\Pr}{...} proves the author knows about \Prob
+        # and chose to redefine \Pr — that's still a JSS deviation.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\newcommand{\\Pr}{\\mathbb{P}}\n"
+            "\\begin{document}$\\Pr(X)$.\\end{document}\n"
         )
         assert len(run_rule(jss_oper_004, src)) == 1
 

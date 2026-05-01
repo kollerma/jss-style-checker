@@ -330,9 +330,40 @@ def _chars_starts_with_blank_line(node: Any) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _doc_uses_prob_macro(doc: ParsedDocument) -> bool:
+    """True when any tex-like surface invokes ``\\Prob``.
+
+    JSS reviewers accept ``\\Pr`` as canonical when the paper uses it
+    consistently — papers with neither ``\\Prob`` nor a redefining
+    ``\\newcommand{\\Pr}`` simply chose the LaTeX built-in. Only flag
+    ``\\Pr`` when the paper also has ``\\Prob`` somewhere (inconsistent
+    notation) or has a custom ``\\Pr`` redefinition that proves the
+    author knows about the jss.cls variant.
+    """
+    for tex in doc.all_tex_like():
+        for node in _helpers._walk(tex.nodes):
+            if not isinstance(node, LatexMacroNode):
+                continue
+            if node.macroname == "Prob":
+                return True
+            if node.macroname in {"newcommand", "renewcommand", "providecommand"}:
+                # Walk into the macro's first group arg to see if it
+                # defines \Pr; pylatexenc represents the target macro
+                # as a child of the def macro's argument.
+                for child in _helpers._walk([node]):
+                    if (
+                        isinstance(child, LatexMacroNode)
+                        and child.macroname == "Pr"
+                        and child is not node
+                    ):
+                        return True
+    return False
+
+
 def check_jss_oper_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    flag_pr = _doc_uses_prob_macro(doc)
     for tex in doc.all_tex_like():
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
@@ -342,12 +373,13 @@ def check_jss_oper_004(
             if not _helpers._is_inside_math(ancestors):
                 continue
             if node.macroname == "Pr":
-                yield _violation(
-                    tex=tex,
-                    pos=node.pos,
-                    rule_id="JSS-OPER-004",
-                    suggestion="Use \\Prob from jss.cls instead of \\Pr.",
-                )
+                if flag_pr:
+                    yield _violation(
+                        tex=tex,
+                        pos=node.pos,
+                        rule_id="JSS-OPER-004",
+                        suggestion="Use \\Prob from jss.cls instead of \\Pr.",
+                    )
                 continue
             if node.macroname not in _NONCANON_PROB_MACROS:
                 continue
