@@ -158,6 +158,30 @@ class TestXref004:
         )
         assert run_rule(jss_xref_004, src) == []
 
+    def test_nonumber_equation_silent(self, run_rule):
+        # Reviewer-confirmed FPs from cran_sphet, cran_synthpop:
+        # \nonumber inside an equation env suppresses the equation
+        # number, so it isn't a cross-ref target and a missing
+        # \label{} is not a defect.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{equation}B \theta = 0 \nonumber\end{equation}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_004, src) == []
+
+    def test_align_with_nonumber_still_fires(self, run_rule):
+        # Multi-line align with \nonumber on one line does NOT unnumber
+        # the others — the env still needs a \label{}.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{align}x=1\nonumber \\ y=2\end{align}" "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_xref_004, src)) == 1
+
     def test_non_equation_env_silent(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

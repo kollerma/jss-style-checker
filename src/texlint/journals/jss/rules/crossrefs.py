@@ -331,6 +331,18 @@ def check_jss_xref_004(
             # they don't need their own.
             if _inside_subequations(ancestors):
                 continue
+            # ``\nonumber`` / ``\notag`` inside a single-line equation
+            # env (``equation``, ``multline``) suppresses the equation
+            # number, so the equation isn't a cross-ref target and a
+            # missing ``\label{}`` is not a defect. Multi-line envs
+            # (``align``, ``eqnarray``, ``gather``) carry per-line
+            # numbering — a ``\nonumber`` on one line doesn't unnumber
+            # the others, so they still need their own labels.
+            if (
+                node.environmentname in {"equation", "multline"}
+                and _env_has_nonumber(node)
+            ):
+                continue
             yield _violation(
                 tex=tex,
                 pos=node.pos,
@@ -340,6 +352,19 @@ def check_jss_xref_004(
                     "be referenced from the text."
                 ),
             )
+
+
+_NONUMBER_MACROS: frozenset[str] = frozenset({"nonumber", "notag"})
+
+
+def _env_has_nonumber(env: Any) -> bool:
+    for child in _helpers._walk(env.nodelist or ()):
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _NONUMBER_MACROS
+        ):
+            return True
+    return False
 
 
 def _inside_subequations(ancestors: list[Any]) -> bool:
