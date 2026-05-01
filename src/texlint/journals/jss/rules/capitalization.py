@@ -74,18 +74,27 @@ _EXTRA_PROPER_NOUNS: frozenset[str] = frozenset(
         # Diseases, microbe genera, and named corpora
         "Alzheimer", "Campylobacter", "Faithful", "Indians",
         "Listeria", "Moby", "Newport", "Pima", "Salmonella",
-        # Calendar months (full + common abbreviations). They appear
-        # frequently in time-series captions ("seasonal component over
-        # January, March, June, July...") and are genuine proper nouns
-        # in English — sentence-style retains their capitalisation.
-        "January", "February", "March", "April", "May", "June", "July",
-        "August", "September", "October", "November", "December",
-        "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep",
-        "Sept", "Oct", "Nov", "Dec",
     }
 )
 
+# Calendar months — CAP-003-only proper nouns. Months appear in
+# time-series captions ("seasonal component over January, March...")
+# where the rule should treat them as proper nouns. They MUST NOT
+# leak into CAP-002 (section titles): cran_np/np_faq has 51
+# changelog headings of the form "Changes from Version X.Y to X.Z
+# [12-Mar-2023]" where Mar would otherwise become the second-offender
+# anchor — adding months to CAP-002's set silences all 51 TPs.
+_CAPTION_EXTRA_PROPER_NOUNS: frozenset[str] = frozenset({
+    "January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December",
+    "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep",
+    "Sept", "Oct", "Nov", "Dec",
+})
+
 _PROPER_NOUNS: frozenset[str] = LANGUAGES | R_PACKAGES | _EXTRA_PROPER_NOUNS
+_CAPTION_PROPER_NOUNS: frozenset[str] = (
+    _PROPER_NOUNS | _CAPTION_EXTRA_PROPER_NOUNS
+)
 
 
 def _violation(
@@ -416,10 +425,14 @@ def check_jss_cap_003(
                 "Use sentence style in the caption (capitalise only the "
                 "first word; proper names remain capitalised).",
                 collapse_runs=True,
+                proper_nouns=_CAPTION_PROPER_NOUNS,
             )
 
 
-def _is_capitalised_offender(word: str) -> bool:
+def _is_capitalised_offender(
+    word: str,
+    proper_nouns: frozenset[str] = _PROPER_NOUNS,
+) -> bool:
     """True if ``word`` is a capitalised non-stopword non-proper-noun
     that's NOT an abbreviation or single-letter math symbol — i.e.,
     the kind of capitalisation sentence style penalises.
@@ -433,7 +446,7 @@ def _is_capitalised_offender(word: str) -> bool:
         return False
     if not bare[0].isupper():
         return False
-    if bare in _PROPER_NOUNS:
+    if bare in proper_nouns:
         return False
     if bare.lower() in _TITLE_STOPWORDS:
         return False
@@ -465,6 +478,7 @@ def _check_sentence_style(
     suggestion: str,
     *,
     collapse_runs: bool = False,
+    proper_nouns: frozenset[str] = _PROPER_NOUNS,
 ) -> Iterator[Violation]:
     """Fire when ≥2 distinct offending capitalisations appear in ``group``.
 
@@ -479,6 +493,12 @@ def _check_sentence_style(
     With ``collapse_runs=False`` (the default, used for section headings
     where two-word capital runs ARE the title-case signature), each
     capitalised non-proper-non-abbrev token contributes individually.
+
+    ``proper_nouns`` lets callers extend the recognised proper-noun
+    set per rule — CAP-003 passes a wider set (including calendar
+    months) while CAP-002 sticks with the base set so changelog
+    headings like ``Changes from Version X to Y [12-Mar-2023]`` still
+    count ``Mar`` as a stopword anchor.
     """
     text = _group_plain_text(group)
     words = _words_with_boundary(text)
@@ -513,7 +533,7 @@ def _check_sentence_style(
         run = [w for w, _, _ in words[run_start:j]]
         run_text = "-".join(w.lower() for w in run)
         any_known = any(
-            p in _PROPER_NOUNS or _looks_like_abbrev(p) for p in run
+            p in proper_nouns or _looks_like_abbrev(p) for p in run
         )
         any_stopword = any(p.lower() in _TITLE_STOPWORDS for p in run)
 
@@ -558,7 +578,7 @@ def _check_sentence_style(
                 continue
             if w_is_hyphen and k > 0:
                 continue
-            if _is_capitalised_offender(w):
+            if _is_capitalised_offender(w, proper_nouns):
                 key = w.lower()
                 if key in seen:
                     continue
