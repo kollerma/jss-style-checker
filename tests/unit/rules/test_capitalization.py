@@ -220,6 +220,36 @@ class TestCap003:
         )
         assert run_rule(jss_cap_003, src) == []
 
+    def test_subfigure_letter_labels_silent(self, run_rule):
+        # Reviewer-confirmed FPs from cran_Langevin and cran_bbl: panel
+        # labels ``(a)`` / ``(b)`` introducing subfigure descriptions
+        # should anchor the post-label word as a sentence-start, the
+        # same way ``(2)`` numbering already does. ``(a) Sketch of a
+        # stochastic process ... (b) its corresponding ...`` is
+        # sentence-style, not title-case.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{(a) Sketch of a stochastic process and (b) its"
+            r" corresponding density.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        assert run_rule(jss_cap_003, src) == []
+
+    def test_subfigure_label_after_period_silent(self, run_rule):
+        # Variant from cran_bbl: caption opens with a sentence, then
+        # ``\n(a) Cross-validation ... (b-d) Comparison ...``. The
+        # period anchors the next sub-sentence and the parens-letter
+        # is transparent as numbering.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{Inference using simulated data. (a) Cross-validation"
+            r" output. (b-d) Comparison of true and inferred parameters.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        assert run_rule(jss_cap_003, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-CAP-004 — Keywords sentence case

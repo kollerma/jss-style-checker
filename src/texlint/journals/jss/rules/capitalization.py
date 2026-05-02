@@ -166,9 +166,21 @@ def _words(text: str) -> list[str]:
 # ``[2]``, ``1.``, or ``2)`` between the punctuator and the content
 # word is transparent — caption text such as ``... algorithms.
 # (2) Estimator consists ...`` should anchor the boundary to
-# ``Estimator``, not to ``(2)``.
+# ``Estimator``, not to ``(2)``. The same applies to subfigure-letter
+# labels ``(a)`` / ``(b)`` / ``[i]`` / ``(ii)`` that introduce panel
+# captions (``... data. (a) Cross-validation ... (b) Comparison ...``).
+_LIST_NUMBERING = (
+    r"(?:[(\[]\d+[)\]]|\d+[).]"
+    r"|[(\[][a-z][)\]]|[(\[][ivx]{1,4}[)\]])"
+)
 _SENTENCE_BOUNDARY_RE = re.compile(
-    r"[.:?!]\s+(?:(?:[(\[]\d+[)\]]|\d+[).])\s+)?(\S+)"
+    r"[.:?!]\s+(?:" + _LIST_NUMBERING + r"\s+)?(\S+)"
+)
+# Caption-leading list-numbering: ``(a) Sketch of ...`` / ``(i) Foo ...``
+# at the very start of a caption should treat the post-label word as a
+# sentence-opening word (no preceding punctuator required).
+_CAPTION_LEADING_LABEL_RE = re.compile(
+    r"^\s*" + _LIST_NUMBERING + r"\s+(\S+)"
 )
 
 
@@ -189,6 +201,11 @@ def _words_with_boundary(text: str) -> list[tuple[str, bool, bool]]:
     boundary_offsets: set[int] = set()
     for m in _SENTENCE_BOUNDARY_RE.finditer(text):
         boundary_offsets.add(m.start(1))
+    # Caption-leading subfigure label: anchor the post-label word as a
+    # sentence-start so ``(a) Sketch of ...`` doesn't penalise ``Sketch``.
+    leading = _CAPTION_LEADING_LABEL_RE.match(text)
+    if leading:
+        boundary_offsets.add(leading.start(1))
     out: list[tuple[str, bool, bool]] = []
     # Tokenize whitespace-delimited "source words" first to anchor the
     # boundary flag, then split each source word on hyphens.
