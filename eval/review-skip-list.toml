@@ -8,76 +8,63 @@
 # The `reason` field is documentation only — it is not interpreted.
 #
 # Bare-string entries (just `"JSS-FOO-123"`) are also accepted.
-#
-# Examples (commented; uncomment / adapt when Step 3 has the rule
-# catalogue that makes each one a live concern):
-#
-#   { rule_id = "JSS-CODE-003", reason = "Qwen3 mislabels param=value inside \\code{}" },
-#
-#   { rule_id = "JSS-SRC-001", reason = "Qwen3 rubber-stamps numeric-assertion messages as TP; see spec.md Assumptions for the 2026-04-23 observation" },
 
 skip_rules = []
 
-# Spec 004 pre-populated entries — rules whose violations bypass AI labelling
-# entirely. See specs/004-jss-rule-modules/contracts/ai-skip-list.md.
-# Removal policy: each removal MUST include rationale in the removing PR.
+# Last revision: 2026-05-01 after the full 934-row gold benchmark
+# (eval/labeler-benchmark-summary.md). Each entry below is justified
+# by a per-rule agreement number on the human gold set; rules that
+# at least one available model handles at ≥94% have been removed.
+# The ones still here either (a) both models < 75% agreement, or
+# (b) both models ≥97% uncertain on the rule — useless either way.
+
+[[rules]]
+rule_id       = "JSS-CAP-003"
+reason        = "Both models fail. Bonsai 40% (accepts 28/47 FPs as TPs), Qwen3 63%. The captions sentence-style heuristic is too loose — both labellers confuse 'figure caption with proper-noun phrase' for genuine title-case. Iter-71 benchmark."
+added_in_spec = "004"
 
 [[rules]]
 rule_id       = "JSS-CITE-004"
-reason        = "Regex-over-prose with code/verbatim masking; AI labeller rubber-stamps matches."
+reason        = "Regex-over-prose with code/verbatim masking; AI labeller rubber-stamps matches. Benchmark shows 100% agreement on the 18 gold rows for both models — RETAINED defensively because the gold set is small and the FP risk is high if the rule's heuristic over-fires (e.g. on text matching '(Author, year)' inside a quote env)."
 added_in_spec = "004"
 
 [[rules]]
 rule_id       = "JSS-OPER-002"
-reason        = "Polarity inversion: Qwen3 systematically labels manuscripts that use '^T' as FP, claiming '^T complies with the rule'. The rule says use '\\top' NOT '^T'. Even with the per-rule polarity hint in eval/review.py::_RULE_HINTS, 22/22 AI verdicts during iter-2 review were wrong-direction."
+reason        = "RETAINED: Qwen3 polarity inversion (48% agreement at iter-71). Bonsai handles it well (96%) but the skip-list is single-model-agnostic; see eval/labeler-benchmark-summary.md routing notes for per-rule model selection. Move to per-rule routing when (b) lands; remove from skip-list at that time."
 added_in_iter = "5"
 
 [[rules]]
 rule_id       = "JSS-REFS-002"
-reason        = "BibTeX title-case tight heuristic; Qwen3 rubber-stamps 'looks-like-a-title' cases (spec 002 note)."
-added_in_spec = "004"
-
-# Removed 2026-04-24 (iteration 2): with the new prompt that anchors
-# the violation line/column ('>>'/'^' markers) and the per-rule
-# polarity hints in eval/review.py::_RULE_HINTS, these pattern-match
-# rules should be tractable for the AI. Verify via `eval-jss benchmark`
-# before removing more.
-#
-# - JSS-MARKUP-001 (language names) — caret marks the bare token; hints
-#   exclude filenames / math / initials.
-# - JSS-HOUSE-001 (e.g./i.e. comma) — caret marks the period; trivial
-#   substring check after the marker.
-# - JSS-OPER-001 ($p$~value) — caret marks the lowercase letter; hint
-#   names the trigger nouns explicitly.
-# - JSS-CODE-003 (operator spacing) — caret in \code{...}; hint
-#   excludes single dotted/hyphenated identifiers and scientific
-#   notation.
-# - JSS-ABBR-001 (uppercase abbreviation) — caret on the multi-letter
-#   dotted token.
-# - JSS-REFS-005 (journal abbreviation) — full bib entry rendered as
-#   the snippet (`.bib` files show the whole @entry block).
-
-[[rules]]
-rule_id       = "JSS-CAP-001"
-reason        = "Title-style heuristic; AI labeller lacks principal-word dictionary."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-CAP-002"
-reason        = "Sentence-style heuristic on section titles; Qwen3 blind spot."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-CAP-003"
-reason        = "Sentence-style heuristic on captions; Qwen3 blind spot."
-added_in_spec = "004"
-
-[[rules]]
-rule_id       = "JSS-CAP-004"
-reason        = "Keyword sentence-case heuristic; short fields with limited context — AI unreliable."
+reason        = "BibTeX title-case tight heuristic; the gold set has 0 rows for this rule (REFS-002 hasn't fired in the corpus), so benchmark agreement is unmeasurable. Retained pending evidence."
 added_in_spec = "004"
 
 [[rules]]
 rule_id       = "JSS-NAME-002"
-reason        = "Publisher / journal canonicalization. AI classifier hallucinates JSS conventions on bare 'Springer' / 'Wiley' / 'Chapman' entries — labelled 10/10 firings as FP at iter-15 with reasons like 'Springer aligns with JSS conventions' (it doesn't). All bare publisher matches are real violations; route to human-review. Added 2026-04-29 after the cluster was misclassified twice."
+reason        = "RETAINED: Bonsai 63% agreement (flips 13 publisher TPs → FP, hallucinating 'Springer aligns with JSS conventions'). Qwen3 100% on the same 38 rows. Like OPER-002, this is a model-routing case — when (b) lands, route NAME-002 to Qwen3 and remove from skip-list."
 added_in_iter = "32"
+
+# ---------------------------------------------------------------------------
+# Removed 2026-05-01 after the full benchmark (iter-71)
+# ---------------------------------------------------------------------------
+# The rules below were on the skip-list but the benchmark shows at
+# least one model handles them at ≥94% agreement. Removed so AI
+# review picks them up; the per-rule routing config (when (b) lands)
+# will pin each to its best model.
+#
+# - JSS-CAP-001 — Bonsai 100% on 15 gold rows (was: title-style
+#   heuristic; AI lacks principal-word dictionary).
+# - JSS-CAP-002 — Bonsai 94% on 192 gold rows (was: sentence-style
+#   heuristic on section titles; Qwen3 blind spot — confirmed, Qwen3
+#   88%, but Bonsai handles it).
+# - JSS-CAP-004 — Both 100% on 7 gold rows (was: keyword
+#   sentence-case heuristic).
+#
+# Earlier removals (kept for context):
+#
+# Removed 2026-04-24 (iteration 2):
+# - JSS-MARKUP-001 (language names) — caret marks the bare token.
+# - JSS-HOUSE-001 (e.g./i.e. comma) — caret marks the period.
+# - JSS-OPER-001 ($p$~value) — caret marks the lowercase letter.
+# - JSS-CODE-003 (operator spacing) — caret in \code{...}.
+# - JSS-ABBR-001 (uppercase abbreviation) — caret on multi-letter token.
+# - JSS-REFS-005 (journal abbreviation) — full bib entry as the snippet.

@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Pre-commit gate that runs `eval-jss iterate guard` before allowing
+# a commit to land. Refuses the commit if any previously-passing rule
+# regressed past the iteration-policy threshold defined in
+# eval/iteration-policy.toml.
+#
+# Skips the check when the staged changes don't touch any rule code,
+# the corpus manifest, or the iteration-policy file — doc-only and
+# cosmetic commits don't need a precision rescan.
+#
+# Install (drop-in, won't clobber existing hooks):
+#
+#     ln -s "$(pwd)/scripts/git-hooks/pre-commit-guard" \
+#         .git/hooks/pre-commit
+#
+# Or wire into a multi-hook driver (Entire CLI / pre-commit-framework /
+# husky / lefthook) by calling this script from the existing pre-commit
+# entry point.
+#
+# Exit codes:
+#   0 — commit allowed (no regression OR doc-only change)
+#   1 — regression detected; commit blocked
+#   2 — runtime error (missing venv, missing eval-jss CLI, etc.)
+#
+# Override (for one-off commits where the regression is intentional):
+#
+#     SKIP_EVAL_JSS_GUARD=1 git commit -m "..."
+
+set -euo pipefail
+
+if [[ "${SKIP_EVAL_JSS_GUARD:-}" == "1" ]]; then
+    echo "pre-commit-guard: SKIP_EVAL_JSS_GUARD=1 — bypassing iterate guard"
+    exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# --- Cheap path: skip when nothing precision-relevant is staged ----------
+# Match changes under src/texlint/ (rule code), eval/ (policy / manifest
+# / suggester), or tests/fixtures/{violations,recall}/ (fixture changes
+# that affect smoke / recall).
+RELEVANT="^(src/texlint/|eval/iteration-policy\.toml|eval/corpus-manifest\.csv|tests/fixtures/(violations|recall)/)"
+if ! git diff --cached --name-only | grep -qE "$RELEVANT"; then
+    exit 0
+fi
+
+# --- Locate the venv-installed eval-jss ---------------------------------
+EVAL_JSS=""
+for candidate in \
+    "$REPO_ROOT/.venv/bin/eval-jss" \
+    "/home/node/.venv/bin/eval-jss" \
+    "$(command -v eval-jss 2>/dev/null || true)"; do
+    if [[ -n "$candidate" && -x "$candidate" ]]; then
+        EVAL_JSS="$candidate"
+        break
+    fi
+done
+
+if [[ -z "$EVAL_JSS" ]]; then
+    echo "pre-commit-guard: eval-jss CLI not found." >&2
+    echo "pre-commit-guard: activate the venv (.venv/bin/activate) and pip install -e ." >&2
+    echo "pre-commit-guard: bypass with SKIP_EVAL_JSS_GUARD=1" >&2
+    exit 2
+fi
+
+# --- Run the guard ------------------------------------------------------
+# `iterate guard` reads eval/iteration-policy.toml for the per-rule
+# precision tolerance and exits 1 on any regression. Output (regression
+# table or "no regression vs iteration N") goes to stdout.
+"$EVAL_JSS" iterate guard

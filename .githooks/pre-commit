@@ -54,3 +54,11 @@ fi
 
 # -q keeps output scannable; -x fails fast on the first broken test.
 "$pytest_cmd" -q -x
+
+# Iterate-guard gate: refuse the commit when a previously-passing rule
+# regressed past the iteration-policy tolerance. Skips the rescan for
+# doc-only commits; bypass with SKIP_EVAL_JSS_GUARD=1.
+guard_script="$repo_root/scripts/git-hooks/pre-commit-guard"
+if [ -x "$guard_script" ]; then
+    "$guard_script"
+fi
