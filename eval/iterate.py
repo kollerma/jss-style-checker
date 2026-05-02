@@ -342,6 +342,10 @@ def _load_policy(policy_path: Path) -> dict:
         "precision_threshold": 0.90,
         "min_tp_for_pass": 10,
         "precision_drop_tolerance_pp": 3.0,
+        "max_attempts_per_rule": 5,
+        "max_consecutive_no_progress": 3,
+        "min_progress_pp": 0.5,
+        "max_iterations": 50,
     }
     if not policy_path.exists():
         return defaults
@@ -352,6 +356,7 @@ def _load_policy(policy_path: Path) -> dict:
     raw = tomllib.loads(policy_path.read_text(encoding="utf-8"))
     pass_cfg = raw.get("pass_criteria", {})
     fix_cfg = raw.get("fix_attempt", {})
+    term_cfg = raw.get("termination", {})
     return {
         "precision_threshold": float(
             pass_cfg.get("precision_threshold", defaults["precision_threshold"])
@@ -364,6 +369,23 @@ def _load_policy(policy_path: Path) -> dict:
                 "precision_drop_tolerance_pp",
                 defaults["precision_drop_tolerance_pp"],
             )
+        ),
+        "max_attempts_per_rule": int(
+            fix_cfg.get(
+                "max_attempts_per_rule", defaults["max_attempts_per_rule"]
+            )
+        ),
+        "max_consecutive_no_progress": int(
+            term_cfg.get(
+                "max_consecutive_no_progress",
+                defaults["max_consecutive_no_progress"],
+            )
+        ),
+        "min_progress_pp": float(
+            term_cfg.get("min_progress_pp", defaults["min_progress_pp"])
+        ),
+        "max_iterations": int(
+            term_cfg.get("max_iterations", defaults["max_iterations"])
         ),
     }
 
@@ -463,4 +485,171 @@ def run_guard(
         f"eval-jss guard: no regression vs iteration {prev_iter} — "
         f"recording is safe."
     )
+    return 0
+
+
+def run_plan(
+    *,
+    eval_db: Path,
+    history_db: Path,
+    manifest_path: Path,
+    corpus_dir: Path,
+    policy_path: Path,
+) -> int:
+    """Compute the next loop action and emit it as JSON to stdout.
+
+    The decision tree:
+
+    1. ``stop`` — every rule passes the policy threshold AND total
+       iteration count is under ``max_iterations``. (Vacuous PASSes
+       with TP < min_tp do NOT count as passing; those rules are
+       deferred via the ``insufficient_coverage`` action below — but
+       since the loop has no way to add coverage other than corpus
+       growth, this resolves to ``grow_corpus``.)
+    2. ``rebenchmark`` — the iteration count is a multiple of
+       ``rebenchmark_every_n_iterations`` and the iteration count > 0.
+    3. ``grow_corpus`` — every FAIL rule has hit ``max_attempts_per_rule``,
+       OR the loop has gone ``max_consecutive_no_progress`` iterations
+       without an overall-precision gain ≥ ``min_progress_pp``.
+    4. ``fix_rule`` — pick the FAIL rule with the highest FP count
+       that hasn't hit ``max_attempts_per_rule`` yet.
+    5. ``stop`` — total iteration count ≥ ``max_iterations``.
+
+    Returns 0 always (decision-only, no side effects).
+    """
+    import json
+    policy = _load_policy(policy_path)
+
+    # 1. Current state
+    full = report_mod.compute_precision(eval_db)
+    failing: list[tuple[str, int, int, float]] = []
+    insufficient: list[tuple[str, int, int]] = []
+    for r in full.rows:
+        if r.source != "overall":
+            continue
+        prec = r.precision if r.precision is not None else 0.0
+        if r.tp < policy["min_tp_for_pass"] and prec >= policy["precision_threshold"]:
+            insufficient.append((r.rule_id, r.tp, r.fp))
+            continue
+        if r.status != "PASS":
+            failing.append((r.rule_id, r.tp, r.fp, prec))
+    failing.sort(key=lambda t: -t[2])  # highest FP count first
+
+    # 2. Iteration history
+    iter_id, _ = history.latest_stats(history_db)
+    iter_count = iter_id or 0
+    attempts = history.attempt_count_per_rule(history_db)
+    recent = history.recent_overall_precision(
+        history_db, n=policy["max_consecutive_no_progress"] + 1,
+    )
+    no_progress_streak = 0
+    if len(recent) >= 2:
+        floor = policy["min_progress_pp"] / 100.0
+        for prev, curr in zip(recent[:-1], recent[1:], strict=False):
+            if (curr[2] - prev[2]) < floor:
+                no_progress_streak += 1
+            else:
+                no_progress_streak = 0
+
+    # 3. Decide
+    if iter_count >= policy["max_iterations"]:
+        decision = {
+            "action": "stop",
+            "reason": (
+                f"Reached max_iterations={policy['max_iterations']}; "
+                "loop terminates."
+            ),
+        }
+    elif not failing:
+        if insufficient:
+            decision = {
+                "action": "grow_corpus",
+                "reason": (
+                    f"All FAIL rules resolved; {len(insufficient)} rules"
+                    f" still below min_tp_for_pass={policy['min_tp_for_pass']}"
+                    " — corpus growth is the only way to surface more"
+                    " TPs for them."
+                ),
+                "insufficient_rules": [r[0] for r in insufficient],
+            }
+        else:
+            decision = {
+                "action": "stop",
+                "reason": "All rules pass the precision threshold and have ≥min_tp TPs.",
+            }
+    elif no_progress_streak >= policy["max_consecutive_no_progress"]:
+        decision = {
+            "action": "grow_corpus",
+            "reason": (
+                f"No overall-precision progress (≥{policy['min_progress_pp']}pp)"
+                f" for {no_progress_streak} consecutive iterations; "
+                "rule-fixing is exhausted on the current corpus."
+            ),
+        }
+    else:
+        cap = policy["max_attempts_per_rule"]
+        eligible = [
+            (rule, tp, fp, prec)
+            for (rule, tp, fp, prec) in failing
+            if attempts.get(rule, 0) < cap
+        ]
+        if not eligible:
+            decision = {
+                "action": "grow_corpus",
+                "reason": (
+                    f"Every FAIL rule has hit max_attempts_per_rule={cap}; "
+                    "need new corpus patterns to find tractable fixes."
+                ),
+            }
+        else:
+            target = eligible[0]
+            attempts_used = attempts.get(target[0], 0)
+            decision = {
+                "action": "fix_rule",
+                "target": target[0],
+                "tp": target[1],
+                "fp": target[2],
+                "precision": round(target[3], 4),
+                "attempts_used": attempts_used,
+                "attempts_remaining": cap - attempts_used,
+                "reason": (
+                    f"{target[0]} is the highest-FP failing rule "
+                    f"(precision {target[3]:.1%}, {target[2]} FPs) "
+                    f"with attempts left ({attempts_used}/{cap})."
+                ),
+            }
+
+    # 4. Optional rebenchmark override (every N iterations).
+    rebench_every = 0
+    try:
+        if policy_path.exists():
+            try:
+                import tomllib
+            except ImportError:
+                import tomli as tomllib  # type: ignore[no-redef]
+            raw = tomllib.loads(policy_path.read_text(encoding="utf-8"))
+            rebench_every = int(
+                raw.get("labeler_health", {}).get(
+                    "rebenchmark_every_n_iterations", 0
+                )
+            )
+    except Exception:
+        rebench_every = 0
+    if (
+        decision["action"] != "stop"
+        and rebench_every > 0
+        and iter_count > 0
+        and iter_count % rebench_every == 0
+    ):
+        # Suggest as a side-channel; the orchestrator can interleave it
+        # with the primary action without losing it. We don't override
+        # the primary action because corpus-grow needs to come before
+        # rebenchmark (rebench depends on labelled rows, which grow
+        # produces).
+        decision["rebenchmark_due"] = True
+
+    decision["iteration"] = iter_count
+    decision["max_iterations"] = policy["max_iterations"]
+    decision["no_progress_streak"] = no_progress_streak
+    print(json.dumps(decision, indent=2))
     return 0

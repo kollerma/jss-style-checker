@@ -57,7 +57,10 @@ max_consecutive_no_progress = 3
 min_progress_pp = 0.5
 
 # Hard cap regardless of progress — catches infinite-loop edge cases.
-max_iterations = 50
+# Calibrated for the JSS lint project: ~70 iterations of historical
+# rule-fix work + headroom for ~130 future iterations covering
+# corpus growth and the 53-rule catalogue. Bump as the project ages.
+max_iterations = 200
 
 # ---------------------------------------------------------------------------
 # Corpus growth

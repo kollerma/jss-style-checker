@@ -184,3 +184,64 @@ def latest_stats(
         return iter_id, out
     finally:
         cx.close()
+
+
+def attempt_count_per_rule(db_path: Path) -> dict[str, int]:
+    """Return ``{rule_id: count}`` for how many ``post-JSS-<RULE>-...``
+    iterations have been recorded. Used by ``iterate plan`` to honour
+    ``max_attempts_per_rule`` from the iteration policy.
+    """
+    if not db_path.exists():
+        return {}
+    import re
+    pat = re.compile(r"^post-(JSS-[A-Z]+-\d+)\b")
+    out: dict[str, int] = {}
+    cx = connect(db_path)
+    try:
+        for r in cx.execute("SELECT label FROM iterations").fetchall():
+            label = r["label"] or ""
+            m = pat.match(label)
+            if m is None:
+                continue
+            rule_id = m.group(1)
+            out[rule_id] = out.get(rule_id, 0) + 1
+    finally:
+        cx.close()
+    return out
+
+
+def recent_overall_precision(
+    db_path: Path, n: int,
+) -> list[tuple[int, str, float]]:
+    """Return ``[(iteration_id, label, overall_precision_full)]`` for
+    the most recent ``n`` iterations, oldest-first within the window.
+
+    Used by ``iterate plan`` to detect "no-progress streaks" — N
+    consecutive iterations whose overall precision changed by less
+    than the policy's ``min_progress_pp`` floor.
+    """
+    if not db_path.exists():
+        return []
+    cx = connect(db_path)
+    try:
+        rows = cx.execute(
+            "SELECT id, label FROM iterations ORDER BY id DESC LIMIT ?",
+            (n,),
+        ).fetchall()
+        out: list[tuple[int, str, float]] = []
+        for r in rows:
+            it_id = int(r["id"])
+            stats = cx.execute(
+                "SELECT SUM(tp) AS tp, SUM(fp) AS fp"
+                " FROM iteration_rule_stats"
+                " WHERE iteration_id = ? AND scope = 'full'",
+                (it_id,),
+            ).fetchone()
+            tp = int(stats["tp"] or 0)
+            fp = int(stats["fp"] or 0)
+            prec = (tp / (tp + fp)) if (tp + fp) > 0 else 0.0
+            out.append((it_id, r["label"] or "", prec))
+        out.reverse()
+        return out
+    finally:
+        cx.close()
