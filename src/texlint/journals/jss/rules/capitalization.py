@@ -173,14 +173,21 @@ _LIST_NUMBERING = (
     r"(?:[(\[]\d+[)\]]|\d+[).]"
     r"|[(\[][a-z][)\]]|[(\[][ivx]{1,4}[)\]])"
 )
+# The content-word capture is a single non-space character: callers only
+# read ``m.start(1)`` (the start offset), and matching the whole word
+# greedily would swallow trailing ``.:?!`` characters that should remain
+# available to anchor the *next* sub-sentence boundary. Example:
+# ``(solid: mean, dashed: quartiles).\n    Plot corresponds to ...`` —
+# with greedy ``(\S+)`` the inner colon's match consumes ``quartiles).``
+# and the final ``.`` is no longer available to anchor ``Plot``.
 _SENTENCE_BOUNDARY_RE = re.compile(
-    r"[.:?!]\s+(?:" + _LIST_NUMBERING + r"\s+)?(\S+)"
+    r"[.:?!]\s+(?:" + _LIST_NUMBERING + r"\s+)?(\S)"
 )
 # Caption-leading list-numbering: ``(a) Sketch of ...`` / ``(i) Foo ...``
 # at the very start of a caption should treat the post-label word as a
 # sentence-opening word (no preceding punctuator required).
 _CAPTION_LEADING_LABEL_RE = re.compile(
-    r"^\s*" + _LIST_NUMBERING + r"\s+(\S+)"
+    r"^\s*" + _LIST_NUMBERING + r"\s+(\S)"
 )
 
 

@@ -250,6 +250,25 @@ class TestCap003:
         )
         assert run_rule(jss_cap_003, src) == []
 
+    def test_boundary_after_inner_punct_still_fires(self, run_rule):
+        # Reviewer-confirmed FP from cran_robustlmm and cran_poweRlaw:
+        # a caption containing ``... (solid: mean, dashed: quartiles).
+        # Plot corresponds to ...`` should treat ``Plot`` as a
+        # sentence-start. Earlier the greedy ``(\S+)`` capture in the
+        # boundary regex consumed the trailing ``).`` and the final
+        # period was no longer available to anchor the next clause.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\begin{figure}" "\n"
+            r"\caption{Mean values across designs. The yellow line shows"
+            r" the classical fit (solid: mean, dashed: quartiles). Plot"
+            r" corresponds to the figure.}" "\n"
+            r"\end{figure}\end{document}"
+        )
+        # ``Mean`` is the first word; ``Plot`` is post-period sentence-
+        # start; no other capitalised offenders remain → silent.
+        assert run_rule(jss_cap_003, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-CAP-004 — Keywords sentence case
