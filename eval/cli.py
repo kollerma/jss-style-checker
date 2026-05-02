@@ -144,6 +144,17 @@ def human_review_cmd(
     default=Path("eval/review-skip-list.toml"),
     show_default=True,
 )
+@click.option(
+    "--routing",
+    "routing_path",
+    type=click.Path(path_type=Path),
+    default=None,
+    help=(
+        "Per-rule model routing TOML (eval/review-routing.toml). "
+        "When set, supersedes --model/--base-url and routes each rule "
+        "to its best-performing model per the gold benchmark."
+    ),
+)
 @click.pass_context
 def review_cmd(
     ctx: click.Context,
@@ -152,6 +163,7 @@ def review_cmd(
     model: str,
     base_url: str,
     skip_list: Path,
+    routing_path: Path | None,
 ) -> None:
     """Delegate labelling of unlabelled violations to a local LLM."""
     from eval import review as review_mod
@@ -163,6 +175,7 @@ def review_cmd(
         model=model,
         base_url=base_url,
         skip_list_path=Path(skip_list),
+        routing_path=routing_path,
     )
     ctx.exit(code)
 

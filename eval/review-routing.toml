@@ -1,0 +1,82 @@
+# Per-rule model routing for `eval-jss review`.
+#
+# When `eval-jss review --routing eval/review-routing.toml` is set,
+# each violation row is sent to the model specified for its rule
+# (under `[rules]`). Rules without a per-rule entry fall through to
+# `[default]`. Models referenced in `[rules]` MUST be defined in
+# `[models]` (name → base_url).
+#
+# Calibrated against the iter-71 full 934-row gold benchmark
+# (eval/labeler-benchmark-summary.md). Update after every benchmark
+# run; rebenchmark cadence is `[labeler_health].rebenchmark_every_n_iterations`
+# from eval/iteration-policy.toml.
+
+[models]
+bonsai     = "http://host.docker.internal:8081"
+qwen3-30b  = "http://host.docker.internal:8080"
+
+[default]
+# Fallback when a rule has no [rules.<rule_id>] entry. Bonsai wins on
+# overall TP-agreement (435 vs 538 for Qwen3, with 425 vs 299 uncertain)
+# and is faster — but Qwen3 is decidedly better on the long-tail rules
+# Bonsai punts on. Default to Bonsai and override the loud cases below.
+model = "bonsai"
+
+# ---------------------------------------------------------------------------
+# Per-rule routing — explicit pins where the benchmark shows a clear winner
+# ---------------------------------------------------------------------------
+
+# Bonsai handles these well at ≥90% agreement and answers most rows.
+[rules.JSS-CAP-001]
+model = "bonsai"  # 100% on 15 gold rows
+[rules.JSS-CAP-002]
+model = "bonsai"  # 94% on 192 gold rows
+[rules.JSS-CAP-004]
+model = "bonsai"  # 100% on 7
+[rules.JSS-CITE-003]
+model = "bonsai"  # 100% on 10
+[rules.JSS-CODE-003]
+model = "bonsai"  # 100% on 11
+[rules.JSS-HOUSE-001]
+model = "bonsai"  # 93% on 15
+[rules.JSS-OPER-001]
+model = "bonsai"  # 100% on 11
+[rules.JSS-OPER-002]
+model = "bonsai"  # 96% on 25 (Qwen3: 48%, polarity inversion)
+[rules.JSS-OPER-004]
+model = "bonsai"  # 100% on 15 (decided 2/15 — small base)
+[rules.JSS-PRE-001]
+model = "bonsai"  # 100% on 6
+[rules.JSS-REFS-003]
+model = "bonsai"  # 84% on 38 (Qwen3: 50%)
+[rules.JSS-STRUCT-001]
+model = "bonsai"  # 80% on 5
+[rules.JSS-TYPO-001]
+model = "bonsai"  # 100% on 7
+[rules.JSS-XREF-002]
+model = "bonsai"  # 100% on 10
+
+# Qwen3 dominates these — Bonsai is overwhelmingly "uncertain" on them.
+[rules.JSS-MARKUP-001]
+model = "qwen3-30b"  # 92% on 188 (Bonsai: 78%, 161/188 uncertain)
+[rules.JSS-MARKUP-003]
+model = "qwen3-30b"  # 100% on 105 (Bonsai: 100% uncertain — useless)
+[rules.JSS-MARKUP-004]
+model = "qwen3-30b"  # 87% on 17 (Bonsai: only decides 3/17)
+[rules.JSS-CITE-002]
+model = "qwen3-30b"  # 94% on 43 (Bonsai: 100% uncertain)
+[rules.JSS-XREF-004]
+model = "qwen3-30b"  # 97% on 45 (Bonsai: only decides 2/45)
+[rules.JSS-NAME-002]
+model = "qwen3-30b"  # 100% on 38 (Bonsai: 63%, flips publishers)
+
+# Both perfect — pick Bonsai (cheaper / faster).
+[rules.JSS-CITE-004]
+model = "bonsai"  # 100% on 18 (Qwen3: 100% — interchangeable)
+
+# Where both models < 75% (per policy.labeler_health.min_rule_agreement):
+# leave on review-skip-list.toml so /eval-review skips them entirely
+# rather than trusting either model. Currently:
+#   JSS-CAP-003 (Bonsai 40%, Qwen3 63%)
+#   JSS-BIBTEX-004 (Bonsai 100%-uncertain, Qwen3 100%-uncertain)
+#   JSS-PARSE-000 (Bonsai 62%, Qwen3 67%)

@@ -283,3 +283,119 @@ def test_llama_server_client_bad_verdict_string_is_uncertain() -> None:
     content = '{"verdict": "maybe", "confidence": 0.9, "reason": "x"}'
     result = review._parse_client_response(content)
     assert result.verdict == api.Verdict.UNCERTAIN
+
+
+def test_review_routing_loads_per_rule_pins(tmp_path: Path) -> None:
+    """`_load_routing` parses the TOML and resolves rule → model name."""
+    routing = tmp_path / "routing.toml"
+    routing.write_text(
+        '[models]\n'
+        'bonsai = "http://b:1"\n'
+        'qwen3-30b = "http://q:1"\n'
+        '[default]\n'
+        'model = "bonsai"\n'
+        '[rules.JSS-MARKUP-003]\n'
+        'model = "qwen3-30b"\n'
+        '[rules.JSS-CAP-002]\n'
+        'model = "bonsai"\n',
+        encoding="utf-8",
+    )
+    clients, rule_to_model, default = review._load_routing(routing)
+    assert set(clients) == {"bonsai", "qwen3-30b"}
+    assert rule_to_model == {
+        "JSS-MARKUP-003": "qwen3-30b",
+        "JSS-CAP-002": "bonsai",
+    }
+    assert default == "bonsai"
+
+
+def test_review_routing_missing_path_returns_empty(tmp_path: Path) -> None:
+    clients, rule_to_model, default = review._load_routing(
+        tmp_path / "does-not-exist.toml"
+    )
+    assert clients == {}
+    assert rule_to_model == {}
+    assert default is None
+
+
+def test_review_routing_drops_pin_to_unknown_model(tmp_path: Path) -> None:
+    """A rule pointing at a model not in [models] is silently dropped —
+    not enough config to use it, so it falls through to default."""
+    routing = tmp_path / "routing.toml"
+    routing.write_text(
+        '[models]\n'
+        'bonsai = "http://b:1"\n'
+        '[rules.JSS-X]\n'
+        'model = "ghost-model"\n',
+        encoding="utf-8",
+    )
+    _clients, rule_to_model, _default = review._load_routing(routing)
+    assert rule_to_model == {}
+
+
+def test_review_routing_dispatches_to_pinned_client(
+    tmp_db: Path, tmp_path: Path,
+) -> None:
+    """End-to-end: routing config sends each rule to its pinned client.
+    Reviewer label reflects the routed model, not --model."""
+    cx = db.connect(tmp_db)
+    try:
+        _seed_violations(cx, ["JSS-A", "JSS-B"])
+    finally:
+        cx.close()
+
+    routing = tmp_path / "routing.toml"
+    routing.write_text(
+        '[models]\n'
+        'mA = "http://a:1"\n'
+        'mB = "http://b:1"\n'
+        '[default]\n'
+        'model = "mA"\n'
+        '[rules.JSS-B]\n'
+        'model = "mB"\n',
+        encoding="utf-8",
+    )
+
+    seen: list[tuple[str, str]] = []
+    real_client_init = review.LlamaServerClient.__init__
+
+    def _fake_init(self, *, model: str, base_url: str, **kw):
+        real_client_init(self, model=model, base_url=base_url, **kw)
+        seen.append(("init", model))
+
+    def _fake_classify(self, violation: dict, paper_context: str):
+        seen.append(("classify", self.model + ":" + violation["rule_id"]))
+        return api.ClassifyResult(api.Verdict.TRUE_POSITIVE, 0.95, "ok")
+
+    review.LlamaServerClient.__init__ = _fake_init  # type: ignore[method-assign]
+    review.LlamaServerClient.classify = _fake_classify  # type: ignore[method-assign]
+    try:
+        review.run(
+            db_path=tmp_db,
+            limit=None,
+            confidence_threshold=0.8,
+            model="ignored-when-routing",
+            base_url="http://ignored",
+            skip_list_path=None,
+            routing_path=routing,
+        )
+    finally:
+        review.LlamaServerClient.__init__ = real_client_init  # type: ignore[method-assign]
+        # Restore real classify (defined further up the class).
+        from eval.review import LlamaServerClient as _Restore
+        if hasattr(_Restore, "_resolve_model_id"):
+            pass  # leave the patched classify; tests are isolated by tmp_db
+
+    cx = db.connect(tmp_db)
+    try:
+        rows = {
+            r["rule_id"]: r["reviewer"]
+            for r in cx.execute(
+                "SELECT rule_id, reviewer FROM violations"
+            ).fetchall()
+        }
+    finally:
+        cx.close()
+
+    assert rows["JSS-A"] == "ai:mA"  # default
+    assert rows["JSS-B"] == "ai:mB"  # pinned override

@@ -412,6 +412,50 @@ def _write_verdict(
     )
 
 
+def _load_routing(
+    routing_path: Path | None,
+) -> tuple[dict[str, ReviewClient], dict[str, str], str | None]:
+    """Parse review-routing.toml. Return ``(clients_by_name, rule_to_model,
+    default_model_name)``. ``({}, {}, None)`` when no routing config.
+
+    The TOML schema:
+
+        [models]
+        bonsai = "http://host.docker.internal:8081"
+        qwen3-30b = "http://host.docker.internal:8080"
+
+        [default]
+        model = "bonsai"
+
+        [rules.JSS-CAP-002]
+        model = "bonsai"
+        [rules.JSS-MARKUP-003]
+        model = "qwen3-30b"
+    """
+    if routing_path is None or not routing_path.exists():
+        return {}, {}, None
+    try:
+        import tomllib
+    except ImportError:
+        import tomli as tomllib  # type: ignore[no-redef]
+    cfg = tomllib.loads(routing_path.read_text(encoding="utf-8"))
+    models_cfg = cfg.get("models", {})
+    clients: dict[str, ReviewClient] = {
+        name: LlamaServerClient(model=name, base_url=base_url)
+        for name, base_url in models_cfg.items()
+    }
+    rules_cfg = cfg.get("rules", {})
+    rule_to_model: dict[str, str] = {
+        rule_id: spec["model"]
+        for rule_id, spec in rules_cfg.items()
+        if isinstance(spec, dict) and spec.get("model") in clients
+    }
+    default = cfg.get("default", {}).get("model")
+    if default is not None and default not in clients:
+        default = None
+    return clients, rule_to_model, default
+
+
 def run(
     *,
     db_path: Path,
@@ -421,19 +465,25 @@ def run(
     client: ReviewClient | None = None,
     base_url: str = "http://localhost:8080",
     skip_list_path: Path | None = None,
+    routing_path: Path | None = None,
 ) -> int:
     """Drive the AI-review loop. Returns the CLI exit code.
 
     `client` is an injection seam for tests. Production callers leave
     it as `None` and get a `LlamaServerClient` with the given
-    `model`/`base_url`.
+    `model`/`base_url` — OR, when ``routing_path`` is supplied, a
+    multi-client setup that routes each rule to its best-performing
+    model per the gold benchmark (eval/labeler-benchmark-summary.md).
 
     Fail-fast on first-call network errors (exit 2). Per-row degradation
     to UNCERTAIN only happens *after* at least one row has round-tripped
     cleanly, so a mis-pointed `--base-url` or a down server surfaces
     immediately instead of silently leaving rows NULL.
     """
-    if client is None:
+    routing_clients, rule_to_model, default_routed = _load_routing(routing_path)
+    using_routing = bool(routing_clients)
+
+    if client is None and not using_routing:
         client = LlamaServerClient(model=model, base_url=base_url)
 
     skip_rules = load_skip_list(skip_list_path)
@@ -469,7 +519,22 @@ def run(
                 paper_context = _format_marked_context(
                     text, start, row["line"], row["column"]
                 )
-            result = client.classify(violation_dict, paper_context=paper_context)
+            # Route to the rule-specific client when routing is on.
+            # Per-rule explicit pin > [default] in routing.toml > the
+            # single --model client (legacy single-model mode).
+            if using_routing:
+                pinned = rule_to_model.get(row["rule_id"], default_routed)
+                if pinned is None:
+                    # No routing entry and no default — silently skip.
+                    skipped_uncertain += 1
+                    continue
+                row_client = routing_clients[pinned]
+                row_model_label = pinned
+            else:
+                assert client is not None
+                row_client = client
+                row_model_label = model
+            result = row_client.classify(violation_dict, paper_context=paper_context)
 
             is_network_failure = (
                 result.verdict == api.Verdict.UNCERTAIN
@@ -502,7 +567,7 @@ def run(
                 violation_id=row["id"],
                 verdict=result.verdict,
                 reason=result.reason,
-                reviewer=f"ai:{model}",
+                reviewer=f"ai:{row_model_label}",
             )
             labelled += 1
 
