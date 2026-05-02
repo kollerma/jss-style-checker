@@ -1,0 +1,6 @@
+\documentclass[article]{jss}
+\begin{document}
+\begin{CodeInput}
+R> summary(glm(Days ~ (Eth + Sex + Age + Lrn)^2, data = quine, family = poisson, control = glm.control(maxit = 100)))
+\end{CodeInput}
+\end{document}
