@@ -594,12 +594,31 @@ def run_plan(
             if attempts.get(rule, 0) < cap
         ]
         if not eligible:
+            # All FAIL rules have exhausted their per-rule attempts.
+            # Two interpretations:
+            #   - corpus has fresh patterns to expose → grow_corpus
+            #     might surface a new tractable cluster
+            #   - corpus is exhausted (suggester returns ≤1) → loop
+            #     has converged on a state that needs human design
+            #     review for the capped rules.
+            # The planner can't cheaply check the suggester, so it
+            # emits both signals. The cron driver treats the deferred
+            # list as "loop converged" when corpus growth no-ops.
+            deferred = [
+                {"rule": rule, "tp": tp, "fp": fp,
+                 "precision": round(prec, 4),
+                 "attempts_used": attempts.get(rule, 0)}
+                for (rule, tp, fp, prec) in failing
+            ]
             decision = {
                 "action": "grow_corpus",
                 "reason": (
                     f"Every FAIL rule has hit max_attempts_per_rule={cap}; "
-                    "need new corpus patterns to find tractable fixes."
+                    "need new corpus patterns to find tractable fixes. "
+                    "If the corpus is exhausted, the loop has converged "
+                    "and the deferred rules need human design review."
                 ),
+                "deferred_rules": deferred,
             }
         else:
             target = eligible[0]
