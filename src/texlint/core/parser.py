@@ -249,6 +249,12 @@ def parse_bib_file(path: Path) -> ParsedBibFile:
     library = bibtexparser.parse_string(source)
     violations: list[Violation] = []
     for failed in getattr(library, "failed_blocks", ()):
+        # DuplicateBlockKeyBlock is a recoverable warning, not a parse
+        # failure — bibtexparser kept the first occurrence and routed
+        # the rest here. JSS-BIBTEX-002 reports duplicate citation
+        # keys directly; we must not double-flag them as parse errors.
+        if type(failed).__name__ == "DuplicateBlockKeyBlock":
+            continue
         start = getattr(failed, "start_line", None)
         line = (start + 1) if isinstance(start, int) else 1
         message = getattr(failed, "error", None) or "BibTeX parse error"
