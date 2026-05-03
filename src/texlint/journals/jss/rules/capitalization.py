@@ -61,10 +61,12 @@ _EXTRA_PROPER_NOUNS: frozenset[str] = frozenset(
         "Scottish", "Spanish", "Swedish", "Swiss", "Turkish", "Welsh",
         # Statistical / mathematical eponyms
         "Bayes", "Bayesian", "Bernoulli", "Boole", "Boolean",
-        "Cauchy", "Cox", "Dirichlet", "Euclidean", "Fisher",
-        "Gauss", "Gaussian", "Lagrange", "Laplace", "Markov",
-        "Maxwell", "Monte", "Carlo", "Newton", "Pareto", "Pearson",
-        "Poisson", "Riemann", "Shannon", "Wald", "Weibull", "Wishart",
+        "Cauchy", "Cholesky", "Clayton", "Cox", "Dirichlet",
+        "Euclidean", "Fisher", "Frank", "Gauss", "Gaussian",
+        "Gumbel", "Lagrange", "Laplace", "Markov", "Maxwell",
+        "Monte", "Carlo", "Newton", "Pareto", "Pearson",
+        "Poisson", "Riemann", "Shannon", "Wald", "Weibull",
+        "Wishart",
         # Place / vendor / product names commonly mentioned
         "Apple", "Google", "Linux", "Microsoft", "Oracle", "Unix",
         "Windows",
@@ -232,7 +234,9 @@ def _words_with_boundary(text: str) -> list[tuple[str, bool, bool]]:
 def _looks_like_abbrev(token: str) -> bool:
     """True for abbreviations that are conventionally capitalised even
     in sentence style — all-caps 2–6 letter tokens (PDF, NIH, NACP),
-    plurals of those (SNPs, EOFs, IDs), or mixed-case scientific
+    plurals of those (SNPs, EOFs, IDs), all-caps with a single trailing
+    lowercase variant suffix (LLt / LDLt / RSEn / RSEa — common in
+    statistics / linear-algebra prose), or mixed-case scientific
     shorthands like mRNA / iPad.
     """
     letters = re.sub(r"[^A-Za-z]", "", token)
@@ -240,10 +244,13 @@ def _looks_like_abbrev(token: str) -> bool:
         return False
     if 2 <= len(letters) <= 6 and letters.isupper():
         return True
-    # Plural of an all-caps abbreviation: 2-6 caps followed by a single 's'.
+    # All-caps abbreviation followed by a single trailing lowercase
+    # letter — covers plurals (SNPs, EOFs, IDs) AND single-letter
+    # variant suffixes (LLt, LDLt for matrix decomposition shorthand;
+    # RSEn / RSEa for statistical estimator labels).
     if (
         3 <= len(letters) <= 7
-        and letters[-1] == "s"
+        and letters[-1].islower()
         and len(letters) - 1 >= 2
         and letters[:-1].isupper()
     ):
