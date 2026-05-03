@@ -469,6 +469,43 @@ def _strip_textual_citations(text: str) -> str:
     return _TEXTUAL_CITATION.sub(" ", text)
 
 
+# Caption-label prefix: a leading "Capitalised Phrase: " that names
+# the dataset / cohort / approach the figure depicts, followed by a
+# sentence-style description. JSS permits this label form — the
+# descriptive part after the colon is what should be evaluated.
+# The prefix tokens may be hyphenated ("One-dimensional"), digit-
+# bearing ("Group 2"), or all-caps acronyms ("GBSG2"); a stopword
+# (lowercase "of", "and", etc.) inside the prefix breaks the pattern
+# so prose like "Effect of treatment: ..." doesn't match.
+_LABEL_PREFIX = re.compile(
+    r"^\s*("
+    r"[A-Z][A-Za-z0-9'\-]*"
+    r"(?:\s+[A-Z0-9][A-Za-z0-9'\-]*){0,6}"
+    r")\s*:\s+"
+)
+
+
+def _strip_label_prefix(text: str) -> str:
+    """Strip a leading "Capitalised Phrase: " label from a caption.
+
+    Captions often open with a dataset / cohort / approach name
+    followed by a colon and the actual sentence-style description
+    ("Boston Housing: scatterplot of...", "German Breast Cancer
+    Study Group 2: conditional survivor curves..."). The label
+    counts as a proper-noun phrase and shouldn't trip the
+    title-style detector. Only the body after the colon is the
+    caption proper.
+    """
+    return _LABEL_PREFIX.sub("", text, count=1)
+
+
+def _preprocess_caption(text: str) -> str:
+    """Caption-text preprocessor: strip leading label prefix, then
+    embedded textual citations. Order matters — the citation
+    pattern can otherwise consume the first word of the body."""
+    return _strip_textual_citations(_strip_label_prefix(text))
+
+
 def check_jss_cap_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -496,7 +533,7 @@ def check_jss_cap_003(
                 "first word; proper names remain capitalised).",
                 collapse_runs=True,
                 proper_nouns=_CAPTION_PROPER_NOUNS,
-                text_preprocessor=_strip_textual_citations,
+                text_preprocessor=_preprocess_caption,
             )
 
 
