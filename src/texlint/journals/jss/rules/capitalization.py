@@ -15,7 +15,7 @@ AI-skip-list so AI labelling bypasses them entirely.
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Any
 
 from pylatexenc.latexwalker import (
@@ -445,6 +445,30 @@ def check_jss_cap_002(
 # ---------------------------------------------------------------------------
 
 
+# Textual citation pattern inside captions: "Author and Coauthor"
+# (optionally preceded by "by " and/or followed by ", YYYY"). Two or
+# more capitalised surnames joined by "and"/"&" are the diagnostic;
+# a single capitalised name doesn't match (those overlap too much
+# with proper nouns referenced as method/eponym names like "Huber").
+_TEXTUAL_CITATION = re.compile(
+    r"\b[A-Z][a-zA-Z]+(?:\s+(?:and|&)\s+[A-Z][a-zA-Z]+)+(?:,\s*\d{4})?\b"
+)
+
+
+def _strip_textual_citations(text: str) -> str:
+    """Remove "Author and Coauthor[, YYYY]" runs from caption text.
+
+    Captions sometimes embed the source ("from Soetaert and Herman,
+    2009" / "by Pollet and Nettle"); the surnames trip the
+    title-style detector even though sentence-style permits them.
+    Stripping the matched span before tokenisation avoids the false
+    positives without lowering recall on captions where the citation
+    is one of several title-style markers (the remaining offenders
+    still fire the rule).
+    """
+    return _TEXTUAL_CITATION.sub(" ", text)
+
+
 def check_jss_cap_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -472,6 +496,7 @@ def check_jss_cap_003(
                 "first word; proper names remain capitalised).",
                 collapse_runs=True,
                 proper_nouns=_CAPTION_PROPER_NOUNS,
+                text_preprocessor=_strip_textual_citations,
             )
 
 
@@ -525,6 +550,7 @@ def _check_sentence_style(
     *,
     collapse_runs: bool = False,
     proper_nouns: frozenset[str] = _PROPER_NOUNS,
+    text_preprocessor: Callable[[str], str] | None = None,
 ) -> Iterator[Violation]:
     """Fire when ≥2 distinct offending capitalisations appear in ``group``.
 
@@ -547,6 +573,8 @@ def _check_sentence_style(
     count ``Mar`` as a stopword anchor.
     """
     text = _group_plain_text(group)
+    if text_preprocessor is not None:
+        text = text_preprocessor(text)
     words = _words_with_boundary(text)
     if not words:
         return
