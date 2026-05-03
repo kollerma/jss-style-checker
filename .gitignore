@@ -172,3 +172,4 @@ examples/cran_*/
 .githooks/*
 !.githooks/pre-commit
 eval/orphans/
+/eval/.iteration-running

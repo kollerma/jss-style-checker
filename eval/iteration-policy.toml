@@ -53,8 +53,12 @@ max_attempts_per_rule = 5
 [termination]
 # Stop the autonomous loop when this many consecutive iterations
 # improve overall corpus precision by less than `min_progress_pp`.
+# Calibration note: with a 7k-row corpus, a single rule fix that
+# clears 10–20 FPs moves overall precision by ~0.1–0.2pp. The
+# threshold is set just below that band so genuine progress doesn't
+# trip the no-progress detector. Raise as the corpus grows further.
 max_consecutive_no_progress = 3
-min_progress_pp = 0.5
+min_progress_pp = 0.1
 
 # Hard cap regardless of progress — catches infinite-loop edge cases.
 # Calibrated for the JSS lint project: ~70 iterations of historical
