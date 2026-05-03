@@ -527,9 +527,10 @@ def _probe_jss_vignette(
                 has_class, self_cites = _vignette_text_signals_jss(text)
                 if has_class and (self_cites or bib_mentions_jss):
                     return m.name
-    except tarfile.TarError as err:
+    except (tarfile.TarError, EOFError, OSError) as err:
         print(
-            f"eval-jss: skip {pkg} {version}: unreadable tarball ({err})",
+            f"eval-jss: skip {pkg} {version}: unreadable tarball "
+            f"({type(err).__name__}: {err})",
             file=sys.stderr,
         )
         return None
