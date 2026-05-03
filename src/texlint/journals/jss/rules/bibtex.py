@@ -115,6 +115,9 @@ def check_jss_bibtex_002(
             key = getattr(block, "key", None)
             if not key:
                 continue
+            inner = getattr(block, "ignore_error_block", None)
+            if inner is not None and type(inner).__name__ != "Entry":
+                continue
             yield _violation(
                 bib=bib,
                 entry=block,
