@@ -86,11 +86,26 @@ _EXTRA_PROPER_NOUNS: frozenset[str] = frozenset(
 # changelog headings of the form "Changes from Version X.Y to X.Z
 # [12-Mar-2023]" where Mar would otherwise become the second-offender
 # anchor — adding months to CAP-002's set silences all 51 TPs.
+#
+# Also CAP-003-only: cross-reference nouns. Inside sentence-style
+# captions, "Figure 3", "Section 7", "Example 2" retain caps because
+# they're cross-refs to numbered/labelled elements — JSS doesn't
+# downcase those. Restricting these to the caption set protects
+# CAP-002, where a section title like "Theorem and Definition"
+# legitimately reads as title-case prose.
 _CAPTION_EXTRA_PROPER_NOUNS: frozenset[str] = frozenset({
     "January", "February", "March", "April", "May", "June", "July",
     "August", "September", "October", "November", "December",
     "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep",
     "Sept", "Oct", "Nov", "Dec",
+    # Cross-reference nouns (singular + plural)
+    "Figure", "Figures", "Table", "Tables", "Section", "Sections",
+    "Example", "Examples", "Scenario", "Scenarios", "Topic", "Topics",
+    "Part", "Parts", "Algorithm", "Algorithms", "Theorem", "Theorems",
+    "Equation", "Equations", "Chapter", "Chapters", "Step", "Steps",
+    "Phase", "Phases", "Stage", "Stages", "Lemma", "Lemmas",
+    "Proposition", "Propositions", "Corollary", "Corollaries",
+    "Definition", "Definitions", "Appendix", "Appendices",
 })
 
 _PROPER_NOUNS: frozenset[str] = LANGUAGES | R_PACKAGES | _EXTRA_PROPER_NOUNS
