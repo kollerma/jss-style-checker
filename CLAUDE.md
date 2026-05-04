@@ -1,16 +1,17 @@
 <!-- SPECKIT START -->
-Current implementation plan: `specs/005-rnw-rmd-support/plan.md`
+Current implementation plan: `specs/017-recall-evaluation/plan.md`
 
 For technologies used, project structure, shell commands, and other
 important information about the active feature, read that plan and the
-sibling artifacts under `specs/005-rnw-rmd-support/` (`research.md`,
+sibling artifacts under `specs/017-recall-evaluation/` (`research.md`,
 `data-model.md`, `contracts/`, `quickstart.md`).
 
 The previous features' artifacts remain available under
-`specs/001-linter-foundation/`, `specs/002-eval-jss-harness/`,
-`specs/003-jss-rule-catalogue/`, and `specs/004-jss-rule-modules/` —
-consult them for the rule API (spec 001), the `eval-jss` precision
-harness (spec 002), the frozen 58-rule catalogue (spec 003), and the
-per-category rule modules + format-filter baseline (spec 004) that
-this spec extends to `.Rnw` / `.Rmd` inputs.
+`specs/001-linter-foundation/` through `specs/016-revision-diff/`.
+
+The 12-feature roadmap from `roadmap/README.md` is now fully
+spec-kit-driven through `/speckit.specify` → `/speckit.clarify` →
+`/speckit.plan`. The next step for each feature is
+`/speckit.tasks` and `/speckit.implement`, in dependency order
+documented in `roadmap/README.md`.
 <!-- SPECKIT END -->
