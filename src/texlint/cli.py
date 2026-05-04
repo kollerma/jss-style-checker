@@ -144,6 +144,33 @@ def _determine_exit_code(report: Any) -> int:
     default=None,
     help="Enable diagnostic output on stderr.",
 )
+@click.option(
+    "--fix",
+    "fix",
+    is_flag=True,
+    default=False,
+    help="Apply auto-fixes (spec 008). Atomic write per file.",
+)
+@click.option(
+    "--dry-run",
+    "dry_run",
+    is_flag=True,
+    default=False,
+    help="With --fix: print proposed fixes as a unified diff; do not write.",
+)
+@click.option(
+    "--apply",
+    "apply_interactive",
+    is_flag=True,
+    default=False,
+    help="With --fix: prompt [y/n/a/q] per fix.",
+)
+@click.option(
+    "--fix-rule",
+    "fix_rules",
+    multiple=True,
+    help="Repeatable; limits --fix to the named rule ids.",
+)
 @click.argument("paths", nargs=-1, type=click.Path(path_type=str))
 def main(
     journal: str | None,
@@ -152,6 +179,10 @@ def main(
     source_root: str | None,
     ignore_rules: str | None,
     verbose: bool | None,
+    fix: bool,
+    dry_run: bool,
+    apply_interactive: bool,
+    fix_rules: tuple[str, ...],
     paths: tuple[str, ...],
 ) -> None:
     """Lint LaTeX/BibTeX manuscripts against journal style guides."""
@@ -193,6 +224,44 @@ def main(
         sys.exit(2)
 
     report = run(cfg, document, journal_module)
+
+    # Spec 008: --fix / --dry-run / --apply / --fix-rule.
+    if dry_run and not fix:
+        _eprint("jss-lint: --dry-run requires --fix")
+        sys.exit(2)
+    if apply_interactive and not fix:
+        _eprint("jss-lint: --apply requires --fix")
+        sys.exit(2)
+    if dry_run and apply_interactive:
+        _eprint("jss-lint: --dry-run and --apply are mutually exclusive")
+        sys.exit(2)
+    if fix:
+        from .core.fixer import apply_fixes
+
+        # Validate --fix-rule values against known rules from the
+        # current report's catalogue.
+        if fix_rules:
+            known_ids = {v.rule_id for v in report.violations}
+            # Also accept any catalogue rule the loaded journal exports.
+            for r in journal_module.rules():
+                known_ids.add(r.id)
+            for rid in fix_rules:
+                if rid not in known_ids:
+                    _eprint(f"jss-lint: unknown --fix-rule {rid!r}")
+                    sys.exit(2)
+            scope: frozenset[str] | None = frozenset(fix_rules)
+        else:
+            scope = None
+        if dry_run:
+            fix_mode = "dry-run"
+        elif apply_interactive:
+            fix_mode = "interactive"
+        else:
+            fix_mode = "write"
+        fix_report = apply_fixes(report, mode=fix_mode, rules=scope)
+        if fix_report.rejected:
+            sys.exit(2)
+
     _dispatch_renderer(cfg.output, report, cfg)
     sys.exit(_determine_exit_code(report))
 
