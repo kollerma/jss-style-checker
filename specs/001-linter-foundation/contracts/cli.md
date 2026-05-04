@@ -16,7 +16,8 @@ At least one `FILES` argument is required when the tool is expected to produce a
 |------|------|---------|-------------|
 | `--journal <id>` | string | `jss` | Journal module to apply. Must resolve via the `texlint.journals` entry-point group. |
 | `--mode <author\|reviewer>` | choice | `author` | Output emphasis. `author` shows per-violation detail; `reviewer` shows the per-category summary table. |
-| `--output <terminal\|json\|html>` | choice | `terminal` | Renderer for the compliance report. |
+| `--output <terminal\|json\|html\|sarif>` | choice | `terminal` | Renderer for the compliance report. (`sarif` added by spec 006.) |
+| `--source-root <DIR>` | path | CWD | Base directory for SARIF `artifactLocation.uri` values. Silently accepted (and ignored) for other output formats. (Spec 006.) |
 | `--ignore-rules <csv>` | string | `""` | Comma-separated rule ids to suppress (e.g. `JSS-BIB-001,JSS-SRC-001`). Parsed once into a `frozenset[str]` inside `config.load()`. |
 | `--verbose` / `-v` | flag | off | Enables diagnostic output on stderr (config merge trace, per-file parse timing, per-rule counts). Does **not** affect the JSON/HTML renderers' output. |
 | `--version` | flag | — | Print `jss-lint <version>` to stdout and exit 0. |
@@ -71,6 +72,7 @@ Implemented via `sys.exit(code)` from `main()` (not `click.Context.exit(...)`), 
 | `--output terminal` rendering | **stdout** |
 | `--output json` document | **stdout** |
 | `--output html` document | **stdout** |
+| `--output sarif` document | **stdout** (spec 006) |
 | `--verbose` diagnostics | **stderr** |
 | Exit-2 error messages | **stderr** |
 | `--help`, `--version` | stdout, exit 0 |
