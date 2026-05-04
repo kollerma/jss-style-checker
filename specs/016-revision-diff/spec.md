@@ -5,6 +5,15 @@
 **Status**: Draft
 **Input**: User description: "Add `jss-lint diff OLD.json NEW.json [--format terminal|markdown|json] [--ignore-line-drift]`. Output groups violations into `fixed` (in OLD, not in NEW), `introduced` (in NEW, not in OLD), and `unchanged`. Identity is `(rule_id, file, line, message_template)` by default; with `--ignore-line-drift`, identity drops `line` so a fix elsewhere in the file doesn't re-flag downstream violations as new. Terminal format uses colour and the same renderer as `jss-lint --mode reviewer`. Exit code is 0 when nothing introduced, 1 when new violations appear. Useful for both editorial revision rounds and CI regression detection on PR diffs."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Canonical identity tuple — should `severity` or `column` participate? → A: Default identity is `(rule_id, file, line, message)`. `severity` does NOT participate (a rule's severity should not change between runs of the same tool version; if it does, the violation has fundamentally changed and re-classifying as `introduced` is correct). `column` does NOT participate either: column drift on the same line is common (an author rewords a sentence) and adds no signal beyond `(file, line)`. With `--ignore-line-drift`, the tuple becomes `(rule_id, file, message)`.
+- Q: When OLD and NEW are produced by different tool versions (rule renamed), do we map via a migration table or report as fixed+introduced? → A: Migration table. A `docs/jss-guide/rule-renames.json` file (initially empty) maps old rule ids to new ids. The diff command applies the map to OLD violations before identity comparison. When a rule is renamed in spec-NN, that spec's PR adds the entry to `rule-renames.json`. This avoids spurious "1 fixed, 1 introduced" on every cross-version diff.
+- Q: Markdown output: GitHub-flavoured or CommonMark? → A: GitHub-flavoured CommonMark. Tables and inline code blocks render correctly on GitHub PR comments — the primary consumer of the markdown format. Pure CommonMark would force the consumer to flatten the summary count line into prose.
+- Q: Is the diff three-way (vs. a baseline, e.g., "compared to clean template") ever in scope? → A: Out of scope for v1. Two-way is the headline use case (revision rounds, PR regression). Three-way introduces a transitivity question (is `unchanged` defined relative to baseline-vs-NEW or OLD-vs-NEW?) that needs its own design discussion. v1 leaves the CLI surface uncluttered for a future `--baseline` flag.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Editor sees what changed across revision rounds (Priority: P1)
