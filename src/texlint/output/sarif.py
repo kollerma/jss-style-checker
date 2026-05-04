@@ -101,21 +101,33 @@ def _rule_descriptor(rule_id: str, meta: dict[str, Any]) -> dict[str, Any]:
     """Project a catalogue entry to a SARIF rule descriptor.
 
     Required catalogue keys: ``category``, ``severity``,
-    ``message_template``. The descriptor's ``properties.tags`` carries
-    the rule's category as a single-element list — the SARIF-blessed
-    surface for tool-internal labels (research §4 of spec 006).
+    ``message_template``. Optional keys: ``guide_section`` and
+    ``guide_url`` (spec 007). The descriptor's ``properties.tags``
+    carries the rule's category as a single-element list — the
+    SARIF-blessed surface for tool-internal labels (spec 006 §4).
     """
     severity = meta["severity"]
     category = meta["category"]
     message = meta["message_template"]
-    return {
+    guide_section = meta.get("guide_section") or ""
+    guide_url = meta.get("guide_url")
+
+    short_text = (
+        f"{message} ({guide_section})"
+        if guide_section and guide_section != "internal"
+        else message
+    )
+    descriptor: dict[str, Any] = {
         "id": rule_id,
         "name": rule_id,
-        "shortDescription": {"text": message},
+        "shortDescription": {"text": short_text},
         "fullDescription": {"text": message},
         "defaultConfiguration": {"level": _SARIF_LEVEL[severity]},
         "properties": {"tags": [category]},
     }
+    if guide_url:
+        descriptor["helpUri"] = guide_url
+    return descriptor
 
 
 def _catalogue_rules() -> list[dict[str, Any]]:
