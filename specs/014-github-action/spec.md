@@ -5,6 +5,15 @@
 **Status**: Draft
 **Input**: User description: "Ship a reusable composite GitHub Action and publish it as `kollerma/jss-style-checker-action@v1`. Inputs: `paths` (default: auto-detected `.tex` / `.rnw` / `.rmd`), `journal` (default `jss`), `fail-on-severity` (default `error`), `comment-mode` (`pr-review` | `pr-comment` | `none`), `upload-sarif` (default `true`), `python-version`. Behaviour: pip-install the latest release (or a pinned `version` input), run `jss-lint --output sarif` on `paths`, upload SARIF via `github/codeql-action/upload-sarif@v3`, and for `comment-mode=pr-review` post a single review with one comment per violation grouped by file. Action exits with `fail-on-severity` honoured. Publish docs as a `README.md` next to `action.yml`."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Do we own a separate `kollerma/jss-style-checker-action` repo (Marketplace canonical) or vendor it inside the main repo? → A: Inside the main repo at `action/action.yml`. The Marketplace accepts both repo layouts; co-locating with the Python package keeps the Action's smoke-test workflow in lock-step with the linter's changes. The Marketplace listing's "uses" string remains `kollerma/jss-style-checker-action@v1` — handled by publishing the Action under that org/name via a release workflow, even though the source lives in the main repo.
+- Q: `fail-on-severity` semantics — `error` blocks merge; what about `warning` — configurable threshold count? → A: No threshold count in v1. `fail-on-severity: warning` causes ANY warning to fail the run; `fail-on-severity: error` causes ANY error to fail. Threshold-by-count is a feature with thin demand and would multiply the input surface; if a real user asks, a follow-up spec adds `fail-on-count: <n>`.
+- Q: Does PR-review-mode dedupe violations across runs (resolves stale comments) or always create fresh? → A: Dedupe. The Action lists prior reviews authored by the workflow's bot user (typically `github-actions[bot]`); for each, it dismisses the review with a `dismissalReason: "outdated"` before posting the new review. This keeps the PR conversation history clean across many force-pushes.
+- Q: Tag/release strategy — a `v1` rolling tag + immutable `v1.0.0` semver, or only semver? → A: Both. Rolling `v<MAJOR>` for "I always want the latest stable v1.x"; immutable `vX.Y.Z` for pinning. The release workflow updates the rolling tag automatically on every semver release that is itself a v1.x.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Drop-in PR linting (Priority: P1)
