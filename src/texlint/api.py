@@ -82,6 +82,13 @@ class Rule:
     authority: str
     check: RuleCheck
     formats: frozenset[str] | None = None
+    # JSS-guide citation surface (spec 007). Both default to empty/None
+    # so existing rules keep working until they are backfilled. The
+    # catalogue contract test enforces population for citable
+    # categories; tool-side rules use the sentinel
+    # ``guide_section = "internal"``, ``guide_url = None``.
+    guide_section: str = ""
+    guide_url: str | None = None
 
 
 @dataclass(frozen=True)
