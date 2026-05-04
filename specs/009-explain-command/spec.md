@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Add a new `explain` subcommand to `jss-lint`: `jss-lint explain RULE-ID [--example] [--format markdown|terminal]`. The subcommand prints the rule's full metadata (id, severity, category, JSS-guide section + URL from spec 007), a one-paragraph plain-language explanation, a \"bad\" example fragment, a \"good\" example fragment, and (when `--example` is passed) the corresponding fixture pair from `tests/fixtures/violations/`. `jss-lint explain` with no argument lists all rules grouped by category. `--format markdown` produces output that pastes cleanly into GitHub issues / PR comments. The explanation text lives in `_catalogue_data.RULES[rule_id][\"explanation\"]` (a new field) so explanations are version-controlled alongside the rule logic."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Is `--format html` in scope, or only `markdown` / `terminal`? → A: Only `terminal` (default) and `markdown`. HTML would duplicate the existing `--output html` renderer and add a third format with no clear consumer. If a future user needs static-site embedding, they pipe the markdown form through pandoc or use `--output html`.
+- Q: When a rule fixture doesn't yet exist, fall back to a synthetic example or surface "no example available"? → A: Surface `(no in-corpus fixture)` as a literal sentinel in the fixture-block position. Synthesising fake fixtures would mislead authors into thinking a real corpus example exists; the sentinel is honest about the gap.
+- Q: Does the listing view (`jss-lint explain` no arg) page output through `less` like `git log`? → A: No. Paging is OFF by default. The output is small (~58 lines for the current catalogue); pagination overhead would dominate. Users who want paging pipe through `less` themselves. This matches the existing read-only `jss-lint` invocation, which also does not page.
+- Q: Do we require explanation text for every rule in CI, or allow rollout gaps with a TODO sentinel? → A: Require for every rule. Consistent with spec 007's "no TODO sentinels" stance. The spec-009 PR author backfills explanations for the existing 58 rules in a single mechanical pass; no rule ships without one.
+- Q: How does `jss-lint <PATHS>` (no subcommand) coexist with the new `jss-lint explain` subcommand — Click default group action, or a `lint` subcommand alias with PATHS attached? → A: Click default group action. The existing positional `PATHS` argument continues to work as the default; `explain` is the only subcommand surface in this spec. `lint` as an explicit subcommand is rejected because every existing CI script and editor integration would have to update its invocation.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Author looks up a rule id (Priority: P1)
