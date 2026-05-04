@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Add SARIF 2.1.0 as a fourth value for `--output` in `jss-lint` (alongside `terminal`, `json`, `html`). The renderer maps each `Violation` to a SARIF `result` and each `Rule` in the active journal to an entry under `runs[0].tool.driver.rules`. Severity translates as `error -> error`, `warning -> warning`, `info -> note`. Each result carries `ruleId`, `message.text`, `level`, and a `locations[0]` with a `physicalLocation.artifactLocation.uri` (relative to CWD or to a new `--source-root` flag) and a `region` with `startLine`, `startColumn`, and (when known) `endLine` / `endColumn`. Parse failures (`JSS-PARSE-000`) emit `notification` objects under `runs[0].invocations[0].toolExecutionNotifications`. Output is deterministic byte-for-byte for identical inputs; a JSON-schema contract test asserts conformance to SARIF 2.1.0. The existing `--output json` shape is unchanged."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: How does internal `category` (e.g., `markup`, `style`, `naming`) map to SARIF `tags` / `taxonomies`? → A: Emit each rule's category as a string in `tool.driver.rules[].properties.tags = [<category>]`. Do NOT define a SARIF `taxonomies` array — `taxonomies` are reserved for cross-tool standards (CWE, OWASP). JSS rule categories are tool-internal and belong under `properties.tags`.
+- Q: When auto-fix lands in spec 008, do SARIF results carry `fixes[]` in this spec? → A: No. This spec emits no `fixes[]`. Spec 008 will extend the renderer to populate `fixes[]` and update the contract test. Consumers must not infer "no fix exists" from absent `fixes[]` in 006-era output.
+- Q: Default for `--source-root` when the flag is omitted? → A: Current working directory (CWD). The specify prompt already states URIs are "relative to CWD or to a new `--source-root` flag", so CWD is the default. Picking the first input file's directory would silently shift URIs in mixed-directory invocations and is rejected.
+- Q: Does `--ignore-rules JSS-PARSE-000` suppress the `notification` entry, or does it always emit? → A: Always emit under `toolExecutionNotifications`. Parse failures describe a tool-execution event (the linter could not analyse the file), not a finding. `--ignore-rules` filters `results`, never tool-execution events; otherwise users could silently mute the linter on broken files.
+- Q: Does the SARIF renderer respect `ignore_rules` filtering upstream, or include suppressed results with `suppressions[]`? → A: Filtering is upstream of the renderer. Suppressed violations do NOT appear in `results` and do NOT appear under `suppressions[]`. This matches the existing `terminal` / `json` / `html` behaviour. Rules that are fully ignored still appear under `tool.driver.rules` (the catalogue is independent of the result list).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Upload lint results to GitHub code scanning (Priority: P1)
@@ -191,8 +201,11 @@ papers/foo`, the SARIF document contains
   (i.e., every entry of `_catalogue_data.RULES` not filtered out by
   the journal) MUST appear under `runs[0].tool.driver.rules` with
   fields `id`, `name`, `shortDescription.text`, `fullDescription.text`,
-  `defaultConfiguration.level`, and `helpUri` (when known). Rules with
-  no hits MUST still appear there.
+  `defaultConfiguration.level`, and `helpUri` (when known). Rules
+  with no hits MUST still appear there. Each rule entry MUST also
+  carry `properties.tags = [<category>]` containing the rule's
+  internal category as a single string. The renderer MUST NOT emit a
+  SARIF `taxonomies` array (reserved for cross-tool standards).
 - **FR-005**: Every emitted `Violation` MUST become exactly one entry
   in `runs[0].results` with `ruleId` matching its rule, `level` from
   the severity mapping (`error→error`, `warning→warning`,
@@ -212,6 +225,10 @@ papers/foo`, the SARIF document contains
   `descriptor.id = "JSS-PARSE-000"`, `level = "error"`, the source
   artifact URI in `locations[0]`, and the parser diagnostic in
   `message.text`. They MUST NOT also appear under `runs[0].results`.
+  `--ignore-rules JSS-PARSE-000` MUST NOT suppress these
+  notifications — parse failures are tool-execution events, not
+  findings, and silencing them would mute the linter on files it
+  could not analyse.
 - **FR-009**: `runs[0].invocations[0]` MUST also carry
   `executionSuccessful: true` whenever the run completed without an
   internal crash (parse failures do not flip this; an uncaught
@@ -234,6 +251,10 @@ papers/foo`, the SARIF document contains
   directory when not provided, and MUST be a string acceptable
   wherever `--output sarif` is meaningful (it is silently ignored for
   other output formats so a single CI invocation can be used).
+- **FR-015**: SARIF results MUST NOT include a `fixes[]` array in
+  this spec. Spec 008 (auto-fix) is the owner of `fixes[]` rendering.
+  Consumers MUST NOT infer "no fix exists" from the absence of
+  `fixes[]` in 006-era output.
 
 ### Key Entities
 
