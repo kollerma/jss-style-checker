@@ -1,0 +1,114 @@
+name: 'JSS Style Checker'
+description: 'Lint LaTeX/BibTeX manuscripts against the JSS style guide.'
+author: 'kollerma'
+
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  paths:
+    description: 'Files or directories to lint (default: auto-detect tracked .tex/.Rnw/.Rmd files).'
+    required: false
+    default: ''
+  journal:
+    description: 'Journal id (default: jss).'
+    required: false
+    default: 'jss'
+  fail-on-severity:
+    description: 'error | warning | info | never (default: error).'
+    required: false
+    default: 'error'
+  comment-mode:
+    description: 'pr-review | pr-comment | none (default: pr-review).'
+    required: false
+    default: 'pr-review'
+  upload-sarif:
+    description: 'Upload SARIF to the Security tab (default: true).'
+    required: false
+    default: 'true'
+  python-version:
+    description: 'Python version (default: 3.12).'
+    required: false
+    default: '3.12'
+  version:
+    description: "jss-lint PyPI version (default: 'latest')."
+    required: false
+    default: 'latest'
+
+outputs:
+  sarif-path:
+    description: 'Path to the generated SARIF file.'
+    value: ${{ steps.lint.outputs.sarif-path }}
+  violation-count:
+    description: 'Total violation count.'
+    value: ${{ steps.lint.outputs.violation-count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install jss-lint
+      shell: bash
+      run: |
+        if [ "${{ inputs.version }}" = "latest" ]; then
+          pip install jss-lint
+        else
+          pip install "jss-lint==${{ inputs.version }}"
+        fi
+
+    - id: paths
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.paths }}" ]; then
+          echo "list=${{ inputs.paths }}" >> "$GITHUB_OUTPUT"
+        else
+          # Auto-detect tracked .tex / .Rnw / .Rmd files (research §6).
+          mapfile -t files < <(git ls-files \
+            | grep -E '\.(tex|Rnw|Rmd)$' \
+            | grep -v -E '^(\.git|node_modules|_build|build|dist|_minted-)/' || true)
+          echo "list=${files[*]}" >> "$GITHUB_OUTPUT"
+        fi
+
+    - id: lint
+      shell: bash
+      run: |
+        set +e
+        jss-lint --output sarif --journal "${{ inputs.journal }}" \
+          ${{ steps.paths.outputs.list }} > jss-lint.sarif
+        rc=$?
+        echo "sarif-path=jss-lint.sarif" >> "$GITHUB_OUTPUT"
+        n=$(jq '.runs[0].results | length' jss-lint.sarif)
+        echo "violation-count=$n" >> "$GITHUB_OUTPUT"
+        # Decide exit per fail-on-severity (severity ranking: error<warning<info<never).
+        case "${{ inputs.fail-on-severity }}" in
+          error)
+            jq -e '.runs[0].results[] | select(.level == "error")' jss-lint.sarif > /dev/null && exit 1 ;;
+          warning)
+            jq -e '.runs[0].results[] | select(.level == "error" or .level == "warning")' jss-lint.sarif > /dev/null && exit 1 ;;
+          info)
+            jq -e '.runs[0].results[] | select(.level)' jss-lint.sarif > /dev/null && exit 1 ;;
+          never) ;;
+          *) echo "unknown fail-on-severity: ${{ inputs.fail-on-severity }}"; exit 2 ;;
+        esac
+        # Pass through the linter's own exit (e.g. parse-error exit 2).
+        if [ "$rc" = "2" ]; then exit 2; fi
+        exit 0
+
+    - name: Upload SARIF
+      if: ${{ inputs.upload-sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.lint.outputs.sarif-path }}
+
+    - name: Post PR review
+      if: ${{ inputs.comment-mode == 'pr-review' && github.event_name == 'pull_request' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { postReview } = require('${{ github.action_path }}/scripts/post-review.js');
+          await postReview({ github, context, sarifPath: '${{ steps.lint.outputs.sarif-path }}' });
