@@ -97,6 +97,12 @@ def render(doc: Mapping[str, Any]) -> str:
         out.append(f"        \"authority_ref\": {authority_ref},\n")
         out.append(f"        \"inspects\": {inspects_literal},\n")
         out.append(f"        \"auto_fixable\": {auto_fixable},\n")
+        # spec 007: optional citation surface; emit only when present
+        # in the YAML so existing rules without a backfill stay clean.
+        if rule.get("guide_section"):
+            out.append(f"        \"guide_section\": {_py_str(rule['guide_section'])},\n")
+        if rule.get("guide_url"):
+            out.append(f"        \"guide_url\": {_py_str(rule['guide_url'])},\n")
         out.append("    }),\n")
     out.append("})\n\n")
 
