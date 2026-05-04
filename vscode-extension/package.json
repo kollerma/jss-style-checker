@@ -1,0 +1,87 @@
+{
+  "name": "jss-style-checker",
+  "displayName": "JSS Style Checker",
+  "description": "Lint LaTeX/BibTeX manuscripts against the JSS style guide.",
+  "version": "0.1.0",
+  "publisher": "kollerma",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:latex",
+    "onLanguage:tex",
+    "onLanguage:rnoweb",
+    "onLanguage:rmd",
+    "onCommand:jss-lint.runInit",
+    "onCommand:jss-lint.applyAllFixes"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "JSS Style Checker",
+      "properties": {
+        "jssStyleChecker.python.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Python interpreter that has jss-lint[lsp] installed (default: discover via the VS Code Python extension or fallback to `python` on PATH)."
+        },
+        "jssStyleChecker.severityOverrides": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {"type": "string", "enum": ["error", "warning", "info"]},
+          "description": "Per-rule severity override map."
+        },
+        "jssStyleChecker.ignoreRules": {
+          "type": "array",
+          "default": [],
+          "items": {"type": "string"},
+          "description": "Rule ids to suppress."
+        },
+        "jssStyleChecker.codeWidth": {
+          "type": "number",
+          "default": 80,
+          "description": "Maximum line width for JSS-WIDTH-001."
+        },
+        "jssStyleChecker.runOn": {
+          "type": "string",
+          "enum": ["save", "change"],
+          "default": "change",
+          "description": "When to re-lint (default: on every change)."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "jss-lint.runInit",
+        "title": "jss-lint: Run init",
+        "category": "jss-lint"
+      },
+      {
+        "command": "jss-lint.applyAllFixes",
+        "title": "jss-lint: Apply all fixes",
+        "category": "jss-lint"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kollerma/jss-style-checker"
+  }
+}
