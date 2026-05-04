@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Ship a VS Code extension `kollerma.jss-style-checker` published to the marketplace. The extension activates on `.tex`, `.ltx`, `.rnw`, `.rmd` files; spawns the spec-011 LSP server (`jss-lint lsp`) using the user's configured Python interpreter; exposes the standard LSP UX (squiggles, hover, code-action lightbulb, Problems pane). Settings: `jssStyleChecker.python.path`, `jssStyleChecker.severityOverrides`, `jssStyleChecker.ignoreRules`, `jssStyleChecker.codeWidth`, `jssStyleChecker.runOn` (`save` | `change`). Status-bar item shows violation count and links to the Problems pane. Bundle a \"Run jss-lint init\" command (spec 010)."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Where does the extension source live — same repo (`vscode-extension/`) or sibling repo (`kollerma/jss-style-checker-vscode`)? → A: Same repo at `vscode-extension/`. A sibling repo would split tests, CI, and version coordination across two PR streams; a single tree keeps the LSP server's contract changes (spec 011) and the extension's consumption of it in lockstep. Trade-off accepted: the main repo's CI matrix grows by one Node-based job.
+- Q: Bundle a Python interpreter or require user-managed venv? → A: Require user-managed Python. Bundling adds ~30 MB to the extension and complicates platform-specific publishing (Apple Silicon, glibc variants, …). Authors with a working LaTeX toolchain almost always have Python; the extension surfaces an actionable notification when it's missing.
+- Q: Support Overleaf via the same extension or a sibling browser extension? → A: Out of scope for spec 012. Overleaf does not run VS Code extensions; it would need a separate browser-extension or server-side integration with a different security model. A future spec may address it.
+- Q: Which marketplace — only the public VS Code marketplace, or also Open VSX for Cursor / Codium? → A: Both. Open VSX is the accepted-by-VS-Code-forks distribution path; publishing both means Cursor / Codium / Theia users install the same extension. The same `.vsix` artefact ships to both surfaces; the GitHub Actions workflow handles both publishes.
+- Q: Automated marketplace publish via GitHub Actions on tag push? → A: Yes. Tags of the form `v*-vscode` trigger the publish workflow; the suffix distinguishes them from the Python-package tag scheme so a tag like `v0.5.0` does NOT publish the extension. Manual publishes remain possible for first-release / debugging.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Install the extension and lint a manuscript (Priority: P1)
