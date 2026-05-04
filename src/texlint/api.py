@@ -30,9 +30,30 @@ class CategoryStatus(str, Enum):
 
 @dataclass(frozen=True)
 class FixSuggestion:
-    """Reserved structured-fix payload. Step 4 adds offsets and replacement text."""
+    """Reserved structured-fix payload. Spec 008 supersedes this with :class:`Fix`."""
 
     description: str
+
+
+@dataclass(frozen=True)
+class Fix:
+    """A single text-edit auto-fix payload (spec 008).
+
+    Byte offsets are 0-based, half-open. ``replacement`` is the literal
+    UTF-8 text to substitute. ``confidence``:
+
+      * ``"safe"``: the engine applies it under ``--fix`` without
+        further gating.
+      * ``"review"``: the engine still applies it, but the rule's
+        author flagged it for human attention; reserved for a future
+        ``--fix-confidence safe`` filter.
+    """
+
+    start: int
+    end: int
+    replacement: str
+    description: str
+    confidence: Literal["safe", "review"] = "safe"
 
 
 @dataclass(frozen=True)
@@ -44,7 +65,7 @@ class Violation:
     severity: Severity
     message: str
     suggestion: str | None = None
-    fix: FixSuggestion | None = None
+    fix: Fix | FixSuggestion | None = None
 
     def sort_key(self) -> tuple[str, int, int, int, str]:
         # (file, line, column-bucket, column-value, rule_id).
@@ -82,6 +103,13 @@ class Rule:
     authority: str
     check: RuleCheck
     formats: frozenset[str] | None = None
+    # JSS-guide citation surface (spec 007). Both default to empty/None
+    # so existing rules keep working until they are backfilled. The
+    # catalogue contract test enforces population for citable
+    # categories; tool-side rules use the sentinel
+    # ``guide_section = "internal"``, ``guide_url = None``.
+    guide_section: str = ""
+    guide_url: str | None = None
 
 
 @dataclass(frozen=True)
@@ -153,10 +181,11 @@ class ComplianceReport:
 class ToolConfig:
     journal: str = "jss"
     mode: Literal["author", "reviewer"] = "author"
-    output: Literal["terminal", "json", "html"] = "terminal"
+    output: Literal["terminal", "json", "html", "sarif"] = "terminal"
     ignore_rules: frozenset[str] = field(default_factory=frozenset)
     verbose: bool = False
     code_width: int = 80
+    source_root: Path = field(default_factory=Path.cwd)
 
 
 @dataclass(frozen=True)
