@@ -17,14 +17,14 @@ inline).
 
 ## Cross-cutting (touches multiple features)
 
-- [ ] **Click sub-group migration** (`src/texlint/cli.py`) — convert
+- [x] **Click sub-group migration** (`src/texlint/cli.py`) — convert
       `jss-lint` from a single `@click.command` to a
       `@click.group(invoke_without_command=True, ...)` so subcommands
       can be added without breaking the existing positional-PATHS
       invocation. Unblocks the CLI surfaces of features 009, 010,
-      015, 016. Risk: the existing CLI integration tests need to keep
-      passing; the migration is a one-PR change with careful
-      `runner.invoke(main, [...])` test surface preservation.
+      011, 015, 016. (Shipped: every existing CLI integration test
+      passes byte-identically; smoke tests at
+      `tests/integration/test_cli_group_shape.py`.)
 
 ## Feature 006 — SARIF output
 
