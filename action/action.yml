@@ -78,7 +78,8 @@ runs:
       shell: bash
       run: |
         set +e
-        jss-lint --output sarif --journal "${{ inputs.journal }}" \
+        jss-lint --output sarif --source-root "$GITHUB_WORKSPACE" \
+          --journal "${{ inputs.journal }}" \
           ${{ steps.paths.outputs.list }} > jss-lint.sarif
         rc=$?
         echo "sarif-path=jss-lint.sarif" >> "$GITHUB_OUTPUT"
