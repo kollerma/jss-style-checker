@@ -27,6 +27,7 @@ from texlint.api import (
     JournalRuleModule,
     ParsedBibFile,
     ParsedDocument,
+    ParsedProject,
     ParsedRmdFile,
     ParsedTexFile,
     SkippedRule,
@@ -120,9 +121,21 @@ def load_journal(journal_id: str) -> JournalRuleModule:
 
 def run(
     config: ToolConfig,
-    parsed_document: ParsedDocument,
+    target: ParsedDocument | ParsedProject,
     journal: JournalRuleModule,
 ) -> ComplianceReport:
+    """Execute ``journal``'s rules against ``target``.
+
+    ``target`` may be a :class:`ParsedDocument` (existing single-file
+    flow) or a :class:`ParsedProject` (spec 013). When a project is
+    passed, every rule with ``check_project`` set runs once on the
+    whole project; every rule with ``check`` set runs once per
+    :class:`ParsedDocument` in :attr:`ParsedProject.documents`.
+
+    When a :class:`ParsedDocument` is passed, behaviour is identical
+    to the pre-spec-013 engine: only ``rule.check`` runs;
+    ``rule.check_project`` is ignored.
+    """
     ignore = frozenset(config.ignore_rules)
 
     violations_by_category: dict[str, list[Violation]] = defaultdict(list)
@@ -130,8 +143,17 @@ def run(
     passed_by_category: dict[str, int] = defaultdict(int)
     skipped: list[SkippedRule] = []
 
-    # Derive input formats present in the document. Empty doc → empty set.
-    input_formats = {_file_format(f) for f in parsed_document.all_files()}
+    if isinstance(target, ParsedProject):
+        project: ParsedProject | None = target
+        documents: tuple[ParsedDocument, ...] = target.documents
+    else:
+        project = None
+        documents = (target,)
+
+    # Derive input formats present across the project / document. Empty → empty set.
+    input_formats: set[str] = set()
+    for doc in documents:
+        input_formats.update(_file_format(f) for f in doc.all_files())
 
     categories = journal.categories()
 
@@ -140,26 +162,56 @@ def run(
             if rule.id in ignore:
                 continue
             # Format filter: skip rules whose formats don't intersect the
-            # document's input formats (spec 005 FR-008).
-            if rule.formats is not None and not (rule.formats & input_formats):
-                skipped.append(SkippedRule(
-                    rule_id=rule.id,
-                    reason=(
-                        f"format mismatch (rule formats={sorted(rule.formats)}; "
-                        f"inputs={sorted(input_formats)})"
-                    ),
-                ))
+            # document's input formats (spec 005 FR-008). The format
+            # filter governs ``rule.check`` only; ``check_project``
+            # always runs (it operates on the whole project, including
+            # files with non-matching formats — e.g., a project-level
+            # cycle-detector spans .tex + .bib).
+            check_ran = False
+            check_produced_any = False
+            check_skipped_for_format = False
+
+            if rule.check is not None:
+                if rule.formats is not None and not (rule.formats & input_formats):
+                    check_skipped_for_format = True
+                else:
+                    for doc in documents:
+                        matched_files = list(doc.files_for_rule(rule))
+                        if not matched_files:
+                            continue
+                        check_ran = True
+                        before = len(violations_by_category[category.id])
+                        for v in rule.check(doc, config):
+                            violations_by_category[category.id].append(v)
+                        if len(violations_by_category[category.id]) > before:
+                            check_produced_any = True
+
+            project_ran = False
+            project_produced_any = False
+            if project is not None and rule.check_project is not None:
+                project_ran = True
+                before = len(violations_by_category[category.id])
+                for v in rule.check_project(project):
+                    violations_by_category[category.id].append(v)
+                if len(violations_by_category[category.id]) > before:
+                    project_produced_any = True
+
+            if not check_ran and not project_ran:
+                # Either the format filter excluded the rule, or no input
+                # file matched. Format-mismatch is reported as a SkippedRule;
+                # plain "no matched files" silently drops out.
+                if check_skipped_for_format and rule.check_project is None:
+                    skipped.append(SkippedRule(
+                        rule_id=rule.id,
+                        reason=(
+                            f"format mismatch (rule formats={sorted(rule.formats)}; "
+                            f"inputs={sorted(input_formats)})"
+                        ),
+                    ))
                 continue
-            # A rule is "applied" only if at least one input file matches.
-            matched_files = list(parsed_document.files_for_rule(rule))
-            if not matched_files:
-                continue
+
             applied_by_category[category.id] += 1
-            before = len(violations_by_category[category.id])
-            for v in rule.check(parsed_document, config):
-                violations_by_category[category.id].append(v)
-            produced = len(violations_by_category[category.id]) - before
-            if produced == 0:
+            if not (check_produced_any or project_produced_any):
                 passed_by_category[category.id] += 1
 
     summaries: list[CategorySummary] = []
@@ -174,10 +226,13 @@ def run(
             )
         )
 
-    # Collect pre-existing parse-error violations from the parsed document.
-    parse_errors = tuple(
-        v for v in parsed_document.all_violations() if v.rule_id == _PARSE_RULE_ID
-    )
+    # Collect pre-existing parse-error violations from each parsed document.
+    parse_errors_list: list[Violation] = []
+    for doc in documents:
+        parse_errors_list.extend(
+            v for v in doc.all_violations() if v.rule_id == _PARSE_RULE_ID
+        )
+    parse_errors = tuple(parse_errors_list)
     if parse_errors:
         summaries.append(
             CategorySummary(

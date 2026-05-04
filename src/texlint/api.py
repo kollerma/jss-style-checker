@@ -77,6 +77,7 @@ class Violation:
 
 
 RuleCheck = Callable[["ParsedDocument", "ToolConfig"], Iterator[Violation]]
+RuleCheckProject = Callable[["ParsedProject"], Iterable[Violation]]
 
 
 @dataclass(frozen=True)
@@ -94,6 +95,14 @@ class Rule:
     filter (``{".tex", ".bib"}``); the semantics changed to an
     input-format filter. Existing rules with ``formats=None`` continue
     to work correctly under both readings.
+
+    ``check_project`` (spec 013 follow-up) is an optional companion
+    callable that receives the entire :class:`ParsedProject` instead
+    of a single :class:`ParsedDocument`. It runs only when the engine
+    is invoked with a ``ParsedProject``; defaults to ``None`` so
+    existing per-document rules keep working unchanged. A rule MAY
+    populate both ``check`` and ``check_project``; the engine then
+    runs both when given a project.
     """
 
     id: str
@@ -110,6 +119,9 @@ class Rule:
     # ``guide_section = "internal"``, ``guide_url = None``.
     guide_section: str = ""
     guide_url: str | None = None
+    # Spec 013 follow-up: optional whole-project check. ``None`` means
+    # the rule is per-document only.
+    check_project: RuleCheckProject | None = None
 
 
 @dataclass(frozen=True)
@@ -306,6 +318,28 @@ class ParsedDocument:
         for f in self.all_files():
             if _file_format(f) in rule.formats:
                 yield f
+
+
+@dataclass(frozen=True)
+class ParsedProject:
+    """A multi-file project rooted at a single user-passed file.
+
+    Spec 013 surface. Built by ``texlint.core.resolver.resolve``; consumed
+    by rules that need cross-file context via :attr:`Rule.check_project`.
+
+    Fields:
+      * ``root`` — the file the user invoked the linter against.
+      * ``documents`` — every reachable :class:`ParsedDocument` in
+        depth-first resolution order. Each entry holds the parsed view
+        of one file (i.e., a single-file ``ParsedDocument``).
+      * ``tree`` — adjacency list mapping each file to its direct
+        ``\\input`` / ``\\include`` / ``\\subfile`` / ``\\bibliography``
+        references. A leaf file maps to the empty tuple.
+    """
+
+    root: Path
+    documents: tuple[ParsedDocument, ...]
+    tree: dict[Path, tuple[Path, ...]]
 
 
 class JournalRuleModule(ABC):
