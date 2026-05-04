@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Build a recall-evaluation pipeline alongside the existing precision harness. A new \"ground-truth\" corpus (`eval/recall-corpus/`) contains ~10 hand-annotated JSS papers where a human has labelled *every* JSS guide violation in the source, regardless of whether the tool fired. Annotations are per-paper TOML files keyed by `(rule_id, line)`. `eval-jss recall` runs the linter on these papers, compares the output to the ground-truth, and reports per-rule recall = `TP / (TP + FN)`. The output integrates with the existing precision report so the README can publish a \"precision/recall\" badge per rule and an aggregate F1. Recall regressions block CI on the recall corpus the same way precision regressions do today."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Corpus size — 10 papers minimum, but is there a target ceiling beyond which annotation cost exceeds value? → A: 10 papers minimum, ~30 papers ceiling. Beyond ~30 the marginal recall-measurement value drops while annotation cost grows linearly. The spec calls out the ceiling explicitly so contributors don't assume "more is always better". If a future spec demonstrates value beyond 30, the ceiling is revisited.
+- Q: Annotation format — TOML, YAML, or CSV? → A: TOML. Matches the existing `eval/review-skip-list.toml` style; reuses the `tomli` reader; renders cleanly in PRs (no CSV escaping headaches, no YAML quoting traps). The schema is FR-002.
+- Q: Inter-annotator agreement — single annotator (Manuel) v1, dual annotator v2? → A: Single annotator v1. Inter-annotator agreement is a real research problem; v1 ships with one annotator and a frank caveat in the README. v2 (a future spec) adds a second annotator and a Cohen-kappa-style agreement metric. v1's recall number is approximate; that's still a real upgrade over today's "no recall measurement at all".
+- Q: Do we publish the corpus or keep annotations private to avoid the tool training on them? → A: Publish. Reproducibility is the entire point of the recall pipeline; a private corpus produces a number readers cannot verify. We accept the tail risk that future ML-assisted rule development may indirectly train on these annotations; the value of public reproducibility outweighs it. Also: the JSS papers themselves are public, so the corpus's main novelty is the annotation labels, not the source.
+- Q: What's the recall threshold that gates a release — 80 %, 90 %, per-rule? → A: Aggregate 0.70 with per-rule "no big regression" tracking. Hard floor: aggregate recall ≥ 0.70. Per-rule: regression of >0.05 in any single rule's recall vs. the previous run also fails the gate. The aggregate threshold is calibrated to be achievable with v1's 10-paper corpus; the per-rule check catches surgical regressions in a specific rule that the aggregate would mask.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Editor sees the published recall (Priority: P1)
