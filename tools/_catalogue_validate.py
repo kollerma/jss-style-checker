@@ -71,7 +71,16 @@ REQUIRED_RULE_KEYS: frozenset[str] = frozenset(
     }
 )
 
-OPTIONAL_RULE_KEYS: frozenset[str] = frozenset({"notes"})
+OPTIONAL_RULE_KEYS: frozenset[str] = frozenset(
+    {
+        "notes",
+        # JSS-guide citation fields — spec 007. Strict-validation move
+        # to REQUIRED is deferred until the full catalogue backfill
+        # ships in a follow-up PR.
+        "guide_section",
+        "guide_url",
+    }
+)
 
 ALL_RULE_KEYS: frozenset[str] = REQUIRED_RULE_KEYS | OPTIONAL_RULE_KEYS
 
