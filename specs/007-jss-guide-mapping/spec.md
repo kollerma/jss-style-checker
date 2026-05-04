@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Extend the existing `Rule` dataclass and `_catalogue_data.RULES` metadata so every rule carries a `guide_section` string (e.g., `\"§3.2 Citations\"`) and a `guide_url` URL pointing to the public JSS author-guide HTML/PDF anchor that defines the rule. Render `guide_section` in terminal output (\"see §3.2\"), include both fields in JSON output, include them in SARIF (006) as `helpUri` and `shortDescription`, and in HTML output as a hyperlink. Add a contract test that fails CI when any rule in the catalogue is missing either field. A JSON file under `docs/jss-guide/index.json` lists the canonical anchor URLs so they can be updated centrally when the JSS guide is republished."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Stable HTML anchors on the public JSS author guide, or a local mirror under `docs/jss-guide/`? → A: Use the public JSS author-guide URL with anchor fragments where the public site exposes them; fall back to the page-level URL when an anchor does not exist. Maintain `docs/jss-guide/index.json` as the *single point of update* — every rule's `guide_url` resolves through `index.json` rather than being hard-coded in `_catalogue_data.RULES`. We do NOT mirror the JSS guide content locally.
+- Q: When one rule implements multiple guide paragraphs, list or canonical citation? → A: Pick the *single most canonical* paragraph and cite it. Multi-section coverage is captured as additional prose in the rule's `description` field. Keeping `guide_section` a scalar simplifies every renderer (no array splatting, no "n more" UI). When several sections are equally relevant, prefer the *highest-numbered* (most specific) one.
+- Q: Do `JSS-PARSE-000` and other tool-side rules carry a real citation, a sentinel, or are they exempt from the contract test? → A: They use the sentinel `guide_section = "internal"` and `guide_url = None`. The contract test treats this sentinel as valid. Only rules whose `category` is in the citable set (`markup`, `style`, `naming`, `preamble`, `bibliography`, `width`) MUST point at the JSS guide; tool-side rules (`internal`, `parse`) are exempt.
+- Q: Is `guide_url` mandatory at the catalogue level, or is a `TODO` sentinel allowed during rollout? → A: `guide_url` is `str | None`. The contract test allows `None` for tool-side rules (sentinel above) and for citable-category rules requires a non-empty string that resolves through `docs/jss-guide/index.json`. No `TODO` strings are accepted; rollout uses page-level URLs as a temporary fall-back.
+- Q: How is the contract test scoped — every rule, or only the citable categories? → A: Every rule. Tool-side rules pass via the `"internal"` sentinel; citable-category rules pass when both fields are populated and `guide_url` resolves through `index.json`.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Author sees the canonical guide section in terminal output (Priority: P1)
