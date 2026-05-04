@@ -180,6 +180,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§3.2 Citations',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#citations',
     }),
     'JSS-CITE-003': MappingProxyType({
         "category": 'citations',
