@@ -1,4 +1,4 @@
 <!-- SPECKIT START -->
-Current implementation plan: `specs/011-language-server/plan.md`
-Previous artifacts under `specs/001-linter-foundation/` through `specs/010-init-onboarding/`.
+Current implementation plan: `specs/012-vscode-extension/plan.md`
+Previous artifacts under `specs/001-linter-foundation/` through `specs/011-language-server/`.
 <!-- SPECKIT END -->
