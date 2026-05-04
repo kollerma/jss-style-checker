@@ -1,0 +1,26 @@
+name: release-action
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  rolling-tag:
+    if: ${{ !endsWith(github.ref_name, '-vscode') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Update rolling v<MAJOR> tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          # tag = vX.Y.Z; rolling = vX
+          major="${tag%%.*}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -f "$major" "$tag"
+          git push -f origin "$major"
