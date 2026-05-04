@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Add `jss-lint init [PATH]` subcommand. Behaviour: scan the manuscript, run all rules, group violations by rule and confidence, then write a `.jss-lint.toml` next to the source with: severity overrides where the default is too noisy, an `ignore-rules` list for rules whose precision on this corpus is below a configurable threshold, and an inline comment explaining why each suppression was added. Print a summary table: \"Found 87 violations across 14 rules. Focus first on these 5 high-precision must-fix rules (23 violations).\" Refuse to overwrite an existing `.jss-lint.toml` without `--force`. Operate read-only when `--dry-run` is passed."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Does `init` ever propose `--ignore-abbreviation`-style or other rule-specific data overrides, or only `ignore_rules`? → A: Only `ignore_rules` and severity overrides in this spec. Rule-specific data (abbreviation lists, package-name allow-lists) is rule-internal; surfacing it through `init` would couple `init` to every rule's data shape and re-create the wall-of-warnings problem inside the config. Future spec may extend.
+- Q: What is the precision threshold — corpus-wide ≥90% (matching Constitution §VI), or configurable per invocation? → A: Configurable via `--threshold` (default 0.90). The default matches Constitution §VI so users who do not set it get the same gate the project itself enforces.
+- Q: Do we offer to fetch and pin a corpus-relevant `.jss-lint.toml` from GitHub, or always synthesise locally? → A: Always synthesise locally. No network calls. Fetching introduces version drift, supply-chain concerns, and offline-incompatibility for no clear benefit (the local manuscript is the right input).
+- Q: Does the summary table count violations or unique-line-violations (a single long line can re-trigger one rule)? → A: Both. The header shows total violations AND unique-line-violations; the per-rule rows show total only. The two numbers together help the author distinguish "many small problems" from "one stubborn line".
+- Q: Is there a separate `--audit` mode that prints the same summary without writing a config? → A: No separate flag. `--dry-run` is the audit path: prints the summary AND the proposed config to stdout/stderr without writing. A separate `--audit` would add a flag with no behavioural distinction; consolidating onto `--dry-run` keeps the CLI surface small.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - First-time author bootstraps a config (Priority: P1)
