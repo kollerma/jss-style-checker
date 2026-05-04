@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Implement an LSP server exposed as `jss-lint lsp` (stdio transport; `--socket PORT` for TCP). The server speaks LSP 3.17 and supports: `initialize`, `initialized`, `shutdown`, `exit`, `textDocument/didOpen`, `textDocument/didChange` (debounced 200 ms), `textDocument/didSave`, `textDocument/didClose`, `textDocument/publishDiagnostics`, `textDocument/codeAction` (one CodeAction per `Fix` from spec 008), and `workspace/executeCommand` for \"apply all fixes\". Diagnostics use the SARIF severity mapping from spec 006. Per-document AST cache so re-lint on character-level edits doesn't re-parse from scratch when the change is local. The daemon respects the project's `.jss-lint.toml` and watches it for changes."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Which LSP library — `pygls` (well-maintained, opinionated) or hand-rolled JSON-RPC? → A: `pygls>=1.3`. It is the de-facto Python LSP framework, has a `pygls.test` test driver, and saves ~1k LOC of hand-rolled JSON-RPC + framing logic. Constitution §X allows the dep when the alternative is a substantial hand-rolled stack. The dep is gated behind the new optional `[lsp]` extra, so non-LSP users do not pay for it.
+- Q: Is multi-root workspace support in scope v1? → A: No. The server uses the FIRST workspace folder (sorted by URI) as the config root; other folders inherit the same config. Per-folder `.jss-lint.toml` is out of scope for v1; revisit if a real user demands it.
+- Q: Does the AST cache key on file mtime, content hash, or both? → A: LSP `textDocument.version` (the integer version maintained by the editor). This is the protocol-canonical "did the buffer change" signal; it is monotonic per document and authoritative because the editor — not the filesystem — owns the buffer. Mtime is unreliable when the editor has unsaved buffer state; content hash is redundant given the version counter.
+- Q: How do we handle very large files (>1 MB) — full reparse, partial reparse, or skip? → A: Full reparse on every settled edit. The 200 ms debounce + per-document cache strategy is sufficient for typical JSS manuscripts (≤200 KB). Partial reparse would require a tree diff over pylatexenc tokens; that is a much larger spec. If real users exceed the 1 MB threshold and the latency is unacceptable, a follow-up spec adds partial reparse.
+- Q: Protocol for surfacing rule explanations (spec 009) in hover-over diagnostics? → A: Each `Diagnostic` carries `codeDescription.href = Rule.guide_url` (LSP 3.17 standard field) so the editor's tooltip can render the link. Full explanation prose is NOT inlined; users invoke `jss-lint explain <rule-id>` from a terminal. A future spec may extend `textDocument/hover` to inline the prose; out of scope for v1.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Author sees inline squiggles in their editor (Priority: P1)
