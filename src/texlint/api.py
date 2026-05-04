@@ -30,9 +30,30 @@ class CategoryStatus(str, Enum):
 
 @dataclass(frozen=True)
 class FixSuggestion:
-    """Reserved structured-fix payload. Step 4 adds offsets and replacement text."""
+    """Reserved structured-fix payload. Spec 008 supersedes this with :class:`Fix`."""
 
     description: str
+
+
+@dataclass(frozen=True)
+class Fix:
+    """A single text-edit auto-fix payload (spec 008).
+
+    Byte offsets are 0-based, half-open. ``replacement`` is the literal
+    UTF-8 text to substitute. ``confidence``:
+
+      * ``"safe"``: the engine applies it under ``--fix`` without
+        further gating.
+      * ``"review"``: the engine still applies it, but the rule's
+        author flagged it for human attention; reserved for a future
+        ``--fix-confidence safe`` filter.
+    """
+
+    start: int
+    end: int
+    replacement: str
+    description: str
+    confidence: Literal["safe", "review"] = "safe"
 
 
 @dataclass(frozen=True)
@@ -44,7 +65,7 @@ class Violation:
     severity: Severity
     message: str
     suggestion: str | None = None
-    fix: FixSuggestion | None = None
+    fix: Fix | FixSuggestion | None = None
 
     def sort_key(self) -> tuple[str, int, int, int, str]:
         # (file, line, column-bucket, column-value, rule_id).
