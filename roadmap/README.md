@@ -96,3 +96,12 @@ banner:
 When scope changes mid-roadmap, edit the feature file directly rather
 than accumulating diffs. The roadmap is intent, not history; history
 lives under `specs/` and `CHANGELOG.md`.
+
+## Tracking deferred work
+
+Each feature shipped its core correctness surface (engine + tests).
+Subsidiary work that the v1 implementation deferred — CLI
+sub-group migration, marketplace publishes, hand-annotated
+corpora, full catalogue backfills — lives in
+[`follow-ups.md`](follow-ups.md). Check items off there as they
+land.
