@@ -1,0 +1,36 @@
+name: vscode-publish
+on:
+  push:
+    tags:
+      - 'v*-vscode'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install
+        working-directory: vscode-extension
+        run: npm ci
+      - name: Compile
+        working-directory: vscode-extension
+        run: npm run compile
+      - name: Package
+        working-directory: vscode-extension
+        run: npx --yes vsce package
+      - name: Publish to VS Code marketplace
+        working-directory: vscode-extension
+        run: npx --yes vsce publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - name: Publish to Open VSX
+        working-directory: vscode-extension
+        run: npx --yes ovsx publish
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
