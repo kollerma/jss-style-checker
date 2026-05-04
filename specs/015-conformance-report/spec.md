@@ -5,6 +5,15 @@
 **Status**: Draft
 **Input**: User description: "Add `jss-lint report PATH [--format md|pdf|html] [--out FILE]`. The output is a one-page summary containing: manuscript metadata (title, author, file count), overall conformance score (% of rules passing on this manuscript), error/warning/info counts, top-five most violated rules with one example each (linked to the JSS guide via spec 007), and a numbered \"fix me first\" list (errors before warnings, sorted by rule precision). Markdown is the canonical format; PDF rendered via WeasyPrint; HTML via the existing Jinja2 templates. Designed to be attached to an editorial decision letter."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Is WeasyPrint an acceptable runtime dep (it pulls in cairo) or do we offer PDF only as an extra `[pdf]`? → A: Optional extra `[pdf]`. WeasyPrint pulls in cairo / pango / GLib, which is a substantial install footprint for users who only want the markdown surface. The extra gate (`pip install "jss-lint[pdf]"`) keeps the core install lean. Mirrors the spec-011 `[lsp]` pattern.
+- Q: Does the score weight errors vs warnings (e.g., 3:1) or count rules-passing/rules-total unweighted? → A: Unweighted: `100 * (rules_with_zero_violations / total_active_rules)`. The score answers "how many rules is this manuscript clean against?" not "how serious are the issues?". Severity is surfaced in the per-tier counts and the fix-me ordering. A weighted formula is editorially opinionated; unweighted is the JSS-authority-neutral choice.
+- Q: Do we include manuscript-level metadata only when the preamble exposes `\title{}` / `\Plainauthor{}`, or do we accept CLI overrides? → A: Both. Extract from the preamble when present; honour `--title TEXT` / `--author TEXT` overrides when the manuscript lacks the macros (or when the editor wants a specific framing for the letter).
+- Q: Is the markdown output stable across runs (deterministic section order)? → A: Yes. Section order is fixed (six sections per FR-003). Within sections: top-5 ordered by `(count desc, rule_id asc)`; fix-me-first ordered by `(severity asc, precision desc, rule_id asc)`. The only non-deterministic value is the run-date line; tests compare body bytes minus that single line.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Editor attaches the report to a decision letter (Priority: P1)
