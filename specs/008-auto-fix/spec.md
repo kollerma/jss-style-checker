@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Add three CLI flags to `jss-lint`: `--fix` (apply all available fixes in place, atomic write), `--dry-run` (print proposed fixes as a unified diff but do not write — requires `--fix`), and `--apply` (interactive hunk-by-hunk walk-through, `y/n/all/quit` per fix). Introduce a `Fix` dataclass on `Violation` (text edit, fix description, confidence level). Each rule module that supports auto-fix populates `fix=Fix(...)` on the violations it yields; rules without a deterministic fix yield `fix=None`. The engine groups fixes per file, applies them in reverse-position order, validates the rewritten file no longer re-triggers the same rule, and rolls back atomically on failure. Add `--fix-rule RULE-ID` (repeatable) to scope fixes to specific rules. Default behaviour with no flag is unchanged (read-only)."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Conflict resolution when two rules propose overlapping edits in the same byte range — first-wins, highest-confidence-wins, or fail-loud? → A: Highest-confidence-wins, with a fully deterministic tiebreaker: order on `(confidence, rule_id, start, end)` ascending — `safe` beats `review`; same-confidence ties break on lexicographic `rule_id`, then byte range. The losing fix is *skipped* (not "rejected") and listed in the exit summary. Fail-loud was rejected because it would block adoption: a single rule pair that frequently overlaps would force the user to pin per-run rule selection.
+- Q: Does `--apply` re-prompt after each accepted fix or batch-prompt grouped by rule? → A: Re-prompt after every accepted fix until the user types `a` (all). No per-rule batch mode. Batch-by-rule was rejected as a confusing UX surface for the size of typical fix lists; if needed later, `--fix-rule` already gives the user "apply only these rules" without an interactive layer.
+- Q: Do we require coverage of every rule that ships a `Fix`, or allow incremental adoption with a per-rule `auto_fixable: bool` flag in the catalogue? → A: Incremental, no flag. A rule has auto-fix support iff its emitted violations carry `fix is not None`. Catalogue introspection at runtime is sufficient; an explicit `auto_fixable: bool` would double-bookkeep with the violation's `fix` field. Rules opt in at their own pace.
+- Q: How do we surface fixes that need user input (e.g., "this abbreviation needs an expansion — what should it be?")? → A: Such rules set `fix=None`. The rule's `description` field MAY include guidance for the human author. There is no "interactive fix authoring" UX in this spec — `--apply` is consent, not authoring. Authoring belongs to a future spec if demand emerges.
+- Q: What's the exit code when `--dry-run` shows fixes — 0 (informational) or 1 (changes pending)? → A: `0`. `--dry-run` is informational. The user re-runs without `--dry-run` to apply, and only that run's outcome (fixes applied, violations remaining) flows into the exit code. `1` for `--dry-run` would conflict with shell pipelines and CI status checks that treat 0 as "command succeeded".
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Apply all available fixes with one flag (Priority: P1)
