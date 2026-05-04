@@ -11757,3 +11757,100 @@ Loop converged at iter 78 (overall precision 96.79 %, +0.91pp over
 iters 67–78). 226/226 recall plants still fire after the rule
 changes. The cron-driven 5-hour iteration trigger has been
 cancelled and the iteration lock cleared.
+
+---
+
+## Conclusion (closing the autonomous loop, 2026-05-03)
+
+This log is closed. 78 iterations across the precision-loop
+methodology — six weeks of corpus growth, AI-classifier review,
+human verification, and rule-by-rule fix attempts — have brought
+the JSS lint catalogue from a 50-paper baseline (Iter 1) to a
+**232-paper, 53/54 PASS, 96.79 % overall-precision** state. What
+follows is a stable artefact: a linter whose remaining error budget
+is concentrated in one rule and one corpus boundary, both of
+which are out of reach of further mechanical iteration.
+
+### Where the wins came from
+
+The bulk of the precision gains came from three categories of
+intervention:
+
+1. **Mass FP elimination via targeted exemptions.** MARKUP-001 lost
+   ~100 FPs to language-name + filename detection (iters 14, 26).
+   REFS-003 lost 60+ FPs to abbreviation-aware matching. CITE-002
+   lost the textual-citation cluster. Each was a domain pattern
+   the rule's original author hadn't anticipated and that fresh
+   corpus exposure surfaced.
+2. **Per-rule labeller routing.** The full 934-row gold benchmark
+   (iter 71) showed Bonsai-8B and Qwen3-30B are *complementary*,
+   not redundant — Bonsai dominates short-prose rules (CAP-002,
+   OPER-002), Qwen3 dominates long-prose rules (MARKUP-001,
+   CITE-002). Pinning each rule to its best-performing model
+   (`eval/review-routing.toml`) cut the human-review queue by ~40 %
+   and made the AI-labelled rows trustworthy enough to drive the
+   loop unattended.
+3. **AI-mislabel correction.** A surprising fraction of "FPs"
+   surfaced by the loop were AI-labeller mistakes, not rule
+   defects. NAME-001 (FORTRAN→Fortran), TYPO-004 (caption-before-
+   chunk-content), HOUSE-003 (`\usepackage{hyperref}` over
+   jss.cls), BIBTEX-004 (6+-author entries), and PARSE-000 (real
+   Latin-1 byte) were all correctly fired; the labellers
+   misidentified them. Proxy-flipping these as `human:claude-proxy`
+   added ~14 TPs without rule changes.
+
+### What's deferred
+
+Two open items survive convergence:
+
+1. **JSS-CAP-003 at 60.6 %** (20 TP / 13 FP, 5/5 attempts used).
+   The remaining 13 FPs split across statistical method names
+   (*Huber's Proposal 2*), R class identifiers (*DSClassify*,
+   *DSOutlier*), place names (*Long Bridge*, *Wind Field Park*,
+   *Québec*), and political proper nouns. Each is a domain-
+   ontology gap, not a parse / heuristic gap. Two paths forward
+   are documented in the iter-78 Plan section.
+
+2. **Non-R JSS-paper corpus.** ~115 JSS papers in Python, MATLAB,
+   Stata, Julia, C++, etc., all written in jss.cls, are
+   inaccessible via the current CRAN-vignette path. JSS itself
+   doesn't host the manuscript .tex source — only the PDF and
+   replication code/data. Hand-curating the .tex from author
+   GitHubs / arXiv would extend the corpus into multi-language
+   territory but isn't loop-tractable.
+
+### What this log doesn't capture
+
+The git history under `src/texlint/journals/jss/rules/`
+documents *what* the rule changes were. This log documents
+*why* — the corpus signals that motivated each change and the
+TP/FP deltas that confirmed (or reverted) them. Read the two
+together: the diff says what shipped, this log says what evidence
+shipped it.
+
+The infrastructure built along the way (the
+`eval-jss iterate plan` decider, the policy-codified
+`eval/iteration-policy.toml`, the per-rule labeller routing, the
+recall-plants test suite, the pre-commit guard chained into
+`.githooks/pre-commit`) outlives this log. Future
+human-driven iterations can replay any step of the loop without
+the historical context that produced these knobs.
+
+### Resuming
+
+The loop can be resumed at any time:
+
+```bash
+source .venv/bin/activate
+eval-jss iterate plan        # what should we do next?
+eval-jss iterate refresh     # re-scan + restore labels
+eval-jss iterate record <label>
+```
+
+The planner correctly emits `deferred_rules` for the CAP-003
+state; once that rule is hand-fixed (or downgraded to `warning`
+severity), the planner will report `stop` with "all rules pass".
+Until then, the answer is structurally `grow_corpus`, and the
+corpus is structurally exhausted by the means available.
+
+— end of log —
