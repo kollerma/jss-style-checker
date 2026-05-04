@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Introduce a project-level model. When `jss-lint` is invoked on a single \"root\" file, recursively resolve `\\input{...}`, `\\include{...}`, `\\subfile{...}`, and `\\bibliography{...}` references, producing a `ParsedProject` that aggregates all `ParsedDocument`s with file provenance preserved on every violation. Cycle detection (refuses to recurse on a file already being processed). `\\input` paths are resolved relative to the root file with TeX's standard path-search semantics. A new flag `--no-resolve` keeps the current single-file behaviour. The existing multi-file invocation (`jss-lint paper.tex intro.tex refs.bib`) still works and is treated as an explicit project; behaviour falls through to auto-resolve only when a single root file is passed."
 
+## Clarifications
+
+### Session 2026-05-03
+
+- Q: Policy when a referenced file doesn't exist — parse warning or fatal? → A: A `JSS-PROJECT-002` violation, severity `error`. The linter exits 1 (violations present) — NOT 2 (parse failure). Rationale: a missing input is a project-shape error the author must fix, but it does not block linting the rest of the project. The contract test in spec 003 / 007 treats `JSS-PROJECT-002` as a tool-side rule (sentinel `guide_section = "internal"`).
+- Q: Do we follow `\bibliography{refs}` to find `refs.bib` in standard TeX search paths, or require explicit naming? → A: Yes, follow it. Search order: same directory as the root file, then `BIBINPUTS` env var entries (POSIX-only), then `TEXINPUTS`. First match wins. This matches what BibTeX itself does and is the behaviour every JSS author already expects.
+- Q: Is `\subimport` (subfiles package) in scope v1? → A: No. `\subimport{subdir/}{file}` has its own path semantics (changes the current directory for nested inputs); supporting it correctly requires a directory stack in the resolver. Out of scope for v1; revisit if a real user reports a `\subimport`-using submission. `\subfile` (the top-level form) IS supported in v1 because it shares `\input` semantics.
+- Q: Per-file vs. project-wide `.jss-lint.toml` precedence? → A: Project-wide only. The config used is the one in the root file's directory (or its nearest ancestor — same semantics as the spec-001 single-file flow). Per-file or per-subdirectory configs introduce a precedence question we have no demand for; if a user wants different settings for `intro.tex` vs. `methods.tex`, they can use `--ignore-rules` on the CLI.
+- Q: How do cross-file rules (e.g., abbreviation defined in one file, used in another) interact with the rule's existing single-file walker? → A: Rules opt into project-mode by accepting a `ParsedProject` argument explicitly. The existing single-file rule signature `check(doc: ParsedDocument) -> Iterable[Violation]` continues to work for rules that do not need cross-file scope. A new variant `check_project(project: ParsedProject) -> Iterable[Violation]` is the entry point for cross-file rules. The engine dispatches both on every run; rules that ship `check_project` see the whole project, rules that ship only `check` see each file individually.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Lint a real multi-file JSS submission with one CLI invocation (Priority: P1)
