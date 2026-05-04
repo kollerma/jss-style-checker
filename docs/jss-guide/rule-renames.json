@@ -1,0 +1,5 @@
+{
+  "_about": "Spec 016 — rule-rename map applied by `jss-lint diff` so a renamed rule does not appear as one fix + one introduce. Format: { \"renames\": { \"OLD\": \"NEW\" } }. Spec PRs that rename a rule add an entry here.",
+  "renames": {},
+  "_provenance": {}
+}
