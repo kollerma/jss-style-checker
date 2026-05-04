@@ -76,6 +76,10 @@ def _dispatch_renderer(output: str, report: Any, cfg: ToolConfig) -> None:
         from .output.html_output import render as render_html
 
         render_html(report, cfg)
+    elif output == "sarif":
+        from .output.sarif import render as render_sarif
+
+        render_sarif(report, cfg)
     else:  # pragma: no cover - click Choice prevents this
         _eprint(f"jss-lint: unknown output format {output!r}")
         sys.exit(2)
@@ -115,9 +119,16 @@ def _determine_exit_code(report: Any) -> int:
 @click.option(
     "--output",
     "output",
-    type=click.Choice(["terminal", "json", "html"], case_sensitive=False),
+    type=click.Choice(["terminal", "json", "html", "sarif"], case_sensitive=False),
     default=None,
     help="Renderer for the compliance report (default: terminal).",
+)
+@click.option(
+    "--source-root",
+    "source_root",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=str),
+    default=None,
+    help="Base directory for SARIF artifact URIs (default: current working directory).",
 )
 @click.option(
     "--ignore-rules",
@@ -138,6 +149,7 @@ def main(
     journal: str | None,
     mode: str | None,
     output: str | None,
+    source_root: str | None,
     ignore_rules: str | None,
     verbose: bool | None,
     paths: tuple[str, ...],
@@ -154,6 +166,8 @@ def main(
         cli_overrides["mode"] = mode.lower()
     if output is not None:
         cli_overrides["output"] = output.lower()
+    if source_root is not None:
+        cli_overrides["source_root"] = Path(source_root)
     if ignore_rules is not None:
         cli_overrides["ignore_rules"] = ignore_rules
     if verbose is not None:

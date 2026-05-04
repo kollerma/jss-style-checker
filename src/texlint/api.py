@@ -153,10 +153,11 @@ class ComplianceReport:
 class ToolConfig:
     journal: str = "jss"
     mode: Literal["author", "reviewer"] = "author"
-    output: Literal["terminal", "json", "html"] = "terminal"
+    output: Literal["terminal", "json", "html", "sarif"] = "terminal"
     ignore_rules: frozenset[str] = field(default_factory=frozenset)
     verbose: bool = False
     code_width: int = 80
+    source_root: Path = field(default_factory=Path.cwd)
 
 
 @dataclass(frozen=True)
