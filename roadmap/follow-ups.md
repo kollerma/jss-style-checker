@@ -29,10 +29,11 @@ inline).
 ## Feature 006 — SARIF output
 
 - [x] Renderer + tests + CLI flag (shipped).
-- [ ] Vendor the official SARIF 2.1.0 JSON schema at
+- [x] Vendor the official SARIF 2.1.0 JSON schema at
       `tests/fixtures/sarif-2.1.0-schema.json` and add a contract
       test that validates every golden via
-      `jsonschema.Draft202012Validator`.
+      `jsonschema.Draft202012Validator`. (Shipped: vendored from
+      SchemaStore mirror as Draft 7; four parametrised scenarios.)
 - [ ] Multi-fixture golden files
       (`tests/fixtures/sarif/golden_*.sarif`). Current tests assert
       structural invariants instead of byte-equality goldens.
@@ -131,13 +132,14 @@ inline).
 
 ## Feature 013 — Multi-file projects
 
-- [ ] **`ParsedProject` public type** in `texlint.api` —
+- [x] **`ParsedProject` public type** in `texlint.api` —
       wraps a tuple of `ParsedDocument`s, the root `Path`, and
-      the project graph.
-- [ ] **`Rule.check_project: Callable | None`** — additive
-      field on the public `Rule` dataclass.
-- [ ] Engine dispatch in `core/engine.py::run` — accept
+      the project graph. (Shipped.)
+- [x] **`Rule.check_project: Callable | None`** — additive
+      field on the public `Rule` dataclass. (Shipped.)
+- [x] Engine dispatch in `core/engine.py::run` — accept
       `ParsedDocument | ParsedProject`, route per-rule.
+      (Shipped.)
 - [ ] Migrate the abbreviations rule from `check` to
       `check_project` (the canonical cross-file rule).
 - [ ] `--no-resolve` CLI flag in `cli.py` — passes a
