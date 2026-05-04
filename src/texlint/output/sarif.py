@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from texlint import __version__
-from texlint.api import ComplianceReport, Severity, ToolConfig, Violation
+from texlint.api import ComplianceReport, Fix, Severity, ToolConfig, Violation
 
 JSS_PARSE_RULE_ID = "JSS-PARSE-000"
 
@@ -72,12 +72,41 @@ def _location(violation: Violation, source_root: Path) -> dict[str, Any]:
 
 
 def _result(violation: Violation, source_root: Path) -> dict[str, Any]:
-    return {
+    result: dict[str, Any] = {
         "ruleId": violation.rule_id,
         "level": _SARIF_LEVEL[violation.severity],
         "message": {"text": violation.message},
         "locations": [_location(violation, source_root)],
     }
+    # Spec 008 §7: project structured Fix payloads as SARIF
+    # ``fixes[]``. ``FixSuggestion`` (the legacy reserved type) carries
+    # no byte-range data and is intentionally excluded; the key is
+    # OMITTED entirely when the violation has no fix, mirroring spec
+    # 006's policy of not emitting absent fields.
+    if isinstance(violation.fix, Fix):
+        fix = violation.fix
+        result["fixes"] = [
+            {
+                "description": {"text": fix.description},
+                "artifactChanges": [
+                    {
+                        "artifactLocation": {
+                            "uri": _relativise(violation.file, source_root)
+                        },
+                        "replacements": [
+                            {
+                                "deletedRegion": {
+                                    "byteOffset": fix.start,
+                                    "byteLength": fix.end - fix.start,
+                                },
+                                "insertedContent": {"text": fix.replacement},
+                            }
+                        ],
+                    }
+                ],
+            }
+        ]
+    return result
 
 
 def _notification(violation: Violation, source_root: Path) -> dict[str, Any]:

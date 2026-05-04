@@ -56,7 +56,7 @@ inline).
 
 ## Feature 008 — Auto-fix
 
-- [ ] **SARIF `fixes[]` projection** —
+- [x] **SARIF `fixes[]` projection** —
       `src/texlint/output/sarif.py`. When a violation has a `Fix`,
       emit `runs[0].results[].fixes[]` per spec-006 §C-11 +
       spec-008 §3.7.
