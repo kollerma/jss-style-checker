@@ -98,9 +98,10 @@ def _determine_exit_code(report: Any) -> int:
     return 0
 
 
-@click.command(
+@click.group(
     context_settings={"help_option_names": ["-h", "--help"]},
     name="jss-lint",
+    invoke_without_command=True,
 )
 @click.version_option(__version__, prog_name="jss-lint")
 @click.option(
@@ -172,7 +173,9 @@ def _determine_exit_code(report: Any) -> int:
     help="Repeatable; limits --fix to the named rule ids.",
 )
 @click.argument("paths", nargs=-1, type=click.Path(path_type=str))
+@click.pass_context
 def main(
+    ctx: click.Context,
     journal: str | None,
     mode: str | None,
     output: str | None,
@@ -185,7 +188,21 @@ def main(
     fix_rules: tuple[str, ...],
     paths: tuple[str, ...],
 ) -> None:
-    """Lint LaTeX/BibTeX manuscripts against journal style guides."""
+    """Lint LaTeX/BibTeX manuscripts against journal style guides.
+
+    With no subcommand, runs the read-only lint pass over the given
+    paths (the historic ``jss-lint <PATHS>`` invocation). The command
+    is also a Click group so that follow-ups such as ``explain``,
+    ``init``, ``report``, ``diff``, and ``lsp`` can attach as
+    subcommands without breaking the bare-PATHS surface — the seam is
+    ``invoke_without_command=True``.
+    """
+    # When a subcommand is invoked, defer to its callback. The group
+    # callback still runs first (Click always invokes the parent), so
+    # we early-return before doing any lint work.
+    if ctx.invoked_subcommand is not None:
+        return
+
     if not paths:
         _eprint("jss-lint: at least one FILE argument is required.")
         sys.exit(2)
