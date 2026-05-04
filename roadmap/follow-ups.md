@@ -160,9 +160,12 @@ inline).
       `.github/workflows/test-action.yml` — runs the action
       against `docs/jss-template/` (or the recall corpus once
       it ships) and asserts SARIF presence + violation count.
-- [ ] `--source-root` integration: forward the GitHub Actions
+- [x] `--source-root` integration: forward the GitHub Actions
       checkout root to the spec-006 flag so SARIF URIs resolve
-      to repo-relative paths in the Security tab.
+      to repo-relative paths in the Security tab. (Shipped: the
+      composite action's lint step now passes
+      `--source-root "$GITHUB_WORKSPACE"`; contract test at
+      `tests/integration/test_action_manifest.py` guards the wiring.)
 
 ## Feature 015 — Conformance report
 

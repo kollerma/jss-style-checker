@@ -4,6 +4,12 @@
 
 Lint LaTeX / Sweave / R Markdown manuscripts on every PR. Inline review comments + SARIF upload to the Security tab + a one-line PR check.
 
+The action invokes `jss-lint --source-root "$GITHUB_WORKSPACE"`, so SARIF
+`artifactLocation.uri` values are always relative to the repo checkout root.
+GitHub code-scanning resolves these URIs against the repo root, which keeps
+inline annotations correct even when the calling workflow `cd`s into a
+sub-directory before invoking the action.
+
 ## Usage
 
 ```yaml
