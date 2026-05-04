@@ -428,6 +428,8 @@ rules:
       We fit the model using \pkg{mgcv} \citep{Wood:2006}.
     inspects: [tex_files]
     auto_fixable: false
+    guide_section: "§3.2 Citations"
+    guide_url: "https://www.jstatsoft.org/about/submissions#citations"
     notes: |
       Strict same-paragraph definition: "paragraph" is the token span bounded by char nodes containing blank
       lines (`\n\n`) or by environment / group boundaries. The check: first \pkg{X} mention per distinct X
