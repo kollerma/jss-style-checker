@@ -68,12 +68,24 @@ inline).
 - [x] `before.tex` / `after.tex` golden fixture pairs under
       `tests/fixtures/auto-fix/` for each migrated rule.
       (Shipped for JSS-CITE-003 and JSS-NAME-001.)
-- [ ] Integration test for `--apply` interactive prompt
+- [x] Integration test for `--apply` interactive prompt
       (stdin scripted with `y\nn\na\n`) — covered by unit tests
       today; end-to-end via the CLI runner is the missing piece.
-- [ ] Regression-rollback CLI integration test (a fixture rule
+      (Shipped: `tests/integration/test_cli_fix_apply.py`
+      `TestApplyInteractive` scripts `y\n` and `n\n` over stdin
+      against the JSS-CITE-003 fixture; `y` rewrites the file to
+      match `after.tex` byte-for-byte, `n` leaves it untouched.)
+- [x] Regression-rollback CLI integration test (a fixture rule
       whose fix re-trips its own rule; CLI exits 2 with the
-      file unchanged).
+      file unchanged). (Shipped:
+      `tests/integration/test_cli_fix_apply.py`
+      `TestRegressionRollback` registers a synthetic `regression`
+      journal via `monkeypatch` on `importlib.metadata.entry_points`;
+      its only rule emits a no-op `Fix` whose replacement equals the
+      matched token, so the rule re-fires on re-validate and the
+      engine rolls back to the pre-fix bytes — the test asserts
+      exit 2, byte-identical file content, and that the rollback
+      message names the rule id.)
 
 ## Feature 009 — `jss-lint explain`
 
