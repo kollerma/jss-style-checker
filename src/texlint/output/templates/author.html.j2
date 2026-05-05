@@ -26,15 +26,23 @@
 <h2>{{ group.file }}</h2>
 <table>
   <thead>
-    <tr><th>Line:Col</th><th>Severity</th><th>Rule</th><th>Message</th><th>Suggestion</th></tr>
+    <tr><th>Line:Col</th><th>Severity</th><th>Rule</th><th>Message</th><th>Section</th><th>Suggestion</th></tr>
   </thead>
   <tbody>
   {% for v in group.violations %}
+    {% set guide = guide_index.get(v.rule_id) %}
     <tr>
       <td class="loc">{{ v.line }}{% if v.column is not none %}:{{ v.column }}{% endif %}</td>
       <td class="sev-{{ v.severity.value }}">{{ v.severity.value }}</td>
       <td class="rid">{{ v.rule_id }}</td>
       <td>{{ v.message }}</td>
+      <td>
+        {%- if guide and guide.section and guide.section != "internal" and guide.url -%}
+          <a href="{{ guide.url }}">{{ guide.section }}</a>
+        {%- else -%}
+          <span class="none">internal</span>
+        {%- endif -%}
+      </td>
       <td>{% if v.suggestion %}{{ v.suggestion }}{% else %}<span class="none">—</span>{% endif %}</td>
     </tr>
   {% endfor %}

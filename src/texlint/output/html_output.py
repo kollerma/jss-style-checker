@@ -34,11 +34,36 @@ def _group_violations(report: ComplianceReport) -> list[dict[str, Any]]:
     ]
 
 
+def _guide_index() -> dict[str, dict[str, Any]]:
+    """Return a mapping ``rule_id -> {"section": str, "url": str | None}``.
+
+    Cached on first call. Sentinel rules (``JSS-PARSE-000``) are not in
+    the catalogue, so the template treats a missing entry as plain text.
+    """
+    cached = getattr(_guide_index, "_cache", None)
+    if cached is None:
+        from texlint.journals.jss._catalogue_data import RULES
+
+        cached = {
+            rid: {
+                "section": str(meta.get("guide_section") or ""),
+                "url": meta.get("guide_url"),
+            }
+            for rid, meta in RULES.items()
+        }
+        _guide_index._cache = cached  # type: ignore[attr-defined]
+    return cached
+
+
 def render(report: ComplianceReport, config: ToolConfig) -> None:
     env = _make_env()
     template_name = "reviewer.html.j2" if config.mode == "reviewer" else "author.html.j2"
     template = env.get_template(template_name)
-    rendered = template.render(report=report, groups=_group_violations(report))
+    rendered = template.render(
+        report=report,
+        groups=_group_violations(report),
+        guide_index=_guide_index(),
+    )
     sys.stdout.write(rendered)
     if not rendered.endswith("\n"):
         sys.stdout.write("\n")

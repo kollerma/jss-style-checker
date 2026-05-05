@@ -88,6 +88,43 @@ class TestReviewerHtml:
         assert "100" in result.output
 
 
+class TestGuideSectionAnchor:
+    """Spec 007 follow-up: HTML rows render guide_section as a hyperlink
+    for citable rules; sentinel rules render plain text."""
+
+    def test_citable_rule_renders_anchor(self, runner: CliRunner):
+        result = runner.invoke(
+            main,
+            [
+                "--output",
+                "html",
+                str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"),
+            ],
+        )
+        assert result.exit_code == 1
+        _assert_parseable(result.output)
+        assert (
+            '<a href="https://www.jstatsoft.org/about/submissions#citations'
+            in result.output
+        )
+        assert "§3.2 Citations" in result.output
+
+    def test_parse_failure_renders_no_anchor(self, runner: CliRunner):
+        result = runner.invoke(
+            main,
+            [
+                "--output",
+                "html",
+                str(FIXTURES / "violations" / "JSS-PARSE-000.tex"),
+            ],
+        )
+        assert result.exit_code == 2
+        _assert_parseable(result.output)
+        # JSS-PARSE-000 is a sentinel rule — its row must not carry an
+        # `<a href=` anchor (the only `<a>` would be in this column).
+        assert "<a href=" not in result.output
+
+
 class TestDeterminism:
     def test_html_byte_identical_across_runs(self, runner: CliRunner):
         args = [

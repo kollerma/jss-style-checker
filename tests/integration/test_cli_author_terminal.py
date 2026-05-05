@@ -79,6 +79,27 @@ class TestAuthorOutputShape:
         assert result.output.strip() == ""
 
 
+class TestGuideSectionSuffix:
+    """Spec 007 follow-up: terminal lines append ``(see <section>)`` for
+    citable rules; sentinel rules (``JSS-PARSE-000``) render unchanged."""
+
+    def test_citable_rule_appends_see_suffix(self, runner: CliRunner):
+        result = runner.invoke(
+            main,
+            [str(FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex")],
+        )
+        assert result.exit_code == 1
+        assert "(see §3.2 Citations)" in result.output
+
+    def test_parse_failure_has_no_see_suffix(self, runner: CliRunner):
+        result = runner.invoke(
+            main,
+            [str(FIXTURES / "violations" / "JSS-PARSE-000.tex")],
+        )
+        assert result.exit_code == 2
+        assert "(see " not in result.output
+
+
 class TestIgnoreRules:
     def test_ignored_rule_not_reported(self, runner: CliRunner):
         result = runner.invoke(
