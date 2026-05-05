@@ -3,6 +3,18 @@
 Rule:
   - JSS-ABBR-001 — abbreviations are in uppercase without periods
     (e.g., "U.S.A." → "USA").
+
+Spec-013 cross-file migration deferred — current rule operates
+per-document. The rule fires on text-pattern matches inside prose
+nodes; it has no concept of "abbreviation definition" or "first
+introduction" that would benefit from a project-wide pass. Author-
+initial heuristics depend on the local pylatexenc node graph
+(:func:`_looks_like_author_initial`), which is per-file by
+construction. Until JSS-ABBR-001 grows a "definition tracking"
+sub-rule (e.g., "every abbreviation must be defined on first use
+across the project"), there is nothing for ``check_project`` to
+do that ``check`` does not already do once per document. See
+``roadmap/follow-ups.md`` Feature 013 for tracking.
 """
 
 from __future__ import annotations

@@ -142,11 +142,29 @@ inline).
       (Shipped.)
 - [ ] Migrate the abbreviations rule from `check` to
       `check_project` (the canonical cross-file rule).
-- [ ] `--no-resolve` CLI flag in `cli.py` — passes a
+      *Deferred*: JSS-ABBR-001 is a text-pattern rule with no
+      cross-file scoping (no "definition on first use"
+      semantics); a `check_project` body would be a trivial
+      iterate-over-documents loop with no behavioural change.
+      Will land alongside a real cross-file abbreviation
+      sub-rule. Note added to
+      `src/texlint/journals/jss/rules/abbreviations.py`.
+- [x] `--no-resolve` CLI flag in `cli.py` — passes a
       `ParsedDocument` rather than auto-resolving.
-- [ ] `JSS-PROJECT-001` (cycle) and `JSS-PROJECT-002`
+      (Shipped as a reserved flag: it is wired through
+      `cli_overrides` but has no observable effect today
+      because the CLI does not currently auto-resolve. Lets
+      users script against the flag ahead of the auto-resolve
+      bridge.)
+- [x] `JSS-PROJECT-001` (cycle) and `JSS-PROJECT-002`
       (missing reference) tool-side rules emitted by the
-      resolver.
+      resolver. (Shipped at
+      `src/texlint/journals/jss/rules/project.py`.
+      JSS-PROJECT-001 detects cycles by DFS over
+      `ParsedProject.tree`; JSS-PROJECT-002 is a documented
+      no-op stub until the resolver → ParsedProject bridge
+      threads `missing` through. Not registered in the
+      catalogue YAML — these are tool-side diagnostics.)
 
 ## Feature 014 — GitHub Action
 
