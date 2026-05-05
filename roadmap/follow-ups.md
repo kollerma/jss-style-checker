@@ -40,17 +40,14 @@ inline).
 
 ## Feature 007 — JSS-guide rule mapping
 
-- [ ] **Full catalogue backfill** —
-      `specs/003-jss-rule-catalogue/catalogue.yaml`. Add
-      `guide_section` and `guide_url` to the remaining 57 rules
-      (only `JSS-CITE-002` is backfilled in v1). Mechanical pass:
-      one entry per rule, sourced from
-      `docs/jss-guide/index.json`. After backfill, tighten the
-      `test_backfilled_rules_resolve_through_index` test and the
-      validator to mark these fields REQUIRED for citable
-      categories.
-- [ ] Update the spec-007 contract test to fail (not warn) when
+- [x] **Full catalogue backfill** —
+      `specs/003-jss-rule-catalogue/catalogue.yaml`. (Shipped:
+      all 58 rules carry guide_section + guide_url; index.json
+      grew by 6 sections — Structure, Typography, Mathematical
+      notation, Cross-references, Abbreviations, House style.)
+- [x] Update the spec-007 contract test to fail (not warn) when
       a citable rule lacks `guide_section` / `guide_url`.
+      (Shipped: `test_every_citable_rule_is_backfilled`.)
 - [ ] Plumb `guide_section` into the terminal renderer's
       `(see <section>)` suffix and into the HTML renderer as an
       `<a href="...">` anchor.
@@ -61,12 +58,16 @@ inline).
       `src/texlint/output/sarif.py`. When a violation has a `Fix`,
       emit `runs[0].results[].fixes[]` per spec-006 §C-11 +
       spec-008 §3.7.
-- [ ] **Rule-side `Fix` migrations** — pick three mechanical
+- [x] **Rule-side `Fix` migrations** — pick three mechanical
       catalogue rules (`JSS-CITE-003`, `JSS-NAME-001`,
       `JSS-CAP-002` are the spec-008 baseline candidates) and
-      emit `Fix(...)` payloads on their violations.
-- [ ] `before.tex` / `after.tex` golden fixture pairs under
+      emit `Fix(...)` payloads on their violations. (Shipped:
+      JSS-CITE-003 and JSS-NAME-001 emit safe-confidence fixes;
+      JSS-CAP-002 deferred — no stable byte range without a
+      rule-body rewrite.)
+- [x] `before.tex` / `after.tex` golden fixture pairs under
       `tests/fixtures/auto-fix/` for each migrated rule.
+      (Shipped for JSS-CITE-003 and JSS-NAME-001.)
 - [ ] Integration test for `--apply` interactive prompt
       (stdin scripted with `y\nn\na\n`) — covered by unit tests
       today; end-to-end via the CLI runner is the missing piece.
