@@ -1,8 +1,8 @@
 """Spec 015 — one-page conformance report.
 
-Pure-Python markdown renderer for an editorial decision-letter
-attachment. PDF / HTML rendering and CLI subcommand wiring are
-deferred to follow-ups.
+Markdown and HTML renderers for an editorial decision-letter
+attachment. PDF rendering and CLI subcommand wiring stay deferred to
+follow-ups.
 """
 
 from __future__ import annotations
@@ -11,12 +11,17 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 from typing import Literal
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from texlint.api import ComplianceReport, Severity
 from texlint.journals.jss._catalogue_data import RULES
 
-Format = Literal["md"]
+Format = Literal["md", "html"]
+
+_TEMPLATE_DIR = Path(__file__).parent / "output" / "templates"
 
 TOOL_SIDE_CATEGORIES = frozenset({"parse", "internal"})
 
@@ -177,6 +182,16 @@ def _render_md(summary: ConformanceSummary) -> str:
     return "\n".join(parts) + "\n"
 
 
+def _render_html(summary: ConformanceSummary) -> str:
+    env = Environment(
+        loader=FileSystemLoader(str(_TEMPLATE_DIR)),
+        autoescape=select_autoescape(["html", "xml", "j2", "html.j2"]),
+        keep_trailing_newline=True,
+    )
+    template = env.get_template("conformance.html.j2")
+    return template.render(summary=summary)
+
+
 def render_report(
     report: ComplianceReport,
     *,
@@ -195,4 +210,6 @@ def render_report(
     )
     if fmt == "md":
         return _render_md(summary)
-    raise ValueError(f"unsupported format: {fmt}")  # pragma: no cover
+    if fmt == "html":
+        return _render_html(summary)
+    raise ValueError(f"unsupported format: {fmt}")
