@@ -257,12 +257,15 @@ inline).
       `(rule_id, file, line)` per FR-002.
 - [ ] `eval-jss recall` CLI subcommand with `--gate` and
       `--validate` flags.
-- [ ] `recall_history` SQLite table schema in
-      `eval/precision-history.db` per data-model §3.
+- [x] `recall_history` SQLite table schema in
+      `eval/precision-history.db` per data-model §3. (Shipped:
+      schema + `record_recall()` / `latest_recall_per_rule()`
+      helpers in `eval/history.py`.)
 - [ ] Combined precision + recall report column in
       `eval/report.py`.
-- [ ] `eval/badge.py` — emits shields.io endpoint JSON for
-      the precision and recall badges.
+- [x] `eval/badge.py` — emits shields.io endpoint JSON for
+      the precision and recall badges. (Shipped: also covers F1.
+      Has a CLI: `python -m eval.badge {precision|recall|f1} V`.)
 - [ ] `.github/workflows/publish-badges.yml` — push
       regenerated badge JSON to the `gh-pages` branch on
       every CI run.
