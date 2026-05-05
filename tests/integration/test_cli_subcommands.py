@@ -148,6 +148,32 @@ class TestReport:
         # Title still flows through to HTML.
         assert "A Short Demo Article" in text
 
+    def test_report_pdf_format(self, runner: CliRunner, tmp_path: Path) -> None:
+        """Spec 015 follow-up — `--format pdf` writes a PDF via
+        WeasyPrint when the [pdf] extra is installed."""
+        pytest.importorskip("weasyprint")
+        out = tmp_path / "report.pdf"
+        result = runner.invoke(
+            main,
+            ["report", "--format", "pdf", "--out", str(out), str(COMPLIANT_TEX)],
+        )
+        assert result.exit_code == 0, result.stderr
+        assert out.exists()
+        assert out.read_bytes().startswith(b"%PDF-")
+
+    def test_report_pdf_requires_out_flag(
+        self, runner: CliRunner
+    ) -> None:
+        """`--format pdf` writes binary; refusing to dump to stdout
+        prevents terminal corruption."""
+        pytest.importorskip("weasyprint")
+        result = runner.invoke(
+            main,
+            ["report", "--format", "pdf", str(COMPLIANT_TEX)],
+        )
+        assert result.exit_code == 2
+        assert "--format pdf requires --out" in result.stderr
+
 
 # ------------------------------------------------------------------- diff ----
 

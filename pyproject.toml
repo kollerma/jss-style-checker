@@ -44,6 +44,12 @@ dev = [
 lsp = [
     "pygls>=1.3",
 ]
+# Spec 015 — PDF rendering of the conformance report via WeasyPrint.
+# WeasyPrint pulls in cairo / pango / GLib so we keep it under the
+# explicit `[pdf]` extra; markdown / HTML formats stay dep-free.
+pdf = [
+    "weasyprint>=60",
+]
 
 [project.scripts]
 jss-lint = "texlint.cli:main"

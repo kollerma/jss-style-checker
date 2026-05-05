@@ -20,7 +20,13 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from texlint.api import ComplianceReport, ParsedDocument, Severity
 from texlint.journals.jss._catalogue_data import RULES
 
-Format = Literal["md", "html"]
+Format = Literal["md", "html", "pdf"]
+
+
+class PdfNotAvailable(RuntimeError):
+    """Raised when ``fmt="pdf"`` is requested but WeasyPrint is not
+    importable. Caught at the CLI boundary; converted into a
+    user-friendly install hint there."""
 
 _TEMPLATE_DIR = Path(__file__).parent / "output" / "templates"
 
@@ -193,6 +199,30 @@ def _render_html(summary: ConformanceSummary) -> str:
     return template.render(summary=summary)
 
 
+def _render_pdf(summary: ConformanceSummary) -> bytes:
+    """Render the conformance summary as a PDF via WeasyPrint.
+
+    Reuses the ``conformance.html.j2`` template — WeasyPrint
+    consumes HTML+CSS, so the PDF format is a printer's view of the
+    same document the HTML format produces. Page break / paper-
+    size styling lives inline in the template's ``<style>`` block.
+
+    Raises :class:`PdfNotAvailable` when WeasyPrint is not
+    installed; the CLI catches this and prints the install hint
+    for the ``[pdf]`` extra.
+    """
+    try:
+        import weasyprint  # noqa: I001 — optional import gated by extra
+    except ImportError as exc:
+        raise PdfNotAvailable(
+            "PDF rendering requires WeasyPrint; install with "
+            '`pip install "jss-lint[pdf]"`'
+        ) from exc
+
+    html = _render_html(summary)
+    return weasyprint.HTML(string=html).write_pdf()
+
+
 # ---------------------------------------------------------------------------
 # Manuscript metadata extraction (spec 015 follow-up)
 # ---------------------------------------------------------------------------
@@ -304,7 +334,15 @@ def render_report(
     author: str = "(unknown)",
     file_count: int = 1,
     ignore_rules: Iterable[str] = (),
-) -> str:
+) -> str | bytes:
+    """Render a one-page conformance report.
+
+    ``fmt="md"`` (default) and ``fmt="html"`` return ``str``;
+    ``fmt="pdf"`` returns ``bytes`` (the PDF document). PDF
+    rendering depends on the optional ``[pdf]`` extra
+    (WeasyPrint); a missing dependency raises
+    :class:`PdfNotAvailable`.
+    """
     summary = _compute_summary(
         report,
         title=title,
@@ -316,4 +354,6 @@ def render_report(
         return _render_md(summary)
     if fmt == "html":
         return _render_html(summary)
+    if fmt == "pdf":
+        return _render_pdf(summary)
     raise ValueError(f"unsupported format: {fmt}")

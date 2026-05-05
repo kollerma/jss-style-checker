@@ -460,9 +460,9 @@ def init_cmd(path: str, force: bool, dry_run: bool, threshold: float) -> None:
 @click.option(
     "--format",
     "fmt",
-    type=click.Choice(["md", "html"], case_sensitive=False),
+    type=click.Choice(["md", "html", "pdf"], case_sensitive=False),
     default="md",
-    help="Output format. PDF is a deferred follow-up.",
+    help='Output format. PDF requires the [pdf] extra (`pip install "jss-lint[pdf]"`).',
 )
 @click.option(
     "--out",
@@ -520,18 +520,30 @@ def report_cmd(
         if author is None:
             author = extracted_author or "(unknown)"
 
-    rendered = _report.render_report(
-        report,
-        fmt=fmt.lower(),
-        title=title,
-        author=author,
-        file_count=len(candidates),
-    )
+    fmt_norm = fmt.lower()
+    try:
+        rendered = _report.render_report(
+            report,
+            fmt=fmt_norm,
+            title=title,
+            author=author,
+            file_count=len(candidates),
+        )
+    except _report.PdfNotAvailable as exc:
+        _eprint(f"jss-lint: {exc}")
+        sys.exit(2)
 
-    if out is None:
-        click.echo(rendered, nl=False)
+    if fmt_norm == "pdf":
+        # bytes — must NOT echo to stdout as text; require --out.
+        if out is None:
+            _eprint("jss-lint: --format pdf requires --out FILE")
+            sys.exit(2)
+        Path(out).write_bytes(rendered)  # type: ignore[arg-type]
     else:
-        Path(out).write_text(rendered, encoding="utf-8")
+        if out is None:
+            click.echo(rendered, nl=False)
+        else:
+            Path(out).write_text(rendered, encoding="utf-8")  # type: ignore[arg-type]
 
 
 @main.command(name="diff")

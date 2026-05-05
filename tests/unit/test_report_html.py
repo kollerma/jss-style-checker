@@ -66,8 +66,10 @@ class TestHtmlReport:
         assert "Foo" in out
         assert "Bar" in out
 
-    def test_pdf_still_unsupported(self) -> None:
-        import pytest
-
-        with pytest.raises(ValueError):
-            render_report(_report(()), fmt="pdf")  # type: ignore[arg-type]
+    def test_pdf_returns_bytes_when_weasyprint_available(self) -> None:
+        """Spec 015 follow-up — fmt='pdf' is now supported via the
+        optional [pdf] extra. WeasyPrint is installed in the dev
+        environment; the call returns the PDF bytes."""
+        out = render_report(_report(()), fmt="pdf")
+        assert isinstance(out, bytes)
+        assert out.startswith(b"%PDF-")
