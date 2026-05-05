@@ -172,8 +172,12 @@ inline).
 
 - [ ] PDF rendering via WeasyPrint (gated behind
       `[project.optional-dependencies] pdf = ["weasyprint>=60"]`).
-- [ ] HTML rendering via the existing Jinja2 stack
+- [x] HTML rendering via the existing Jinja2 stack
       (`output/html_output.py` shares its template loader).
+      (Shipped: `render_report(..., fmt="html")` renders the
+      six-section template at
+      `src/texlint/output/templates/conformance.html.j2`; covered
+      by `tests/unit/test_report_html.py`.)
 - [ ] CLI subcommand `jss-lint report PATH` (depends on Click
       sub-group migration).
 - [ ] Manuscript-metadata extraction from `\title{}` /
