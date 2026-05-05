@@ -18,6 +18,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:37',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§2.1 Preamble',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#preamble',
     }),
     'JSS-PRE-002': MappingProxyType({
         "category": 'preamble',
@@ -27,6 +29,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Address',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§2.1 Preamble',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#preamble',
     }),
     'JSS-PRE-003': MappingProxyType({
         "category": 'preamble',
@@ -36,6 +40,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Plaintitle',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§2.1 Preamble',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#preamble',
     }),
     'JSS-PRE-004': MappingProxyType({
         "category": 'preamble',
@@ -45,6 +51,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:120',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§2.1 Preamble',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#preamble',
     }),
     'JSS-PRE-005': MappingProxyType({
         "category": 'preamble',
@@ -54,6 +62,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:197',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§2.1 Preamble',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#preamble',
     }),
     'JSS-PRE-006': MappingProxyType({
         "category": 'preamble',
@@ -63,6 +73,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Plaintitle',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§2.1 Preamble',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#preamble',
     }),
     'JSS-PRE-007': MappingProxyType({
         "category": 'preamble',
@@ -72,6 +84,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Plainauthor',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§2.1 Preamble',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#preamble',
     }),
     'JSS-PRE-008': MappingProxyType({
         "category": 'preamble',
@@ -81,6 +95,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Plainkeywords',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§2.1 Preamble',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#preamble',
     }),
     'JSS-STRUCT-001': MappingProxyType({
         "category": 'structure',
@@ -90,6 +106,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:378',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§2.2 Structure',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#structure',
     }),
     'JSS-STRUCT-002': MappingProxyType({
         "category": 'structure',
@@ -99,6 +117,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:407',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§2.2 Structure',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#structure',
     }),
     'JSS-STRUCT-003': MappingProxyType({
         "category": 'structure',
@@ -108,6 +128,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:438',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§2.2 Structure',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#structure',
     }),
     'JSS-STRUCT-004': MappingProxyType({
         "category": 'structure',
@@ -117,6 +139,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§2.2 Structure',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#structure',
     }),
     'JSS-STRUCT-005': MappingProxyType({
         "category": 'structure',
@@ -126,6 +150,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:22',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§2.2 Structure',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#structure',
     }),
     'JSS-STRUCT-006': MappingProxyType({
         "category": 'structure',
@@ -135,6 +161,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:430',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§2.2 Structure',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#structure',
     }),
     'JSS-MARKUP-001': MappingProxyType({
         "category": 'markup',
@@ -144,6 +172,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\proglang',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.1 Markup',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#markup',
     }),
     'JSS-MARKUP-002': MappingProxyType({
         "category": 'markup',
@@ -153,6 +183,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\pkg',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.1 Markup',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#markup',
     }),
     'JSS-MARKUP-003': MappingProxyType({
         "category": 'markup',
@@ -162,6 +194,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\code',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§4.1 Markup',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#markup',
     }),
     'JSS-MARKUP-004': MappingProxyType({
         "category": 'markup',
@@ -171,6 +205,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.1 Markup',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#markup',
     }),
     'JSS-CITE-002': MappingProxyType({
         "category": 'citations',
@@ -191,6 +227,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-different-cite-citet-citep-commands-about',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§3.2 Citations',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#citations',
     }),
     'JSS-CITE-004': MappingProxyType({
         "category": 'citations',
@@ -200,6 +238,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:62',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§3.2 Citations',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#citations',
     }),
     'JSS-REFS-001': MappingProxyType({
         "category": 'references',
@@ -209,6 +249,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§3.3 References',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
     }),
     'JSS-REFS-002': MappingProxyType({
         "category": 'references',
@@ -218,6 +260,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§3.3 References',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
     }),
     'JSS-REFS-003': MappingProxyType({
         "category": 'references',
@@ -227,6 +271,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:421',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§3.3 References',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
     }),
     'JSS-REFS-004': MappingProxyType({
         "category": 'references',
@@ -236,6 +282,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-cite-r-packages',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§3.3 References',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
     }),
     'JSS-REFS-005': MappingProxyType({
         "category": 'references',
@@ -245,6 +293,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:473',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§3.3 References',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
     }),
     'JSS-REFS-006': MappingProxyType({
         "category": 'references',
@@ -254,6 +304,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§3.3 References',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
     }),
     'JSS-REFS-007': MappingProxyType({
         "category": 'references',
@@ -263,6 +315,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:473',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§3.3 References',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
     }),
     'JSS-BIBTEX-001': MappingProxyType({
         "category": 'bibtex',
@@ -272,6 +326,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-cite-r-packages',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§5.1 Bibliography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#bibliography',
     }),
     'JSS-BIBTEX-002': MappingProxyType({
         "category": 'bibtex',
@@ -281,6 +337,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-cite-r-packages',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§5.1 Bibliography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#bibliography',
     }),
     'JSS-BIBTEX-003': MappingProxyType({
         "category": 'bibtex',
@@ -290,6 +348,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-cite-r-packages',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§5.1 Bibliography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#bibliography',
     }),
     'JSS-BIBTEX-004': MappingProxyType({
         "category": 'bibtex',
@@ -299,6 +359,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:45',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "guide_section": '§5.1 Bibliography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#bibliography',
     }),
     'JSS-NAME-001': MappingProxyType({
         "category": 'naming',
@@ -308,6 +370,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§6.1 Naming',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#naming',
     }),
     'JSS-NAME-002': MappingProxyType({
         "category": 'naming',
@@ -317,6 +381,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss',
         "inspects": ('bib_files',),
         "auto_fixable": True,
+        "guide_section": '§6.1 Naming',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#naming',
     }),
     'JSS-CAP-001': MappingProxyType({
         "category": 'capitalization',
@@ -326,6 +392,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§6.2 Capitalisation',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#capitalisation',
     }),
     'JSS-CAP-002': MappingProxyType({
         "category": 'capitalization',
@@ -335,6 +403,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§6.2 Capitalisation',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#capitalisation',
     }),
     'JSS-CAP-003': MappingProxyType({
         "category": 'capitalization',
@@ -344,6 +414,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§6.2 Capitalisation',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#capitalisation',
     }),
     'JSS-CAP-004': MappingProxyType({
         "category": 'capitalization',
@@ -353,6 +425,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:48',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§6.2 Capitalisation',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#capitalisation',
     }),
     'JSS-TYPO-001': MappingProxyType({
         "category": 'typography',
@@ -362,6 +436,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.3 Typography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#typography',
     }),
     'JSS-TYPO-002': MappingProxyType({
         "category": 'typography',
@@ -371,6 +447,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§4.3 Typography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#typography',
     }),
     'JSS-TYPO-003': MappingProxyType({
         "category": 'typography',
@@ -380,6 +458,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§4.3 Typography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#typography',
     }),
     'JSS-TYPO-004': MappingProxyType({
         "category": 'typography',
@@ -389,6 +469,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§4.3 Typography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#typography',
     }),
     'JSS-ABBR-001': MappingProxyType({
         "category": 'abbreviations',
@@ -398,6 +480,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-should-abbrevations-be-formatted',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§6.3 Abbreviations',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#abbreviations',
     }),
     'JSS-CODE-001': MappingProxyType({
         "category": 'code_style',
@@ -407,6 +491,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-should-code-be-formatted-in-the-manuscript',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§4.2 Code style',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#code-style',
     }),
     'JSS-CODE-002': MappingProxyType({
         "category": 'code_style',
@@ -416,6 +502,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.2 Code style',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#code-style',
     }),
     'JSS-CODE-003': MappingProxyType({
         "category": 'code_style',
@@ -425,6 +513,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-should-code-be-formatted-in-the-manuscript',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.2 Code style',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#code-style',
     }),
     'JSS-WIDTH-001': MappingProxyType({
         "category": 'code_width',
@@ -434,6 +524,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-should-code-be-formatted-in-the-manuscript',
         "inspects": ('raw_source',),
         "auto_fixable": False,
+        "guide_section": '§7.1 Line width',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#line-width',
     }),
     'JSS-OPER-001': MappingProxyType({
         "category": 'operators',
@@ -443,6 +535,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.4 Mathematical notation',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#mathematical-notation',
     }),
     'JSS-OPER-002': MappingProxyType({
         "category": 'operators',
@@ -452,6 +546,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.4 Mathematical notation',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#mathematical-notation',
     }),
     'JSS-OPER-003': MappingProxyType({
         "category": 'operators',
@@ -461,6 +557,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:154',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.4 Mathematical notation',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#mathematical-notation',
     }),
     'JSS-OPER-004': MappingProxyType({
         "category": 'operators',
@@ -470,6 +568,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:484',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.4 Mathematical notation',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#mathematical-notation',
     }),
     'JSS-XREF-001': MappingProxyType({
         "category": 'crossrefs',
@@ -479,6 +579,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§4.5 Cross-references',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#cross-references',
     }),
     'JSS-XREF-002': MappingProxyType({
         "category": 'crossrefs',
@@ -488,6 +590,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§4.5 Cross-references',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#cross-references',
     }),
     'JSS-XREF-003': MappingProxyType({
         "category": 'crossrefs',
@@ -497,6 +601,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§4.5 Cross-references',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#cross-references',
     }),
     'JSS-XREF-004': MappingProxyType({
         "category": 'crossrefs',
@@ -506,6 +612,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "guide_section": '§4.5 Cross-references',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#cross-references',
     }),
     'JSS-HOUSE-001': MappingProxyType({
         "category": 'house_style',
@@ -515,6 +623,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§8.1 House style',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#house-style',
     }),
     'JSS-HOUSE-002': MappingProxyType({
         "category": 'house_style',
@@ -524,6 +634,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('bib_files',),
         "auto_fixable": True,
+        "guide_section": '§8.1 House style',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#house-style',
     }),
     'JSS-HOUSE-003': MappingProxyType({
         "category": 'house_style',
@@ -533,6 +645,8 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:54',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "guide_section": '§8.1 House style',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#house-style',
     }),
 })
 

@@ -84,3 +84,18 @@ class TestCitationContract:
             rid for rid, meta in RULES.items() if meta.get("guide_section")
         ]
         assert backfilled, "no rule has a guide_section yet — backfill stalled"
+
+
+def test_every_citable_rule_is_backfilled() -> None:
+    """Every citable-category rule must populate guide_section
+    and guide_url after the spec-007 backfill PR."""
+    for rule_id, meta in RULES.items():
+        if meta["category"] in TOOL_SIDE_CATEGORIES:
+            continue
+        assert meta.get("guide_section"), (
+            f"{rule_id}: guide_section is unpopulated; "
+            "spec-007 backfill is required for every citable rule"
+        )
+        assert meta.get("guide_url"), (
+            f"{rule_id}: guide_url is unpopulated"
+        )
