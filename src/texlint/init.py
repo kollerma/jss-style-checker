@@ -1,12 +1,21 @@
 """Spec 010 — `jss-lint init` Python API.
 
-CLI integration follows after the Click sub-group migration ships
-(spec 009 deferred); this module is the seam.
+CLI integration shipped via the spec-009/010 Click subcommand batch.
+This module is the engine seam.
+
+Spec 010 follow-up (this version): precision-DB-aware suppression.
+When ``eval/precision-history.db`` is available locally, the
+generated ``.jss-lint.toml`` suppresses any rule whose corpus-wide
+precision (from the latest iteration) falls below ``--threshold``
+(default 0.90, matching Constitution §VI). The generated config's
+``ignore_rules`` list is annotated with the precision value and
+the iteration label so the user can audit each suppression.
 """
 
 from __future__ import annotations
 
 import os
+import sqlite3
 import tempfile
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -14,6 +23,10 @@ from datetime import date
 from pathlib import Path
 
 from texlint.api import ComplianceReport, Violation
+
+# Default DB location — relative to repo root. Callers may override via
+# the ``precision_db_path`` argument to :func:`run`.
+_DEFAULT_DB_PATH = Path("eval") / "precision-history.db"
 
 
 @dataclass(frozen=True)
@@ -24,6 +37,46 @@ class InitResult:
     must_fix_count: int
     suppressed_count: int
     total_violations: int
+
+
+def _read_precision_db(
+    db_path: Path,
+) -> tuple[dict[str, float], str | None]:
+    """Read the latest per-rule precision values from the eval-jss DB.
+
+    Returns ``({rule_id: precision}, label)``. ``label`` is the
+    iteration's human-readable tag (e.g. ``"iter-78-convergence"``)
+    so the generated TOML's comments can cite it. Returns ``({}, None)``
+    when the DB is missing or unreadable — the caller treats that as
+    "no precision data available; no auto-suppressions".
+
+    The DB schema lives in ``eval/schema.sql`` (spec 002). Only rules
+    with a non-NULL ``precision`` value in the latest ``full``-scope
+    run participate; rules without measured precision (status
+    ``NOT MEASURED``) are silently skipped.
+    """
+    if not db_path.is_file():
+        return {}, None
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    except sqlite3.OperationalError:  # pragma: no cover - permissions etc.
+        return {}, None
+    try:
+        latest = conn.execute(
+            "SELECT id, label FROM iterations ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        if latest is None:
+            return {}, None
+        latest_id, label = latest
+        rows = conn.execute(
+            "SELECT rule_id, precision FROM iteration_rule_stats "
+            "WHERE iteration_id = ? AND scope = 'full' "
+            "  AND precision IS NOT NULL",
+            (latest_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return {rid: float(p) for rid, p in rows}, label
 
 
 def _render_toml(
@@ -86,13 +139,21 @@ def run(
     dry_run: bool = False,
     threshold: float = 0.90,
     journal: str = "jss",
+    precision_db_path: Path | None = None,
 ) -> InitResult:
     """Build (and optionally write) a `.jss-lint.toml` for a manuscript.
 
     *target_dir* is the directory in which `.jss-lint.toml` will live.
     *report* is the read-only lint report against the manuscript.
-    *threshold* is currently informational; precision-DB-aware
-    suppressions are a follow-up.
+
+    *precision_db_path* points at the spec-002 eval-jss SQLite file.
+    When ``None`` (default) the function tries
+    ``<target_dir>/eval/precision-history.db`` and the canonical
+    repo-relative ``eval/precision-history.db``. When a DB is found,
+    every rule whose latest measured precision falls below
+    ``threshold`` is added to ``ignore_rules`` with an inline comment
+    citing the precision value + iteration label. When no DB is
+    found the generated config has an empty ``ignore_rules``.
     """
     if not 0.0 <= threshold <= 1.0:
         raise ValueError(f"--threshold must be between 0 and 1; got {threshold}")
@@ -107,10 +168,36 @@ def run(
     for v in report.violations:
         by_rule.setdefault(v.rule_id, []).append(v)
 
-    # v1: no precision-DB integration. The generated config has
-    # `ignore_rules = []` and the user can hand-edit. Future spec
-    # extends this to query the precision-history DB.
+    # Resolve the precision DB path. Order: explicit arg → target_dir
+    # sibling → repo-relative default (relative to the current working
+    # directory at call time).
+    candidates: list[Path] = []
+    if precision_db_path is not None:
+        candidates.append(precision_db_path)
+    else:
+        candidates.append(target_dir / "eval" / "precision-history.db")
+        candidates.append(_DEFAULT_DB_PATH)
+    db_used: Path | None = None
+    precision_per_rule: dict[str, float] = {}
+    db_label: str | None = None
+    for candidate in candidates:
+        if candidate.is_file():
+            precision_per_rule, db_label = _read_precision_db(candidate)
+            if precision_per_rule:
+                db_used = candidate
+                break
+
     ignored: list[tuple[str, str]] = []
+    if precision_per_rule:
+        for rid, precision in precision_per_rule.items():
+            if precision < threshold:
+                comment = (
+                    f"precision {precision:.2f} (run {db_label}), "
+                    f"below {threshold:.2f}"
+                )
+                ignored.append((rid, comment))
+    # When the DB is missing or empty the loop above is a no-op and
+    # `ignored` stays empty; this is the documented graceful path.
 
     contents = _render_toml(
         journal=journal,

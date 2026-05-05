@@ -439,7 +439,9 @@ def init_cmd(path: str, force: bool, dry_run: bool, threshold: float) -> None:
     else:
         click.echo(f"Wrote {result.config_path}")
         click.echo(
-            f"({result.must_fix_count} distinct rules in {result.total_violations} violations)"
+            f"({result.must_fix_count} distinct rules in {result.total_violations} violations"
+            f"; {result.suppressed_count} rule"
+            f"{'' if result.suppressed_count == 1 else 's'} auto-suppressed by precision DB)"
         )
 
 
