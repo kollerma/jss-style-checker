@@ -55,6 +55,26 @@ CREATE TABLE IF NOT EXISTS iteration_rule_stats (
 );
 
 CREATE INDEX IF NOT EXISTS idx_iter_rule_rule ON iteration_rule_stats(rule_id);
+
+-- spec 017: recall pipeline. Each `recall_history` row records one
+-- per-(rule, run) sample point. `corpus_hash` pins the corpus that
+-- was annotated when this measurement was taken so cross-snapshot
+-- comparisons stay reproducible per Constitution §XII. `recall` may
+-- be NULL for rules whose annotation set is empty (TP+FN == 0) — see
+-- `eval/recall.py::compute_recall` for the contract.
+CREATE TABLE IF NOT EXISTS recall_history (
+    run_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_timestamp TEXT NOT NULL,
+    corpus_hash   TEXT NOT NULL,
+    rule_id       TEXT NOT NULL,
+    tp            INTEGER NOT NULL,
+    fn            INTEGER NOT NULL,
+    recall        REAL,
+    UNIQUE (run_timestamp, rule_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_recall_history_rule ON recall_history(rule_id);
+CREATE INDEX IF NOT EXISTS idx_recall_history_ts   ON recall_history(run_timestamp);
 """
 
 
@@ -243,5 +263,71 @@ def recent_overall_precision(
             out.append((it_id, r["label"] or "", prec))
         out.reverse()
         return out
+    finally:
+        cx.close()
+
+
+# ---------------------------------------------------------------------------
+# Spec 017 — recall persistence
+# ---------------------------------------------------------------------------
+
+
+def record_recall(
+    db_path: Path,
+    *,
+    run_timestamp: str,
+    corpus_hash: str,
+    per_rule: list[tuple[str, int, int, float | None]],
+) -> int:
+    """Persist one ``recall_history`` snapshot.
+
+    ``per_rule`` is a list of ``(rule_id, tp, fn, recall)`` tuples; one
+    row is inserted per entry. Returns the number of rows written.
+    """
+    init(db_path)
+    cx = connect(db_path)
+    try:
+        rows = [
+            (run_timestamp, corpus_hash, rid, tp, fn, recall)
+            for rid, tp, fn, recall in per_rule
+        ]
+        cx.executemany(
+            "INSERT INTO recall_history "
+            "(run_timestamp, corpus_hash, rule_id, tp, fn, recall) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            rows,
+        )
+        return len(rows)
+    finally:
+        cx.close()
+
+
+def latest_recall_per_rule(db_path: Path) -> dict[str, float | None]:
+    """Return ``{rule_id: recall}`` from the most recent
+    ``recall_history`` snapshot. ``{}`` when the DB / table is empty
+    or absent.
+
+    The "most recent snapshot" is the set of rows whose
+    ``run_timestamp`` is the lexicographic max — works because
+    timestamps are ISO-8601 UTC.
+    """
+    if not db_path.exists():
+        return {}
+    cx = connect(db_path)
+    try:
+        # Schema may not be applied yet on a stale DB; init() is
+        # idempotent so call it to be safe.
+        cx.executescript(_SCHEMA)
+        latest = cx.execute(
+            "SELECT MAX(run_timestamp) AS ts FROM recall_history"
+        ).fetchone()
+        if latest is None or latest["ts"] is None:
+            return {}
+        ts = latest["ts"]
+        rows = cx.execute(
+            "SELECT rule_id, recall FROM recall_history WHERE run_timestamp = ?",
+            (ts,),
+        ).fetchall()
+        return {r["rule_id"]: r["recall"] for r in rows}
     finally:
         cx.close()
