@@ -18,6 +18,36 @@ from rich.table import Table
 from texlint.api import CategoryStatus, ComplianceReport, Severity, ToolConfig, Violation
 
 
+def _guide_sections() -> dict[str, str]:
+    """Return a mapping ``rule_id -> guide_section`` for every catalogue rule.
+
+    Cached on first call. Sentinel rules (e.g. ``JSS-PARSE-000``) are not
+    in the catalogue and absent from this dict, so a missing key signals
+    "no suffix to render" without an extra check.
+    """
+    cached = getattr(_guide_sections, "_cache", None)
+    if cached is None:
+        from texlint.journals.jss._catalogue_data import RULES
+
+        cached = {
+            rid: str(meta.get("guide_section") or "") for rid, meta in RULES.items()
+        }
+        _guide_sections._cache = cached  # type: ignore[attr-defined]
+    return cached
+
+
+def _guide_suffix(rule_id: str) -> str:
+    """Return ``" (see <section>)"`` for citable rules, else an empty string.
+
+    The leading single space lets callers append the suffix unconditionally
+    to an existing message without an additional separator check.
+    """
+    section = _guide_sections().get(rule_id, "")
+    if not section or section == "internal":
+        return ""
+    return f" (see {section})"
+
+
 def _display_path(raw: str) -> str:
     """Return `raw` relative to CWD when possible.
 
@@ -96,7 +126,7 @@ def _render_author(report: ComplianceReport) -> None:
                 locator,
                 f"[{style}]{v.severity.value}[/{style}]" if style else v.severity.value,
                 v.rule_id,
-                v.message,
+                f"{v.message}{_guide_suffix(v.rule_id)}",
                 v.suggestion or "",
             )
         console.print(table)
