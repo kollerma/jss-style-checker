@@ -68,6 +68,7 @@ rules:
     auto_fixable: false
     guide_section: "§2.1 Preamble"
     guide_url: "https://www.jstatsoft.org/about/submissions#preamble"
+    explanation: "Document class must be jss with a valid class option (article, codesnippet, bookreview, softwarereview)."
     notes: |
       The class line defines four mutually-exclusive publication types (jss.cls:37-44); one must be selected.
       Class-option default: `\@articletrue` at jss.cls:26 means `article` is the silent default if no option is
@@ -100,6 +101,7 @@ rules:
     auto_fixable: false
     guide_section: "§2.1 Preamble"
     guide_url: "https://www.jstatsoft.org/about/submissions#preamble"
+    explanation: "Preamble defines \\Address{} with author affiliation and contact."
 
   - rule_id: JSS-PRE-003
     category: preamble
@@ -116,6 +118,7 @@ rules:
     auto_fixable: true
     guide_section: "§2.1 Preamble"
     guide_url: "https://www.jstatsoft.org/about/submissions#preamble"
+    explanation: "When \\title{} contains LaTeX markup, preamble also defines \\Plaintitle{} with the markup-free form."
     notes: |
       jss.cls:82 defines \Plaintitle; article.tex:30 uses it. Rule fires only when \title{} contains a LaTeX
       macro call (\proglang, \pkg, \code, \emph, \textit, etc). A plain-text \title{} does not require a
@@ -144,6 +147,7 @@ rules:
     auto_fixable: false
     guide_section: "§2.1 Preamble"
     guide_url: "https://www.jstatsoft.org/about/submissions#preamble"
+    explanation: "\\Abstract{} is present and overrides the sentinel placeholder from jss.cls."
     notes: |
       jss.cls:120 sets a sentinel "---!!!---an abstract is required---!!!---"; a real paper must override it.
 
@@ -166,6 +170,7 @@ rules:
     auto_fixable: false
     guide_section: "§2.1 Preamble"
     guide_url: "https://www.jstatsoft.org/about/submissions#preamble"
+    explanation: "\\Keywords{} is present and overrides the sentinel placeholder from jss.cls."
     notes: |
       jss.cls:197 sets a sentinel "---!!!---at least one keyword is required---!!!---"; a real paper must override it.
 
@@ -185,6 +190,7 @@ rules:
     auto_fixable: true
     guide_section: "§2.1 Preamble"
     guide_url: "https://www.jstatsoft.org/about/submissions#preamble"
+    explanation: "\\Plaintitle, \\Plainauthor, \\Plainkeywords contain no LaTeX markup (PDF metadata must be plain text)."
     notes: |
       jss.cls:82/84/94 define the plain-text twin commands for PDF metadata (pdftitle, pdfauthor, pdfkeywords
       via hyperref — see jss.cls:449-465). Any LaTeX macro inside these values lands verbatim in the PDF info
@@ -207,6 +213,7 @@ rules:
     auto_fixable: true
     guide_section: "§2.1 Preamble"
     guide_url: "https://www.jstatsoft.org/about/submissions#preamble"
+    explanation: "When \\author{} contains LaTeX markup, preamble also defines \\Plainauthor{} with the markup-free form."
     notes: |
       jss.cls:84 defines \Plainauthor; jss.cls:121 sets its default to `\@author` (i.e., whatever is in
       \author{} verbatim). When \author{} contains macros (\orcidlink, affiliation \\ separators, \textbf, …)
@@ -229,6 +236,7 @@ rules:
     auto_fixable: true
     guide_section: "§2.1 Preamble"
     guide_url: "https://www.jstatsoft.org/about/submissions#preamble"
+    explanation: "When \\Keywords{} contains LaTeX markup, preamble also defines \\Plainkeywords{} with the markup-free form."
     notes: |
       jss.cls:94 defines \Plainkeywords; jss.cls:153/161 set its default to `\@Keywords` verbatim. When
       \Keywords{} contains a LaTeX macro, the default value leaks raw LaTeX into the PDF's pdfkeywords
@@ -259,6 +267,7 @@ rules:
     auto_fixable: false
     guide_section: "§2.2 Structure"
     guide_url: "https://www.jstatsoft.org/about/submissions#structure"
+    explanation: "Document ends with a summary / discussion section before the bibliography."
     notes: |
       DRAFT — reviewer flagged 2026-04-23 for either a better authority anchor or removal. Template comment at
       article.tex:381 says "As usual …" (placeholder) which is weak grounding. Candidate for removal in the
@@ -280,6 +289,7 @@ rules:
     auto_fixable: true
     guide_section: "§2.2 Structure"
     guide_url: "https://www.jstatsoft.org/about/submissions#structure"
+    explanation: "Acknowledgments section uses American spelling (not \"Acknowledgements\")."
     notes: |
       article.tex:407 carries the explicit template comment "note the AE spelling".
 
@@ -303,6 +313,7 @@ rules:
     auto_fixable: false
     guide_section: "§2.2 Structure"
     guide_url: "https://www.jstatsoft.org/about/submissions#structure"
+    explanation: "Appendix sections have proper titles instead of a bare \"Appendix\"."
 
   - rule_id: JSS-STRUCT-004
     category: structure
@@ -320,6 +331,7 @@ rules:
     auto_fixable: false
     guide_section: "§2.2 Structure"
     guide_url: "https://www.jstatsoft.org/about/submissions#structure"
+    explanation: "References are declared via \\bibliography{} rather than a hand-written thebibliography environment."
 
   - rule_id: JSS-STRUCT-005
     category: structure
@@ -335,6 +347,7 @@ rules:
     auto_fixable: true
     guide_section: "§2.2 Structure"
     guide_url: "https://www.jstatsoft.org/about/submissions#structure"
+    explanation: "\\author{} separates authors with \\And or \\AND (not lowercase \\and)."
     notes: |
       article.tex:22-23 template comment specifies `\And` (inline separator) or `\AND` (line-break separator);
       the lowercase `\and` is LaTeX's default but is not wired to jss.cls's title-block layout (jss.cls:339-344)
@@ -367,6 +380,7 @@ rules:
     auto_fixable: true
     guide_section: "§2.2 Structure"
     guide_url: "https://www.jstatsoft.org/about/submissions#structure"
+    explanation: "Appendix follows the bibliography with a \\newpage (or \\clearpage) separator."
     notes: |
       article.tex:430 places an explicit `\newpage` between `\bibliography{refs}` (line 423) and the
       `\begin{appendix}` env (line 432). Appendices start on a fresh page in JSS papers. The check fires when
@@ -391,6 +405,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.1 Markup"
     guide_url: "https://www.jstatsoft.org/about/submissions#markup"
+    explanation: "Programming-language names in prose are wrapped in \\proglang{}."
     notes: |
       Style guide SG-005 mirrors this. jss.cls:476 defines \proglang as \textsf. Cross-checked against
       terms.LANGUAGES. FP-reduction strategies required for reasonable precision:
@@ -413,6 +428,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.1 Markup"
     guide_url: "https://www.jstatsoft.org/about/submissions#markup"
+    explanation: "Software-package names in prose are wrapped in \\pkg{}."
     notes: |
       Style guide SG-005 mirrors this. Cross-checked against terms.R_PACKAGES so the rule does not false-positive on normal English words.
 
@@ -430,6 +446,7 @@ rules:
     auto_fixable: false
     guide_section: "§4.1 Markup"
     guide_url: "https://www.jstatsoft.org/about/submissions#markup"
+    explanation: "Inline function, argument, and command names are wrapped in \\code{}."
     notes: |
       Style guide SG-030 mirrors this.
 
@@ -447,6 +464,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.1 Markup"
     guide_url: "https://www.jstatsoft.org/about/submissions#markup"
+    explanation: "Section titles containing markup supply a plain-text shim via \\section[plain]{markup}."
 
   # ---------------------------------------------------------------------------
   # citations — JSS-CITE-001 is retired (see top-of-file note)
@@ -464,6 +482,7 @@ rules:
       We fit the model using \pkg{mgcv} \citep{Wood:2006}.
     inspects: [tex_files]
     auto_fixable: false
+    explanation: "First occurrence of a software package has a citation within the same paragraph. See §3.2 Citations."
     guide_section: "§3.2 Citations"
     guide_url: "https://www.jstatsoft.org/about/submissions#citations"
     notes: |
@@ -487,6 +506,7 @@ rules:
     auto_fixable: true
     guide_section: "§3.2 Citations"
     guide_url: "https://www.jstatsoft.org/about/submissions#citations"
+    explanation: "Avoid bracket-in-bracket citation forms like (\\cite{...}); use \\citep{...} instead."
 
   - rule_id: JSS-CITE-004
     category: citations
@@ -502,6 +522,7 @@ rules:
     auto_fixable: false
     guide_section: "§3.2 Citations"
     guide_url: "https://www.jstatsoft.org/about/submissions#citations"
+    explanation: "Citations use natbib commands (\\cite, \\citet, \\citep, \\citealp) rather than hardcoded author-year text."
     notes: |
       jss.cls:62 loads natbib in author-year mode; hardcoded references bypass the bibliography and cannot be
       back-linked to refs.bib. The regex-based match MUST mask:
@@ -537,6 +558,7 @@ rules:
     auto_fixable: false
     guide_section: "§3.3 References"
     guide_url: "https://www.jstatsoft.org/about/submissions#references"
+    explanation: "BibTeX entries carry a year field so natbib author-year citations render correctly."
     notes: |
       Retrofit of the Step 1 smoke rule bib_001_year.py. natbib in author-year mode (jss.cls:62) emits "(????)" when year is missing.
 
@@ -562,6 +584,7 @@ rules:
     auto_fixable: false
     guide_section: "§3.3 References"
     guide_url: "https://www.jstatsoft.org/about/submissions#references"
+    explanation: "BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase)."
     notes: |
       Tight companion to the loose heuristic in JSS-REFS-006. Split per reviewer feedback 2026-04-23: REFS-002
       is the high-precision narrow check (every word lowercase), REFS-006 catches subtler violations. Both are
@@ -592,6 +615,7 @@ rules:
     auto_fixable: false
     guide_section: "§3.3 References"
     guide_url: "https://www.jstatsoft.org/about/submissions#references"
+    explanation: "BibTeX entries include a doi field where one is available (advisory)."
     notes: |
       Advisory-only. Fires on article / inproceedings / incollection / book entry types lacking a `doi` field.
       The rule cannot verify "where available" — some entries legitimately have no DOI (older journals, book
@@ -618,6 +642,7 @@ rules:
     auto_fixable: false
     guide_section: "§3.3 References"
     guide_url: "https://www.jstatsoft.org/about/submissions#references"
+    explanation: "BibTeX titles use JSS markup (\\proglang, \\pkg, \\code) for language and package names."
 
   - rule_id: JSS-REFS-005
     category: references
@@ -643,6 +668,7 @@ rules:
     auto_fixable: false
     guide_section: "§3.3 References"
     guide_url: "https://www.jstatsoft.org/about/submissions#references"
+    explanation: "Journal titles in BibTeX entries are not abbreviated."
     notes: |
       Template comment at article.tex:473 pins this: "Journal titles should not be abbreviated and in title case."
       This rule covers the not-abbreviated half; JSS-REFS-007 covers the title-case half. Heuristic — flag journal
@@ -668,6 +694,7 @@ rules:
     auto_fixable: false
     guide_section: "§3.3 References"
     guide_url: "https://www.jstatsoft.org/about/submissions#references"
+    explanation: "BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case)."
     notes: |
       Loose companion to JSS-REFS-002's tight heuristic. Checks: first word must be capitalised; word after a
       colon or hyphen must be capitalised (style-guide SG-013 cross-reference). Higher false-positive rate than
@@ -697,6 +724,7 @@ rules:
     auto_fixable: false
     guide_section: "§3.3 References"
     guide_url: "https://www.jstatsoft.org/about/submissions#references"
+    explanation: "Journal titles in BibTeX entries are in title case."
     notes: |
       article.tex:473 mandates "Journal titles should not be abbreviated and in title case." JSS-REFS-005 covers
       the not-abbreviated half; this rule covers the title-case half. Same principal-word heuristic as REFS-002.
@@ -727,6 +755,7 @@ rules:
     auto_fixable: false
     guide_section: "§5.1 Bibliography"
     guide_url: "https://www.jstatsoft.org/about/submissions#bibliography"
+    explanation: "Every BibTeX entry has a non-empty citation key."
     notes: |
       Style-guide SG-017 requires BibTeX to be valid. An entry without a key cannot be cited and fails BibTeX validation.
 
@@ -758,6 +787,7 @@ rules:
     auto_fixable: false
     guide_section: "§5.1 Bibliography"
     guide_url: "https://www.jstatsoft.org/about/submissions#bibliography"
+    explanation: "BibTeX citation keys are unique within the database."
 
   - rule_id: JSS-BIBTEX-003
     category: bibtex
@@ -781,6 +811,7 @@ rules:
     auto_fixable: false
     guide_section: "§5.1 Bibliography"
     guide_url: "https://www.jstatsoft.org/about/submissions#bibliography"
+    explanation: "BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …)."
     notes: |
       Required-field matrix (per BibTeX standard + JSS SG-017 "valid BibTeX"):
         * article        → author, title, journal, year
@@ -820,6 +851,7 @@ rules:
     auto_fixable: false
     guide_section: "§5.1 Bibliography"
     guide_url: "https://www.jstatsoft.org/about/submissions#bibliography"
+    explanation: "Entries with 6+ authors use \\shortcites{} or the shortnames class option is enabled."
     notes: |
       natbib's default author-year output for 6+-author entries produces "A. Smith, B. Jones, C. Chen, D. Lopez,
       E. Patel, F. Nguyen, and G. Walker (2020)" which overflows line wrapping and clutters the text.
@@ -845,6 +877,7 @@ rules:
     auto_fixable: true
     guide_section: "§6.1 Naming"
     guide_url: "https://www.jstatsoft.org/about/submissions#naming"
+    explanation: "Programming-language names use their canonical capitalisation."
     notes: |
       Style guide SG-044..SG-047 pin "Fortran", "Java", "MATLAB", "S-PLUS". Lookup goes through terms.canonical_form(); the rule only fires on tokens the shared list knows about.
 
@@ -868,6 +901,7 @@ rules:
     auto_fixable: true
     guide_section: "§6.1 Naming"
     guide_url: "https://www.jstatsoft.org/about/submissions#naming"
+    explanation: "Publisher and journal names follow JSS conventions (e.g., \"Springer-Verlag\", \"The Annals of Statistics\")."
     notes: |
       Style guide SG-048..SG-052 pin the canonical forms for a handful of journals and publishers that appear frequently in JSS references.
 
@@ -889,6 +923,7 @@ rules:
     auto_fixable: false
     guide_section: "§6.2 Capitalisation"
     guide_url: "https://www.jstatsoft.org/about/submissions#capitalisation"
+    explanation: "\\title{} is in title style (principal words capitalised)."
     notes: |
       Style guide SG-007 and SG-014. Pragmatic heuristic: flag titles whose first word is lowercase OR whose
       every word is lowercase. Common function words (of, and, the, in, for, a, an, to, with) may stay
@@ -909,6 +944,7 @@ rules:
     auto_fixable: false
     guide_section: "§6.2 Capitalisation"
     guide_url: "https://www.jstatsoft.org/about/submissions#capitalisation"
+    explanation: "Section titles are in sentence style (first word capitalised; others lowercase except proper names)."
     notes: |
       Style guide SG-009. Also covers SG-013 "In sentence style, capitalise only the first word and the first
       word after colon/hyphen; proper names remain uppercase" — the rule enforces the capital-after-colon /
@@ -930,6 +966,7 @@ rules:
     auto_fixable: false
     guide_section: "§6.2 Capitalisation"
     guide_url: "https://www.jstatsoft.org/about/submissions#capitalisation"
+    explanation: "Figure / table captions are in sentence style."
     notes: |
       Style guide SG-010 and SG-013. Same sentence-style semantics as JSS-CAP-002 applied to captions.
 
@@ -947,6 +984,7 @@ rules:
     auto_fixable: false
     guide_section: "§6.2 Capitalisation"
     guide_url: "https://www.jstatsoft.org/about/submissions#capitalisation"
+    explanation: "\\Keywords{} is comma-separated and in sentence case."
     notes: |
       article.tex:48 carries the template comment "Should be comma-separated and in sentence case."
 
@@ -968,6 +1006,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.3 Typography"
     guide_url: "https://www.jstatsoft.org/about/submissions#typography"
+    explanation: "Figure and table captions end with a period."
 
   - rule_id: JSS-TYPO-002
     category: typography
@@ -983,6 +1022,7 @@ rules:
     auto_fixable: false
     guide_section: "§4.3 Typography"
     guide_url: "https://www.jstatsoft.org/about/submissions#typography"
+    explanation: "Figure / table captions avoid emphasis macros wrapping the whole caption (\\emph, \\textbf, \\textit on full caption)."
     notes: |
       Applies only to emphasis macros wrapping the whole caption (or the full non-label portion of it). Targeted
       formatting on short phrases within a caption is allowed — e.g., italicising a Latin species name, a
@@ -1008,6 +1048,7 @@ rules:
     auto_fixable: false
     guide_section: "§4.3 Typography"
     guide_url: "https://www.jstatsoft.org/about/submissions#typography"
+    explanation: "Tables do not use footnote-style annotations; annotations go in the caption."
 
   - rule_id: JSS-TYPO-004
     category: typography
@@ -1029,6 +1070,7 @@ rules:
     auto_fixable: false
     guide_section: "§4.3 Typography"
     guide_url: "https://www.jstatsoft.org/about/submissions#typography"
+    explanation: "\\caption{} appears after the figure / table content, not before."
     notes: |
       Style guide SG-021: "Captions appear below the corresponding figure/table." Closes the §1.3 SG-021 gap
       from the reviewer checklist. Caption placement before content produces visual separation between the
@@ -1052,6 +1094,7 @@ rules:
     auto_fixable: true
     guide_section: "§6.3 Abbreviations"
     guide_url: "https://www.jstatsoft.org/about/submissions#abbreviations"
+    explanation: "Abbreviations are in uppercase without periods or additional formatting."
 
   # JSS-ABBR-002 retired 2026-04-23 (reviewer judgement: out-of-scope);
   # see retired_rule_ids comment at top of file.
@@ -1079,6 +1122,7 @@ rules:
     auto_fixable: false
     guide_section: "§4.2 Code style"
     guide_url: "https://www.jstatsoft.org/about/submissions#code-style"
+    explanation: "Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text."
 
   - rule_id: JSS-CODE-002
     category: code_style
@@ -1100,6 +1144,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.2 Code style"
     guide_url: "https://www.jstatsoft.org/about/submissions#code-style"
+    explanation: "R library() and data() calls quote their first argument."
 
   - rule_id: JSS-CODE-003
     category: code_style
@@ -1115,6 +1160,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.2 Code style"
     guide_url: "https://www.jstatsoft.org/about/submissions#code-style"
+    explanation: "Code samples use spaces around operators and after commas."
 
   # ---------------------------------------------------------------------------
   # code_width — retrofits JSS-SRC-001 (line-width scan; raw_source)
@@ -1140,6 +1186,7 @@ rules:
     auto_fixable: false
     guide_section: "§7.1 Line width"
     guide_url: "https://www.jstatsoft.org/about/submissions#line-width"
+    explanation: "Code input / output inside Sinput / CodeInput / CodeOutput environments fits within the configured column limit."
     notes: |
       Retrofit of the Step 1 smoke rule src_001_width.py. Line-length checks are byte-level, not structural —
       Constitution §II carve-out applies (line width is intrinsically textual). Default column limit is 80,
@@ -1164,6 +1211,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.4 Mathematical notation"
     guide_url: "https://www.jstatsoft.org/about/submissions#mathematical-notation"
+    explanation: "Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen)."
 
   - rule_id: JSS-OPER-002
     category: operators
@@ -1179,6 +1227,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.4 Mathematical notation"
     guide_url: "https://www.jstatsoft.org/about/submissions#mathematical-notation"
+    explanation: "Transpose is typeset with \\top rather than a superscript prime or literal T."
 
   - rule_id: JSS-OPER-003
     category: operators
@@ -1206,6 +1255,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.4 Mathematical notation"
     guide_url: "https://www.jstatsoft.org/about/submissions#mathematical-notation"
+    explanation: "Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks)."
     notes: |
       article.tex:161-165 template comment says "no spaces before/after equations so that 'normal' spacing is
       used and not a new paragraph started". Carve-out: when the equation's content ends with a period (full
@@ -1227,6 +1277,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.4 Mathematical notation"
     guide_url: "https://www.jstatsoft.org/about/submissions#mathematical-notation"
+    explanation: "Expectation / variance / covariance / probability use jss.cls shortcuts \\E, \\VAR, \\COV, \\Prob."
     notes: |
       jss.cls:484-487 define \E, \VAR, \COV, \Prob (all as \mathsf). Ad-hoc alternatives (\mathbb{E},
       \mathrm{Var}, \operatorname{Cov}, \mathrm{P}) produce visually inconsistent output across JSS papers.
@@ -1251,6 +1302,7 @@ rules:
     auto_fixable: false
     guide_section: "§4.5 Cross-references"
     guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Figures and tables carry \\label{} and are referenced by \\ref{} rather than manual numbering."
     notes: |
       Scope narrowed 2026-04-23 (reviewer split): figures and tables carry the warning severity; numbered
       equations are covered separately by JSS-XREF-004 at info severity. An unreferenced figure/table suggests
@@ -1270,6 +1322,7 @@ rules:
     auto_fixable: true
     guide_section: "§4.5 Cross-references"
     guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...})."
     notes: |
       SG-060 makes this advisory for manuscripts with many equation references; the rule ships at info severity
       and is easy to suppress per-paper.
@@ -1288,6 +1341,7 @@ rules:
     auto_fixable: false
     guide_section: "§4.5 Cross-references"
     guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Cross-references to subsections use \"Section x.y\" rather than \"Subsection x.y\"."
 
   - rule_id: JSS-XREF-004
     category: crossrefs
@@ -1308,6 +1362,7 @@ rules:
     auto_fixable: false
     guide_section: "§4.5 Cross-references"
     guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Numbered equations carry \\label{} and are referenced from the text."
     notes: |
       Companion to JSS-XREF-001 for numbered equations only; info severity because unreferenced numbered
       equations are a style nit, not a missing-callout signal (the reader still sees the equation in place).
@@ -1331,6 +1386,7 @@ rules:
     auto_fixable: true
     guide_section: "§8.1 House style"
     guide_url: "https://www.jstatsoft.org/about/submissions#house-style"
+    explanation: "\"e.g.\" and \"i.e.\" are followed by a comma so LaTeX does not treat the period as a sentence end."
 
   - rule_id: JSS-HOUSE-002
     category: house_style
@@ -1352,6 +1408,7 @@ rules:
     auto_fixable: true
     guide_section: "§8.1 House style"
     guide_url: "https://www.jstatsoft.org/about/submissions#house-style"
+    explanation: "Book editions are indicated as 2nd, 3rd, etc., not as \"second\" or \"2e\"."
 
   - rule_id: JSS-HOUSE-003
     category: house_style
@@ -1369,5 +1426,6 @@ rules:
     auto_fixable: true
     guide_section: "§8.1 House style"
     guide_url: "https://www.jstatsoft.org/about/submissions#house-style"
+    explanation: "Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref)."
     notes: |
       jss.cls:54 loads graphicx/xcolor/ae/fancyvrb and jss.cls:254 loads hyperref; duplicate \usepackage calls are silently ignored by LaTeX but clutter the preamble. Style guide SG-002 ("keep LaTeX code as simple as possible") backs this.

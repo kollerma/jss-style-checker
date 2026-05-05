@@ -36,6 +36,7 @@ def _level(sev: Severity | str) -> str:
 def _render_one_terminal(rule_id: str, meta: dict) -> str:
     section = meta.get("guide_section") or ""
     url = meta.get("guide_url")
+    body = meta.get("explanation") or meta["message_template"]
     lines = [
         f"{rule_id} ({_level(meta['severity']).upper()})",
         f"  Category: {meta['category']}",
@@ -46,13 +47,14 @@ def _render_one_terminal(rule_id: str, meta: dict) -> str:
         if url:
             lines.append(f"  See: {url}")
     lines.append("")
-    lines.append(meta["message_template"])
+    lines.append(body)
     return "\n".join(lines) + "\n"
 
 
 def _render_one_markdown(rule_id: str, meta: dict) -> str:
     section = meta.get("guide_section") or ""
     url = meta.get("guide_url")
+    body = meta.get("explanation") or meta["message_template"]
     parts = [f"# {rule_id}", ""]
     parts.append(f"- **Severity:** {_level(meta['severity'])}")
     parts.append(f"- **Category:** {meta['category']}")
@@ -62,7 +64,7 @@ def _render_one_markdown(rule_id: str, meta: dict) -> str:
     elif section:
         parts.append(f"- **JSS guide:** {section}")
     parts.append("")
-    parts.append(meta["message_template"])
+    parts.append(body)
     parts.append("")
     return "\n".join(parts)
 

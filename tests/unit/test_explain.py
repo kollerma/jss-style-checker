@@ -25,6 +25,20 @@ class TestSingleRule:
         assert "[§3.2 Citations]" in out
         assert "https://" in out
 
+    def test_terminal_uses_explanation_when_populated(self) -> None:
+        """Spec 009: when a rule populates `explanation`, the terminal
+        renderer surfaces it instead of the terse message_template
+        fallback. JSS-CITE-002 was backfilled in the spec-009 catalogue
+        extension, so the rendered text must include the prose
+        (which includes the trailing "See §..." reference)."""
+        out = render("JSS-CITE-002", fmt="terminal")
+        assert "See §3.2 Citations." in out
+
+    def test_markdown_uses_explanation_when_populated(self) -> None:
+        """Spec 009: same as the terminal test, in markdown form."""
+        out = render("JSS-CITE-002", fmt="markdown")
+        assert "See §3.2 Citations." in out
+
     def test_unknown_raises_keyerror(self) -> None:
         with pytest.raises(KeyError):
             render("JSS-FOO-999", fmt="terminal")

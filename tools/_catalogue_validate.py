@@ -79,6 +79,16 @@ OPTIONAL_RULE_KEYS: frozenset[str] = frozenset(
         # ships in a follow-up PR.
         "guide_section",
         "guide_url",
+        # Spec-009 explain surface — per-rule prose plus optional
+        # bad/good fragments. `explanation` ships across the whole
+        # catalogue (enforced by the strict contract test
+        # `test_every_rule_has_explanation`); the fixture fragments
+        # are independently optional. Strict-validation move to
+        # REQUIRED is deferred so YAML editors can drop the field
+        # while iterating without invalidating the whole document.
+        "explanation",
+        "example_bad",
+        "example_good",
     }
 )
 

@@ -369,6 +369,10 @@ def test_no_forbidden_keys_on_rules(catalogue_doc: dict) -> None:
         # spec 007 — optional citation surface.
         "guide_section",
         "guide_url",
+        # spec 009 — optional explain surface.
+        "explanation",
+        "example_bad",
+        "example_good",
     }
     forbidden_examples = {"fix", "fix_suggestion", "formats", "status", "owner"}
     for rule in catalogue_doc["rules"]:
