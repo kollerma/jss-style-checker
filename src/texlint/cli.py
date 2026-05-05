@@ -98,6 +98,33 @@ def _determine_exit_code(report: Any) -> int:
     return 0
 
 
+def _lint_paths(paths: tuple[str, ...]) -> tuple[Any, ToolConfig]:
+    """Shared lint pipeline used by ``init`` and ``report`` subcommands.
+
+    Mirrors the bare-PATHS branch in :func:`main`: load config, parse the
+    inputs, load the journal module, and run the rule engine. On any
+    failure it ``sys.exit``s with the appropriate code so callers do not
+    need to re-implement error handling.
+    """
+    try:
+        cfg = load_config({}, Path.cwd())
+    except Exception as exc:  # pragma: no cover - defensive
+        _eprint(f"jss-lint: failed to load .jss-lint.toml: {exc}")
+        sys.exit(2)
+
+    document, code = _parse_inputs(paths)
+    if document is None:
+        sys.exit(code)
+
+    try:
+        journal_module = load_journal(cfg.journal)
+    except (JournalNotFoundError, InvalidJournalError) as exc:
+        _eprint(f"jss-lint: {exc}")
+        sys.exit(2)
+
+    return run(cfg, document, journal_module), cfg
+
+
 @click.group(
     context_settings={"help_option_names": ["-h", "--help"]},
     name="jss-lint",
@@ -203,6 +230,18 @@ def main(
     if ctx.invoked_subcommand is not None:
         return
 
+    # Manual subcommand dispatch: the group keeps a ``paths`` nargs=-1
+    # argument so that the historic ``jss-lint <PATHS>`` invocation
+    # works without a ``lint`` prefix. As a side-effect, Click parses
+    # subcommand names into ``paths`` instead of dispatching. Detect
+    # the case here and forward to the matching subcommand.
+    if paths and paths[0] in main.commands:
+        sub = main.commands[paths[0]]
+        sub_ctx = sub.make_context(paths[0], list(paths[1:]), parent=ctx)
+        with sub_ctx:
+            sub.invoke(sub_ctx)
+        return
+
     if not paths:
         _eprint("jss-lint: at least one FILE argument is required.")
         sys.exit(2)
@@ -281,6 +320,215 @@ def main(
 
     _dispatch_renderer(cfg.output, report, cfg)
     sys.exit(_determine_exit_code(report))
+
+
+@main.command(name="explain")
+@click.argument("rule_id", required=False, default=None)
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["terminal", "markdown"], case_sensitive=False),
+    default="terminal",
+    help="Output format (default: terminal).",
+)
+@click.option(
+    "--example",
+    "example",
+    is_flag=True,
+    default=False,
+    help="Reserved for fixture pull-through; currently no-op.",
+)
+def explain_cmd(rule_id: str | None, fmt: str, example: bool) -> None:
+    """Render a rule explanation (or a per-category listing).
+
+    Spec 009. ``--example`` is reserved for fixture pull-through and is a
+    no-op in v1.
+    """
+    from . import explain as _explain
+
+    fmt_norm = fmt.lower()
+    try:
+        out = _explain.render(rule_id, fmt=fmt_norm)
+    except KeyError:
+        unknown = (rule_id or "").strip().upper()
+        _eprint(f"error: unknown rule id {unknown}")
+        suggestions = _explain.did_you_mean(unknown)
+        if suggestions:
+            _eprint(f"did you mean: {', '.join(suggestions)}")
+        sys.exit(2)
+    click.echo(out, nl=False)
+
+
+@main.command(name="init")
+@click.argument(
+    "path",
+    required=False,
+    default=".",
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=str),
+)
+@click.option("--force", "force", is_flag=True, default=False)
+@click.option("--dry-run", "dry_run", is_flag=True, default=False)
+@click.option("--threshold", "threshold", type=float, default=0.90)
+def init_cmd(path: str, force: bool, dry_run: bool, threshold: float) -> None:
+    """Initialise a ``.jss-lint.toml`` for a manuscript directory.
+
+    Spec 010. Lints PATH first, then writes (or previews) a starter
+    config beside it.
+    """
+    from . import init as _init
+
+    target = Path(path)
+    if target.is_dir():
+        target_dir = target
+        # Lint every supported source file in the directory (single
+        # level — matches the historic spec-010 lint surface).
+        candidates = tuple(
+            sorted(
+                str(p)
+                for p in target.iterdir()
+                if p.is_file() and p.suffix.lower() in _SUPPORTED_SUFFIXES
+            )
+        )
+    else:
+        target_dir = target.parent
+        candidates = (str(target),)
+
+    if not candidates:
+        _eprint(f"jss-lint: no lintable files under {target}")
+        sys.exit(2)
+
+    report, _cfg = _lint_paths(candidates)
+
+    try:
+        result = _init.run(
+            target_dir,
+            report=report,
+            force=force,
+            dry_run=dry_run,
+            threshold=threshold,
+        )
+    except _init.InitRefusedError as exc:
+        _eprint(f"jss-lint: {exc}")
+        sys.exit(2)
+    except ValueError as exc:
+        _eprint(f"jss-lint: {exc}")
+        sys.exit(2)
+
+    if dry_run:
+        click.echo("Proposed .jss-lint.toml (dry-run; nothing written):")
+        click.echo(result.contents)
+    else:
+        click.echo(f"Wrote {result.config_path}")
+        click.echo(
+            f"({result.must_fix_count} distinct rules in {result.total_violations} violations)"
+        )
+
+
+@main.command(name="report")
+@click.argument("path", type=click.Path(exists=True, path_type=str))
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["md"], case_sensitive=False),
+    default="md",
+    help="Output format. HTML and PDF are deferred follow-ups.",
+)
+@click.option(
+    "--out",
+    "out",
+    type=click.Path(dir_okay=False, writable=True, path_type=str),
+    default=None,
+    help="Write report to FILE instead of stdout.",
+)
+@click.option("--title", "title", default="Manuscript")
+@click.option("--author", "author", default="(unknown)")
+def report_cmd(
+    path: str,
+    fmt: str,
+    out: str | None,
+    title: str,
+    author: str,
+) -> None:
+    """Render a one-page conformance report (spec 015)."""
+    from . import report as _report
+
+    target = Path(path)
+    if target.is_dir():
+        candidates = tuple(
+            sorted(
+                str(p)
+                for p in target.iterdir()
+                if p.is_file() and p.suffix.lower() in _SUPPORTED_SUFFIXES
+            )
+        )
+    else:
+        candidates = (str(target),)
+
+    if not candidates:
+        _eprint(f"jss-lint: no lintable files under {target}")
+        sys.exit(2)
+
+    report, _cfg = _lint_paths(candidates)
+    rendered = _report.render_report(
+        report,
+        fmt=fmt.lower(),
+        title=title,
+        author=author,
+        file_count=len(candidates),
+    )
+
+    if out is None:
+        click.echo(rendered, nl=False)
+    else:
+        Path(out).write_text(rendered, encoding="utf-8")
+
+
+@main.command(name="diff")
+@click.argument("old", type=click.Path(exists=True, dir_okay=False, path_type=str))
+@click.argument("new", type=click.Path(exists=True, dir_okay=False, path_type=str))
+@click.option(
+    "--ignore-line-drift",
+    "ignore_line_drift",
+    is_flag=True,
+    default=False,
+)
+def diff_cmd(old: str, new: str, ignore_line_drift: bool) -> None:
+    """Diff two ``--output json`` reports (spec 016)."""
+    import json
+
+    from . import diff as _diff
+
+    def _load(p: str) -> list[dict]:
+        try:
+            with open(p, encoding="utf-8") as f:
+                payload = json.load(f)
+        except (OSError, json.JSONDecodeError) as exc:
+            _eprint(f"jss-lint: failed to read {p}: {exc}")
+            sys.exit(2)
+        if not isinstance(payload, dict) or "violations" not in payload:
+            _eprint(
+                f"jss-lint: {p} is not a spec-001 jss-lint JSON report "
+                "(missing 'violations' key)"
+            )
+            sys.exit(2)
+        violations = payload["violations"]
+        if not isinstance(violations, list):
+            _eprint(f"jss-lint: {p}: 'violations' must be a list")
+            sys.exit(2)
+        return violations
+
+    old_violations = _load(old)
+    new_violations = _load(new)
+
+    diff = _diff.compare(
+        old_violations, new_violations, ignore_line_drift=ignore_line_drift
+    )
+    click.echo(
+        f"fixed: {len(diff.fixed)} "
+        f"introduced: {len(diff.introduced)} "
+        f"unchanged: {len(diff.unchanged)}"
+    )
+    sys.exit(1 if diff.introduced else 0)
 
 
 if __name__ == "__main__":  # pragma: no cover
