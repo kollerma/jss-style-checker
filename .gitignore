@@ -158,6 +158,12 @@ cython_debug/
 # marker files (`.sha256` left by `corpus fetch`) are ephemeral.
 eval/eval.db
 eval/eval.db-*
+# SQLite WAL/SHM sidecars for the precision-history DB. Only the .db
+# itself is checked in; spec-010's read-only precision query opens the
+# DB through `file:...?mode=ro&uri=true` to avoid creating these, but
+# any non-readonly invocation may produce them locally.
+eval/precision-history.db-shm
+eval/precision-history.db-wal
 eval/*.bak
 examples/**/.sha256
 # CRAN-sourced vignettes — reproducible from eval/corpus-manifest.csv via

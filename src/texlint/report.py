@@ -1,8 +1,9 @@
 """Spec 015 — one-page conformance report.
 
 Markdown and HTML renderers for an editorial decision-letter
-attachment. PDF rendering and CLI subcommand wiring stay deferred to
-follow-ups.
+attachment. PDF rendering still deferred; manuscript-metadata
+extraction (\\title{} / \\author{} / \\Plainauthor{}) shipped as a
+follow-up.
 """
 
 from __future__ import annotations
@@ -12,11 +13,11 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from texlint.api import ComplianceReport, Severity
+from texlint.api import ComplianceReport, ParsedDocument, Severity
 from texlint.journals.jss._catalogue_data import RULES
 
 Format = Literal["md", "html"]
@@ -190,6 +191,109 @@ def _render_html(summary: ConformanceSummary) -> str:
     )
     template = env.get_template("conformance.html.j2")
     return template.render(summary=summary)
+
+
+# ---------------------------------------------------------------------------
+# Manuscript metadata extraction (spec 015 follow-up)
+# ---------------------------------------------------------------------------
+
+
+def _node_plain_text(node: Any) -> str:
+    """Recursively collect literal text from a pylatexenc node tree.
+
+    Char nodes contribute their `.chars`; macro nodes contribute the
+    flattened text of their argument groups (so ``\\emph{Foo}`` becomes
+    ``Foo``). Whitespace is preserved; the caller may strip.
+
+    Tolerant by design: anything we don't recognise contributes the
+    empty string. This is metadata extraction, not parsing — never
+    raise on weird AST shapes.
+    """
+    if node is None:
+        return ""
+    chars = getattr(node, "chars", None)
+    if chars is not None:
+        return chars
+    parts: list[str] = []
+    nodelist = getattr(node, "nodelist", None)
+    if nodelist:
+        for child in nodelist:
+            parts.append(_node_plain_text(child))
+    nodeargd = getattr(node, "nodeargd", None)
+    if nodeargd is not None:
+        for arg in (getattr(nodeargd, "argnlist", ()) or ()):
+            parts.append(_node_plain_text(arg))
+    return "".join(parts)
+
+
+_TITLE_MACROS = ("title", "Plaintitle")
+_AUTHOR_MACROS = ("Plainauthor", "author")
+
+
+def _first_macro_arg_text(nodes: Iterable[Any], macronames: tuple[str, ...]) -> str | None:
+    """Walk *nodes* depth-first, return the flattened brace-arg text of
+    the first macro whose name is in *macronames*. None when no match.
+
+    Macro precedence is the order of *macronames*: a `\\Plainauthor{}`
+    found before any `\\author{}` wins because Plainauthor appears first
+    in the tuple. (For author lookups we want the markup-free form
+    when both are present.)
+    """
+    found_by_name: dict[str, str] = {}
+
+    def walk(items: Iterable[Any]) -> None:
+        for n in items:
+            if n is None:
+                continue
+            macroname = getattr(n, "macroname", None)
+            if macroname in macronames and macroname not in found_by_name:
+                argd = getattr(n, "nodeargd", None)
+                if argd is not None:
+                    for arg in (getattr(argd, "argnlist", ()) or ()):
+                        text = _node_plain_text(arg).strip()
+                        if text:
+                            found_by_name[macroname] = text
+                            break
+            sub = getattr(n, "nodelist", None)
+            if sub:
+                walk(sub)
+            argd = getattr(n, "nodeargd", None)
+            if argd is not None:
+                for arg in (getattr(argd, "argnlist", ()) or ()):
+                    if arg is not None:
+                        sub = getattr(arg, "nodelist", None)
+                        if sub:
+                            walk(sub)
+
+    walk(nodes)
+    for name in macronames:
+        if name in found_by_name:
+            return found_by_name[name]
+    return None
+
+
+def extract_metadata(document: ParsedDocument) -> tuple[str | None, str | None]:
+    """Return ``(title, author)`` extracted from the parsed document's
+    preamble.
+
+    Looks for ``\\title{}`` / ``\\Plaintitle{}`` for the title and
+    ``\\Plainauthor{}`` / ``\\author{}`` for the author across every
+    tex-like view of the document (per spec 005's
+    `all_tex_like()`). The first non-empty match wins for each field.
+    Either return value may be ``None`` when the macros are absent or
+    yield empty text.
+    """
+    title: str | None = None
+    author: str | None = None
+    for tex in document.all_tex_like():
+        nodes = getattr(tex, "nodes", ())
+        if title is None:
+            title = _first_macro_arg_text(nodes, _TITLE_MACROS)
+        if author is None:
+            author = _first_macro_arg_text(nodes, _AUTHOR_MACROS)
+        if title is not None and author is not None:
+            break
+    return title, author
 
 
 def render_report(

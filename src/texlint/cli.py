@@ -106,6 +106,16 @@ def _lint_paths(paths: tuple[str, ...]) -> tuple[Any, ToolConfig]:
     failure it ``sys.exit``s with the appropriate code so callers do not
     need to re-implement error handling.
     """
+    report, _doc, cfg = _lint_paths_with_doc(paths)
+    return report, cfg
+
+
+def _lint_paths_with_doc(
+    paths: tuple[str, ...],
+) -> tuple[Any, ParsedDocument, ToolConfig]:
+    """Like :func:`_lint_paths` but also returns the parsed document so
+    callers (spec-015 ``report`` subcommand) can introspect the
+    preamble for title / author."""
     try:
         cfg = load_config({}, Path.cwd())
     except Exception as exc:  # pragma: no cover - defensive
@@ -122,7 +132,7 @@ def _lint_paths(paths: tuple[str, ...]) -> tuple[Any, ToolConfig]:
         _eprint(f"jss-lint: {exc}")
         sys.exit(2)
 
-    return run(cfg, document, journal_module), cfg
+    return run(cfg, document, journal_module), document, cfg
 
 
 @click.group(
@@ -450,9 +460,9 @@ def init_cmd(path: str, force: bool, dry_run: bool, threshold: float) -> None:
 @click.option(
     "--format",
     "fmt",
-    type=click.Choice(["md"], case_sensitive=False),
+    type=click.Choice(["md", "html"], case_sensitive=False),
     default="md",
-    help="Output format. HTML and PDF are deferred follow-ups.",
+    help="Output format. PDF is a deferred follow-up.",
 )
 @click.option(
     "--out",
@@ -461,14 +471,24 @@ def init_cmd(path: str, force: bool, dry_run: bool, threshold: float) -> None:
     default=None,
     help="Write report to FILE instead of stdout.",
 )
-@click.option("--title", "title", default="Manuscript")
-@click.option("--author", "author", default="(unknown)")
+@click.option(
+    "--title",
+    "title",
+    default=None,
+    help="Override the manuscript title (default: extracted from \\title{}).",
+)
+@click.option(
+    "--author",
+    "author",
+    default=None,
+    help="Override the manuscript author (default: extracted from \\author{} or \\Plainauthor{}).",
+)
 def report_cmd(
     path: str,
     fmt: str,
     out: str | None,
-    title: str,
-    author: str,
+    title: str | None,
+    author: str | None,
 ) -> None:
     """Render a one-page conformance report (spec 015)."""
     from . import report as _report
@@ -489,7 +509,17 @@ def report_cmd(
         _eprint(f"jss-lint: no lintable files under {target}")
         sys.exit(2)
 
-    report, _cfg = _lint_paths(candidates)
+    report, document, _cfg = _lint_paths_with_doc(candidates)
+
+    # Spec 015 follow-up: extract title / author from the parsed
+    # preamble when the user didn't pass an override on the CLI.
+    if title is None or author is None:
+        extracted_title, extracted_author = _report.extract_metadata(document)
+        if title is None:
+            title = extracted_title or "Manuscript"
+        if author is None:
+            author = extracted_author or "(unknown)"
+
     rendered = _report.render_report(
         report,
         fmt=fmt.lower(),

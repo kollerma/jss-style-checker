@@ -111,6 +111,43 @@ class TestReport:
         assert out.exists()
         assert out.read_text().startswith("# JSS conformance report")
 
+    def test_report_extracts_title_from_preamble(self, runner: CliRunner) -> None:
+        """Spec 015 follow-up: when --title is omitted, the report uses
+        the manuscript's \\title{} from the preamble."""
+        result = runner.invoke(main, ["report", str(COMPLIANT_TEX)])
+        assert result.exit_code == 0, result.stderr
+        # Compliant fixture's title starts with "A Short Demo Article".
+        assert "A Short Demo Article" in result.stdout
+
+    def test_report_extracts_author_from_preamble(self, runner: CliRunner) -> None:
+        """Spec 015 follow-up: when --author is omitted, the report uses
+        \\Plainauthor{} (preferred) from the preamble."""
+        result = runner.invoke(main, ["report", str(COMPLIANT_TEX)])
+        assert result.exit_code == 0, result.stderr
+        assert "Achim Zeileis" in result.stdout
+
+    def test_report_explicit_title_overrides_preamble(
+        self, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(
+            main, ["report", "--title", "Override Title", str(COMPLIANT_TEX)]
+        )
+        assert result.exit_code == 0, result.stderr
+        assert "Override Title" in result.stdout
+        assert "A Short Demo Article" not in result.stdout
+
+    def test_report_html_format(self, runner: CliRunner, tmp_path: Path) -> None:
+        out = tmp_path / "report.html"
+        result = runner.invoke(
+            main,
+            ["report", "--format", "html", "--out", str(out), str(COMPLIANT_TEX)],
+        )
+        assert result.exit_code == 0, result.stderr
+        text = out.read_text()
+        assert "<h1>" in text or "<H1>" in text
+        # Title still flows through to HTML.
+        assert "A Short Demo Article" in text
+
 
 # ------------------------------------------------------------------- diff ----
 
