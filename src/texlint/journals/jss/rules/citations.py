@@ -26,7 +26,7 @@ from pylatexenc.latexwalker import (
     LatexMathNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -402,6 +402,18 @@ def check_jss_cite_003(
             if not _chars_starts_with_close_paren(after):
                 continue
             line, col = _helpers._lineno_col(tex, node.pos)
+            # Auto-fix: replace the bracketed `(\cite{key})` form with
+            # `\citep{key}`. The `(` lives at the end of the
+            # whitespace-stripped `before` chars node and `)` at the
+            # start of the whitespace-stripped `after` chars node; the
+            # macro body itself is verbatim except for the `\cite` →
+            # `\citep` swap, so we keep multi-key arguments as-is.
+            paren_open = before.pos + len(before.chars.rstrip(" \t")) - 1
+            paren_close = after.pos + (
+                len(after.chars) - len(after.chars.lstrip(" \t"))
+            )
+            macro_body = tex.source[node.pos : node.pos + node.len]
+            replacement = "\\citep" + macro_body[len("\\cite") :]
             yield Violation(
                 file=tex.path,
                 line=line,
@@ -410,7 +422,13 @@ def check_jss_cite_003(
                 severity=meta["severity"],
                 message=meta["message_template"],
                 suggestion=r"Replace (\cite{...}) with \citep{...}.",
-                fix=None,
+                fix=Fix(
+                    start=paren_open,
+                    end=paren_close + 1,
+                    replacement=replacement,
+                    description=r"Replace (\cite{...}) with \citep{...}.",
+                    confidence="safe",
+                ),
             )
 
 
