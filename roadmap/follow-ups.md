@@ -211,10 +211,11 @@ inline).
       workflow at `.github/workflows/release-action.yml`
       handles the rolling-tag update once the dedicated repo
       exists.
-- [ ] Live smoke-test workflow at
+- [x] Live smoke-test workflow at
       `.github/workflows/test-action.yml` — runs the action
-      against `docs/jss-template/` (or the recall corpus once
-      it ships) and asserts SARIF presence + violation count.
+      against `docs/jss-template/` and asserts SARIF presence +
+      violation count. (Shipped: `uses: ./action`, runs on every
+      PR + push to main, asserted by the YAML lint test.)
 - [x] `--source-root` integration: forward the GitHub Actions
       checkout root to the spec-006 flag so SARIF URIs resolve
       to repo-relative paths in the Security tab. (Shipped: the
@@ -262,8 +263,12 @@ inline).
       shape; mismatch exits 2. (Shipped: top-level keys +
       per-violation required keys via `texlint.diff.SchemaMismatch`
       + `validate_payload`.)
-- [ ] Populate `docs/jss-guide/rule-renames.json` with
-      historical renames as they happen (currently empty).
+- [x] Populate `docs/jss-guide/rule-renames.json` with
+      historical renames as they happen. (Shipped: a `_history`
+      note explains why the map is empty — the two retired
+      catalogue rules JSS-CITE-001 and JSS-ABBR-002 are
+      RETIREMENTS, not renames, and belong in
+      `retired_rule_ids`. Future spec PRs add real renames here.)
 
 ## Feature 017 — Recall evaluation
 
@@ -289,9 +294,11 @@ inline).
 - [x] `eval/badge.py` — emits shields.io endpoint JSON for
       the precision and recall badges. (Shipped: also covers F1.
       Has a CLI: `python -m eval.badge {precision|recall|f1} V`.)
-- [ ] `.github/workflows/publish-badges.yml` — push
+- [x] `.github/workflows/publish-badges.yml` — push
       regenerated badge JSON to the `gh-pages` branch on
-      every CI run.
+      every push to main. (Shipped: workflow renders via
+      `python -m eval.badge`; pushes to gh-pages with the default
+      GITHUB_TOKEN. Goes live the first time it runs on main.)
 - [x] Update README to display the three badges
       (precision / recall / F1). (Shipped: README header carries
       shields.io endpoint badges pointing at
