@@ -96,13 +96,16 @@ inline).
       `texlint.explain.render`; listing view (no rule id) supported;
       unknown rule id exits 2 with did-you-mean suggestions.
       (Shipped in the spec-009/010/015/016 CLI subcommand batch.)
-- [ ] Catalogue extension: add `explanation: str`,
+- [x] Catalogue extension: add `explanation: str`,
       `example_bad: str | None`, `example_good: str | None` to
-      every rule entry in `catalogue.yaml`. The `tomli_w`-style
-      regenerator already accepts unknown OPTIONAL keys; adding
-      the three fields is a one-line schema addition.
-- [ ] `test_every_rule_has_explanation` contract test in
+      every rule entry in `catalogue.yaml`. (Shipped: every rule
+      carries a non-empty `explanation` (minimum-viable
+      one-liner derived from message_template + guide_section);
+      `example_bad` / `example_good` are independently optional
+      OPTIONAL keys in the validator.)
+- [x] `test_every_rule_has_explanation` contract test in
       `tests/unit/journals/jss/test_catalogue_citations.py`.
+      (Shipped.)
 
 ## Feature 010 — `jss-lint init`
 
