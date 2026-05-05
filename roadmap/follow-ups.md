@@ -77,10 +77,11 @@ inline).
 
 ## Feature 009 — `jss-lint explain`
 
-- [ ] CLI subcommand wiring — depends on the cross-cutting Click
-      sub-group migration. Once that lands, the `jss-lint explain
-      RULE-ID [--example] [--format {terminal,markdown}]` surface
-      dispatches into the existing `texlint.explain.render` API.
+- [x] CLI subcommand wiring — `jss-lint explain RULE-ID
+      [--format {terminal,markdown}]` dispatches into
+      `texlint.explain.render`; listing view (no rule id) supported;
+      unknown rule id exits 2 with did-you-mean suggestions.
+      (Shipped in the spec-009/010/015/016 CLI subcommand batch.)
 - [ ] Catalogue extension: add `explanation: str`,
       `example_bad: str | None`, `example_good: str | None` to
       every rule entry in `catalogue.yaml`. The `tomli_w`-style
@@ -91,8 +92,10 @@ inline).
 
 ## Feature 010 — `jss-lint init`
 
-- [ ] CLI subcommand wiring (depends on Click sub-group
-      migration).
+- [x] CLI subcommand wiring — `jss-lint init [PATH] [--force]
+      [--dry-run] [--threshold T]` dispatches into
+      `texlint.init.run`. Refusal-without-force exits 2; dry-run
+      writes nothing. (Shipped.)
 - [ ] Precision-DB-aware suppression: query
       `eval/precision-history.db` per rule and emit suppressions
       for any rule below the `--threshold` (default 0.90).
@@ -196,15 +199,19 @@ inline).
       six-section template at
       `src/texlint/output/templates/conformance.html.j2`; covered
       by `tests/unit/test_report_html.py`.)
-- [ ] CLI subcommand `jss-lint report PATH` (depends on Click
-      sub-group migration).
+- [x] CLI subcommand `jss-lint report PATH [--format md]
+      [--out FILE] [--title T] [--author A]` dispatches into
+      `texlint.report.render_report`. (Shipped.)
 - [ ] Manuscript-metadata extraction from `\title{}` /
       `\author{}` / `\Plainauthor{}` macros at preamble parse
       time. v1 uses the `--title` / `--author` overrides only.
 
 ## Feature 016 — `jss-lint diff`
 
-- [ ] CLI subcommand `jss-lint diff OLD.json NEW.json`
+- [x] CLI subcommand `jss-lint diff OLD.json NEW.json
+      [--ignore-line-drift]` dispatches into `texlint.diff.compare`.
+      Schema mismatch on input exits 2; introduced > 0 exits 1.
+      (Shipped.)
       (depends on Click sub-group migration).
 - [ ] Renderers: `--format terminal` (reuses
       reviewer-mode), `--format markdown` (GitHub-flavoured
