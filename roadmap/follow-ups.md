@@ -253,12 +253,15 @@ inline).
       Schema mismatch on input exits 2; introduced > 0 exits 1.
       (Shipped.)
       (depends on Click sub-group migration).
-- [ ] Renderers: `--format terminal` (reuses
-      reviewer-mode), `--format markdown` (GitHub-flavoured
-      CommonMark), `--format json` (deterministic
-      `{summary, fixed, introduced, unchanged}` shape).
-- [ ] Schema validation of input JSON against the spec-001
-      JSON Schema; mismatch exits 2.
+- [x] Renderers: `--format terminal` (plain-text grouped
+      sections), `--format markdown` (GitHub-flavoured
+      CommonMark with H2 sub-sections), `--format json`
+      (deterministic `{summary, fixed, introduced, unchanged}`
+      shape via `sort_keys`). (Shipped.)
+- [x] Schema validation of input JSON against the spec-001
+      shape; mismatch exits 2. (Shipped: top-level keys +
+      per-violation required keys via `texlint.diff.SchemaMismatch`
+      + `validate_payload`.)
 - [ ] Populate `docs/jss-guide/rule-renames.json` with
       historical renames as they happen (currently empty).
 
