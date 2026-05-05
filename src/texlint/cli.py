@@ -582,5 +582,26 @@ def diff_cmd(old: str, new: str, ignore_line_drift: bool) -> None:
     sys.exit(1 if diff.introduced else 0)
 
 
+@main.command(name="lsp")
+def lsp_cmd() -> None:
+    """Start the spec-011 LSP server on stdio.
+
+    Requires the ``[lsp]`` extra (``pip install "jss-lint[lsp]"``).
+    Editors / clients spawn this command as a subprocess; the
+    server speaks LSP 3.17 and shuts down when the client closes
+    the connection.
+    """
+    try:
+        from .lsp.server import main as _lsp_main
+    except ImportError as exc:
+        _eprint(
+            "jss-lint: LSP support not installed; "
+            'install with `pip install "jss-lint[lsp]"`'
+        )
+        _eprint(f"  ({exc})")
+        sys.exit(2)
+    _lsp_main()
+
+
 if __name__ == "__main__":  # pragma: no cover
     main()

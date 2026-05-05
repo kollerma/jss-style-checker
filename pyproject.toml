@@ -38,6 +38,12 @@ dev = [
     "ruff",
     "jsonschema",
 ]
+# Spec 011 — Language Server. Pulled in only when a user wants to
+# run `jss-lint lsp` (or develop the LSP server). Keeps `pygls` and
+# its `pygls`-side deps out of the core install.
+lsp = [
+    "pygls>=1.3",
+]
 
 [project.scripts]
 jss-lint = "texlint.cli:main"
