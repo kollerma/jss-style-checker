@@ -49,3 +49,28 @@ def test_bare_invocation_still_works(runner: CliRunner) -> None:
 def test_main_is_a_click_group() -> None:
     """The seam: ``main`` is a ``click.Group`` so subcommands can attach."""
     assert isinstance(main, click.Group)
+
+
+def test_no_resolve_flag_accepted(runner: CliRunner) -> None:
+    """Spec 013 follow-up: ``--no-resolve`` is accepted as a reserved flag.
+
+    It currently has no observable effect (auto-resolve is not wired
+    yet), but adding it now lets users script against it ahead of
+    time. The flag must round-trip through the CLI without error.
+    """
+    result = runner.invoke(
+        main,
+        [
+            "--no-resolve",
+            str(FIXTURES / "compliant" / "minimal.tex"),
+            str(FIXTURES / "compliant" / "minimal.bib"),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+
+def test_no_resolve_flag_in_help(runner: CliRunner) -> None:
+    """The ``--no-resolve`` flag advertises itself in ``--help``."""
+    result = runner.invoke(main, ["--help"])
+    assert result.exit_code == 0
+    assert "--no-resolve" in result.output

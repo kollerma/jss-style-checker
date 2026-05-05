@@ -172,6 +172,17 @@ def _determine_exit_code(report: Any) -> int:
     multiple=True,
     help="Repeatable; limits --fix to the named rule ids.",
 )
+@click.option(
+    "--no-resolve",
+    "no_resolve",
+    is_flag=True,
+    default=False,
+    help=(
+        "Skip recursive \\input / \\include / \\subfile / "
+        "\\bibliography resolution (currently a no-op until "
+        "auto-resolve ships)."
+    ),
+)
 @click.argument("paths", nargs=-1, type=click.Path(path_type=str))
 @click.pass_context
 def main(
@@ -186,6 +197,7 @@ def main(
     dry_run: bool,
     apply_interactive: bool,
     fix_rules: tuple[str, ...],
+    no_resolve: bool,
     paths: tuple[str, ...],
 ) -> None:
     """Lint LaTeX/BibTeX manuscripts against journal style guides.
@@ -220,6 +232,13 @@ def main(
         cli_overrides["ignore_rules"] = ignore_rules
     if verbose is not None:
         cli_overrides["verbose"] = verbose
+    # Spec 013 follow-up: ``--no-resolve`` is a reserved flag. The
+    # CLI does not currently auto-resolve, so the flag is wired
+    # through ``cli_overrides`` but has no observable effect today.
+    # Reserving it now lets users start scripting against the flag
+    # before auto-resolve ships.
+    if no_resolve:
+        cli_overrides["no_resolve"] = True
 
     try:
         cfg = load_config(cli_overrides, Path.cwd())
