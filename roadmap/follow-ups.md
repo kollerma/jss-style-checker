@@ -223,9 +223,12 @@ inline).
 - [x] CLI subcommand `jss-lint report PATH [--format md]
       [--out FILE] [--title T] [--author A]` dispatches into
       `texlint.report.render_report`. (Shipped.)
-- [ ] Manuscript-metadata extraction from `\title{}` /
+- [x] Manuscript-metadata extraction from `\title{}` /
       `\author{}` / `\Plainauthor{}` macros at preamble parse
-      time. v1 uses the `--title` / `--author` overrides only.
+      time. (Shipped: `texlint.report.extract_metadata` walks the
+      tex AST; the `report` subcommand uses extracted values when
+      `--title` / `--author` are omitted; `\Plainauthor{}` wins
+      over `\author{}` when both present.)
 
 ## Feature 016 — `jss-lint diff`
 
