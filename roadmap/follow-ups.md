@@ -264,8 +264,9 @@ inline).
       `eval/precision-history.db` per data-model §3. (Shipped:
       schema + `record_recall()` / `latest_recall_per_rule()`
       helpers in `eval/history.py`.)
-- [ ] Combined precision + recall report column in
-      `eval/report.py`.
+- [x] Combined precision + recall report column in
+      `eval/report.py`. (Shipped: `eval-jss report --with-recall`
+      adds Recall + F1 columns plus an aggregate footer row.)
 - [x] `eval/badge.py` — emits shields.io endpoint JSON for
       the precision and recall badges. (Shipped: also covers F1.
       Has a CLI: `python -m eval.badge {precision|recall|f1} V`.)
