@@ -34,9 +34,13 @@ inline).
       test that validates every golden via
       `jsonschema.Draft202012Validator`. (Shipped: vendored from
       SchemaStore mirror as Draft 7; four parametrised scenarios.)
-- [ ] Multi-fixture golden files
-      (`tests/fixtures/sarif/golden_*.sarif`). Current tests assert
-      structural invariants instead of byte-equality goldens.
+- [x] Multi-fixture golden files
+      (`tests/fixtures/sarif/golden_*.sarif`). (Shipped: four
+      scenarios — clean / single warning / parse error /
+      multi-file — under
+      `tests/integration/test_cli_sarif_goldens.py`. Volatile
+      fields (version + full rule catalogue) are masked. Regen
+      via `JSSLINT_REGEN_GOLDENS=1 pytest`.)
 
 ## Feature 007 — JSS-guide rule mapping
 
@@ -220,8 +224,12 @@ inline).
 
 ## Feature 015 — Conformance report
 
-- [ ] PDF rendering via WeasyPrint (gated behind
+- [x] PDF rendering via WeasyPrint (gated behind
       `[project.optional-dependencies] pdf = ["weasyprint>=60"]`).
+      (Shipped: `render_report(..., fmt="pdf")` returns PDF
+      bytes; `report --format pdf --out FILE` writes the file;
+      missing WeasyPrint raises `PdfNotAvailable` which the CLI
+      converts into an install-hint.)
 - [x] HTML rendering via the existing Jinja2 stack
       (`output/html_output.py` shares its template loader).
       (Shipped: `render_report(..., fmt="html")` renders the
