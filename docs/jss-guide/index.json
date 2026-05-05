@@ -1,14 +1,20 @@
 {
   "_about": "Section -> URL map for JSS-guide citations (spec 007). Single point of update when the JSS author guide is republished. Edit only this file; the catalogue and the renderers read through it.",
   "sections": {
+    "§2.1 Preamble": "https://www.jstatsoft.org/about/submissions#preamble",
+    "§2.2 Structure": "https://www.jstatsoft.org/about/submissions#structure",
     "§3.2 Citations": "https://www.jstatsoft.org/about/submissions#citations",
     "§3.3 References": "https://www.jstatsoft.org/about/submissions#references",
     "§4.1 Markup": "https://www.jstatsoft.org/about/submissions#markup",
     "§4.2 Code style": "https://www.jstatsoft.org/about/submissions#code-style",
+    "§4.3 Typography": "https://www.jstatsoft.org/about/submissions#typography",
+    "§4.4 Mathematical notation": "https://www.jstatsoft.org/about/submissions#mathematical-notation",
+    "§4.5 Cross-references": "https://www.jstatsoft.org/about/submissions#cross-references",
     "§5.1 Bibliography": "https://www.jstatsoft.org/about/submissions#bibliography",
     "§6.1 Naming": "https://www.jstatsoft.org/about/submissions#naming",
     "§6.2 Capitalisation": "https://www.jstatsoft.org/about/submissions#capitalisation",
+    "§6.3 Abbreviations": "https://www.jstatsoft.org/about/submissions#abbreviations",
     "§7.1 Line width": "https://www.jstatsoft.org/about/submissions#line-width",
-    "§2.1 Preamble": "https://www.jstatsoft.org/about/submissions#preamble"
+    "§8.1 House style": "https://www.jstatsoft.org/about/submissions#house-style"
   }
 }
