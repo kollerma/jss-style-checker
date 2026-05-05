@@ -50,7 +50,7 @@ the four output surfaces (terminal / JSON / SARIF / HTML).
 
 ## Phase 4: User Story 2 — Renderer plumbing (P1)
 
-- [ ] T009 [US2] Update `src/texlint/output/json_output.py` to
+- [x] T009 [US2] Update `src/texlint/output/json_output.py` to
       include `guide_section` and `guide_url` per violation entry
       (default empty string / `null`).
 - [x] T010 [US2] Update `src/texlint/output/sarif.py` to populate
@@ -77,7 +77,7 @@ the four output surfaces (terminal / JSON / SARIF / HTML).
 
 ## Phase 6: User Story 4 — Centralised URL update (P2)
 
-- [ ] T015 [US4] Document the `index.json` re-publication flow
+- [x] T015 [US4] Document the `index.json` re-publication flow
       in `docs/jss-guide/README.md` (small file; one section
       per data-model §4).
 

@@ -67,9 +67,16 @@ class TestJsonShape:
             "message",
             "suggestion",
             "fix",
+            # Spec 007 follow-up — citation fields surface per violation.
+            "guide_section",
+            "guide_url",
         }
         assert v["rule_id"] == "JSS-CITE-002"
         assert v["fix"] is None
+        # JSS-CITE-002 was backfilled in spec 007; expect the citation
+        # surface to flow through.
+        assert v["guide_section"] == "§3.2 Citations"
+        assert v["guide_url"].startswith("https://")
 
 
 class TestDeterminism:
