@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from texlint.api import (
+    Fix,
     ParsedBibFile,
     ParsedDocument,
     ParsedTexFile,
@@ -72,6 +73,36 @@ class TestName001:
             r"\end{document}"
         )
         assert run_rule(jss_name_001, src) == []
+
+    def test_emits_safe_fix_payload(self, run_rule):
+        """Spec 008 follow-up: each violation carries a Fix(...)
+        payload whose byte range covers the offending token and
+        whose replacement is the canonical capitalisation."""
+        autofix_dir = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
+        before = (autofix_dir / "JSS-NAME-001" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_name_001, before)
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        assert before[v.fix.start : v.fix.end] == "JAVA"
+        assert v.fix.replacement == "Java"
+
+    def test_fix_application_matches_after_fixture(self, run_rule):
+        autofix_dir = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
+        before = (autofix_dir / "JSS-NAME-001" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        after = (autofix_dir / "JSS-NAME-001" / "after.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_name_001, before)
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        applied = before[: fix.start] + fix.replacement + before[fix.end :]
+        assert applied == after
 
 
 # ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texlint.api import ParsedDocument, Severity, ToolConfig
+from texlint.api import Fix, ParsedDocument, Severity, ToolConfig
 from texlint.journals.jss.rules.citations import (
     check_jss_cite_002,
     check_jss_cite_004,
@@ -16,6 +16,7 @@ from texlint.journals.jss.rules.citations import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "violations" / "citations"
+AUTOFIX_DIR = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
 
 
 # ---------------------------------------------------------------------------
@@ -453,6 +454,51 @@ class TestCite003:
         # but input here has no open-paren, exercise the non-chars "after" path.
         src = r"(\cite{Key}\emph{x}"
         assert run_rule(jss_cite_003, src) == []
+
+    def test_emits_safe_fix_payload(self, run_rule):
+        # Spec 008 follow-up: the rule emits a `Fix` whose byte range
+        # covers the bracketed `(\cite{...})` span and whose
+        # replacement is the canonical `\citep{...}` form.
+        before = (AUTOFIX_DIR / "JSS-CITE-003" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_cite_003, before)
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        # Span exactly covers `(\cite{Cameron+Trivedi:2013})`.
+        assert before[v.fix.start : v.fix.end] == "(\\cite{Cameron+Trivedi:2013})"
+        assert v.fix.replacement == "\\citep{Cameron+Trivedi:2013}"
+
+    def test_fix_application_matches_after_fixture(self, run_rule):
+        # Apply the fix in-memory and assert the result matches the
+        # canonical `after.tex` golden byte-for-byte.
+        before = (AUTOFIX_DIR / "JSS-CITE-003" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        after = (AUTOFIX_DIR / "JSS-CITE-003" / "after.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_cite_003, before)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        applied = before[: fix.start] + fix.replacement + before[fix.end :]
+        assert applied == after
+
+    def test_fix_preserves_multi_key_argument(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Foo (\cite{a,b,c}) bar." "\n"
+            r"\end{document}" "\n"
+        )
+        violations = run_rule(jss_cite_003, src)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        assert fix.replacement == r"\citep{a,b,c}"
 
 
 # ---------------------------------------------------------------------------

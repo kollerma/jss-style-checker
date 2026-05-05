@@ -16,7 +16,7 @@ from typing import Any
 
 from pylatexenc.latexwalker import LatexCharsNode
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import (
@@ -38,7 +38,13 @@ _BARE_URL_RE = re.compile(
 
 
 def _violation(
-    *, file: Any, line: int, column: int | None, rule_id: str, suggestion: str
+    *,
+    file: Any,
+    line: int,
+    column: int | None,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     return Violation(
@@ -49,7 +55,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -86,6 +92,7 @@ def check_jss_name_001(
                     continue
                 canonical = CANONICAL[token]
                 abs_pos = node.pos + match.start()
+                abs_end = node.pos + match.end()
                 line, col = _helpers._lineno_col(tex, abs_pos)
                 yield _violation(
                     file=tex.path,
@@ -95,6 +102,15 @@ def check_jss_name_001(
                     suggestion=(
                         f"Use canonical form {canonical!r} instead of "
                         f"{token!r}."
+                    ),
+                    fix=Fix(
+                        start=abs_pos,
+                        end=abs_end,
+                        replacement=canonical,
+                        description=(
+                            f"Replace {token!r} with canonical {canonical!r}."
+                        ),
+                        confidence="safe",
                     ),
                 )
 
