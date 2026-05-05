@@ -84,3 +84,17 @@ class TestCitationContract:
             rid for rid, meta in RULES.items() if meta.get("guide_section")
         ]
         assert backfilled, "no rule has a guide_section yet — backfill stalled"
+
+
+def test_every_rule_has_explanation() -> None:
+    """Every rule must populate `explanation` after the spec-009
+    catalogue-extension PR."""
+    for rule_id, meta in RULES.items():
+        assert meta.get("explanation"), (
+            f"{rule_id}: explanation is unpopulated; "
+            "spec-009 catalogue extension is required"
+        )
+        # Sanity: not a TODO placeholder.
+        assert "TODO" not in (meta.get("explanation") or "").upper(), (
+            f"{rule_id}: explanation contains TODO placeholder"
+        )

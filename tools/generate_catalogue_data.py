@@ -103,6 +103,15 @@ def render(doc: Mapping[str, Any]) -> str:
             out.append(f"        \"guide_section\": {_py_str(rule['guide_section'])},\n")
         if rule.get("guide_url"):
             out.append(f"        \"guide_url\": {_py_str(rule['guide_url'])},\n")
+        # spec 009: optional explain surface — per-rule prose plus
+        # optional bad/good fixture fragments. Same pattern as the
+        # citation fields: emit only when populated.
+        if rule.get("explanation"):
+            out.append(f"        \"explanation\": {_py_str(rule['explanation'])},\n")
+        if rule.get("example_bad"):
+            out.append(f"        \"example_bad\": {_py_str(rule['example_bad'])},\n")
+        if rule.get("example_good"):
+            out.append(f"        \"example_good\": {_py_str(rule['example_good'])},\n")
         out.append("    }),\n")
     out.append("})\n\n")
 

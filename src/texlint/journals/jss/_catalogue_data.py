@@ -18,6 +18,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:37',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Document class must be jss with a valid class option (article, codesnippet, bookreview, softwarereview).',
     }),
     'JSS-PRE-002': MappingProxyType({
         "category": 'preamble',
@@ -27,6 +28,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Address',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Preamble defines \\Address{} with author affiliation and contact.',
     }),
     'JSS-PRE-003': MappingProxyType({
         "category": 'preamble',
@@ -36,6 +38,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Plaintitle',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'When \\title{} contains LaTeX markup, preamble also defines \\Plaintitle{} with the markup-free form.',
     }),
     'JSS-PRE-004': MappingProxyType({
         "category": 'preamble',
@@ -45,6 +48,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:120',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": '\\Abstract{} is present and overrides the sentinel placeholder from jss.cls.',
     }),
     'JSS-PRE-005': MappingProxyType({
         "category": 'preamble',
@@ -54,6 +58,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:197',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": '\\Keywords{} is present and overrides the sentinel placeholder from jss.cls.',
     }),
     'JSS-PRE-006': MappingProxyType({
         "category": 'preamble',
@@ -63,6 +68,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Plaintitle',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": '\\Plaintitle, \\Plainauthor, \\Plainkeywords contain no LaTeX markup (PDF metadata must be plain text).',
     }),
     'JSS-PRE-007': MappingProxyType({
         "category": 'preamble',
@@ -72,6 +78,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Plainauthor',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'When \\author{} contains LaTeX markup, preamble also defines \\Plainauthor{} with the markup-free form.',
     }),
     'JSS-PRE-008': MappingProxyType({
         "category": 'preamble',
@@ -81,6 +88,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\Plainkeywords',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'When \\Keywords{} contains LaTeX markup, preamble also defines \\Plainkeywords{} with the markup-free form.',
     }),
     'JSS-STRUCT-001': MappingProxyType({
         "category": 'structure',
@@ -90,6 +98,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:378',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Document ends with a summary / discussion section before the bibliography.',
     }),
     'JSS-STRUCT-002': MappingProxyType({
         "category": 'structure',
@@ -99,6 +108,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:407',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Acknowledgments section uses American spelling (not "Acknowledgements").',
     }),
     'JSS-STRUCT-003': MappingProxyType({
         "category": 'structure',
@@ -108,6 +118,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:438',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Appendix sections have proper titles instead of a bare "Appendix".',
     }),
     'JSS-STRUCT-004': MappingProxyType({
         "category": 'structure',
@@ -117,6 +128,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'References are declared via \\bibliography{} rather than a hand-written thebibliography environment.',
     }),
     'JSS-STRUCT-005': MappingProxyType({
         "category": 'structure',
@@ -126,6 +138,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:22',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": '\\author{} separates authors with \\And or \\AND (not lowercase \\and).',
     }),
     'JSS-STRUCT-006': MappingProxyType({
         "category": 'structure',
@@ -135,6 +148,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:430',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Appendix follows the bibliography with a \\newpage (or \\clearpage) separator.',
     }),
     'JSS-MARKUP-001': MappingProxyType({
         "category": 'markup',
@@ -144,6 +158,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\proglang',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Programming-language names in prose are wrapped in \\proglang{}.',
     }),
     'JSS-MARKUP-002': MappingProxyType({
         "category": 'markup',
@@ -153,6 +168,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\pkg',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Software-package names in prose are wrapped in \\pkg{}.',
     }),
     'JSS-MARKUP-003': MappingProxyType({
         "category": 'markup',
@@ -162,6 +178,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:\\code',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Inline function, argument, and command names are wrapped in \\code{}.',
     }),
     'JSS-MARKUP-004': MappingProxyType({
         "category": 'markup',
@@ -171,6 +188,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Section titles containing markup supply a plain-text shim via \\section[plain]{markup}.',
     }),
     'JSS-CITE-002': MappingProxyType({
         "category": 'citations',
@@ -182,6 +200,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "auto_fixable": False,
         "guide_section": '§3.2 Citations',
         "guide_url": 'https://www.jstatsoft.org/about/submissions#citations',
+        "explanation": 'First occurrence of a software package has a citation within the same paragraph. See §3.2 Citations.',
     }),
     'JSS-CITE-003': MappingProxyType({
         "category": 'citations',
@@ -191,6 +210,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-different-cite-citet-citep-commands-about',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Avoid bracket-in-bracket citation forms like (\\cite{...}); use \\citep{...} instead.',
     }),
     'JSS-CITE-004': MappingProxyType({
         "category": 'citations',
@@ -200,6 +220,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:62',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Citations use natbib commands (\\cite, \\citet, \\citep, \\citealp) rather than hardcoded author-year text.',
     }),
     'JSS-REFS-001': MappingProxyType({
         "category": 'references',
@@ -209,6 +230,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'BibTeX entries carry a year field so natbib author-year citations render correctly.',
     }),
     'JSS-REFS-002': MappingProxyType({
         "category": 'references',
@@ -218,6 +240,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase).',
     }),
     'JSS-REFS-003': MappingProxyType({
         "category": 'references',
@@ -227,6 +250,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:421',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'BibTeX entries include a doi field where one is available (advisory).',
     }),
     'JSS-REFS-004': MappingProxyType({
         "category": 'references',
@@ -236,6 +260,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-cite-r-packages',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'BibTeX titles use JSS markup (\\proglang, \\pkg, \\code) for language and package names.',
     }),
     'JSS-REFS-005': MappingProxyType({
         "category": 'references',
@@ -245,6 +270,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:473',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'Journal titles in BibTeX entries are not abbreviated.',
     }),
     'JSS-REFS-006': MappingProxyType({
         "category": 'references',
@@ -254,6 +280,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case).',
     }),
     'JSS-REFS-007': MappingProxyType({
         "category": 'references',
@@ -263,6 +290,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:473',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'Journal titles in BibTeX entries are in title case.',
     }),
     'JSS-BIBTEX-001': MappingProxyType({
         "category": 'bibtex',
@@ -272,6 +300,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-cite-r-packages',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'Every BibTeX entry has a non-empty citation key.',
     }),
     'JSS-BIBTEX-002': MappingProxyType({
         "category": 'bibtex',
@@ -281,6 +310,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-cite-r-packages',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'BibTeX citation keys are unique within the database.',
     }),
     'JSS-BIBTEX-003': MappingProxyType({
         "category": 'bibtex',
@@ -290,6 +320,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-cite-r-packages',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …).',
     }),
     'JSS-BIBTEX-004': MappingProxyType({
         "category": 'bibtex',
@@ -299,6 +330,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:45',
         "inspects": ('bib_files',),
         "auto_fixable": False,
+        "explanation": 'Entries with 6+ authors use \\shortcites{} or the shortnames class option is enabled.',
     }),
     'JSS-NAME-001': MappingProxyType({
         "category": 'naming',
@@ -308,6 +340,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Programming-language names use their canonical capitalisation.',
     }),
     'JSS-NAME-002': MappingProxyType({
         "category": 'naming',
@@ -317,6 +350,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss',
         "inspects": ('bib_files',),
         "auto_fixable": True,
+        "explanation": 'Publisher and journal names follow JSS conventions (e.g., "Springer-Verlag", "The Annals of Statistics").',
     }),
     'JSS-CAP-001': MappingProxyType({
         "category": 'capitalization',
@@ -326,6 +360,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": '\\title{} is in title style (principal words capitalised).',
     }),
     'JSS-CAP-002': MappingProxyType({
         "category": 'capitalization',
@@ -335,6 +370,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Section titles are in sentence style (first word capitalised; others lowercase except proper names).',
     }),
     'JSS-CAP-003': MappingProxyType({
         "category": 'capitalization',
@@ -344,6 +380,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Figure / table captions are in sentence style.',
     }),
     'JSS-CAP-004': MappingProxyType({
         "category": 'capitalization',
@@ -353,6 +390,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:48',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": '\\Keywords{} is comma-separated and in sentence case.',
     }),
     'JSS-TYPO-001': MappingProxyType({
         "category": 'typography',
@@ -362,6 +400,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Figure and table captions end with a period.',
     }),
     'JSS-TYPO-002': MappingProxyType({
         "category": 'typography',
@@ -371,6 +410,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Figure / table captions avoid emphasis macros wrapping the whole caption (\\emph, \\textbf, \\textit on full caption).',
     }),
     'JSS-TYPO-003': MappingProxyType({
         "category": 'typography',
@@ -380,6 +420,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Tables do not use footnote-style annotations; annotations go in the caption.',
     }),
     'JSS-TYPO-004': MappingProxyType({
         "category": 'typography',
@@ -389,6 +430,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-to-format-figuretable-captions',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": '\\caption{} appears after the figure / table content, not before.',
     }),
     'JSS-ABBR-001': MappingProxyType({
         "category": 'abbreviations',
@@ -398,6 +440,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-should-abbrevations-be-formatted',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Abbreviations are in uppercase without periods or additional formatting.',
     }),
     'JSS-CODE-001': MappingProxyType({
         "category": 'code_style',
@@ -407,6 +450,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-should-code-be-formatted-in-the-manuscript',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text.',
     }),
     'JSS-CODE-002': MappingProxyType({
         "category": 'code_style',
@@ -416,6 +460,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'R library() and data() calls quote their first argument.',
     }),
     'JSS-CODE-003': MappingProxyType({
         "category": 'code_style',
@@ -425,6 +470,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-should-code-be-formatted-in-the-manuscript',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Code samples use spaces around operators and after commas.',
     }),
     'JSS-WIDTH-001': MappingProxyType({
         "category": 'code_width',
@@ -434,6 +480,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#how-should-code-be-formatted-in-the-manuscript',
         "inspects": ('raw_source',),
         "auto_fixable": False,
+        "explanation": 'Code input / output inside Sinput / CodeInput / CodeOutput environments fits within the configured column limit.',
     }),
     'JSS-OPER-001': MappingProxyType({
         "category": 'operators',
@@ -443,6 +490,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen).',
     }),
     'JSS-OPER-002': MappingProxyType({
         "category": 'operators',
@@ -452,6 +500,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Transpose is typeset with \\top rather than a superscript prime or literal T.',
     }),
     'JSS-OPER-003': MappingProxyType({
         "category": 'operators',
@@ -461,6 +510,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'article.tex:154',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks).',
     }),
     'JSS-OPER-004': MappingProxyType({
         "category": 'operators',
@@ -470,6 +520,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:484',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Expectation / variance / covariance / probability use jss.cls shortcuts \\E, \\VAR, \\COV, \\Prob.',
     }),
     'JSS-XREF-001': MappingProxyType({
         "category": 'crossrefs',
@@ -479,6 +530,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Figures and tables carry \\label{} and are referenced by \\ref{} rather than manual numbering.',
     }),
     'JSS-XREF-002': MappingProxyType({
         "category": 'crossrefs',
@@ -488,6 +540,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...}).',
     }),
     'JSS-XREF-003': MappingProxyType({
         "category": 'crossrefs',
@@ -497,6 +550,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Cross-references to subsections use "Section x.y" rather than "Subsection x.y".',
     }),
     'JSS-XREF-004': MappingProxyType({
         "category": 'crossrefs',
@@ -506,6 +560,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
         "inspects": ('tex_files',),
         "auto_fixable": False,
+        "explanation": 'Numbered equations carry \\label{} and are referenced from the text.',
     }),
     'JSS-HOUSE-001': MappingProxyType({
         "category": 'house_style',
@@ -515,6 +570,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": '"e.g." and "i.e." are followed by a comma so LaTeX does not treat the period as a sentence end.',
     }),
     'JSS-HOUSE-002': MappingProxyType({
         "category": 'house_style',
@@ -524,6 +580,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": '#miscellaneous',
         "inspects": ('bib_files',),
         "auto_fixable": True,
+        "explanation": 'Book editions are indicated as 2nd, 3rd, etc., not as "second" or "2e".',
     }),
     'JSS-HOUSE-003': MappingProxyType({
         "category": 'house_style',
@@ -533,6 +590,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "authority_ref": 'jss.cls:54',
         "inspects": ('tex_files',),
         "auto_fixable": True,
+        "explanation": 'Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref).',
     }),
 })
 
