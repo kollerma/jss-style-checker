@@ -255,8 +255,11 @@ inline).
       labour-intensive deferred item — read each paper end-
       to-end, identify every JSS-guide violation, record
       `(rule_id, file, line)` per FR-002.
-- [ ] `eval-jss recall` CLI subcommand with `--gate` and
-      `--validate` flags.
+- [x] `eval-jss recall` CLI subcommand with `--gate` and
+      `--validate` flags. (Shipped: also `--corpus`,
+      `--format {terminal|json}`, `--history-db`, `--no-record`.
+      Empty corpus exits 0 with a friendly note. Persists each
+      run to the recall_history table.)
 - [x] `recall_history` SQLite table schema in
       `eval/precision-history.db` per data-model §3. (Shipped:
       schema + `record_recall()` / `latest_recall_per_rule()`
