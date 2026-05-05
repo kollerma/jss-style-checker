@@ -113,9 +113,13 @@ inline).
       [--dry-run] [--threshold T]` dispatches into
       `texlint.init.run`. Refusal-without-force exits 2; dry-run
       writes nothing. (Shipped.)
-- [ ] Precision-DB-aware suppression: query
+- [x] Precision-DB-aware suppression: query
       `eval/precision-history.db` per rule and emit suppressions
       for any rule below the `--threshold` (default 0.90).
+      (Shipped: `texlint.init.run` reads the latest iteration's
+      full-scope precision per rule and adds below-threshold rules
+      to `ignore_rules` with audit-trail comments. Missing DB and
+      NULL-precision rules fall back to no suppression.)
 - [ ] Promote `tomli_w` from "hand-rolled TOML rendering" to a
       proper runtime dependency once the generated config gains
       structures (severity overrides, table-of-table sections)
