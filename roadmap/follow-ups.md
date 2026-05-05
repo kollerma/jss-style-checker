@@ -48,9 +48,11 @@ inline).
 - [x] Update the spec-007 contract test to fail (not warn) when
       a citable rule lacks `guide_section` / `guide_url`.
       (Shipped: `test_every_citable_rule_is_backfilled`.)
-- [ ] Plumb `guide_section` into the terminal renderer's
+- [x] Plumb `guide_section` into the terminal renderer's
       `(see <section>)` suffix and into the HTML renderer as an
-      `<a href="...">` anchor.
+      `<a href="...">` anchor. (Shipped: terminal appends
+      `(see §<section>)` for citable rules; HTML gains a Section
+      column with anchor links; sentinel rules render plain.)
 
 ## Feature 008 — Auto-fix
 
