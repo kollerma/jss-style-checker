@@ -6,14 +6,14 @@ description: "Tasks for reusable GitHub Action"
 
 ## Phase 1: Action manifest
 
-- [ ] T001 `action/action.yml` — composite action with the seven
+- [x] T001 `action/action.yml` — composite action with the seven
       inputs from spec.
-- [ ] T002 `action/scripts/post-review.js` — review-posting payload.
-- [ ] T003 `action/README.md` — marketplace listing copy.
+- [x] T002 `action/scripts/post-review.js` — review-posting payload.
+- [x] T003 `action/README.md` — marketplace listing copy.
 
 ## Phase 2: Release workflow
 
-- [ ] T004 `.github/workflows/release-action.yml` — tag-triggered
+- [x] T004 `.github/workflows/release-action.yml` — tag-triggered
       rolling-tag updater.
 
 ## Implementation Strategy

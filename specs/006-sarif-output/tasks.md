@@ -16,18 +16,18 @@ does not apply, but ≥95% line coverage tracks the existing
 
 ## Phase 1: Setup
 
-- [ ] T001 Add SARIF 2.1.0 schema fixture: download once, save to
+- [x] T001 Add SARIF 2.1.0 schema fixture: download once, save to
       `tests/fixtures/sarif-2.1.0-schema.json` (vendored — research §2).
 
 ## Phase 2: Foundational (blocking)
 
-- [ ] T002 Add `source_root: Path` field to `ToolConfig` in
+- [x] T002 Add `source_root: Path` field to `ToolConfig` in
       `src/texlint/api.py` with `default_factory=Path.cwd`. Ensure
       every existing constructor still works.
-- [ ] T003 Add `--source-root DIR` Click option to `src/texlint/cli.py`
+- [x] T003 Add `--source-root DIR` Click option to `src/texlint/cli.py`
       that threads into `cli_overrides["source_root"]`. Silently
       accepted for non-SARIF outputs.
-- [ ] T004 Extend `--output` Click `Choice` in `src/texlint/cli.py`
+- [x] T004 Extend `--output` Click `Choice` in `src/texlint/cli.py`
       to include `"sarif"`.
 
 ## Phase 3: User Story 1 — Upload to GitHub code scanning (P1)
@@ -39,34 +39,34 @@ that GitHub code scanning consumes.
 output validates against the vendored schema and contains exactly
 one `result` with the right `ruleId` / `level` / `region`.
 
-- [ ] T005 [US1] Create `src/texlint/output/sarif.py` exposing
+- [x] T005 [US1] Create `src/texlint/output/sarif.py` exposing
       `render(report, cfg)` (matches `json_output.py` signature). Stub.
-- [ ] T006 [US1] Implement the path-relativisation helper in
+- [x] T006 [US1] Implement the path-relativisation helper in
       `src/texlint/output/sarif.py::_relativise(file, source_root)`
       per data-model §3d.
-- [ ] T007 [US1] Implement the severity map
+- [x] T007 [US1] Implement the severity map
       `_SARIF_LEVEL = {Severity.ERROR: "error", Severity.WARNING:
       "warning", Severity.INFO: "note"}` in
       `src/texlint/output/sarif.py`.
-- [ ] T008 [US1] Implement `_rule_descriptor(rule)` projecting a
+- [x] T008 [US1] Implement `_rule_descriptor(rule)` projecting a
       catalogue rule to `tool.driver.rules[]` entry per data-model
       §3a, with `properties.tags = [rule.category]`.
-- [ ] T009 [US1] Implement `_result(violation, source_root)` projecting
+- [x] T009 [US1] Implement `_result(violation, source_root)` projecting
       a non-`JSS-PARSE-000` violation to a SARIF result per
       data-model §3b. Include `endLine` / `endColumn` only when set.
-- [ ] T010 [US1] Wire `_dispatch_renderer` in `src/texlint/cli.py` to
+- [x] T010 [US1] Wire `_dispatch_renderer` in `src/texlint/cli.py` to
       route `output == "sarif"` to the new module.
-- [ ] T011 [US1] Create test
+- [x] T011 [US1] Create test
       `tests/unit/output/test_sarif.py::test_clean_run` with a
       golden fixture asserting byte-equality + schema validation.
-- [ ] T012 [US1] Add
+- [x] T012 [US1] Add
       `tests/unit/output/test_sarif.py::test_single_warning` covering
       a single warning fixture; assert `result[0].ruleId`,
       `level == "warning"`, region values.
-- [ ] T013 [US1] Add `tests/unit/output/test_sarif.py::test_multi_file`
+- [x] T013 [US1] Add `tests/unit/output/test_sarif.py::test_multi_file`
       with two-file fixture; assert per-result `artifactLocation.uri`
       values and ordering.
-- [ ] T014 [US1] Generate goldens: `tests/fixtures/sarif/golden_clean.sarif`,
+- [x] T014 [US1] Generate goldens: `tests/fixtures/sarif/golden_clean.sarif`,
       `golden_single_error.sarif`, `golden_multi_file.sarif`.
 
 ## Phase 4: User Story 2 — Surface parse failures (P1)
@@ -78,21 +78,21 @@ not as `results`.
 with `results == []`, one `toolExecutionNotifications` entry with
 `descriptor.id == "JSS-PARSE-000"`, and the right artifact URI.
 
-- [ ] T015 [US2] Implement `_notification(violation, source_root)` in
+- [x] T015 [US2] Implement `_notification(violation, source_root)` in
       `src/texlint/output/sarif.py` per data-model §3e.
-- [ ] T016 [US2] Update the top-level renderer to partition violations
+- [x] T016 [US2] Update the top-level renderer to partition violations
       by `rule_id == "JSS-PARSE-000"`: parse failures → notifications,
       others → results. `executionSuccessful: true` always (parse
       failures don't flip it — only an internal exception does).
-- [ ] T017 [US2] Ensure `--ignore-rules JSS-PARSE-000` does NOT
+- [x] T017 [US2] Ensure `--ignore-rules JSS-PARSE-000` does NOT
       suppress notifications (it filters `results` upstream of the
       renderer; notifications bypass that filter).
-- [ ] T018 [US2] Add `tests/unit/output/test_sarif.py::test_parse_failure`
+- [x] T018 [US2] Add `tests/unit/output/test_sarif.py::test_parse_failure`
       with a fixture that triggers `JSS-PARSE-000`; assert
       `notifications[0]` shape; assert `results == []`.
-- [ ] T019 [US2] Add
+- [x] T019 [US2] Add
       `tests/unit/output/test_sarif.py::test_ignore_parse_does_not_silence`.
-- [ ] T020 [US2] Generate golden `tests/fixtures/sarif/golden_parse_error.sarif`.
+- [x] T020 [US2] Generate golden `tests/fixtures/sarif/golden_parse_error.sarif`.
 
 ## Phase 5: User Story 3 — Reproducible SARIF (P2)
 
@@ -102,16 +102,16 @@ byte-identical SARIF.
 **Independent test**: Run renderer twice on the same fixture; assert
 sha256 of outputs match.
 
-- [ ] T021 [US3] Sort `tool.driver.rules[]` ascending by `id` before
+- [x] T021 [US3] Sort `tool.driver.rules[]` ascending by `id` before
       serialisation.
-- [ ] T022 [US3] Sort `runs[0].results[]` ascending by
+- [x] T022 [US3] Sort `runs[0].results[]` ascending by
       `(file, line, column, ruleId)` before serialisation.
-- [ ] T023 [US3] Sort `toolExecutionNotifications[]` ascending by
+- [x] T023 [US3] Sort `toolExecutionNotifications[]` ascending by
       `(uri, line)` before serialisation.
-- [ ] T024 [US3] Confirm `json.dumps(..., sort_keys=True, indent=2,
+- [x] T024 [US3] Confirm `json.dumps(..., sort_keys=True, indent=2,
       ensure_ascii=False)` is the only path; no Python `dict`
       iteration order leaks.
-- [ ] T025 [US3] Add
+- [x] T025 [US3] Add
       `tests/unit/output/test_sarif.py::test_byte_deterministic`
       that invokes `render` twice on identical inputs and asserts
       byte equality.
@@ -125,26 +125,26 @@ sha256 of outputs match.
 `--source-root` pointing elsewhere; assert URIs are relative to
 that root.
 
-- [ ] T026 [US4] Add
+- [x] T026 [US4] Add
       `tests/unit/output/test_sarif.py::test_source_root_default_cwd`.
-- [ ] T027 [US4] Add
+- [x] T027 [US4] Add
       `tests/unit/output/test_sarif.py::test_source_root_explicit`.
-- [ ] T028 [US4] Add
+- [x] T028 [US4] Add
       `tests/unit/output/test_sarif.py::test_source_root_outside_emits_dotdot`.
 
 ## Phase 7: Cross-cutting + polish
 
-- [ ] T029 [P] Update
+- [x] T029 [P] Update
       `specs/001-linter-foundation/contracts/cli.md` to note SARIF
       as a fourth peer format alongside terminal/json/html. (If the
       file is `cli.md`-named differently in spec 001, follow the
       spec's existing naming.)
-- [ ] T030 [P] Add a JSON-output regression test asserting
+- [x] T030 [P] Add a JSON-output regression test asserting
       pre-spec-006 byte shape unchanged (FR-012 / SC-004).
-- [ ] T031 [P] Run the full test suite (`pytest -q`) and confirm
+- [x] T031 [P] Run the full test suite (`pytest -q`) and confirm
       all 1127 pre-spec-006 tests still pass alongside the new
       SARIF tests.
-- [ ] T032 [P] Confirm no new runtime dependencies in
+- [x] T032 [P] Confirm no new runtime dependencies in
       `pyproject.toml`. `jsonschema` is dev-only.
 
 ## Dependencies

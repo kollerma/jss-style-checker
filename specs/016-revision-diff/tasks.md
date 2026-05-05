@@ -6,12 +6,12 @@ description: "Tasks for `jss-lint diff`"
 
 ## Phase 1: Foundational
 
-- [ ] T001 `src/texlint/diff.py::compare(old, new, *,
+- [x] T001 `src/texlint/diff.py::compare(old, new, *,
       ignore_line_drift, rule_renames) -> DiffReport`. Pure
       function over the spec-001 JSON shape.
-- [ ] T002 `tests/unit/test_diff.py` covering identical inputs,
+- [x] T002 `tests/unit/test_diff.py` covering identical inputs,
       fix-only, introduce-only, line-drift, rule-rename.
-- [ ] T003 `docs/jss-guide/rule-renames.json` — initially empty
+- [x] T003 `docs/jss-guide/rule-renames.json` — initially empty
       map; loaded by `compare`.
 
 ## Implementation Strategy

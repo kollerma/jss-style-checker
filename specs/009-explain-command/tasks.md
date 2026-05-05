@@ -6,22 +6,22 @@ description: "Tasks for `jss-lint explain` subcommand"
 
 ## Phase 1: Foundational
 
-- [ ] T001 Migrate `jss-lint` to a `click.Group` with the existing
+- [x] T001 Migrate `jss-lint` to a `click.Group` with the existing
       lint as the default action (`invoke_without_command=True`).
-- [ ] T002 Add a small `Explainer` module reading rule metadata
+- [x] T002 Add a small `Explainer` module reading rule metadata
       from the catalogue.
 
 ## Phase 2: User Story 1 — Single-rule explain (P1)
 
-- [ ] T003 [US1] Implement `src/texlint/explain.py::render(rule_id,
+- [x] T003 [US1] Implement `src/texlint/explain.py::render(rule_id,
       *, fmt) -> str` (terminal + markdown).
-- [ ] T004 [US1] Wire `jss-lint explain RULE-ID` subcommand.
-- [ ] T005 [US1] Tests: terminal + markdown formats; unknown rule
+- [x] T004 [US1] Wire `jss-lint explain RULE-ID` subcommand.
+- [x] T005 [US1] Tests: terminal + markdown formats; unknown rule
       exits 2; listing view (no rule).
 
 ## Phase 3: Catalogue extension (deferred)
 
-- [ ] T006 Catalogue fields `explanation`, `example_bad`,
+- [x] T006 Catalogue fields `explanation`, `example_bad`,
       `example_good` are reserved as optional; full backfill is a
       follow-up. v1 ships rendering against the existing
       `message_template` + authority surface.
