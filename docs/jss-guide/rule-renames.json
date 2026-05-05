@@ -1,5 +1,6 @@
 {
   "_about": "Spec 016 — rule-rename map applied by `jss-lint diff` so a renamed rule does not appear as one fix + one introduce. Format: { \"renames\": { \"OLD\": \"NEW\" } }. Spec PRs that rename a rule add an entry here.",
+  "_history": "No renames as of 2026-05-05. The catalogue's two retired rule ids — JSS-CITE-001 and JSS-ABBR-002 (per specs/003-jss-rule-catalogue/catalogue.yaml::retired_rule_ids) — are RETIREMENTS, not renames; they have no successor rule and so don't belong in this map. Future spec PRs that rename an active rule should add the (old_id -> new_id) pair here and a one-line entry under _provenance keyed on the old id.",
   "renames": {},
   "_provenance": {}
 }

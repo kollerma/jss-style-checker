@@ -1,0 +1,112 @@
+name: publish-badges
+
+# Spec 017 follow-up: generate the precision / recall / F1 badge
+# JSON files from the local eval databases and push them to the
+# `gh-pages` branch where shields.io's endpoint pattern can read
+# them.
+#
+# Trigger: every push to `main`. Idempotent — re-running with the
+# same DB state produces byte-identical badge JSON, so the
+# gh-pages commit is a no-op when nothing changed.
+#
+# Permissions: `contents: write` so the action can push to
+# gh-pages. The default GITHUB_TOKEN is sufficient.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-badges
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install jss-lint (dev extras)
+        run: pip install -e '.[dev]'
+
+      - name: Compute aggregates
+        id: agg
+        run: |
+          set -euo pipefail
+          # Aggregate precision = sum(tp) / (sum(tp)+sum(fp)) over the
+          # latest iteration's full-scope rows.
+          precision=$(python -c "
+          import sqlite3
+          cx = sqlite3.connect('eval/precision-history.db')
+          row = cx.execute(
+              'SELECT SUM(tp) AS tp, SUM(fp) AS fp FROM iteration_rule_stats '
+              'WHERE iteration_id = (SELECT MAX(id) FROM iterations) '
+              \"  AND scope = 'full'\"
+          ).fetchone()
+          tp = row[0] or 0; fp = row[1] or 0
+          print(0.0 if tp+fp == 0 else tp/(tp+fp))
+          ")
+          recall=$(python -c "
+          import sqlite3
+          cx = sqlite3.connect('eval/precision-history.db')
+          row = cx.execute(
+              'SELECT SUM(tp) AS tp, SUM(fn) AS fn FROM recall_history '
+              'WHERE run_timestamp = (SELECT MAX(run_timestamp) FROM recall_history)'
+          ).fetchone()
+          tp = (row[0] or 0) if row else 0
+          fn = (row[1] or 0) if row else 0
+          print(0.0 if tp+fn == 0 else tp/(tp+fn))
+          ")
+          f1=$(python -c "
+          p=$precision; r=$recall
+          print(0.0 if p+r == 0 else 2*p*r/(p+r))
+          ")
+          echo "precision=$precision" >> "$GITHUB_OUTPUT"
+          echo "recall=$recall" >> "$GITHUB_OUTPUT"
+          echo "f1=$f1" >> "$GITHUB_OUTPUT"
+
+      - name: Generate badge JSON
+        run: |
+          mkdir -p _badges
+          python -m eval.badge precision ${{ steps.agg.outputs.precision }} > _badges/precision.json
+          python -m eval.badge recall    ${{ steps.agg.outputs.recall    }} > _badges/recall.json
+          python -m eval.badge f1        ${{ steps.agg.outputs.f1        }} > _badges/f1.json
+
+      - name: Publish to gh-pages
+        # Force-push the contents of _badges/ to gh-pages under
+        # `badges/`. Using a worktree-style checkout keeps the
+        # working tree clean.
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Stage badges to a temp dir.
+          tmpdir=$(mktemp -d)
+          cp _badges/*.json "$tmpdir/"
+          # Fetch (or create) gh-pages.
+          if git fetch origin gh-pages; then
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf .
+          fi
+          mkdir -p badges
+          cp "$tmpdir"/*.json badges/
+          git add badges/
+          if git diff --cached --quiet; then
+            echo "no badge changes; skipping commit"
+            exit 0
+          fi
+          git commit -m "badges: refresh from main@${GITHUB_SHA::8}"
+          git push origin gh-pages

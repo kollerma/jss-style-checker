@@ -1,0 +1,59 @@
+name: test-action
+
+# Spec 014 follow-up: end-to-end smoke test of the JSS Style
+# Checker GitHub Action. Runs the local `./action` against
+# `docs/jss-template/` (the vendored JSS reference paper) and
+# asserts that the action produced a SARIF artifact and a
+# non-empty violation count.
+#
+# Trigger: every PR + every push to main. Pulls in the local
+# action via `uses: ./action`, so the test exercises the same
+# manifest a published-marketplace caller would consume.
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run jss-style-checker action
+        id: lint
+        uses: ./action
+        with:
+          paths: docs/jss-template
+          journal: jss
+          fail-on-severity: never  # we don't gate the smoke test on lint quality
+          comment-mode: none       # noisy on CI; we only care about the artifact
+          upload-sarif: 'false'    # no upload on the smoke-test run
+
+      - name: Assert SARIF artifact exists
+        run: |
+          set -euo pipefail
+          test -f "${{ steps.lint.outputs.sarif-path }}"
+          # Must be valid JSON.
+          python3 -c "import json; json.load(open('${{ steps.lint.outputs.sarif-path }}'))"
+
+      - name: Assert violation count is set
+        run: |
+          set -euo pipefail
+          # The action exposes the integer count as an output.
+          # `docs/jss-template/article.tex` is the reference
+          # JSS-template paper and is expected to lint cleanly,
+          # but a non-empty count is also acceptable — we only
+          # assert the field exists and parses.
+          n="${{ steps.lint.outputs.violation-count }}"
+          test -n "$n"
+          python3 -c "assert int('$n') >= 0"
+          echo "violation-count=$n"
