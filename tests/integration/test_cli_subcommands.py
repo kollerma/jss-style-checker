@@ -251,3 +251,60 @@ class TestDiff:
         )
         assert result.exit_code == 0, result.stderr
         assert "unchanged: 1" in result.stdout
+
+    def test_diff_format_markdown(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        old = tmp_path / "old.json"
+        new = tmp_path / "new.json"
+        _write_json(old, [_v()])
+        _write_json(new, [_v(rule_id="JSS-NEW-001")])
+        result = runner.invoke(
+            main, ["diff", "--format", "markdown", str(old), str(new)]
+        )
+        assert result.exit_code == 1
+        assert "**fixed:**" in result.stdout
+        assert "## Fixed" in result.stdout
+        assert "## Introduced" in result.stdout
+        assert "## Unchanged" in result.stdout
+
+    def test_diff_format_json(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        old = tmp_path / "old.json"
+        new = tmp_path / "new.json"
+        _write_json(old, [_v()])
+        _write_json(new, [_v()])
+        result = runner.invoke(
+            main, ["diff", "--format", "json", str(old), str(new)]
+        )
+        assert result.exit_code == 0, result.stderr
+        payload = json.loads(result.stdout)
+        assert payload["summary"] == {
+            "fixed": 0,
+            "introduced": 0,
+            "unchanged": 1,
+        }
+
+    def test_diff_per_violation_missing_key_exits_2(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Per-violation schema validation now catches malformed
+        entries in addition to missing top-level keys."""
+        old = tmp_path / "old.json"
+        new = tmp_path / "new.json"
+        old.write_text(
+            json.dumps(
+                {
+                    "tool_version": "0",
+                    "journal_id": "jss",
+                    # Each violation is missing line + message.
+                    "violations": [{"rule_id": "X", "file": "m.tex"}],
+                }
+            ),
+            encoding="utf-8",
+        )
+        _write_json(new, [])
+        result = runner.invoke(main, ["diff", str(old), str(new)])
+        assert result.exit_code == 2
+        assert "missing key" in result.stderr.lower()

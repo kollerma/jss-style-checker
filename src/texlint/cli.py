@@ -555,7 +555,17 @@ def report_cmd(
     is_flag=True,
     default=False,
 )
-def diff_cmd(old: str, new: str, ignore_line_drift: bool) -> None:
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["terminal", "markdown", "json"], case_sensitive=False),
+    default="terminal",
+    show_default=True,
+    help="Output format (markdown is GitHub-flavoured CommonMark).",
+)
+def diff_cmd(
+    old: str, new: str, ignore_line_drift: bool, fmt: str,
+) -> None:
     """Diff two ``--output json`` reports (spec 016)."""
     import json
 
@@ -568,17 +578,11 @@ def diff_cmd(old: str, new: str, ignore_line_drift: bool) -> None:
         except (OSError, json.JSONDecodeError) as exc:
             _eprint(f"jss-lint: failed to read {p}: {exc}")
             sys.exit(2)
-        if not isinstance(payload, dict) or "violations" not in payload:
-            _eprint(
-                f"jss-lint: {p} is not a spec-001 jss-lint JSON report "
-                "(missing 'violations' key)"
-            )
+        try:
+            return _diff.validate_payload(payload, p)
+        except _diff.SchemaMismatch as exc:
+            _eprint(f"jss-lint: {exc}")
             sys.exit(2)
-        violations = payload["violations"]
-        if not isinstance(violations, list):
-            _eprint(f"jss-lint: {p}: 'violations' must be a list")
-            sys.exit(2)
-        return violations
 
     old_violations = _load(old)
     new_violations = _load(new)
@@ -586,11 +590,13 @@ def diff_cmd(old: str, new: str, ignore_line_drift: bool) -> None:
     diff = _diff.compare(
         old_violations, new_violations, ignore_line_drift=ignore_line_drift
     )
-    click.echo(
-        f"fixed: {len(diff.fixed)} "
-        f"introduced: {len(diff.introduced)} "
-        f"unchanged: {len(diff.unchanged)}"
-    )
+    fmt_norm = fmt.lower()
+    if fmt_norm == "markdown":
+        click.echo(_diff.render_markdown(diff), nl=False)
+    elif fmt_norm == "json":
+        click.echo(_diff.render_json(diff), nl=False)
+    else:
+        click.echo(_diff.render_terminal(diff), nl=False)
     sys.exit(1 if diff.introduced else 0)
 
 
