@@ -189,6 +189,16 @@ def review_cmd(
     help="Partition precision by violation file suffix (tex | bib | rnw | rmd).",
 )
 @click.option(
+    "--with-recall",
+    "with_recall",
+    is_flag=True,
+    default=False,
+    help=(
+        "Add Recall and F1 columns to the overall table. Reads recall "
+        "from the latest recall_history snapshot in --history-db."
+    ),
+)
+@click.option(
     "--diff",
     is_flag=True,
     default=False,
@@ -245,6 +255,7 @@ def report_cmd(
     ctx: click.Context,
     by_source: bool,
     by_format: bool,
+    with_recall: bool,
     diff: bool,
     against: int | None,
     history_db: Path,
@@ -273,6 +284,7 @@ def report_cmd(
             diff=diff,
             history_db=history_db,
             against=against,
+            with_recall=with_recall,
         )
     except (FileNotFoundError, ManifestError) as err:
         click.echo(f"eval-jss: {err}", err=True)

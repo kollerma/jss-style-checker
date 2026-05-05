@@ -324,8 +324,33 @@ _STATUS_STYLE = {
 }
 
 
-def render_terminal(table: PrecisionTable, console: Console | None = None) -> None:
+def _f1(precision: float | None, recall: float | None) -> float | None:
+    """Standard F1 = 2 * P * R / (P + R). Returns None when either
+    component is missing or both are zero."""
+    if precision is None or recall is None:
+        return None
+    if precision + recall == 0:
+        return None
+    return 2 * precision * recall / (precision + recall)
+
+
+def render_terminal(
+    table: PrecisionTable,
+    console: Console | None = None,
+    *,
+    recall_per_rule: dict[str, float | None] | None = None,
+) -> None:
+    """Render the per-rule precision table.
+
+    When *recall_per_rule* is provided (a ``{rule_id: recall}`` map,
+    typically from ``eval.history.latest_recall_per_rule``), the
+    overall table gains two columns: Recall and F1. F1 is computed
+    pointwise from the precision/recall pair; cells where either is
+    missing render as ``"—"``.
+    """
     console = console or Console()
+    recall_per_rule = recall_per_rule or {}
+    show_recall = bool(recall_per_rule)
 
     overall_rows = [r for r in table.rows if r.source == "overall"]
     per_source_rows = [r for r in table.rows if r.source != "overall"]
@@ -340,18 +365,56 @@ def render_terminal(table: PrecisionTable, console: Console | None = None) -> No
         t.add_column("FP", justify="right")
         t.add_column("Pending", justify="right")
         t.add_column("Precision", justify="right")
+        if show_recall:
+            t.add_column("Recall", justify="right")
+            t.add_column("F1", justify="right")
         t.add_column("Status")
         for r in overall_rows:
             precision_str = f"{r.precision:.2%}" if r.precision is not None else "—"
             style = _STATUS_STYLE.get(r.status, "white")
-            t.add_row(
+            row = [
                 r.category,
                 r.rule_id,
                 str(r.tp),
                 str(r.fp),
                 str(r.pending),
                 precision_str,
-                f"[{style}]{r.status}[/{style}]",
+            ]
+            if show_recall:
+                rec = recall_per_rule.get(r.rule_id)
+                row.append(f"{rec:.2%}" if rec is not None else "—")
+                f1 = _f1(r.precision, rec)
+                row.append(f"{f1:.2%}" if f1 is not None else "—")
+            row.append(f"[{style}]{r.status}[/{style}]")
+            t.add_row(*row)
+        if show_recall:
+            # Aggregate row at the bottom: pooled precision (already
+            # known) + pooled recall (sum of TP / sum of TP+FN over
+            # the rules with measured recall) + F1 from the pair.
+            pooled_tp = sum(r.tp for r in overall_rows)
+            pooled_fp = sum(r.fp for r in overall_rows)
+            agg_precision = (
+                pooled_tp / (pooled_tp + pooled_fp)
+                if (pooled_tp + pooled_fp) > 0
+                else None
+            )
+            measured = [
+                rec for rec in recall_per_rule.values() if rec is not None
+            ]
+            agg_recall = (
+                sum(measured) / len(measured) if measured else None
+            )
+            agg_f1 = _f1(agg_precision, agg_recall)
+            t.add_row(
+                "[bold]aggregate[/bold]",
+                "",
+                str(pooled_tp),
+                str(pooled_fp),
+                "",
+                f"{agg_precision:.2%}" if agg_precision is not None else "—",
+                f"{agg_recall:.2%}" if agg_recall is not None else "—",
+                f"{agg_f1:.2%}" if agg_f1 is not None else "—",
+                "",
             )
         console.print(t)
 
@@ -595,6 +658,7 @@ def run(
     diff: bool = False,
     history_db: Path | None = None,
     against: int | None = None,
+    with_recall: bool = False,
 ) -> int:
     if diff:
         render_diff(
@@ -617,7 +681,15 @@ def run(
         table = compute_precision_by_source(db_path, pinned=pinned)
     else:
         table = compute_precision(db_path, pinned=pinned)
-    render_terminal(table)
+
+    recall_per_rule: dict[str, float | None] | None = None
+    if with_recall:
+        from eval import history as history_mod
+
+        recall_per_rule = history_mod.latest_recall_per_rule(
+            history_db or Path("eval/precision-history.db")
+        )
+    render_terminal(table, recall_per_rule=recall_per_rule)
 
     if csv_path and csv_path != "-":
         append_csv(
