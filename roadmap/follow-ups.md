@@ -273,8 +273,11 @@ inline).
 - [ ] `.github/workflows/publish-badges.yml` — push
       regenerated badge JSON to the `gh-pages` branch on
       every CI run.
-- [ ] Update README to display the three badges
-      (precision / recall / F1).
+- [x] Update README to display the three badges
+      (precision / recall / F1). (Shipped: README header carries
+      shields.io endpoint badges pointing at
+      `kollerma.github.io/jss-style-checker/badges/*.json`. The
+      JSONs are populated by the deferred gh-pages workflow.)
 
 ## Tracking
 

@@ -1,7 +1,18 @@
 # jss-style-checker
 
+[![precision](https://img.shields.io/endpoint?url=https%3A%2F%2Fkollerma.github.io%2Fjss-style-checker%2Fbadges%2Fprecision.json)](https://kollerma.github.io/jss-style-checker/)
+[![recall](https://img.shields.io/endpoint?url=https%3A%2F%2Fkollerma.github.io%2Fjss-style-checker%2Fbadges%2Frecall.json)](https://kollerma.github.io/jss-style-checker/)
+[![F1](https://img.shields.io/endpoint?url=https%3A%2F%2Fkollerma.github.io%2Fjss-style-checker%2Fbadges%2Ff1.json)](https://kollerma.github.io/jss-style-checker/)
+
 Style checker for manuscripts submitted to the
 [Journal of Statistical Software](https://www.jstatsoft.org/) (JSS).
+
+> The badges above read shields.io endpoint JSON files refreshed by
+> CI from the spec-002 precision-history DB and the spec-017 recall
+> corpus. They go live when the gh-pages publish workflow ships and
+> the recall corpus is annotated; until then they render as the
+> shields-io fallback. See
+> [`roadmap/follow-ups.md`](roadmap/follow-ups.md).
 
 The package ships:
 
