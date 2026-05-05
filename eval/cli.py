@@ -280,6 +280,276 @@ def report_cmd(
     ctx.exit(code)
 
 
+@cli.command("recall")
+@click.option(
+    "--corpus",
+    "corpus_dir",
+    type=click.Path(path_type=Path),
+    default=Path("eval/recall-corpus"),
+    show_default=True,
+    help="Recall corpus root (each subdirectory holds annotations.toml).",
+)
+@click.option(
+    "--gate",
+    is_flag=True,
+    default=False,
+    help=(
+        "Exit 1 when aggregate recall < 0.70 OR any per-rule recall "
+        "regressed by > 0.05 vs. the previous recorded run."
+    ),
+)
+@click.option(
+    "--validate",
+    "validate_only",
+    is_flag=True,
+    default=False,
+    help="Only validate annotation files; do not run the linter.",
+)
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["terminal", "json"]),
+    default="terminal",
+    show_default=True,
+)
+@click.option(
+    "--history-db",
+    "history_db",
+    type=click.Path(path_type=Path),
+    default=Path("eval/precision-history.db"),
+    show_default=True,
+    help="Path to the precision-history DB; recall_history rows live here too.",
+)
+@click.option(
+    "--no-record",
+    is_flag=True,
+    default=False,
+    help="Compute recall but do not persist to the history DB.",
+)
+@click.pass_context
+def recall_cmd(
+    ctx: click.Context,
+    corpus_dir: Path,
+    gate: bool,
+    validate_only: bool,
+    fmt: str,
+    history_db: Path,
+    no_record: bool,
+) -> None:
+    """Spec 017 — measure recall against a hand-annotated corpus.
+
+    Walks ``<corpus>/*/annotations.toml``; for each paper, runs the
+    linter against ``manuscript.tex`` (and any sibling sources) and
+    compares to the ground-truth annotations via
+    :func:`eval.recall.compute_recall`. Aggregate + per-rule numbers
+    are printed; when ``--gate`` is set, the exit code reflects
+    threshold/regression status.
+
+    Empty corpus is not an error: the function prints a friendly
+    note and exits 0. The 10-paper annotation contents are tracked
+    as a separate follow-up; this CLI works with however many
+    papers happen to be present.
+    """
+    from datetime import datetime, timezone
+    import hashlib
+    import json
+    import sys as _sys
+
+    if _sys.version_info >= (3, 11):
+        import tomllib
+    else:  # pragma: no cover - exercised only on 3.10
+        import tomli as tomllib
+
+    from eval import history, recall as recall_mod
+
+    if not corpus_dir.is_dir():
+        click.echo(
+            f"eval-jss recall: corpus directory not found: {corpus_dir}",
+            err=True,
+        )
+        ctx.exit(2)
+
+    annotation_files = sorted(corpus_dir.glob("*/annotations.toml"))
+    if not annotation_files:
+        click.echo(
+            "eval-jss recall: corpus is empty (0 annotated papers); "
+            "nothing to compute"
+        )
+        ctx.exit(0)
+
+    # Load + validate annotations.
+    per_paper: list[tuple[Path, list[dict]]] = []
+    validation_errors: list[str] = []
+    for ann_path in annotation_files:
+        try:
+            with ann_path.open("rb") as f:
+                doc = tomllib.load(f)
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            validation_errors.append(f"{ann_path}: {exc}")
+            continue
+        meta = doc.get("meta") or {}
+        if not isinstance(meta, dict) or not meta.get("paper_id"):
+            validation_errors.append(f"{ann_path}: missing meta.paper_id")
+            continue
+        violations = doc.get("violations") or []
+        if not isinstance(violations, list):
+            validation_errors.append(
+                f"{ann_path}: meta.violations must be a list"
+            )
+            continue
+        for i, v in enumerate(violations):
+            if not isinstance(v, dict):
+                validation_errors.append(
+                    f"{ann_path}: violations[{i}] is not a table"
+                )
+                continue
+            for required in ("rule_id", "file", "line"):
+                if required not in v:
+                    validation_errors.append(
+                        f"{ann_path}: violations[{i}] missing {required!r}"
+                    )
+        per_paper.append((ann_path, list(violations)))
+
+    if validation_errors:
+        for err in validation_errors:
+            click.echo(f"eval-jss recall: {err}", err=True)
+        ctx.exit(2)
+
+    if validate_only:
+        click.echo(
+            f"eval-jss recall: validated {len(annotation_files)} paper(s); ok"
+        )
+        ctx.exit(0)
+
+    # Run the linter against each paper's manuscript and aggregate
+    # linter-results across the whole corpus. We use the existing
+    # texlint pipeline.
+    from texlint.config import load as load_config
+    from texlint.core.engine import load_journal, parse_document, run as run_engine
+
+    cfg = load_config({}, Path.cwd())
+    journal = load_journal(cfg.journal)
+
+    all_linter: list[dict] = []
+    all_annotations: list[dict] = []
+    for ann_path, ann_violations in per_paper:
+        paper_dir = ann_path.parent
+        # The corpus convention is one manuscript per paper directory.
+        manuscript_files = sorted(
+            p for p in paper_dir.iterdir()
+            if p.suffix.lower() in {".tex", ".ltx", ".rnw", ".rmd"}
+        )
+        if not manuscript_files:
+            click.echo(
+                f"eval-jss recall: {paper_dir}: no manuscript file; skipping",
+                err=True,
+            )
+            continue
+        document = parse_document(manuscript_files)
+        report = run_engine(cfg, document, journal)
+        for v in report.violations:
+            all_linter.append(
+                {
+                    "rule_id": v.rule_id,
+                    "file": str(v.file.name),
+                    "line": v.line,
+                }
+            )
+        for v in ann_violations:
+            all_annotations.append(
+                {
+                    "rule_id": v["rule_id"],
+                    "file": v["file"],
+                    "line": v["line"],
+                }
+            )
+
+    recall_report = recall_mod.compute_recall(all_linter, all_annotations)
+
+    # Persist (unless --no-record).
+    if not no_record:
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        # Corpus hash: SHA-256 of the sorted set of annotation file
+        # paths + their byte contents — gives us a single fingerprint
+        # that changes when annotations change.
+        h = hashlib.sha256()
+        for ann_path in sorted(annotation_files):
+            h.update(str(ann_path.relative_to(corpus_dir)).encode())
+            h.update(b"\0")
+            h.update(ann_path.read_bytes())
+            h.update(b"\0")
+        corpus_hash = h.hexdigest()[:16]
+
+        per_rule = [
+            (r.rule_id, r.tp, r.fn, r.recall)
+            for r in recall_report.per_rule
+        ]
+        history.record_recall(
+            history_db,
+            run_timestamp=ts,
+            corpus_hash=corpus_hash,
+            per_rule=per_rule,
+        )
+
+    # Render.
+    if fmt == "json":
+        payload = {
+            "aggregate_recall": recall_report.aggregate_recall,
+            "f1": recall_report.f1,
+            "per_rule": [
+                {
+                    "rule_id": r.rule_id,
+                    "tp": r.tp,
+                    "fn": r.fn,
+                    "recall": r.recall,
+                }
+                for r in recall_report.per_rule
+            ],
+        }
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        agg = recall_report.aggregate_recall
+        click.echo(
+            f"Recall corpus: {corpus_dir} ({len(annotation_files)} papers)"
+        )
+        click.echo(
+            f"Aggregate: "
+            + (f"{agg:.3f}" if agg is not None else "n/a")
+            + f"  (per-rule rows: {len(recall_report.per_rule)})"
+        )
+        for r in recall_report.per_rule:
+            recall_text = f"{r.recall:.3f}" if r.recall is not None else "n/a"
+            click.echo(
+                f"  {r.rule_id}: TP={r.tp} FN={r.fn} recall={recall_text}"
+            )
+
+    # Gate logic.
+    if gate:
+        agg = recall_report.aggregate_recall or 0.0
+        if agg < 0.70:
+            click.echo(
+                f"eval-jss recall: aggregate {agg:.3f} below 0.70 floor",
+                err=True,
+            )
+            ctx.exit(1)
+        # Per-rule regression vs. previous run.
+        prev = history.latest_recall_per_rule(history_db)
+        for r in recall_report.per_rule:
+            if r.recall is None:
+                continue
+            prior = prev.get(r.rule_id)
+            if prior is None:
+                continue
+            if (prior - r.recall) > 0.05:
+                click.echo(
+                    f"eval-jss recall: {r.rule_id} regressed from "
+                    f"{prior:.3f} to {r.recall:.3f}",
+                    err=True,
+                )
+                ctx.exit(1)
+    ctx.exit(0)
+
+
 @cli.command("benchmark")
 @click.option(
     "--model",
