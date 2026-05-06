@@ -80,7 +80,7 @@ argument and emit a sibling macro with that projection.
       `\Plainkeywords{}`. (Shipped via the shared
       `_check_markup_plain_pair` plumbing; insertion anchored on the
       brace-group's end since `\Keywords` has no pylatexenc arg-spec.)
-- [ ] **JSS-PRE-006** — `\Plaintitle{}` / `\Plainauthor{}` /
+- [x] **JSS-PRE-006** — `\Plaintitle{}` / `\Plainauthor{}` /
       `\Plainkeywords{}` must be markup-free. Fix: strip markup
       from the existing brace argument; replace the macro's
       content range with the cleaned text.
@@ -109,9 +109,11 @@ math. Bounded because the catalogue describes the canonical form;
 implementation needs careful position arithmetic to avoid
 nesting / verbatim hazards.
 
-- [ ] **JSS-OPER-001** — `p-value` → `$p$~value`,
-      `t-statistic` → `$t$~statistic`, etc. Fix: replace the
-      matched token range.
+- [x] **JSS-OPER-001** — `p-value` → `$p$~value`,
+      `t-statistic` → `$t$~statistic`, etc. (Shipped: matched span
+      replaced with `$<sym>$~<noun>`; the rule's existing
+      detection regex's capture groups drive the replacement so
+      fix domain == detection domain.)
 - [ ] **JSS-OPER-002** — transpose: prime / `T` superscript →
       `\top`. Fix: replace the offending superscript with
       `\top`.
@@ -132,9 +134,11 @@ with the fix domain (don't touch the surrounding `\code{}`
 delimiters). Confidence "safe" requires a self-applying
 re-check.
 
-- [ ] **JSS-CODE-002** — R `library(...)` / `data(...)` first
-      arg quoted: `library(MASS)` → `library("MASS")`. Fix:
-      wrap the bareword first argument in double quotes.
+- [x] **JSS-CODE-002** — R `library(...)` / `data(...)` first
+      arg quoted: `library(MASS)` → `library("MASS")`. (Shipped:
+      wraps the bareword first argument in double quotes;
+      confidence "safe" only when the bareword matches a clean R
+      identifier — expression-style first args keep `fix=None`.)
 - [ ] **JSS-CODE-003** — spaces around operators / after commas
       in code samples. Fix: insert spaces; this is multi-edit
       territory and may require multiple `Fix` payloads or a
