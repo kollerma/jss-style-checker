@@ -137,6 +137,56 @@ def test_xref_002_flags_eqref(tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
+# JSS-CODE-001 — comments inside HIDDEN (echo=FALSE) chunks must NOT
+# fire. Hidden-chunk bodies are absent from the rendered manuscript;
+# they only feed the auto-purled .R script where comments are
+# encouraged. The published jss5342 keeps explanatory comments inside
+# echo=FALSE setup chunks (e.g. line 26 "# Setup prompt to follow
+# requested style") — flagging them would mean the linter is wrong
+# about the surface it's linting.
+# ---------------------------------------------------------------------------
+
+def test_code_001_skips_hidden_chunk(tmp_path: Path):
+    """`# comment` inside an echo=FALSE chunk must NOT be flagged."""
+    src = (
+        "\\documentclass[article]{jss}\n"
+        "\\begin{document}\n"
+        "<<setup, echo = FALSE, results = hide>>=\n"
+        "# Setup prompt to follow requested style\n"
+        "options(prompt = \"R> \")\n"
+        "@\n"
+        "\\end{document}\n"
+    )
+    doc = _rnw_doc(tmp_path, src)
+    violations = _violations_for("JSS-CODE-001", doc)
+    assert violations == [], (
+        "expected JSS-CODE-001 to skip comments inside echo=FALSE "
+        "chunks; the hidden chunk feeds the .R script (where comments "
+        "are encouraged), not the rendered manuscript. Got: "
+        f"{violations}"
+    )
+
+
+def test_code_001_still_fires_in_visible_chunk(tmp_path: Path):
+    """`# comment` inside a visible chunk must still be flagged."""
+    src = (
+        "\\documentclass[article]{jss}\n"
+        "\\begin{document}\n"
+        "<<example>>=\n"
+        "# This comment ends up rendered in the paper\n"
+        "x <- 1\n"
+        "@\n"
+        "\\end{document}\n"
+    )
+    doc = _rnw_doc(tmp_path, src)
+    violations = _violations_for("JSS-CODE-001", doc)
+    assert violations, (
+        "expected JSS-CODE-001 to flag comments inside a visible "
+        "chunk — comments belong in surrounding LaTeX prose"
+    )
+
+
+# ---------------------------------------------------------------------------
 # JSS-MARKUP-003 — bare `NULL` (and similar R sentinel values) in prose
 # should be wrapped in \code{}. Reviewer evidence: R5-r3 (Table 3:
 # "NULL → \\code{NULL}").

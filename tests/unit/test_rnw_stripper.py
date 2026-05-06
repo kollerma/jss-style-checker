@@ -6,7 +6,7 @@ have one or more cases.
 
 from __future__ import annotations
 
-from texlint.core.parser import strip_rnw_chunks
+from texlint.core.parser import strip_rnw_chunks, wrap_rnw_chunks_as_sinput
 
 # ---------------------------------------------------------------------------
 # S-1 line-count invariant
@@ -145,3 +145,52 @@ def test_sexpr_with_nested_braces_not_stripped():
     src = "\\Sexpr{foo{bar}}"
     out = strip_rnw_chunks(src)
     assert out == src
+
+
+# ---------------------------------------------------------------------------
+# Hidden-chunk handling in wrap_rnw_chunks_as_sinput
+# ---------------------------------------------------------------------------
+
+
+def test_wrap_emits_sinput_for_visible_chunk():
+    src = "<<example>>=\nx <- 1\n@\n"
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" in out
+    assert "x <- 1" in out
+    assert out.count("\n") == src.count("\n")
+
+
+def test_wrap_blanks_echo_false_chunk():
+    # echo=FALSE chunks do not appear in the rendered manuscript, so
+    # manuscript rules must not see their body.
+    src = "<<setup, echo = FALSE>>=\nlibrary(MASS)\n# explanatory note\n@\n"
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" not in out
+    assert "library" not in out
+    assert "explanatory" not in out
+    assert out.count("\n") == src.count("\n")
+
+
+def test_wrap_blanks_echo_F_short_form():
+    # R / knitr accept the bare ``F`` shorthand for FALSE.
+    src = "<<setup, echo=F>>=\nlibrary(MASS)\n@\n"
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" not in out
+    assert "library" not in out
+
+
+def test_wrap_blanks_include_false_chunk():
+    # knitr's include=FALSE suppresses both code and output.
+    src = "<<setup, include = FALSE>>=\nlibrary(MASS)\n@\n"
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" not in out
+    assert "library" not in out
+
+
+def test_wrap_keeps_eval_false_visible():
+    # eval=FALSE only suppresses execution; the code IS still echoed
+    # in the rendered manuscript, so it must remain lintable.
+    src = "<<demo, eval = FALSE>>=\nlibrary(MASS)\n@\n"
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" in out
+    assert "library(MASS)" in out

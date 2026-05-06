@@ -132,6 +132,17 @@ def _neutralize_verbatim_envs(src: str) -> str:
 # where ``{`` / ``}`` don't appear unbalanced.
 _CHUNK_BODY_NEUTRALIZE = str.maketrans({"{": " ", "}": " ", "\\": " "})
 
+# Sweave / knitr chunk options that suppress code echo in the rendered
+# manuscript: ``echo=FALSE`` (Sweave + knitr) and ``include=FALSE``
+# (knitr — suppresses both code and output). Both forms accept the
+# single-letter ``F`` shorthand R uses for FALSE. Spaces around ``=``
+# are optional. A hidden chunk's body never appears in the .tex / PDF
+# the reviewer sees, so manuscript-style rules (CODE-*, WIDTH-001)
+# must not fire on its content — the chunk only feeds the auto-purled
+# .R script, where comments and looser style are encouraged. Match is
+# case-sensitive: R / knitr treat ``False`` / ``false`` as undefined.
+_HIDDEN_CHUNK_OPT = re.compile(r"\b(?:echo|include)\s*=\s*(?:FALSE|F)\b")
+
 
 def wrap_rnw_chunks_as_sinput(src: str) -> str:
     """Rewrite Sweave / knitr R code chunks to ``\\begin{Sinput}`` /
@@ -160,6 +171,14 @@ def wrap_rnw_chunks_as_sinput(src: str) -> str:
         if nl == -1:
             return whole
         header = whole[:nl]
+        # Hidden chunks (echo=FALSE / include=FALSE) do not appear in
+        # the rendered manuscript, so manuscript rules must not lint
+        # them. Blank to whitespace, preserving line count exactly as
+        # ``strip_rnw_chunks`` would, so downstream line numbers stay
+        # source-authoritative for any rule that does fire on the
+        # surrounding prose.
+        if _HIDDEN_CHUNK_OPT.search(header):
+            return "\n" * whole.count("\n")
         # Strip CR if present so we re-emit a clean LF.
         header_nl = "\r\n" if header.endswith("\r") else "\n"
         rest = whole[nl + 1:]
