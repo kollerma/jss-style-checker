@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 
 
 @pytest.fixture
@@ -97,6 +98,34 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-MARKUP-001 end-to-end --fix
+# ---------------------------------------------------------------------------
+
+
+class TestMarkup001Fix:
+    """``jss-lint --fix`` against the JSS-MARKUP-001 before fixture
+    rewrites the file in place to match the after fixture.
+
+    The before fixture has exactly one ``Python`` mention that the rule
+    flags; the fix wraps it in ``\\proglang{Python}``.
+    """
+
+    def test_fix_rewrites_to_after_fixture(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(MARKUP_001 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit 1: in-memory report still carries the violation. The
+        # rewrite happens after the report is built.
+        assert result.exit_code == 1, result.output
+        expected = (MARKUP_001 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------
