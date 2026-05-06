@@ -20,7 +20,7 @@ from pylatexenc.latexwalker import (
     LatexSpecialsNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -42,6 +42,14 @@ _MISSING_SPACES_RE = re.compile(
     r"(?:[A-Za-z0-9_\.\)\]][=+\-*/][A-Za-z0-9_\.\(\[])"
     r"|(?:,[A-Za-z0-9_\.\(\[])"
 )
+
+# Clean R identifier — letter, then letters/digits/underscore/dot. The
+# detection regex (_LIBRARY_UNQUOTED_RE) already enforces this shape on
+# the bareword first arg, so every flagged match has a deterministic
+# canonical form (wrap in double quotes). Confidence is therefore
+# "safe" across the entire current detection set.
+_CLEAN_R_IDENT_RE = re.compile(r"^[A-Za-z][A-Za-z0-9._]*$")
+
 
 # `\code{foo.bar}` / `\code{Ch-Intro}` / `\code{with-dash_and.dot}` —
 # content that's a single dotted/hyphenated identifier token. These are
@@ -88,7 +96,12 @@ _STRING_LITERAL_RE = re.compile(r"\"[^\"\n]*\"|'[^'\n]*'")
 
 
 def _violation(
-    *, tex: Any, pos: int, rule_id: str, suggestion: str
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -100,7 +113,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -161,11 +174,36 @@ def check_jss_code_002(
                     continue
                 for match in _LIBRARY_UNQUOTED_RE.finditer(child.chars):
                     abs_pos = child.pos + match.start()
+                    bareword = match.group(1)
+                    # The detection regex (_LIBRARY_UNQUOTED_RE) already
+                    # constrains the bareword to a clean R identifier
+                    # (``[A-Za-z][A-Za-z0-9_.]*``). Wrapping it in
+                    # double quotes is the deterministic canonical
+                    # form, so confidence is "safe" for every match.
+                    # Quoted first args (``library("MASS")``) and
+                    # expression first args (``library(get("MASS"))``)
+                    # never match the regex in the first place, so
+                    # they don't reach this point.
+                    if _CLEAN_R_IDENT_RE.match(bareword):
+                        bareword_start = child.pos + match.start(1)
+                        bareword_end = child.pos + match.end(1)
+                        fix: Fix | None = Fix(
+                            start=bareword_start,
+                            end=bareword_end,
+                            replacement=f'"{bareword}"',
+                            description=(
+                                "quote first argument to library() / data()"
+                            ),
+                            confidence="safe",
+                        )
+                    else:
+                        fix = None
                     yield _violation(
                         tex=tex,
                         pos=abs_pos,
                         rule_id="JSS-CODE-002",
                         suggestion=_code_002_suggestion(match),
+                        fix=fix,
                     )
 
 

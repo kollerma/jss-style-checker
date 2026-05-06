@@ -47,6 +47,7 @@ from texlint.cli import main
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 ABBR_001 = FIXTURES / "auto-fix" / "JSS-ABBR-001"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+CODE_002 = FIXTURES / "auto-fix" / "JSS-CODE-002"
 HOUSE_003 = FIXTURES / "auto-fix" / "JSS-HOUSE-003"
 MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
@@ -490,6 +491,36 @@ class TestOper001Fix:
         # auto-fixed and re-validation finds no recurrence.
         assert result.exit_code in (0, 1), result.output
         expected = (OPER_001 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-CODE-002 --fix end-to-end byte equality
+# ---------------------------------------------------------------------------
+
+
+class TestCode002Fix:
+    """End-to-end ``--fix`` for JSS-CODE-002.
+
+    Drives the CLI in non-interactive write mode against the
+    ``before.tex`` fixture (a CodeInput block containing
+    ``library(MASS)``) and asserts the rewritten file is
+    byte-identical to ``after.tex`` (which has ``library("MASS")``).
+    """
+
+    def test_fix_rewrites_to_after(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(CODE_002 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The in-memory report carries the violation (computed before
+        # the rewrite), so exit_code is 1 — the post-fix byte equality
+        # below is the load-bearing assertion.
+        assert result.exit_code == 1, result.output
+        expected = (CODE_002 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 
