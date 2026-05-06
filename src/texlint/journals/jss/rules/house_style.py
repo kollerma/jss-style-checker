@@ -20,7 +20,7 @@ from pylatexenc.latexwalker import (
     LatexMacroNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -39,7 +39,12 @@ _JSS_LOADED_PACKAGES: frozenset[str] = frozenset(
 
 
 def _violation(
-    *, tex: Any, pos: int, rule_id: str, suggestion: str
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -51,7 +56,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -71,6 +76,12 @@ def check_jss_house_001(
                 continue
             for match in _EG_IE_RE.finditer(node.chars):
                 abs_pos = node.pos + match.start()
+                # The fix swaps the trailing `.` for `.,` — a 1-byte
+                # range whose replacement is the same `.` followed by
+                # the missing comma. The rule only fires in prose
+                # context (math/verbatim/code already filtered above),
+                # so the fix is unambiguous; confidence "safe".
+                dot_pos = node.pos + match.end() - 1
                 yield _violation(
                     tex=tex,
                     pos=abs_pos,
@@ -78,6 +89,13 @@ def check_jss_house_001(
                     suggestion=(
                         f"Add a comma after {match.group(0)!r}: "
                         f"'{match.group(0)},'."
+                    ),
+                    fix=Fix(
+                        start=dot_pos,
+                        end=dot_pos + 1,
+                        replacement=".,",
+                        description="insert comma after e.g. / i.e.",
+                        confidence="safe",
                     ),
                 )
 
