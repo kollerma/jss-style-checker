@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from texlint.api import ComplianceReport, Severity, Violation
 from texlint.report import render_report
 
@@ -67,9 +69,12 @@ class TestHtmlReport:
         assert "Bar" in out
 
     def test_pdf_returns_bytes_when_weasyprint_available(self) -> None:
-        """Spec 015 follow-up — fmt='pdf' is now supported via the
-        optional [pdf] extra. WeasyPrint is installed in the dev
-        environment; the call returns the PDF bytes."""
+        """Spec 015 follow-up — fmt='pdf' is supported via the
+        optional [pdf] extra. Skipped on environments without
+        WeasyPrint (e.g. the GitHub Actions matrix); when present
+        (dev container, ``pip install jss-lint[pdf]``), the call
+        returns PDF bytes."""
+        pytest.importorskip("weasyprint")
         out = render_report(_report(()), fmt="pdf")
         assert isinstance(out, bytes)
         assert out.startswith(b"%PDF-")
