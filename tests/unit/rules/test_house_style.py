@@ -118,6 +118,34 @@ class TestHouse003:
     def test_good_silent(self, run_rule):
         assert run_rule(jss_house_003, _tex("JSS-HOUSE-003-good.tex")) == []
 
+    def test_fix_payload_deletes_whole_line(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\usepackage{graphicx}" "\n"
+            r"\begin{document}\end{document}" "\n"
+        )
+        violations = run_rule(jss_house_003, src)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert fix is not None
+        assert fix.replacement == ""
+        assert fix.end > fix.start
+        # Applying the fix should drop the whole \usepackage line.
+        assert src[fix.start : fix.end] == "\\usepackage{graphicx}\n"
+
+    def test_fix_none_when_line_has_other_content(self, run_rule):
+        # Conservative: if the offending macro shares its line with
+        # other content, the rule must not emit a fix payload.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\usepackage{graphicx} % comment after"
+            "\n"
+            r"\begin{document}\end{document}" "\n"
+        )
+        violations = run_rule(jss_house_003, src)
+        assert len(violations) == 1
+        assert violations[0].fix is None
+
     def test_unrelated_usepackage_silent(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

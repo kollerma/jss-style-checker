@@ -20,7 +20,7 @@ from pylatexenc.latexwalker import (
     LatexMacroNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -148,7 +148,19 @@ def check_jss_house_003(
                 continue
             if name not in _JSS_LOADED_PACKAGES:
                 continue
-            yield _violation(
+            macro_end = node.pos + (node.len or 0)
+            line_range = _whole_line_range(tex.source, node.pos, macro_end)
+            fix: Fix | None = None
+            if line_range is not None:
+                line_start, line_end = line_range
+                fix = Fix(
+                    start=line_start,
+                    end=line_end,
+                    replacement="",
+                    description=f"delete redundant \\usepackage{{{name}}}",
+                    confidence="safe",
+                )
+            v = _violation(
                 tex=tex,
                 pos=node.pos,
                 rule_id="JSS-HOUSE-003",
@@ -157,6 +169,47 @@ def check_jss_house_003(
                     "loads it."
                 ),
             )
+            if fix is not None:
+                # Violation is frozen — rebuild with the fix payload.
+                v = Violation(
+                    file=v.file,
+                    line=v.line,
+                    column=v.column,
+                    rule_id=v.rule_id,
+                    severity=v.severity,
+                    message=v.message,
+                    suggestion=v.suggestion,
+                    fix=fix,
+                )
+            yield v
+
+
+def _whole_line_range(
+    source: str, macro_start: int, macro_end: int
+) -> tuple[int, int] | None:
+    """Return ``(line_start, line_end_after_newline)`` if the line
+    containing ``\\usepackage{...}`` consists only of that macro and
+    optional surrounding whitespace; otherwise return ``None``.
+
+    ``line_start`` is the index just after the previous ``\\n`` (or 0
+    at buffer start). ``line_end`` is one past the trailing ``\\n``
+    (or ``len(source)`` if the line has no trailing newline). Slicing
+    ``source[line_start:line_end]`` therefore yields the whole line
+    including its newline, suitable as a deletion range.
+    """
+    prev_nl = source.rfind("\n", 0, macro_start)
+    line_start = 0 if prev_nl == -1 else prev_nl + 1
+    next_nl = source.find("\n", macro_end)
+    line_end = len(source) if next_nl == -1 else next_nl + 1
+
+    before = source[line_start:macro_start]
+    # ``line_end`` includes the trailing newline; everything after the
+    # macro on the same line lives in ``[macro_end, next_nl)``.
+    after_end = next_nl if next_nl != -1 else len(source)
+    after = source[macro_end:after_end]
+    if before.strip() != "" or after.strip() != "":
+        return None
+    return line_start, line_end
 
 
 def _usepackage_name(macro: Any, parent: Any, idx: int) -> str:
