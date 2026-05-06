@@ -50,6 +50,7 @@ MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
 NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
 PRE_003 = FIXTURES / "auto-fix" / "JSS-PRE-003"
+PRE_007 = FIXTURES / "auto-fix" / "JSS-PRE-007"
 STRUCT_005 = FIXTURES / "auto-fix" / "JSS-STRUCT-005"
 STRUCT_006 = FIXTURES / "auto-fix" / "JSS-STRUCT-006"
 TYPO_001 = FIXTURES / "auto-fix" / "JSS-TYPO-001"
@@ -283,6 +284,37 @@ class TestPre003Fix:
         # rewrite, asserted byte-for-byte.
         assert result.exit_code == 1, result.output
         expected = (PRE_003 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-PRE-007 Plainauthor insertion
+# ---------------------------------------------------------------------------
+
+
+class TestPre007Fix:
+    """End-to-end ``jss-lint --fix`` rewrite for JSS-PRE-007.
+
+    The fixture's ``\\author{}`` carries markup (``\\pkg{}``) and
+    ``\\Plainauthor{}`` is missing. The fixer should insert
+    ``\\Plainauthor{<projected plain text>}`` immediately after
+    ``\\author{...}`` and the file should match ``after.tex``
+    byte-for-byte.
+    """
+
+    def test_fix_inserts_plainauthor(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(PRE_007 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit 1 because the in-memory report still carries the
+        # JSS-PRE-007 violation (computed pre-rewrite); the rewrite
+        # itself succeeds and the byte-equality check below proves it.
+        assert result.exit_code == 1, result.output
+        expected = (PRE_007 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 
