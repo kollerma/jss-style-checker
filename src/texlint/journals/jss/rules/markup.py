@@ -26,14 +26,19 @@ from pylatexenc.latexwalker import (
     LatexMathNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
 
 def _violation(
-    *, tex: Any, pos: int, rule_id: str, suggestion: str
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -45,7 +50,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -186,6 +191,7 @@ def _check_bare_terms(
     rule_id: str,
     wrap_macro: str,
     skip_initials: bool,
+    emit_fix: bool = False,
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
@@ -219,6 +225,30 @@ def _check_bare_terms(
                 if _disambiguates_to_method(node.chars, offset, token):
                     continue
                 abs_pos = node.pos + offset
+                abs_end = abs_pos + len(token)
+                # Spec 008 follow-up: MARKUP-002 emits a ``safe`` Fix
+                # that wraps the bare token in ``\pkg{<token>}``. The
+                # already-applied carve-outs (``_is_in_prose_context``
+                # filters tokens inside ``\code{}`` / ``\verb`` /
+                # ``\pkg{}`` / math / verbatim envs; ``_is_filename_context``
+                # / ``_is_option_list_value`` / ``_disambiguates_to_method``
+                # cover ambiguous prose contexts) leave only true bare
+                # prose mentions, where the wrap is mechanical and the
+                # rewritten bytes do not re-trigger MARKUP-002 (the
+                # token is now inside ``\pkg{...}`` and therefore no
+                # longer in prose context). MARKUP-001 keeps
+                # ``fix=None`` until its own follow-up lands — its
+                # carve-outs differ subtly (initials, filenames) and
+                # ``\proglang{}`` wrapping warrants its own audit.
+                fix: Fix | None = None
+                if emit_fix:
+                    fix = Fix(
+                        start=abs_pos,
+                        end=abs_end,
+                        replacement=f"\\{wrap_macro}{{{token}}}",
+                        description=f"wrap {token} in \\{wrap_macro}{{}}",
+                        confidence="safe",
+                    )
                 yield _violation(
                     tex=tex,
                     pos=abs_pos,
@@ -226,6 +256,7 @@ def _check_bare_terms(
                     suggestion=(
                         f"Wrap {token!r} in \\{wrap_macro}{{{token}}}."
                     ),
+                    fix=fix,
                 )
 
 
@@ -243,7 +274,7 @@ def check_jss_markup_002(
 ) -> Iterator[Violation]:
     yield from _check_bare_terms(
         doc, terms=R_PACKAGES, rule_id="JSS-MARKUP-002",
-        wrap_macro="pkg", skip_initials=False,
+        wrap_macro="pkg", skip_initials=False, emit_fix=True,
     )
 
 
