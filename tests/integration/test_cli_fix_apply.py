@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+CODE_002 = FIXTURES / "auto-fix" / "JSS-CODE-002"
 
 
 @pytest.fixture
@@ -97,6 +98,36 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-CODE-002 --fix end-to-end byte equality
+# ---------------------------------------------------------------------------
+
+
+class TestCode002Fix:
+    """End-to-end ``--fix`` for JSS-CODE-002.
+
+    Drives the CLI in non-interactive write mode against the
+    ``before.tex`` fixture (a CodeInput block containing
+    ``library(MASS)``) and asserts the rewritten file is
+    byte-identical to ``after.tex`` (which has ``library("MASS")``).
+    """
+
+    def test_fix_rewrites_to_after(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(CODE_002 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The in-memory report carries the violation (computed before
+        # the rewrite), so exit_code is 1 — the post-fix byte equality
+        # below is the load-bearing assertion.
+        assert result.exit_code == 1, result.output
+        expected = (CODE_002 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------

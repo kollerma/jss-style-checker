@@ -134,6 +134,31 @@ class TestCode002:
         )
         assert run_rule(jss_code_002, src) == []
 
+    def test_emits_safe_fix_payload(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}library(MASS)\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_code_002, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        assert v.fix.replacement.startswith('"')
+        assert v.fix.replacement.endswith('"')
+        assert v.fix.replacement == '"MASS"'
+        assert v.fix.confidence == "safe"
+        assert v.fix.end > v.fix.start
+        # Apply the fix to the original source and confirm the
+        # bareword is now wrapped in double quotes.
+        before = src
+        rewritten = (
+            before[: v.fix.start] + v.fix.replacement + before[v.fix.end :]
+        )
+        assert "library(MASS)" not in rewritten
+        assert 'library("MASS")' in rewritten
+
 
 # ---------------------------------------------------------------------------
 # JSS-CODE-003 — missing spaces in \code{}
