@@ -32,6 +32,31 @@ _WORDY_EDITION_RE = re.compile(
     flags=re.IGNORECASE,
 )
 
+# Mapping from non-canonical edition shorthand to the JSS-canonical
+# short-ordinal form. Covers every form `_WORDY_EDITION_RE` matches.
+_EDITION_CANONICAL: dict[str, str] = {
+    "first":   "1st",
+    "second":  "2nd",
+    "third":   "3rd",
+    "fourth":  "4th",
+    "fifth":   "5th",
+    "sixth":   "6th",
+    "seventh": "7th",
+    "eighth":  "8th",
+    "ninth":   "9th",
+    "tenth":   "10th",
+    "1e":  "1st",
+    "2e":  "2nd",
+    "3e":  "3rd",
+    "4e":  "4th",
+    "5e":  "5th",
+    "6e":  "6th",
+    "7e":  "7th",
+    "8e":  "8th",
+    "9e":  "9th",
+    "10e": "10th",
+}
+
 # Packages that jss.cls already loads (per catalogue note on HOUSE-003).
 _JSS_LOADED_PACKAGES: frozenset[str] = frozenset(
     {"graphicx", "xcolor", "ae", "fancyvrb", "hyperref"}
@@ -111,6 +136,43 @@ def _iter_bib_entries(doc: ParsedDocument) -> Iterator[tuple[Any, Any]]:
     yield from _helpers._iter_referenced_entries(doc)
 
 
+def _line_start_offsets(text: str) -> list[int]:
+    """Return the absolute char offset of the start of every line in
+    ``text`` (line 0 starts at offset 0)."""
+    offsets = [0]
+    for i, ch in enumerate(text):
+        if ch == "\n":
+            offsets.append(i + 1)
+    return offsets
+
+
+def _locate_edition_value(
+    source: str, field_start_line: int, value: str
+) -> tuple[int, int] | None:
+    """Locate the byte span of an edition ``value`` inside ``source``.
+
+    The bibtex parser strips the surrounding ``{...}`` / ``"..."`` from
+    the field value, so we re-locate it by scanning forward from the
+    line on which the field starts. We accept whitespace between the
+    delimiter and the value so ``edition = { second }`` still resolves.
+    """
+    offsets = _line_start_offsets(source)
+    if field_start_line < 0 or field_start_line >= len(offsets):
+        return None
+    line_pos = offsets[field_start_line]
+    pat = re.compile(
+        r"\{\s*(" + re.escape(value) + r")\s*\}"
+        r"|\"\s*(" + re.escape(value) + r")\s*\"",
+        flags=re.IGNORECASE,
+    )
+    m = pat.search(source, pos=line_pos)
+    if m is None:
+        return None
+    if m.group(1) is not None:
+        return m.start(1), m.end(1)
+    return m.start(2), m.end(2)
+
+
 def check_jss_house_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -123,6 +185,29 @@ def check_jss_house_002(
             continue
         start = getattr(entry, "start_line", 0) or 0
         meta = _catalogue_data.RULES["JSS-HOUSE-002"]
+
+        # Auto-fix: emit a safe Fix(...) payload covering exactly the
+        # edition value (without the surrounding ``{}`` / ``""``) so
+        # the rewrite preserves the surrounding delimiter style.
+        canonical = _EDITION_CANONICAL.get(value.lower())
+        fix: Fix | None = None
+        if canonical is not None:
+            field_line = getattr(field, "start_line", None)
+            if field_line is None:
+                field_line = start
+            span = _locate_edition_value(bib.source, field_line, value)
+            if span is not None:
+                fix_start, fix_end = span
+                fix = Fix(
+                    start=fix_start,
+                    end=fix_end,
+                    replacement=canonical,
+                    description=(
+                        f"use {canonical!r} for edition shorthand"
+                    ),
+                    confidence="safe",
+                )
+
         yield Violation(
             file=bib.path,
             line=start + 1,
@@ -134,7 +219,7 @@ def check_jss_house_002(
                 f"Replace edition {value!r} with an ordinal form "
                 "(e.g., '2nd', '3rd')."
             ),
-            fix=None,
+            fix=fix,
         )
 
 
