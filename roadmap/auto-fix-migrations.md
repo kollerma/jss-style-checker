@@ -65,13 +65,21 @@ equivalent) with a deterministic canonical form.
 Pattern: extract a plain-text projection of an existing macro's
 argument and emit a sibling macro with that projection.
 
-- [ ] **JSS-PRE-003** — when `\title{}` contains markup, emit
-      `\Plaintitle{<plain text>}`. Fix: insert
-      `\Plaintitle{...}` after the existing `\title{...}` line.
-- [ ] **JSS-PRE-007** — same as PRE-003 but for `\author{}` →
-      `\Plainauthor{}`.
-- [ ] **JSS-PRE-008** — same as PRE-003 but for `\Keywords{}` →
-      `\Plainkeywords{}`.
+- [x] **JSS-PRE-003** — when `\title{}` contains markup, emit
+      `\Plaintitle{<plain text>}`. (Shipped: 0-length insert of
+      `\n\Plaintitle{<projection>}` after `\title{...}`; the
+      projection walks the title nodelist (text verbatim, recurse
+      into macro brace-args, math `$`-stripped, drop everything else)
+      and only fires when no `\Plaintitle{}` already exists.)
+- [x] **JSS-PRE-007** — same as PRE-003 but for `\author{}` →
+      `\Plainauthor{}`. (Shipped via the shared
+      `_check_markup_plain_pair` plumbing; `\and` / `\And` / `\AND`
+      project to a literal `, ` so the plain author list reads as a
+      comma-separated string.)
+- [x] **JSS-PRE-008** — same as PRE-003 but for `\Keywords{}` →
+      `\Plainkeywords{}`. (Shipped via the shared
+      `_check_markup_plain_pair` plumbing; insertion anchored on the
+      brace-group's end since `\Keywords` has no pylatexenc arg-spec.)
 - [ ] **JSS-PRE-006** — `\Plaintitle{}` / `\Plainauthor{}` /
       `\Plainkeywords{}` must be markup-free. Fix: strip markup
       from the existing brace argument; replace the macro's
@@ -81,9 +89,9 @@ argument and emit a sibling macro with that projection.
 - [x] **JSS-STRUCT-005** — `\author{A \and B}` → `\author{A \And
       B}`. (Shipped: replaces the lowercase `\and` separator inside
       `\author{}` with the JSS-canonical `\And`.)
-- [ ] **JSS-STRUCT-006** — appendix needs a `\newpage` separator
-      after `\bibliography{}`. Fix: insert `\newpage\n` at the
-      reported position.
+- [x] **JSS-STRUCT-006** — appendix needs a `\newpage` separator
+      after `\bibliography{}`. (Shipped: 0-length insert of
+      `\newpage\n` at the `\begin{appendix}` byte offset.)
 - [x] **JSS-TYPO-001** — figure / table captions end with a
       period. (Shipped: 0-length insert of `.` at the offset just
       after the last non-whitespace char of the last visible
