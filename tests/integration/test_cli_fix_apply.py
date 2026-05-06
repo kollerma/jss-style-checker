@@ -49,6 +49,7 @@ CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
 MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
 NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
+STRUCT_005 = FIXTURES / "auto-fix" / "JSS-STRUCT-005"
 TYPO_001 = FIXTURES / "auto-fix" / "JSS-TYPO-001"
 
 
@@ -196,6 +197,33 @@ class TestTypo001Fix:
         # rewrite happens after the report is built.
         assert result.exit_code == 1, result.output
         expected = (TYPO_001 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# 1d. JSS-STRUCT-005 end-to-end --fix
+# ---------------------------------------------------------------------------
+
+
+class TestStruct005Fix:
+    """``jss-lint --fix`` against the JSS-STRUCT-005 before fixture
+    rewrites the file in place to match the after fixture.
+
+    The before fixture has exactly one lowercase ``\\and`` separator
+    inside ``\\author{}``; the fix swaps it for the JSS-canonical
+    ``\\And``.
+    """
+
+    def test_fix_rewrites_to_after_fixture(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(STRUCT_005 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        assert result.exit_code == 1, result.output
+        expected = (STRUCT_005 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 
