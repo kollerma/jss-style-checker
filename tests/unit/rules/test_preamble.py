@@ -125,6 +125,43 @@ class TestPre003:
         src = r"\documentclass[article]{jss}" "\n\\begin{document}\\end{document}"
         assert run_rule(jss_pre_003, src) == []
 
+    def test_fix_payload_inserts_plaintitle(self, run_rule):
+        # Spec 008 follow-up: when \title{} carries markup and no
+        # \Plaintitle{} exists, PRE-003 emits a Fix that inserts a
+        # plain-text companion right after the closing \title{} brace.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\title{Regression Models in \proglang{R}}" "\n"
+            r"\Abstract{a}\Keywords{k}\Address{a}" "\n"
+            r"\begin{document}\end{document}"
+        )
+        violations = run_rule(jss_pre_003, src)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert fix is not None
+        assert fix.confidence == "safe"
+        assert "Regression Models in R" in fix.replacement
+        assert fix.replacement.startswith("\n\\Plaintitle{")
+        assert fix.start == fix.end  # 0-length insert
+        rewritten = src[: fix.start] + fix.replacement + src[fix.end :]
+        assert "\\Plaintitle{Regression Models in R}" in rewritten
+
+    def test_fix_omitted_when_plaintitle_exists(self, run_rule):
+        # PRE-006 owns markup-in-Plaintitle complaints; PRE-003 still
+        # flags but must not emit a Fix that would duplicate
+        # \Plaintitle{}.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\title{Regression in \proglang{R}}" "\n"
+            r"\Plaintitle{Regression in R}" "\n"
+            r"\Abstract{a}\Keywords{k}\Address{a}" "\n"
+            r"\begin{document}\end{document}"
+        )
+        # PRE-003 currently expects no Plaintitle to fire; if Plaintitle
+        # IS present the rule stays silent. Verify: no violations.
+        violations = run_rule(jss_pre_003, src)
+        assert violations == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-PRE-004 — Abstract

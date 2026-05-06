@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+PRE_003 = FIXTURES / "auto-fix" / "JSS-PRE-003"
 
 
 @pytest.fixture
@@ -97,6 +98,36 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-PRE-003 — \title{} markup ⇒ insert \Plaintitle{}
+# ---------------------------------------------------------------------------
+
+
+class TestPre003Fix:
+    """End-to-end ``--fix`` test for JSS-PRE-003.
+
+    The fixture pair ``before.tex`` / ``after.tex`` differs only by
+    a single inserted ``\\Plaintitle{...}`` line — exactly what the
+    rule's spec-008 ``Fix`` payload should produce when ``--fix`` is
+    invoked.
+    """
+
+    def test_fix_writes_plaintitle(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(PRE_003 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Report still carries the original violation — exit 1 is the
+        # expected rendering of "violations seen". The point is the
+        # rewrite, asserted byte-for-byte.
+        assert result.exit_code == 1, result.output
+        expected = (PRE_003 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------
