@@ -595,7 +595,7 @@ def check_jss_pre_006(
                 group = _first_group_arg(macro, parent, idx)
                 if not _group_contains_markup(group):
                     continue
-                yield _violation(
+                violation = _violation(
                     tex=tex,
                     pos=macro.pos,
                     rule_id="JSS-PRE-006",
@@ -604,6 +604,31 @@ def check_jss_pre_006(
                         " must be plain text."
                     ),
                 )
+                # Auto-fix (spec 008): in-place rewrite of the brace-arg
+                # contents to its markup-stripped projection. The byte
+                # range covers ONLY the inside of the braces. Skip the
+                # fix when the projection is empty — that's a degenerate
+                # case where stripping markup would erase the metadata.
+                plain_text = _group_plain_text(group)
+                if plain_text and group is not None:
+                    fix = Fix(
+                        start=group.pos + 1,
+                        end=group.pos + group.len - 1,
+                        replacement=plain_text,
+                        description=r"strip markup from \Plain*{}",
+                        confidence="safe",
+                    )
+                    violation = Violation(
+                        file=violation.file,
+                        line=violation.line,
+                        column=violation.column,
+                        rule_id=violation.rule_id,
+                        severity=violation.severity,
+                        message=violation.message,
+                        suggestion=violation.suggestion,
+                        fix=fix,
+                    )
+                yield violation
 
 
 # ---------------------------------------------------------------------------

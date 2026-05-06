@@ -53,6 +53,7 @@ MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
 MARKUP_004 = FIXTURES / "auto-fix" / "JSS-MARKUP-004"
 NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
 PRE_003 = FIXTURES / "auto-fix" / "JSS-PRE-003"
+PRE_006 = FIXTURES / "auto-fix" / "JSS-PRE-006"
 PRE_007 = FIXTURES / "auto-fix" / "JSS-PRE-007"
 PRE_008 = FIXTURES / "auto-fix" / "JSS-PRE-008"
 STRUCT_005 = FIXTURES / "auto-fix" / "JSS-STRUCT-005"
@@ -435,6 +436,36 @@ class TestMarkup004Fix:
         # point of the assertion is the rewrite, not the exit status.
         assert result.exit_code == 1, result.output
         expected = (MARKUP_004 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# JSS-PRE-006 — in-place markup-strip Fix
+# ---------------------------------------------------------------------------
+
+
+class TestPre006Fix:
+    """End-to-end byte-equality test for the JSS-PRE-006 Fix payload.
+
+    Driving ``jss-lint --fix <file>`` over the ``before.tex`` fixture
+    must rewrite the file to be byte-identical to ``after.tex`` —
+    confirming the in-place brace-arg replacement lands at the right
+    byte range and projects the plain-text content correctly.
+    """
+
+    def test_fix_writes_markup_stripped_after_fixture(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(PRE_006 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The report still carries the JSS-PRE-006 violation (it was
+        # computed before the rewrite), so the CLI exits 1 — the
+        # byte-equality check below is what matters.
+        assert result.exit_code == 1, result.output
+        expected = (PRE_006 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 

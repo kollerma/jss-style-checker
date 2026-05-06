@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texlint.api import ParsedDocument, ParsedTexFile, Severity, ToolConfig
+from texlint.api import Fix, ParsedDocument, ParsedTexFile, Severity, ToolConfig
 from texlint.journals.jss.rules.preamble import (
     check_jss_pre_001,
     check_jss_pre_002,
@@ -275,6 +275,34 @@ class TestPre006:
             r"\begin{document}\end{document}"
         )
         assert run_rule(jss_pre_006, src) == []
+
+    def test_fix_strips_markup_inside_brace_arg(self, run_rule):
+        """Spec 008 follow-up: PRE-006 emits a safe in-place Fix that
+        replaces ONLY the brace-arg contents with the markup-stripped
+        projection. Applying the fix to the source must yield the
+        plain-text projection at the same byte range."""
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\Plaintitle{Some \pkg{foo} title}" "\n"
+            r"\begin{document}\end{document}"
+        )
+        violations = run_rule(jss_pre_006, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        # Replacement is markup-free.
+        assert "\\" not in v.fix.replacement
+        assert "{" not in v.fix.replacement
+        assert "}" not in v.fix.replacement
+        # The fix range covers only the inside of the braces — the byte
+        # just before ``start`` is ``{`` and the byte at ``end`` is ``}``.
+        assert src[v.fix.start - 1] == "{"
+        assert src[v.fix.end] == "}"
+        # Applying it to the brace-arg yields the projected plain text.
+        applied = src[: v.fix.start] + v.fix.replacement + src[v.fix.end :]
+        assert r"\pkg" not in applied
+        assert "Some foo title" in applied
 
 
 # ---------------------------------------------------------------------------
