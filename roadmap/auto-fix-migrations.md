@@ -36,25 +36,27 @@ Pattern: AST walker has already located the offending token; the
 fix is a string substitution at `node.pos` / `node.len` (or
 equivalent) with a deterministic canonical form.
 
-- [ ] **JSS-MARKUP-001** — wrap programming-language name in
-      `\proglang{...}`. Fix: `start = match.start()`, `end =
-      match.end()`, `replacement = f"\\proglang{{{token}}}"`.
-- [ ] **JSS-MARKUP-002** — wrap software-package name in `\pkg{...}`.
-      Same pattern as MARKUP-001 but with `\pkg{}`.
+- [x] **JSS-MARKUP-001** — wrap programming-language name in
+      `\proglang{...}`. (Shipped: `_check_bare_terms(emit_fix=True)`
+      yields `Fix(start, end, replacement="\\proglang{<token>}",
+      confidence="safe")`.)
+- [x] **JSS-MARKUP-002** — wrap software-package name in `\pkg{...}`.
+      (Shipped via the same `_check_bare_terms` plumbing.)
 - [ ] **JSS-NAME-002** — BibTeX publisher / journal canonicalisation
       (e.g. `Springer` → `Springer-Verlag`). Fix: replace the
       `publisher = {...}` or `journal = {...}` string-literal value
       with the canonical form. Operates on `.bib` files.
-- [ ] **JSS-HOUSE-001** — insert `,` after `e.g.` / `i.e.` so the
-      period isn't treated as end-of-sentence. Fix: insert `,` at
-      `match.end() - 1` (one-byte deletion-and-replacement of `.`
-      with `.,`). Confidence safe because the regex constrains
-      context.
+- [x] **JSS-HOUSE-001** — insert `,` after `e.g.` / `i.e.` so the
+      period isn't treated as end-of-sentence. (Shipped: 1-byte
+      replacement at the trailing `.` with `.,`; confidence
+      "safe".)
 - [ ] **JSS-HOUSE-002** — book-edition rendering: `second
       edition` → `2nd edition`. Fix: replace the matched ordinal
       word with the digit form.
-- [ ] **JSS-STRUCT-002** — replace `Acknowledgements` with
-      `Acknowledgments`. Fix: single-token spelling swap.
+- [x] **JSS-STRUCT-002** — replace `Acknowledgements` with
+      `Acknowledgments`. (Shipped: case-preserving single-token
+      spelling swap; lowercase / singular / all-caps forms each
+      get the matching canonical form.)
 
 ## Batch B — structural shim (medium)
 
