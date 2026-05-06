@@ -26,14 +26,19 @@ from pylatexenc.latexwalker import (
     LatexMathNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
 
 def _violation(
-    *, tex: Any, pos: int, rule_id: str, suggestion: str
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -45,7 +50,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -304,7 +309,93 @@ def check_jss_markup_004(
                     "Provide a plain-text section title as the optional "
                     "argument: \\section[plain]{...}."
                 ),
+                fix=_build_markup_004_fix(node),
             )
+
+
+def _build_markup_004_fix(macro: Any) -> Fix | None:
+    """Build a 0-length-insert ``Fix`` that supplies the missing
+    ``[<plain text>]`` optional argument immediately before the
+    mandatory ``{...}`` group.
+
+    Returns ``None`` when the mandatory group cannot be located or its
+    plain-text projection is empty (rare edge case, e.g. a title that
+    consists solely of math / comments).
+    """
+    argd = getattr(macro, "nodeargd", None)
+    if argd is None:
+        return None
+    mandatory_group: Any = None
+    for arg in argd.argnlist or ():
+        if isinstance(arg, LatexGroupNode):
+            delim = getattr(arg, "delimiters", None)
+            if delim and delim[0] == "{":
+                mandatory_group = arg
+                break
+    if mandatory_group is None:
+        return None
+    plain = _project_section_title_to_plain(mandatory_group)
+    if not plain:
+        return None
+    insert_at = mandatory_group.pos
+    replacement = f"[{plain}]"
+    return Fix(
+        start=insert_at,
+        end=insert_at,
+        replacement=replacement,
+        description=(
+            f"Insert plain-text optional arg [{plain}] before the "
+            "section title."
+        ),
+        confidence="safe",
+    )
+
+
+def _project_section_title_to_plain(group: Any) -> str:
+    """Project a section-title brace group to plain text.
+
+    Char-data nodes contribute verbatim; macro brace-args recurse in
+    (so ``\\pkg{foo}`` projects to ``foo``); math nodes and comments are
+    dropped. Whitespace is collapsed to single spaces and the result is
+    stripped.
+    """
+    if group is None:
+        return ""
+    parts: list[str] = []
+    _collect_plain_text(group.nodelist or (), parts)
+    text = "".join(parts)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _collect_plain_text(nodes: Any, out: list[str]) -> None:
+    for node in nodes or ():
+        if node is None:
+            continue
+        if isinstance(node, LatexMathNode):
+            continue
+        if isinstance(node, LatexCharsNode):
+            out.append(node.chars)
+            continue
+        if isinstance(node, LatexGroupNode):
+            _collect_plain_text(node.nodelist or (), out)
+            continue
+        if isinstance(node, LatexEnvironmentNode):
+            _collect_plain_text(node.nodelist or (), out)
+            continue
+        if isinstance(node, LatexMacroNode):
+            if node.macroname in _NON_MARKUP_TITLE_MACROS:
+                # Renders as no glyph or a single accented character;
+                # contribute nothing to the plain-text projection.
+                continue
+            argd = getattr(node, "nodeargd", None)
+            if argd is None:
+                continue
+            for arg in argd.argnlist or ():
+                if isinstance(arg, LatexGroupNode):
+                    delim = getattr(arg, "delimiters", None)
+                    if delim and delim[0] == "{":
+                        _collect_plain_text(arg.nodelist or (), out)
+            continue
 
 
 def _has_optional_shim(macro: Any) -> bool:
