@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+PRE_006 = FIXTURES / "auto-fix" / "JSS-PRE-006"
 
 
 @pytest.fixture
@@ -97,6 +98,36 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+# ---------------------------------------------------------------------------
+# JSS-PRE-006 — in-place markup-strip Fix
+# ---------------------------------------------------------------------------
+
+
+class TestPre006Fix:
+    """End-to-end byte-equality test for the JSS-PRE-006 Fix payload.
+
+    Driving ``jss-lint --fix <file>`` over the ``before.tex`` fixture
+    must rewrite the file to be byte-identical to ``after.tex`` —
+    confirming the in-place brace-arg replacement lands at the right
+    byte range and projects the plain-text content correctly.
+    """
+
+    def test_fix_writes_markup_stripped_after_fixture(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(PRE_006 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The report still carries the JSS-PRE-006 violation (it was
+        # computed before the rewrite), so the CLI exits 1 — the
+        # byte-equality check below is what matters.
+        assert result.exit_code == 1, result.output
+        expected = (PRE_006 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------
