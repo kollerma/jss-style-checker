@@ -32,7 +32,7 @@ inputs:
     required: false
     default: '3.12'
   version:
-    description: "jss-lint PyPI version (default: 'latest')."
+    description: "jss-lint PyPI version. 'latest' pulls the latest release from PyPI; 'local' installs from the action's checked-out source (used by this repo's smoke-test workflow); any other value is treated as a pinned PyPI version."
     required: false
     default: 'latest'
 
@@ -55,11 +55,20 @@ runs:
     - name: Install jss-lint
       shell: bash
       run: |
-        if [ "${{ inputs.version }}" = "latest" ]; then
-          pip install jss-lint
-        else
-          pip install "jss-lint==${{ inputs.version }}"
-        fi
+        case "${{ inputs.version }}" in
+          latest)
+            pip install jss-lint
+            ;;
+          local)
+            # Smoke-test mode: install from the action's checked-out
+            # source. action.yml lives in `action/`, so its parent is
+            # the repo root (carrying pyproject.toml).
+            pip install "${{ github.action_path }}/.."
+            ;;
+          *)
+            pip install "jss-lint==${{ inputs.version }}"
+            ;;
+        esac
 
     - id: paths
       shell: bash

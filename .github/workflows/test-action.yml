@@ -37,6 +37,8 @@ jobs:
           fail-on-severity: never  # we don't gate the smoke test on lint quality
           comment-mode: none       # noisy on CI; we only care about the artifact
           upload-sarif: 'false'    # no upload on the smoke-test run
+          version: local           # install from the checked-out source, not PyPI
+                                   # (jss-lint isn't published yet)
 
       - name: Assert SARIF artifact exists
         run: |
