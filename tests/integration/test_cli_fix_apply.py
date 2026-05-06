@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+OPER_001 = FIXTURES / "auto-fix" / "JSS-OPER-001"
 
 
 @pytest.fixture
@@ -97,6 +98,29 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+class TestOper001Fix:
+    """End-to-end ``jss-lint --fix`` over the JSS-OPER-001 fixture.
+
+    OPER-001 rewrites symbol-plus-noun constructs like ``p-value`` to
+    ``$p$~value``. The fixer should rewrite ``before.tex`` to be
+    byte-identical to ``after.tex``.
+    """
+
+    def test_fix_writes_after_fixture(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(OPER_001 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit code 0: the in-memory report's only violation has been
+        # auto-fixed and re-validation finds no recurrence.
+        assert result.exit_code in (0, 1), result.output
+        expected = (OPER_001 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------

@@ -24,7 +24,7 @@ from pylatexenc.latexwalker import (
     LatexMacroNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -49,7 +49,12 @@ _NONCANON_PROB_ARGS: frozenset[str] = frozenset(
 
 
 def _violation(
-    *, tex: Any, pos: int, rule_id: str, suggestion: str
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -61,7 +66,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -89,14 +94,28 @@ def check_jss_oper_001(
                 if match.start() > 0 and node.chars[match.start() - 1] == "[":
                     continue
                 abs_pos = node.pos + match.start()
+                abs_end = node.pos + match.end()
                 sym, noun = match.group(1), match.group(2)
+                replacement = f"${sym}$~{noun}"
+                # The detection regex constrains the match to a single
+                # lowercase symbol letter + hyphen + noun; the canonical
+                # form is unambiguous, so confidence is always "safe".
                 yield _violation(
                     tex=tex,
                     pos=abs_pos,
                     rule_id="JSS-OPER-001",
                     suggestion=(
                         f"Replace {match.group(0)!r} with "
-                        f"'${sym}$~{noun}' (italicized symbol, tie)."
+                        f"'{replacement}' (italicized symbol, tie)."
+                    ),
+                    fix=Fix(
+                        start=abs_pos,
+                        end=abs_end,
+                        replacement=replacement,
+                        description=(
+                            f"rewrite {match.group(0)} as {replacement}"
+                        ),
+                        confidence="safe",
                     ),
                 )
 
