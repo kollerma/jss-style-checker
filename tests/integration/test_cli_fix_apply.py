@@ -56,6 +56,7 @@ PRE_008 = FIXTURES / "auto-fix" / "JSS-PRE-008"
 STRUCT_005 = FIXTURES / "auto-fix" / "JSS-STRUCT-005"
 STRUCT_006 = FIXTURES / "auto-fix" / "JSS-STRUCT-006"
 TYPO_001 = FIXTURES / "auto-fix" / "JSS-TYPO-001"
+XREF_002 = FIXTURES / "auto-fix" / "JSS-XREF-002"
 
 
 @pytest.fixture
@@ -376,6 +377,37 @@ class TestAbbr001Fix:
         # below is the load-bearing assertion.
         assert result.exit_code == 1, result.output
         expected = (ABBR_001 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-XREF-002 end-to-end --fix
+# ---------------------------------------------------------------------------
+
+
+class TestXref002Fix:
+    """End-to-end ``jss-lint --fix`` over the JSS-XREF-002 fixture.
+
+    The before fixture has a single ``(\\ref{eq:mean})`` violation.
+    Running ``--fix`` (no ``--apply``, so the fixer applies all safe
+    fixes non-interactively) must rewrite the file byte-for-byte to
+    the after fixture.
+    """
+
+    def test_fix_rewrites_file(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(XREF_002 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The CLI exits with the report's exit code (1 — the in-memory
+        # report carries the JSS-XREF-002 violation, computed before
+        # the fixer rewrote the file). The point of this test is the
+        # post-rewrite byte-equality below.
+        assert result.exit_code == 1, result.output
+        expected = (XREF_002 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 

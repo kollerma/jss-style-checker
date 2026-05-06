@@ -22,7 +22,7 @@ from pylatexenc.latexwalker import (
     LatexMacroNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -257,6 +257,7 @@ def _label_has_non_equation_prefix(node: Any) -> bool:
 def check_jss_xref_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    meta = _catalogue_data.RULES["JSS-XREF-002"]
     for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
@@ -271,13 +272,40 @@ def check_jss_xref_002(
                 continue
             if _label_has_non_equation_prefix(node):
                 continue
-            yield _violation(
-                tex=tex,
-                pos=node.pos,
+            # Auto-fix: replace ``(\ref{label})`` with
+            # ``Equation~\ref{label}``. The matching pre-conditions
+            # already guarantee a single ``\ref`` macro tightly nested
+            # between ``(`` and ``)`` (the chars node before ends with
+            # ``(`` after stripping trailing whitespace, and the chars
+            # node after starts with ``)`` after stripping leading
+            # whitespace). Multi-ref / mixed-token cases like
+            # ``(\ref{a}, \ref{b})`` never satisfy those conditions
+            # because the comma-separated siblings break the
+            # adjacency, so a fix here is unambiguous.
+            paren_open = before.pos + len(before.chars.rstrip(" \t\n")) - 1
+            paren_close = after.pos + (
+                len(after.chars) - len(after.chars.lstrip(" \t\n"))
+            )
+            macro_body = tex.source[node.pos : node.pos + node.len]
+            replacement = "Equation~" + macro_body
+            line, col = _helpers._lineno_col(tex, node.pos)
+            yield Violation(
+                file=tex.path,
+                line=line,
+                column=col,
                 rule_id="JSS-XREF-002",
+                severity=meta["severity"],
+                message=meta["message_template"],
                 suggestion=(
                     "Replace '(\\ref{...})' with 'Equation~\\ref{...}' "
                     "(capitalised, non-breaking space)."
+                ),
+                fix=Fix(
+                    start=paren_open,
+                    end=paren_close + 1,
+                    replacement=replacement,
+                    description=r"replace (\ref{}) with Equation~\ref{}",
+                    confidence="safe",
                 ),
             )
 
