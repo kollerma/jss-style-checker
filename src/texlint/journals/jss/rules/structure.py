@@ -26,7 +26,7 @@ from pylatexenc.latexwalker import (
     LatexMacroNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -169,9 +169,28 @@ def _find_bibliography_pos(tex: Any) -> int | None:
 # ---------------------------------------------------------------------------
 
 
+_ACKNOWLEDGEMENT_WORD_RE = re.compile(
+    r"\backnowledgement(s?)\b", flags=re.IGNORECASE
+)
+
+
+def _struct_002_replacement(matched: str) -> str:
+    """Map ``acknowledgement[s]`` to ``acknowledgment[s]`` preserving case.
+
+    JSS submissions use American spelling (no ``e`` before ``ment``); we
+    drop the same letter regardless of upper/lower casing, so
+    ``Acknowledgements`` -> ``Acknowledgments``,
+    ``acknowledgement`` -> ``acknowledgment``,
+    ``ACKNOWLEDGEMENTS`` -> ``ACKNOWLEDGMENTS``.
+    """
+    # Drop the 'e' / 'E' between 'g' (index 9) and 'm' (index 11).
+    return matched[:10] + matched[11:]
+
+
 def check_jss_struct_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    meta = _catalogue_data.RULES["JSS-STRUCT-002"]
     for tex in doc.tex_files:
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
@@ -180,16 +199,44 @@ def check_jss_struct_002(
             ):
                 continue
             title = _first_arg_text(node, parent, idx)
-            if re.search(r"\backnowledgement[s]?\b", title, flags=re.IGNORECASE):
-                yield _violation(
-                    tex=tex,
-                    pos=node.pos,
-                    rule_id="JSS-STRUCT-002",
-                    suggestion=(
-                        "Use 'Acknowledgments' (American spelling) — "
-                        "not 'Acknowledgements'."
+            if not _ACKNOWLEDGEMENT_WORD_RE.search(title):
+                continue
+            # Locate the word within the macro's source span so we can
+            # emit a Fix(...) with exact byte offsets. The macro span
+            # covers ``\section{...Acknowledgements...}``; we search
+            # inside it for the offending word.
+            macro_src = tex.source[node.pos : node.pos + node.len]
+            match = _ACKNOWLEDGEMENT_WORD_RE.search(macro_src)
+            line, col = _helpers._lineno_col(tex, node.pos)
+            fix: Fix | None = None
+            if match is not None:
+                matched = match.group(0)
+                replacement = _struct_002_replacement(matched)
+                start = node.pos + match.start()
+                end = node.pos + match.end()
+                fix = Fix(
+                    start=start,
+                    end=end,
+                    replacement=replacement,
+                    description=(
+                        f"Replace {matched!r} with American spelling "
+                        f"{replacement!r}."
                     ),
+                    confidence="safe",
                 )
+            yield Violation(
+                file=tex.path,
+                line=line,
+                column=col,
+                rule_id="JSS-STRUCT-002",
+                severity=meta["severity"],
+                message=meta["message_template"],
+                suggestion=(
+                    "Use 'Acknowledgments' (American spelling) — "
+                    "not 'Acknowledgements'."
+                ),
+                fix=fix,
+            )
 
 
 # ---------------------------------------------------------------------------
