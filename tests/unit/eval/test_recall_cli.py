@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from eval.cli import cli
 
 

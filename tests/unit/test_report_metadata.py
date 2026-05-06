@@ -16,7 +16,7 @@ from texlint.core.parser import parse_tex_file
 from texlint.report import extract_metadata
 
 
-def _doc_from_source(tmp_path: Path, source: str) -> "ParsedDocument":  # noqa: F821
+def _doc_from_source(tmp_path: Path, source: str) -> ParsedDocument:  # noqa: F821
     from texlint.api import ParsedDocument
 
     p = tmp_path / "manuscript.tex"

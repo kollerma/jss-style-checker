@@ -12,7 +12,6 @@ import json
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-
 # Spec-001 JSON top-level keys. Used for schema validation of
 # the OLD / NEW inputs to `compare`. The `violations` array's
 # per-element keys (rule_id, file, line, message, severity, etc.)
@@ -148,11 +147,7 @@ def render_terminal(diff: DiffReport) -> str:
     Click runner does not auto-attach a TTY in tests, so we keep
     this format dep-free."""
     lines: list[str] = [
-        "fixed: {} introduced: {} unchanged: {}".format(
-            len(diff.fixed),
-            len(diff.introduced),
-            len(diff.unchanged),
-        ),
+        f"fixed: {len(diff.fixed)} introduced: {len(diff.introduced)} unchanged: {len(diff.unchanged)}",  # noqa: E501
     ]
     for label, group in (
         ("Fixed", diff.fixed),
@@ -174,11 +169,7 @@ def render_markdown(diff: DiffReport) -> str:
     PR-comment surface."""
     parts: list[str] = []
     parts.append(
-        "**fixed:** {} | **introduced:** {} | **unchanged:** {}".format(
-            len(diff.fixed),
-            len(diff.introduced),
-            len(diff.unchanged),
-        )
+        f"**fixed:** {len(diff.fixed)} | **introduced:** {len(diff.introduced)} | **unchanged:** {len(diff.unchanged)}"  # noqa: E501
     )
     parts.append("")
     for label, group in (

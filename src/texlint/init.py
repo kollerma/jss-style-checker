@@ -177,14 +177,12 @@ def run(
     else:
         candidates.append(target_dir / "eval" / "precision-history.db")
         candidates.append(_DEFAULT_DB_PATH)
-    db_used: Path | None = None
     precision_per_rule: dict[str, float] = {}
     db_label: str | None = None
     for candidate in candidates:
         if candidate.is_file():
             precision_per_rule, db_label = _read_precision_db(candidate)
             if precision_per_rule:
-                db_used = candidate
                 break
 
     ignored: list[tuple[str, str]] = []
