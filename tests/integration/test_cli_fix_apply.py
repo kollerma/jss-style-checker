@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+STRUCT_006 = FIXTURES / "auto-fix" / "JSS-STRUCT-006"
 
 
 @pytest.fixture
@@ -97,6 +98,33 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-STRUCT-006 --fix end-to-end
+# ---------------------------------------------------------------------------
+
+
+class TestStruct006Fix:
+    """End-to-end test that ``jss-lint --fix`` rewrites a STRUCT-006
+    violation by inserting ``\\newpage`` between ``\\bibliography{}``
+    and ``\\begin{appendix}``.
+    """
+
+    def test_fix_inserts_newpage(self, tmp_path: Path, runner: CliRunner) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(STRUCT_006 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit 1: the in-memory compliance report still carries the
+        # JSS-STRUCT-006 violation (it's computed before the fixer
+        # rewrites the file). The contract under test is the rewrite
+        # itself — see the byte-equality check below.
+        assert result.exit_code == 1, result.output
+        # File now matches the after fixture, byte-for-byte.
+        expected = (STRUCT_006 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------

@@ -26,7 +26,7 @@ from pylatexenc.latexwalker import (
     LatexMacroNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -87,6 +87,7 @@ def _violation(
     pos: int,
     rule_id: str,
     suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -98,7 +99,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -331,6 +332,13 @@ def check_jss_struct_006(
             suggestion=(
                 "Insert \\newpage (or \\clearpage) between \\bibliography{}"
                 " and \\begin{appendix}."
+            ),
+            fix=Fix(
+                start=appendix_env.pos,
+                end=appendix_env.pos,
+                replacement="\\newpage\n",
+                description="insert \\newpage before \\appendix",
+                confidence="safe",
             ),
         )
 
