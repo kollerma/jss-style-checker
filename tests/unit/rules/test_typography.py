@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texlint.api import ParsedDocument, ParsedTexFile, ToolConfig
+from texlint.api import Fix, ParsedDocument, ParsedTexFile, ToolConfig
 from texlint.journals.jss.rules.typography import (
     check_jss_typo_001,
     check_jss_typo_002,
@@ -19,6 +19,7 @@ from texlint.journals.jss.rules.typography import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "violations" / "typography"
+AUTOFIX_DIR = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
 
 
 def _tex(name: str) -> str:
@@ -71,6 +72,103 @@ class TestTypo001:
             r"\end{document}"
         )
         assert run_rule(jss_typo_001, src) == []
+
+    def test_emits_safe_fix_payload(self, run_rule):
+        """Spec 008 follow-up: each violation carries a Fix(...) payload
+        whose insertion point lives just after the last visible
+        non-whitespace character of the caption text and whose
+        replacement is a single ``.``."""
+        before = (AUTOFIX_DIR / "JSS-TYPO-001" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_typo_001, before)
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        # 0-length insert at the same offset.
+        assert v.fix.start == v.fix.end
+        assert v.fix.replacement == "."
+        # Insertion point lands just after the last non-whitespace
+        # character of the caption text — i.e. the byte at v.fix.start
+        # is the closing brace `}` of the caption argument (possibly
+        # preceded by whitespace, but in this fixture it's adjacent).
+        assert before[v.fix.start] == "}"
+
+    def test_fix_application_matches_after_fixture(self, run_rule):
+        before = (AUTOFIX_DIR / "JSS-TYPO-001" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        after = (AUTOFIX_DIR / "JSS-TYPO-001" / "after.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_typo_001, before)
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        applied = before[: fix.start] + fix.replacement + before[fix.end :]
+        assert applied == after
+        # Self-verify: re-linting the patched source must not re-fire.
+        assert run_rule(jss_typo_001, applied) == []
+
+    def test_fix_skips_caption_with_label_then_text(self, run_rule):
+        # \caption{\label{fig:x} text without period} — the rule fires
+        # and the fix inserts `.` after "period", before the closing
+        # brace, ignoring the leading \label{} caption metadata.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}" "\n"
+            r"\caption{\label{fig:x} A caption with label and no period}" "\n"
+            r"\end{figure}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_typo_001, src)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        applied = src[: fix.start] + fix.replacement + src[fix.end :]
+        assert "no period.}" in applied
+        assert run_rule(jss_typo_001, applied) == []
+
+    def test_fix_none_for_question_caption(self, run_rule):
+        # Carve-out: a caption ending in `?` is a legitimate
+        # interrogative — rule still fires (JSS prefers `.`), but no
+        # automatic fix is offered.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\caption{Why does it work?}\end{figure}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_typo_001, src)
+        assert len(violations) == 1
+        assert violations[0].fix is None
+
+    def test_fix_none_for_exclamation_caption(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\caption{It works!}\end{figure}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_typo_001, src)
+        assert len(violations) == 1
+        assert violations[0].fix is None
+
+    def test_fix_none_when_caption_ends_with_macro(self, run_rule):
+        # \caption{Some text \emph{bold}} — the chars-only projection
+        # is "Some text " which doesn't end with `.`, so the rule
+        # fires; the last visible content is the \emph macro, so the
+        # insertion offset is ambiguous and we leave fix=None.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\caption{Some text \emph{bold}}\end{figure}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_typo_001, src)
+        assert len(violations) == 1
+        assert violations[0].fix is None
 
 
 # ---------------------------------------------------------------------------

@@ -82,9 +82,12 @@ argument and emit a sibling macro with that projection.
 - [ ] **JSS-STRUCT-006** — appendix needs a `\newpage` separator
       after `\bibliography{}`. Fix: insert `\newpage\n` at the
       reported position.
-- [ ] **JSS-TYPO-001** — figure / table captions end with a
-      period. Fix: insert `.` at the end of the caption text
-      argument.
+- [x] **JSS-TYPO-001** — figure / table captions end with a
+      period. (Shipped: 0-length insert of `.` at the offset just
+      after the last non-whitespace char of the last visible
+      `LatexCharsNode` in the caption brace argument; `\label{}`
+      caption metadata is skipped, and captions ending in `?` /
+      `!` keep `fix=None`.)
 
 ## Batch C — math / operator typesetting (judgement-y but bounded)
 

@@ -21,7 +21,7 @@ from pylatexenc.latexwalker import (
     LatexMacroNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -44,7 +44,12 @@ _EMPHASIS_MACROS: frozenset[str] = frozenset(
 
 
 def _violation(
-    *, tex: Any, pos: int, rule_id: str, suggestion: str
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -56,7 +61,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -144,12 +149,60 @@ def check_jss_typo_001(
                 continue
             if text.endswith("."):
                 continue
+            # Carve-out: a caption ending in `?` or `!` is a legitimate
+            # interrogative / exclamatory sentence — don't append `.`.
+            # The rule still fires (JSS prefers a period), but we leave
+            # the fix to a human.
+            insert_pos: int | None
+            if text.endswith(("?", "!")):
+                insert_pos = None
+            else:
+                insert_pos = _caption_period_insert_pos(group)
+            fix = (
+                Fix(
+                    start=insert_pos,
+                    end=insert_pos,
+                    replacement=".",
+                    description="end caption with a period",
+                    confidence="safe",
+                )
+                if insert_pos is not None
+                else None
+            )
             yield _violation(
                 tex=tex,
                 pos=node.pos,
                 rule_id="JSS-TYPO-001",
                 suggestion="End the caption with a period.",
+                fix=fix,
             )
+
+
+def _caption_period_insert_pos(group: Any) -> int | None:
+    """Return the byte offset at which to insert ``.`` so the caption
+    text ends with a period.
+
+    Walks the caption's brace-argument children in reverse, skipping
+    trailing whitespace-only chars nodes and ``\\label`` macros (caption
+    metadata, not visible content). The insert position lands just after
+    the last non-whitespace character of the last visible chars node.
+    Returns ``None`` when the last visible content is a non-``\\label``
+    macro — appending ``.`` after a macro is ambiguous, so we leave such
+    cases unfixed.
+    """
+    for child in reversed(group.nodelist or ()):
+        if isinstance(child, LatexCharsNode):
+            stripped = child.chars.rstrip()
+            if not stripped:
+                continue
+            return child.pos + len(stripped)
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname == "label"
+        ):
+            continue
+        return None
+    return None
 
 
 # ---------------------------------------------------------------------------
