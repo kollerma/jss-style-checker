@@ -50,6 +50,7 @@ CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
 HOUSE_003 = FIXTURES / "auto-fix" / "JSS-HOUSE-003"
 MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
+MARKUP_004 = FIXTURES / "auto-fix" / "JSS-MARKUP-004"
 NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
 PRE_003 = FIXTURES / "auto-fix" / "JSS-PRE-003"
 PRE_007 = FIXTURES / "auto-fix" / "JSS-PRE-007"
@@ -409,6 +410,31 @@ class TestXref002Fix:
         # post-rewrite byte-equality below.
         assert result.exit_code == 1, result.output
         expected = (XREF_002 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+class TestMarkup004Fix:
+    """End-to-end test of the JSS-MARKUP-004 auto-fix.
+
+    The fixture has a single ``\\section{Some \\pkg{foo} title}``
+    without the required plain-text optional arg. ``jss-lint --fix``
+    should rewrite the file to match ``after.tex`` byte-for-byte.
+    """
+
+    def test_fix_inserts_plain_text_optional_arg(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(MARKUP_004 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The CLI exits with the report's exit code; the in-memory
+        # report still carries the JSS-MARKUP-004 violation since the
+        # report is computed before the fixer rewrites the file. The
+        # point of the assertion is the rewrite, not the exit status.
+        assert result.exit_code == 1, result.output
+        expected = (MARKUP_004 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 

@@ -378,6 +378,22 @@ class TestMarkup004:
         )
         assert run_rule(jss_markup_004, src) == []
 
+    def test_emits_safe_fix_payload(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\section{Some \pkg{foo} title}\end{document}"
+        )
+        violations = run_rule(jss_markup_004, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        # 0-length insert at the position immediately before the
+        # mandatory ``{...}`` group.
+        assert v.fix.start == v.fix.end
+        assert v.fix.replacement.startswith("[")
+        assert v.fix.replacement.endswith("]")
+        assert v.fix.confidence == "safe"
+
 
 def test_empty_tex_silent():
     tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)
