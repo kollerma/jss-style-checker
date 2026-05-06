@@ -42,10 +42,10 @@ equivalent) with a deterministic canonical form.
       confidence="safe")`.)
 - [x] **JSS-MARKUP-002** — wrap software-package name in `\pkg{...}`.
       (Shipped via the same `_check_bare_terms` plumbing.)
-- [ ] **JSS-NAME-002** — BibTeX publisher / journal canonicalisation
-      (e.g. `Springer` → `Springer-Verlag`). Fix: replace the
-      `publisher = {...}` or `journal = {...}` string-literal value
-      with the canonical form. Operates on `.bib` files.
+- [x] **JSS-NAME-002** — BibTeX publisher / journal canonicalisation
+      (e.g. `Springer` → `Springer-Verlag`). (Shipped: the violating
+      field's value range is replaced with the canonical form;
+      operates on `.bib` files.)
 - [x] **JSS-HOUSE-001** — insert `,` after `e.g.` / `i.e.` so the
       period isn't treated as end-of-sentence. (Shipped: 1-byte
       replacement at the trailing `.` with `.,`; confidence
@@ -78,9 +78,9 @@ argument and emit a sibling macro with that projection.
       content range with the cleaned text.
 - [ ] **JSS-MARKUP-004** — `\section[plain-text]{markup}` shim.
       Fix: insert `[plain]` after `\section`.
-- [ ] **JSS-STRUCT-005** — `\author{A \and B}` → `\author{A \And
-      B}`. Fix: replace `\and` with `\And` (or `\AND`) inside
-      the matched `\author{}` block.
+- [x] **JSS-STRUCT-005** — `\author{A \and B}` → `\author{A \And
+      B}`. (Shipped: replaces the lowercase `\and` separator inside
+      `\author{}` with the JSS-canonical `\And`.)
 - [ ] **JSS-STRUCT-006** — appendix needs a `\newpage` separator
       after `\bibliography{}`. Fix: insert `\newpage\n` at the
       reported position.
