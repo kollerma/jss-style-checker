@@ -30,7 +30,7 @@ from pylatexenc.latexwalker import (
     LatexSpecialsNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -139,6 +139,7 @@ def _violation(
     pos: int,
     rule_id: str,
     suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -150,7 +151,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -302,6 +303,24 @@ def _check_markup_plain_pair(
         return
     if _first_macro(tex, plain_macro) is not None:
         return
+    fix: Fix | None = None
+    # Auto-fix: only PRE-007 emits a Fix payload. PRE-003 / PRE-008
+    # would need their own plain-text projection (title vs. keyword
+    # semantics) — leave them unfixed for now and keep the
+    # rule-specific helper local.
+    if rule_id == "JSS-PRE-007":
+        plain = _project_author_plain_text(group)
+        if plain:
+            insertion = macro.pos + macro.len
+            fix = Fix(
+                start=insertion,
+                end=insertion,
+                replacement=f"\n\\Plainauthor{{{plain}}}",
+                description=(
+                    "Insert \\Plainauthor{} with markup-free author list."
+                ),
+                confidence="safe",
+            )
     yield _violation(
         tex=tex,
         pos=macro.pos,
@@ -310,7 +329,66 @@ def _check_markup_plain_pair(
             f"\\{markup_macro}{{}} contains LaTeX markup; add a \\{plain_macro}"
             f"{{}} with the markup-free form for PDF metadata."
         ),
+        fix=fix,
     )
+
+
+# ``\and`` / ``\And`` / ``\AND`` separate authors in the JSS author
+# macro. Project them as a literal ``, `` so the resulting plain
+# author list reads as a comma-separated string in PDF metadata.
+_AUTHOR_SEPARATOR_MACROS: frozenset[str] = frozenset({"and", "And", "AND"})
+
+
+def _project_author_plain_text(group: Any) -> str:
+    """Walk ``\\author{...}``'s nodelist and project it to plain text.
+
+    Rules:
+      * :class:`LatexCharsNode` text content is taken verbatim.
+      * :class:`LatexMacroNode` for one of the author-separator macros
+        (``\\and``, ``\\And``, ``\\AND``) becomes a literal ``, ``.
+      * Any other macro recurses into its brace-arg contents (so
+        ``\\pkg{foo}`` projects to ``foo``).
+      * Math, comments, specials, and groups other than macro args
+        are dropped.
+
+    Returns the concatenated, whitespace-collapsed string. Multi-space
+    runs and newlines are squashed because PDF metadata fields render
+    as a single line.
+    """
+    if group is None:
+        return ""
+    parts: list[str] = []
+    _project_nodes(group.nodelist or (), parts)
+    raw = "".join(parts)
+    # Collapse newlines and runs of whitespace to single spaces.
+    collapsed = " ".join(raw.split())
+    # Tidy up "<word> , <word>" → "<word>, <word>" arising from
+    # ``\And``-translated separators surrounded by whitespace.
+    while " ," in collapsed:
+        collapsed = collapsed.replace(" ,", ",")
+    while ",," in collapsed:
+        collapsed = collapsed.replace(",,", ",")
+    return collapsed.strip().strip(",").strip()
+
+
+def _project_nodes(nodes: Any, out: list[str]) -> None:
+    for node in nodes or ():
+        if node is None:
+            continue
+        if isinstance(node, LatexCharsNode):
+            out.append(node.chars)
+        elif isinstance(node, LatexMacroNode):
+            if node.macroname in _AUTHOR_SEPARATOR_MACROS:
+                out.append(", ")
+                continue
+            argd = getattr(node, "nodeargd", None)
+            if argd is not None:
+                for arg in argd.argnlist or ():
+                    if isinstance(arg, LatexGroupNode):
+                        _project_nodes(arg.nodelist or (), out)
+        elif isinstance(node, LatexGroupNode):
+            _project_nodes(node.nodelist or (), out)
+        # Math / specials / comments / unknown node types: drop.
 
 
 def check_jss_pre_003(

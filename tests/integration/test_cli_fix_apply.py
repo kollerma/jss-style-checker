@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+PRE_007 = FIXTURES / "auto-fix" / "JSS-PRE-007"
 
 
 @pytest.fixture
@@ -97,6 +98,37 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-PRE-007 Plainauthor insertion
+# ---------------------------------------------------------------------------
+
+
+class TestPre007Fix:
+    """End-to-end ``jss-lint --fix`` rewrite for JSS-PRE-007.
+
+    The fixture's ``\\author{}`` carries markup (``\\pkg{}``) and
+    ``\\Plainauthor{}`` is missing. The fixer should insert
+    ``\\Plainauthor{<projected plain text>}`` immediately after
+    ``\\author{...}`` and the file should match ``after.tex``
+    byte-for-byte.
+    """
+
+    def test_fix_inserts_plainauthor(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(PRE_007 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit 1 because the in-memory report still carries the
+        # JSS-PRE-007 violation (computed pre-rewrite); the rewrite
+        # itself succeeds and the byte-equality check below proves it.
+        assert result.exit_code == 1, result.output
+        expected = (PRE_007 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------

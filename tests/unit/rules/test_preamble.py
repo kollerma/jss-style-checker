@@ -261,6 +261,35 @@ class TestPre007:
         )
         assert run_rule(jss_pre_007, src) == []
 
+    def test_fix_emitted_when_plainauthor_missing(self, run_rule):
+        # Markup in \author{} + no \Plainauthor{}: rule emits a Fix
+        # that inserts a \Plainauthor{} with the projected plain text.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\author{Jane \pkg{Doe} \And John \pkg{Roe}}" "\n"
+            r"\begin{document}\end{document}"
+        )
+        violations = run_rule(jss_pre_007, src)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert fix is not None
+        # Zero-length insert positioned at the closing brace of \author{}.
+        assert fix.start == fix.end
+        assert fix.replacement.startswith("\n\\Plainauthor{")
+        assert "Jane Doe, John Roe" in fix.replacement
+        assert fix.confidence == "safe"
+
+    def test_no_fix_when_plainauthor_already_present(self, run_rule):
+        # PRE-007 is silent when \Plainauthor{} exists; PRE-006 owns
+        # the "Plainauthor markup" half of the contract.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\author{Jane \pkg{Doe}}" "\n"
+            r"\Plainauthor{Jane Doe}" "\n"
+            r"\begin{document}\end{document}"
+        )
+        assert run_rule(jss_pre_007, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-PRE-008 — Keywords markup ↔ Plainkeywords
