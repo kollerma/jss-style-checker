@@ -44,34 +44,44 @@ jobs:
         id: agg
         run: |
           set -euo pipefail
-          # Aggregate precision = sum(tp) / (sum(tp)+sum(fp)) over the
-          # latest iteration's full-scope rows.
-          precision=$(python -c "
+          # Both aggregates query eval/precision-history.db. The
+          # `recall_history` table is created lazily when `eval-jss
+          # recall` runs; on fresh checkouts it may be absent. Apply
+          # the schema (idempotent) before querying so we don't crash
+          # — recall just falls back to 0.0 when no snapshot exists.
+          read -r precision recall f1 < <(python - <<'PY'
           import sqlite3
-          cx = sqlite3.connect('eval/precision-history.db')
+          from pathlib import Path
+
+          from eval.history import _SCHEMA  # noqa: PLC2701 (intentional internal use)
+
+          db = Path("eval/precision-history.db")
+          cx = sqlite3.connect(db)
+          cx.executescript(_SCHEMA)
+
           row = cx.execute(
-              'SELECT SUM(tp) AS tp, SUM(fp) AS fp FROM iteration_rule_stats '
-              'WHERE iteration_id = (SELECT MAX(id) FROM iterations) '
-              \"  AND scope = 'full'\"
+              "SELECT SUM(tp) AS tp, SUM(fp) AS fp "
+              "FROM iteration_rule_stats "
+              "WHERE iteration_id = (SELECT MAX(id) FROM iterations) "
+              "  AND scope = 'full'"
           ).fetchone()
-          tp = row[0] or 0; fp = row[1] or 0
-          print(0.0 if tp+fp == 0 else tp/(tp+fp))
-          ")
-          recall=$(python -c "
-          import sqlite3
-          cx = sqlite3.connect('eval/precision-history.db')
+          tp = row[0] or 0
+          fp = row[1] or 0
+          precision = 0.0 if tp + fp == 0 else tp / (tp + fp)
+
           row = cx.execute(
-              'SELECT SUM(tp) AS tp, SUM(fn) AS fn FROM recall_history '
-              'WHERE run_timestamp = (SELECT MAX(run_timestamp) FROM recall_history)'
+              "SELECT SUM(tp) AS tp, SUM(fn) AS fn FROM recall_history "
+              "WHERE run_timestamp = (SELECT MAX(run_timestamp) FROM recall_history)"
           ).fetchone()
           tp = (row[0] or 0) if row else 0
           fn = (row[1] or 0) if row else 0
-          print(0.0 if tp+fn == 0 else tp/(tp+fn))
-          ")
-          f1=$(python -c "
-          p=$precision; r=$recall
-          print(0.0 if p+r == 0 else 2*p*r/(p+r))
-          ")
+          recall = 0.0 if tp + fn == 0 else tp / (tp + fn)
+
+          f1 = 0.0 if precision + recall == 0 else 2 * precision * recall / (precision + recall)
+
+          print(precision, recall, f1)
+          PY
+          )
           echo "precision=$precision" >> "$GITHUB_OUTPUT"
           echo "recall=$recall" >> "$GITHUB_OUTPUT"
           echo "f1=$f1" >> "$GITHUB_OUTPUT"
