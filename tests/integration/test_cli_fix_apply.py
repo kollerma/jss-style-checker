@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+PRE_008 = FIXTURES / "auto-fix" / "JSS-PRE-008"
 
 
 @pytest.fixture
@@ -97,6 +98,36 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+# ---------------------------------------------------------------------------
+# JSS-PRE-008 — \Keywords markup → insert \Plainkeywords{}
+# ---------------------------------------------------------------------------
+
+
+class TestPre008Fix:
+    """End-to-end ``jss-lint --fix`` for JSS-PRE-008.
+
+    The before fixture has ``\\Keywords{JSS, style guide, \\proglang{R}}``
+    with no companion ``\\Plainkeywords{}``; the rule's safe Fix
+    inserts ``\\Plainkeywords{JSS, style guide, R}`` (markup dropped,
+    macro brace-args projected) immediately after the ``\\Keywords``
+    closing brace.
+    """
+
+    def test_fix_writes_plainkeywords_after_keywords(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(PRE_008 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit code is from the report (PRE-008 violation present
+        # in the report computed before the rewrite).
+        assert result.exit_code == 1, result.output
+        expected = (PRE_008 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------

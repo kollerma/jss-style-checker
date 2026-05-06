@@ -283,6 +283,34 @@ class TestPre008:
         )
         assert run_rule(jss_pre_008, src) == []
 
+    def test_emits_safe_fix_with_projected_plain_text(self, run_rule):
+        # Spec 008 follow-up: PRE-008 emits a Fix that inserts
+        # ``\Plainkeywords{<plain text>}`` after the closing brace of
+        # ``\Keywords{...}``. The plain-text projection drops markup
+        # but recurses into macro brace-arg contents (``\proglang{R}``
+        # → ``R``), keeping comma separators verbatim.
+        from texlint.api import Fix
+
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\Keywords{JSS, style guide, \proglang{R}}" "\n"
+            r"\begin{document}\end{document}"
+        )
+        violations = run_rule(jss_pre_008, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        # Zero-length insert.
+        assert v.fix.start == v.fix.end
+        # Projected plain text appears in the replacement.
+        assert r"\Plainkeywords{JSS, style guide, R}" in v.fix.replacement
+        # Replacement begins on a new line so the insertion sits on its
+        # own line in the preamble, not glued to ``\Keywords{...}``.
+        assert v.fix.replacement.startswith("\n")
+        # Insertion point is right after the closing brace of \Keywords.
+        assert src[v.fix.start - 1] == "}"
+
 
 # ---------------------------------------------------------------------------
 # Helper-level coverage: _first_group_arg fallback, unknown macro args,

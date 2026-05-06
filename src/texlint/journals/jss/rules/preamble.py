@@ -20,6 +20,7 @@ not require a companion Plain* command (FR-019).
 from __future__ import annotations
 
 from collections.abc import Iterator
+from dataclasses import replace
 from typing import Any
 
 from pylatexenc.latexwalker import (
@@ -30,7 +31,7 @@ from pylatexenc.latexwalker import (
     LatexSpecialsNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -285,7 +286,8 @@ def _has_strict_jss_class(tex: Any) -> bool:
 
 
 def _check_markup_plain_pair(
-    tex: Any, *, markup_macro: str, plain_macro: str, rule_id: str
+    tex: Any, *, markup_macro: str, plain_macro: str, rule_id: str,
+    emit_fix: bool = False,
 ) -> Iterator[Violation]:
     if not _has_strict_jss_class(tex):
         # ``\\Plainauthor`` / ``\\Plaintitle`` / ``\\Plainkeywords`` only
@@ -302,15 +304,38 @@ def _check_markup_plain_pair(
         return
     if _first_macro(tex, plain_macro) is not None:
         return
-    yield _violation(
+    suggestion = (
+        f"\\{markup_macro}{{}} contains LaTeX markup; add a \\{plain_macro}"
+        f"{{}} with the markup-free form for PDF metadata."
+    )
+    fix: Fix | None = None
+    if emit_fix:
+        plain_text = _group_plain_text(group)
+        # Insertion point: immediately after the closing brace of
+        # ``\{markup_macro}{...}``. For unknown macros without arg
+        # specs, ``macro.len`` covers only the macro token itself, so
+        # we anchor on the brace-group's end instead.
+        insertion_pos = group.pos + group.len
+        replacement = f"\n\\{plain_macro}{{{plain_text}}}"
+        fix = Fix(
+            start=insertion_pos,
+            end=insertion_pos,
+            replacement=replacement,
+            description=(
+                f"Insert \\{plain_macro}{{{plain_text}}} after \\{markup_macro}{{}}."
+            ),
+            confidence="safe",
+        )
+    violation = _violation(
         tex=tex,
         pos=macro.pos,
         rule_id=rule_id,
-        suggestion=(
-            f"\\{markup_macro}{{}} contains LaTeX markup; add a \\{plain_macro}"
-            f"{{}} with the markup-free form for PDF metadata."
-        ),
+        suggestion=suggestion,
     )
+    if fix is not None:
+        # ``Violation`` is frozen — rebuild with the fix attached.
+        violation = replace(violation, fix=fix)
+    yield violation
 
 
 def check_jss_pre_003(
@@ -339,7 +364,7 @@ def check_jss_pre_008(
     for tex in doc.tex_files:
         yield from _check_markup_plain_pair(
             tex, markup_macro="Keywords", plain_macro="Plainkeywords",
-            rule_id="JSS-PRE-008",
+            rule_id="JSS-PRE-008", emit_fix=True,
         )
 
 
