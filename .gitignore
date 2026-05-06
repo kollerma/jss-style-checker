@@ -179,3 +179,5 @@ examples/cran_*/
 !.githooks/pre-commit
 eval/orphans/
 /eval/.iteration-running
+
+examples/jss5342-versions/
