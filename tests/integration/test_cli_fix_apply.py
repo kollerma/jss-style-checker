@@ -50,6 +50,7 @@ MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
 NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
 STRUCT_005 = FIXTURES / "auto-fix" / "JSS-STRUCT-005"
+STRUCT_006 = FIXTURES / "auto-fix" / "JSS-STRUCT-006"
 TYPO_001 = FIXTURES / "auto-fix" / "JSS-TYPO-001"
 
 
@@ -224,6 +225,33 @@ class TestStruct005Fix:
 
         assert result.exit_code == 1, result.output
         expected = (STRUCT_005 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-STRUCT-006 --fix end-to-end
+# ---------------------------------------------------------------------------
+
+
+class TestStruct006Fix:
+    """End-to-end test that ``jss-lint --fix`` rewrites a STRUCT-006
+    violation by inserting ``\\newpage`` between ``\\bibliography{}``
+    and ``\\begin{appendix}``.
+    """
+
+    def test_fix_inserts_newpage(self, tmp_path: Path, runner: CliRunner) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(STRUCT_006 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit 1: the in-memory compliance report still carries the
+        # JSS-STRUCT-006 violation (it's computed before the fixer
+        # rewrites the file). The contract under test is the rewrite
+        # itself — see the byte-equality check below.
+        assert result.exit_code == 1, result.output
+        # File now matches the after fixture, byte-for-byte.
+        expected = (STRUCT_006 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 

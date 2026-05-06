@@ -405,6 +405,18 @@ class TestStruct006:
         violations = run_rule(jss_struct_006, src)
         assert len(violations) == 1
 
+    def test_emits_zero_length_newpage_fix(self, run_rule):
+        # Spec 008 follow-up: STRUCT-006 must emit a Fix payload so it
+        # participates in ``jss-lint --fix``. The fix is a 0-length
+        # insertion of ``\newpage\n`` at the \begin{appendix} offset.
+        violations = run_rule(jss_struct_006, _tex("JSS-STRUCT-006-bad.tex"))
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        assert v.fix.start == v.fix.end  # 0-length insert
+        assert "\\newpage" in v.fix.replacement
+        assert v.fix.confidence == "safe"
+
 
 def test_all_checks_silent_on_empty_tex():
     tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)
