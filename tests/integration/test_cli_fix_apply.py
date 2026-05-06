@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+XREF_002 = FIXTURES / "auto-fix" / "JSS-XREF-002"
 
 
 @pytest.fixture
@@ -97,6 +98,37 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-XREF-002 end-to-end --fix
+# ---------------------------------------------------------------------------
+
+
+class TestXref002Fix:
+    """End-to-end ``jss-lint --fix`` over the JSS-XREF-002 fixture.
+
+    The before fixture has a single ``(\\ref{eq:mean})`` violation.
+    Running ``--fix`` (no ``--apply``, so the fixer applies all safe
+    fixes non-interactively) must rewrite the file byte-for-byte to
+    the after fixture.
+    """
+
+    def test_fix_rewrites_file(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(XREF_002 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The CLI exits with the report's exit code (1 — the in-memory
+        # report carries the JSS-XREF-002 violation, computed before
+        # the fixer rewrote the file). The point of this test is the
+        # post-rewrite byte-equality below.
+        assert result.exit_code == 1, result.output
+        expected = (XREF_002 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------

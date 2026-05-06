@@ -95,6 +95,19 @@ class TestXref002:
         src = r"Leading (\ref{eq:mean}"
         assert run_rule(jss_xref_002, src) == []
 
+    def test_emits_safe_fix(self, run_rule):
+        src = r"Leading (\ref{eq:mean}) trailing."
+        violations = run_rule(jss_xref_002, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        assert v.fix.confidence == "safe"
+        # Replacement preserves the original \ref{label} verbatim.
+        assert v.fix.replacement.startswith("Equation~\\ref{")
+        assert v.fix.replacement == "Equation~\\ref{eq:mean}"
+        # Span covers the entire ``(\ref{eq:mean})`` substring.
+        assert src[v.fix.start : v.fix.end] == r"(\ref{eq:mean})"
+
 
 # ---------------------------------------------------------------------------
 # JSS-XREF-003 — Subsection N.N
