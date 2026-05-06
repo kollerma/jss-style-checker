@@ -26,14 +26,19 @@ from pylatexenc.latexwalker import (
     LatexMathNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
 
 def _violation(
-    *, tex: Any, pos: int, rule_id: str, suggestion: str
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -45,7 +50,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -186,6 +191,7 @@ def _check_bare_terms(
     rule_id: str,
     wrap_macro: str,
     skip_initials: bool,
+    emit_fix: bool = False,
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
@@ -219,6 +225,17 @@ def _check_bare_terms(
                 if _disambiguates_to_method(node.chars, offset, token):
                     continue
                 abs_pos = node.pos + offset
+                abs_end = abs_pos + len(token)
+                fix: Fix | None = None
+                if emit_fix:
+                    replacement = f"\\{wrap_macro}{{{token}}}"
+                    fix = Fix(
+                        start=abs_pos,
+                        end=abs_end,
+                        replacement=replacement,
+                        description=f"wrap {token} in \\{wrap_macro}{{}}",
+                        confidence="safe",
+                    )
                 yield _violation(
                     tex=tex,
                     pos=abs_pos,
@@ -226,15 +243,27 @@ def _check_bare_terms(
                     suggestion=(
                         f"Wrap {token!r} in \\{wrap_macro}{{{token}}}."
                     ),
+                    fix=fix,
                 )
 
 
 def check_jss_markup_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    """Emit JSS-MARKUP-001 violations for bare programming-language names.
+
+    Each violation carries a ``Fix`` payload that wraps the offending
+    token in ``\\proglang{...}``. The fix is safe because all carve-outs
+    that could make the rewrite ambiguous (math mode, verbatim, section
+    titles, code/url/verb, file-extension and option-list-value contexts,
+    bibliography author initials) are already filtered upstream by
+    ``_check_bare_terms`` — anything reaching the violation site is a
+    bare prose mention whose canonical fix is the ``\\proglang{}``
+    wrapper.
+    """
     yield from _check_bare_terms(
         doc, terms=LANGUAGES, rule_id="JSS-MARKUP-001",
-        wrap_macro="proglang", skip_initials=True,
+        wrap_macro="proglang", skip_initials=True, emit_fix=True,
     )
 
 

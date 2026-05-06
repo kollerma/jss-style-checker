@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texlint.api import ParsedDocument, ParsedTexFile, ToolConfig
+from texlint.api import Fix, ParsedDocument, ParsedTexFile, ToolConfig
 from texlint.journals.jss.rules.markup import (
     check_jss_markup_001,
     check_jss_markup_002,
@@ -19,6 +19,9 @@ from texlint.journals.jss.rules.markup import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "violations" / "markup"
+AUTOFIX_MARKUP_001 = (
+    REPO_ROOT / "tests" / "fixtures" / "auto-fix" / "JSS-MARKUP-001"
+)
 
 
 def _tex(name: str) -> str:
@@ -118,6 +121,35 @@ class TestMarkup001:
             r"\end{document}"
         )
         assert len(run_rule(jss_markup_001, src)) == 1
+
+    def test_emits_safe_fix_payload(self, run_rule):
+        source = (AUTOFIX_MARKUP_001 / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_markup_001, source)
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        # Byte range exactly covers the offending token.
+        token = source[v.fix.start : v.fix.end]
+        assert token == "Python"
+        # Replacement wraps the token in \proglang{}.
+        assert v.fix.replacement == "\\proglang{Python}"
+
+    def test_fix_application_matches_after_fixture(self, run_rule):
+        source = (AUTOFIX_MARKUP_001 / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        expected = (AUTOFIX_MARKUP_001 / "after.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_markup_001, source)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        rewritten = source[: fix.start] + fix.replacement + source[fix.end :]
+        assert rewritten == expected
 
     def test_skip_listings_option_value(self, run_rule):
         # Reviewer-confirmed FPs from cran_psychotools:
