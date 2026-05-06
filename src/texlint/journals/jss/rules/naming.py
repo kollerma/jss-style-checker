@@ -132,12 +132,103 @@ def _entry_line(entry: Any) -> int:
     return start + 1
 
 
+def _entry_source_span(source: str, entry: Any) -> tuple[int, int]:
+    """Resolve the byte-offset slice in *source* covering *entry*.
+
+    bibtexparser 2.x exposes only ``entry.start_line`` (0-based); fields
+    have a ``start_line`` but no byte offsets. To find the literal range
+    of a particular field value we first narrow to the entry's slice
+    (start of its ``@type{key,...`` line through just before the next
+    ``@``-at-line-start), then scan within.
+    """
+    start_line = getattr(entry, "start_line", 0) or 0
+    # Translate 0-based line index → byte offset of that line's start.
+    offset = 0
+    cur_line = 0
+    while cur_line < start_line:
+        nl = source.find("\n", offset)
+        if nl == -1:
+            offset = len(source)
+            break
+        offset = nl + 1
+        cur_line += 1
+    # End of entry: first ``@`` at column 0 after the start, else EOF.
+    end = len(source)
+    next_at = re.search(r"(?m)^@", source[offset + 1 :])
+    if next_at is not None:
+        end = offset + 1 + next_at.start()
+    return offset, end
+
+
+# Match ``<name> = <delim><value><delim>`` for a single bib field. The
+# value is captured as the literal source bytes between the opening and
+# closing delimiter (``{...}`` or ``"..."``); only the captured group
+# becomes the Fix range, so the surrounding ``{}`` / ``""`` stays put.
+def _field_value_span(
+    source: str, entry: Any, field_name: str, expected_value: str,
+) -> tuple[int, int] | None:
+    es, ee = _entry_source_span(source, entry)
+    block = source[es:ee]
+    pattern = re.compile(
+        r"(?im)(?<![A-Za-z0-9_])"
+        + re.escape(field_name)
+        + r"\s*=\s*(?:\{(?P<bv>[^{}]*)\}|\"(?P<qv>[^\"]*)\")"
+    )
+    for match in pattern.finditer(block):
+        value = match.group("bv")
+        delim = "brace"
+        if value is None:
+            value = match.group("qv")
+            delim = "quote"
+        # bibtexparser strips surrounding whitespace from the value; we
+        # match against the raw delimiter contents stripped the same way
+        # so cosmetic ``{ Springer }`` still resolves.
+        if value.strip() != expected_value:
+            continue
+        group_name = "bv" if delim == "brace" else "qv"
+        # Use the captured-group span so the Fix range covers ONLY the
+        # literal value bytes (excluding the {}/"" delimiters).
+        v_start = es + match.start(group_name)
+        v_end = es + match.end(group_name)
+        # Trim leading/trailing whitespace inside the delimiters — the
+        # canonical replacement should not pad whitespace into the
+        # delimiters either.
+        literal = source[v_start:v_end]
+        lstripped = literal.lstrip()
+        rstripped = lstripped.rstrip()
+        v_start += len(literal) - len(lstripped)
+        v_end -= len(lstripped) - len(rstripped)
+        return v_start, v_end
+    return None
+
+
+def _build_fix(
+    source: str,
+    entry: Any,
+    field_name: str,
+    raw_value: str,
+    canonical: str,
+) -> Fix | None:
+    span = _field_value_span(source, entry, field_name, raw_value)
+    if span is None:
+        return None
+    start, end = span
+    return Fix(
+        start=start,
+        end=end,
+        replacement=canonical,
+        description=f"use canonical form {canonical!r}",
+        confidence="safe",
+    )
+
+
 def check_jss_name_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for bib, entry in _helpers._iter_referenced_entries(doc):
         publisher = _field_value(entry, "publisher")
         if publisher and publisher in PUBLISHER_CANONICAL:
+            canonical = PUBLISHER_CANONICAL[publisher]
             yield _violation(
                 file=bib.path,
                 line=_entry_line(entry),
@@ -145,11 +236,15 @@ def check_jss_name_002(
                 rule_id="JSS-NAME-002",
                 suggestion=(
                     f"Replace publisher {publisher!r} with "
-                    f"{PUBLISHER_CANONICAL[publisher]!r}."
+                    f"{canonical!r}."
+                ),
+                fix=_build_fix(
+                    bib.source, entry, "publisher", publisher, canonical,
                 ),
             )
         journal = _field_value(entry, "journal")
         if journal and journal in JOURNAL_CANONICAL:
+            canonical = JOURNAL_CANONICAL[journal]
             yield _violation(
                 file=bib.path,
                 line=_entry_line(entry),
@@ -157,7 +252,10 @@ def check_jss_name_002(
                 rule_id="JSS-NAME-002",
                 suggestion=(
                     f"Replace journal {journal!r} with "
-                    f"{JOURNAL_CANONICAL[journal]!r}."
+                    f"{canonical!r}."
+                ),
+                fix=_build_fix(
+                    bib.source, entry, "journal", journal, canonical,
                 ),
             )
 

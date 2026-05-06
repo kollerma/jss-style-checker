@@ -160,6 +160,78 @@ class TestName002:
         doc = ParsedDocument(bib_files=(broken,))
         assert list(check_jss_name_002(doc, ToolConfig())) == []
 
+    def test_emits_safe_fix_payload(self, run_rule):
+        """Spec 008 follow-up: each violation carries a Fix(...) payload
+        whose byte range covers the literal field value (without the
+        surrounding ``{}``/``""`` delimiters) and whose replacement is
+        the JSS-canonical form.
+        """
+        autofix_dir = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
+        before = (autofix_dir / "JSS-NAME-002" / "before.bib").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_name_002, before, kind="bib")
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        # The Fix range must exclude the surrounding ``{}`` delimiters.
+        assert before[v.fix.start : v.fix.end] == "Springer"
+        assert v.fix.replacement == "Springer-Verlag"
+
+    def test_fix_application_matches_after_fixture(self, run_rule):
+        autofix_dir = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
+        before = (autofix_dir / "JSS-NAME-002" / "before.bib").read_text(
+            encoding="utf-8"
+        )
+        after = (autofix_dir / "JSS-NAME-002" / "after.bib").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_name_002, before, kind="bib")
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        applied = before[: fix.start] + fix.replacement + before[fix.end :]
+        assert applied == after
+
+    def test_fix_handles_quote_delimited_value(self, run_rule):
+        """Quote-wrapped (``journal = "JASA"``) field values must
+        resolve to a Fix range that excludes the ``""`` delimiters."""
+        src = (
+            "@article{x,\n"
+            "  author  = {Doe},\n"
+            "  title   = {T},\n"
+            '  journal = "JASA",\n'
+            "  year    = {2020}\n"
+            "}\n"
+        )
+        violations = run_rule(jss_name_002, src, kind="bib")
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        assert src[fix.start : fix.end] == "JASA"
+        assert fix.replacement == "Journal of the American Statistical Association"
+
+    def test_fix_targets_correct_entry_when_value_repeats(self, run_rule):
+        """Two entries, one already canonical (``Springer-Verlag``) and
+        one not (``Springer``); the Fix must point at the offending
+        entry's ``publisher`` value, not at the first textual match.
+        """
+        src = (
+            "@book{a,\n"
+            "  publisher = {Springer-Verlag}\n"
+            "}\n"
+            "@book{b,\n"
+            "  publisher = {Springer}\n"
+            "}\n"
+        )
+        violations = run_rule(jss_name_002, src, kind="bib")
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        # The slice must read literal "Springer" (8 chars), not the
+        # 15-char "Springer-Verlag" from entry ``a``.
+        assert src[fix.start : fix.end] == "Springer"
+
 
 def test_name_001_empty_tex_silent():
     tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)
