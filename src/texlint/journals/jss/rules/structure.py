@@ -314,6 +314,7 @@ def check_jss_struct_004(
 def check_jss_struct_005(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    meta = _catalogue_data.RULES["JSS-STRUCT-005"]
     for tex in doc.tex_files:
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
@@ -324,15 +325,35 @@ def check_jss_struct_005(
             group = _first_group_arg(node, parent, idx)
             if group is None:
                 continue
-            if _group_contains_lowercase_and(group):
-                yield _violation(
-                    tex=tex,
-                    pos=node.pos,
+            # Each lowercase ``\and`` inside the \author{} group becomes
+            # its own Violation carrying a Fix that swaps the 4 bytes
+            # ``\and`` for ``\And`` (post-macro whitespace untouched —
+            # the engine applies fixes in reverse-position order so
+            # multiple sites compose).
+            for and_node in _iter_lowercase_and(group):
+                line, col = _helpers._lineno_col(tex, and_node.pos)
+                fix = Fix(
+                    start=and_node.pos,
+                    end=and_node.pos + len("\\and"),
+                    replacement="\\And",
+                    description=(
+                        "Replace lowercase \\and with capitalised \\And — "
+                        "the JSS-canonical author separator."
+                    ),
+                    confidence="safe",
+                )
+                yield Violation(
+                    file=tex.path,
+                    line=line,
+                    column=col,
                     rule_id="JSS-STRUCT-005",
+                    severity=meta["severity"],
+                    message=meta["message_template"],
                     suggestion=(
                         "Separate authors with \\And (inline) or \\AND "
                         "(line break), not lowercase \\and."
                     ),
+                    fix=fix,
                 )
 
 
@@ -345,11 +366,11 @@ def _first_group_arg(macro: Any, parent: Any, idx: int) -> Any:
     return _helpers._next_group_arg(parent, idx)
 
 
-def _group_contains_lowercase_and(group: Any) -> bool:
+def _iter_lowercase_and(group: Any) -> Iterator[Any]:
+    """Yield every ``\\and`` macro node inside ``group`` (ordered)."""
     for node in _helpers._walk(group.nodelist or ()):
         if isinstance(node, LatexMacroNode) and node.macroname == "and":
-            return True
-    return False
+            yield node
 
 
 # ---------------------------------------------------------------------------

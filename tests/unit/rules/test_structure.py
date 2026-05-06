@@ -279,6 +279,54 @@ class TestStruct005:
         fake = FakeMacro()
         assert _first_group_arg(fake, (fake,), 0) is None
 
+    def test_emits_safe_fix_payload(self, run_rule):
+        """Spec 008 follow-up: each ``\\and`` site carries a Fix(...) whose
+        byte range covers exactly ``\\and`` (4 bytes) and whose
+        replacement is ``\\And`` — confidence ``safe``."""
+        source = (AUTOFIX_DIR / "JSS-STRUCT-005" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_struct_005, source)
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        assert source[v.fix.start : v.fix.end] == "\\and"
+        assert v.fix.replacement == "\\And"
+
+    def test_fix_application_matches_after_fixture(self, run_rule):
+        before = (AUTOFIX_DIR / "JSS-STRUCT-005" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        after = (AUTOFIX_DIR / "JSS-STRUCT-005" / "after.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_struct_005, before)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        applied = before[: fix.start] + fix.replacement + before[fix.end :]
+        assert applied == after
+        # Self-verify: re-linting the patched source must NOT re-fire.
+        assert run_rule(jss_struct_005, applied) == []
+
+    def test_multiple_and_each_get_their_own_fix(self, run_rule):
+        # Three authors -> two ``\and`` separators -> two Violations,
+        # each with its own Fix on disjoint byte ranges.
+        src = r"\author{Alice \and Bob \and Carol}"
+        violations = run_rule(jss_struct_005, src)
+        assert len(violations) == 2
+        fixes = [v.fix for v in violations]
+        assert all(isinstance(f, Fix) for f in fixes)
+        for f in fixes:
+            assert src[f.start : f.end] == "\\and"
+            assert f.replacement == "\\And"
+            assert f.confidence == "safe"
+        # The two byte ranges must be disjoint.
+        starts = sorted(f.start for f in fixes)
+        ends = sorted(f.end for f in fixes)
+        assert starts[0] < ends[0] <= starts[1] < ends[1]
+
 
 # ---------------------------------------------------------------------------
 # JSS-STRUCT-006 — pagebreak between bibliography and appendix
