@@ -73,12 +73,30 @@ runs:
     - id: paths
       shell: bash
       run: |
+        # Lintable file extensions (jss-lint's parse table).
+        re='\.(tex|ltx|Rnw|rnw|Rmd|rmd|bib)$'
         if [ -n "${{ inputs.paths }}" ]; then
-          echo "list=${{ inputs.paths }}" >> "$GITHUB_OUTPUT"
+          # Each token may be a file or a directory. Files pass
+          # through; directories expand to their tracked lintable
+          # files via git ls-files. Anything else (glob, missing
+          # path) is left as-is so jss-lint can complain with its
+          # own error.
+          declare -a expanded=()
+          for token in ${{ inputs.paths }}; do
+            if [ -d "$token" ]; then
+              mapfile -t children < <(git ls-files -- "$token" \
+                | grep -E "$re" \
+                | grep -v -E '^(\.git|node_modules|_build|build|dist|_minted-)/' || true)
+              expanded+=("${children[@]}")
+            else
+              expanded+=("$token")
+            fi
+          done
+          echo "list=${expanded[*]}" >> "$GITHUB_OUTPUT"
         else
-          # Auto-detect tracked .tex / .Rnw / .Rmd files (research §6).
+          # Auto-detect tracked .tex / .Rnw / .Rmd / .bib files (research §6).
           mapfile -t files < <(git ls-files \
-            | grep -E '\.(tex|Rnw|Rmd)$' \
+            | grep -E "$re" \
             | grep -v -E '^(\.git|node_modules|_build|build|dist|_minted-)/' || true)
           echo "list=${files[*]}" >> "$GITHUB_OUTPUT"
         fi
