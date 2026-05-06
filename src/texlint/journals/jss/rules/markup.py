@@ -226,13 +226,23 @@ def _check_bare_terms(
                     continue
                 abs_pos = node.pos + offset
                 abs_end = abs_pos + len(token)
+                # Spec 008 follow-up: MARKUP-001 / MARKUP-002 each emit
+                # a ``safe`` Fix that wraps the bare token in
+                # ``\proglang{...}`` / ``\pkg{...}`` respectively. The
+                # already-applied carve-outs (``_is_in_prose_context``
+                # filters tokens inside ``\code{}`` / ``\verb`` /
+                # ``\pkg{}`` / ``\proglang{}`` / math / verbatim envs;
+                # ``_is_filename_context`` / ``_is_option_list_value`` /
+                # ``_disambiguates_to_method`` cover ambiguous prose
+                # contexts) leave only true bare prose mentions, where
+                # the wrap is mechanical and the rewritten bytes do not
+                # re-trigger the same rule.
                 fix: Fix | None = None
                 if emit_fix:
-                    replacement = f"\\{wrap_macro}{{{token}}}"
                     fix = Fix(
                         start=abs_pos,
                         end=abs_end,
-                        replacement=replacement,
+                        replacement=f"\\{wrap_macro}{{{token}}}",
                         description=f"wrap {token} in \\{wrap_macro}{{}}",
                         confidence="safe",
                     )
@@ -272,7 +282,7 @@ def check_jss_markup_002(
 ) -> Iterator[Violation]:
     yield from _check_bare_terms(
         doc, terms=R_PACKAGES, rule_id="JSS-MARKUP-002",
-        wrap_macro="pkg", skip_initials=False,
+        wrap_macro="pkg", skip_initials=False, emit_fix=True,
     )
 
 

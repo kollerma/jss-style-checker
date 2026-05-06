@@ -47,6 +47,7 @@ from texlint.cli import main
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
 MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
+MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
 
 
 @pytest.fixture
@@ -98,6 +99,27 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+
+class TestMarkup002Fix:
+    """End-to-end test of the JSS-MARKUP-002 \\pkg{} fix applied
+    through ``jss-lint --fix`` on the canonical fixture."""
+
+    def test_fix_wraps_bare_package_in_pkg(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(MARKUP_002 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit 1: the report is computed BEFORE the fixer rewrites
+        # (see TestApplyInteractive::test_y_applies_fix above for the
+        # precedent); the byte-equality assertion is the load-bearing
+        # check that the rewrite happened.
+        assert result.exit_code == 1, result.output
+        expected = (MARKUP_002 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
 
 
 # ---------------------------------------------------------------------------

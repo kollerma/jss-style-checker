@@ -19,9 +19,8 @@ from texlint.journals.jss.rules.markup import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "violations" / "markup"
-AUTOFIX_MARKUP_001 = (
-    REPO_ROOT / "tests" / "fixtures" / "auto-fix" / "JSS-MARKUP-001"
-)
+AUTOFIX_DIR = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
+AUTOFIX_MARKUP_001 = AUTOFIX_DIR / "JSS-MARKUP-001"
 
 
 def _tex(name: str) -> str:
@@ -237,6 +236,41 @@ class TestMarkup002:
                 r"\end{document}"
             )
             assert run_rule(jss_markup_002, src) == [], follower
+
+    def test_emits_safe_fix_payload(self, run_rule):
+        # Spec 008 follow-up: each violation carries a Fix(...) payload
+        # whose byte range covers the bare package token and whose
+        # replacement wraps the token in ``\pkg{...}``.
+        before = (AUTOFIX_DIR / "JSS-MARKUP-002" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_markup_002, before)
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        # Span exactly covers the bare ``MASS`` token.
+        assert before[v.fix.start : v.fix.end] == "MASS"
+        assert v.fix.replacement == r"\pkg{MASS}"
+
+    def test_fix_application_matches_after_fixture(self, run_rule):
+        # Apply the fix in-memory and assert the rewritten bytes match
+        # the canonical ``after.tex`` golden byte-for-byte.
+        before = (AUTOFIX_DIR / "JSS-MARKUP-002" / "before.tex").read_text(
+            encoding="utf-8"
+        )
+        after = (AUTOFIX_DIR / "JSS-MARKUP-002" / "after.tex").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_markup_002, before)
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        applied = before[: fix.start] + fix.replacement + before[fix.end :]
+        assert applied == after
+        # Self-verification: re-linting the rewritten bytes does NOT
+        # re-trigger MARKUP-002 on the now-wrapped token.
+        assert run_rule(jss_markup_002, applied) == []
 
 
 # ---------------------------------------------------------------------------
