@@ -47,6 +47,7 @@ from texlint.cli import main
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 ABBR_001 = FIXTURES / "auto-fix" / "JSS-ABBR-001"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+HOUSE_003 = FIXTURES / "auto-fix" / "JSS-HOUSE-003"
 MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
 NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
@@ -565,3 +566,30 @@ class TestRegressionRollback:
         # stderr / output names the rule id and the rollback.
         assert _REGRESSION_RULE_ID in result.output
         assert "rolled back" in result.output
+
+
+# ---------------------------------------------------------------------------
+# 3. JSS-HOUSE-003 — delete redundant \usepackage line
+# ---------------------------------------------------------------------------
+
+
+class TestHouse003Fix:
+    """End-to-end check that ``jss-lint --fix`` removes a redundant
+    ``\\usepackage{graphicx}`` line in its entirety. The resulting
+    file must be byte-identical to ``after.tex``.
+    """
+
+    def test_fix_deletes_redundant_usepackage_line(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(HOUSE_003 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The remaining manuscript still triggers other JSS-* rules
+        # (no real abstract / keywords text, etc.) so we don't pin the
+        # exit code; the load-bearing assertion is the byte equality.
+        assert result.exit_code in (0, 1), result.output
+        expected = (HOUSE_003 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
