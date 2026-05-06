@@ -84,8 +84,11 @@ argument and emit a sibling macro with that projection.
       `\Plainkeywords{}` must be markup-free. Fix: strip markup
       from the existing brace argument; replace the macro's
       content range with the cleaned text.
-- [ ] **JSS-MARKUP-004** — `\section[plain-text]{markup}` shim.
-      Fix: insert `[plain]` after `\section`.
+- [x] **JSS-MARKUP-004** — `\section[plain-text]{markup}` shim.
+      (Shipped: 0-length insert of `[<projection>]` between the
+      section macro name and its mandatory `{...}` argument; the
+      projection takes char nodes verbatim and recurses into macro
+      brace-args, dropping math / labels.)
 - [x] **JSS-STRUCT-005** — `\author{A \and B}` → `\author{A \And
       B}`. (Shipped: replaces the lowercase `\and` separator inside
       `\author{}` with the JSS-canonical `\And`.)
@@ -115,8 +118,11 @@ nesting / verbatim hazards.
 - [ ] **JSS-OPER-004** — expectation / variance / covariance /
       probability shortcuts: `\mathbb{E}` → `\E`, etc. Fix:
       one-to-one macro substitution from a small fixed table.
-- [ ] **JSS-XREF-002** — `(\ref{eq:foo})` → `Equation~\ref{eq:foo}`.
-      Fix: replace the parenthesised reference span.
+- [x] **JSS-XREF-002** — `(\ref{eq:foo})` → `Equation~\ref{eq:foo}`.
+      (Shipped: replaces the full `(\ref{...})` span with
+      `Equation~\ref{...}`. The rule's existing pre-conditions
+      already restrict matches to single-`\ref` parenthesised
+      forms, so confidence is always "safe".)
 
 ## Batch D — code-style / spacing rules (most invasive)
 
@@ -139,12 +145,19 @@ re-check.
 
 ## Batch E — abbreviations + house style (tail)
 
-- [ ] **JSS-ABBR-001** — abbreviations uppercased without
-      periods or formatting. Fix: replace `U.S.A.` with `USA`,
-      `Ph.D` with `PhD`, etc.
-- [ ] **JSS-HOUSE-003** — preamble `\usepackage{graphicx}` /
+- [x] **JSS-ABBR-001** — abbreviations uppercased without
+      periods or formatting. (Shipped: matched span is replaced
+      with the deperiod form. The rule's existing detection regex
+      `\b([A-Z])\.([A-Z])(\.[A-Z])*\.?` already restricts matches
+      to runs of uppercase ASCII letters separated by periods, so
+      stripping `.` is unambiguous and confidence is "safe".)
+- [x] **JSS-HOUSE-003** — preamble `\usepackage{graphicx}` /
       `\usepackage{xcolor}` etc. when `jss.cls` already
-      provides them. Fix: delete the offending `\usepackage{}`
+      provides them. (Shipped: deletes the entire offending
+      `\usepackage{...}` line including its trailing newline,
+      but only when the line contains the `\usepackage{}` and
+      whitespace alone — mixed-content lines keep `fix=None`
+      so we don't drop neighbouring code.)
       line entirely.
 
 ## Tracking
