@@ -637,14 +637,14 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
     'JSS-XREF-002': MappingProxyType({
         "category": 'crossrefs',
         "severity": Severity.INFO,
-        "message_template": 'Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...})',
+        "message_template": 'Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...}) or \\eqref{...}',
         "authority": 'style_guide',
         "authority_ref": '#miscellaneous',
         "inspects": ('tex_files',),
         "auto_fixable": True,
         "guide_section": '§4.5 Cross-references',
         "guide_url": 'https://www.jstatsoft.org/about/submissions#cross-references',
-        "explanation": 'Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...}).',
+        "explanation": 'Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...}) or \\eqref{...}; both \\eqref and (\\ref) render as the parenthesised form reviewers discourage.',
     }),
     'JSS-XREF-003': MappingProxyType({
         "category": 'crossrefs',

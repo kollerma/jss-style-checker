@@ -106,3 +106,28 @@ def test_width_001_fires_inside_rnw_chunk(tmp_path: Path):
         "expected JSS-WIDTH-001 to flag a >77-char line inside an "
         "Rnw code chunk"
     )
+
+
+# ---------------------------------------------------------------------------
+# JSS-XREF-002 — \eqref{...} produces parenthesised form, same defect
+# Reviewer evidence: P10 ("Equation~\ref{...} (capitalised) without
+# parentheses ... former being preferred"). \eqref renders as "(N)" so
+# it is the same defect class as `(\ref{...})`.
+# ---------------------------------------------------------------------------
+
+def test_xref_002_flags_eqref(tmp_path: Path):
+    """`\\eqref{...}` (which renders as parens) must be flagged."""
+    src = (
+        "\\documentclass[article]{jss}\n"
+        "\\begin{document}\n"
+        "See \\eqref{eq:1} for the model.\n"
+        "\\begin{equation}\\label{eq:1} a=b. \\end{equation}\n"
+        "\\end{document}\n"
+    )
+    doc = _rnw_doc(tmp_path, src)
+    violations = _violations_for("JSS-XREF-002", doc)
+    assert violations, (
+        "expected JSS-XREF-002 to flag \\eqref{...}; reviewer P10 "
+        "discourages the parenthesised form regardless of which macro "
+        "produces it"
+    )

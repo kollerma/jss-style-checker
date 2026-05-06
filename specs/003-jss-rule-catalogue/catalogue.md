@@ -158,7 +158,7 @@ _crossrefs_ — 4 rule(s)
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-XREF-001` | warning | Figures and tables carry \label{} and are referenced by \ref{} rather than manual numbering | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-XREF-002` | info | Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) | style_guide | `#miscellaneous` | ✓ |
+| `JSS-XREF-002` | info | Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) or \eqref{...} | style_guide | `#miscellaneous` | ✓ |
 | `JSS-XREF-003` | warning | Cross-references to subsections use "Section x.y" rather than "Subsection x.y" | style_guide | `#miscellaneous` | — |
 | `JSS-XREF-004` | info | Numbered equations carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 
@@ -2106,7 +2106,7 @@ a missing callout from the prose; an unreferenced numbered equation is a milder 
 
 **Category**: `crossrefs` · **Severity**: `info` · **Auto-fixable**: yes
 
-Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...})
+Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) or \eqref{...}
 
 **Authority**: `style_guide` → `#miscellaneous`
 
@@ -2116,7 +2116,7 @@ Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}
 <summary>Example violation</summary>
 
 ```latex
-See (\ref{eq:mean}) for the derivation.
+See (\ref{eq:mean}) or \eqref{eq:mean} for the derivation.
 ```
 
 </details>

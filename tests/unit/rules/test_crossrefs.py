@@ -108,6 +108,33 @@ class TestXref002:
         # Span covers the entire ``(\ref{eq:mean})`` substring.
         assert src[v.fix.start : v.fix.end] == r"(\ref{eq:mean})"
 
+    def test_eqref_flagged(self, run_rule):
+        # \eqref{...} renders as "(N)" — same parenthesised form
+        # reviewer P10 discourages, so it shares the rule id.
+        src = r"See \eqref{eq:mean} for the derivation."
+        violations = run_rule(jss_xref_002, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-XREF-002"
+        assert violations[0].severity == Severity.INFO
+
+    def test_eqref_emits_safe_fix(self, run_rule):
+        src = r"See \eqref{eq:mean} for the derivation."
+        violations = run_rule(jss_xref_002, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        assert v.fix.confidence == "safe"
+        # Autofix drops the ``eq`` and rewrites to ``Equation~\ref{label}``.
+        assert v.fix.replacement == "Equation~\\ref{eq:mean}"
+        # Span covers the entire ``\eqref{eq:mean}`` substring.
+        assert src[v.fix.start : v.fix.end] == r"\eqref{eq:mean}"
+
+    def test_eqref_non_equation_prefix_silent(self, run_rule):
+        # A label like ``sec:intro`` is clearly not an equation, even
+        # if someone wrote \eqref{sec:intro} — don't suggest renaming.
+        src = r"See \eqref{sec:intro} for context."
+        assert run_rule(jss_xref_002, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-XREF-003 — Subsection N.N

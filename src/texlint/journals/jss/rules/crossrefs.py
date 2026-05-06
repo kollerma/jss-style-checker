@@ -3,7 +3,8 @@
 Rules:
   - JSS-XREF-001 — figures / tables referenced by \\ref{}, not by number.
   - JSS-XREF-002 — equation references use ``Equation~\\ref{...}``
-    rather than bare ``(\\ref{...})``.
+    rather than bare ``(\\ref{...})`` or ``\\eqref{...}`` (both render
+    the same parenthesised form the reviewer discourages).
   - JSS-XREF-003 — subsection references say "Section x.y", not
     "Subsection x.y".
   - JSS-XREF-004 — numbered equation environments carry \\label{}.
@@ -254,60 +255,117 @@ def _label_has_non_equation_prefix(node: Any) -> bool:
     return prefix in _NON_EQUATION_LABEL_PREFIXES
 
 
+def _eqref_label_text(node: Any) -> str:
+    """Return the label text inside an ``\\eqref{...}`` macro, or ``""``."""
+    argd = getattr(node, "nodeargd", None)
+    if argd is None:
+        return ""
+    label_text = ""
+    for arg in argd.argnlist or ():
+        if isinstance(arg, LatexGroupNode):
+            for child in arg.nodelist or ():
+                if isinstance(child, LatexCharsNode):
+                    label_text += child.chars
+            break
+    return label_text
+
+
 def check_jss_xref_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     meta = _catalogue_data.RULES["JSS-XREF-002"]
     for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
-            if not (
-                isinstance(node, LatexMacroNode) and node.macroname == "ref"
-            ):
+            if not isinstance(node, LatexMacroNode):
                 continue
-            before = parent[idx - 1] if idx > 0 else None
-            after = parent[idx + 1] if idx + 1 < len(parent) else None
-            if not _chars_ends_with_open_paren(before):
-                continue
-            if not _chars_starts_with_close_paren(after):
-                continue
-            if _label_has_non_equation_prefix(node):
-                continue
-            # Auto-fix: replace ``(\ref{label})`` with
-            # ``Equation~\ref{label}``. The matching pre-conditions
-            # already guarantee a single ``\ref`` macro tightly nested
-            # between ``(`` and ``)`` (the chars node before ends with
-            # ``(`` after stripping trailing whitespace, and the chars
-            # node after starts with ``)`` after stripping leading
-            # whitespace). Multi-ref / mixed-token cases like
-            # ``(\ref{a}, \ref{b})`` never satisfy those conditions
-            # because the comma-separated siblings break the
-            # adjacency, so a fix here is unambiguous.
-            paren_open = before.pos + len(before.chars.rstrip(" \t\n")) - 1
-            paren_close = after.pos + (
-                len(after.chars) - len(after.chars.lstrip(" \t\n"))
-            )
-            macro_body = tex.source[node.pos : node.pos + node.len]
-            replacement = "Equation~" + macro_body
-            line, col = _helpers._lineno_col(tex, node.pos)
-            yield Violation(
-                file=tex.path,
-                line=line,
-                column=col,
-                rule_id="JSS-XREF-002",
-                severity=meta["severity"],
-                message=meta["message_template"],
-                suggestion=(
-                    "Replace '(\\ref{...})' with 'Equation~\\ref{...}' "
-                    "(capitalised, non-breaking space)."
-                ),
-                fix=Fix(
-                    start=paren_open,
-                    end=paren_close + 1,
-                    replacement=replacement,
-                    description=r"replace (\ref{}) with Equation~\ref{}",
-                    confidence="safe",
-                ),
-            )
+            if node.macroname == "ref":
+                before = parent[idx - 1] if idx > 0 else None
+                after = parent[idx + 1] if idx + 1 < len(parent) else None
+                if not _chars_ends_with_open_paren(before):
+                    continue
+                if not _chars_starts_with_close_paren(after):
+                    continue
+                if _label_has_non_equation_prefix(node):
+                    continue
+                # Auto-fix: replace ``(\ref{label})`` with
+                # ``Equation~\ref{label}``. The matching pre-conditions
+                # already guarantee a single ``\ref`` macro tightly nested
+                # between ``(`` and ``)`` (the chars node before ends with
+                # ``(`` after stripping trailing whitespace, and the chars
+                # node after starts with ``)`` after stripping leading
+                # whitespace). Multi-ref / mixed-token cases like
+                # ``(\ref{a}, \ref{b})`` never satisfy those conditions
+                # because the comma-separated siblings break the
+                # adjacency, so a fix here is unambiguous.
+                paren_open = (
+                    before.pos + len(before.chars.rstrip(" \t\n")) - 1
+                )
+                paren_close = after.pos + (
+                    len(after.chars) - len(after.chars.lstrip(" \t\n"))
+                )
+                macro_body = tex.source[node.pos : node.pos + node.len]
+                replacement = "Equation~" + macro_body
+                line, col = _helpers._lineno_col(tex, node.pos)
+                yield Violation(
+                    file=tex.path,
+                    line=line,
+                    column=col,
+                    rule_id="JSS-XREF-002",
+                    severity=meta["severity"],
+                    message=meta["message_template"],
+                    suggestion=(
+                        "Replace '(\\ref{...})' or '\\eqref{...}' with "
+                        "'Equation~\\ref{...}' (capitalised, non-breaking "
+                        "space)."
+                    ),
+                    fix=Fix(
+                        start=paren_open,
+                        end=paren_close + 1,
+                        replacement=replacement,
+                        description=(
+                            r"replace (\ref{}) with Equation~\ref{}"
+                        ),
+                        confidence="safe",
+                    ),
+                )
+            elif node.macroname == "eqref":
+                # ``\eqref{label}`` renders as ``(N)``, the same
+                # parenthesised form reviewer P10 discourages. Same
+                # defect class as ``(\ref{label})`` so it shares the
+                # rule id. Honour the non-equation-prefix filter to
+                # avoid renaming references whose label clearly points
+                # at a section / figure / table / algorithm.
+                if _label_has_non_equation_prefix(node):
+                    continue
+                label_text = _eqref_label_text(node)
+                if not label_text:
+                    continue
+                # Auto-fix: rewrite ``\eqref{label}`` to
+                # ``Equation~\ref{label}`` (drop the ``eq`` prefix).
+                replacement = "Equation~\\ref{" + label_text + "}"
+                line, col = _helpers._lineno_col(tex, node.pos)
+                yield Violation(
+                    file=tex.path,
+                    line=line,
+                    column=col,
+                    rule_id="JSS-XREF-002",
+                    severity=meta["severity"],
+                    message=meta["message_template"],
+                    suggestion=(
+                        "Replace '\\eqref{...}' with 'Equation~\\ref{...}' "
+                        "(capitalised, non-breaking space; \\eqref renders "
+                        "as parenthesised which reviewers discourage)."
+                    ),
+                    fix=Fix(
+                        start=node.pos,
+                        end=node.pos + node.len,
+                        replacement=replacement,
+                        description=(
+                            r"replace \eqref{} with Equation~\ref{}"
+                        ),
+                        confidence="safe",
+                    ),
+                )
 
 
 # ---------------------------------------------------------------------------

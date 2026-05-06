@@ -1311,18 +1311,18 @@ rules:
   - rule_id: JSS-XREF-002
     category: crossrefs
     severity: info
-    description: Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...})
+    description: Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) or \eqref{...}
     authority: style_guide
     authority_ref: "#miscellaneous"
     example_violation: |
-      See (\ref{eq:mean}) for the derivation.
+      See (\ref{eq:mean}) or \eqref{eq:mean} for the derivation.
     example_fix: |
       See Equation~\ref{eq:mean} for the derivation.
     inspects: [tex_files]
     auto_fixable: true
     guide_section: "§4.5 Cross-references"
     guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
-    explanation: "Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...})."
+    explanation: "Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...}) or \\eqref{...}; both \\eqref and (\\ref) render as the parenthesised form reviewers discourage."
     notes: |
       SG-060 makes this advisory for manuscripts with many equation references; the rule ships at info severity
       and is easy to suppress per-paper.
