@@ -147,7 +147,11 @@ def render_terminal(diff: DiffReport) -> str:
     Click runner does not auto-attach a TTY in tests, so we keep
     this format dep-free."""
     lines: list[str] = [
-        f"fixed: {len(diff.fixed)} introduced: {len(diff.introduced)} unchanged: {len(diff.unchanged)}",  # noqa: E501
+        (
+            f"fixed: {len(diff.fixed)} "
+            f"introduced: {len(diff.introduced)} "
+            f"unchanged: {len(diff.unchanged)}"
+        ),
     ]
     for label, group in (
         ("Fixed", diff.fixed),
@@ -169,7 +173,9 @@ def render_markdown(diff: DiffReport) -> str:
     PR-comment surface."""
     parts: list[str] = []
     parts.append(
-        f"**fixed:** {len(diff.fixed)} | **introduced:** {len(diff.introduced)} | **unchanged:** {len(diff.unchanged)}"  # noqa: E501
+        f"**fixed:** {len(diff.fixed)} | "
+        f"**introduced:** {len(diff.introduced)} | "
+        f"**unchanged:** {len(diff.unchanged)}"
     )
     parts.append("")
     for label, group in (

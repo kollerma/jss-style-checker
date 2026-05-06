@@ -50,9 +50,11 @@ equivalent) with a deterministic canonical form.
       period isn't treated as end-of-sentence. (Shipped: 1-byte
       replacement at the trailing `.` with `.,`; confidence
       "safe".)
-- [ ] **JSS-HOUSE-002** — book-edition rendering: `second
-      edition` → `2nd edition`. Fix: replace the matched ordinal
-      word with the digit form.
+- [x] **JSS-HOUSE-002** — book-edition rendering: `second
+      edition` → `2nd edition`. (Shipped: replaces the matched
+      ordinal word inside the `edition = {...}` / `"..."` value
+      with its short-ordinal form (`2nd`, `3rd`, …); confidence
+      "safe".)
 - [x] **JSS-STRUCT-002** — replace `Acknowledgements` with
       `Acknowledgments`. (Shipped: case-preserving single-token
       spelling swap; lowercase / singular / all-caps forms each

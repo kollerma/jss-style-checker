@@ -134,6 +134,65 @@ class TestHouse002:
         doc = ParsedDocument(bib_files=(broken,))
         assert list(check_jss_house_002(doc, ToolConfig())) == []
 
+    # -------- spec 008 follow-up: Fix payload ----------------------------
+
+    def test_emits_safe_fix_payload(self, run_rule):
+        """Each violation carries a Fix(...) payload whose byte range
+        covers the offending edition value and whose replacement is
+        the JSS-canonical short ordinal."""
+        autofix_dir = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
+        before = (autofix_dir / "JSS-HOUSE-002" / "before.bib").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_house_002, before, kind="bib")
+        assert len(violations) == 1
+        v = violations[0]
+        assert isinstance(v.fix, Fix)
+        assert v.fix.confidence == "safe"
+        assert before[v.fix.start : v.fix.end] == "second"
+        assert v.fix.replacement == "2nd"
+
+    def test_fix_application_matches_after_fixture(self, run_rule):
+        autofix_dir = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
+        before = (autofix_dir / "JSS-HOUSE-002" / "before.bib").read_text(
+            encoding="utf-8"
+        )
+        after = (autofix_dir / "JSS-HOUSE-002" / "after.bib").read_text(
+            encoding="utf-8"
+        )
+        violations = run_rule(jss_house_002, before, kind="bib")
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        applied = before[: fix.start] + fix.replacement + before[fix.end :]
+        assert applied == after
+
+    def test_2e_fix_replacement(self, run_rule):
+        src = "@book{a, edition={2e}, year={2020}}\n"
+        violations = run_rule(jss_house_002, src, kind="bib")
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        assert fix.replacement == "2nd"
+        assert src[fix.start : fix.end] == "2e"
+
+    def test_quoted_value_fix(self, run_rule):
+        src = '@book{a, edition="third", year={2020}}\n'
+        violations = run_rule(jss_house_002, src, kind="bib")
+        assert len(violations) == 1
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        assert fix.replacement == "3rd"
+        assert src[fix.start : fix.end] == "third"
+
+    def test_self_verify_no_refire(self, run_rule):
+        """Re-linting the patched bib MUST NOT re-fire HOUSE-002."""
+        src = "@book{a, edition={fourth}, year={2020}}\n"
+        violations = run_rule(jss_house_002, src, kind="bib")
+        fix = violations[0].fix
+        assert isinstance(fix, Fix)
+        patched = src[: fix.start] + fix.replacement + src[fix.end :]
+        assert run_rule(jss_house_002, patched, kind="bib") == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-HOUSE-003 — redundant \usepackage
