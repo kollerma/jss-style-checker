@@ -130,7 +130,7 @@ class TestSarifGoldens:
         expected = golden_path.read_text(encoding="utf-8")
         assert normalised == expected, (
             "SARIF output drifted from golden. "
-            f"Regenerate via JSSLINT_REGEN_GOLDENS=1 pytest if intentional."
+            "Regenerate via JSSLINT_REGEN_GOLDENS=1 pytest if intentional."
         )
 
     def test_double_invocation_is_byte_identical(

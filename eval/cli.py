@@ -362,17 +362,18 @@ def recall_cmd(
     as a separate follow-up; this CLI works with however many
     papers happen to be present.
     """
-    from datetime import datetime, timezone
     import hashlib
     import json
     import sys as _sys
+    from datetime import datetime, timezone
 
     if _sys.version_info >= (3, 11):
         import tomllib
     else:  # pragma: no cover - exercised only on 3.10
         import tomli as tomllib
 
-    from eval import history, recall as recall_mod
+    from eval import history
+    from eval import recall as recall_mod
 
     if not corpus_dir.is_dir():
         click.echo(
@@ -437,7 +438,8 @@ def recall_cmd(
     # linter-results across the whole corpus. We use the existing
     # texlint pipeline.
     from texlint.config import load as load_config
-    from texlint.core.engine import load_journal, parse_document, run as run_engine
+    from texlint.core.engine import load_journal, parse_document
+    from texlint.core.engine import run as run_engine
 
     cfg = load_config({}, Path.cwd())
     journal = load_journal(cfg.journal)
@@ -525,7 +527,7 @@ def recall_cmd(
             f"Recall corpus: {corpus_dir} ({len(annotation_files)} papers)"
         )
         click.echo(
-            f"Aggregate: "
+            "Aggregate: "
             + (f"{agg:.3f}" if agg is not None else "n/a")
             + f"  (per-rule rows: {len(recall_report.per_rule)})"
         )

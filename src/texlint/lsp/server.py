@@ -35,22 +35,25 @@ from urllib.parse import unquote, urlparse
 from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
-from texlint.api import Fix, ParsedDocument, ToolConfig
+from texlint.api import Fix, ToolConfig
 from texlint.core.engine import (
     InvalidJournalError,
     JournalNotFoundError,
     load_journal,
     parse_document,
+)
+from texlint.core.engine import (
     run as run_engine,
 )
+from texlint.journals.jss._catalogue_data import RULES as _CATALOGUE
+from texlint.journals.jss._guide_index import load_guide_index
 from texlint.lsp.cache import CachedDocument, DocumentCache
-from texlint.lsp.config_watch import ConfigState, reload as reload_config
+from texlint.lsp.config_watch import ConfigState
+from texlint.lsp.config_watch import reload as reload_config
 from texlint.lsp.conversions import (
     fix_to_text_edit,
     violation_to_diagnostic,
 )
-from texlint.journals.jss._catalogue_data import RULES as _CATALOGUE
-from texlint.journals.jss._guide_index import load_guide_index
 
 _DEBOUNCE_MS = 200
 

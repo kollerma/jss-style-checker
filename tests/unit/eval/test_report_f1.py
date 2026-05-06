@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import io
 
-from rich.console import Console
-
 from eval.report import PrecisionTable, RuleRow, _f1, render_terminal
+from rich.console import Console
 
 
 def _row(rule_id: str, tp: int, fp: int, precision: float | None) -> RuleRow:

@@ -11,7 +11,6 @@ exercises real handler code.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -19,8 +18,7 @@ pytest.importorskip("pygls")
 
 from lsprotocol import types as lsp  # noqa: E402
 
-from texlint.lsp.server import create_server, _uri_to_path  # noqa: E402
-
+from texlint.lsp.server import _uri_to_path, create_server  # noqa: E402
 
 _FIXTURE_TEX = (
     "\\documentclass[article]{jss}\n"

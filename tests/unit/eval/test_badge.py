@@ -7,7 +7,6 @@ import subprocess
 import sys
 
 import pytest
-
 from eval.badge import (
     f1_badge_json,
     precision_badge_json,
