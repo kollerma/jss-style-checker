@@ -43,6 +43,21 @@ _MISSING_SPACES_RE = re.compile(
     r"|(?:,[A-Za-z0-9_\.\(\[])"
 )
 
+# Code-env (Sinput / CodeInput / verbatim) line scanner — narrower than
+# the ``\code{...}`` heuristic because R style allows ``f(x=1)`` (no
+# spaces around ``=`` inside function calls) and chunk content has many
+# such legitimate keyword args. Only the comma-without-following-space
+# pattern is unambiguous in any R style guide.
+_CODE_ENV_MISSING_COMMA_SPACE_RE = re.compile(r",[A-Za-z0-9_\.\(\[\"']")
+# An R / shell comment from ``#`` to end-of-line — used to mask comments
+# before scanning operator spacing so prose-style commas inside comments
+# (``# foo, bar``) don't trip the rule.
+_CODE_ENV_COMMENT_RE = re.compile(r"#[^\n]*")
+# Bare string literals ``"..."`` / ``'...'``. Mask before scanning so
+# commas inside file paths (``"plot3logit-overview"``) or quoted text
+# (``"foo,bar"``) don't trip the rule.
+_CODE_ENV_STRING_RE = re.compile(r"\"[^\"\n]*\"|'[^'\n]*'")
+
 # Clean R identifier — letter, then letters/digits/underscore/dot. The
 # detection regex (_LIBRARY_UNQUOTED_RE) already enforces this shape on
 # the bareword first arg, so every flagged match has a deterministic
@@ -216,6 +231,17 @@ def check_jss_code_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
+        # First pass: scan code envs (Sinput / verbatim / CodeInput / ...)
+        # for missing-space-after-comma. Narrower than the \code{} check
+        # because R style permits ``f(x=1)`` so ``=`` inside chunks isn't
+        # a reliable signal; comma-without-space is unambiguous.
+        for env in _helpers._walk(tex.nodes):
+            if not isinstance(env, LatexEnvironmentNode):
+                continue
+            if env.environmentname not in _CODE_ENVS:
+                continue
+            yield from _scan_code_env_for_spacing(tex, env)
+        # Second pass: original \code{...} macro check.
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode)
@@ -259,6 +285,40 @@ def check_jss_code_003(
                         "the code sample (e.g., 'y = a + b * x')."
                     ),
                 )
+
+
+def _scan_code_env_for_spacing(tex: Any, env: Any) -> Iterator[Violation]:
+    """Yield a single CODE-003 violation per code env that contains a
+    missing-space-after-comma pattern. One violation per env keeps the
+    output proportional to the defect — authors fix one chunk at a time
+    and per-line repetition is noisy.
+    """
+    nodelist = env.nodelist or ()
+    for child in nodelist:
+        if not isinstance(child, LatexCharsNode):
+            continue
+        text = child.chars
+        # Mask comments and string literals so commas inside them
+        # don't trip the rule.
+        cleaned = _CODE_ENV_COMMENT_RE.sub("", text)
+        cleaned = _CODE_ENV_STRING_RE.sub("", cleaned)
+        match = _CODE_ENV_MISSING_COMMA_SPACE_RE.search(cleaned)
+        if match is None:
+            continue
+        # Map the offset back into the original text. The cleaned-string
+        # offset doesn't equal the original offset once we've stripped
+        # comments / strings; for line-level reporting it's enough to
+        # report on the env opening — line numbers stay accurate.
+        yield _violation(
+            tex=tex,
+            pos=child.pos,
+            rule_id="JSS-CODE-003",
+            suggestion=(
+                "Add a space after each comma in the code sample "
+                "(e.g., 'f(x, y)' rather than 'f(x,y)')."
+            ),
+        )
+        return  # one violation per env
 
 
 def _first_group_arg(macro: Any, parent: Any, idx: int) -> Any:

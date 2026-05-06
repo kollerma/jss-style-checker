@@ -4,10 +4,15 @@ All parsers are non-raising: any failure to read or parse produces a
 ``JSS-PARSE-000`` violation on the returned object instead of propagating
 an exception. See spec FR-005, spec 005 FR-014.
 
-``.Rnw`` handling (spec 005 §US1): :func:`strip_rnw_chunks` replaces R
-code chunks with equivalent-length whitespace, then
-:func:`parse_rnw_file` delegates to :func:`parse_tex_source`. Line
-numbers remain source-authoritative.
+``.Rnw`` handling (spec 005 §US1): :func:`parse_rnw_file` rewrites R
+code chunks to ``\\begin{Sinput} ... \\end{Sinput}`` envelopes (so the
+chunk body becomes a verbatim env that prose rules already skip but
+CODE-* / WIDTH-001 already target) and then delegates to
+:func:`parse_tex_source`. Line numbers remain source-authoritative.
+
+The legacy :func:`strip_rnw_chunks` (which blanks chunk content to
+whitespace) is preserved for callers and tests that depend on the
+older behaviour, but it is no longer used by :func:`parse_rnw_file`.
 
 ``.Rmd`` handling (spec 005 §US2): :func:`parse_rmd_file` delegates to
 :mod:`texlint.core.rmd_parser`.
@@ -115,6 +120,73 @@ def _neutralize_verbatim_envs(src: str) -> str:
     return _VERBATIM_ENVS_RE.sub(_sub, src)
 
 
+# Characters inside an R chunk body that pylatexenc (strict mode) would
+# otherwise misinterpret as TeX syntax: ``{`` / ``}`` form groups,
+# ``\`` starts a macro. Length-preserving replacement to spaces keeps
+# WIDTH-001's per-line measurements faithful to the original .Rnw and
+# CODE-002 / CODE-003 token detection unaffected (they don't look at
+# braces or backslashes anyway). ``$`` and ``%`` are handled later by
+# :func:`_neutralize_verbatim_envs` once the Sinput envelope is in
+# place. NB: deliberately not in :data:`_TEX_SPECIAL_CHARS` because
+# those substitutions also apply inside ``\\code{...}`` macro args
+# where ``{`` / ``}`` don't appear unbalanced.
+_CHUNK_BODY_NEUTRALIZE = str.maketrans({"{": " ", "}": " ", "\\": " "})
+
+
+def wrap_rnw_chunks_as_sinput(src: str) -> str:
+    """Rewrite Sweave / knitr R code chunks to ``\\begin{Sinput}`` /
+    ``\\end{Sinput}`` envelopes so CODE-* and WIDTH-001 rules (which
+    already target Sinput-class envs) can lint chunk content while
+    prose rules (which check ``_is_inside_verbatim``) continue to skip
+    it.
+
+    Newline count is preserved per-chunk so line numbers in downstream
+    violations remain source-authoritative on the original ``.Rnw``.
+    Chunk body lines are kept verbatim (modulo length-preserving
+    neutralisation of ``{`` / ``}`` / ``\\`` to spaces) so WIDTH-001's
+    per-line widths match the source. Inline ``\\Sexpr{...}`` calls are
+    blanked exactly as in :func:`strip_rnw_chunks` because they live in
+    prose and prose rules must continue to ignore them.
+
+    Design note: chosen over the alternative of carrying a separate
+    ``code_chunks`` field on :class:`ParsedTexFile` and editing every
+    CODE-* / WIDTH-001 rule. CODE-* / WIDTH-001 already iterate Sinput,
+    so re-emitting chunks as Sinput needs zero rule-level changes.
+    """
+    def _rewrite(m: re.Match[str]) -> str:
+        whole = m.group(0)
+        # Locate header line (`<<...>>=`) and trailing `@` line.
+        nl = whole.find("\n")
+        if nl == -1:
+            return whole
+        header = whole[:nl]
+        # Strip CR if present so we re-emit a clean LF.
+        header_nl = "\r\n" if header.endswith("\r") else "\n"
+        rest = whole[nl + 1:]
+        # rest ends with the `@` (possibly trailing whitespace) on its
+        # own line. Find the start of that final line.
+        last_nl = rest.rfind("\n")
+        if last_nl == -1:
+            # Shouldn't happen given the regex shape, but bail safely.
+            return whole
+        body = rest[:last_nl + 1]  # keeps the trailing newline
+        # Trailer is the bare `@` (regex anchors ^@\s*$ on its own line).
+        # Length-preserving neutralisation of body-only TeX-special chars.
+        body_safe = body.translate(_CHUNK_BODY_NEUTRALIZE)
+        return (
+            f"\\begin{{Sinput}}{header_nl}"
+            f"{body_safe}"
+            f"\\end{{Sinput}}"
+        )
+
+    def _blank_inline(m: re.Match[str]) -> str:
+        return "".join(c if c == "\n" else " " for c in m.group(0))
+
+    rewritten = _RNW_CHUNK.sub(_rewrite, src)
+    rewritten = _RNW_SEXPR.sub(_blank_inline, rewritten)
+    return rewritten
+
+
 def strip_rnw_chunks(src: str) -> str:
     """Replace R code chunks and inline ``\\Sexpr`` calls with
     equivalent-length whitespace so the residue parses as normal LaTeX
@@ -218,17 +290,20 @@ def parse_tex_source(source: str, path: Path) -> ParsedTexFile:
 
 
 def parse_rnw_file(path: Path) -> ParsedTexFile:
-    """Parse a Sweave / knitr ``.Rnw`` file by stripping R code chunks
-    and then delegating to :func:`parse_tex_source`. Line numbers stay
-    source-authoritative (spec 005 FR-003).
+    """Parse a Sweave / knitr ``.Rnw`` file by rewriting R code chunks
+    to ``\\begin{Sinput}...\\end{Sinput}`` envelopes (so CODE-* /
+    WIDTH-001 rules see chunk content while prose rules continue to
+    skip it via ``_is_inside_verbatim``) and then delegating to
+    :func:`parse_tex_source`. Line numbers stay source-authoritative
+    (spec 005 FR-003).
     """
     source, read_err = _read_utf8(path)
     if read_err is not None:
         return ParsedTexFile(
             path=path, source="", nodes=(), walker=None, violations=(read_err,)
         )
-    stripped = strip_rnw_chunks(source)
-    return parse_tex_source(stripped, path)
+    rewritten = wrap_rnw_chunks_as_sinput(source)
+    return parse_tex_source(rewritten, path)
 
 
 def _extract_line(exc: LatexWalkerError) -> int | None:
