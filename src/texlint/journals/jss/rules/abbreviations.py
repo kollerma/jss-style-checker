@@ -25,7 +25,7 @@ from typing import Any
 
 from pylatexenc.latexwalker import LatexCharsNode
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -56,7 +56,12 @@ _AUTHOR_SURNAME_PREFIX_RE = re.compile(
 
 
 def _violation(
-    *, tex: Any, pos: int, rule_id: str, suggestion: str
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -68,7 +73,7 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
 
 
@@ -130,6 +135,23 @@ def check_jss_abbr_001(
                     continue
                 collapsed = raw.replace(".", "")
                 abs_pos = node.pos + match.start()
+                abs_end = node.pos + match.end()
+                # The detection regex (_DOTTED_ABBREV_RE) only matches
+                # runs of uppercase ASCII letters separated by periods
+                # (``U.S.A.``, ``M.I.T.``, ``I.R.S.``). For every match
+                # the canonical form is unambiguous: drop the periods.
+                # Confidence is therefore "safe" across the entire
+                # current detection set.
+                fix = Fix(
+                    start=abs_pos,
+                    end=abs_end,
+                    replacement=collapsed,
+                    description=(
+                        f"Normalize abbreviation {raw!r} to canonical "
+                        f"{collapsed!r}."
+                    ),
+                    confidence="safe",
+                )
                 yield _violation(
                     tex=tex,
                     pos=abs_pos,
@@ -138,6 +160,7 @@ def check_jss_abbr_001(
                         f"Replace {raw!r} with {collapsed!r} (uppercase, "
                         "no periods)."
                     ),
+                    fix=fix,
                 )
 
 

@@ -65,6 +65,15 @@ class TestAbbr001:
         violations = run_rule(jss_abbr_001, src)
         assert len(violations) == 1
 
+    def test_emits_safe_fix_payload(self, run_rule):
+        violations = run_rule(jss_abbr_001, _tex("JSS-ABBR-001-bad.tex"))
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        assert v.fix.replacement == "USA"
+        assert v.fix.confidence == "safe"
+        assert v.fix.end > v.fix.start
+
 
 def test_empty_tex_silent():
     tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)

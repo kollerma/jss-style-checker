@@ -45,6 +45,7 @@ from texlint.api import (
 from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
+ABBR_001 = FIXTURES / "auto-fix" / "JSS-ABBR-001"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
 MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
@@ -346,6 +347,35 @@ class TestPre008Fix:
         # in the report computed before the rewrite).
         assert result.exit_code == 1, result.output
         expected = (PRE_008 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-ABBR-001 --fix end-to-end byte equality
+# ---------------------------------------------------------------------------
+
+
+class TestAbbr001Fix:
+    """End-to-end ``--fix`` for JSS-ABBR-001.
+
+    Drives the CLI in non-interactive write mode against the
+    ``before.tex`` fixture and asserts the rewritten file is
+    byte-identical to ``after.tex``.
+    """
+
+    def test_fix_rewrites_to_after(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(ABBR_001 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # The in-memory report carries the violation (computed before
+        # the rewrite), so exit_code is 1 — the post-fix byte equality
+        # below is the load-bearing assertion.
+        assert result.exit_code == 1, result.output
+        expected = (ABBR_001 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 
