@@ -46,6 +46,7 @@ from texlint.cli import main
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
+NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
 
 
 @pytest.fixture
@@ -97,6 +98,27 @@ class TestApplyInteractive:
         assert target.read_bytes() == before_bytes
         # Prompt rendered, but the file did not gain ``\citep{``.
         assert "Apply fix for JSS-CITE-003" in result.output
+
+    def test_y_applies_jss_name_002_bib_fix(
+        self, tmp_path: Path, runner: CliRunner,
+    ) -> None:
+        """Spec 008 follow-up: ``--apply`` rewrites the BibTeX
+        ``publisher = {Springer}`` literal to ``Springer-Verlag``,
+        leaving the surrounding ``{}`` intact."""
+        target = tmp_path / "refs.bib"
+        shutil.copyfile(NAME_002 / "before.bib", target)
+
+        result = runner.invoke(
+            main, ["--fix", "--apply", str(target)], input="y\n",
+        )
+
+        # Exit 1: the in-memory report still carries the violation
+        # (computed before the fixer rewrites). The byte-equality
+        # check below proves the rewrite landed.
+        assert result.exit_code == 1, result.output
+        expected = (NAME_002 / "after.bib").read_bytes()
+        assert target.read_bytes() == expected
+        assert "Apply fix for JSS-NAME-002" in result.output
 
 
 # ---------------------------------------------------------------------------
