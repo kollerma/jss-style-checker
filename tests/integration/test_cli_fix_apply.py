@@ -51,6 +51,7 @@ MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
 NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
 PRE_003 = FIXTURES / "auto-fix" / "JSS-PRE-003"
 PRE_007 = FIXTURES / "auto-fix" / "JSS-PRE-007"
+PRE_008 = FIXTURES / "auto-fix" / "JSS-PRE-008"
 STRUCT_005 = FIXTURES / "auto-fix" / "JSS-STRUCT-005"
 STRUCT_006 = FIXTURES / "auto-fix" / "JSS-STRUCT-006"
 TYPO_001 = FIXTURES / "auto-fix" / "JSS-TYPO-001"
@@ -315,6 +316,36 @@ class TestPre007Fix:
         # itself succeeds and the byte-equality check below proves it.
         assert result.exit_code == 1, result.output
         expected = (PRE_007 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# JSS-PRE-008 — \Keywords markup → insert \Plainkeywords{}
+# ---------------------------------------------------------------------------
+
+
+class TestPre008Fix:
+    """End-to-end ``jss-lint --fix`` for JSS-PRE-008.
+
+    The before fixture has ``\\Keywords{JSS, style guide, \\proglang{R}}``
+    with no companion ``\\Plainkeywords{}``; the rule's safe Fix
+    inserts ``\\Plainkeywords{JSS, style guide, R}`` (markup dropped,
+    macro brace-args projected) immediately after the ``\\Keywords``
+    closing brace.
+    """
+
+    def test_fix_writes_plainkeywords_after_keywords(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(PRE_008 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Exit code is from the report (PRE-008 violation present
+        # in the report computed before the rewrite).
+        assert result.exit_code == 1, result.output
+        expected = (PRE_008 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 

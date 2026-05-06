@@ -332,7 +332,8 @@ def _has_strict_jss_class(tex: Any) -> bool:
 
 
 def _check_markup_plain_pair(
-    tex: Any, *, markup_macro: str, plain_macro: str, rule_id: str
+    tex: Any, *, markup_macro: str, plain_macro: str, rule_id: str,
+    emit_fix: bool = False,
 ) -> Iterator[Violation]:
     if not _has_strict_jss_class(tex):
         # ``\\Plainauthor`` / ``\\Plaintitle`` / ``\\Plainkeywords`` only
@@ -349,21 +350,32 @@ def _check_markup_plain_pair(
         return
     if _first_macro(tex, plain_macro) is not None:
         return
+    suggestion = (
+        f"\\{markup_macro}{{}} contains LaTeX markup; add a \\{plain_macro}"
+        f"{{}} with the markup-free form for PDF metadata."
+    )
     fix: Fix | None = None
-    # Auto-fix: only PRE-007 emits a Fix payload. PRE-003 / PRE-008
-    # would need their own plain-text projection (title vs. keyword
-    # semantics) — leave them unfixed for now and keep the
-    # rule-specific helper local.
-    if rule_id == "JSS-PRE-007":
-        plain = _project_author_plain_text(group)
-        if plain:
-            insertion = macro.pos + macro.len
+    if emit_fix:
+        # Per-rule projection: authors need ``\and``/``\And`` translated
+        # to ``, ``; keywords are a flat comma-separated list and the
+        # generic projection is enough.
+        if rule_id == "JSS-PRE-007":
+            plain_text = _project_author_plain_text(group)
+        else:
+            plain_text = _group_plain_text(group)
+        if plain_text:
+            # Anchor on the brace-group's end. ``macro.len`` covers
+            # only the macro token for macros without a pylatexenc
+            # arg-spec (e.g. JSS's ``\Keywords``), so anchoring on the
+            # group is the robust choice across all three rules.
+            insertion_pos = group.pos + group.len
+            replacement = f"\n\\{plain_macro}{{{plain_text}}}"
             fix = Fix(
-                start=insertion,
-                end=insertion,
-                replacement=f"\n\\Plainauthor{{{plain}}}",
+                start=insertion_pos,
+                end=insertion_pos,
+                replacement=replacement,
                 description=(
-                    "Insert \\Plainauthor{} with markup-free author list."
+                    f"Insert \\{plain_macro}{{{plain_text}}} after \\{markup_macro}{{}}."
                 ),
                 confidence="safe",
             )
@@ -371,10 +383,7 @@ def _check_markup_plain_pair(
         tex=tex,
         pos=macro.pos,
         rule_id=rule_id,
-        suggestion=(
-            f"\\{markup_macro}{{}} contains LaTeX markup; add a \\{plain_macro}"
-            f"{{}} with the markup-free form for PDF metadata."
-        ),
+        suggestion=suggestion,
         fix=fix,
     )
 
@@ -492,7 +501,7 @@ def check_jss_pre_007(
     for tex in doc.tex_files:
         yield from _check_markup_plain_pair(
             tex, markup_macro="author", plain_macro="Plainauthor",
-            rule_id="JSS-PRE-007",
+            rule_id="JSS-PRE-007", emit_fix=True,
         )
 
 
@@ -502,7 +511,7 @@ def check_jss_pre_008(
     for tex in doc.tex_files:
         yield from _check_markup_plain_pair(
             tex, markup_macro="Keywords", plain_macro="Plainkeywords",
-            rule_id="JSS-PRE-008",
+            rule_id="JSS-PRE-008", emit_fix=True,
         )
 
 
