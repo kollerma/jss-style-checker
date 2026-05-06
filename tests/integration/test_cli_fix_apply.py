@@ -49,6 +49,7 @@ CITE_003 = FIXTURES / "auto-fix" / "JSS-CITE-003"
 MARKUP_001 = FIXTURES / "auto-fix" / "JSS-MARKUP-001"
 MARKUP_002 = FIXTURES / "auto-fix" / "JSS-MARKUP-002"
 NAME_002 = FIXTURES / "auto-fix" / "JSS-NAME-002"
+PRE_003 = FIXTURES / "auto-fix" / "JSS-PRE-003"
 STRUCT_005 = FIXTURES / "auto-fix" / "JSS-STRUCT-005"
 STRUCT_006 = FIXTURES / "auto-fix" / "JSS-STRUCT-006"
 TYPO_001 = FIXTURES / "auto-fix" / "JSS-TYPO-001"
@@ -252,6 +253,36 @@ class TestStruct006Fix:
         assert result.exit_code == 1, result.output
         # File now matches the after fixture, byte-for-byte.
         expected = (STRUCT_006 / "after.tex").read_bytes()
+        assert target.read_bytes() == expected
+
+
+# ---------------------------------------------------------------------------
+# 1b. JSS-PRE-003 — \title{} markup ⇒ insert \Plaintitle{}
+# ---------------------------------------------------------------------------
+
+
+class TestPre003Fix:
+    """End-to-end ``--fix`` test for JSS-PRE-003.
+
+    The fixture pair ``before.tex`` / ``after.tex`` differs only by
+    a single inserted ``\\Plaintitle{...}`` line — exactly what the
+    rule's spec-008 ``Fix`` payload should produce when ``--fix`` is
+    invoked.
+    """
+
+    def test_fix_writes_plaintitle(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        target = tmp_path / "manuscript.tex"
+        shutil.copyfile(PRE_003 / "before.tex", target)
+
+        result = runner.invoke(main, ["--fix", str(target)])
+
+        # Report still carries the original violation — exit 1 is the
+        # expected rendering of "violations seen". The point is the
+        # rewrite, asserted byte-for-byte.
+        assert result.exit_code == 1, result.output
+        expected = (PRE_003 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
 

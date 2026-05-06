@@ -30,7 +30,7 @@ from pylatexenc.latexwalker import (
     LatexSpecialsNode,
 )
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
@@ -139,6 +139,7 @@ def _violation(
     pos: int,
     rule_id: str,
     suggestion: str,
+    fix: Fix | None = None,
 ) -> Violation:
     meta = _catalogue_data.RULES[rule_id]
     line, col = _helpers._lineno_col(tex, pos)
@@ -150,8 +151,54 @@ def _violation(
         severity=meta["severity"],
         message=meta["message_template"],
         suggestion=suggestion,
-        fix=None,
+        fix=fix,
     )
+
+
+def _project_nodelist_to_plain(nodelist: Any) -> str:
+    """Project a pylatexenc nodelist to a plain-text string.
+
+    Used by JSS-PRE-003's auto-fix to synthesise a ``\\Plaintitle{}``
+    body from a markup-bearing ``\\title{}``. The projection is a
+    best-effort PDF-metadata-safe rendering:
+
+      * :class:`LatexCharsNode` content is taken verbatim;
+      * :class:`LatexMacroNode` nodes are unwrapped — each braced
+        ``LatexGroupNode`` argument is projected recursively (so
+        ``\\pkg{foo}`` becomes ``foo``); macros without a braced arg
+        are dropped;
+      * :class:`LatexMathNode` raw source is included with the
+        delimiting ``$`` stripped (``$x_i$`` becomes ``x_i``);
+      * every other node type (groups, environments, specials,
+        comments) is dropped.
+
+    The result has whitespace runs collapsed so that ``\\title{Foo
+    \\pkg{bar}  baz}`` projects cleanly to ``Foo bar baz``.
+    """
+    parts: list[str] = []
+    for node in nodelist or ():
+        if node is None:
+            continue
+        if isinstance(node, LatexCharsNode):
+            parts.append(node.chars)
+        elif isinstance(node, LatexMacroNode):
+            argd = getattr(node, "nodeargd", None)
+            if argd is None:
+                continue
+            for arg in argd.argnlist or ():
+                if isinstance(arg, LatexGroupNode):
+                    parts.append(_project_nodelist_to_plain(arg.nodelist))
+        elif isinstance(node, LatexMathNode):
+            raw = getattr(node, "latex_verbatim", lambda: "")()
+            parts.append(raw.strip("$"))
+        elif isinstance(node, LatexGroupNode):
+            # Bare brace groups (rare in titles) — recurse into them so
+            # ``\title{{Foo}}`` still projects to ``Foo``.
+            parts.append(_project_nodelist_to_plain(node.nodelist))
+        # Everything else (specials, environments, comments) drops.
+    text = "".join(parts)
+    # Collapse whitespace so the resulting Plaintitle is one tidy line.
+    return " ".join(text.split())
 
 
 def _violation_at_file_start(
@@ -317,9 +364,48 @@ def check_jss_pre_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.tex_files:
-        yield from _check_markup_plain_pair(
-            tex, markup_macro="title", plain_macro="Plaintitle",
+        if not _has_strict_jss_class(tex):
+            continue
+        triple = _first_macro(tex, "title")
+        if triple is None:
+            continue
+        macro, parent, idx = triple
+        group = _first_group_arg(macro, parent, idx)
+        if not _group_contains_markup(group):
+            continue
+        if _first_macro(tex, "Plaintitle") is not None:
+            # Plaintitle is already present — PRE-006 owns any
+            # markup-in-Plaintitle complaint. PRE-003 stays silent
+            # to preserve the pre-spec-008 behaviour.
+            continue
+        plain_text = _project_nodelist_to_plain(group.nodelist or ())
+        suggestion = (
+            "\\title{} contains LaTeX markup; add a \\Plaintitle{}"
+            " with the markup-free form for PDF metadata."
+        )
+        if not plain_text:
+            # Projection produced nothing useful (e.g., the title body
+            # strips to empty). Emit the violation but no fix — we
+            # don't want to insert ``\\Plaintitle{}`` blindly.
+            yield _violation(
+                tex=tex, pos=macro.pos, rule_id="JSS-PRE-003",
+                suggestion=suggestion,
+            )
+            continue
+        insert_pos = macro.pos + macro.len
+        replacement = f"\n\\Plaintitle{{{plain_text}}}"
+        yield _violation(
+            tex=tex,
+            pos=macro.pos,
             rule_id="JSS-PRE-003",
+            suggestion=suggestion,
+            fix=Fix(
+                start=insert_pos,
+                end=insert_pos,
+                replacement=replacement,
+                description=f"insert \\Plaintitle{{{plain_text}}}",
+                confidence="safe",
+            ),
         )
 
 
