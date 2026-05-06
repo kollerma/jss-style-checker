@@ -295,6 +295,99 @@ class TestMarkup003:
         )
         assert run_rule(jss_markup_003, src) == []
 
+    # --- R sentinel value coverage (NULL / NA / TRUE / FALSE) -------------
+
+    def test_bare_null_in_prose_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The default is NULL and may be replaced." "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-MARKUP-003"
+
+    def test_bare_na_true_false_in_prose_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Set the flag to TRUE; missing entries become NA, not FALSE."
+            "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        # TRUE, NA, FALSE → 3 hits.
+        assert len(violations) == 3
+        assert all(v.rule_id == "JSS-MARKUP-003" for v in violations)
+
+    def test_na_subtypes_in_prose_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Use NA_integer_ rather than NA_real_ for counts." "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        # NA_integer_, NA_real_ → 2 hits (no separate NA hits because the
+        # tokenizer eats the underscored tail).
+        assert len(violations) == 2
+
+    def test_sentinel_inside_code_macro_skipped(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The default is \code{NULL}." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_substring_does_not_match(self, run_rule):
+        # ``ANNULLED`` contains the substring ``NULL`` but the
+        # word-boundary tokenizer must not flag it; same for ``NAtural``
+        # / ``TRUEness`` / ``FALSEhood``.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Their NAtural ANNULLED TRUEness was FALSEhood." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_sentinel_inside_math_skipped(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Let $X = \mathit{NA}$ when missing." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_sentinel_inside_verbatim_skipped(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{verbatim}" "\n"
+            r"x <- NULL" "\n"
+            r"\end{verbatim}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_sentinel_emits_safe_fix(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The default is NULL." "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        assert v.fix.replacement == "\\code{NULL}"
+        assert v.fix.confidence == "safe"
+
 
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-004 — section titles with markup

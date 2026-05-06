@@ -12,7 +12,10 @@ round N).
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+
+import pytest
 
 from texlint.api import ParsedDocument, ToolConfig, Violation
 from texlint.core.parser import parse_rnw_file
@@ -130,4 +133,28 @@ def test_xref_002_flags_eqref(tmp_path: Path):
         "expected JSS-XREF-002 to flag \\eqref{...}; reviewer P10 "
         "discourages the parenthesised form regardless of which macro "
         "produces it"
+    )
+
+
+# ---------------------------------------------------------------------------
+# JSS-MARKUP-003 — bare `NULL` (and similar R sentinel values) in prose
+# should be wrapped in \code{}. Reviewer evidence: R5-r3 (Table 3:
+# "NULL → \\code{NULL}").
+# ---------------------------------------------------------------------------
+
+def test_markup_003_flags_bare_null_in_prose(tmp_path: Path):
+    """Plain `NULL` in running text must be wrapped in \\code{}."""
+    src = (
+        "\\documentclass[article]{jss}\n"
+        "\\begin{document}\n"
+        "The default value for \\code{verify.saved} is NULL and may "
+        "be replaced by a saved bootstrap object.\n"
+        "\\end{document}\n"
+    )
+    doc = _rnw_doc(tmp_path, src)
+    violations = _violations_for("JSS-MARKUP-003", doc)
+    assert violations, (
+        "expected JSS-MARKUP-003 to flag bare 'NULL' in prose; "
+        "reviewer R5-r3 explicitly required NULL -> \\code{NULL} "
+        "throughout Table 3"
     )

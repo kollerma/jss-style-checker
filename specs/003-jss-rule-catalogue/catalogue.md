@@ -45,7 +45,7 @@ _markup_ — 4 rule(s)
 |---|---|---|---|---|---|
 | `JSS-MARKUP-001` | warning | Programming-language names in prose are wrapped in \proglang{} | jss_cls | `jss.cls:\proglang` | ✓ |
 | `JSS-MARKUP-002` | warning | Software-package names in prose are wrapped in \pkg{} | jss_cls | `jss.cls:\pkg` | ✓ |
-| `JSS-MARKUP-003` | warning | Inline function, argument, and command names are wrapped in \code{} | jss_cls | `jss.cls:\code` | — |
+| `JSS-MARKUP-003` | warning | Inline function, argument, command names, and R sentinel values are wrapped in \code{} | jss_cls | `jss.cls:\code` | ✓ |
 | `JSS-MARKUP-004` | warning | Section titles containing markup supply a plain-text shim via \section[plain]{markup} | style_guide | `#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do` | ✓ |
 
 ## Citations
@@ -771,9 +771,9 @@ The \pkg{MASS} package provides \fct{glm.nb}.
 
 ### JSS-MARKUP-003
 
-**Category**: `markup` · **Severity**: `warning` · **Auto-fixable**: no
+**Category**: `markup` · **Severity**: `warning` · **Auto-fixable**: yes
 
-Inline function, argument, and command names are wrapped in \code{}
+Inline function, argument, command names, and R sentinel values are wrapped in \code{}
 
 **Authority**: `jss_cls` → `jss.cls:\code`
 
@@ -783,7 +783,7 @@ Inline function, argument, and command names are wrapped in \code{}
 <summary>Example violation</summary>
 
 ```latex
-The glm() function takes a family argument.
+The glm() function takes a family argument and may return NULL.
 ```
 
 </details>
@@ -792,12 +792,12 @@ The glm() function takes a family argument.
 <summary>Example fix</summary>
 
 ```latex
-The \code{glm()} function takes a \code{family} argument.
+The \code{glm()} function takes a \code{family} argument and may return \code{NULL}.
 ```
 
 </details>
 
-**Notes**: Style guide SG-030 mirrors this.
+**Notes**: Style guide SG-030 mirrors this. Reviewer feedback on jss5342 (R5-r3) explicitly required NULL -> \code{NULL} throughout Table 3, motivating the R-sentinel-value coverage.
 
 ---
 

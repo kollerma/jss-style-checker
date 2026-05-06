@@ -435,20 +435,20 @@ rules:
   - rule_id: JSS-MARKUP-003
     category: markup
     severity: warning
-    description: Inline function, argument, and command names are wrapped in \code{}
+    description: Inline function, argument, command names, and R sentinel values are wrapped in \code{}
     authority: jss_cls
     authority_ref: "jss.cls:\\code"
     example_violation: |
-      The glm() function takes a family argument.
+      The glm() function takes a family argument and may return NULL.
     example_fix: |
-      The \code{glm()} function takes a \code{family} argument.
+      The \code{glm()} function takes a \code{family} argument and may return \code{NULL}.
     inspects: [tex_files]
-    auto_fixable: false
+    auto_fixable: true
     guide_section: "§4.1 Markup"
     guide_url: "https://www.jstatsoft.org/about/submissions#markup"
-    explanation: "Inline function, argument, and command names are wrapped in \\code{}."
+    explanation: "Inline function, argument, and command names — and bare R sentinel values such as NULL, NA, TRUE, FALSE — are wrapped in \\code{}."
     notes: |
-      Style guide SG-030 mirrors this.
+      Style guide SG-030 mirrors this. Reviewer feedback on jss5342 (R5-r3) explicitly required NULL -> \code{NULL} throughout Table 3, motivating the R-sentinel-value coverage.
 
   - rule_id: JSS-MARKUP-004
     category: markup

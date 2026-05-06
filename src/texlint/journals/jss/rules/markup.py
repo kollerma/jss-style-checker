@@ -3,7 +3,9 @@
 Rules in this module:
   - JSS-MARKUP-001 — programming-language names wrapped in \\proglang{}.
   - JSS-MARKUP-002 — software-package names wrapped in \\pkg{}.
-  - JSS-MARKUP-003 — inline function / argument names wrapped in \\code{}.
+  - JSS-MARKUP-003 — inline function / argument names AND bare R
+    sentinel values (``NULL``, ``NA`` family, ``TRUE`` / ``FALSE``)
+    wrapped in \\code{}.
   - JSS-MARKUP-004 — section titles with markup supply a plain-text
     optional arg: ``\\section[plain]{markup}``.
 
@@ -287,11 +289,31 @@ def check_jss_markup_002(
 
 
 # ---------------------------------------------------------------------------
-# JSS-MARKUP-003 — inline function / argument names
+# JSS-MARKUP-003 — inline function / argument names + R sentinel values
 # ---------------------------------------------------------------------------
 
 
 _FUNCTION_CALL_RE = re.compile(r"\b[a-zA-Z][a-zA-Z0-9_.]*\(\s*\)")
+
+# R sentinel values that should be wrapped in ``\code{}`` when they
+# appear as standalone words in prose. Reviewer R5-r3 on jss5342
+# explicitly called out ``NULL -> \code{NULL}`` in Table 3; the same
+# JSS markup expectation applies to the closely-related missing-value
+# and logical sentinels (``NA`` family, ``TRUE`` / ``FALSE``). The
+# scope is intentionally conservative: it omits ``Inf`` / ``-Inf`` /
+# ``NaN`` because those frequently appear as displayed math symbols
+# rather than R values.
+_R_SENTINEL_VALUES: frozenset[str] = frozenset({
+    "NULL",
+    "NA", "NA_integer_", "NA_real_", "NA_character_", "NA_complex_",
+    "TRUE", "FALSE",
+})
+
+# Word-boundary token finder: an uppercase-leading identifier whose
+# tail may include letters, digits, and underscores (so ``NA_integer_``
+# matches in full and ``ANNULLED`` does not match ``NULL`` because the
+# leading ``A`` extends the token).
+_SENTINEL_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
 
 
 def check_jss_markup_003(
@@ -303,6 +325,12 @@ def check_jss_markup_003(
                 continue
             if not _helpers._is_in_prose_context(ancestors):
                 continue
+            # Skip bibliography environments — those go through the
+            # references.py rules, not the JSS markup rules. Avoids
+            # false-positives on ``NA`` / ``NULL`` appearing inside
+            # ``\bibitem`` titles.
+            if _is_inside_bibliography(ancestors):
+                continue
             for match in _FUNCTION_CALL_RE.finditer(node.chars):
                 abs_pos = node.pos + match.start()
                 yield _violation(
@@ -313,6 +341,35 @@ def check_jss_markup_003(
                         f"Wrap {match.group(0)!r} in "
                         f"\\code{{{match.group(0)}}}."
                     ),
+                )
+            for match in _SENTINEL_TOKEN_RE.finditer(node.chars):
+                token = match.group(0)
+                if token not in _R_SENTINEL_VALUES:
+                    continue
+                start = match.start()
+                end = match.end()
+                abs_pos = node.pos + start
+                abs_end = node.pos + end
+                # Wrap is mechanical and self-stabilising: the rewritten
+                # bytes ``\code{NULL}`` no longer match the sentinel
+                # token (the token is now inside ``\code{}`` and skipped
+                # by ``_is_in_prose_context``).
+                fix = Fix(
+                    start=abs_pos,
+                    end=abs_end,
+                    replacement=f"\\code{{{token}}}",
+                    description=f"wrap {token} in \\code{{}}",
+                    confidence="safe",
+                )
+                yield _violation(
+                    tex=tex,
+                    pos=abs_pos,
+                    rule_id="JSS-MARKUP-003",
+                    suggestion=(
+                        f"Wrap bare R sentinel {token!r} in "
+                        f"\\code{{{token}}}."
+                    ),
+                    fix=fix,
                 )
 
 

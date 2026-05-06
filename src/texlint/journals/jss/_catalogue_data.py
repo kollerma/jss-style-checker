@@ -205,14 +205,14 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
     'JSS-MARKUP-003': MappingProxyType({
         "category": 'markup',
         "severity": Severity.WARNING,
-        "message_template": 'Inline function, argument, and command names are wrapped in \\code{}',
+        "message_template": 'Inline function, argument, command names, and R sentinel values are wrapped in \\code{}',
         "authority": 'jss_cls',
         "authority_ref": 'jss.cls:\\code',
         "inspects": ('tex_files',),
-        "auto_fixable": False,
+        "auto_fixable": True,
         "guide_section": '§4.1 Markup',
         "guide_url": 'https://www.jstatsoft.org/about/submissions#markup',
-        "explanation": 'Inline function, argument, and command names are wrapped in \\code{}.',
+        "explanation": 'Inline function, argument, and command names — and bare R sentinel values such as NULL, NA, TRUE, FALSE — are wrapped in \\code{}.',
     }),
     'JSS-MARKUP-004': MappingProxyType({
         "category": 'markup',
