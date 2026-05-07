@@ -305,6 +305,36 @@ inline).
       `kollerma.github.io/jss-style-checker/badges/*.json`. The
       JSONs are populated by the deferred gh-pages workflow.)
 
+## Rule catalogue additions surfaced by recall annotation
+
+New rule proposals discovered while hand-annotating the v1 recall
+corpus (`eval/recall-corpus/`). Each item has reviewer/style-guide
+provenance and a concrete corpus carrier so the rule can be
+test-driven from real text.
+
+- [ ] **JSS-PRE-009 — preamble must not undefine or redefine
+      jss.cls-provided code environments** (`Code`, `CodeInput`,
+      `CodeOutput`, `Sinput`, `Soutput`). Detect via
+      `\let\Code\@undefined` (or `\renewenvironment{Code}`,
+      `\lstnewenvironment{Code}`, `\let\CodeInput=\@undefined`,
+      etc.) on any of the JSS-provided code env names.
+      **Why**: jss.cls supplies a fancyvrb-based Code/CodeInput/
+      CodeOutput / Sinput / Soutput stack so all submissions
+      render code uniformly. Replacing them with a custom
+      listings-based stack bypasses the JSS house style and
+      structurally hides the manuscript's code from CODE-001/002/
+      003 and WIDTH-001 (which target the JSS env names). No
+      published JSS paper does this — the only carriers in the
+      precision corpus are four CRAN vignettes from a single
+      author group (pmclust, pbdMPI, pbdSLAP, MixfMRI), none of
+      which appear in `eval/jss-archive.json`.
+      **Carriers**: `pmclust/pmclust-include/00-preamble.tex:18-26`
+      is the canonical example (`\let\Code\@undefined` followed
+      by `\lstnewenvironment{Code}{...}`).
+      **Severity**: error (replaces the JSS code surface entirely).
+      **Authority**: §4.2 Code style + jss.cls (the env names
+      themselves).
+
 ## Tracking
 
 This file is hand-edited. When a follow-up lands, check its
