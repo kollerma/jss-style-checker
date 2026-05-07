@@ -97,6 +97,39 @@ found, you record TPs but no FNs, which means recall is
 mathematically pinned at 1.0. The point is to surface defects
 the linter missed.
 
+### TOML escaping for backslashes
+
+A double-quoted TOML string interprets `\X` as an escape, so a
+`comment` like `"Used 'and' not '\And'"` fails to parse (`\A` is
+not a valid escape). Use a literal single-quoted string for any
+comment that mentions LaTeX macros:
+
+```toml
+# bad — TOMLDecodeError on '\A':
+comment = "Used 'and' not '\And' in author list"
+
+# good — literal string preserves backslashes verbatim:
+comment = 'Used "and" not "\And" in author list'
+```
+
+### Papers split across `\input` files
+
+If the manuscript pulls in additional `.tex` files via
+`\input{...}` (only `pmclust` does this in the v1 slate), the
+scaffolder copies them under the same relative subdirectory. The
+recall CLI walks the paper directory recursively, so a violation
+in `pmclust-include/02-example.tex` is annotated as
+
+```toml
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "02-example.tex"   # iterdir basename — not "pmclust-include/02-example.tex"
+line = 47
+```
+
+The linter reports `file` as the bare basename, so annotations
+should match.
+
 ## Identity tuple
 
 `(rule_id, file, line)`. Column does NOT participate. A

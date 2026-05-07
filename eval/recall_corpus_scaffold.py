@@ -16,9 +16,17 @@ Idempotent: re-running overwrites manuscript / bib files but leaves
 from __future__ import annotations
 
 import csv
+import re
 import shutil
 import sys
 from pathlib import Path
+
+# Match `\input{path}`, `\include{path}`, `\subfile{path}`, and the bib-side
+# `\bibliography{path}`. Whitespace inside braces is rare but tolerated.
+# Multiple bibs separated by commas (`\bibliography{a,b}`) are split below.
+_INPUT_RE = re.compile(
+    r"\\(?:input|include|subfile|bibliography)\s*\{\s*([^}]+?)\s*\}"
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES = REPO_ROOT / "examples"
@@ -52,11 +60,58 @@ def _manifest_lookup() -> dict[str, tuple[Path, Path]]:
     return out
 
 
-def _copy_paper(paper_id: str, manuscript: Path, src_dir: Path) -> int:
-    """Copy manuscript + sibling .bib into the paper directory.
+def _resolve_input_targets(
+    manuscript: Path, src_dir: Path, *, _seen: set[Path] | None = None
+) -> list[Path]:
+    """Recursively follow ``\\input`` / ``\\include`` / ``\\bibliography``
+    chains starting from ``manuscript`` and return every referenced file
+    that exists, with paths relative to ``src_dir``-or-deeper preserved.
 
-    Returns the number of files copied. The annotations.toml file is
-    never touched (it carries the hand-annotation work).
+    LaTeX accepts both ``\\input{foo}`` and ``\\input{foo.tex}``; we try
+    the bare path first then ``.tex`` / ``.cls`` / ``.bib`` extensions.
+    Targets we cannot resolve are skipped silently — most are figure /
+    listing files outside the lint surface.
+    """
+    if _seen is None:
+        _seen = set()
+    out: list[Path] = []
+    try:
+        text = manuscript.read_text(errors="ignore")
+    except OSError:
+        return out
+    for m in _INPUT_RE.finditer(text):
+        # \bibliography{a,b} → split.
+        for raw in m.group(1).split(","):
+            target = raw.strip()
+            if not target:
+                continue
+            cmd_is_bib = m.group(0).startswith("\\bibliography")
+            extensions = (".bib",) if cmd_is_bib else (".tex", "", ".cls")
+            for ext in extensions:
+                candidate = (manuscript.parent / f"{target}{ext}").resolve()
+                if candidate.exists() and candidate.is_file():
+                    if candidate not in _seen:
+                        _seen.add(candidate)
+                        out.append(candidate)
+                        # Recurse only into .tex-class files
+                        if candidate.suffix.lower() in {".tex", ".ltx"}:
+                            out.extend(
+                                _resolve_input_targets(
+                                    candidate, src_dir, _seen=_seen
+                                )
+                            )
+                    break
+    return out
+
+
+def _copy_paper(paper_id: str, manuscript: Path, src_dir: Path) -> int:
+    """Copy manuscript + its \\input chain + sibling .bib files into the
+    paper directory.
+
+    Subdirectory structure is preserved relative to the manuscript so
+    that any future ``\\input{./subdir/file}`` autoresolve walks the
+    same path. Returns the number of files copied. ``annotations.toml``
+    is never touched.
     """
     if not manuscript.exists():
         print(
@@ -67,11 +122,22 @@ def _copy_paper(paper_id: str, manuscript: Path, src_dir: Path) -> int:
         return 0
     dest = CORPUS_ROOT / paper_id
     dest.mkdir(parents=True, exist_ok=True)
+
     n = 0
     shutil.copy2(manuscript, dest / manuscript.name)
     n += 1
+    # Sibling .bib files (most papers have these directly next to the
+    # manuscript; covered here even when no \bibliography{} explicitly
+    # references them).
     for bib in sorted(src_dir.glob("*.bib")):
         shutil.copy2(bib, dest / bib.name)
+        n += 1
+    # \input / \include / \bibliography chain, preserving subdir layout.
+    for target in _resolve_input_targets(manuscript, src_dir):
+        rel = target.relative_to(src_dir) if src_dir in target.parents else Path(target.name)
+        out_path = dest / rel
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(target, out_path)
         n += 1
     return n
 

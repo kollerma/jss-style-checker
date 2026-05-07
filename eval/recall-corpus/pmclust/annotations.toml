@@ -22,7 +22,7 @@
 
 [meta]
 paper_id = "pmclust"
-annotator = ""             # fill in your name / handle
+annotator = "Manuel Koller"             # fill in your name / handle
 date = "2026-05-07"
 notes = """
 Stub created 2026-05-07. Replace this notes block when annotation begins.
@@ -37,4 +37,14 @@ Stub created 2026-05-07. Replace this notes block when annotation begins.
 # line = 42
 # comment = "<optional rationale>"
 
-# (no violations recorded yet)
+[[violations]]
+rule_id = "JSS-STRUCT-005"
+file = "pmclust-guide.Rnw"
+line = 15
+comment = 'Used "and" and not "\And" in authors list'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "pmclust-guide.Rnw"
+line = 42
+comment = "<optional rationale>"

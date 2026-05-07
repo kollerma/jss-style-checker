@@ -451,9 +451,13 @@ def recall_cmd(
         # The corpus convention is one manuscript per paper directory,
         # plus any sibling .bib so bibliography-side rules (NAME-002,
         # REFS-*, BIBTEX-*) can fire alongside manuscript-side rules.
+        # Recursive: papers split via \input{subdir/...} (e.g. pmclust)
+        # ship include subdirectories that must be linted alongside the
+        # outer manuscript.
         manuscript_files = sorted(
-            p for p in paper_dir.iterdir()
-            if p.suffix.lower() in {".tex", ".ltx", ".rnw", ".rmd", ".bib"}
+            p for p in paper_dir.rglob("*")
+            if p.is_file()
+            and p.suffix.lower() in {".tex", ".ltx", ".rnw", ".rmd", ".bib"}
         )
         if not manuscript_files:
             click.echo(

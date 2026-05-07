@@ -174,11 +174,16 @@ examples/cran_*/
 # `python -m eval.recall_corpus_scaffold` (mirrors the precision-corpus
 # pattern). Each vignette carries its source package's license, which is
 # typically GPL-2/3 — incompatible with bundling into this MIT repo.
-eval/recall-corpus/*/*.Rnw
-eval/recall-corpus/*/*.Rmd
-eval/recall-corpus/*/*.tex
-eval/recall-corpus/*/*.ltx
-eval/recall-corpus/*/*.bib
+# `**/` matches arbitrary depth so papers split via \input subdirs
+# (e.g. pmclust/pmclust-include/) are also covered.
+eval/recall-corpus/**/*.Rnw
+eval/recall-corpus/**/*.Rmd
+eval/recall-corpus/**/*.tex
+eval/recall-corpus/**/*.ltx
+eval/recall-corpus/**/*.bib
+eval/recall-corpus/**/*.cls
+eval/recall-corpus/**/*.pdf
+eval/recall-corpus/**/.DS_Store
 .claude/settings.local.json
 
 # `entire` CLI injects hooks (commit-msg, post-commit, pre-push,
