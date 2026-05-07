@@ -1,0 +1,40 @@
+# Hand-annotated ground truth for paper "rstpm2".
+#
+# Annotation protocol: read the rendered manuscript end-to-end and
+# record every JSS-guide violation you spot. Identity tuple is
+# (rule_id, file, line); column does NOT participate. See
+# eval/recall-corpus/README.md for the full protocol.
+#
+# Lint surface for recall measurement: `eval-jss recall` runs the
+# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
+# directory. The annotator should annotate against the same surface
+# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
+# to keep the comparison fair.
+#
+# This is a STUB. Linter output for reference (do not pre-populate
+# the [[violations]] section from this list — the recall measurement
+# depends on independent annotation):
+#
+# Linter says: 57 violations across 15 rules.
+# Rules fired: JSS-BIBTEX-004, JSS-CITE-002, JSS-HOUSE-001, JSS-HOUSE-003, JSS-MARKUP-001, JSS-MARKUP-002, JSS-NAME-002, JSS-OPER-002, JSS-PRE-006, JSS-REFS-003, JSS-REFS-004, JSS-REFS-006, JSS-TYPO-001, JSS-TYPO-003, JSS-XREF-002
+# Manuscript: multistate.Rnw (527 loc)
+# Sibling .bib(s): lib.bib
+
+[meta]
+paper_id = "rstpm2"
+annotator = ""             # fill in your name / handle
+date = "2026-05-07"
+notes = """
+Stub created 2026-05-07. Replace this notes block when annotation begins.
+"""
+
+# Add one [[violations]] entry per ground-truth defect.
+# Schema:
+#
+# [[violations]]
+# rule_id = "JSS-CITE-002"
+# file = "multistate.Rnw"
+# line = 42
+# comment = "<optional rationale>"
+
+# (no violations recorded yet)

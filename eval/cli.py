@@ -448,10 +448,12 @@ def recall_cmd(
     all_annotations: list[dict] = []
     for ann_path, ann_violations in per_paper:
         paper_dir = ann_path.parent
-        # The corpus convention is one manuscript per paper directory.
+        # The corpus convention is one manuscript per paper directory,
+        # plus any sibling .bib so bibliography-side rules (NAME-002,
+        # REFS-*, BIBTEX-*) can fire alongside manuscript-side rules.
         manuscript_files = sorted(
             p for p in paper_dir.iterdir()
-            if p.suffix.lower() in {".tex", ".ltx", ".rnw", ".rmd"}
+            if p.suffix.lower() in {".tex", ".ltx", ".rnw", ".rmd", ".bib"}
         )
         if not manuscript_files:
             click.echo(

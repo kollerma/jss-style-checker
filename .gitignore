@@ -169,6 +169,16 @@ examples/**/.sha256
 # CRAN-sourced vignettes — reproducible from eval/corpus-manifest.csv via
 # `eval-jss corpus fetch`; SHA256-pinned, so we do not check in the payload.
 examples/cran_*/
+# Recall corpus — annotations.toml is committed (the novel work); the
+# manuscripts and bibs are CRAN-vendored and reproduced via
+# `python -m eval.recall_corpus_scaffold` (mirrors the precision-corpus
+# pattern). Each vignette carries its source package's license, which is
+# typically GPL-2/3 — incompatible with bundling into this MIT repo.
+eval/recall-corpus/*/*.Rnw
+eval/recall-corpus/*/*.Rmd
+eval/recall-corpus/*/*.tex
+eval/recall-corpus/*/*.ltx
+eval/recall-corpus/*/*.bib
 .claude/settings.local.json
 
 # `entire` CLI injects hooks (commit-msg, post-commit, pre-push,
