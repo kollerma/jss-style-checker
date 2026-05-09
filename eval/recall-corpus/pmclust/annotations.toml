@@ -10,22 +10,26 @@
 # directory. The annotator should annotate against the same surface
 # the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
 # to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 2 violations across 2 rules.
-# Rules fired: JSS-PRE-004, JSS-PRE-005
-# Manuscript: pmclust-guide.Rnw (101 loc)
-# Sibling .bib(s): (none)
 
 [meta]
 paper_id = "pmclust"
 annotator = "Manuel Koller"             # fill in your name / handle
 date = "2026-05-07"
 notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
+pmclust's 00-preamble.tex redefines the JSS-class code environments
+(\\Code, \\CodeInput, \\CodeOutput) via \\let\\Code\\@undefined, then
+re-binds Code/CodeOutput/Command/Error to listings-based envs. As a
+result the linter's CODE-001/002/003 and WIDTH-001 rules — which key
+on jss.cls env names — silently miss every code defect inside those
+custom envs. The defects are still annotated here against the lines
+they appear on, but until the JSS-PRE-009 follow-up (preamble must
+not undefine jss.cls code envs) ships and is paired with a generic
+"unknown verbatim env" pass, those rules will read 0 % recall on
+this paper structurally. See roadmap/follow-ups.md.
+
+REFS-003 (DOI advisory) entries are annotated even though they are
+info-severity: every flagged entry has a DOI on crossref.org that
+the bib does not record.
 """
 
 # Add one [[violations]] entry per ground-truth defect.
@@ -44,7 +48,368 @@ line = 15
 comment = 'Used "and" and not "\And" in authors list'
 
 [[violations]]
-rule_id = "JSS-CITE-002"
+rule_id = "JSS-PRE-004"
 file = "pmclust-guide.Rnw"
-line = 42
-comment = "<optional rationale>"
+line = 1
+comment = '"\Abstract" is commented out'
+
+[[violations]]
+rule_id = "JSS-PRE-005"
+file = "pmclust-guide.Rnw"
+line = 1
+comment = '"\Keywords" is commented out'
+
+[[violations]]
+rule_id = "JSS-STRUCT-002"
+file = "01-acknowledgement.tex"
+line = 2
+comment = '\section*{Acknowledgement} — JSS uses American plural "Acknowledgments"'
+
+[[violations]]
+rule_id = "JSS-ABBR-001"
+file = "01-acknowledgement.tex"
+line = 13
+comment = '"U.S. DOE" — abbreviation "U.S." carries periods (JSS wants bare uppercase: "US")'
+
+[[violations]]
+rule_id = "JSS-ABBR-001"
+file = "01-acknowledgement.tex"
+line = 18
+comment = '"U.S. National Science Foundation" — same "U.S." periods issue'
+
+[[violations]]
+rule_id = "JSS-ABBR-001"
+file = "01-acknowledgement.tex"
+line = 24
+comment = '"U.S. Department of Energy under Contract No. DE-AC05-00OR22725" — both "U.S." and "No." carry periods'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "01-introduction.tex"
+line = 38
+comment = '"Requirement" should be lower case'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "01-introduction.tex"
+line = 67
+comment = '"Start" should be lower case'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "01-introduction.tex"
+line = 75
+comment = 'Inside custom \begin{Command} env (defined in 00-preamble.tex). Linter does not recognise it as a code env, so this rule structurally cannot fire here — see JSS-PRE-009 follow-up.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "01-introduction.tex"
+line = 76
+comment = 'Inside custom \begin{Command} env (defined in 00-preamble.tex). Linter does not recognise it as a code env, so this rule structurally cannot fire here — see JSS-PRE-009 follow-up.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "01-introduction.tex"
+line = 77
+comment = 'Inside custom \begin{Command} env (defined in 00-preamble.tex). Linter does not recognise it as a code env, so this rule structurally cannot fire here — see JSS-PRE-009 follow-up.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "01-introduction.tex"
+line = 78
+comment = 'Inside custom \begin{Command} env (defined in 00-preamble.tex). Linter does not recognise it as a code env, so this rule structurally cannot fire here — see JSS-PRE-009 follow-up.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "02-example.tex"
+line = 11
+comment = '"i.e." without following comma'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "02-example.tex"
+line = 13
+comment = '"i.e." without following comma'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "02-example.tex"
+line = 16
+comment = 'Should be "Single program multiple data"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "02-example.tex"
+line = 26
+comment = 'Inside custom \begin{Command} env (defined in 00-preamble.tex). Linter does not recognise it as a code env, so this rule structurally cannot fire here — see JSS-PRE-009 follow-up.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "02-example.tex"
+line = 39
+comment = '"i.e." without following comma'
+
+[[violations]]
+rule_id = "JSS-OPER-002"
+file = "02-example.tex"
+line = 47
+comment = '"^\prime" instead of "^\top", twice in the same row'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "02-example.tex"
+line = 71
+comment = '"i.e." without following comma'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "02-example.tex"
+line = 101
+comment = '"Workers" should be lower case'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "02-example.tex"
+line = 126
+comment = "First of multiple # comments in this code block; per CODE-001 convention, the rule fires once per block at the first comment line."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "02-example.tex"
+line = 179
+comment = '"Examples" should be lower case'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "02-example.tex"
+line = 196
+comment = 'Inside custom \begin{Command} env (defined in 00-preamble.tex). Linter does not recognise it as a code env, so this rule structurally cannot fire here — see JSS-PRE-009 follow-up.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "02-example.tex"
+line = 211
+comment = '\caption{The functions for \code{ddmatrix}} — caption does not end with a period.'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "02-example.tex"
+line = 211
+comment = '\caption{...} appears immediately after \begin{table} + \centering, before \begin{tabular} content. Caption should follow the table body, not precede it.'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "02-example.tex"
+line = 226
+comment = 'Should be "Input and output via CSV files"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "02-example.tex"
+line = 236
+comment = 'Inside custom \begin{Command} env (defined in 00-preamble.tex). Linter does not recognise it as a code env, so this rule structurally cannot fire here — see JSS-PRE-009 follow-up.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 1
+comment = 'Chen2012pmclustpackage — DOI for the pmclust package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 1
+comment = '"pmclust" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 8
+comment = 'Chen2012a — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "pmclust.bib"
+line = 20
+comment = 'Title is not title-style: only "Model-based", APECM, AECM start uppercase; principal words like "Clustering", "Regression", "Time", "Series", "Data", "Algorithm", "Beat" should be capitalised. Linter heuristic only checks first word and post-colon word, so currently silent.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 20
+comment = 'Chen2011 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "pmclust.bib"
+line = 30
+comment = 'Should drop "Series" in title and in long_title'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 30
+comment = 'Dempster1977 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 41
+comment = 'Fisher1936 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "pmclust.bib"
+line = 41
+comment = 'Fisher1936 — title in sentence case ("The use of multiple measurements in taxonomic problems"); JSS wants title case ("The Use of Multiple Measurements in Taxonomic Problems").'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "pmclust.bib"
+line = 41
+comment = 'Should be "The Annals of Eugenics" not "Annals of Eugenics"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 49
+comment = 'Fraley2002 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 59
+comment = 'Lloyd1982 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "pmclust.bib"
+line = 59
+comment = 'Lloyd1982 — title in sentence case; principal words ("Least", "Squares", "Quantization", "PCM") should be capitalised.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 68
+comment = 'Maitra2009 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "pmclust.bib"
+line = 68
+comment = 'Maitra2009 — title in sentence case ("Initializing partition-optimization algorithms"); JSS wants title case ("Initializing Partition-Optimization Algorithms").'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 77
+comment = 'Melnykov2012 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 77
+comment = '"MixSim" is an R package, should be wrapped with "\pkg{}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 87
+comment = 'Meng1997 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "pmclust.bib"
+line = 87
+comment = 'Should drop "Series" in title and in long_title'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 104
+comment = 'Chen2012pbdMPIpackage — DOI for the pbdMPI package archive exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 104
+comment = '"pbdMPI" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 112
+comment = '"pbdMPI" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 112
+comment = '"pbdSLAP" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 127
+comment = '"pbdBASE" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 134
+comment = '"pbdDMAT" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 141
+comment = 'Schmidt2013pbdDEMOpackage — DOI for the pbdDEMO package archive exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 141
+comment = '"pbdDEMO" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 149
+comment = '"R" is just plain and not wrapped in note several times'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 159
+comment = 'Schmidberger2009 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 159
+comment = '"R" is just plain and not wrapped in note several times'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 168
+comment = 'Rcore — DOI exists on Crossref for the R Manual; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 168
+comment = '"R" is just plain and not wrapped in note several times'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 177
+comment = 'Yu2010 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "pmclust.bib"
+line = 177
+comment = '"Rmpi" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
