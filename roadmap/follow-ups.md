@@ -305,12 +305,12 @@ inline).
       `kollerma.github.io/jss-style-checker/badges/*.json`. The
       JSONs are populated by the deferred gh-pages workflow.)
 
-## Rule catalogue additions surfaced by recall annotation
+## Rule catalogue follow-ups surfaced by recall annotation
 
-New rule proposals discovered while hand-annotating the v1 recall
-corpus (`eval/recall-corpus/`). Each item has reviewer/style-guide
-provenance and a concrete corpus carrier so the rule can be
-test-driven from real text.
+New rule proposals and existing-rule behaviour fixes discovered
+while hand-annotating the v1 recall corpus (`eval/recall-corpus/`).
+Each item has reviewer/style-guide provenance and a concrete
+corpus carrier so the change can be test-driven from real text.
 
 - [ ] **JSS-PRE-009 — preamble must not undefine or redefine
       jss.cls-provided code environments** (`Code`, `CodeInput`,
@@ -334,6 +334,30 @@ test-driven from real text.
       **Severity**: error (replaces the JSS code surface entirely).
       **Authority**: §4.2 Code style + jss.cls (the env names
       themselves).
+
+- [ ] **Bib-side rules should skip uncited entries**
+      (`src/texlint/journals/jss/rules/references.py`,
+      `bibtex.py`). `JSS-REFS-002/003/004/005/006/007` and
+      `JSS-BIBTEX-002/003/004` currently walk every entry returned
+      by `_iter_entries()`, regardless of whether any
+      `\cite{}` / `\citep{}` / `\citet{}` / `\citealt{}` /
+      `\citealp{}` actually references the entry's key. Uncited
+      entries don't appear in the printed bibliography (BibTeX/
+      biblatex filters them out), so reviewers never see them and
+      annotators correctly skip them — but the linter still fires,
+      which inflates precision-side FP counts on the precision
+      corpus and clutters the report.
+      **Fix**: build the `\cite*{...}`-referenced key set per
+      ParsedDocument once (helper in `_helpers.py`), then have
+      each bib rule short-circuit when `entry.key not in
+      cited_keys`. Keep `JSS-BIBTEX-001` (empty key) and the
+      key-uniqueness check `JSS-BIBTEX-002` walking all entries —
+      those are bib-hygiene rules independent of citation use.
+      **Carrier**: pmclust's `pmclust-include/pmclust.bib`
+      contains several entries (e.g. unreferenced book chapters)
+      that fire `JSS-REFS-003` / `REFS-007` despite being absent
+      from the printed bibliography.
+      **Severity**: existing rule severity; behaviour fix only.
 
 ## Tracking
 
