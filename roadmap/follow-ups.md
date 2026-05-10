@@ -420,20 +420,43 @@ corpus carrier so the change can be test-driven from real text.
       **Severity**: existing rule severity (warning).
 
 - [ ] **`JSS-REFS-003` (DOI advisory) entry-type coverage is too
-      narrow** (`src/texlint/journals/jss/rules/references.py`).
-      The rule currently fires on a small subset of entries — both
-      pmclust (6/15 fire; 9 missed) and robustlmm (5/16 fire; 11
-      missed) showed real DOI-missing entries that didn't trigger.
+      narrow + DOI-in-wrong-field anti-pattern is missed**
+      (`src/texlint/journals/jss/rules/references.py`).
+      Two related gaps:
+
+      *(a) Entry-type filter.* The rule currently fires on a small
+      subset of entries — pmclust (6/15 fire; 9 missed), robustlmm
+      (5/16 fire; 11 missed), CARBayesST (37/65 fire; 28 missed)
+      all showed real DOI-missing entries that didn't trigger.
       Likely scoped to `@ARTICLE` with a `journal` field set,
       ignoring `@MISC`, `@Manual`, `@incollection`, `@book` etc.
       that legitimately have DOIs.
       **Carriers**: pmclust `pmclust.bib` (Chen2012pmclustpackage,
       Chen2012pbdMPIpackage, Schmidt2013pbdDEMOpackage, Rcore,
       Yu2010 etc.); robustlmm `simulationStudies.bib` (most
-      package-archive @Manual / @MISC entries).
+      package-archive @Manual / @MISC entries); CARBayesST
+      `JSS2728.bib` (~28 entries spanning JSS articles, Wiley /
+      Springer / Elsevier journal articles, Springer & Chapman
+      books, R-package @Manuals).
+
+      *(b) DOI in wrong field.* When a DOI exists but is recorded
+      inside `pages = "..."` or `url = "..."` instead of a proper
+      `doi = "..."` field, the rule misses it (it only looks at
+      `doi=`). This is a real anti-pattern: `pages` ends up in
+      the rendered bibliography in unexpected ways, and `url=`
+      with a `dx.doi.org` link is non-canonical.
+      **Carriers**: CARBayesST `JSS2728.bib` — `haining2010`
+      (`pages = "123-131, DOI:10.1016/j.sste.2010.03.006"`),
+      `lee2022` (`pages = "https://doi.org/10.1016/j.spasta.2021.100508"`),
+      `leroux2000` (`url = "http://dx.doi.org/10.1007/978-1-4612-1284-3_4"`).
+
       **Fix**: drop the entry-type filter — *any* entry whose
       published form has a DOI on Crossref should be flagged when
-      `doi` is missing.
+      `doi` is missing. Additionally scan `pages` and `url` for
+      embedded DOIs (regex `10\.\d+/\S+`); when found, fire a
+      distinct sub-message ("DOI exists but is recorded in the
+      wrong field; move to `doi=`") so the author knows the
+      defect is field-placement, not absence.
       **Severity**: info (advisory) — unchanged.
 
 - [ ] **`JSS-REFS-004` (proglang / pkg / code markup in bib titles)
