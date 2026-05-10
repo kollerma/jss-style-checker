@@ -4,37 +4,842 @@
 # record every JSS-guide violation you spot. Identity tuple is
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
-#
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 80 violations across 20 rules.
-# Rules fired: JSS-ABBR-001, JSS-BIBTEX-004, JSS-CAP-001, JSS-CODE-001, JSS-CODE-002, JSS-CODE-003, JSS-HOUSE-001, JSS-HOUSE-002, JSS-HOUSE-003, JSS-MARKUP-001, JSS-MARKUP-003, JSS-OPER-001, JSS-OPER-004, JSS-REFS-003, JSS-REFS-004, JSS-REFS-007, JSS-STRUCT-002, JSS-WIDTH-001, JSS-XREF-002, JSS-XREF-004
-# Manuscript: CARBayesST.Rnw (961 loc)
-# Sibling .bib(s): JSS2728.bib
 
 [meta]
 paper_id = "CARBayesST"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
+annotator = "Manuel Koller"
+date = "2026-05-10"
 notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
+JSS-XREF-002: I did not flag the equation references in Table 1
+    (lines 142, 145, 147, 149, 151, 153, 155) because the table header
+    reads "Equation".
 """
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "CARBayesST.Rnw"
-# line = 42
-# comment = "<optional rationale>"
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "CARBayesST.Rnw"
+line = 5
+comment = "JSS already provides graphicx"
 
-# (no violations recorded yet)
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "CARBayesST.Rnw"
+line = 8
+comment = "JSS already provides hyperref"
+
+[[violations]]
+rule_id = "JSS-STRUCT-005"
+file = "CARBayesST.Rnw"
+line = 40
+comment = 'Authors separated by "and" and not "\And"'
+
+[[violations]]
+rule_id = "JSS-CAP-001"
+file = "CARBayesST.Rnw"
+line = 42
+comment = '"version" should be capitalised'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 52
+comment = '"\code{n-cores=1}" should "\code{n-cores = 1}"'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CARBayesST.Rnw"
+line = 124
+comment = 'Should use \E instead of \mathbf{E}'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CARBayesST.Rnw"
+line = 124
+comment = '"Equation (\ref{})" is missing "~", should be "Equation~(\ref{})"'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "CARBayesST.Rnw"
+line = 143
+comment = 'bernardinelli1995 has 6 authors, should use \shortcites and not \cite'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "CARBayesST.Rnw"
+line = 165
+comment = 'See L143'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CARBayesST.Rnw"
+line = 176
+comment = '"(\ref{equation likelihood})" could be written as "Equation~\ref{...}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 191
+comment = '"\code{interaction=TRUE}" should be "\code{interaction = TRUE}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 240
+comment = '"\code{AR=1}" should be "\code{AR = 1}", similar for "\code{AR=2}"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CARBayesST.Rnw"
+line = 303
+comment = '"\textbf{ST.CARclustrends()}" should be "\code{ST.CARclustrends()}"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CARBayesST.Rnw"
+line = 325
+comment = '"R identifier" in table header — "R" should be \proglang{R}.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CARBayesST.Rnw"
+line = 340
+comment = '"\textbf{ST.CARclustrends()}" should be "\code{ST.CARclustrends()}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 347
+comment = '"\code{MALA=FALSE}" should be "\code{MALA = FALSE}", similar for "\code{n.cores=1}"'
+
+[[violations]]
+rule_id = "JSS-ABBR-001"
+file = "CARBayesST.Rnw"
+line = 349
+comment = '"Upper C.I." should be "upper CI"'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "CARBayesST.Rnw"
+line = 349
+comment = 'gelman2013 has 6 authors, should use \shortcites{...}, 2x in the same line'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "CARBayesST.Rnw"
+line = 349
+comment = 'The coda R package is cited not at the first mention but only later'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CARBayesST.Rnw"
+line = 364
+comment = 'Should use \E instead of \mathbf{E}'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CARBayesST.Rnw"
+line = 385
+comment = 'Should use \P instead of \mathbf{P}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 387
+comment = "Equation (16) is missing a label and is not referenced from anywhere"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 406
+comment = '"\code{AR=1}" should be "\code{AR = 1}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 407
+comment = '"\code{AR=2}" should be "\code{AR = 2}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CARBayesST.Rnw"
+line = 407
+comment = '"(\ref{eq_joint})" could be written as "Equation~\ref{...}"'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 411
+comment = "Equation (18) is missing a label and is not referenced from anywhere"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 422
+comment = "Equation (19) is missing a label and is not referenced from anywhere"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CARBayesST.Rnw"
+line = 441
+comment = '"Comprehensive R Archive Network" - R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "CARBayesST.Rnw"
+line = 441
+comment = 'GGally has more than 6 authors, should use \shortcites and not \cite'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 455
+comment = '"\code{family=\"binomial\"}" should be "\code{family = \"binomial\"}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 487
+comment = '"\code{verbose=FALSE}" should be "\code{verbose = FALSE}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 492
+comment = '"\code{interaction=TRUE}" should be "\code{interaction = TRUE}"'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CARBayesST.Rnw"
+line = 502
+comment = '\mathbb{P} should be \P'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "CARBayesST.Rnw"
+line = 514
+comment = '"i.e." without following comma'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CARBayesST.Rnw"
+line = 528
+comment = '"(\ref{equation likelihood})" could be written as "Equation~\ref{...}"'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CARBayesST.Rnw"
+line = 557
+comment = 'Should be library("dplyr")'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CARBayesST.Rnw"
+line = 560
+comment = "Code line too wide - overflows in typeset document"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CARBayesST.Rnw"
+line = 568
+comment = 'Should be library("GGally")'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CARBayesST.Rnw"
+line = 596
+comment = "Code line too wide - overflows in typeset document once prompt prefix from L93 is added"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CARBayesST.Rnw"
+line = 602
+comment = 'Should be library("leaflet")'
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "CARBayesST.Rnw"
+line = 654
+comment = '"p-value" should be "p~value"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 658
+comment = '"\code{n.chains=3}" should be "\code{n.chains = 3}", twice in the same line'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 661
+comment = "Missing spaces around = (3 times)"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "CARBayesST.Rnw"
+line = 734
+comment = 'See L349'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CARBayesST.Rnw"
+line = 737
+comment = 'Should be library("coda")'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 749
+comment = "Block has multiple `[2:4 ,...]` calls; per CODE-003 convention the rule fires once per block at the env opening."
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 794
+comment = "Missing spaces around = (6 times on multiple lines)"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CARBayesST.Rnw"
+line = 795
+comment = "Code line too wide - overflows in typeset document once prompt prefix from L93 is added"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CARBayesST.Rnw"
+line = 796
+comment = 'Should be library("ggplot2")'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CARBayesST.Rnw"
+line = 801
+comment = "Code line too wide - overflows in typeset document once prompt prefix from L93 is added"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CARBayesST.Rnw"
+line = 815
+comment = 'Should be library("dplyr")'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 824
+comment = "Missing spaces around = (7 times on multiple lines)"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CARBayesST.Rnw"
+line = 827
+comment = 'Should be library("leaflet")'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 878
+comment = "Missing spaces around = (2 times on multiple lines)"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CARBayesST.Rnw"
+line = 886
+comment = "Code line too wide - overflows in typeset document once prompt prefix from L93 is added"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CARBayesST.Rnw"
+line = 889
+comment = "Code line too wide - overflows in typeset document once prompt prefix from L93 is added"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CARBayesST.Rnw"
+line = 891
+comment = "Code line too wide - overflows in typeset document once prompt prefix from L93 is added"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CARBayesST.Rnw"
+line = 899
+comment = "Missing spaces around = (23 times on multiple lines)"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CARBayesST.Rnw"
+line = 928
+comment = 'Should be library("gridExtra")'
+
+[[violations]]
+rule_id = "JSS-STRUCT-002"
+file = "CARBayesST.Rnw"
+line = 955
+comment = '"Acknowledgements" should be spelled "Acknowledgments"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 1
+comment = 'anderson2014 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 32
+comment = 'bernardinelli1995 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 41
+comment = 'besag1991 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 60
+comment = 'bivand2013 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 95
+comment = 'celeux2006 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 113
+comment = 'choiENV11 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 122
+comment = 'coda2006 — R News article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 135
+comment = 'congdon2005 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 162
+comment = 'eddelbuettel2011 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 182
+comment = 'gelman2013 — Chapman & Hall/CRC book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 211
+comment = '''GGally — title "GGally: Extension to 'ggplot2'" has package names "GGally" and "ggplot2" not wrapped in \pkg{}; note also has "R" not wrapped in \proglang{}.'''
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 219
+comment = 'ggplot2 — Springer book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 219
+comment = 'ggplot2 — title "ggplot2: Elegant Graphics for Data Analysis" has package name "ggplot2" not wrapped in \pkg{}.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 228
+comment = 'gtools — title "gtools: Various R Programming Tools" has package name "gtools" not wrapped in \pkg{} and "R" not in \proglang{}; note also has "R" not wrapped.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 246
+comment = 'huang2013 — Bayesian Analysis article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 255
+comment = 'knorrheld2000 — Statistics in Medicine article (Wiley DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 264
+comment = 'leaflet — DOI for the leaflet package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 264
+comment = '"leaflet" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 282
+comment = 'lee2013 — JSS article DOI 10.18637/jss.v055.i13 exists; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 292
+comment = 'lee2015 — Spatial Statistics article (Elsevier DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 302
+comment = 'lee2016 — Annals of Applied Statistics article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 311
+comment = 'lee2018 — title "Spatio-Temporal Areal Unit Modeling in R with Conditional Autoregressive Priors Using the CARBayesST Package" has "R" unwrapped (\proglang{R}) and "CARBayesST" unwrapped (\pkg{CARBayesST}).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 323
+comment = 'lee2021 — Statistics and Computing article (Springer DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 333
+comment = 'lee2022 — DOI is recorded but in the wrong field: pages = "https://doi.org/10.1016/j.spasta.2021.100508" includes the DOI as a URL. Should be moved to a proper doi= field.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 367
+comment = 'lunn2009 — Statistics in Medicine article (Wiley DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-002"
+file = "JSS2728.bib"
+line = 385
+comment = 'mass2002 — edition = "Fourth" should be "4th" (JSS HOUSE-002 wants ordinal numerals, not spelled-out).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 385
+comment = 'mass2002 — Springer book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 425
+comment = 'napier2016 — Statistical Methods in Medical Research article (SAGE DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 434
+comment = 'napier2018 — Biostatistics article (Oxford DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 494
+comment = 'rue2009 — JRSS B article (Wiley DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 515
+comment = 'rushworth2014 — Spatial and Spatio-temporal Epidemiology article (Elsevier DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "JSS2728.bib"
+line = 515
+comment = 'rushworth2014 — journal "Spatial and Spatio-temporal Epidemiology" has lowercase "temporal"; should be title-case "Spatio-Temporal".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 524
+comment = 'rushworth2016 — JRSS C article (Wiley DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 541
+comment = 'sf — R Journal article DOI (10.32614/RJ-...) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 541
+comment = 'sf — title "Simple Features for R: Standardized Support for Spatial Vector Data" has "R" unwrapped (\proglang{R}); journal "The R Journal" also has "R" unwrapped.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 550
+comment = 'spam2010 — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 561
+comment = 'spdep — Springer book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 561
+comment = 'spdep — title "Applied spatial data analysis with R, Second edition" has "R" unwrapped (\proglang{R}).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 569
+comment = 'spiegelhalter2002 — JRSS B article (Wiley DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 613
+comment = 'wakefield2007 — Biostatistics article (Oxford DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 622
+comment = 'wall2004 — JSPI article (Elsevier DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 631
+comment = 'watanabe2010 — JMLR article DOI exists on Crossref; missing from the entry.'
+
+# -------------------------------------------------------------------
+# Bib FN sweep (added by review pass): REFS-003 DOI-advisory hits the
+# linter misses on @MISC / @Manual / @Book / older @Article entries
+# (entry-type filter follow-up). Plus a handful of REFS-004 / REFS-006
+# / NAME-002 / BIBTEX-004 entries the linter doesn't reach.
+# -------------------------------------------------------------------
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 10
+comment = 'JSSv063i15 (spTimer) — JSS article DOI 10.18637/jss.v063.i15 exists; bib has only the URL.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 20
+comment = 'JSSv067i01 (lme4) — JSS article DOI 10.18637/jss.v067.i01 exists; bib has only the URL.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 50
+comment = 'besag1999 — Wiley DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 68
+comment = 'bivand2015 — JSS article DOI 10.18637/jss.v063.i18 exists; bib has only the URL.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 79
+comment = 'carbayesdata — R package archive DOI exists on Crossref / Zenodo; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 87
+comment = 'cascsim — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 87
+comment = 'Title "cascsim: Casualty Actuarial Society Individual Claim Simulator" — package name "cascsim" should be wrapped \pkg{cascsim}; "R" in note is unwrapped (\proglang{R}).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 104
+comment = 'charras2012 — Biostatistics article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 143
+comment = 'dplyr2015 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 151
+comment = 'JSSv027i02 (plm) — JSS article DOI 10.18637/jss.v027.i02 exists; bib has only the URL.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 172
+comment = 'JSSv063i13 (spBayes) — JSS article DOI 10.18637/jss.v063.i13 exists; bib has only the URL.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 191
+comment = 'gerber2015 — JSS article DOI 10.18637/jss.v063.c01 exists; bib has only the URL.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 237
+comment = 'haining2010 — DOI is recorded but in the wrong field: pages = "123-131, DOI:10.1016/j.sste.2010.03.006" includes the DOI inline. Should be moved to a proper doi= field.'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "JSS2728.bib"
+line = 237
+comment = 'haining2010 has 7 authors (Haining, Li, Maheswaran, Blangiardo, Law, Best, Richardson) — BIBTEX-004 requires \shortcites or the shortnames class option for >=6 authors.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 273
+comment = 'lee2009 — Biostatistics article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 345
+comment = 'leroux2000 — DOI exists but in the wrong field: url = "http://dx.doi.org/10.1007/978-1-4612-1284-3_4" is the DOI URL. Should be moved to a proper doi= field.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 357
+comment = 'li2012 — Biostatistics article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 376
+comment = 'maptools2015 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 395
+comment = 'matrixcalc2012 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 403
+comment = 'millo2012 (splm) — JSS article DOI 10.18637/jss.v047.i01 exists; bib has only the URL.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 415
+comment = 'moran1950 — Biometrika DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 444
+comment = 'paul2016 — entry is malformed: the title field contains the URL "http://CRAN.R-project.org/package=surveillance"; this is also a missing-DOI case for the surveillance package.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 450
+comment = 'pinheiro2015 (nlme) — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 458
+comment = 'R — the R Manual has a DOI on Zenodo (typically 10.5281/zenodo.<id>); missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 476
+comment = 'robert2010 — Springer book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "JSS2728.bib"
+line = 476
+comment = 'robert2010 publisher = "Springer" — JSS canonical form is "Springer-Verlag" (matches the convention applied to bivand2013, leroux2000 etc. in this same bib).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 485
+comment = 'roberts1998 — JRSS B article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "JSS2728.bib"
+line = 485
+comment = 'roberts1998 — title "Optimal scaling of discrete approximations to the Langevin diffusions" is in sentence case; JSS wants title case ("Optimal Scaling of Discrete Approximations to the Langevin Diffusions").'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 504
+comment = 'GMRFbook (Rue & Held) — Chapman & Hall book; DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 533
+comment = 'schabenberger2009 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 578
+comment = 'tanner1987 — JASA article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 587
+comment = 'truncnorm2014 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "JSS2728.bib"
+line = 587
+comment = 'truncnorm2014 — title "Truncated normal distribution" (after the package-name colon) is in sentence case; JSS wants title case ("Truncated Normal Distribution").'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 595
+comment = 'truncdist2012 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 603
+comment = 'ugarte2004 — Biometrical Journal DOI exists on Crossref; missing from the entry.'
