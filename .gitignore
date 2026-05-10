@@ -182,6 +182,7 @@ eval/recall-corpus/**/*.tex
 eval/recall-corpus/**/*.ltx
 eval/recall-corpus/**/*.bib
 eval/recall-corpus/**/*.cls
+eval/recall-corpus/**/*.sty
 eval/recall-corpus/**/*.pdf
 eval/recall-corpus/**/.DS_Store
 .claude/settings.local.json

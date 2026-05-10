@@ -28,6 +28,17 @@ _INPUT_RE = re.compile(
     r"\\(?:input|include|subfile|bibliography)\s*\{\s*([^}]+?)\s*\}"
 )
 
+# Match `\usepackage[opts]{name}` and `\documentclass[opts]{name}`. Used to
+# pull in custom .sty / .cls files that ship next to the manuscript (e.g.
+# robustlmm's rlmer.sty, defining macros like \Rp). The scaffolder copies
+# them for self-containment so a reviewer can grep them locally; they do
+# NOT participate in the lint surface (the recall CLI's file filter
+# excludes .sty / .cls — the linter has no parser for style files and
+# treats jss.cls as the only authority).
+_USEPACKAGE_RE = re.compile(
+    r"\\(?:usepackage|documentclass)\s*(?:\[[^\]]*\])?\s*\{\s*([^}]+?)\s*\}"
+)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES = REPO_ROOT / "examples"
 MANIFEST = REPO_ROOT / "eval" / "corpus-manifest.csv"
@@ -69,6 +80,12 @@ def _resolve_input_targets(
 
     LaTeX accepts both ``\\input{foo}`` and ``\\input{foo.tex}``; we try
     the bare path first then ``.tex`` / ``.cls`` / ``.bib`` extensions.
+    Also picks up locally-shipped ``\\usepackage{name}`` / ``\\documentclass{name}``
+    targets when a matching ``.sty`` / ``.cls`` sits next to the
+    manuscript (e.g. robustlmm's rlmer.sty). Such files are reference
+    material — they don't participate in the lint surface but make the
+    paper directory self-contained.
+
     Targets we cannot resolve are skipped silently — most are figure /
     listing files outside the lint surface.
     """
@@ -79,6 +96,7 @@ def _resolve_input_targets(
         text = manuscript.read_text(errors="ignore")
     except OSError:
         return out
+    # \input / \include / \subfile / \bibliography
     for m in _INPUT_RE.finditer(text):
         # \bibliography{a,b} → split.
         for raw in m.group(1).split(","):
@@ -101,6 +119,20 @@ def _resolve_input_targets(
                                 )
                             )
                     break
+    # \usepackage{name} / \documentclass{name} — only pick up when a
+    # local sibling file exists. Skip TeX-distribution-supplied packages
+    # silently (we don't want to copy whatever happens to be installed
+    # on the scaffolder's machine).
+    for m in _USEPACKAGE_RE.finditer(text):
+        for raw in m.group(1).split(","):
+            target = raw.strip()
+            if not target:
+                continue
+            ext = ".cls" if m.group(0).startswith("\\documentclass") else ".sty"
+            candidate = (manuscript.parent / f"{target}{ext}").resolve()
+            if candidate.exists() and candidate.is_file() and candidate not in _seen:
+                _seen.add(candidate)
+                out.append(candidate)
     return out
 
 
