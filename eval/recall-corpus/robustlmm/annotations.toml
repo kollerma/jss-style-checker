@@ -4,37 +4,414 @@
 # record every JSS-guide violation you spot. Identity tuple is
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
-#
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 37 violations across 11 rules.
-# Rules fired: JSS-BIBTEX-004, JSS-CAP-002, JSS-CAP-003, JSS-HOUSE-002, JSS-MARKUP-002, JSS-NAME-002, JSS-REFS-003, JSS-REFS-004, JSS-REFS-006, JSS-STRUCT-001, JSS-TYPO-004
-# Manuscript: simulationStudies.Rnw (799 loc)
-# Sibling .bib(s): rlmer.bib, simulationStudies.bib
 
 [meta]
 paper_id = "robustlmm"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
-notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
-"""
+annotator = "Manuel Koller"
+date = "2026-05-10"
+notes = '''
+REFS-003 (DOI advisory) entries are annotated even though they are
+info-severity: every flagged entry has a DOI on crossref.org that
+the bib does not record. Eleven of sixteen REFS-003 hits are
+linter false negatives (the rule only fires on a narrow subset of
+entry types) — see the JSS-REFS-003 entry-type-coverage follow-up
+in roadmap/follow-ups.md.
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "simulationStudies.Rnw"
-# line = 42
-# comment = "<optional rationale>"
+Cross-paper patterns confirmed against pmclust:
 
-# (no violations recorded yet)
+  * JSS-CAP-002 misses every \section[short]{long} form (9 instances
+    in this paper alone).
+  * JSS-REFS-004 misses cases where a package name appears in note=
+    rather than title=, and where MARKUP-002's package-name lookup
+    would have helped (9 instances).
+  * JSS-MARKUP-002 and JSS-MARKUP-003 do not see inside \texttt{...}
+    (line 591, both rules on one line — \texttt{MASS} should be
+    \pkg{MASS} and \texttt{hubers} should be \code{hubers}).
+
+Linter false positives skipped (filed as roadmap follow-ups):
+
+  * JSS-CAP-003 over-eager on technical identifiers in captions
+    (lines 608, 654 — N/N, RSEn, t3/t3 in stats notation).
+  * JSS-REFS-006 _starts_with_package_idiom exemption breaks when
+    the lowercase package name is wrapped in {} (bib lines 18, 94).
+'''
+
+[[violations]]
+rule_id = "JSS-CAP-004"
+file = "simulationStudies.Rnw"
+line = 27
+comment = 'Keywords not in sentence case, "robust" should be capitalised'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "simulationStudies.Rnw"
+line = 68
+comment = '''
+"\pkg{robustlmm}" is not followed by citation.
+This is not the vignette describing the package,
+but another vignette in the same package.
+Such vignettes should cite the package / the package's JSS (or similar) paper.
+The citation comes only much later (in Section 4) - the rule is to cite the
+first mention of a package.
+'''
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 290
+comment = 'Should be "List of functions from other packages"'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 321
+comment = 'Should be "Sensitivity curves"'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 358
+comment = '\caption{...} appears immediately after \begin{figure} + \centering, before \includegraphics content. Caption should follow the chart, not precede it. (Pattern recurs at lines 425, 500, 558, 608, 626, 635, 654, 672, 681, 728, 743, 774, 783.)'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 379
+comment = 'Should be "Consistency and efficiency"'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 381
+comment = 'Should be "Diagonal case"'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 394
+comment = '\caption{...} appears immediately after \begin{table} + \centering, before \begin{tabular} content. Caption should follow the table body, not precede it.'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 425
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 449
+comment = 'Should be "Block diagonal case"'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "simulationStudies.Rnw"
+line = 457
+comment = 'Should have used shortnames option or \shortcites'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 500
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 558
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "simulationStudies.Rnw"
+line = 591
+comment = 'MASS is wrapped in \texttt but should be in \pkg'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "simulationStudies.Rnw"
+line = 591
+comment = '\texttt{hubers} should be \code{hubers}'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 608
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 626
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 635
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 654
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 672
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 681
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 702
+comment = 'Should be "Robustness and empirical test coverage"'
+
+[[violations]]
+rule_id = "JSS-STRUCT-001"
+file = "simulationStudies.Rnw"
+line = 702
+comment = "Last section is not conclusions or discussion"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 704
+comment = 'Should be "Diagonal case"'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 728
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 743
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 752
+comment = 'Should be "Block diagonal case"'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 774
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
+line = 783
+comment = '\caption{...} before \includegraphics content (same pattern as L358).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "simulationStudies.Rnw"
+line = 791
+comment = 'Should be "Session info"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 9
+comment = "koller2022rse - DOI exists on Crossref but is missing from the entry."
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 18
+comment = 'robustlmm — DOI for the robustlmm package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 18
+comment = '"robustlmm" is an R package, should be wrapped with "\pkg{}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 29
+comment = 'ggplot2 - DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 29
+comment = '"ggplot2" is an R package, should be wrapped with "\pkg{}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 38
+comment = 'R — DOI exists on Crossref for the R Manual; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 38
+comment = '"R" is just plain and not wrapped several times'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 66
+comment = '"heavy" is an R package, should be wrapped with "\pkg{}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 74
+comment = 'lqmm — DOI for the lqmm package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 74
+comment = '"lqmm" is an R package, should be wrapped with "\pkg{}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 85
+comment = 'rlme — DOI for the rlme package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 85
+comment = '"rlme" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 94
+comment = 'robustvarComp — DOI for the robustvarComp package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 94
+comment = '"robustvarComp" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-HOUSE-002"
+file = "simulationStudies.bib"
+line = 102
+comment = '"fourth edition" should be "4th edition"'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "simulationStudies.bib"
+line = 102
+comment = 'MASS - published should be "Springer Verlag", not just "Springer"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 102
+comment = 'MASS — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 113
+comment = 'lemon — DOI for the lemon package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 113
+comment = '"lemon" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 121
+comment = 'RColorBrewer — DOI for the RColorBrewer package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 121
+comment = '"RColorBrewer" is an R package, should be wrapped with "\pkg{}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 129
+comment = 'skewt — DOI for the skewt package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 129
+comment = '"skewt" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 137
+comment = 'fs — DOI for the fs package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 137
+comment = '"fs" is an R package, should be wrapped with "\pkg{}", "libuv" should also be wrapped in "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 145
+comment = 'dplyr — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 145
+comment = '"dplyr" is an R package, should be wrapped with "\pkg{}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 153
+comment = 'reshape — DOI exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 153
+comment = '"reshape" is an R package, should be wrapped with "\pkg{}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 164
+comment = 'ggh4x — DOI for the ggh4x package archive exists on Crossref but is missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "simulationStudies.bib"
+line = 164
+comment = '"ggh4x" is an R package, should be wrapped with "\pkg{}", "ggplot2" should also be wrapped in "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 172
+comment = 'belenky03sleepstudy — DOI exists on Crossref; missing from the entry.'
+
