@@ -359,6 +359,98 @@ corpus carrier so the change can be test-driven from real text.
       from the printed bibliography.
       **Severity**: existing rule severity; behaviour fix only.
 
+- [ ] **`JSS-CAP-002` should walk the optional `[short]` arg of
+      `\section{...}` / `\subsection{...}` / `\subsubsection{...}`**
+      (`src/texlint/journals/jss/rules/capitalization.py`). The rule
+      currently only inspects the mandatory `{long}` arg, so titles
+      written as `\subsection[Quick Start]{Quick Start}` go unflagged
+      even when the long form is title-style instead of sentence-style.
+      **Carriers**: pmclust `01-introduction.tex:38` (`System
+      Requirement`), `:67` (`Quick Start`); robustlmm
+      `simulationStudies.Rnw:290, 321, 379, 381, 449, 702, 704, 752,
+      791` — 9 instances in a single paper. Both papers exhibit
+      the same pattern.
+      **Fix**: when the macro carries a `[<short>]` arg, lint *both*
+      the short and long form (each is independently visible in the
+      ToC vs body and either can violate sentence-style).
+      **Severity**: existing CAP-002 severity (warning).
+
+- [ ] **`JSS-MARKUP-002` / `JSS-MARKUP-003` should also flag known
+      package / function names wrapped in `\texttt{}`**
+      (`src/texlint/journals/jss/rules/markup.py`). Both rules
+      currently inspect prose only; bare names wrapped in the wrong
+      macro (`\texttt{MASS}` instead of `\pkg{MASS}`,
+      `\texttt{hubers}` instead of `\code{hubers}`) are invisible.
+      **Carrier**: robustlmm `simulationStudies.Rnw:591` — both
+      defects on a single line. Likely common across the corpus
+      (authors reach for `\texttt{}` because it renders the same).
+      **Fix**: extend the rules to also walk `\texttt{...}` /
+      `\verb|...|` arguments, matching the inner token against the
+      same package-name / R-function lookups already used for prose.
+      **Severity**: existing rule severity (warning each).
+
+- [ ] **`JSS-REFS-006` brace-defeats-`_starts_with_package_idiom`
+      exemption** (`src/texlint/journals/jss/rules/references.py`).
+      The exemption is meant to allow `vegan: Community Ecology
+      Package` style titles where the lowercase word before `:` is
+      the package name. When the package name is wrapped in `{}`
+      to preserve case (`{robustlmm}: An ...`,
+      `{robustvarComp}: Robust ...`), the exemption no longer
+      matches and REFS-006 false-fires.
+      **Carriers**: robustlmm `simulationStudies.bib:18` (robustlmm
+      itself), `:94` (robustvarComp).
+      **Fix**: strip `{...}` wrapping from the leading token before
+      checking the package-idiom exemption.
+      **Severity**: existing rule severity (warning).
+
+- [ ] **`JSS-CAP-003` is over-eager on technical identifiers in
+      captions** (`src/texlint/journals/jss/rules/capitalization.py`).
+      Captions of the form `Convergence simulation study, N/N case,
+      bias, ...` get flagged because tokens like `N/N`, `RSEn`,
+      `lme`, `t3/t3` look like non-sentence-case violations. These
+      are technical identifiers / short variable / package names
+      and shouldn't be lower-cased.
+      **Carriers**: robustlmm `simulationStudies.Rnw:608`, `:654`
+      (and likely many other technical-stats papers).
+      **Fix**: extend the sentence-style check to skip tokens that
+      already appear inside `\code{}` / `\pkg{}` / `\proglang{}` /
+      `\texttt{}` macros within the same caption, AND tokens that
+      contain mixed case + a digit (e.g. `t3`, `RSEn`) or a `/`
+      separator (e.g. `N/N`).
+      **Severity**: existing rule severity (warning).
+
+- [ ] **`JSS-REFS-003` (DOI advisory) entry-type coverage is too
+      narrow** (`src/texlint/journals/jss/rules/references.py`).
+      The rule currently fires on a small subset of entries — both
+      pmclust (6/15 fire; 9 missed) and robustlmm (5/16 fire; 11
+      missed) showed real DOI-missing entries that didn't trigger.
+      Likely scoped to `@ARTICLE` with a `journal` field set,
+      ignoring `@MISC`, `@Manual`, `@incollection`, `@book` etc.
+      that legitimately have DOIs.
+      **Carriers**: pmclust `pmclust.bib` (Chen2012pmclustpackage,
+      Chen2012pbdMPIpackage, Schmidt2013pbdDEMOpackage, Rcore,
+      Yu2010 etc.); robustlmm `simulationStudies.bib` (most
+      package-archive @Manual / @MISC entries).
+      **Fix**: drop the entry-type filter — *any* entry whose
+      published form has a DOI on Crossref should be flagged when
+      `doi` is missing.
+      **Severity**: info (advisory) — unchanged.
+
+- [ ] **`JSS-REFS-004` (proglang / pkg / code markup in bib titles)
+      scope is incomplete** (`src/texlint/journals/jss/rules/references.py`).
+      The rule fires on a fraction of real cases: pmclust caught
+      3 of 11 cases the annotator marked; robustlmm caught 5 of 14.
+      Common miss pattern: `note = {R package version 0.1-5}` and
+      similar where `R` should be `\proglang{R}` or the package
+      name in `title=` should be `\pkg{name}`.
+      **Carriers**: pmclust `pmclust.bib:1, 77, 104, 112, 127,
+      134, 141, 177`; robustlmm `simulationStudies.bib:18, 29,
+      66, 74, 85, 94, 113, 121, 129`.
+      **Fix**: extend the rule to also inspect the `note=` field
+      and to recognise the canonical R-package-name lookup that
+      MARKUP-002 already maintains.
+      **Severity**: existing rule severity (warning).
+
 ## Tracking
 
 This file is hand-edited. When a follow-up lands, check its
