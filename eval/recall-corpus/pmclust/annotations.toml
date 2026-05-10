@@ -243,7 +243,7 @@ comment = 'Chen2011 — DOI exists on Crossref; missing from the entry.'
 rule_id = "JSS-NAME-002"
 file = "pmclust.bib"
 line = 30
-comment = 'Should drop "Series" in title and in long_title'
+comment = 'Should drop "Series" in journal and in long_journal (JSS canonical form: "Journal of the Royal Statistical Society B")'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -262,12 +262,6 @@ rule_id = "JSS-REFS-006"
 file = "pmclust.bib"
 line = 41
 comment = 'Fisher1936 — title in sentence case ("The use of multiple measurements in taxonomic problems"); JSS wants title case ("The Use of Multiple Measurements in Taxonomic Problems").'
-
-[[violations]]
-rule_id = "JSS-NAME-002"
-file = "pmclust.bib"
-line = 41
-comment = 'Should be "The Annals of Eugenics" not "Annals of Eugenics"'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -321,7 +315,7 @@ comment = 'Meng1997 — DOI exists on Crossref; missing from the entry.'
 rule_id = "JSS-NAME-002"
 file = "pmclust.bib"
 line = 87
-comment = 'Should drop "Series" in title and in long_title'
+comment = 'Should drop "Series" in journal and in long_journal (JSS canonical form: "Journal of the Royal Statistical Society B")'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
