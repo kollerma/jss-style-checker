@@ -474,6 +474,45 @@ corpus carrier so the change can be test-driven from real text.
       MARKUP-002 already maintains.
       **Severity**: existing rule severity (warning).
 
+- [ ] **JSS-PRE-010 — Sweave/knitr preamble sets the JSS-standard
+      ``options()`` in an early hidden chunk**. The JSS author
+      template (`docs/jss-template/article.Rnw`) prescribes:
+
+      ```r
+      <<preliminaries, echo=FALSE, results=hide>>=
+      options(prompt = "R> ", continue = "+  ",
+              width = 70, useFancyQuotes = FALSE)
+      @
+      ```
+
+      Each option has a concrete house-style consequence:
+      `prompt`/`continue` produce the canonical "R>"/"+ " prompts
+      in Sinput blocks; `width = 70` (or any value ≤77) keeps
+      rendered Soutput inside the JSS text width — directly
+      affecting JSS-WIDTH-001 recall on the rendered .tex (without
+      it, R defaults to 80 and routinely overflows);
+      `useFancyQuotes = FALSE` suppresses curly Unicode quotes in
+      Soutput, which clash with the JSS monospace font and break
+      copy-paste of code.
+
+      **Carriers** (5 of 10 fully missing, 2 partial across the v1
+      recall corpus): clifford `clifford.Rnw`, cusp `Cusp-JSS.Rnw`,
+      mdsOpt `mdsOpt.ltx`, pmclust `pmclust-guide.Rnw`, rstpm2
+      `multistate.Rnw` set neither; CARBayesST sets prompt but not
+      width; robustlmm sets width but not prompt.
+
+      **Detection**: scan `.Rnw`/`.Rmd` for an early chunk (before
+      `\begin{document}` or within the first ~3 chunks of the
+      manuscript body) that calls `options(...)` with all four
+      keys above set to JSS values (`prompt="R> "`, `continue="+  "`,
+      `width <= 77`, `useFancyQuotes = FALSE`). Fire one violation
+      per missing key, or a single composite violation listing the
+      keys that are absent.
+
+      **Severity**: warning.
+      **Surfaces**: `.Rnw`, `.Rmd` only — non-Sweave manuscripts
+      can't run R `options()` and shouldn't be flagged.
+
 ## Tracking
 
 This file is hand-edited. When a follow-up lands, check its
