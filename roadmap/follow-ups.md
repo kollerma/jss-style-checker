@@ -513,6 +513,29 @@ corpus carrier so the change can be test-driven from real text.
       **Surfaces**: `.Rnw`, `.Rmd` only — non-Sweave manuscripts
       can't run R `options()` and shouldn't be flagged.
 
+- [ ] **`JSS-MARKUP-001`'s recognised-language set is R-centric**
+      (`src/texlint/journals/jss/rules/markup.py`). MARKUP-001
+      currently recognises a narrow set of programming languages
+      (`R`, `C`, `C++`, a handful of others) and only flags those
+      when they appear unwrapped in prose. Other languages and
+      mathematical-software systems that JSS authors mention
+      frequently — `SageMath`, `Python`, `Mathematica`, `Maple`,
+      `MATLAB`, `Julia`, `Stata`, `SPSS`, `SAS`, `Fortran`, `Lisp`,
+      `Haskell` — slip through unflagged.
+      **Carriers**: clifford `clifford.Rnw:315` (`SageMath`
+      unwrapped), `:321` (`Python` unwrapped in the same line as
+      `SymPy`; `SymPy` is the package counterpart and belongs to
+      MARKUP-002's adjacent recognition set).
+      **Fix**: extend the language-name set with the standard
+      mathematical-software / programming-language list. Pair with
+      MARKUP-002's package-name set growth where the boundary
+      crosses (`SymPy` is a Python package — MARKUP-002, not
+      MARKUP-001; `SageMath` is a full system — MARKUP-001).
+      Full software systems (SageMath, Mathematica, Maple) take
+      `\proglang{}`; packages hosted inside another language
+      (`SymPy` inside Python) take `\pkg{}`.
+      **Severity**: existing rule severity (warning).
+
 - [ ] **JSS-CITE-005 — every `\cite*{key}` resolves to a `@type{key,...}`
       in the document's `\bibliography{}`-referenced files**. LaTeX
       itself reports an "undefined citation" warning at typeset
