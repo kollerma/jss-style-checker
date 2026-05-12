@@ -513,6 +513,45 @@ corpus carrier so the change can be test-driven from real text.
       **Surfaces**: `.Rnw`, `.Rmd` only — non-Sweave manuscripts
       can't run R `options()` and shouldn't be flagged.
 
+- [ ] **JSS-CITE-005 — every `\cite*{key}` resolves to a `@type{key,...}`
+      in the document's `\bibliography{}`-referenced files**. LaTeX
+      itself reports an "undefined citation" warning at typeset
+      time and renders the unresolved citation as `?`, but the
+      defect frequently slips through author proofreading (rendered
+      `?` is easy to miss in a busy paragraph) and lands in submitted
+      manuscripts.
+      **Carrier**: clifford `clifford.Rnw:406` —
+      `\cite{chisholm2012}`; the bib has `chisolm2012` (missing
+      second 'h'). One typo, but a clear shape: cite key not in
+      the union of bib-entry keys collected from every `.bib` in
+      the same `ParsedDocument`.
+      **Detection**: build the bib-key set per `ParsedDocument`
+      (same helper as the "skip uncited entries" follow-up needs);
+      walk every `\cite` / `\citet` / `\citep` / `\citealt` /
+      `\citealp` / `\citeauthor` / `\citeyear` / `\nocite` /
+      `\shortcites` argument; split on commas; for each key not
+      in the set, fire one violation at the cite-macro line.
+      **Severity**: error — the rendered manuscript visibly breaks.
+      **Authority**: §3.2 Citations + general LaTeX hygiene.
+
+- [ ] **JSS-XREF-005 — every `\ref{X}` / `\eqref{X}` / `\pageref{X}`
+      resolves to a `\label{X}` somewhere in the document**. Same
+      class of defect as JSS-CITE-005 but on the cross-reference
+      side: LaTeX renders an unresolved reference as `??`, which
+      is also easy to miss. JSS-XREF-001 / JSS-XREF-004 currently
+      only check that figures / tables / equations carry labels
+      (label *presence*); they don't check the inverse direction
+      (reference *resolution*).
+      **Carrier**: not yet observed in the v1 recall corpus, but
+      the check is symmetric with JSS-CITE-005 and the same
+      ParsedDocument scan trivially produces it.
+      **Detection**: collect the union of `\label{X}` arguments
+      across all `tex_files`; walk every `\ref`/`\eqref`/`\pageref`/
+      `\autoref`/`\Cref`/`\cref` argument; flag any key not in
+      the label set.
+      **Severity**: error.
+      **Authority**: §4.5 Cross-references + general LaTeX hygiene.
+
 ## Tracking
 
 This file is hand-edited. When a follow-up lands, check its
