@@ -4,37 +4,361 @@
 # record every JSS-guide violation you spot. Identity tuple is
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
-#
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 35 violations across 10 rules.
-# Rules fired: JSS-BIBTEX-002, JSS-CITE-002, JSS-CODE-001, JSS-CODE-003, JSS-MARKUP-001, JSS-REFS-003, JSS-REFS-004, JSS-REFS-006, JSS-WIDTH-001, JSS-XREF-004
-# Manuscript: clifford.Rnw (510 loc)
-# Sibling .bib(s): clifford.bib
 
 [meta]
 paper_id = "clifford"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
+annotator = "Manuel Koller"
+date = "2026-05-11"
 notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
+This paper is not setting the correct output options, so R input is not
+rendered correctly.
+
+Paper cites chisholm2012 which is not a valid key - the key in clifford.bib is
+misspelled chisolm2012.
 """
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "clifford.Rnw"
-# line = 42
-# comment = "<optional rationale>"
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "clifford.Rnw"
+line = 74
+comment = '"R" should be "\proglang{R}"'
 
-# (no violations recorded yet)
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "clifford.Rnw"
+line = 84
+comment = '"Sage" should be "\proglang{Sage}"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "clifford.Rnw"
+line = 86
+comment = '"R-centric" should be "\proglang{R}-centric"'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 97
+comment = 'Eqnarray including a line with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 105
+comment = 'Eqnarray including a line with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 116
+comment = 'Eqnarray including a line with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 131
+comment = 'Equation with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 140
+comment = 'Equation with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 151
+comment = 'Equation with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 216
+comment = 'Equation with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "clifford.Rnw"
+line = 243
+comment = '"R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 245
+comment = 'Missing spaces, should be `(x <- clifford(list(numeric(0), 1, 2, 2:3), 1:4))`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 252
+comment = """
+Missing spaces, should be
+```
+y <- clifford(list(1), 2)
+x - y
+```
+"""
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "clifford.Rnw"
+line = 258
+comment = '"R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 260
+comment = 'Missing spaces, should be `x * x`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 267
+comment = 'Missing spaces, should be `x * x`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 282
+comment = "Missing spaces, should be `(x <- rcliff(d = 7,g = 5, include.fewer = TRUE))`"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 293
+comment = """
+Missing spaces, should be
+```
+e1 * e1
+e2 * e2
+```
+"""
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 304
+comment = """
+Missing spaces, should be
+```
+signature(1, 1)
+e1 * e1
+e2 * e2
+```
+(I omitted the comments that shoudn't be there.)
+"""
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "clifford.Rnw"
+line = 305
+comment = "All three lines in the code block contain comments that should be in surrounding text instead"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 312
+comment = 'Missing space, should be `\code{signature(3, 1)}`'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "clifford.Rnw"
+line = 312
+comment = 'Should be `\code{clifford}` as in the R class'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 316
+comment = """
+Missing spaces, should be
+```
+x <- rcliff(d = 4, g = 3, include.fewer = TRUE)
+y <- rcliff(d = 4, g = 3, include.fewer = TRUE)
+```
+"""
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "clifford.Rnw"
+line = 321
+comment = 'Should `\code{clifford}` as in the R class'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 324
+comment = """
+Missing spaces, should be
+```
+x * y
+signature(3, 1)
+x * y
+```
+(I omitted the comment that shoudn't be there.)
+"""
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "clifford.Rnw"
+line = 326
+comment = "Code blocks shouldn't contain comments"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 338
+comment = """
+Missing spaces, should be
+```
+signature(0, 0)
+```
+(I omitted the comment that shoudn't be there.)
+"""
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "clifford.Rnw"
+line = 339
+comment = "Code blocks shouldn't contain comments"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "clifford.Rnw"
+line = 341
+comment = "Code line is far too wide"
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "clifford.Rnw"
+line = 345
+comment = "stokes package is not cited on first mention - citation only comes much later"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 347
+comment = """
+Missing spaces, should be
+```
+x <- clifford(list(1:3, c(2, 3, 7)), coeffs = 3:4)
+y <- clifford(list(1:3, c(1, 4, 5), c(4, 5, 6)), coeffs = 1:3)
+x %^% y
+```
+"""
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 356
+comment = """
+Missing spaces, should be
+```
+> (x <- as.kform(rbind(1:3, c(2, 3, 7)), 3:4))
+```
+"""
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 364
+comment = """
+Missing spaces, should be
+```
+> (y <- as.kform(rbind(1:3, c(1, 4, 5), 4:6), 1:3))
+```
+"""
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 409
+comment = 'Eqnarray with both lines with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 418
+comment = 'Missing spaces, should be `\code{lefttick(A, B)}`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 418
+comment = 'Missing spaces, should be `\code{righttick(A, B)}`'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 453
+comment = 'Eqnarray with all lines with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "clifford.Rnw"
+line = 486
+comment = """
+Missing spaces, should be
+```
+(x <- clifford(list(1:3, c(1, 5, 7, 8, 10)), c(4, -10)) + 2)
+(y <- clifford(list(c(1, 2, 3, 7), c(1, 5, 6, 8), c(1, 4, 6, 7)), c(4, 1, -3)) - 1)
+```
+"""
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "clifford.bib"
+line = 9
+comment = 'SageMath should be \proglang{SageMath}'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "clifford.bib"
+line = 17
+comment = 'SymPy and Python should be \pkg{SymPy} and \proglang{Python}'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "clifford.bib"
+line = 17
+comment = 'Title is in sentence case, should be title case.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "clifford.bib"
+line = 31
+comment = 'snygg2010 — Book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "clifford.bib"
+line = 47
+comment = 'Title is in sentence case, should be title case.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "clifford.bib"
+line = 67
+comment = 'ablamowicz2012 — Arxiv article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "clifford.bib"
+line = 87
+comment = 'dorst2002 — Book chapter DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "clifford.bib"
+line = 87
+comment = 'Title is in sentence case, should be title case.'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-002"
+file = "clifford.bib"
+line = 339
+comment = "hankin2022_freealg appears twice in clifford.bib"
+
