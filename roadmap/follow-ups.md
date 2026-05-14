@@ -559,6 +559,39 @@ corpus carrier so the change can be test-driven from real text.
       (`SymPy` inside Python) take `\pkg{}`.
       **Severity**: existing rule severity (warning).
 
+- [ ] **`JSS-MARKUP-004` should exempt starred section forms**
+      (`src/texlint/journals/jss/rules/markup.py`). The rule fires
+      on any `\section{...}` / `\subsection{...}` / etc. whose
+      argument contains markup, suggesting an `\section[plain]{markup}`
+      shim. Two problems on starred forms (`\section*`, `\subsection*`,
+      `\subsubsection*`, ...):
+
+      *(a) The fix doesn't apply.* `\section*` and friends do not
+      take an optional `[short]` argument in standard LaTeX. The
+      author can't follow the rule's suggestion as-is — the correct
+      fix for starred forms is `\texorpdfstring{markup}{plain}`
+      inside the braces, an entirely different mechanism.
+
+      *(b) The defect surface is mostly absent.* Starred forms get
+      no number, no ToC entry, and (under JSS class's default
+      hyperref config) typically no PDF bookmark either. The
+      markup-doesn't-render-in-ToC concern that motivates the rule
+      simply isn't present.
+
+      **Carrier**: cusp `Cusp-JSS.Rnw:325` —
+      `\subsubsection*{Maxwell vs delay convention and $R^{2}$}`.
+      Math markup in a starred subsubsection title, never reaches
+      a ToC or bookmark, so the rule firing is a clean FP.
+
+      **Fix**: skip envs whose macro name ends in `*` (regex
+      `\\(section|subsection|subsubsection|paragraph|subparagraph)\*\b`).
+      Optionally, when fixing this, also emit a different
+      suggestion for the unstarred case when the markup is *only*
+      math mode (math typesets in the ToC, so the practical
+      impact is lower than for `\proglang`/`\pkg`/`\code` — but
+      the PDF-bookmark hyperref-warning concern stands).
+      **Severity**: existing rule severity (warning).
+
 - [ ] **JSS-CITE-006 — `\citep{}` / `\cite{}` where `\citet{}` is
       grammatically required**. When the citation is the
       grammatical agent of a verb ("proposed by X", "introduced by
