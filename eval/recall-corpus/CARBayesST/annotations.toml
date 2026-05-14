@@ -893,3 +893,134 @@ rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
 line = 404
 comment = '\label{leroux} exists but is never \ref-ed from the text.'
+
+# -------------------------------------------------------------------
+# OPER-003 sweep (post-annotation): display equations with blank
+# lines immediately before or after the env (rule fires unless the
+# eq body ends with a period, which closes a sentence). Linter does
+# not fire on most of these on .Rnw input — appears to need the
+# rendered .tex / .ltx surface for the rule to see paragraph breaks.
+# Each entry below is a CANDIDATE — please review against the
+# rendered PDF and delete any that are intentional paragraph breaks
+# (eq is end-of-section, next text is a new paragraph, etc.).
+# -------------------------------------------------------------------
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 118
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 167
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 181
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 198
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 218
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 230
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 242
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 252
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 266
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 278
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 288
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 295
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 306
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 358
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 381
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 387
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 402
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 411
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 422
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 873
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
