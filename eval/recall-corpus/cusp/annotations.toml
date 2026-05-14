@@ -4,37 +4,443 @@
 # record every JSS-guide violation you spot. Identity tuple is
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
-#
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 39 violations across 9 rules.
-# Rules fired: JSS-CODE-003, JSS-MARKUP-001, JSS-MARKUP-004, JSS-NAME-002, JSS-OPER-004, JSS-REFS-003, JSS-STRUCT-006, JSS-XREF-002, JSS-XREF-004
-# Manuscript: Cusp-JSS.Rnw (627 loc)
-# Sibling .bib(s): cusp_papers_jss.bib
 
 [meta]
 paper_id = "cusp"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
+annotator = "Manuel Koller"
+date = "2026-05-14"
 notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
 """
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "Cusp-JSS.Rnw"
-# line = 42
-# comment = "<optional rationale>"
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "Cusp-JSS.Rnw"
+line = 105
+comment = '\label{eq:cusppotential} exists but is never \ref-ed from the text.'
 
-# (no violations recorded yet)
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 134
+comment = '"equation \eqref{eq:dynsys}" should be "Equation~\ref{eq:dynsys}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 143
+comment = '"equation \eqref{eq:dynsys}" should be "Equation~\ref{eq:dynsys}"'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "Cusp-JSS.Rnw"
+line = 162
+comment = '\label{eq:alpharegress} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 168
+comment = '"equation \eqref{eq:cuspdens}" should be "Equation~\ref{eq:cuspdens}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 172
+comment = '"equation \eqref{eq:stateregression}" should be "Equation~\ref{eq:stateregression}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "Cusp-JSS.Rnw"
+line = 200
+comment = '''
+Missing spaces around operators:
+`\code{fit <- cusp(y\tilde z, alpha\tilde x1+x2, beta\tilde x1+x2, data)}`
+should be
+`\code{fit <- cusp(y \tilde\ z, alpha \tilde\ x1 + x2, beta \tilde\ x1 + x2, data)}`
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "Cusp-JSS.Rnw"
+line = 251
+comment = '''
+Missing spaces around operators:
+`\code{y <- rcusp(n=100, alpha=-1/2, beta=2)}`
+should be
+`\code{y <- rcusp(n = 100, alpha = -1/2, beta = 2)}`
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "Cusp-JSS.Rnw"
+line = 256
+comment = '''
+Missing spaces around operators:
+`\code{dcusp(y=1.0, alpha=-1/2, beta=2)}`
+should be
+`\code{dcusp(y = 1.0, alpha = -1/2, beta = 2)}`
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "Cusp-JSS.Rnw"
+line = 260
+comment = '''
+Missing spaces around operators:
+`\code{logist=TRUE}`
+should be
+`\code{logist = TRUE}`
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "Cusp-JSS.Rnw"
+line = 263
+comment = '''
+Missing spaces around operators:
+`\code{fit <- cusp.logist(y\tilde z, alpha\tilde x1+x2, beta\tilde x1+x2, data)}`
+should be
+`\code{fit <- cusp.logist(y \tilde\ z, alpha \tilde\ x1 + x2, beta \tilde\ x1 + x2, data)}`
+'''
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 286
+comment = '"\eqref{eq:cuspdens}" could be replaced by "Equation~\ref{eq:cuspdens}"'
+
+[[violations]]
+rule_id = "JSS-OPER-002"
+file = "Cusp-JSS.Rnw"
+line = 291
+comment = '''
+Using ' to denote tranpose instead of \top in several places.
+'''
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 296
+comment = '"equation \eqref{eq:cuspdens}" should be "Equation~\ref{eq:cuspdens}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 296
+comment = '"\eqref{eq:likelihood}" could be writen as "Equation~\ref{eq:likelihood}"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "Cusp-JSS.Rnw"
+line = 298
+comment = 'C should be written as \proglang{C}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "Cusp-JSS.Rnw"
+line = 330
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "Cusp-JSS.Rnw"
+line = 331
+comment = '\mathrm{Var} should be replaced by \VAR'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 343
+comment = '"equation \eqref{eq:dependents}" should be "Equation~\ref{eq:dependents}", first occurrence on line'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 343
+comment = '"equation \eqref{eq:dependents}" should be "Equation~\ref{eq:dependents}", second occurrence on line'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "Cusp-JSS.Rnw"
+line = 347
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "Cusp-JSS.Rnw"
+line = 371
+comment = '''
+Missing spaces around operators:
+`+    data = attitudes, start=attitudeStartingValues)`
+should be
+`+    data = attitudes, start = attitudeStartingValues)`
+'''
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 457
+comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}"'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "Cusp-JSS.Rnw"
+line = 371
+comment = '''
+Missing spaces around operators:
+`\code{y\tilde z1 + z2 - 1}, \code{alpha\tilde x1 + x2 + x3 - 1},$\;$\code{beta\tilde y1 + y2 + y3 + y4 - 1}. {\em Model II:} \code{y\tilde z1 + z2}, \code{alpha, beta\tilde x1 + x2 + x3 + y1 + y2 + y3 + y4}`
+should be
+`\code{y \tilde\ z1 + z2 - 1}, \code{alpha \tilde\ x1 + x2 + x3 - 1},$\;$\code{beta \tilde\ y1 + y2 + y3 + y4 - 1}. {\em Model II:} \code{y \tilde\ z1 + z2}, \code{alpha, beta \tilde\ x1 + x2 + x3 + y1 + y2 + y3 + y4}`
+'''
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 514
+comment = '"equation \eqref{eq:olivaeq}" should be "Equation~\ref{eq:olivaeq}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 590
+comment = '"equation \eqref{eq:likelihood}" should be "Equation~\ref{eq:likelihood}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 590
+comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}"'
+
+[[violations]]
+rule_id = "JSS-STRUCT-006"
+file = "Cusp-JSS.Rnw"
+line = 608
+comment = 'Missing \clearpage or \newpage before appendix'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 611
+comment = '"equation \eqref{eq:dynsys}" should be "Equation~\ref{eq:dynsys}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 614
+comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 616
+comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}", first occurrence on line'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 616
+comment = '"equation \eqref{eq:stateregression}" should be "Equation~\ref{eq:stateregression}", first occurrence on line'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 616
+comment = '"equation \eqref{eq:stateregression}" should be "Equation~\ref{eq:stateregression}", second occurrence on line'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 616
+comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}", second occurrence on line'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 616
+comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}", third occurrence on line'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 618
+comment = '"equation \eqref{eq:dynsys}" should be "Equation~\ref{eq:dynsys}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 618
+comment = '"\eqref{eq:cuspdens}" could be writen as "Equation~\ref{eq:cuspdens}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 59
+comment = 'Stewart:1983p4517 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 69
+comment = 'Guastello:1988p4414 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 79
+comment = 'Rosser:2007p4680 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 102
+comment = 'Alexander:1992p4429 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 113
+comment = 'Burnham:2004p2952 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 122
+comment = 'Guastello:1992p4418 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "cusp_papers_jss.bib"
+line = 187
+comment = "Publisher Wiley should be John Wiley & Sons"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 200
+comment = 'Cobb:1980p4593 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 210
+comment = 'vanderMaas:1992p4404 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 220
+comment = 'Oliva:1987p4496 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 247
+comment = 'Guastello:1982p4420 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 300
+comment = 'Hartelman:1998p4506 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 310
+comment = 'vanderMaas:2003p626 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 344
+comment = 'Furstenau:2006p4789 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 363
+comment = 'Lange:2000p4495 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 381
+comment = 'Rmanual — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 413
+comment = 'Cobb:1983p4510 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 424
+comment = 'Cobb:1985p358 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "cusp_papers_jss.bib"
+line = 445
+comment = "Publisher Wiley should be John Wiley & Sons"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 445
+comment = 'Seber:1989p4505 — Book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 453
+comment = 'Cobb:1981p4147 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 462
+comment = 'Wagenmakers:2005p202 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 489
+comment = 'Sussmann:1978p4972 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 510
+comment = 'Taeed:1988p4608 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 521
+comment = 'Cobb:1978p — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 541
+comment = 'Zeeman:1973p4577 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 541
+comment = 'Zhu:1997p4854 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 599
+comment = 'Zeeman1974 — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
+line = 620
+comment = 'GrasmanEtAl2009 — Article DOI exists on Crossref; missing from the entry.'
