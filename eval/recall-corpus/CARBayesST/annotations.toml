@@ -843,3 +843,53 @@ rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
 line = 603
 comment = 'ugarte2004 — Biometrical Journal DOI exists on Crossref; missing from the entry.'
+
+# -------------------------------------------------------------------
+# XREF-004 sweep (post-annotation): equations with labels that exist
+# but are never referenced from the text. Distinct from the missing-
+# label cases at L387/411/422 already recorded — same rule, different
+# sub-defect ("present-but-unused" vs. "missing"). Linter does not
+# fire on these (rule scope appears narrower than its description).
+# -------------------------------------------------------------------
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 232
+comment = '\label{carar2} exists in eqnarray but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 244
+comment = '\label{Lerouxjoint} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 268
+comment = '\label{caradaptive2} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 290
+comment = '\label{carcluster2} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 297
+comment = '\label{carcluster3} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 360
+comment = '\label{equation likelihood2} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 404
+comment = '\label{leroux} exists but is never \ref-ed from the text.'
