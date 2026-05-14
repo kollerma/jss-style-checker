@@ -559,6 +559,39 @@ corpus carrier so the change can be test-driven from real text.
       (`SymPy` inside Python) take `\pkg{}`.
       **Severity**: existing rule severity (warning).
 
+- [ ] **JSS-CITE-006 — `\citep{}` / `\cite{}` where `\citet{}` is
+      grammatically required**. When the citation is the
+      grammatical agent of a verb ("proposed by X", "introduced by
+      X", "the method of X"), JSS wants `\citet{}` rendering as
+      `X (year)`. Using `\citep{}` (parenthetical) instead
+      produces `proposed by (X year)` — grammatically broken
+      English. Common JSS-reviewer flag (e.g. jss5342 R4-r3
+      mentioned this pattern in passing).
+      **Carriers**: cusp `Cusp-JSS.Rnw:86`
+      (`method of \cite{Cobb:1983p4510}` → "method of (Cobb
+      1983)"), `:174` (`proposed by \cite{Oliva:1987p4496}` →
+      "proposed by (Oliva et al. 1987)"). Likely more across the
+      corpus; the heuristic below should surface them.
+      **Detection (high-precision heuristic)**: flag `\citep{}` /
+      `\cite{}` when the immediately-preceding text (within
+      ~30 chars, skipping whitespace and inline macros) ends in
+      one of an agent-marking trigger set: `by`, `from`, `of`,
+      `according to`, `following`, `cf.`, `see also`, `as in`,
+      `in`, `~`, plus the verbs `proposed`, `introduced`,
+      `studied`, `extended`, `presented`, `developed`. Skip cases
+      where the citation is at sentence start or follows a period.
+      **Complication — preamble cite redefinitions**: papers
+      sometimes redefine `\cite` to a different default
+      (e.g. cusp's preamble has `\renewcommand{\cite}[1]{\citep{#1}}`
+      at L21, making bare `\cite{}` render parenthetically too).
+      A simple way: treat `\cite{}` and `\citep{}` *identically*
+      for this rule, since under stock JSS-class+natbib both
+      render parenthetically anyway; the rule's logic is purely
+      about the agent-marking context, not which exact macro is
+      used.
+      **Severity**: warning.
+      **Authority**: §3.2 Citations + JSS reviewer practice.
+
 - [ ] **JSS-CITE-005 — every `\cite*{key}` resolves to a `@type{key,...}`
       in the document's `\bibliography{}`-referenced files**. LaTeX
       itself reports an "undefined citation" warning at typeset
