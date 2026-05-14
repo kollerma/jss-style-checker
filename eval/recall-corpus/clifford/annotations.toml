@@ -362,3 +362,21 @@ file = "clifford.bib"
 line = 339
 comment = "hankin2022_freealg appears twice in clifford.bib"
 
+
+# -------------------------------------------------------------------
+# XREF-004 sweep (post-annotation): equations with labels that exist
+# but are never referenced from the text. Linter does not fire on
+# these (rule scope appears narrower than its description).
+# -------------------------------------------------------------------
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 195
+comment = '\label{gencliff2} exists in equation env but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 233
+comment = '\label{specwedge} exists in equation env but is never \ref-ed from the text.'
