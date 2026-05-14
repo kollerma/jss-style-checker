@@ -513,6 +513,29 @@ corpus carrier so the change can be test-driven from real text.
       **Surfaces**: `.Rnw`, `.Rmd` only — non-Sweave manuscripts
       can't run R `options()` and shouldn't be flagged.
 
+- [ ] **`JSS-XREF-004` only checks the "carry `\label{}`" half of its
+      description, not the "referenced from the text" half**
+      (`src/texlint/journals/jss/rules/crossrefs.py`). The rule
+      description reads "Numbered equations carry `\label{}` and are
+      referenced from the text", but the implementation appears to
+      fire only on missing labels, not on labels that exist yet are
+      never `\ref`-ed / `\eqref`-ed.
+      **Carriers**: CARBayesST `CARBayesST.Rnw:232` (`\label{carar2}`),
+      `:244` (`Lerouxjoint`), `:268` (`caradaptive2`), `:290`
+      (`carcluster2`), `:297` (`carcluster3`), `:360`
+      (`equation likelihood2`), `:404` (`leroux`); clifford
+      `clifford.Rnw:195` (`gencliff2`), `:233` (`specwedge`). Nine
+      real defects across two papers; linter fires on zero of them.
+      **Fix**: after the existing missing-label check, additionally
+      collect the union of `\label{...}` arguments inside numbered
+      eq envs and the union of `\ref`/`\eqref`/`\pageref`/`\autoref`/
+      `\Cref`/`\cref` arguments anywhere in the document; flag each
+      eq label not in the reference set. Shares the label-and-ref
+      scan infrastructure proposed for `JSS-XREF-005` (full
+      `\ref`-resolution coverage) — implement once, consume in both
+      rules.
+      **Severity**: existing rule severity (info).
+
 - [ ] **`JSS-MARKUP-001`'s recognised-language set is R-centric**
       (`src/texlint/journals/jss/rules/markup.py`). MARKUP-001
       currently recognises a narrow set of programming languages
