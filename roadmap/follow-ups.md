@@ -622,6 +622,46 @@ corpus carrier so the change can be test-driven from real text.
       the PDF-bookmark hyperref-warning concern stands).
       **Severity**: existing rule severity (warning).
 
+- [ ] **`JSS-CITE-003` scope is narrower than its description**
+      (`src/texlint/journals/jss/rules/citations.py:393`). The
+      catalogue description reads "Avoid bracket-in-bracket citation
+      forms like `(\cite{...})`", but the implementation only
+      matches the exact `(\cite{X})` shape (single `\cite` macro,
+      optional whitespace, nothing else between the parens).
+      The JSS style guide's actual scope is broader — any
+      author-year-rendering citation inside parens produces
+      bracket-in-bracket. Real-world shapes the rule misses:
+
+      | shape | renders as |
+      |---|---|
+      | `(\citep{X})` | `((X year))` — different macro, same defect |
+      | `(see \cite{X})` | `(see (X year))` |
+      | `(e.g., \cite{X})` | `(e.g., (X year))` |
+      | `(\cite{X}, p. 5)` | `((X year), p. 5)` |
+      | `(\cite{X}; \cite{Y})` | `((X year); (Y year))` |
+      | `(\citet{X})` | `(X (year))` (still a paren-inside-paren) |
+
+      **Carriers** (broader scan; comma-separated):
+      - mdsOpt `mdsOpt.ltx` — 15 instances beyond the 11 the linter
+        catches (L72, 74, 121, 175, 179, 205, 212, 214, 236, 324,
+        328, 432, 607, 615, 634): all `(\cite{X}, ...)` / `(see
+        e.g. \cite{X})` / `\cite{X}; \cite{Y})` shapes.
+      - CARBayesST `CARBayesST.Rnw:498` — `(see \cite{celeux2006})`.
+      - spacetime `jss816.Rnw:848` — `(e.g., \cite{allen})`; `:1475`
+        — `(further examples are found in \cite{galton})`.
+      - rstpm2 `multistate.Rnw:88` — `(see Theorem 3.4.6 in
+        \cite{Sen_Singer_1993})`.
+
+      **Fix**: instead of requiring the cite macro to be the *only*
+      content between the parens, walk outward from each
+      author-year-rendering cite macro (`\cite`, `\citep`, and
+      `\citet`) and check whether the surrounding text is inside a
+      paren pair on the same paragraph. The auto-fix becomes
+      context-dependent (which macro is appropriate depends on the
+      surrounding text), so demote to a warning without auto-fix
+      for the broader shapes.
+      **Severity**: warning (existing).
+
 - [ ] **JSS-CITE-006 — `\citep{}` / `\cite{}` where `\citet{}` is
       grammatically required**. When the citation is the
       grammatical agent of a verb ("proposed by X", "introduced by
