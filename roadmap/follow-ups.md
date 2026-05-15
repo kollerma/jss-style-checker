@@ -559,6 +559,36 @@ corpus carrier so the change can be test-driven from real text.
       (`SymPy` inside Python) take `\pkg{}`.
       **Severity**: existing rule severity (warning).
 
+- [ ] **JSS-PRE-011 — `\Plainauthor{}` (and `\Plainkeywords{}`) use
+      comma as separator, not `and` / `\And`**. The JSS template
+      explicitly notes "comma-separated" alongside `\Plainauthor{}`
+      (`docs/jss-template/article.Rnw:31`). `\Plainauthor` is
+      consumed verbatim by hyperref for the PDF `/Author` metadata
+      field, which expects a clean comma-delimited list — `Sharabiani
+      and Mahani` reads as a single author in the metadata.
+
+      Adjacent rule pair:
+      - `JSS-PRE-006` already covers *markup* in `\Plainauthor` (no
+        `\textbf`, etc.).
+      - `JSS-STRUCT-005` covers `\author{}`'s separator (`\And`/`\AND`
+        over lowercase `\and`).
+      Neither covers `\Plainauthor`'s separator. Same gap for
+      `\Plainkeywords{}` (also comma-separated per template).
+
+      **Carrier**: DBR `DBR.Rnw:68` —
+      `\Plainauthor{Sharabiani, Mahani, Price and Bottle}` (the
+      Oxford-comma-omitted "Price and Bottle" should be a comma).
+      Sole carrier in the v1 corpus; the other 7 `\Plainauthor`
+      entries use the canonical comma form (or are single-author).
+
+      **Detection**: parse `\Plainauthor{<body>}` and
+      `\Plainkeywords{<body>}`; flag bodies that contain
+      `\b(?:and|\\And|\\AND|\\and)\b` between author tokens. Skip
+      bodies with zero or one comma (single-author / two-author
+      `"A and B"` edge cases get a softer warning since the
+      defect is less visible there).
+      **Severity**: warning.
+
 - [ ] **`JSS-MARKUP-004` should exempt starred section forms**
       (`src/texlint/journals/jss/rules/markup.py`). The rule fires
       on any `\section{...}` / `\subsection{...}` / etc. whose
