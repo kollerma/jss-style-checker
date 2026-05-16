@@ -559,6 +559,52 @@ corpus carrier so the change can be test-driven from real text.
       (`SymPy` inside Python) take `\pkg{}`.
       **Severity**: existing rule severity (warning).
 
+- [ ] **JSS-STRUCT-007 — figure-producing content must be wrapped in
+      a `figure` environment**. JSS expects every figure to live in
+      `\begin{figure}...\end{figure}` with `\caption{}` and `\label{}`
+      so it floats, captions properly, and can be cross-referenced
+      from prose. Three concrete shapes to flag:
+
+      *(a)* Bare `\includegraphics[...]{...}` not nested inside any
+      `figure` / `subfigure` / `wrapfigure` / `sidewaysfigure` env.
+
+      *(b)* Sweave chunks with `fig=TRUE` (or knitr `fig.cap` unset
+      together with a plot-producing call) that are not inside a
+      `\begin{figure}...\end{figure}` wrapper. knitr's clean
+      alternative is `fig.cap='...'` in the chunk options — that
+      auto-wraps in a figure env with caption — so the rule should
+      tell the author about both fixes.
+
+      *(c)* (lower priority) `\includegraphics` inside `\author{}`
+      / `\title{}` / `\Address{}` — that's a "wrong macro context"
+      defect class, not the figure-env one; could share the rule
+      or land separately.
+
+      **Carriers** (corpus-wide scan after filtering `%`-commented
+      lines and Sweave chunks with `include=FALSE` which generate
+      PDFs for later manual inclusion):
+
+      - DBR `DBR.Rnw` — 8 bare `\includegraphics` at L388, L389,
+        L390, L418, L419, L420, L473, L474; 3 `fig=TRUE` chunks at
+        L320, L352, L480. Sole sustained carrier in the v1 corpus.
+      - clifford `clifford.Rnw:69` — `\hfill\includegraphics{...}`
+        package-logo decoration on the title page. Borderline; could
+        be exempted by a "tiny inline image, no caption, no float"
+        carve-out.
+      - (spacetime `jss816.Rnw:42–43` has `\includegraphics{...}`
+        inside `\author{}` — separate defect class (c), filed under
+        the same rule for now.)
+
+      **Known FP shapes to filter in detection** (learned from the
+      sweep): `%`-commented `\includegraphics` lines; Sweave chunks
+      with `include=FALSE` in their options (these generate output
+      files but knitr does NOT auto-include them; the actual
+      `\includegraphics` is elsewhere and may be properly wrapped).
+
+      **Severity**: warning. The defect produces an un-floated,
+      uncaptioned, unreferenced figure — visible to reviewers but
+      not catastrophic at compile time.
+
 - [ ] **JSS-PRE-011 — `\Plainauthor{}` (and `\Plainkeywords{}`) use
       comma as separator, not `and` / `\And`**. The JSS template
       explicitly notes "comma-separated" alongside `\Plainauthor{}`
