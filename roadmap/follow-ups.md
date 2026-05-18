@@ -559,6 +559,50 @@ corpus carrier so the change can be test-driven from real text.
       (`SymPy` inside Python) take `\pkg{}`.
       **Severity**: existing rule severity (warning).
 
+- [ ] **Rule-precision improvements (`JSS-CITE-002` and
+      `JSS-HOUSE-001` over-eager edge cases)**. Three FP shapes
+      surfaced during DBR annotation; each has a high-precision
+      carve-out the rule should learn.
+
+      *(a) `JSS-CITE-002` fires on a package's own vignette.* When
+      the manuscript IS the package's documentation (carrier:
+      DBR `DBR.Rnw:122` — DBR.Rnw is itself the package vignette;
+      DBR has no upstream CITATION on CRAN), `\pkg{DBR}` at first
+      mention has no citation to make. Carve-out: scan the
+      manuscript for a `\VignetteIndexEntry{...}` or
+      `\VignetteDepends{...}` header — if present, exempt the
+      package name(s) that match the enclosing R package's name
+      from `JSS-CITE-002`. The R package name can be inferred from
+      the file path (`examples/cran_<pkg>/<pkg>/vignettes/...`) or
+      from the vignette directives.
+
+      *(b) `JSS-CITE-002` fires on table cells where the citation
+      lives in surrounding prose.* The rule's "first occurrence in
+      the same paragraph" check doesn't recognise table cells as
+      a different context — a `\pkg{X}` in a table cell with no
+      `\cite*` in the same cell triggers even when the surrounding
+      prose cites `X` properly. Carrier: DBR `DBR.Rnw:297` —
+      `\pkg{coda}` in a table; cited later in prose. Carve-out:
+      exempt first occurrences that appear inside `tabular` /
+      `longtable` / `tabu` / `array` / `tabbing` envs from
+      strict per-paragraph scoping; instead look for a citation
+      anywhere in the surrounding `table` / `figure` env's
+      `\caption{...}` *or* in the immediately surrounding prose.
+
+      *(c) `JSS-HOUSE-001` fires on `i.e.` / `e.g.` followed by a
+      colon.* The rule wants `i.e.,` and `e.g.,` to disambiguate
+      the period from a sentence-end. When the next non-whitespace
+      character is `:` (colon), the disambiguation is already in
+      effect (the colon can't be a sentence end either, and the
+      `i.e.:` / `e.g.:` shape grammatically introduces a list or
+      explanation). Carrier: DBR `DBR.Rnw:176` — `i.e.:` introducing
+      a bullet list. Carve-out: scan one character past the closing
+      period of `i.e.` / `e.g.` (skipping whitespace); skip the
+      violation when that character is `:` or `;`.
+
+      **Severity**: each existing rule's severity, unchanged. All
+      three are precision (not coverage) improvements.
+
 - [ ] **JSS-BIBTEX-005 — bib entry type matches the kind of work it
       describes**. JSS-BIBTEX-003 already checks "are the *required
       fields* present for the declared type" but nothing checks
