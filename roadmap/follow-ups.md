@@ -559,6 +559,58 @@ corpus carrier so the change can be test-driven from real text.
       (`SymPy` inside Python) take `\pkg{}`.
       **Severity**: existing rule severity (warning).
 
+- [ ] **JSS-BIBTEX-005 — bib entry type matches the kind of work it
+      describes**. JSS-BIBTEX-003 already checks "are the *required
+      fields* present for the declared type" but nothing checks
+      "does the declared type match what this entry actually
+      describes?". Authors frequently copy-paste CRAN's
+      auto-generated citation block which uses `@article` for what
+      is clearly an R-package archive entry:
+
+      ```bibtex
+      @article{goodrich2018rstanarm,
+        title={rstanarm: Bayesian applied regression modeling via Stan},
+        author={Goodrich, Ben and Gabry, Jonah and Ali, Imad and Brilleman, Sam},
+        journal={R package version},
+        volume={2},
+        number={4},
+        pages={1758},
+        year={2018}
+      }
+      ```
+
+      The `journal = {R package version}` is the smoking gun —
+      "R package version" is not a journal name; the entry is
+      really an `@Manual` with `note = {R package version
+      2.4-1758}` (or similar). This pattern recurs across the
+      ecosystem because CRAN emits it from `citation()` for any
+      package without a custom `CITATION` file.
+
+      **Detection** (high-precision):
+      - `@article` / `@misc` whose `journal` or `howpublished`
+        field contains "R package", "package version", or matches
+        a CRAN URL pattern (`CRAN\.R-project\.org`).
+      - `@article` whose `note` field contains "R package
+        version".
+      - `@article` whose title matches the pattern `<pkgname>:
+        <description>` where `<pkgname>` matches an entry in
+        MARKUP-002's package-name lookup AND there is no DOI
+        field (real JSS articles always have a DOI).
+
+      **Carriers**: DBR `DBR.bib` — `goodrich2018rstanarm`. Likely
+      many more across the precision corpus; the heuristic is
+      conservative enough to scan widely.
+
+      **Suggested fix in author-facing message**: "Entry appears
+      to describe an R package archive. Use `@Manual{key, title =
+      ..., author = ..., year = ..., note = {R package version
+      X.Y-Z}, url = {https://CRAN.R-project.org/package=...}}`
+      instead of `@article`."
+
+      **Severity**: warning.
+      **Authority**: §5.1 Bibliography (entry-type semantics) +
+      CRAN bib convention.
+
 - [ ] **JSS-STRUCT-007 — figure-producing content must be wrapped in
       a `figure` environment**. JSS expects every figure to live in
       `\begin{figure}...\end{figure}` with `\caption{}` and `\label{}`
