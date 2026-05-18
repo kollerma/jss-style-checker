@@ -4,37 +4,770 @@
 # record every JSS-guide violation you spot. Identity tuple is
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
-#
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 71 violations across 17 rules.
-# Rules fired: JSS-BIBTEX-003, JSS-CAP-002, JSS-CAP-004, JSS-CITE-002, JSS-HOUSE-001, JSS-HOUSE-002, JSS-HOUSE-003, JSS-MARKUP-001, JSS-MARKUP-003, JSS-NAME-002, JSS-OPER-002, JSS-OPER-004, JSS-REFS-003, JSS-REFS-004, JSS-REFS-006, JSS-REFS-007, JSS-XREF-004
-# Manuscript: DBR.Rnw (528 loc)
-# Sibling .bib(s): DBR.bib
 
 [meta]
 paper_id = "DBR"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
-notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
-"""
+annotator = "Manuel Koller"
+date = "2026-05-15"
+notes = '''
+Authors in \Plainauthor (L69) are not all comma separated.
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "DBR.Rnw"
-# line = 42
-# comment = "<optional rationale>"
+Chunks on L320, L352 and several others (`plot` and `hist`) produce a chart
+that is not wrapped in a figure environment. There's no caption, no label,
+no float placement, nothing to \ref from prose.
 
-# (no violations recorded yet)
+Moreover, there are several \includegraphics commands outside figure
+environments scattered over the whole document.
+'''
+
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "DBR.Rnw"
+line = 9
+comment = "graphicx is included via jss.cls already"
+
+[[violations]]
+rule_id = "JSS-CAP-004"
+file = "DBR.Rnw"
+line = 77
+comment = "Keywords are not in sentence case"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "DBR.Rnw"
+line = 120
+comment = '"e.g." not followed by comma'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "DBR.Rnw"
+line = 122
+comment = 'R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "DBR.Rnw"
+line = 124
+comment = '\citep used inside a parenthesis. Should have used \citealp instead.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "DBR.Rnw"
+line = 126
+comment = '\citep used inside a parenthesis multiple times. Should have used \citealp instead.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 126
+comment = '\texttt{DBR} should be \pkg{DBR}'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 132
+comment = 'Section title not in sentence case, should be "The DBR mathematical framework"'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 136
+comment = 'Section title not in sentence case, should be "Overview of Beta Regression"'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "DBR.Rnw"
+line = 166
+comment = '\mathrm{E} should be \E'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "DBR.Rnw"
+line = 167
+comment = '\mathrm{VAR} should be \VAR instead'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 173
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 177
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "DBR.Rnw"
+line = 178
+comment = '\mathrm{E} should be \E'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 181
+comment = 'Section title not in sentence case, should be "Forward and backward transformation of the response variable"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "DBR.Rnw"
+line = 183
+comment = '"Eq.~\ref{eq-beta-alt}" should be "Equation~\ref{eq-beta-alt}"'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 186
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 203
+comment = '\label{eq-def-delta} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 204
+comment = '\label{eq-def-r} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 209
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 216
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 223
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 230
+comment = "Equation without a label"
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "DBR.Rnw"
+line = 238
+comment = 'P should be \P'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "DBR.Rnw"
+line = 240
+comment = '"Eq. \ref{eq-beta-orig}" should be "Equation~\ref{eq-beta-orig}"'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 241
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 245
+comment = 'Section title not in sentence case, should be "Handling extreme responses"'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "DBR.Rnw"
+line = 251
+comment = 'P should be \P'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "DBR.Rnw"
+line = 261
+comment = '"Eqs.~\ref{eq-left-buffer} and \ref{eq-right-buffer}" should be "Equation~\ref{eq-left-buffer} and \ref{eq-right-buffer}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "DBR.Rnw"
+line = 261
+comment = '"Eq.~\ref{eq-dbr-inflated-mixture}" should be "Equation~\ref{eq-dbr-inflated-mixturer}"'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 265
+comment = 'Section title not in sentence case, should be "Bayesian estimation"'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 272
+comment = "Equation without a label"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "DBR.Rnw"
+line = 273
+comment = 'P should be \P'
+
+[[violations]]
+rule_id = "JSS-OPER-002"
+file = "DBR.Rnw"
+line = 275
+comment = "^T should be ^\top"
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "DBR.Rnw"
+line = 281
+comment = '"Eq.~\ref{eq-log-posterior}" should be "Equation~\ref{eq-log-posterior}"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "DBR.Rnw"
+line = 283
+comment = 'DBR should be \pkg{DBR}, and this section title now requires the plain text argument without \pkg{}'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 283
+comment = 'Section title not in sentence case, should be "Using the \pkg{DBR} package"'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 304
+comment = 'Subsection title not in sentence case, should be "The pain interference data"'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 335
+comment = 'Subsection title not in sentence case, should be "Model training"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 343
+comment = 'The line uses \texttt instead of \code several times.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 347
+comment = 'The line uses \texttt instead of \code twice.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 349
+comment = 'The line uses \texttt instead of \code several times.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 363
+comment = 'The line uses \texttt instead of \code several times.'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 379
+comment = 'Subsection title not in sentence case, should be "MCMC Diagnostics"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 381
+comment = 'The line uses \texttt instead of \code several times.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 394
+comment = 'The line uses \texttt instead of \code twice.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 383
+comment = 'The line uses \texttt instead of \code twice.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"                                                                                                                    
+file = "DBR.Rnw"                                                                                                                              
+line = 383
+comment = '"\pkg{plot} function in the \pkg{MfUSampler} package" — "plot" is a function name and should be \code{plot}, not \pkg{plot}. (The second \pkg{MfUSampler} is correct.)' 
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 429
+comment = 'Subsection title not in sentence case, should be "Model prediction"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 431
+comment = 'The line uses \texttt instead of \code several times.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 442
+comment = '\texttt{sample} should be \code{sample}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 453
+comment = '\texttt{sample} should be \code{sample}'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "DBR.Rnw"
+line = 459
+comment = 'Subsection title not in sentence case, should be "Model interpretation"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 460
+comment = 'The line uses \texttt instead of \code several times.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 466
+comment = '\texttt{summary} should be \code{summary}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 475
+comment = 'The line uses \texttt instead of \code several times.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 477
+comment = 'The line uses \texttt instead of \code several times.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "DBR.Rnw"
+line = 510
+comment = 'Several occurrencees of DBR that should be \pkg{DBR}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 10
+comment = 'harpe2015analyze — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 10
+comment = 'harpe2015analyze — title not in title case; should be "How to Analyze Likert and other Rating Scale Data".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 21
+comment = 'zeileis2010beta — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "DBR.bib"
+line = 21
+comment = 'R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 21
+comment = 'zeileis2010beta — title not in title case; should be "Beta Regression in \pkg{R}".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 21
+comment = 'zeileis2010beta — journal not in title case; should be "Journal of Statistical Software".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 31
+comment = 'ferrari2004beta — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 31
+comment = 'ferrari2004beta — title not in title case; should be "Beta Regression for Modelling Rates and Proportions".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 31
+comment = 'ferrari2004beta — journal not in title case; should be "Journal of Applied Statistics".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 41
+comment = 'najera2018comparison — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 41
+comment = 'najera2018comparison — title not in title case; should be "Comparison of Beta-Binomial Regression Model Approaches to Analyze Health-Related Quality of Life Data".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 41
+comment = 'najera2018comparison — journal not in title case; should be "Statistical Methods in Medical Research".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 52
+comment = 'liddell2018analyzing — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 52
+comment = 'liddell2018analyzing — title not in title case; should be "Analyzing Ordinal Data With Metric Models: What Could Possibly Go Wrong?".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 62
+comment = 'hasan2016mnlogit — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "DBR.bib"
+line = 62
+comment = 'R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 73
+comment = 'goodrich2018rstanarm — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "DBR.bib"
+line = 73
+comment = 'rstanarm should be \pkg{rstanarm} and Stan should be \proglang{Stan}'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 73
+comment = 'goodrich2018rstanarm — title not in title case; should be "\pkg{rstanarm}: Bayesian Applied Regression Modeling via \proglang{Stan}".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "DBR.bib"
+line = 83
+comment = 'Title is not in title style, should be "Multivariate-From-Univariate MCMC Sampler: The \proglang{R} Package \pkg{MfUSampler}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 94
+comment = 'jamieson2004likert — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 94
+comment = 'jamieson2004likert — title not in title case; should be "Likert Scales: How to (Ab)use Them?".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 94
+comment = 'jamieson2004likert — journal not in title case; should be "Medical Education".'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "DBR.bib"
+line = 104
+comment = "Springer should be Springer-Verlag"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 104
+comment = 'norman2010likert — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 104
+comment = 'norman2010likert — title not in title case; should be "Likert Scales, Levels of Measurement and the “Laws” of Statistics".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 104
+comment = 'norman2010likert — journal not in title case; should be "Advances in Health Sciences Education".'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "DBR.bib"
+line = 115
+comment = "Annals of statistics should be The Annals of Statistics"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 115
+comment = 'neal2003slice — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 115
+comment = 'neal2003slice — title not in title case; should be "Slice Sampling".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 115
+comment = 'neal2003slice — journal not in title case; should be "The Annals of Statistics".'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "DBR.bib"
+line = 124
+comment = "Springer should be Springer-Verlag"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 124
+comment = 'kruschke2018bayesian — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 124
+comment = 'kruschke2018bayesian — title not in title case; should be "The Bayesian New Statistics: Hypothesis Testing, Estimation, Meta-Analysis, and Power Analysis from a Bayesian Perspective".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 135
+comment = 'mahani2015simd — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 135
+comment = 'mahani2015simd — title not in title case; should be "SIMD Parallel MCMC Sampling with Applications for Big-Data Bayesian Analytics".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 145
+comment = 'kuzon1996seven — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 145
+comment = 'kuzon1996seven — title not in title case; should be "The Seven Deadly Sins of Statistical Analysis".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 145
+comment = 'kuzon1996seven — journal not in title case; should be "Annals of Plastic Surgery".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 154
+comment = 'armstrong1981parametric — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 154
+comment = 'armstrong1981parametric — title not in title case; should be "Parametric Statistics and Ordinal Data: A Pervasive Misconception".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 165
+comment = 'knapp1990treating — title not in title case; should be "Treating Ordinal Scales as Interval Scales: An Attempt to Resolve the Controversy".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 165
+comment = 'knapp1990treating — journal not in title case; should be "Nursing Research".'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-003"
+file = "DBR.bib"
+line = 174
+comment = 'pell2005use — @article entry missing required `journal` field.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 174
+comment = 'pell2005use — Wiley DOI for the Pell 2005 article exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 181
+comment = 'carifio2007ten — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 181
+comment = 'carifio2007ten — title not in title case; should be "Ten Common Misunderstandings, Misconceptions, Persistent Myths and Urban Legends about Likert Scales and Likert Response Formats and Their Antidotes".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 181
+comment = 'carifio2007ten — journal not in title case; should be "Journal of Social Sciences".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 191
+comment = 'carifio2008resolving — Wiley DOI for the Medical Education article exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 191
+comment = 'carifio2008resolving — title not in title case; should be "Resolving the 50-Year Debate around Using and Misusing Likert Scales".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 191
+comment = 'carifio2008resolving — journal not in title case; should be "Medical Education".'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
+line = 197
+comment = '\label{eq-def-u} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 202
+comment = 'allen2007likert — Quality Progress article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 202
+comment = 'allen2007likert — title not in title case; should be "Likert Scales and Data Analyses".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 202
+comment = 'allen2007likert — journal not in title case; should be "Quality Progress".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 220
+comment = 'furnham1986response — title not in title case; should be "Response Bias, Social Desirability and Dissimulation".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 220
+comment = 'furnham1986response — journal not in title case; should be "Personality and Individual Differences".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 231
+comment = 'meisenberg2008acquiescent — Elsevier DOI for the Personality and Individual Differences article exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 231
+comment = 'meisenberg2008acquiescent — title not in title case; should be "Are Acquiescent and Extreme Response Styles Related to Low Intelligence and Education?".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 231
+comment = 'meisenberg2008acquiescent — journal not in title case; should be "Personality and Individual Differences".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 275
+comment = 'taverne2014inflated — arXiv preprint has DOI 10.48550/arXiv.1405.4637; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 275
+comment = 'taverne2014inflated — title not in title case; should be "Inflated Discrete Beta Regression Models for Likert and Discrete Rating Scale Outcomes".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 275
+comment = 'taverne2014inflated — journal not in title case; should be "arXiv preprint arXiv:1405.4637".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 282
+comment = 'plummer206coda — R News article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 295
+comment = 'geweke1992evaluating — title not in title case; should be "Evaluating the Accuracy of Sampling-Based Approaches to the Calculations of Posterior Moments".'
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 295
+comment = 'geweke1992evaluating — journal not in title case; should be "Bayesian Statistics".'
+
+[[violations]]
+rule_id = "JSS-HOUSE-002"
+file = "DBR.bib"
+line = 305
+comment = 'venables2002mass — edition = "Fourth" should be "4th" (JSS HOUSE-002 wants ordinal numerals, not spelled-out).'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "DBR.bib"
+line = 305
+comment = 'venables2002mass — publisher = "Springer" should be "Springer-Verlag" (JSS canonical form).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 305
+comment = 'venables2002mass — Springer book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 73
+comment = 'goodrich2018rstanarm — journal = "R package version" not in title case. (Real fix is to change the entry type to @Manual per JSS-BIBTEX-005 follow-up; flagging here because the rule fires on the field as-written.)'
