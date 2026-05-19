@@ -1024,3 +1024,9 @@ rule_id = "JSS-OPER-003"
 file = "CARBayesST.Rnw"
 line = 873
 comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "CARBayesST.Rnw"
+line = 498
+comment = '"(see \cite{celeux2006})" renders as "(see (Celeux et al. 2006))" — bracket-in-bracket per JSS §3.2. Linter does not catch this shape (only matches exact "(\cite{X})"; see JSS-CITE-003 scope-extension follow-up).'
