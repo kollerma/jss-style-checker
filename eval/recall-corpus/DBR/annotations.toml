@@ -125,6 +125,12 @@ comment = "Equation without a label"
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "DBR.Rnw"
+line = 197
+comment = '\label{eq-def-u} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "DBR.Rnw"
 line = 203
 comment = '\label{eq-def-delta} exists but is never \ref-ed from the text.'
 
@@ -396,6 +402,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 21
 comment = 'zeileis2010beta — title not in title case; should be "Beta Regression in \pkg{R}".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -413,6 +420,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 31
 comment = 'ferrari2004beta — title not in title case; should be "Beta Regression for Modelling Rates and Proportions".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -430,6 +438,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 41
 comment = 'najera2018comparison — title not in title case; should be "Comparison of Beta-Binomial Regression Model Approaches to Analyze Health-Related Quality of Life Data".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -479,6 +488,12 @@ line = 73
 comment = 'goodrich2018rstanarm — title not in title case; should be "\pkg{rstanarm}: Bayesian Applied Regression Modeling via \proglang{Stan}".'
 
 [[violations]]
+rule_id = "JSS-REFS-007"
+file = "DBR.bib"
+line = 73
+comment = 'goodrich2018rstanarm — journal = "R package version" not in title case. (Real fix is to change the entry type to @Manual per JSS-BIBTEX-005 follow-up; flagging here because the rule fires on the field as-written.)'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "DBR.bib"
 line = 83
@@ -495,6 +510,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 94
 comment = 'jamieson2004likert — title not in title case; should be "Likert Scales: How to (Ab)use Them?".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -518,6 +534,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 104
 comment = 'norman2010likert — title not in title case; should be "Likert Scales, Levels of Measurement and the “Laws” of Statistics".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -541,6 +558,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 115
 comment = 'neal2003slice — title not in title case; should be "Slice Sampling".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -588,6 +606,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 145
 comment = 'kuzon1996seven — title not in title case; should be "The Seven Deadly Sins of Statistical Analysis".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -611,11 +630,18 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 165
 comment = 'knapp1990treating — title not in title case; should be "Treating Ordinal Scales as Interval Scales: An Attempt to Resolve the Controversy".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
 line = 165
 comment = 'knapp1990treating — journal not in title case; should be "Nursing Research".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 165
+comment = 'knapp1990treating — Article DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-BIBTEX-003"
@@ -640,6 +666,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 181
 comment = 'carifio2007ten — title not in title case; should be "Ten Common Misunderstandings, Misconceptions, Persistent Myths and Urban Legends about Likert Scales and Likert Response Formats and Their Antidotes".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -657,17 +684,12 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 191
 comment = 'carifio2008resolving — title not in title case; should be "Resolving the 50-Year Debate around Using and Misusing Likert Scales".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
 line = 191
 comment = 'carifio2008resolving — journal not in title case; should be "Medical Education".'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "DBR.Rnw"
-line = 197
-comment = '\label{eq-def-u} exists but is never \ref-ed from the text.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -680,6 +702,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 202
 comment = 'allen2007likert — title not in title case; should be "Likert Scales and Data Analyses".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -687,10 +710,29 @@ line = 202
 comment = 'allen2007likert — journal not in title case; should be "Quality Progress".'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 212
+comment = 'proreg2020josu — R package DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "DBR.bib"
+line = 212
+comment = 'PROreg should be \pkg{PROreg} and R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 220
+comment = 'furnham1986response — article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
 rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 220
 comment = 'furnham1986response — title not in title case; should be "Response Bias, Social Desirability and Dissimulation".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -708,11 +750,36 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 231
 comment = 'meisenberg2008acquiescent — title not in title case; should be "Are Acquiescent and Extreme Response Styles Related to Low Intelligence and Education?".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
 line = 231
 comment = 'meisenberg2008acquiescent — journal not in title case; should be "Personality and Individual Differences".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 242
+comment = 'greenleaf1992measuring — article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 242
+comment = 'greenleaf1992measuring — title not in title case; should be "Measuring Extreme Response Style".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 253
+comment = 'lambert1992zero — article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "DBR.bib"
+line = 253
+comment = 'lambert1992zero — title not in title case; should be "Zero-Inflated Poisson Regression, with an Application to Defects in Manufacturing".'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -725,6 +792,7 @@ rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 275
 comment = 'taverne2014inflated — title not in title case; should be "Inflated Discrete Beta Regression Models for Likert and Discrete Rating Scale Outcomes".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -738,10 +806,23 @@ line = 282
 comment = 'plummer206coda — R News article DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
+rule_id = "JSS-REFS-004"
+file = "DBR.bib"
+line = 283
+comment = 'CODA should be \pkg{CODA} and R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 282
+comment = 'geweke1992evaluating — book chapter DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
 rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 295
 comment = 'geweke1992evaluating — title not in title case; should be "Evaluating the Accuracy of Sampling-Based Approaches to the Calculations of Posterior Moments".'
+
 [[violations]]
 rule_id = "JSS-REFS-007"
 file = "DBR.bib"
@@ -765,9 +846,3 @@ rule_id = "JSS-REFS-003"
 file = "DBR.bib"
 line = 305
 comment = 'venables2002mass — Springer book DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-007"
-file = "DBR.bib"
-line = 73
-comment = 'goodrich2018rstanarm — journal = "R package version" not in title case. (Real fix is to change the entry type to @Manual per JSS-BIBTEX-005 follow-up; flagging here because the rule fires on the field as-written.)'
