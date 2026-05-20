@@ -846,3 +846,9 @@ rule_id = "JSS-REFS-003"
 file = "DBR.bib"
 line = 305
 comment = 'venables2002mass — Springer book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 295
+comment = 'geweke1992evaluating — DOI 10.21034/sr.148 found on Crossref (title similarity 0.99); add to the entry as doi="10.21034/sr.148".'

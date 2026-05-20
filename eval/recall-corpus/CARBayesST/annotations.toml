@@ -1030,3 +1030,9 @@ rule_id = "JSS-CITE-003"
 file = "CARBayesST.Rnw"
 line = 498
 comment = '"(see \cite{celeux2006})" renders as "(see (Celeux et al. 2006))" — bracket-in-bracket per JSS §3.2. Linter does not catch this shape (only matches exact "(\cite{X})"; see JSS-CITE-003 scope-extension follow-up).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 202
+comment = 'geweke1992 — DOI 10.21034/sr.148 found on Crossref (title similarity 1.00); add to the entry as doi="10.21034/sr.148".'
