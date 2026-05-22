@@ -536,6 +536,49 @@ corpus carrier so the change can be test-driven from real text.
       rules.
       **Severity**: existing rule severity (info).
 
+- [ ] **JSS-MARKUP-005 — URLs in prose use `\url{}` or `\href{}{}`,
+      not `\texttt{}` / `\verb` / bare prose**. The JSS author
+      guide is clear that URLs go through `\url{}` (from the `url`
+      package or `hyperref`) so they (a) render as clickable
+      hyperlinks in the PDF, (b) handle line-breaking at sensible
+      spots, and (c) avoid LaTeX-escape gymnastics for `_`, `~`,
+      `#`, etc. Authors who reach for `\texttt{}` lose all three
+      and have to manually escape special chars in the URL body;
+      bare URLs in prose lose (a) and (b).
+
+      Two sub-checks:
+
+      *(a) URLs wrapped in `\texttt{}` / `\verb` / `\path`* —
+      high-precision, simple detection.
+      **Carrier**: deSolve `deSolve.Rnw:1282` —
+      `\texttt{http://www.scholarpedia.org/article/Stiff\_systems}`
+      (note the `\_` escape, required because `\texttt{}` treats
+      `_` as subscript; `\url{}` wouldn't).
+
+      *(b) Bare URLs in prose* — wider net, needs carve-outs.
+      Skip inside:
+      - `\url{...}`, `\href{...}{...}`, `\nolinkurl{...}` (already
+        the right macro)
+      - verbatim envs (`verbatim`, `Verbatim`, `lstlisting`)
+      - Sweave/knitr code envs (`Sinput`, `Soutput`, `CodeInput`,
+        `CodeOutput`, `Code`, `Schunk`)
+      - `<<...>>= ... @` Rnw chunks
+      - math mode (`$...$`, `\(...\)`, `\[...\]`, display-eq envs)
+      - `%`-line comments
+      - `.bib` files entirely (the bib has its own `url=` field
+        which downstream styles handle their own way)
+
+      URL pattern: `(?:https?|ftp|mailto)://\S+` plus a bare
+      `www\.\S+` heuristic (lower confidence — many false `www.`
+      mentions in prose).
+
+      **Fix**: rewrite as `\url{<body-unescaped>}` (strip the
+      `\_` / `\#` / `\%` / `\&` escapes the author inserted to
+      keep `\texttt{}` happy). For URLs with display text, use
+      `\href{<url>}{<text>}`.
+      **Severity**: warning.
+      **Authority**: §4.1 Markup + hyperref/url package conventions.
+
 - [ ] **`JSS-MARKUP-001`'s recognised-language set is R-centric**
       (`src/texlint/journals/jss/rules/markup.py`). MARKUP-001
       currently recognises a narrow set of programming languages
