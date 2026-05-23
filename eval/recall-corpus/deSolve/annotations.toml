@@ -4,37 +4,769 @@
 # record every JSS-guide violation you spot. Identity tuple is
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
-#
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 57 violations across 14 rules.
-# Rules fired: JSS-CAP-002, JSS-CITE-002, JSS-CITE-004, JSS-CODE-001, JSS-CODE-002, JSS-CODE-003, JSS-HOUSE-001, JSS-HOUSE-003, JSS-MARKUP-001, JSS-NAME-001, JSS-NAME-002, JSS-REFS-003, JSS-STRUCT-001, JSS-TYPO-001
-# Manuscript: deSolve.Rnw (1942 loc)
-# Sibling .bib(s): integration.bib
 
 [meta]
 paper_id = "deSolve"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
-notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
-"""
+annotator = "Manuel Koller"
+date = "2026-05-19"
+notes = '''
+deSolve.Rnw:1282 wraps a Scholarpedia URL in \texttt{} instead of
+\url{}: \texttt{http://www.scholarpedia.org/article/Stiff\_systems}.
+No rule_id exists yet for this defect — filed as JSS-MARKUP-005
+("URLs in prose use \url{}/\href{}, not \texttt{}/\verb / bare
+prose"). Will become a TP the moment that rule ships.
+'''
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "deSolve.Rnw"
-# line = 42
-# comment = "<optional rationale>"
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "deSolve.Rnw"
+line = 5
+comment = "graphicx is included via jss.cls already"
 
-# (no violations recorded yet)
+[[violations]]
+rule_id = "JSS-CAP-004"
+file = "deSolve.Rnw"
+line = 30
+comment = "Keywords not in sentence case, first word should be upper case"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "deSolve.Rnw"
+line = 128
+comment = 'Section title not in sentence case, should be "A simple ODE: Chaos in the atmosphere"'
+
+[[violations]]
+rule_id = "JSS-CITE-004"
+file = "deSolve.Rnw"
+line = 130
+comment = "Lorenz, 1963 hard coded, should use natbib commands instead"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 138
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 146
+comment = 'Blank lines BEFORE \[ AND AFTER \].'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "deSolve.Rnw"
+line = 160
+comment = "e.g. without following comma"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "deSolve.Rnw"
+line = 166
+comment = 'R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 180
+comment = "-8/3 should be -8 / 3"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 221
+comment = "Several missing spaces around operators in code block, e.g,, a*X and Y*Z should be a * X and Y * Z"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 224
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "deSolve.Rnw"
+line = 240
+comment = '''R's should be \proglang{R}'s'''
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "deSolve.Rnw"
+line = 160
+comment = "a.o. without following comma, same spirit as for e.g. and i.e."
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "deSolve.Rnw"
+line = 259
+comment = '`library(deSolve)` should be `library("deSolve")`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 289
+comment = "Figure caption is missing a period at the end."
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "deSolve.Rnw"
+line = 290
+comment = 'R-code should be \proglang{R}-code'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "deSolve.Rnw"
+line = 300
+comment = "e.g. without following comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 382
+comment = 'Missing spaces. `)),{` should be `)), {` and `1/2` should be `1 / 2` (occurs twice)'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "deSolve.Rnw"
+line = 456
+comment = 'R-code should be \proglang{R}-code'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 473
+comment = 'Blank lines BEFORE \[ AND AFTER \].'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 479
+comment = 'Blank lines BEFORE \[ AND AFTER \].'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 485
+comment = 'Blank lines BEFORE \[ AND AFTER \].'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 500
+comment = 'Blank lines BEFORE \[ AND AFTER \].'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 506
+comment = 'Blank lines BEFORE \[ AND AFTER \].'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 524
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 532
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 544
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 564
+comment = 'Missing spaces around operators, `head(out[,1:5])` should be `head(out[, 1:5])`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 591
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 603
+comment = 'Several occurrences of missing space after comma'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 607
+comment = 'Missing spaces around operators: `col="red"` should be `col = "red"`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 623
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "deSolve.Rnw"
+line = 624
+comment = 'R-code should be \proglang{R}-code'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 656
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 664
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "deSolve.Rnw"
+line = 679
+comment = '`library(deSolve)` should be `library("deSolve")`'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 684
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 688
+comment = 'Missing spaces around operators, `out[,1], out[,2:3]` should be `out[, 1], out[, 2:3]`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 699
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "deSolve.Rnw"
+line = 700
+comment = 'R-code should be \proglang{R}-code'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 760
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 772
+comment = 'Blank line BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 781
+comment = 'Missing spaces around operators, `1/2.1+0i` should be `1 / 2.1+0i`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 806
+comment = '''
+Missing spaces around operators
+```
+analytical <- cbind(f = exp(1i*times), g = 1/(exp(1i*times)+1.1))
+tail(cbind(out[,2], analytical[,1]))
+```
+should be 
+```
+analytical <- cbind(f = exp(1i * times), g = 1 / (exp(1i * times) + 1.1))
+tail(cbind(out[, 2], analytical[, 1]))
+```
+'''
+
+[[violations]]
+rule_id = "JSS-NAME-001"
+file = "deSolve.Rnw"
+line = 920
+comment = 'FORTRAN should be \proglang{FORTRAN}'
+
+[[violations]]
+rule_id = "JSS-NAME-001"
+file = "deSolve.Rnw"
+line = 920
+comment = 'C-code should be \proglang{C}-code'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "deSolve.Rnw"
+line = 932
+comment = 'Code not wrapped in \code{}, \subsection{Event specified in a data.frame} should be \subsection[Event specified in a data.frame]{Event specified in a \code{data.frame}}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 936
+comment = 'Missing spaces around operators: `-0.1*var` should be `-0.1 * var`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 973
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 983
+comment = 'Missing spaces around operators: `ballode<-` should be `ballode <-`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1000
+comment = 'Missing spaces around operators: `y[1]<-` should be `y[1] <-`, same for `y[2]<-`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1030
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "deSolve.Rnw"
+line = 1044
+comment = "i.e. without following comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "deSolve.Rnw"
+line = 1152
+comment = '`library(deSolve)` should be `library("deSolve")`'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1155
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1188
+comment = 'Missing spaces around operators: `yout[,2], yout[,3]` should be `yout[, 2], yout[, 3]`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1200
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1227
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1251
+comment = 'Missing spaces around operators: `out[,1], out[,-1]` should be `out[, 1], out[, -1]`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1262
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "deSolve.Rnw"
+line = 1266
+comment = 'Section title not in sentence style, \subsection{Plotting deSolve Objects} should be \subsection[Plotting deSolve Objects]{Plotting \code{deSolve} objects}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "deSolve.Rnw"
+line = 1266
+comment = 'Code not wrapped in \code{}, \subsection{Plotting deSolve Objects} should be \subsection[Plotting deSolve Objects]{Plotting \code{deSolve} objects}'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "deSolve.Rnw"
+line = 1274
+comment = '''Section title not in sentence style, \subsection{Plotting Multiple Scenario's} should be \subsection{Plotting multiple scenarios}'''
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "deSolve.Rnw"
+line = 1284
+comment = 'Blank lines BEFORE \[.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1292
+comment = 'Missing spaces around operators: `list(y^2 * (1-y) )` should be `list(y ^ 2 * (1 - y))`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "deSolve.Rnw"
+line = 1293
+comment = '`library(deSolve)` should be `library("deSolve")`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1302
+comment = 'Missing spaces around operators: `yini*2` should be `yini * 2`, similar for the other cases `yini*`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1322
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "deSolve.Rnw"
+line = 1326
+comment = 'Section title not in sentence style, \subsection{Plotting Output with Observations} should be \subsection{Plotting output with observations}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1302
+comment = 'Missing spaces around operators: `c(1,2,3,NA)` should be `c(1, 2, 3, NA)`'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1381
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1408
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "deSolve.Rnw"
+line = 1412
+comment = 'Section title not in sentence style, \subsection{Plotting Summary Histograms} should be \subsection{Plotting summary histograms}'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1431
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1455
+comment = '''
+Several missing spaces around operators, e.g.,
+`state[(N+1):(2*N)]` should be `state[(N + 1):(2 * N)]`
+and
+`-diff(ri * FluxPrey)/rr/dr` should be `-diff(ri * FluxPrey) / rr / dr`
+among others
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1461
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1486
+comment = '''
+Several missing spaces around operators, e.g.,
+```
+dr <- R/N
+r  <- seq(dr/2,by = dr,len = N)
+ri <- seq(0,by = dr,len = N+1)
+```
+should be
+```
+dr <- R / N
+r  <- seq(dr / 2, by = dr, len = N)
+ri <- seq(0, by = dr, len = N + 1)
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1487
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1507
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1553
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "deSolve.Rnw"
+line = 1553
+comment = 'Figure caption not in sentence style. Should be "Image Plots"'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1571
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1578
+comment = '''
+Missing spaces around operators: 
+`dx/2` should be `dx / 2`, and `dy/2` should be `dy / 2`
+and 
+```
+FUN=function(x,y) ((x-50)^2 + (y-50)^2)*1e-4
+```
+should be
+```
+FUN = function(x, y) ((x - 50) ^ 2 + (y - 50) ^ 2) * 1e-4
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1579
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1614
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-STRUCT-001"
+file = "deSolve.Rnw"
+line = 1619
+comment = '''Last section is "Troubleshooting", not 'Conclusions' or similar'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1630
+comment = '''
+Missing spaces around operators: 
+```
+dP <- c*P   - d*C*P
+dC <- e*P*C - f*C
+```
+should be
+```
+dP <- c * P     - d * C * P
+dC <- e * P * C - f * C
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1631
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "deSolve.Rnw"
+line = 1670
+comment = "e.g. without following comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1677
+comment = 'Missing spaces around operators: `out[,1], out[,2:3]` should be `out[, 1], out[, 2:3]`'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "deSolve.Rnw"
+line = 1710
+comment = "e.g. without following comma"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "deSolve.Rnw"
+line = 1724
+comment = "e.g. without following comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "deSolve.Rnw"
+line = 1737
+comment = 'Missing spaces around operators: `Prey/K` should be `Prey / K`'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "deSolve.Rnw"
+line = 1751
+comment = "Comments in code should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1842
+comment = "Figure caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1849
+comment = "Table caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "deSolve.Rnw"
+line = 1849
+comment = "Table caption should be below table, not above"
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "deSolve.Rnw"
+line = 1877
+comment = "Table caption should be below table, not above"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "deSolve.Rnw"
+line = 1918
+comment = "Table caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "deSolve.Rnw"
+line = 1918
+comment = "Table caption should be below table, not above"
+
+[[violations]]
+rule_id = "JSS-REFS-002"
+file = "integration.bib"
+line = 66
+comment = 'Article title not in title style'
+
+[[violations]]
+rule_id = "JSS-REFS-002"
+file = "integration.bib"
+line = 88
+comment = 'Article title not in title style, should be "A Family of Embedded Runge-Kutta Formulae."'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 118
+comment = "Hairer1 - DOI 10.1007/978-3-540-78862-1 found on springer.com"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 127
+comment = "Hairer2 - DOI 10.1007/978-3-642-05221-7 found on springer.com"
+
+[[violations]]
+rule_id = "JSS-REFS-002"
+file = "integration.bib"
+line = 198
+comment = 'Article title not in title style, should be "ReacTran: Reactive Transport Modelling in 1D, 2D and 3D"'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "integration.bib"
+line = 198
+comment = 'R in note should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "integration.bib"
+line = 220
+comment = "Springer should be Springer-Verlag"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 220
+comment = "Soetaert08 - DOI 10.1007/978-1-4020-8624-3 found on springer.com"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 3
+comment = 'Bogacki1989 — DOI 10.1016/0893-9659(89)90079-7 found on Crossref (title similarity 0.97); add to the entry as doi="10.1016/0893-9659(89)90079-7".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 12
+comment = 'Brenan96 — DOI 10.1137/1.9781611971224 found on Crossref (title similarity 1.00); add to the entry as doi="10.1137/1.9781611971224".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 21
+comment = 'Brown89 — DOI 10.1137/0910062 found on Crossref (title similarity 0.96); add to the entry as doi="10.1137/0910062".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 30
+comment = 'Butcher1987 — DOI 10.2307/2008600 found on Crossref (title similarity 0.98); add to the entry as doi="10.2307/2008600".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 49
+comment = 'Cash1990 — DOI 10.1145/79505.79507 found on Crossref (title similarity 1.00); add to the entry as doi="10.1145/79505.79507".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 88
+comment = 'Dormand1980 — DOI 10.1016/0771-050x(80)90013-3 found on Crossref (title similarity 1.00); add to the entry as doi="10.1016/0771-050x(80)90013-3".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 98
+comment = 'Dormand1981 — DOI 10.1016/0771-050x(81)90010-3 found on Crossref (title similarity 1.00); add to the entry as doi="10.1016/0771-050x(81)90010-3".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 148
+comment = 'Petzold1983 — DOI 10.1137/0904010 found on Crossref (title similarity 1.00); add to the entry as doi="10.1137/0904010".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 198
+comment = 'ReacTran — DOI 10.32614/cran.package.reactran found on Crossref (title similarity 1.00); add to the entry as doi="10.32614/cran.package.reactran".'
