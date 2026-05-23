@@ -12,10 +12,7 @@ round N).
 """
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
-
-import pytest
 
 from texlint.api import ParsedDocument, ToolConfig, Violation
 from texlint.core.parser import parse_rnw_file
