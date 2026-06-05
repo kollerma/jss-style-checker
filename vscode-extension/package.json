@@ -18,7 +18,12 @@
     "onLanguage:rnoweb",
     "onLanguage:rmd",
     "onCommand:jss-lint.runInit",
-    "onCommand:jss-lint.applyAllFixes"
+    "onCommand:jss-lint.applyAllFixes",
+    "workspaceContains:**/*.tex",
+    "workspaceContains:**/*.ltx",
+    "workspaceContains:**/*.Rnw",
+    "workspaceContains:**/*.Rmd",
+    "workspaceContains:**/*.bib"
   ],
   "contributes": {
     "configuration": {
@@ -32,13 +37,22 @@
         "jssStyleChecker.severityOverrides": {
           "type": "object",
           "default": {},
-          "additionalProperties": {"type": "string", "enum": ["error", "warning", "info"]},
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ]
+          },
           "description": "Per-rule severity override map."
         },
         "jssStyleChecker.ignoreRules": {
           "type": "array",
           "default": [],
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "description": "Rule ids to suppress."
         },
         "jssStyleChecker.codeWidth": {
@@ -48,7 +62,10 @@
         },
         "jssStyleChecker.runOn": {
           "type": "string",
-          "enum": ["save", "change"],
+          "enum": [
+            "save",
+            "change"
+          ],
           "default": "change",
           "description": "When to re-lint (default: on every change)."
         }
@@ -74,6 +91,7 @@
     "publish": "vsce publish"
   },
   "devDependencies": {
+    "@types/node": "^25.9.1",
     "@types/vscode": "^1.85.0",
     "typescript": "^5.0.0"
   },

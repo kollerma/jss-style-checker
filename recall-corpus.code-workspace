@@ -1,0 +1,79 @@
+{
+  // Multi-root workspace for hand-annotating the JSS recall corpus while
+  // dogfooding the spec-012 VS Code extension. Open with:
+  //   code recall-corpus.code-workspace
+  //
+  // Lives at the repo root (not under eval/recall-corpus/) so the
+  // Dev Containers extension can use the repo as the mount root —
+  // workspace folders below need to be subdirectories of the file's
+  // directory, and the LSP needs the repo root to resolve
+  // `.jss-lint.toml` and load the linter source.
+  //
+  // The repo root is included as a folder so the LSP can resolve
+  // `.jss-lint.toml` and the corpus-level annotations. Each paper
+  // directory is a separate root so the explorer surfaces them at
+  // the top level for faster paper-switching.
+  "folders": [
+    { "name": "repo root", "path": "." },
+    { "name": "CARBayesST", "path": "eval/recall-corpus/CARBayesST" },
+    { "name": "clifford", "path": "eval/recall-corpus/clifford" },
+    { "name": "cusp", "path": "eval/recall-corpus/cusp" },
+    { "name": "DBR", "path": "eval/recall-corpus/DBR" },
+    { "name": "deSolve", "path": "eval/recall-corpus/deSolve" },
+    { "name": "mdsOpt", "path": "eval/recall-corpus/mdsOpt" },
+    { "name": "pmclust", "path": "eval/recall-corpus/pmclust" },
+    { "name": "robustlmm", "path": "eval/recall-corpus/robustlmm" },
+    { "name": "rstpm2", "path": "eval/recall-corpus/rstpm2" },
+    { "name": "spacetime", "path": "eval/recall-corpus/spacetime" }
+  ],
+  "settings": {
+    // Interpreter pinning is environment-specific — leave unset here
+    // and configure once per machine:
+    //   - In the devcontainer: VS Code Server runs inside the
+    //     container, so set `jssStyleChecker.python.path` to
+    //     `/home/node/.venv/bin/python` in your USER settings
+    //     (Cmd/Ctrl + ,) or rely on the Python extension's selected
+    //     interpreter once the spec-012 v2 discovery lands.
+    //   - On a host VS Code: set it to the macOS / Linux interpreter
+    //     where you ran `pip install jss-lint[lsp]`.
+    // The extension's `discoverPythonPath()` currently falls back to
+    // literal `python`; without an override on a stock devcontainer
+    // (where only `python3` is on PATH) the LSP spawn fails ENOENT.
+
+    // Re-lint on save, not on every keystroke. Corpus .Rnw files run to
+    // ~2000 LOC; full-document linting on change is noticeable.
+    "jssStyleChecker.runOn": "save",
+
+    // Treat .Rnw as Sweave / R-noweb. VS Code's built-in mapping covers
+    // this when the LaTeX Workshop extension is installed; the explicit
+    // entry keeps the workspace self-contained.
+    "files.associations": {
+      "*.Rnw": "rnoweb",
+      "*.rnw": "rnoweb",
+      "*.Rmd": "rmd",
+      "*.rmd": "rmd"
+    },
+
+    // Annotation files are TOML; pin a wider ruler so long `comment`
+    // strings stay readable.
+    "[toml]": {
+      "editor.rulers": [100]
+    },
+
+    // The corpus paper files are read-only reference material for the
+    // recall workflow — don't auto-format on save (preserves the
+    // original vignette byte-for-byte).
+    "editor.formatOnSave": false
+  },
+  "extensions": {
+    "recommendations": [
+      // The extension under test. Source lives in vscode-extension/;
+      // launch it via the Extension Development Host (F5 from a window
+      // opened on vscode-extension/) and the LSP wires up automatically.
+      "kollerma.jss-style-checker",
+      // Required for .Rnw / .tex syntax highlighting and the rnoweb /
+      // latex language ids the extension's documentSelector keys on.
+      "james-yu.latex-workshop"
+    ]
+  }
+}

@@ -601,7 +601,20 @@ def diff_cmd(
 
 
 @main.command(name="lsp")
-def lsp_cmd() -> None:
+@click.option(
+    "--stdio",
+    "stdio",
+    is_flag=True,
+    default=True,
+    help=(
+        "Communicate over stdio (default). Accepted for compatibility with "
+        "LSP clients that append this flag — notably vscode-languageclient, "
+        "which passes it whenever the server is configured with "
+        "TransportKind.stdio. The server only speaks stdio, so this is a "
+        "no-op."
+    ),
+)
+def lsp_cmd(stdio: bool) -> None:  # noqa: ARG001 — stdio is accepted, not consumed
     """Start the spec-011 LSP server on stdio.
 
     Requires the ``[lsp]`` extra (``pip install "jss-lint[lsp]"``).

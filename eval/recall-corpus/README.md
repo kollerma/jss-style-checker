@@ -70,6 +70,21 @@ the linter would catch given source-only access.
 
 ## Annotation walk-through
 
+> **Tip — VS Code extension dogfood.** Open
+> `recall-corpus.code-workspace` (at the repo root —
+> `code recall-corpus.code-workspace`) to get a pre-configured
+> multi-root workspace with the spec-012 extension's settings baked
+> in (`runOn: "save"`, `.Rnw → rnoweb`). The file lives at the repo
+> root rather than under `eval/recall-corpus/` so the Dev Containers
+> extension can use the repo as the mount root.
+> The extension surfaces every violation as an inline diagnostic with
+> a previewable quick-fix, which is much faster context for the
+> human-review step than the file:line CLI snippet. Labels still get
+> recorded via the CLI (annotations.toml is not editor-aware), so the
+> flow is: read context in the editor, decide TP/FP, write the
+> annotation. Doubles as integration testing for the extension on
+> real corpus papers.
+
 1. Pick the paper directory you intend to annotate. The 10 v1
    directories were scaffolded on 2026-05-07; see the picks
    table at the bottom of this README.

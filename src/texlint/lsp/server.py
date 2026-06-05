@@ -257,6 +257,17 @@ def create_server(
             )
         return actions
 
+    @server.feature(lsp.WORKSPACE_DID_CHANGE_CONFIGURATION)
+    def _did_change_configuration(
+        params: lsp.DidChangeConfigurationParams,  # noqa: ARG001
+    ) -> None:
+        # VS Code (and other clients) push a notification whenever the
+        # user edits settings. Config reload is wired through the file
+        # watcher on `.jss-lint.toml` rather than client-pushed
+        # settings, so we accept-and-ignore — without a registered
+        # handler pygls logs a noisy warning for every settings save.
+        return
+
     @server.feature(lsp.WORKSPACE_DID_CHANGE_WATCHED_FILES)
     def _config_changed(params: lsp.DidChangeWatchedFilesParams) -> None:
         for change in params.changes:
@@ -339,6 +350,12 @@ def main() -> None:  # pragma: no cover - CLI entry
     """Console entry point for ``jss-lint lsp``. Spawns the server
     on stdio and blocks until the editor closes the connection."""
     logging.basicConfig(level=logging.WARNING)
+    # pygls's json-rpc layer logs WARNING on every cancel notification
+    # whose target request has already completed — a race that's
+    # routine in interactive editing (the client cancels a stale code-
+    # action probe just after the server already responded). Suppress
+    # by bumping that logger to ERROR; we still see real errors.
+    logging.getLogger("pygls.protocol.json_rpc").setLevel(logging.ERROR)
     server = create_server()
     server.start_io()
 

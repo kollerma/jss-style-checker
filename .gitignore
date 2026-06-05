@@ -197,3 +197,8 @@ eval/orphans/
 /eval/.iteration-running
 
 examples/jss5342-versions/
+
+# vscode-extension (spec 012) — npm build artifacts.
+# `package-lock.json` IS tracked (reproducible installs).
+vscode-extension/node_modules/
+vscode-extension/out/

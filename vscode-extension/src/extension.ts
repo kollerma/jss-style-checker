@@ -9,7 +9,7 @@ import * as path from "path";
 import * as cp from "child_process";
 import {
   workspace,
-  window,
+window,
   commands,
   ExtensionContext,
   StatusBarItem,
@@ -59,6 +59,13 @@ export function activate(context: ExtensionContext): void {
       { scheme: "file", language: "tex" },
       { scheme: "file", language: "rnoweb" },
       { scheme: "file", language: "rmd" },
+      // Pattern fallback: bind by filename so the LSP still lints
+      // when no sibling LaTeX language pack is installed (the file
+      // resolves as `plaintext`, but the extension still activates
+      // and diagnostics flow). Spec 012 v1 originally relied on
+      // LaTeX Workshop registering the `rnoweb` / `latex` ids; this
+      // pattern entry makes the extension self-sufficient.
+      { scheme: "file", pattern: "**/*.{tex,ltx,Rnw,rnw,Rmd,rmd,bib}" },
     ],
     synchronize: {
       configurationSection: "jssStyleChecker",
@@ -102,7 +109,16 @@ export function activate(context: ExtensionContext): void {
   );
   refreshStatus();
 
-  // Commands.
+  // Commands. Only register ids the LSP server does NOT declare in
+  // its `executeCommandProvider.commands` capability — vscode-
+  // languageclient auto-registers a VS Code command for each of
+  // those, and registering them again here would throw "command X
+  // already exists", crashing the LSP startup.
+  //
+  // Server-side (auto-registered by vscode-languageclient):
+  //   - jss-lint.applyAllFixes
+  // Client-side (must register here):
+  //   - jss-lint.runInit
   context.subscriptions.push(
     commands.registerCommand("jss-lint.runInit", async () => {
       const folder = workspace.workspaceFolders?.[0];
@@ -123,14 +139,6 @@ export function activate(context: ExtensionContext): void {
           window.showInformationMessage("jss-lint: wrote .jss-lint.toml");
         }
       );
-    }),
-    commands.registerCommand("jss-lint.applyAllFixes", async () => {
-      if (!client) {
-        return;
-      }
-      await client.sendRequest("workspace/executeCommand", {
-        command: "jss-lint.applyAllFixes",
-      });
     })
   );
 }
