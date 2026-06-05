@@ -59,21 +59,23 @@ for a developer walkthrough see
 The `jss` journal ships with the package; third-party packages can register
 additional journals with zero edits to this repo (Constitution §IV).
 
-Foundation-step smoke rules in the `jss` journal:
+The `jss` journal ships **58 rules** across 15 categories — full
+catalogue with descriptions, severity, JSS-guide §, example
+violations, and example fixes:
 
-| Rule id | Shape | Description |
-|---|---|---|
-| `JSS-CITE-001` | LaTeX AST | `\emph{bibkey}` used instead of `\cite{bibkey}` |
-| `JSS-BIB-001` | BibTeX | bibliography entry missing a `year` field |
-| `JSS-SRC-001` | Source scan | source line exceeds `code_width` (default 80) |
-| `JSS-PARSE-000` | Parser | non-fatal parse failure in a `.tex` or `.bib` file |
+→ [`specs/003-jss-rule-catalogue/catalogue.md`](specs/003-jss-rule-catalogue/catalogue.md)
 
-The full 53-rule JSS catalogue, `--fix` support, and `.Rnw`/`.Rmd`
-dispatch land in later steps. The `eval-jss` precision harness (Step 2,
-spec 002) is shipped — it enforces Constitution §VI empirically against
-the pinned corpus under `examples/` and the manifest at
-`eval/corpus-manifest.csv`. Precision trends land in `eval/report.csv`
-as an append-only history; diff it with `git log -p eval/report.csv`.
+The catalogue is generated from `catalogue.yaml`; edit the YAML
+and re-render with `python -m tools.render_catalogue`. From the
+CLI, `jss-lint explain` lists every rule one-line at a time;
+`jss-lint explain <RULE-ID>` shows the full explanation for one
+rule.
+
+The `eval-jss` precision harness (spec 002) is shipped — it
+enforces Constitution §VI empirically against the pinned corpus
+under `examples/` and the manifest at `eval/corpus-manifest.csv`.
+Precision trends land in `eval/report.csv` as an append-only
+history; diff it with `git log -p eval/report.csv`.
 
 ## Development
 
