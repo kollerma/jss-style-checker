@@ -744,6 +744,56 @@ corpus carrier so the change can be test-driven from real text.
       uncaptioned, unreferenced figure — visible to reviewers but
       not catastrophic at compile time.
 
+- [ ] **JSS-PRE-012 — Plain* fields match the markup-stripped form
+      of their non-Plain counterparts**. Three macro pairs that JSS
+      requires to be content-equivalent (modulo LaTeX markup):
+
+      - `\title{}` ↔ `\Plaintitle{}`
+      - `\author{}` ↔ `\Plainauthor{}`
+      - `\Keywords{}` ↔ `\Plainkeywords{}`
+
+      Existing adjacent rules:
+      - `JSS-PRE-003` / `-007` / `-008` ensure the Plain* macro
+        is *present* when the non-Plain form contains markup.
+      - `JSS-PRE-006` ensures the Plain* form contains no markup.
+
+      What no rule checks: that the *content* matches. The PDF
+      metadata fields (`/Title`, `/Author`, `/Keywords`) are built
+      verbatim from the Plain* macros, so divergence means the
+      metadata silently disagrees with what readers see on the
+      page. Common shapes that slip through:
+
+      - Plain* updated for an early draft and not refreshed when
+        the visible title / authors / keywords changed.
+      - Punctuation or spacing differences (commas, en-dashes).
+      - Plain* missing one of the keywords from the visible list.
+
+      **Detection**: for each macro pair `(M, Plain<M>)`, build the
+      markup-stripped form of `M`:
+
+      1. Replace `\proglang{X}` / `\pkg{X}` / `\code{X}` / `\fct{X}`
+         / `\class{X}` etc. with their argument `X`.
+      2. Strip any remaining `\<macro>` tokens with no arguments.
+      3. Collapse whitespace, normalise dashes and non-breaking
+         spaces.
+
+      Compare to the equivalently-normalised `Plain<M>` value. For
+      `\Keywords{}` ↔ `\Plainkeywords{}` the comparison is on the
+      comma-separated *set* of keywords (order-insensitive); for
+      `\title{}` and `\author{}` it's on the full normalised string.
+      Fire one violation per disagreeing pair, on the line where
+      `Plain<M>` is defined.
+
+      **Carriers**: not yet observed (no carrier confirmed in the
+      v1 corpus during annotation review — would need a sweep
+      across all 10 papers). Still worth implementing
+      preventatively: the failure mode is silent and only visible
+      when a reader inspects PDF metadata.
+
+      **Severity**: warning.
+      **Authority**: jss.cls Plain* semantics (see PRE-003/007/008
+      authority references).
+
 - [ ] **JSS-PRE-011 — `\Plainauthor{}` (and `\Plainkeywords{}`) use
       comma as separator, not `and` / `\And`**. The JSS template
       explicitly notes "comma-separated" alongside `\Plainauthor{}`
