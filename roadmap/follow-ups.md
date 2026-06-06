@@ -698,6 +698,59 @@ corpus carrier so the change can be test-driven from real text.
       **Authority**: §5.1 Bibliography (entry-type semantics) +
       CRAN bib convention.
 
+- [ ] **JSS-STRUCT-008 — appendix uses `\appendix` + plain
+      `\section{}`, not `\section*{}` with hard-coded letters**.
+      The JSS author template (`docs/jss-template/article.Rnw`)
+      prescribes:
+
+      ```latex
+      \appendix
+
+      \section{Background}     % renders as "A. Background"
+      \section{Algorithm}      % renders as "B. Algorithm"
+      \subsection{Notation}    % renders as "A.1. Notation"
+      ```
+
+      The `\appendix` macro switches subsequent `\section`
+      numbering from arabic to letters automatically; unstarred
+      `\section{}` then auto-generates the label, the ToC entry,
+      the PDF bookmark, and a `\ref`-able anchor.
+
+      What this rule flags is the manual workaround pattern:
+      `\section*{A. Background}` / `\section*{Appendix A: ...}` /
+      similar. Hard-coded letters in the title body bypass
+      LaTeX's auto-numbering, lose the ToC entry, lose the PDF
+      bookmark, lose `\ref` resolution, and need manual
+      renumbering when sections are added or reordered.
+
+      **Carrier**: rstpm2 `multistate.Rnw` — appendix sections
+      use `\section*{}` with hard-coded "A.", "B.", etc. instead
+      of `\appendix` + `\section{}`. Confirm carrier line numbers
+      when annotation is added.
+
+      **Detection**: after the bibliography (or after the first
+      `\bibliography{}` macro), flag any `\section*{...}` whose
+      title body matches one of:
+
+      - `^[A-Z]\.\s` (e.g. "A. Background")
+      - `^[A-Z]:\s` (e.g. "A: Background")
+      - `^Appendix\s+[A-Z]?[\.:]?` (e.g. "Appendix A:", "Appendix")
+
+      AND the document does not contain `\appendix` anywhere
+      (the `\appendix`-then-`\section{}` form is the correct
+      pattern). Severity rises if both signals are present
+      (manual letter + no `\appendix`); fires at info on either
+      signal alone.
+
+      **Fix suggestion**: replace the starred + hard-coded form
+      with `\appendix` (once, before the first appendix section)
+      followed by plain `\section{<title without letter>}` for
+      each appendix section.
+
+      **Severity**: warning.
+      **Authority**: §2.2 Structure + jss.cls / article.tex
+      appendix convention.
+
 - [ ] **JSS-STRUCT-007 — figure-producing content must be wrapped in
       a `figure` environment**. JSS expects every figure to live in
       `\begin{figure}...\end{figure}` with `\caption{}` and `\label{}`
