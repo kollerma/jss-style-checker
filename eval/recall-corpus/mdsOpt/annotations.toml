@@ -4,37 +4,876 @@
 # record every JSS-guide violation you spot. Identity tuple is
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
-#
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 94 violations across 18 rules.
-# Rules fired: JSS-CITE-002, JSS-CITE-003, JSS-CODE-001, JSS-CODE-002, JSS-CODE-003, JSS-HOUSE-001, JSS-HOUSE-003, JSS-MARKUP-001, JSS-OPER-003, JSS-PRE-006, JSS-REFS-003, JSS-REFS-004, JSS-REFS-005, JSS-REFS-007, JSS-TYPO-001, JSS-XREF-001, JSS-XREF-002, JSS-XREF-004
-# Manuscript: mdsOpt.ltx (1273 loc)
-# Sibling .bib(s): mdsOpt.bib
 
 [meta]
 paper_id = "mdsOpt"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
+annotator = "Manuel Koller"
+date = "2026-06-07"
 notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
 """
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "mdsOpt.ltx"
-# line = 42
-# comment = "<optional rationale>"
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 1
+comment = "Billard+Diday:2006 - DOI 10.1002/9780470090183 exists but is missing from entry"
 
-# (no violations recorded yet)
+[[violations]]
+rule_id = "JSS-HOUSE-002"
+file = "mdsOpt.bib"
+line = 21
+comment = 'Borg+Groenen:2005 - "2nd edition" should be just "2nd" (BibTex adds "edition")'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "mdsOpt.bib"
+line = 21
+comment = "Borg+Groenen:2005 - publisher Springer Science+Business Media should be Springer-Verlag"
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "mdsOpt.bib"
+line = 31
+comment = "Borg+Groenen+Mair:2013 - publisher Springer should be Springer-Verlag"
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "mdsOpt.bib"
+line = 40
+comment = "Borg+Groenen+Mair:2018 - publisher Springer should be Springer-Verlag"
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 71
+comment = 'Leeuw+Mair:2009 — in title, "SMACOF in R" should be "\pkg{SMACOF} in \proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 195
+comment = 'Mair+Leeuw+Borg+Groenen:2019 — DOI 10.32614/CRAN.package.smacof exists but is missing'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 195
+comment = 'Mair+Leeuw+Borg+Groenen:2019 — in title, "SMACOF" and "R" should be "\pkg{SMACOF}" and "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 203
+comment = 'Milligan+Cooper:1988 — DOI 10.1007/bf01897163 exists but is missing'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 203
+comment = 'R:2019 — DOI 10.32614/r.manuals exists but is missing'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 203
+comment = 'Milligan+Cooper:1988 — DOI 10.1007/bf01897163 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/bf01897163".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 232
+comment = 'R:2019 - "R" should be "\proglang{R}" multiple times'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 241
+comment = 'Terada+Groenen:2015 — DOI 10.32614/CRAN.package.smd exists but is missing'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 241
+comment = 'Terada+Groenen:2015 - "smds" should be "\pkg{smds}" and "R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 249
+comment = "Walesiak+Dudek:2017 — DOI 10.21307/stattrans-2016-084 exists but is missing"
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 249
+comment = 'Walesiak+Dudek:2017 — "R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "mdsOpt.bib"
+line = 249
+comment = "Walesiak+Dudek:2017 - journal is not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 259
+comment = "Walesiak+Dudek:2019 — DOI 10.32614/CRAN.package.clusterSim exists but is missing"
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 259
+comment = 'Walesiak+Dudek:2019 — "clusterSim" should be "\pkg{clusterSim}" and "R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 312
+comment = "Takane:2007 — DOI 10.1016/s0169-7161(06)26011-5 exists but is missing"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 323
+comment = 'Adams:1995 — DOI 10.1007/bf00419633 exists but is missing'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 323
+comment = 'Adams:1995 — DOI 10.1007/bf00419633 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/bf00419633".'
+
+[[violations]]
+rule_id = "JSS-REFS-005"
+file = "mdsOpt.bib"
+line = 323
+comment = 'Adams:1995 — "Psychological Res." should not be abbreviated'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 333
+comment = "Walesiak:2018 — DOI 10.21307/stattrans-2018-036 exists but is missing"
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "mdsOpt.bib"
+line = 333
+comment = "Walesiak:2018 - journal is not in title case"
+
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "mdsOpt.ltx"
+line = 15
+comment = "Latex package graphicx is already included in jss.cls"
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "mdsOpt.ltx"
+line = 27
+comment = '''\title{mdsOpt -- ...} — "mdsOpt" is a package name and should be wrapped \pkg{mdsOpt}. (Linter incorrectly fires CAP-001 here because the heuristic doesn't recognise unwrapped package names; the title-case "violation" disappears once the \pkg{} wrap goes in.)'''
+
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 43
+comment = 'Plain `R` (programming language) should be wrapped `\proglang{R}` (JSS MARKUP-001).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 45
+comment = 'Plain `R` (programming language) should be wrapped `\proglang{R}` (JSS MARKUP-001).'
+
+
+[[violations]]
+rule_id = "JSS-CAP-004"
+file = "mdsOpt.ltx"
+line = 65
+comment = '"multidimensional scaling" should be "Multidimensional scaling"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 65
+comment = 'Plain `R` (programming language) should be wrapped `\proglang{R}` (JSS MARKUP-001).'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 72
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 74
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 83
+comment = '`(\cite{Takane:2007})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 83
+comment = '`(\cite{Pinkley:2005})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 83
+comment = '`(\cite{Embleton:2013})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 84
+comment = '`(\cite{Cooper:1983})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 84
+comment = '`(\cite{Marcussen:2014})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 84
+comment = '`(\cite{Adams:1995})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 98
+comment = 'Display equation has blank line(s) immediately before \begin{} or after \end{} — JSS wants `%` to suppress paragraph break unless the equation body ends a sentence.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 109
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 121
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 121
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "mdsOpt.ltx"
+line = 121
+comment = '`\eqref{eq:1}` / `(\ref{eq:1})` — JSS canonical form is `Equation~\ref{eq:1}` (capitalised, non-parenthesised).'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 131
+comment = 'Display equation has blank line(s) immediately after \end{} — JSS wants `%` to suppress paragraph break unless the equation body ends a sentence.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 131
+comment = 'Numbered equation missing \label{}'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 156
+comment = 'Display equation has blank line(s) immediately after \end{} — JSS wants `%` to suppress paragraph break unless the equation body ends a sentence.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 156
+comment = 'Numbered equation missing \label{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 175
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 179
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 183
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 200
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 205
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 205
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 207
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 212
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 212
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 214
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 218
+comment = '`(\cite{Borg+Mair:2017})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 218
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 218
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 235
+comment = 'Language name "R" should be wrapped \proglang{R}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 236
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 236
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 237
+comment = '`(\cite{Terada+Groenen:2015})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 237
+comment = 'Language name "R" should be wrapped \proglang{R}.'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "mdsOpt.ltx"
+line = 259
+comment = 'First mention of \pkg{clusterSim} lacks an accompanying citation in the same paragraph.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 261
+comment = '`(\cite{R:2019})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 261
+comment = 'Plain `R` (programming language) should be wrapped `\proglang{R}` (JSS MARKUP-001).'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 271
+comment = '`(\cite{R:2019})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 271
+comment = 'Plain `R` (programming language) should be wrapped `\proglang{R}` (JSS MARKUP-001).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 289
+comment = 'Language name "R" should be wrapped \proglang{R}.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 289
+comment = 'Figure / table caption does not end with a period: "\caption{Relationships between \pkg{mdsOpt} and other R packages}\label{tab:1}".'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 306
+comment = 'Language name "R" should be wrapped \proglang{R}.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 313
+comment = '"e.g." not followed by a comma.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 324
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "mdsOpt.ltx"
+line = 327
+comment = '`\eqref{eq:4}` / `(\ref{eq:4})` — JSS canonical form is `Equation~\ref{eq:4}` (capitalised, non-parenthesised).'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 328
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 330
+comment = 'Display equation has blank line(s) immediately before \begin{} and after \end{} — JSS wants `%` to suppress paragraph break unless the equation body ends a sentence.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 432
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 432
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 432
+comment = 'Figure / table caption does not end with a period: "\caption{Normalization methods (based on \cite{Jajuga+Walesiak:2000}; \cite{Wale".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 436
+comment = '`(\cite{Milligan+Cooper:1988})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 440
+comment = '`(\cite{Walesiak+Dudek:2019})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 449
+comment = '`(\cite{Mlodak:2014})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 495
+comment = 'Figure / table caption does not end with a period: "\caption{Distance measures for interval-valued data (based on \cite{Billard+Dida".'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 502
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 511
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 583
+comment = 'Figure / table caption does not end with a period: "\caption{The groups of normalization methods resulting in identical distance mat".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 584
+comment = '`(\cite{Walesiak+Dudek:2017})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 599
+comment = '"e.g." not followed by a comma; JSS wants "e.g.,".'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 603
+comment = 'Display equation has blank line(s) immediately after \end{} — JSS wants `%` to suppress paragraph break unless the equation body ends a sentence.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 603
+comment = 'Numbered equation missing \label{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 607
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 615
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 619
+comment = 'Display equation has blank line(s) immediately after \end{} — JSS wants `%` to suppress paragraph break unless the equation body ends a sentence.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 619
+comment = 'Numbered equation missing \label{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 634
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 634
+comment = 'Citation inside parens (bracket-in-bracket); drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 639
+comment = 'Display equation has blank line(s) immediately after \end{} — JSS wants `%` to suppress paragraph break unless the equation body ends a sentence.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 639
+comment = 'Numbered equation missing \label{}'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 648
+comment = 'Display equation has blank line(s) immediately before \begin{} and after \end{} — JSS wants `%` to suppress paragraph break unless the equation body ends a sentence.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 648
+comment = 'Numbered equation missing \label{}'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 745
+comment = '`library(mdsOpt)` should be `library("mdsOpt")` (JSS-CODE-002 wants the first argument quoted).'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 746
+comment = '`data(data_lower_silesian)` should be `data("data_lower_silesian")` (JSS-CODE-002 wants the first argument quoted).'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 754
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 767
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 784
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 804
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 813
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 823
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 824
+comment = 'Verbatim / CodeInput block contains a `#` comment; JSS wants comments in surrounding LaTeX prose, not in the code block.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 851
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 852
+comment = 'Verbatim / CodeInput block contains a `#` comment; JSS wants comments in surrounding LaTeX prose, not in the code block.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 866
+comment = 'Figure / table caption does not end with a period: "\caption{T{he values of } $\mathit{Stress}\text{{}-}1$ {fit measure }and $\mat".'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 874
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 875
+comment = '`library(mdsOpt)` should be `library("mdsOpt")` (JSS-CODE-002 wants the first argument quoted).'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 876
+comment = '`data(data_lower_silesian)` should be `data("data_lower_silesian")` (JSS-CODE-002 wants the first argument quoted).'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 881
+comment = 'Verbatim / CodeInput block contains a `#` comment; JSS wants comments in surrounding LaTeX prose, not in the code block.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 905
+comment = 'Figure / table caption does not end with a period: "\caption{The results of multidimensional scaling (procedure 117) of 31 objects".'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 922
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 927
+comment = 'Verbatim / CodeInput block contains a `#` comment; JSS wants comments in surrounding LaTeX prose, not in the code block.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 942
+comment = 'Figure / table caption does not end with a period: "\caption{The results of multidimensional scaling (procedure 13) of 31 objects\".'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1002
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 1003
+comment = '`library(mdsOpt)` should be `library("mdsOpt")` (JSS-CODE-002 wants the first argument quoted).'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1012
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1024
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1058
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1068
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1079
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 1080
+comment = 'Verbatim / CodeInput block contains a `#` comment; JSS wants comments in surrounding LaTeX prose, not in the code block.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1103
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 1104
+comment = 'Verbatim / CodeInput block contains a `#` comment; JSS wants comments in surrounding LaTeX prose, not in the code block.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 1117
+comment = 'Figure / table caption does not end with a period: "\caption{ T{he values of } $I\text{{}-}\mathit{Stress}$ {fit measure }and".'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 1128
+comment = '`library(smds)` should be `library("smds")` (JSS-CODE-002 wants the first argument quoted).'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1136
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 1137
+comment = '`library(mdsOpt)` should be `library("mdsOpt")` (JSS-CODE-002 wants the first argument quoted).'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 1154
+comment = 'Verbatim / CodeInput block contains a `#` comment; JSS wants comments in surrounding LaTeX prose, not in the code block.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 1182
+comment = 'Figure / table caption does not end with a period: "\caption{ The results of multidimensional scaling (procedure 5) of 18 objects\".'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1198
+comment = 'Code chunk has missing spaces around operators or after commas.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 1204
+comment = 'Verbatim / CodeInput block contains a `#` comment; JSS wants comments in surrounding LaTeX prose, not in the code block.'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 1222
+comment = 'Figure / table caption does not end with a period: "\caption{ The results of multidimensional scaling (procedure 5) of 18 objects\".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 1267
+comment = '`(\cite{Leeuw+Mair:2015})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-XREF-001"
+file = "mdsOpt.ltx"
+line = 313
+comment = '"(see Table 3)" — bare numerical reference; should use "Table~\ref{tab:3}".'
