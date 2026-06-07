@@ -403,6 +403,41 @@ corpus carrier so the change can be test-driven from real text.
       checking the package-idiom exemption.
       **Severity**: existing rule severity (warning).
 
+- [ ] **`JSS-CAP-001` should defer when the first word of the
+      title is an unwrapped package name** (`src/texlint/journals/jss/rules/capitalization.py`).
+      Mirror the `_starts_with_package_idiom` exemption that
+      `JSS-REFS-006` already carries for bib titles. When the
+      manuscript `\title{}` opens with a lowercase token that
+      matches a known R package name, the title-case heuristic
+      should NOT fire — the real defect is missing `\pkg{}`
+      wrapping, which `JSS-MARKUP-002` handles. Letting both
+      fire produces:
+
+      - one CAP-001 hit that's editorially wrong (the title-case
+        "violation" disappears once `\pkg{}` goes in)
+      - and either no MARKUP-002 hit at all (because the linter's
+        MARKUP-002 scope misses titles), or a duplicate annotation
+        burden on the annotator.
+
+      **Carrier**: mdsOpt `mdsOpt.ltx:27` —
+      `\title{mdsOpt -- Searching for Optimal MDS Procedure
+      \newline for Metric and Interval-Valued Data}` (the linter
+      fires CAP-001; the real defect is missing `\pkg{mdsOpt}`).
+
+      Same shape as the existing `JSS-REFS-006` exemption applied
+      to bib titles where the package name leads (e.g.
+      `{robustlmm}: An R Package for ...`) — the rule should
+      reuse that helper.
+
+      **Fix**: in `check_jss_cap_001`, before flagging an
+      uncapitalised first word, check whether it matches a
+      package-name entry in the `MARKUP-002` recognised-set. If
+      so, defer (the defect belongs to MARKUP-002, not CAP-001).
+      Pair with the existing MARKUP-002 scope follow-up so the
+      defect is surfaced by the correct rule.
+
+      **Severity**: existing rule severity (warning).
+
 - [ ] **`JSS-CAP-003` is over-eager on technical identifiers in
       captions** (`src/texlint/journals/jss/rules/capitalization.py`).
       Captions of the form `Convergence simulation study, N/N case,
