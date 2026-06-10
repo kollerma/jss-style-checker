@@ -173,6 +173,81 @@ class TestRunSkipped:
         assert report.compliance_percentage == 100.0
 
 
+class TestRunCrashIsolation:
+    def _crashing_rule(self, rule_id: str, *, category: str = "x") -> Rule:
+        def _check(doc, cfg):
+            yield _v(rule_id=rule_id)
+            raise RuntimeError("boom")
+
+        return Rule(
+            id=rule_id,
+            category=category,
+            severity=Severity.ERROR,
+            message_template="",
+            authority="",
+            check=_check,
+            formats=frozenset({"tex"}),
+        )
+
+    def test_crashing_rule_reported_skipped_others_still_run(
+        self, tmp_path: Path
+    ):
+        doc = _make_doc(tmp_path, "a.tex")
+        tex = doc.tex_files[0]
+        bad = self._crashing_rule("JSS-BAD-001")
+        good = _rule("JSS-GOOD-001", fires_on=(str(tex.path),))
+        journal = _Journal(
+            "j", (RuleCategory(id="x", title="X", rules=(bad, good)),)
+        )
+        report = run(ToolConfig(), doc, journal)
+        # The good rule's finding survives; the crashing rule's partial
+        # output is discarded (buffered, not committed).
+        assert [v.rule_id for v in report.violations] == ["JSS-GOOD-001"]
+        reasons = {s.rule_id: s.reason for s in report.skipped_rules}
+        assert "JSS-BAD-001" in reasons
+        assert reasons["JSS-BAD-001"].startswith("internal error: RuntimeError")
+
+    def test_crashing_rule_does_not_count_as_applied(self, tmp_path: Path):
+        doc = _make_doc(tmp_path, "a.tex")
+        bad = self._crashing_rule("JSS-BAD-001")
+        journal = _Journal(
+            "j", (RuleCategory(id="x", title="X", rules=(bad,)),)
+        )
+        report = run(ToolConfig(), doc, journal)
+        assert report.categories[0].status == CategoryStatus.SKIPPED
+        assert report.categories[0].rules_applied == 0
+        assert report.violations == ()
+
+    def test_crashing_check_project_reported_skipped(self, tmp_path: Path):
+        from texlint.api import ParsedProject
+
+        doc = _make_doc(tmp_path, "a.tex")
+
+        def _bad_project(project):
+            raise ValueError("project boom")
+
+        bad = Rule(
+            id="JSS-PROJ-001",
+            category="x",
+            severity=Severity.ERROR,
+            message_template="",
+            authority="",
+            check=None,
+            check_project=_bad_project,
+        )
+        journal = _Journal(
+            "j", (RuleCategory(id="x", title="X", rules=(bad,)),)
+        )
+        project = ParsedProject(
+            root=doc.tex_files[0].path,
+            documents=(doc,),
+            tree={doc.tex_files[0].path: ()},
+        )
+        report = run(ToolConfig(), project, journal)
+        reasons = {s.rule_id: s.reason for s in report.skipped_rules}
+        assert reasons["JSS-PROJ-001"].startswith("internal error: ValueError")
+
+
 class TestRunParseError:
     def test_parse_error_adds_synthetic_parse_category_excluded_from_percentage(
         self, tmp_path: Path
