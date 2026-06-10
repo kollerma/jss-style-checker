@@ -20,20 +20,11 @@ from pylatexenc.latexwalker import (
     LatexMathNode,
 )
 
-_VERBATIM_ENVS: frozenset[str] = frozenset(
-    {
-        "verbatim",
-        "Verbatim",
-        "Code",
-        "CodeInput",
-        "CodeOutput",
-        "Sinput",
-        "Soutput",
-        "Scode",
-        "Schunk",
-        "CodeChunk",
-    }
-)
+from texlint.api import VERBATIM_ENVS
+
+# Shared with the parser's special-char neutraliser via texlint.api —
+# any env the parser neutralises is also non-prose for rule purposes.
+_VERBATIM_ENVS: frozenset[str] = VERBATIM_ENVS
 
 _VERBATIM_MACROS: frozenset[str] = frozenset({"verb", "code"})
 
@@ -177,6 +168,28 @@ def _collect_cited_keys(doc: Any) -> tuple[set[str], bool]:
                 elif key:
                     keys.add(key)
     return keys, include_all
+
+
+def _collect_macro_arg_texts(doc: Any, macroname: str) -> set[str]:
+    """Collect the first braced-arg text of every ``\\<macroname>{...}``
+    across all tex-like islands in ``doc``.
+
+    Used e.g. to learn the document's own package vocabulary from its
+    ``\\pkg{...}`` usage: a paper that wraps ``\\pkg{flexsurv}`` anywhere
+    has told us "flexsurv" is a package name, which beats any global
+    curated list (and any filesystem-path heuristic).
+    """
+    texts: set[str] = set()
+    for tex in doc.all_tex_like():
+        for parent, idx, node in _iter_with_parent(tex.nodes):
+            if not isinstance(node, LatexMacroNode):
+                continue
+            if node.macroname != macroname:
+                continue
+            text = _macro_args_text(node, parent, idx)
+            if text:
+                texts.add(text)
+    return texts
 
 
 def _iter_referenced_entries(doc: Any) -> Iterator[tuple[Any, Any]]:

@@ -99,6 +99,24 @@ class TestMarkup001:
         )
         assert run_rule(jss_markup_001, src) == []
 
+    def test_skip_lstlisting(self, run_rule):
+        # Regression: lstlisting was neutralised by the parser but
+        # missing from the rules' verbatim set, so MARKUP-001/002/003
+        # fired (with "safe" auto-fixes) inside code listings.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{lstlisting}" "\n"
+            r"library(zoo)" "\n"
+            r'result <- Python.call("foo")' "\n"
+            r"x = data.frame()" "\n"
+            r"\end{lstlisting}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+        assert run_rule(jss_markup_002, src) == []
+        assert run_rule(jss_markup_003, src) == []
+
     def test_skip_filename_extension(self, run_rule):
         # `foo.R` / `algo.tex` / `data.table.R` — the trailing letter
         # is a file extension, not a bare language reference.

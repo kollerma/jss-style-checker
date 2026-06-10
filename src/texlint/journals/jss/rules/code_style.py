@@ -20,15 +20,21 @@ from pylatexenc.latexwalker import (
     LatexSpecialsNode,
 )
 
-from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import (
+    CODE_DISPLAY_ENVS,
+    Fix,
+    ParsedDocument,
+    Rule,
+    ToolConfig,
+    Violation,
+)
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
-# Envs where code lives.
-_CODE_ENVS: frozenset[str] = frozenset(
-    {"verbatim", "Verbatim", "Code", "CodeInput", "CodeOutput",
-     "Sinput", "Soutput", "Scode", "Schunk", "CodeChunk"}
-)
+# Envs where code lives — the shared code-display subset of the
+# verbatim contract (LISTING_ENVS like lstlisting are non-prose but
+# not JSS code-display, so CODE-* does not lint them).
+_CODE_ENVS: frozenset[str] = CODE_DISPLAY_ENVS
 
 # Match ``#`` (or ``##``, ``###``) followed by at least one space then
 # non-whitespace content — the shape of an explanatory R / shell /

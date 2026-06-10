@@ -27,6 +27,7 @@ import bibtexparser
 from pylatexenc.latexwalker import LatexWalker, LatexWalkerError
 
 from texlint.api import (
+    VERBATIM_ENVS,
     ParsedBibFile,
     ParsedRmdFile,
     ParsedTexFile,
@@ -94,9 +95,18 @@ def _neutralize_verbatim_args(src: str) -> str:
 # either math-mode-entry or environment-mismatch errors. Pre-substitute
 # special chars to ``?`` so the body parses as innocuous chars while
 # line / column offsets stay source-authoritative.
+#
+# The environment list is the shared ``texlint.api.VERBATIM_ENVS``
+# contract — the same set rule modules use to skip non-prose content —
+# so the two can never drift apart again. Longest-first alternation so
+# ``verbatim*`` is preferred over its ``verbatim`` prefix.
 _VERBATIM_ENVS_RE = re.compile(
-    r"(\\begin\{(?P<name>Sinput|Soutput|Scode|Code|CodeInput|CodeOutput"
-    r"|CodeChunk|alltt|tabbing|verbatim\*|lstlisting)\}.*?\\end\{(?P=name)\})",
+    r"(\\begin\{(?P<name>"
+    + "|".join(
+        re.escape(name)
+        for name in sorted(VERBATIM_ENVS, key=lambda n: (-len(n), n))
+    )
+    + r")\}.*?\\end\{(?P=name)\})",
     re.DOTALL,
 )
 

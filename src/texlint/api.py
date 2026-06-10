@@ -22,6 +22,53 @@ class Severity(str, Enum):
     INFO = "info"
 
 
+# ---------------------------------------------------------------------------
+# Verbatim-environment contract
+# ---------------------------------------------------------------------------
+#
+# Single source of truth for "this environment's body is code / literal
+# text, not prose". Two consumers MUST stay in sync, which is why the
+# sets live here on the public surface:
+#
+#   * ``texlint.core.parser`` neutralises TeX-special characters inside
+#     these environments before strict parsing (length-preserving), and
+#   * rule modules treat content inside them as non-prose (skip
+#     prose-style checks; CODE-* / WIDTH-* rules target the
+#     ``CODE_DISPLAY_ENVS`` subset).
+#
+# Historical note: these used to be two hand-maintained lists that
+# drifted apart — ``lstlisting`` was neutralised by the parser but not
+# recognised as verbatim by the rules, so markup rules fired (and
+# auto-fixed!) inside code listings.
+
+#: Sweave / knitr / jss.cls code-display environments. CODE-* and
+#: WIDTH-* rules lint the *content* of these.
+CODE_DISPLAY_ENVS: frozenset[str] = frozenset(
+    {
+        "verbatim",
+        "Verbatim",
+        "Code",
+        "CodeInput",
+        "CodeOutput",
+        "Sinput",
+        "Soutput",
+        "Scode",
+        "Schunk",
+        "CodeChunk",
+    }
+)
+
+#: Other literal-body environments: their content is not prose, but it
+#: is not JSS code-display either (so CODE-* / WIDTH-* do not apply).
+LISTING_ENVS: frozenset[str] = frozenset(
+    {"lstlisting", "alltt", "tabbing", "verbatim*"}
+)
+
+#: Every environment whose body must be neutralised by the parser and
+#: skipped by prose rules.
+VERBATIM_ENVS: frozenset[str] = CODE_DISPLAY_ENVS | LISTING_ENVS
+
+
 class CategoryStatus(str, Enum):
     PASS = "PASS"
     FAIL = "FAIL"
