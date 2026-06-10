@@ -66,6 +66,45 @@ class TestCap001:
         src = r"\title{regression Models in R}"
         assert len(run_rule(jss_cap_001, src)) == 1
 
+    def test_title_own_package_first_word_silent(self, run_rule):
+        # The conventional JSS title opens with the paper's own package
+        # name in its native lowercase casing. The document wrapping
+        # the same name in \pkg{} elsewhere is the signal — NOT the
+        # filesystem path (the old cran_<name>/vignettes/ heuristic
+        # never matched real submissions).
+        src = (
+            r"\title{flexsurv: A Platform for Parametric Survival "
+            r"Modeling}" "\n"
+            r"\begin{document}" "\n"
+            r"The \pkg{flexsurv} package does things." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_cap_001, src) == []
+
+    def test_title_own_package_with_digits_silent(self, run_rule):
+        # Digit-bearing package names (ggplot2-style) must compare
+        # with digits intact.
+        src = (
+            r"\title{ggplot2: Elegant Graphics for Data Analysis}" "\n"
+            r"\begin{document}" "\n"
+            r"We extend \pkg{ggplot2} here." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_cap_001, src) == []
+
+    def test_title_lowercase_first_word_without_pkg_corroboration_fires(
+        self, run_rule
+    ):
+        # A lowercase first word that the document never wraps in
+        # \pkg{} anywhere is a plain title-case failure.
+        src = (
+            r"\title{regression: A Platform for Survival Modeling}" "\n"
+            r"\begin{document}" "\n"
+            r"Some prose." "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_cap_001, src)) == 1
+
     def test_title_leading_markup_hyphen_compound_silent(self, run_rule):
         # Reviewer-confirmed FP from cran_ReacTran: ``\proglang{R}-package``
         # is a hyphen-glued compound; the plain-text strip leaves

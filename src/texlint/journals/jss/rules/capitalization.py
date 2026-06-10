@@ -329,24 +329,38 @@ def _word_letters_lower(word: str) -> str:
     return re.sub(r"[^A-Za-z]", "", word).lower()
 
 
-# Match a vignette path's package home: ``examples/cran_<name>/<name>/...``.
-# The first word of a JSS title is conventionally the package name in
-# bare lowercase; without this hint we'd flag every ``\\title{flexsurv:
-# A Platform...}`` style title for "first word not capitalised".
-_OWN_PACKAGE_PATH_RE = re.compile(r"/cran_([^/]+)/(?:[^/]+/)?vignettes/")
+def _pkg_token(word: str) -> str:
+    """Normalise a word for package-name comparison: keep letters,
+    digits, and dots (``ggplot2``, ``data.table``); strip surrounding
+    punctuation like the conventional title colon; lowercase."""
+    return re.sub(r"[^A-Za-z0-9.]", "", word).strip(".").lower()
 
 
-def _own_package_name(path: Any) -> str | None:
-    m = _OWN_PACKAGE_PATH_RE.search(str(path))
-    return m.group(1) if m else None
+def _doc_pkg_names_lower(doc: ParsedDocument) -> set[str]:
+    """Package names the document itself wraps in ``\\pkg{...}``.
+
+    The first word of a JSS title is conventionally the paper's own
+    package name in its native (often lowercase) casing — e.g.
+    ``\\title{flexsurv: A Platform for ...}``. A paper about a package
+    invariably wraps that name in ``\\pkg{}`` somewhere (abstract,
+    body), so the document's own markup is the authoritative signal.
+    This replaces an earlier filesystem-path heuristic that only
+    matched the eval corpus's ``cran_<name>/vignettes/`` layout and
+    never fired on real submissions.
+    """
+    return {
+        _pkg_token(name)
+        for name in _helpers._collect_macro_arg_texts(doc, "pkg")
+        if _pkg_token(name)
+    }
 
 
 def check_jss_cap_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     proper_lower = {n.lower() for n in _PROPER_NOUNS}
+    doc_pkgs_lower = _doc_pkg_names_lower(doc)
     for tex in doc.all_tex_like():
-        own_pkg_lower = (_own_package_name(tex.path) or "").lower()
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode) and node.macroname == "title"
@@ -389,12 +403,13 @@ def check_jss_cap_001(
             # names) and shouldn't trigger the title-case check.
             if first_lower in proper_lower:
                 continue
-            # Skip when the first word matches the vignette's home
-            # package name. JSS papers conventionally start the title
-            # with the package name (e.g., ``flexsurv: A Platform for
-            # ...``); whether to wrap it in ``\pkg{}`` is a separate
-            # MARKUP-002 / REFS-006 concern, not a title-case issue.
-            if own_pkg_lower and first_lower == own_pkg_lower:
+            # Skip when the first word matches a package name the
+            # document itself wraps in \pkg{} elsewhere. JSS papers
+            # conventionally start the title with the package name
+            # (e.g., ``flexsurv: A Platform for ...``); whether to
+            # wrap it in ``\pkg{}`` is a separate MARKUP-002 /
+            # REFS-006 concern, not a title-case issue.
+            if _pkg_token(first) in doc_pkgs_lower:
                 continue
             # Skip when the first word looks like a function call
             # (`covMcd()`, `data.frame()`); these are code identifiers
