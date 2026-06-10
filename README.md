@@ -43,6 +43,20 @@ jss-lint --output html --mode reviewer paper.tex > r.html
 jss-lint --ignore-rules JSS-SRC-001 paper.tex   # suppress a rule
 ```
 
+To silence a single false positive in place (instead of disabling the
+whole rule project-wide), add an inline comment on the offending line —
+or on its own line directly above it:
+
+```tex
+The sandwich estimator is robust.  % jss-lint: ignore JSS-MARKUP-002
+% jss-lint: ignore JSS-CAP-002
+\section{Changes from Version 1.2 to 1.3}
+```
+
+A bare `% jss-lint: ignore` suppresses every rule on the target line;
+free text after the rule ids is treated as rationale. Parse errors
+(`JSS-PARSE-000`) are never suppressed.
+
 Exit codes: `0` clean · `1` violations found · `2` tool could not complete
 (unknown journal, missing file, parse error, unsupported extension).
 
