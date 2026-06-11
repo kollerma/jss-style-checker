@@ -41,7 +41,11 @@ _CODE_ENVS: frozenset[str] = CODE_DISPLAY_ENVS
 # ``##ID##`` inside example HTML and CSS hex colours like ``#fff``.
 _COMMENT_LINE_RE = re.compile(r"(?m)#+[^\S\n]+\S[^\n]*")
 _LIBRARY_UNQUOTED_RE = re.compile(
-    r"\b(?:library|data|require|requireNamespace)\(\s*([A-Za-z][A-Za-z0-9_.]*)\s*\)"
+    # Match bareword first arg whether the call ends there (``require(sf)``)
+    # or continues with additional args (``require(sf, quietly = TRUE)``).
+    # The trailing context is ``\s*[,)]`` instead of ``\s*\)``.
+    r"\b(?:library|data|require|requireNamespace)\(\s*"
+    r"([A-Za-z][A-Za-z0-9_.]*)\s*[,)]"
 )
 _MISSING_SPACES_RE = re.compile(
     r"(?:[A-Za-z0-9_\.\)\]][=+\-*/][A-Za-z0-9_\.\(\[])"
