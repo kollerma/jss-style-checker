@@ -388,44 +388,122 @@ def check_jss_xref_003(
 # ---------------------------------------------------------------------------
 
 
+_REF_MACROS: frozenset[str] = frozenset(
+    {"ref", "eqref", "pageref", "nameref", "autoref", "vref", "cref",
+     "Cref", "Ref", "subref"}
+)
+
+
+def _collect_referenced_labels(doc: ParsedDocument) -> set[str]:
+    """Gather every label key referenced from ``\\ref{...}``-family macros
+    across every tex_like file in the document.
+
+    Labels can be referenced in multi-key form (``\\ref{a,b,c}``) and the
+    comma-separated keys are split. Whitespace around keys is stripped.
+    """
+    refs: set[str] = set()
+    for tex in doc.all_tex_like():
+        for node in _helpers._walk(tex.nodes):
+            if not isinstance(node, LatexMacroNode):
+                continue
+            if node.macroname not in _REF_MACROS:
+                continue
+            argd = getattr(node, "nodeargd", None)
+            if argd is None:
+                continue
+            for arg in argd.argnlist or ():
+                if not isinstance(arg, LatexGroupNode):
+                    continue
+                for child in arg.nodelist or ():
+                    if isinstance(child, LatexCharsNode):
+                        for key in child.chars.split(","):
+                            key = key.strip()
+                            if key:
+                                refs.add(key)
+    return refs
+
+
+def _env_label_keys(env: Any) -> list[str]:
+    """Return every ``\\label{X}`` key found inside ``env``."""
+    keys: list[str] = []
+    for child in _helpers._walk(env.nodelist or ()):
+        if not (
+            isinstance(child, LatexMacroNode)
+            and child.macroname == "label"
+        ):
+            continue
+        argd = getattr(child, "nodeargd", None)
+        if argd is None:
+            continue
+        for arg in argd.argnlist or ():
+            if not isinstance(arg, LatexGroupNode):
+                continue
+            for ch in arg.nodelist or ():
+                if isinstance(ch, LatexCharsNode):
+                    k = ch.chars.strip()
+                    if k:
+                        keys.append(k)
+    return keys
+
+
 def check_jss_xref_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    referenced = _collect_referenced_labels(doc)
     for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
             if not isinstance(node, LatexEnvironmentNode):
                 continue
             if node.environmentname not in _NUMBERED_EQ_ENVS:
                 continue
-            if _env_has_label(node):
-                continue
             # Inner numbered envs of a ``subequations`` block share the
             # outer block's ``\label{}`` and are referenced via
             # ``\eqref{...}`` / ``\subref{...}`` against that label —
-            # they don't need their own.
+            # they don't need their own and the label-orphan check
+            # below shouldn't fire on the outer either.
             if _inside_subequations(ancestors):
                 continue
-            # ``\nonumber`` / ``\notag`` inside a single-line equation
-            # env (``equation``, ``multline``) suppresses the equation
-            # number, so the equation isn't a cross-ref target and a
-            # missing ``\label{}`` is not a defect. Multi-line envs
-            # (``align``, ``eqnarray``, ``gather``) carry per-line
-            # numbering — a ``\nonumber`` on one line doesn't unnumber
-            # the others, so they still need their own labels.
-            if (
-                node.environmentname in {"equation", "multline"}
-                and _env_has_nonumber(node)
-            ):
+            label_keys = _env_label_keys(node)
+            if not label_keys:
+                # ``\nonumber`` / ``\notag`` inside a single-line equation
+                # env (``equation``, ``multline``) suppresses the equation
+                # number, so the equation isn't a cross-ref target and a
+                # missing ``\label{}`` is not a defect. Multi-line envs
+                # (``align``, ``eqnarray``, ``gather``) carry per-line
+                # numbering — a ``\nonumber`` on one line doesn't unnumber
+                # the others, so they still need their own labels.
+                if (
+                    node.environmentname in {"equation", "multline"}
+                    and _env_has_nonumber(node)
+                ):
+                    continue
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-XREF-004",
+                    suggestion=(
+                        "Add \\label{eq:<name>} inside the equation so it "
+                        "can be referenced from the text."
+                    ),
+                )
                 continue
-            yield _violation(
-                tex=tex,
-                pos=node.pos,
-                rule_id="JSS-XREF-004",
-                suggestion=(
-                    "Add \\label{eq:<name>} inside the equation so it can "
-                    "be referenced from the text."
-                ),
-            )
+            # Label(s) present — check that at least one is referenced
+            # somewhere in the document. JSS wants every numbered
+            # equation to be cited from the prose; an orphan label is
+            # a defect (the equation has a number but the text never
+            # mentions it).
+            if not any(k in referenced for k in label_keys):
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-XREF-004",
+                    suggestion=(
+                        f"Equation label(s) {', '.join(label_keys)!r} "
+                        "are never referenced from the text. Either "
+                        "cite the equation via \\ref{} / \\eqref{} or "
+                        "suppress the number with \\nonumber."
+                    ),
+                )
 
 
 _NONUMBER_MACROS: frozenset[str] = frozenset({"nonumber", "notag"})
