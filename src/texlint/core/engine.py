@@ -8,7 +8,13 @@ The engine is the one module that knows how to:
   * derive per-category ``PASS`` / ``FAIL`` / ``SKIPPED`` status and the overall
     ``compliance_percentage`` (spec FR-010 + Clarification Q3);
   * attach parse-error violations to the synthetic ``parse`` category, which is
-    excluded from ``compliance_percentage`` (Clarification Q1).
+    excluded from ``compliance_percentage`` (Clarification Q1);
+  * isolate rule crashes: a rule whose ``check`` / ``check_project``
+    raises is reported as a :class:`SkippedRule` (reason
+    ``internal error: ...``) and the run continues with the remaining
+    rules, instead of aborting the whole report;
+  * honour inline suppression comments (``% jss-lint: ignore [RULE-IDS]``)
+    by filtering matching findings before they enter the report.
 """
 
 from __future__ import annotations
@@ -20,6 +26,7 @@ from pathlib import Path
 
 from texlint import __version__ as _tool_version
 from texlint.api import (
+    CategoryStatus,
     CategorySummary,
     ComplianceReport,
     InvalidJournalError,
@@ -35,6 +42,7 @@ from texlint.api import (
     Violation,
     _file_format,
 )
+from texlint.core import suppress as _suppress
 
 
 class UnsupportedSuffixError(ValueError):
@@ -91,6 +99,9 @@ _ENTRY_POINT_GROUP = "texlint.journals"
 _PARSE_RULE_ID = "JSS-PARSE-000"
 _PARSE_CATEGORY_ID = "parse"
 _PARSE_CATEGORY_TITLE = "Parse errors"
+
+# Confidence-tier ordering for the ``min_confidence`` gate.
+_CONFIDENCE_RANK: dict[str, int] = {"low": 0, "medium": 1, "high": 2}
 
 
 def load_journal(journal_id: str) -> JournalRuleModule:
@@ -155,11 +166,32 @@ def run(
     for doc in documents:
         input_formats.update(_file_format(f) for f in doc.all_files())
 
+    # Inline-suppression index (``% jss-lint: ignore [RULE-IDS]``),
+    # built once per run. Suppression applies to rule findings only;
+    # parse errors are collected separately below and stay visible.
+    suppression_index = _suppress.build_index(documents)
+
     categories = journal.categories()
+    min_confidence_rank = _CONFIDENCE_RANK.get(config.min_confidence, 0)
 
     for category in categories:
         for rule in category.rules:
             if rule.id in ignore:
+                continue
+            # Confidence gate (spec follow-up to the architecture
+            # review): rules whose measured-precision tier sits below
+            # ``--min-confidence`` are skipped, visibly (--verbose), so
+            # the trade-off stays a presentation-time decision instead
+            # of a code-time one.
+            rule_confidence = getattr(rule, "confidence", "high")
+            if _CONFIDENCE_RANK.get(rule_confidence, 2) < min_confidence_rank:
+                skipped.append(SkippedRule(
+                    rule_id=rule.id,
+                    reason=(
+                        f"confidence {rule_confidence} below "
+                        f"min_confidence={config.min_confidence}"
+                    ),
+                ))
                 continue
             # Format filter: skip rules whose formats don't intersect the
             # document's input formats (spec 005 FR-008). The format
@@ -168,33 +200,37 @@ def run(
             # files with non-matching formats — e.g., a project-level
             # cycle-detector spans .tex + .bib).
             check_ran = False
-            check_produced_any = False
             check_skipped_for_format = False
-
-            if rule.check is not None:
-                if rule.formats is not None and not (rule.formats & input_formats):
-                    check_skipped_for_format = True
-                else:
-                    for doc in documents:
-                        matched_files = list(doc.files_for_rule(rule))
-                        if not matched_files:
-                            continue
-                        check_ran = True
-                        before = len(violations_by_category[category.id])
-                        for v in rule.check(doc, config):
-                            violations_by_category[category.id].append(v)
-                        if len(violations_by_category[category.id]) > before:
-                            check_produced_any = True
-
             project_ran = False
-            project_produced_any = False
-            if project is not None and rule.check_project is not None:
-                project_ran = True
-                before = len(violations_by_category[category.id])
-                for v in rule.check_project(project):
-                    violations_by_category[category.id].append(v)
-                if len(violations_by_category[category.id]) > before:
-                    project_produced_any = True
+            rule_violations: list[Violation] = []
+
+            # Each rule's findings are buffered and committed only when
+            # the rule completes. A rule that raises is reported as a
+            # SkippedRule ("internal error: ...") and the run continues:
+            # one buggy heuristic must not destroy the other rules'
+            # report (previously any rule exception aborted the whole
+            # run with no output at all).
+            try:
+                if rule.check is not None:
+                    if rule.formats is not None and not (
+                        rule.formats & input_formats
+                    ):
+                        check_skipped_for_format = True
+                    else:
+                        for doc in documents:
+                            if not any(True for _ in doc.files_for_rule(rule)):
+                                continue
+                            check_ran = True
+                            rule_violations.extend(rule.check(doc, config))
+                if project is not None and rule.check_project is not None:
+                    project_ran = True
+                    rule_violations.extend(rule.check_project(project))
+            except Exception as exc:  # noqa: BLE001 — crash isolation per rule
+                skipped.append(SkippedRule(
+                    rule_id=rule.id,
+                    reason=f"internal error: {type(exc).__name__}: {exc}",
+                ))
+                continue
 
             if not check_ran and not project_ran:
                 # Either the format filter excluded the rule, or no input
@@ -210,9 +246,19 @@ def run(
                     ))
                 continue
 
+            if suppression_index:
+                rule_violations = [
+                    v
+                    for v in rule_violations
+                    if not _suppress.is_suppressed(suppression_index, v)
+                ]
+
             applied_by_category[category.id] += 1
-            if not (check_produced_any or project_produced_any):
+            if not rule_violations:
+                # No findings — including "all findings inline-suppressed":
+                # the author has explicitly signed off on those lines.
                 passed_by_category[category.id] += 1
+            violations_by_category[category.id].extend(rule_violations)
 
     summaries: list[CategorySummary] = []
     for category in categories:
@@ -238,7 +284,7 @@ def run(
             CategorySummary(
                 category_id=_PARSE_CATEGORY_ID,
                 title=_PARSE_CATEGORY_TITLE,
-                status=__import__("texlint.api", fromlist=["CategoryStatus"]).CategoryStatus.FAIL,
+                status=CategoryStatus.FAIL,
                 rules_applied=0,
                 rules_passed=0,
                 violations=parse_errors,
@@ -254,9 +300,6 @@ def run(
     sorted_violations = tuple(sorted(all_violations, key=lambda v: v.sort_key()))
 
     # Percentage: PASS / (PASS + FAIL), excluding SKIPPED and the synthetic parse category.
-    # Deferred import to avoid the circular feel even though api.py does not import engine.
-    from texlint.api import CategoryStatus  # noqa: WPS433
-
     ratable = [
         s
         for s in summaries

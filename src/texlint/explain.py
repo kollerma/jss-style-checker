@@ -42,6 +42,12 @@ def _render_one_terminal(rule_id: str, meta: dict) -> str:
         f"  Category: {meta['category']}",
         f"  Authority: {meta['authority']} ({meta['authority_ref']})",
     ]
+    confidence = meta.get("confidence", "high")
+    if confidence != "high":
+        lines.append(
+            f"  Confidence: {confidence} (measured corpus precision "
+            "below the gate; see eval/improvement-log.md)"
+        )
     if section:
         lines.append(f"  JSS guide: {section}")
         if url:
@@ -59,6 +65,8 @@ def _render_one_markdown(rule_id: str, meta: dict) -> str:
     parts.append(f"- **Severity:** {_level(meta['severity'])}")
     parts.append(f"- **Category:** {meta['category']}")
     parts.append(f"- **Authority:** {meta['authority']} ({meta['authority_ref']})")
+    if meta.get("confidence", "high") != "high":
+        parts.append(f"- **Confidence:** {meta['confidence']}")
     if section and url:
         parts.append(f"- **JSS guide:** [{section}]({url})")
     elif section:

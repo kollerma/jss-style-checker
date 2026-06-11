@@ -6,6 +6,7 @@ so that ``import texlint`` stays cheap for downstream consumers.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from importlib import import_module
 
 from texlint.api import JournalRuleModule, Rule, RuleCategory
@@ -61,4 +62,22 @@ def _load_category_rules(category: str) -> tuple[Rule, ...]:
     rules = getattr(module, "rules", None)
     if rules is None:
         return ()
-    return tuple(rules)
+    return tuple(_stamp_confidence(r) for r in rules)
+
+
+def _stamp_confidence(rule: Rule) -> Rule:
+    """Set :attr:`Rule.confidence` from the catalogue's measured-precision
+    tier. One stamping point here beats threading the field through the
+    fourteen per-module ``_rule`` factories; rules absent from the
+    catalogue (or without a narrowed tier) stay at the ``"high"``
+    default.
+    """
+    from texlint.journals.jss import _catalogue_data
+
+    meta = _catalogue_data.RULES.get(rule.id)
+    if meta is None:
+        return rule
+    confidence = meta.get("confidence", "high")
+    if confidence == rule.confidence:
+        return rule
+    return replace(rule, confidence=confidence)

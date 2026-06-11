@@ -22,6 +22,53 @@ class Severity(str, Enum):
     INFO = "info"
 
 
+# ---------------------------------------------------------------------------
+# Verbatim-environment contract
+# ---------------------------------------------------------------------------
+#
+# Single source of truth for "this environment's body is code / literal
+# text, not prose". Two consumers MUST stay in sync, which is why the
+# sets live here on the public surface:
+#
+#   * ``texlint.core.parser`` neutralises TeX-special characters inside
+#     these environments before strict parsing (length-preserving), and
+#   * rule modules treat content inside them as non-prose (skip
+#     prose-style checks; CODE-* / WIDTH-* rules target the
+#     ``CODE_DISPLAY_ENVS`` subset).
+#
+# Historical note: these used to be two hand-maintained lists that
+# drifted apart — ``lstlisting`` was neutralised by the parser but not
+# recognised as verbatim by the rules, so markup rules fired (and
+# auto-fixed!) inside code listings.
+
+#: Sweave / knitr / jss.cls code-display environments. CODE-* and
+#: WIDTH-* rules lint the *content* of these.
+CODE_DISPLAY_ENVS: frozenset[str] = frozenset(
+    {
+        "verbatim",
+        "Verbatim",
+        "Code",
+        "CodeInput",
+        "CodeOutput",
+        "Sinput",
+        "Soutput",
+        "Scode",
+        "Schunk",
+        "CodeChunk",
+    }
+)
+
+#: Other literal-body environments: their content is not prose, but it
+#: is not JSS code-display either (so CODE-* / WIDTH-* do not apply).
+LISTING_ENVS: frozenset[str] = frozenset(
+    {"lstlisting", "alltt", "tabbing", "verbatim*"}
+)
+
+#: Every environment whose body must be neutralised by the parser and
+#: skipped by prose rules.
+VERBATIM_ENVS: frozenset[str] = CODE_DISPLAY_ENVS | LISTING_ENVS
+
+
 class CategoryStatus(str, Enum):
     PASS = "PASS"
     FAIL = "FAIL"
@@ -122,6 +169,13 @@ class Rule:
     # Spec 013 follow-up: optional whole-project check. ``None`` means
     # the rule is per-document only.
     check_project: RuleCheckProject | None = None
+    # Measured-precision confidence tier. ``"high"`` is the default for
+    # mechanical rules; heuristic rules whose corpus precision sits
+    # below the gate carry ``"medium"`` or ``"low"`` (sourced from the
+    # eval-jss precision history via the rule catalogue). The engine
+    # skips rules below ``ToolConfig.min_confidence``; renderers may
+    # surface the tier so readers can weigh a finding accordingly.
+    confidence: Literal["high", "medium", "low"] = "high"
 
 
 @dataclass(frozen=True)
@@ -198,6 +252,16 @@ class ToolConfig:
     verbose: bool = False
     code_width: int = 80
     source_root: Path = field(default_factory=Path.cwd)
+    # Confidence floor: rules whose measured-precision tier sits below
+    # this are skipped (reported in ``skipped_rules``). ``"low"`` (the
+    # default) runs everything; ``"medium"`` drops low-confidence rules;
+    # ``"high"`` keeps only the mechanical ~100%-precision rules.
+    min_confidence: Literal["low", "medium", "high"] = "low"
+    # Exit-code policy: the minimum severity that makes the CLI exit 1.
+    # ``"info"`` (the default, the historical behaviour) fails on any
+    # violation; ``"warning"`` ignores info-severity advisories;
+    # ``"error"`` fails only on errors. Parse errors always exit 2.
+    fail_on: Literal["error", "warning", "info"] = "info"
 
 
 @dataclass(frozen=True)

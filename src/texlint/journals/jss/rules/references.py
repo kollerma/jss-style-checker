@@ -23,7 +23,6 @@ from collections.abc import Iterator
 from typing import Any
 
 from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
-from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
@@ -64,9 +63,6 @@ def _field_value(entry: Any, name: str) -> str:
     return str(f.value)
 
 
-def _entry_line(entry: Any) -> int:
-    start = getattr(entry, "start_line", 0) or 0
-    return start + 1
 
 
 def _iter_entries(doc: ParsedDocument) -> Iterator[tuple[Any, Any]]:
@@ -79,24 +75,9 @@ def _iter_entries(doc: ParsedDocument) -> Iterator[tuple[Any, Any]]:
     yield from _helpers._iter_referenced_entries(doc)
 
 
-def _violation(
-    *,
-    bib: Any,
-    entry: Any,
-    rule_id: str,
-    suggestion: str,
-) -> Violation:
-    meta = _catalogue_data.RULES[rule_id]
-    return Violation(
-        file=bib.path,
-        line=_entry_line(entry),
-        column=None,
-        rule_id=rule_id,
-        severity=meta["severity"],
-        message=meta["message_template"],
-        suggestion=suggestion,
-        fix=None,
-    )
+# Catalogue-backed factories live in _helpers (one definition for all
+# rule modules); the module-local names are kept for call-site brevity.
+_violation = _helpers.entry_violation
 
 
 # ---------------------------------------------------------------------------
@@ -417,17 +398,7 @@ def check_jss_refs_007(
 # ---------------------------------------------------------------------------
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
-    meta = _catalogue_data.RULES[rule_id]
-    return Rule(
-        id=rule_id,
-        category=meta["category"],
-        severity=meta["severity"],
-        message_template=meta["message_template"],
-        authority=meta["authority"],
-        check=check_fn,
-        formats=None,
-    )
+_rule = _helpers.make_rule
 
 
 jss_refs_001 = _rule("JSS-REFS-001", check_jss_refs_001)

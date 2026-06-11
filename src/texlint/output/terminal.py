@@ -48,6 +48,40 @@ def _guide_suffix(rule_id: str) -> str:
     return f" (see {section})"
 
 
+def _confidences() -> dict[str, str]:
+    """``rule_id -> confidence`` for rules with a narrowed tier.
+
+    Only non-"high" tiers are kept, so a missing key means "high" and
+    no marker is rendered. Cached on first call, like
+    :func:`_guide_sections`.
+    """
+    cached = getattr(_confidences, "_cache", None)
+    if cached is None:
+        from texlint.journals.jss._catalogue_data import RULES
+
+        cached = {
+            rid: str(meta["confidence"])
+            for rid, meta in RULES.items()
+            if meta.get("confidence", "high") != "high"
+        }
+        _confidences._cache = cached  # type: ignore[attr-defined]
+    return cached
+
+
+def _confidence_suffix(rule_id: str) -> str:
+    """Return a dim ``(<tier> conf.)`` marker on its own line for
+    medium/low-precision rules, else an empty string.
+
+    Surfaces the measured-precision tier under the rule id so a reader
+    can weigh the finding — a low-confidence rule is right only a bit
+    more often than not on the eval corpus. Rendered as a second line
+    inside the (no-wrap) rule cell: ``(medium conf.)`` is no wider than
+    a rule id, so the table's column geometry is unchanged.
+    """
+    tier = _confidences().get(rule_id)
+    return f"\n[dim]({tier} conf.)[/dim]" if tier else ""
+
+
 def _display_path(raw: str) -> str:
     """Return `raw` relative to CWD when possible.
 
@@ -125,7 +159,7 @@ def _render_author(report: ComplianceReport) -> None:
             table.add_row(
                 locator,
                 f"[{style}]{v.severity.value}[/{style}]" if style else v.severity.value,
-                v.rule_id,
+                f"{v.rule_id}{_confidence_suffix(v.rule_id)}",
                 f"{v.message}{_guide_suffix(v.rule_id)}",
                 v.suggestion or "",
             )

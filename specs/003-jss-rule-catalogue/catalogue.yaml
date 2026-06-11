@@ -394,6 +394,8 @@ rules:
   - rule_id: JSS-MARKUP-001
     category: markup
     severity: warning
+    # 88.3% pinned-corpus precision at iter-78 (eval/improvement-log.md).
+    confidence: medium
     description: Programming-language names in prose are wrapped in \proglang{}
     authority: jss_cls
     authority_ref: "jss.cls:\\proglang"
@@ -473,6 +475,8 @@ rules:
   - rule_id: JSS-CITE-002
     category: citations
     severity: warning
+    # 82.7% pinned-corpus precision at iter-78 (eval/improvement-log.md).
+    confidence: medium
     description: First occurrence of a software package has a citation within the same paragraph
     authority: style_guide
     authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
@@ -933,6 +937,8 @@ rules:
   - rule_id: JSS-CAP-002
     category: capitalization
     severity: warning
+    # 87.3% pinned-corpus precision at iter-78 (eval/improvement-log.md).
+    confidence: medium
     description: Section titles are in sentence style (first word capitalised; others lowercase except proper names)
     authority: style_guide
     authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
@@ -955,6 +961,8 @@ rules:
   - rule_id: JSS-CAP-003
     category: capitalization
     severity: warning
+    # 56.5% pinned-corpus precision at iter-78; 5/5 fix attempts exhausted (eval/improvement-log.md).
+    confidence: low
     description: Figure / table captions are in sentence style
     authority: style_guide
     authority_ref: "#how-to-format-figuretable-captions"

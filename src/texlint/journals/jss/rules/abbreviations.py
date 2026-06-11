@@ -26,7 +26,6 @@ from typing import Any
 from pylatexenc.latexwalker import LatexCharsNode
 
 from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
-from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
 # "U.S.A.", "e.g.", "i.e." and similar two-or-more-letter abbreviations
@@ -55,26 +54,9 @@ _AUTHOR_SURNAME_PREFIX_RE = re.compile(
 )
 
 
-def _violation(
-    *,
-    tex: Any,
-    pos: int,
-    rule_id: str,
-    suggestion: str,
-    fix: Fix | None = None,
-) -> Violation:
-    meta = _catalogue_data.RULES[rule_id]
-    line, col = _helpers._lineno_col(tex, pos)
-    return Violation(
-        file=tex.path,
-        line=line,
-        column=col,
-        rule_id=rule_id,
-        severity=meta["severity"],
-        message=meta["message_template"],
-        suggestion=suggestion,
-        fix=fix,
-    )
+# Catalogue-backed factories live in _helpers (one definition for all
+# rule modules); the module-local names are kept for call-site brevity.
+_violation = _helpers.tex_violation
 
 
 def _looks_like_author_initial(
@@ -164,17 +146,7 @@ def check_jss_abbr_001(
                 )
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
-    meta = _catalogue_data.RULES[rule_id]
-    return Rule(
-        id=rule_id,
-        category=meta["category"],
-        severity=meta["severity"],
-        message_template=meta["message_template"],
-        authority=meta["authority"],
-        check=check_fn,
-        formats=None,
-    )
+_rule = _helpers.make_rule
 
 
 jss_abbr_001 = _rule("JSS-ABBR-001", check_jss_abbr_001)

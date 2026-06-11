@@ -10,6 +10,33 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Added
 
+- Per-rule measured-precision **confidence tiers**. The catalogue now
+  carries an optional `confidence` key (`high` default / `medium` /
+  `low`) sourced from the eval-jss precision history; the four
+  sub-90%-precision rules at iter-78 are tiered (`JSS-CAP-003` low;
+  `JSS-CITE-002`, `JSS-CAP-002`, `JSS-MARKUP-001` medium). The tier
+  surfaces in the terminal table (dim marker under the rule id), the
+  JSON `confidence` field, and `jss-lint explain`. New
+  `--min-confidence {low,medium,high}` flag (and `min_confidence`
+  config key) skips rules below the floor, reporting them as skipped
+  rules; default `low` runs everything.
+- `--fail-on {error,warning,info}` flag (and `fail_on` config key):
+  the minimum violation severity that exits 1. Default `info` keeps
+  the historical behaviour (any violation fails); `--fail-on error`
+  stops info/warning advisories (e.g. the missing-DOI rule) from
+  flipping CI red while still reporting them. Parse errors always
+  exit 2.
+- Inline suppression: `% jss-lint: ignore [RULE-IDS]` on a finding's
+  line (or on a comment-only line directly above it) silences matching
+  findings in place, so one false positive no longer forces disabling a
+  whole rule via `--ignore-rules`. Bare `ignore` suppresses every rule
+  on the target line; trailing free text is treated as rationale; parse
+  errors (`JSS-PARSE-000`) are never suppressed. Works in `.tex`,
+  `.Rnw`/`.Rmd` LaTeX islands, and `.bib` files (a directive line above
+  an entry covers findings reported on the entry's first line).
+- `texlint.api.VERBATIM_ENVS` / `CODE_DISPLAY_ENVS` / `LISTING_ENVS`:
+  shared contract for "this environment's body is not prose", consumed
+  by both the parser's special-char neutraliser and the rule modules.
 - `eval-jss`, a companion CLI for measuring per-rule precision of
   `jss-lint` against a real-world corpus. Implements Constitution §VI
   (≥90% precision per rule) as an enforceable gate and §XII (reproducible
@@ -27,8 +54,34 @@ version bump and an entry in this file — see the spec's Clarification Q2.
   the `JSS-CITE-001` / `JSS-SRC-001` / clean code paths; the 10-paper
   real-CRAN corpus is planned follow-up work.
 
+### Changed
+
+- Internal: the fourteen per-module `_violation` and fifteen
+  per-module `_rule` factory copies in `texlint.journals.jss.rules.*`
+  are consolidated into shared catalogue-backed factories in
+  `rules/_helpers.py` (`make_rule`, `tex_violation`, `entry_violation`,
+  `make_violation`, `entry_line`). No behaviour change; net −280
+  lines. New rules get severity/message/confidence wiring for free,
+  and future cross-cutting changes (suppression, confidence) have one
+  seam instead of fifteen.
+
 ### Fixed
 
+- Markup / prose rules no longer fire inside `lstlisting`, `alltt`,
+  `tabbing`, and `verbatim*` bodies. The parser's neutraliser and the
+  rules' non-prose check had drifted into two different environment
+  lists; both now consume the shared `texlint.api.VERBATIM_ENVS`
+  contract. Before the fix, `jss-lint --fix` would even rewrite code
+  inside an `lstlisting` (e.g. `library(zoo)` → `library(\pkg{zoo})`).
+- `JSS-CAP-001` now learns the paper's own package name from the
+  document's `\pkg{...}` usage instead of a filesystem-path heuristic
+  that only matched the eval corpus's `cran_<name>/vignettes/` layout;
+  titles following the JSS convention (`\title{flexsurv: A Platform
+  for ...}`) are no longer flagged on real submissions.
+- One crashing rule no longer aborts the whole run with no output: the
+  engine isolates per-rule exceptions, reports the rule as skipped
+  (`internal error: ...`, visible via `--verbose`), and keeps the
+  remaining rules' findings.
 - `eval/review.py` now builds a `±3`-line source snippet per violation and
   passes it as `paper_context` to the `ReviewClient`, rather than sending
   an empty string. Observed effect: AI precision on the canonical JSS

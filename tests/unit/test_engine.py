@@ -173,6 +173,122 @@ class TestRunSkipped:
         assert report.compliance_percentage == 100.0
 
 
+class TestRunCrashIsolation:
+    def _crashing_rule(self, rule_id: str, *, category: str = "x") -> Rule:
+        def _check(doc, cfg):
+            yield _v(rule_id=rule_id)
+            raise RuntimeError("boom")
+
+        return Rule(
+            id=rule_id,
+            category=category,
+            severity=Severity.ERROR,
+            message_template="",
+            authority="",
+            check=_check,
+            formats=frozenset({"tex"}),
+        )
+
+    def test_crashing_rule_reported_skipped_others_still_run(
+        self, tmp_path: Path
+    ):
+        doc = _make_doc(tmp_path, "a.tex")
+        tex = doc.tex_files[0]
+        bad = self._crashing_rule("JSS-BAD-001")
+        good = _rule("JSS-GOOD-001", fires_on=(str(tex.path),))
+        journal = _Journal(
+            "j", (RuleCategory(id="x", title="X", rules=(bad, good)),)
+        )
+        report = run(ToolConfig(), doc, journal)
+        # The good rule's finding survives; the crashing rule's partial
+        # output is discarded (buffered, not committed).
+        assert [v.rule_id for v in report.violations] == ["JSS-GOOD-001"]
+        reasons = {s.rule_id: s.reason for s in report.skipped_rules}
+        assert "JSS-BAD-001" in reasons
+        assert reasons["JSS-BAD-001"].startswith("internal error: RuntimeError")
+
+    def test_crashing_rule_does_not_count_as_applied(self, tmp_path: Path):
+        doc = _make_doc(tmp_path, "a.tex")
+        bad = self._crashing_rule("JSS-BAD-001")
+        journal = _Journal(
+            "j", (RuleCategory(id="x", title="X", rules=(bad,)),)
+        )
+        report = run(ToolConfig(), doc, journal)
+        assert report.categories[0].status == CategoryStatus.SKIPPED
+        assert report.categories[0].rules_applied == 0
+        assert report.violations == ()
+
+    def test_crashing_check_project_reported_skipped(self, tmp_path: Path):
+        from texlint.api import ParsedProject
+
+        doc = _make_doc(tmp_path, "a.tex")
+
+        def _bad_project(project):
+            raise ValueError("project boom")
+
+        bad = Rule(
+            id="JSS-PROJ-001",
+            category="x",
+            severity=Severity.ERROR,
+            message_template="",
+            authority="",
+            check=None,
+            check_project=_bad_project,
+        )
+        journal = _Journal(
+            "j", (RuleCategory(id="x", title="X", rules=(bad,)),)
+        )
+        project = ParsedProject(
+            root=doc.tex_files[0].path,
+            documents=(doc,),
+            tree={doc.tex_files[0].path: ()},
+        )
+        report = run(ToolConfig(), project, journal)
+        reasons = {s.rule_id: s.reason for s in report.skipped_rules}
+        assert reasons["JSS-PROJ-001"].startswith("internal error: ValueError")
+
+
+class TestConfidenceGate:
+    def _doc_and_rule(self, tmp_path: Path, confidence: str):
+        from dataclasses import replace
+
+        doc = _make_doc(tmp_path, "a.tex")
+        tex = doc.tex_files[0]
+        rule = replace(
+            _rule("JSS-X-001", fires_on=(str(tex.path),)),
+            confidence=confidence,
+        )
+        journal = _Journal(
+            "j", (RuleCategory(id="x", title="X", rules=(rule,)),)
+        )
+        return doc, journal
+
+    def test_default_floor_runs_low_confidence_rule(self, tmp_path: Path):
+        doc, journal = self._doc_and_rule(tmp_path, "low")
+        report = run(ToolConfig(), doc, journal)
+        assert len(report.violations) == 1
+        assert report.skipped_rules == ()
+
+    def test_floor_skips_rule_below_it(self, tmp_path: Path):
+        doc, journal = self._doc_and_rule(tmp_path, "low")
+        report = run(ToolConfig(min_confidence="medium"), doc, journal)
+        assert report.violations == ()
+        assert [s.rule_id for s in report.skipped_rules] == ["JSS-X-001"]
+        assert "min_confidence=medium" in report.skipped_rules[0].reason
+        # The category is SKIPPED, not silently PASS.
+        assert report.categories[0].status == CategoryStatus.SKIPPED
+
+    def test_floor_keeps_rule_at_threshold(self, tmp_path: Path):
+        doc, journal = self._doc_and_rule(tmp_path, "medium")
+        report = run(ToolConfig(min_confidence="medium"), doc, journal)
+        assert len(report.violations) == 1
+
+    def test_high_floor_keeps_default_high_rules(self, tmp_path: Path):
+        doc, journal = self._doc_and_rule(tmp_path, "high")
+        report = run(ToolConfig(min_confidence="high"), doc, journal)
+        assert len(report.violations) == 1
+
+
 class TestRunParseError:
     def test_parse_error_adds_synthetic_parse_category_excluded_from_percentage(
         self, tmp_path: Path

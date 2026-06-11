@@ -88,6 +88,7 @@ Each object:
 | `fix` | object or null | Reserved for Step 4. Every violation in this step serialises `fix` as `null`. |
 | `guide_section` | string | JSS author-guide section label (e.g. `"§3.2 Citations"`). Empty string `""` for tool-side rules (`JSS-PARSE-000`, etc.) and for un-backfilled rules. (Spec 007 follow-up.) |
 | `guide_url` | string or null | Absolute URL into the public JSS author guide. `null` for tool-side / un-backfilled rules. (Spec 007 follow-up.) |
+| `confidence` | string | Measured-precision confidence tier of the originating rule: `"high"`, `"medium"`, or `"low"`. `"high"` for tool-side rules and rules without a narrowed tier in the catalogue. (Architecture-review follow-up.) |
 
 ## Determinism
 

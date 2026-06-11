@@ -1,8 +1,14 @@
-"""Private shared walkers and safety helpers for JSS rule modules.
+"""Private shared walkers, factories, and safety helpers for JSS rule modules.
 
 All functions are pure: same inputs → same outputs, no mutable module
 state, no randomness. The module is underscore-prefixed to mark it
 private to the ``rules/`` package (not part of any third-party surface).
+
+Besides the node walkers, this module is the single home of the
+rule/violation factories (:func:`make_rule`, :func:`tex_violation`,
+:func:`entry_violation`, :func:`make_violation`) that every category
+module previously re-declared locally — fourteen copies of
+``_violation`` and fifteen of ``_rule`` before the consolidation.
 """
 
 from __future__ import annotations
@@ -20,20 +26,121 @@ from pylatexenc.latexwalker import (
     LatexMathNode,
 )
 
-_VERBATIM_ENVS: frozenset[str] = frozenset(
-    {
-        "verbatim",
-        "Verbatim",
-        "Code",
-        "CodeInput",
-        "CodeOutput",
-        "Sinput",
-        "Soutput",
-        "Scode",
-        "Schunk",
-        "CodeChunk",
-    }
+from texlint.api import (
+    VERBATIM_ENVS,
+    Fix,
+    Rule,
+    RuleCheck,
+    RuleCheckProject,
+    Violation,
 )
+
+# Shared with the parser's special-char neutraliser via texlint.api —
+# any env the parser neutralises is also non-prose for rule purposes.
+_VERBATIM_ENVS: frozenset[str] = VERBATIM_ENVS
+
+
+# ---------------------------------------------------------------------------
+# Rule / violation factories
+# ---------------------------------------------------------------------------
+
+
+def make_rule(
+    rule_id: str,
+    check: RuleCheck,
+    *,
+    formats: frozenset[str] | None = None,
+    check_project: RuleCheckProject | None = None,
+) -> Rule:
+    """Build a :class:`Rule` whose metadata comes from the catalogue.
+
+    Single replacement for the per-module ``_rule`` factories. The
+    measured-precision ``confidence`` tier is stamped here as well (the
+    journal-assembly stamp in ``texlint.journals.jss`` then no-ops).
+    """
+    from texlint.journals.jss import _catalogue_data
+
+    meta = _catalogue_data.RULES[rule_id]
+    return Rule(
+        id=rule_id,
+        category=meta["category"],
+        severity=meta["severity"],
+        message_template=meta["message_template"],
+        authority=meta["authority"],
+        check=check,
+        formats=formats,
+        check_project=check_project,
+        confidence=meta.get("confidence", "high"),
+    )
+
+
+def make_violation(
+    *,
+    file: Any,
+    line: int,
+    column: int | None,
+    rule_id: str,
+    suggestion: str | None,
+    fix: Fix | None = None,
+) -> Violation:
+    """Generic catalogue-backed violation: severity and message come
+    from the rule's catalogue entry; the caller supplies position."""
+    from texlint.journals.jss import _catalogue_data
+
+    meta = _catalogue_data.RULES[rule_id]
+    return Violation(
+        file=file,
+        line=line,
+        column=column,
+        rule_id=rule_id,
+        severity=meta["severity"],
+        message=meta["message_template"],
+        suggestion=suggestion,
+        fix=fix,
+    )
+
+
+def tex_violation(
+    *,
+    tex: Any,
+    pos: int,
+    rule_id: str,
+    suggestion: str | None,
+    fix: Fix | None = None,
+) -> Violation:
+    """Violation at a source position inside a parsed tex-like file."""
+    line, col = _lineno_col(tex, pos)
+    return make_violation(
+        file=tex.path,
+        line=line,
+        column=col,
+        rule_id=rule_id,
+        suggestion=suggestion,
+        fix=fix,
+    )
+
+
+def entry_line(entry: Any) -> int:
+    """1-based line of a bibtexparser entry (``start_line`` is 0-based)."""
+    start = getattr(entry, "start_line", 0) or 0
+    return start + 1
+
+
+def entry_violation(
+    *,
+    bib: Any,
+    entry: Any,
+    rule_id: str,
+    suggestion: str | None,
+) -> Violation:
+    """Violation anchored to a BibTeX entry's first line."""
+    return make_violation(
+        file=bib.path,
+        line=entry_line(entry),
+        column=None,
+        rule_id=rule_id,
+        suggestion=suggestion,
+    )
 
 _VERBATIM_MACROS: frozenset[str] = frozenset({"verb", "code"})
 
@@ -177,6 +284,28 @@ def _collect_cited_keys(doc: Any) -> tuple[set[str], bool]:
                 elif key:
                     keys.add(key)
     return keys, include_all
+
+
+def _collect_macro_arg_texts(doc: Any, macroname: str) -> set[str]:
+    """Collect the first braced-arg text of every ``\\<macroname>{...}``
+    across all tex-like islands in ``doc``.
+
+    Used e.g. to learn the document's own package vocabulary from its
+    ``\\pkg{...}`` usage: a paper that wraps ``\\pkg{flexsurv}`` anywhere
+    has told us "flexsurv" is a package name, which beats any global
+    curated list (and any filesystem-path heuristic).
+    """
+    texts: set[str] = set()
+    for tex in doc.all_tex_like():
+        for parent, idx, node in _iter_with_parent(tex.nodes):
+            if not isinstance(node, LatexMacroNode):
+                continue
+            if node.macroname != macroname:
+                continue
+            text = _macro_args_text(node, parent, idx)
+            if text:
+                texts.add(text)
+    return texts
 
 
 def _iter_referenced_entries(doc: Any) -> Iterator[tuple[Any, Any]]:

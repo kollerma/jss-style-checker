@@ -85,15 +85,30 @@ def _dispatch_renderer(output: str, report: Any, cfg: ToolConfig) -> None:
         sys.exit(2)
 
 
-def _determine_exit_code(report: Any) -> int:
-    """Exit 2 if any parse error present; else 1 if any violation; else 0.
+_SEVERITY_RANK: dict[str, int] = {"info": 0, "warning": 1, "error": 2}
+
+
+def _determine_exit_code(report: Any, fail_on: str = "info") -> int:
+    """Exit 2 if any parse error present; else 1 if any violation at or
+    above the ``fail_on`` severity; else 0.
 
     Parse failures dominate style violations because the report is incomplete
     when the parser could not process a file — see contracts/cli.md §Exit codes.
+
+    ``fail_on`` is the minimum severity that flips the exit code:
+    ``"info"`` (the default and the historical behaviour) fails on any
+    violation; ``"warning"`` lets info-severity advisories (e.g. the
+    missing-DOI rule) pass CI; ``"error"`` fails only on errors.
+    Violations below the threshold are still rendered — the policy
+    affects the exit code only.
     """
     if any(v.rule_id == _PARSE_RULE_ID for v in report.violations):
         return 2
-    if report.violations:
+    threshold = _SEVERITY_RANK.get(fail_on, 0)
+    if any(
+        _SEVERITY_RANK.get(v.severity.value, 0) >= threshold
+        for v in report.violations
+    ):
         return 1
     return 0
 
@@ -175,6 +190,26 @@ def _lint_paths_with_doc(
     help="Comma-separated rule ids to suppress.",
 )
 @click.option(
+    "--min-confidence",
+    "min_confidence",
+    type=click.Choice(["low", "medium", "high"], case_sensitive=False),
+    default=None,
+    help=(
+        "Skip rules whose measured-precision confidence tier is below "
+        "this floor (default: low — run everything)."
+    ),
+)
+@click.option(
+    "--fail-on",
+    "fail_on",
+    type=click.Choice(["error", "warning", "info"], case_sensitive=False),
+    default=None,
+    help=(
+        "Minimum violation severity that exits 1 (default: info — any "
+        "violation fails). Lower-severity findings are still reported."
+    ),
+)
+@click.option(
     "-v",
     "--verbose",
     "verbose",
@@ -229,6 +264,8 @@ def main(
     output: str | None,
     source_root: str | None,
     ignore_rules: str | None,
+    min_confidence: str | None,
+    fail_on: str | None,
     verbose: bool | None,
     fix: bool,
     dry_run: bool,
@@ -279,6 +316,10 @@ def main(
         cli_overrides["source_root"] = Path(source_root)
     if ignore_rules is not None:
         cli_overrides["ignore_rules"] = ignore_rules
+    if min_confidence is not None:
+        cli_overrides["min_confidence"] = min_confidence.lower()
+    if fail_on is not None:
+        cli_overrides["fail_on"] = fail_on.lower()
     if verbose is not None:
         cli_overrides["verbose"] = verbose
     # Spec 013 follow-up: ``--no-resolve`` is a reserved flag. The
@@ -348,7 +389,7 @@ def main(
             sys.exit(2)
 
     _dispatch_renderer(cfg.output, report, cfg)
-    sys.exit(_determine_exit_code(report))
+    sys.exit(_determine_exit_code(report, cfg.fail_on))
 
 
 @main.command(name="explain")

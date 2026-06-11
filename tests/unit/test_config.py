@@ -21,6 +21,20 @@ class TestDefaults:
         assert cfg.ignore_rules == frozenset()
         assert cfg.verbose is False
         assert cfg.code_width == 80
+        # Architecture-review follow-up: confidence floor and exit-code
+        # policy default to the historical behaviour (run everything,
+        # fail on any violation).
+        assert cfg.min_confidence == "low"
+        assert cfg.fail_on == "info"
+
+    def test_file_sets_min_confidence_and_fail_on(self, tmp_path: Path):
+        (tmp_path / ".jss-lint.toml").write_text(
+            'min_confidence = "medium"\nfail_on = "error"\n',
+            encoding="utf-8",
+        )
+        cfg = load(cli_overrides={}, cwd=tmp_path)
+        assert cfg.min_confidence == "medium"
+        assert cfg.fail_on == "error"
 
 
 class TestTomlFile:

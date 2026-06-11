@@ -17,30 +17,32 @@ from typing import Any
 
 from pylatexenc.latexwalker import LatexEnvironmentNode
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
-from texlint.journals.jss import _catalogue_data
+from texlint.api import (
+    CODE_DISPLAY_ENVS,
+    ParsedDocument,
+    Rule,
+    ToolConfig,
+    Violation,
+)
 from texlint.journals.jss.rules import _helpers
 
-# Code environments whose content is subject to the line-width rule.
-_CODE_ENVS: frozenset[str] = frozenset(
-    {"verbatim", "Verbatim", "Code", "CodeInput", "CodeOutput",
-     "Sinput", "Soutput", "Scode", "Schunk", "CodeChunk"}
-)
+# Code environments whose content is subject to the line-width rule —
+# the shared code-display subset of the verbatim contract.
+_CODE_ENVS: frozenset[str] = CODE_DISPLAY_ENVS
 
 
 def _violation(
     *, tex: Any, line: int, length: int, limit: int, rule_id: str
 ) -> Violation:
-    meta = _catalogue_data.RULES[rule_id]
-    return Violation(
+    # Width violations are line-anchored (no source pos): the column
+    # carries the offending length so renderers can point past the
+    # margin. Delegates catalogue lookup to the shared factory.
+    return _helpers.make_violation(
         file=tex.path,
         line=line,
         column=length,
         rule_id=rule_id,
-        severity=meta["severity"],
-        message=meta["message_template"],
         suggestion=f"Wrap or reflow the code line to fit in {limit} columns.",
-        fix=None,
     )
 
 
@@ -107,17 +109,7 @@ def _env_content_span(env: Any) -> tuple[int | None, int | None]:
 # ---------------------------------------------------------------------------
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
-    meta = _catalogue_data.RULES[rule_id]
-    return Rule(
-        id=rule_id,
-        category=meta["category"],
-        severity=meta["severity"],
-        message_template=meta["message_template"],
-        authority=meta["authority"],
-        check=check_fn,
-        formats=None,
-    )
+_rule = _helpers.make_rule
 
 
 jss_width_001 = _rule("JSS-WIDTH-001", check_jss_width_001)
