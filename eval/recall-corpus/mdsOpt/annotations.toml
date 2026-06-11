@@ -5,36 +5,973 @@
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
 #
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 94 violations across 18 rules.
-# Rules fired: JSS-CITE-002, JSS-CITE-003, JSS-CODE-001, JSS-CODE-002, JSS-CODE-003, JSS-HOUSE-001, JSS-HOUSE-003, JSS-MARKUP-001, JSS-OPER-003, JSS-PRE-006, JSS-REFS-003, JSS-REFS-004, JSS-REFS-005, JSS-REFS-007, JSS-TYPO-001, JSS-XREF-001, JSS-XREF-002, JSS-XREF-004
-# Manuscript: mdsOpt.ltx (1273 loc)
-# Sibling .bib(s): mdsOpt.bib
+# Conventions (matching the v1 papers): CODE-001 / CODE-003 carry one
+# entry per offending code block; bib-rule entries anchor at the
+# entry's @-line.
 
 [meta]
 paper_id = "mdsOpt"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
+annotator = "Claude Code (AI annotator)"
+date = "2026-06-11"
 notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
+AI-produced annotation from an independent end-to-end read of
+mdsOpt.ltx (1273 loc) and mdsOpt.bib; the linter was not consulted
+before annotating (reconciliation pass afterwards per README step 5).
+Pending human verification. Dominant defect classes: parenthesised
+\\cite without natbib commands, unspaced code (commas / <- / =),
+comments inside CodeInput, captions without trailing periods, bare
+function and argument names in prose. Borderline cases left
+unannotated for human judgement: \\Plaintitle containing "--"
+(PRE-006 fires; arguably plain text), per-table-cell package
+citations, x1..x16 variable labels in prose. Known linter FPs
+observed here (not annotated): MARKUP-001 on the group label "C"
+at .ltx lines 543/573.
 """
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "mdsOpt.ltx"
-# line = 42
-# comment = "<optional rationale>"
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 1
+comment = 'Post-2000 entry without doi field (DOI exists)'
 
-# (no violations recorded yet)
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "mdsOpt.bib"
+line = 9
+comment = 'Title "Symbolic data" not in title case'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "mdsOpt.bib"
+line = 21
+comment = 'Publisher "Springer Science+Business Media" should be "Springer-Verlag"'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "mdsOpt.bib"
+line = 31
+comment = 'Publisher "Springer" should be "Springer-Verlag"'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "mdsOpt.bib"
+line = 40
+comment = 'Publisher "Springer" should be "Springer-Verlag"'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 71
+comment = 'Title mentions SMACOF and R without \pkg{} / \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 195
+comment = 'Package name in title not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 232
+comment = '"R" in title not wrapped in \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 241
+comment = 'Package name in title not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 249
+comment = 'Post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 249
+comment = '"{R}" braced but not wrapped in \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "mdsOpt.bib"
+line = 249
+comment = 'Journal "Statistics in Transition -- new series" not in title case'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mdsOpt.bib"
+line = 259
+comment = 'Package name in title not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 312
+comment = 'Post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-005"
+file = "mdsOpt.bib"
+line = 323
+comment = 'Journal abbreviated: "Psychological Res." should be spelled out'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 333
+comment = 'Post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "mdsOpt.bib"
+line = 333
+comment = 'Journal "Statistics in Transition -- new series" not in title case'
+
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "mdsOpt.ltx"
+line = 15
+comment = '\usepackage{graphicx} duplicates what jss.cls already loads'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "mdsOpt.ltx"
+line = 27
+comment = 'Own package name "mdsOpt" in \title{} is not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 43
+comment = 'Bare "R" in the abstract; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 45
+comment = 'Bare "R" in the abstract; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 72
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 74
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 83
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 84
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 98
+comment = 'Blank line immediately after \end{equation}'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 109
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 121
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 121
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "mdsOpt.ltx"
+line = 121
+comment = 'Bare (\ref{eq:1}); prefer Equation~\ref{eq:1}'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 131
+comment = 'Blank line immediately after \end{equation}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 131
+comment = 'Numbered equation without \label{} and never referenced'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 156
+comment = 'Blank line immediately after \end{equation}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 156
+comment = 'Numbered equation without \label{} and never referenced'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 175
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 179
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 183
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 200
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 205
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 205
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 207
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 212
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 214
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 218
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 235
+comment = 'Bare "R" in prose; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 236
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 237
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 237
+comment = 'Bare "R" in prose; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 254
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 255
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 256
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "mdsOpt.ltx"
+line = 259
+comment = 'First occurrence of \pkg{clusterSim} (Table 1) has no citation; \pkg{base} and \pkg{stats} in the same table are cited'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 260
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 261
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 261
+comment = 'Bare function name "(scale)" in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 263
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 265
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 271
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 271
+comment = 'Bare function name "(dist)" in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 272
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 276
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 281
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 283
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 286
+comment = 'Bare function name in Table 1 cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 289
+comment = 'Bare "R" in table caption; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 289
+comment = 'Table caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mdsOpt.ltx"
+line = 306
+comment = 'Bare "R" in prose; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 306
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 313
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 313
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-XREF-001"
+file = "mdsOpt.ltx"
+line = 313
+comment = '"(see Table 3)" hardcodes the number; use \ref{tab:3}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 317
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 318
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 323
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 324
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "mdsOpt.ltx"
+line = 327
+comment = '\eqref{eq:4}; prefer Equation~\ref{eq:4}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 328
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 330
+comment = 'Blank line immediately before \begin{equation}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 432
+comment = 'Parenthesised \cite{...} inside table caption; use \citep/\citealp'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 432
+comment = 'Table caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 436
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 440
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 440
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 441
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 449
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 452
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 457
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 495
+comment = 'Parenthesised \cite{...} inside table caption; use \citep/\citealp'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 495
+comment = 'Table caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 502
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 502
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 507
+comment = 'Bare argument=value in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 509
+comment = 'Bare argument=value in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 511
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 511
+comment = 'Bare function name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 517
+comment = 'Bare argument=value in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 519
+comment = 'Bare argument=value in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 525
+comment = 'Bare argument=value in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 583
+comment = 'Table caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 584
+comment = 'Parenthesised \cite{...} inside table caption; use \citep/\citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 599
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mdsOpt.ltx"
+line = 599
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 603
+comment = 'Blank line immediately after \end{equation}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 603
+comment = 'Numbered equation without \label{} and never referenced'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 607
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 615
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 619
+comment = 'Blank line immediately after \end{equation}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 619
+comment = 'Numbered equation without \label{} and never referenced'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 634
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 639
+comment = 'Blank line immediately after \end{equation}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 639
+comment = 'Numbered equation without \label{} and never referenced'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "mdsOpt.ltx"
+line = 648
+comment = 'Blank line immediately before \begin{equation}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "mdsOpt.ltx"
+line = 648
+comment = 'Numbered equation without \label{} and never referenced'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 682
+comment = 'Bare argument=value in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 690
+comment = 'Bare dataset name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 745
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 746
+comment = 'data() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 754
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 763
+comment = 'Bare argument name "spline.degree" in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 767
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 778
+comment = 'Bare option name "max.print" in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 784
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 804
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 813
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 823
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 824
+comment = 'R comment inside CodeInput; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 851
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 852
+comment = 'R comment inside CodeInput; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 866
+comment = 'Figure caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 874
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 875
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 876
+comment = 'data() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 881
+comment = 'Three R comments in this CodeInput block; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 905
+comment = 'Figure caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 922
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 927
+comment = 'R comment inside CodeInput; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 942
+comment = 'Figure caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mdsOpt.ltx"
+line = 963
+comment = 'Bare dataset name in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1002
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 1003
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1013
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1024
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1058
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1067
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1079
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 1080
+comment = 'R comment inside CodeInput; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1103
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 1104
+comment = 'R comment inside CodeInput; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 1117
+comment = 'Figure caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 1128
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1136
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "mdsOpt.ltx"
+line = 1137
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 1154
+comment = 'Three R comments in this CodeInput block; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 1182
+comment = 'Figure caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mdsOpt.ltx"
+line = 1198
+comment = 'Code block: no spaces after commas and/or around <- and = throughout'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mdsOpt.ltx"
+line = 1204
+comment = 'R comment inside CodeInput; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "mdsOpt.ltx"
+line = 1222
+comment = 'Figure caption does not end with a period'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 1267
+comment = 'Parenthesised \cite{...}; use \citep or \citealp'

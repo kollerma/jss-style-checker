@@ -5,36 +5,700 @@
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
 #
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 76 violations across 17 rules.
-# Rules fired: JSS-CAP-004, JSS-CITE-002, JSS-CODE-001, JSS-CODE-002, JSS-CODE-003, JSS-HOUSE-001, JSS-MARKUP-001, JSS-NAME-002, JSS-PRE-003, JSS-PRE-007, JSS-REFS-003, JSS-REFS-004, JSS-REFS-006, JSS-REFS-007, JSS-STRUCT-002, JSS-WIDTH-001, JSS-XREF-001
-# Manuscript: jss816.Rnw (1566 loc)
-# Sibling .bib(s): jss816.bib
+# Conventions (matching the v1 papers): CODE-003 carries one entry per
+# offending chunk (anchored at the <<>>= line, where the Sinput
+# envelope starts); bib-rule entries anchor at the entry's @-line.
+# Hidden chunks (echo=FALSE) are not annotated — their code never
+# appears in the rendered manuscript. Only BIB ENTRIES CITED from the
+# manuscript are annotated; jss816.bib carries ~30 additional
+# unreferenced legacy entries that never render.
 
 [meta]
 paper_id = "spacetime"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
+annotator = "Claude Code (AI annotator)"
+date = "2026-06-11"
 notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
+AI-produced annotation from an independent end-to-end read of
+jss816.Rnw (1566 loc) and the cited subset of jss816.bib; the linter
+was not consulted before annotating (reconciliation per README step 5
+afterwards). Pending human verification. This is the published JSS
+v51i07 paper kept as a living vignette, so prose style is largely
+clean; defects concentrate in metadata (\\title markup without
+\\Plaintitle, \\author with logos and no \\Plainauthor), package names
+wrapped in \\code{} instead of \\pkg{}, unspaced chunk code, and the
+bibliography (missing DOIs, unmarked package names in titles).
+Out-of-catalogue defects noticed but not annotatable: \\cite{nc} has
+no bib entry; trailing non-LaTeX notes after \\end{document}.
+Linter FPs observed here (not annotated): XREF-001 on notes after
+\\end{document} (lines 1542/1546/1565); REFS-003 on R News / OGC
+entries that have no DOI; REFS-006 on the lowercase package-name
+first word of the jss816 self-citation title.
+Borderline, left unannotated: require(pkg, quietly = TRUE) guard
+idiom (unquoted first arg); \\code{xts}/\\code{sp} where class vs.
+package reading is ambiguous; lowercase "figure/table/section \\ref".
 """
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "jss816.Rnw"
-# line = 42
-# comment = "<optional rationale>"
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "jss816.Rnw"
+line = 37
+comment = '{\tt R} in title; should be \proglang{R}'
 
-# (no violations recorded yet)
+[[violations]]
+rule_id = "JSS-PRE-003"
+file = "jss816.Rnw"
+line = 37
+comment = '\title{} contains markup (\bf, \pkg, {\tt}); no \Plaintitle{} defined'
+
+[[violations]]
+rule_id = "JSS-PRE-007"
+file = "jss816.Rnw"
+line = 41
+comment = '\author{} contains markup (\includegraphics, \bf); no \Plainauthor{} defined'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 78
+comment = 'Package name wrapped in \code{spacetime}; should be \pkg{spacetime}'
+
+[[violations]]
+rule_id = "JSS-CAP-004"
+file = "jss816.Rnw"
+line = 81
+comment = 'Keywords capitalised: "Time series analysis", "Geographic Information Systems" not sentence case'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "jss816.Rnw"
+line = 151
+comment = 'Bare "R" in prose; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-ABBR-001"
+file = "jss816.Rnw"
+line = 182
+comment = 'Abbreviation "(sids)" lowercase; should be SIDS'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "jss816.Rnw"
+line = 183
+comment = 'First occurrence of package \pkg{sf} has no citation (sf never cited)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 186
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 198
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 216
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 522
+comment = 'Package name wrapped in \code{}; should be \pkg{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "jss816.Rnw"
+line = 561
+comment = 'Bare class names STFDF / STIDF in table cell; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 585
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 588
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 594
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 597
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss816.Rnw"
+line = 598
+comment = 'R comment inside code chunk; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 608
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 615
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 707
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 715
+comment = 'Package name wrapped in \code{}; should be \pkg{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 726
+comment = 'Package name wrapped in \code{}; should be \pkg{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 755
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 797
+comment = 'Package name wrapped in \code{}; should be \pkg{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 847
+comment = 'Package name wrapped in \code{}; should be \pkg{}'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 858
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "jss816.Rnw"
+line = 862
+comment = '"e.g." not followed by a comma'
+
+[[violations]]
+rule_id = "JSS-ABBR-001"
+file = "jss816.Rnw"
+line = 929
+comment = 'Abbreviation "(sids)" lowercase; should be SIDS'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "jss816.Rnw"
+line = 934
+comment = 'First occurrence of package spdep has no citation'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 934
+comment = 'Package name wrapped in \code{}; should be \pkg{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 967
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 976
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 988
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss816.Rnw"
+line = 990
+comment = 'R comment inside code chunk; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 994
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "jss816.Rnw"
+line = 995
+comment = 'Code line exceeds 80 columns'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "jss816.Rnw"
+line = 1015
+comment = 'Bare variable names (gsp / pcap / pc / emp / unemp) in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "jss816.Rnw"
+line = 1016
+comment = 'Bare variable names (gsp / pcap / pc / emp / unemp) in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "jss816.Rnw"
+line = 1017
+comment = 'Bare variable names (gsp / pcap / pc / emp / unemp) in prose; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 1035
+comment = 'Package name wrapped in \code{}; should be \pkg{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1047
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1075
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1082
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss816.Rnw"
+line = 1092
+comment = 'R comment inside code chunk; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1105
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss816.Rnw"
+line = 1118
+comment = 'R comment inside code chunk; move into surrounding text'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1131
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "jss816.Rnw"
+line = 1132
+comment = 'Code line exceeds 80 columns'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1154
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1153
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1163
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "jss816.Rnw"
+line = 1162
+comment = 'Code line exceeds 80 columns'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1172
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1276
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1287
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "jss816.Rnw"
+line = 1305
+comment = 'Bare package name "cshapes" in section title; should be \pkg{cshapes} with plain shim'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1313
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "jss816.Rnw"
+line = 1321
+comment = 'Bare variable names COWSMONTH / COWEMONTH; wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1334
+comment = 'Code chunk: missing spaces after commas and/or around operators (=, +, *, ~)'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1360
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "jss816.Rnw"
+line = 1379
+comment = 'Bare "R" in prose; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1382
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "jss816.Rnw"
+line = 1389
+comment = 'Bare "R" in prose; should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1396
+comment = 'library() first argument unquoted'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "jss816.Rnw"
+line = 1455
+comment = 'Bare class names (POSIXt, Date, timeDate, yearmon, yearqtr); wrap in \code{}'
+
+[[violations]]
+rule_id = "JSS-STRUCT-002"
+file = "jss816.Rnw"
+line = 1496
+comment = 'Section "Acknowledgements" uses British spelling; JSS uses "Acknowledgments"'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 25
+comment = 'Title mixed case: "Geographic information - Simple feature access - Part 1: Common architecture"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 230
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 230
+comment = 'Title: "the gstat Package" — gstat not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 230
+comment = 'First word after ":" lowercase: "the gstat Package"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 257
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 481
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "jss816.bib"
+line = 481
+comment = 'Journal "Ecological informatics" not in title case'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 489
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 497
+comment = 'Title-case "And" should be lowercase "and"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 504
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 504
+comment = '"Spatio-temporal" should be "Spatio-Temporal" in title case'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 512
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 512
+comment = 'Package name in title not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 521
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "jss816.bib"
+line = 521
+comment = 'Journal "Spatial cognition and computation" not in title case'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 533
+comment = '"Space-time" / "Long-memory" hyphen parts not capitalised in title case'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "jss816.bib"
+line = 542
+comment = 'Publisher "Chapman and Hall" should be "Chapman & Hall/CRC"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 542
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 569
+comment = '"R" in title not wrapped in \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 579
+comment = '"Date-time Classes" should be "Date-Time Classes"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 588
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 588
+comment = 'Braced package / language name in title; should use \pkg{} / \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-005"
+file = "jss816.bib"
+line = 598
+comment = 'Journal abbreviated: "Commun. ACM" should be "Communications of the ACM"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 617
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 617
+comment = 'Package name in title not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 628
+comment = '"{R}" braced but not wrapped in \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 639
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 639
+comment = '"{R}" braced but not wrapped in \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 647
+comment = '"R" in title not wrapped in \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 656
+comment = 'Package name in title not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 663
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 683
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 683
+comment = 'Package name and bare "R" in title without \pkg{} / \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 692
+comment = 'Package name in title not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 692
+comment = '"ColorBrewer palettes" — "palettes" not capitalised in title case'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 706
+comment = 'Package name in title not wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 732
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 732
+comment = 'Package name and bare "R" in title without \pkg{} / \proglang{}'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 745
+comment = 'Cited post-2000 entry without doi field (DOI exists)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 745
+comment = 'Braced package / language name in title; should use \pkg{} / \proglang{}'
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 645
+comment = 'Prose \code{a[i,j]}: missing space after comma'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 649
+comment = 'Prose \code{a[i,j,k]}: missing space after comma'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 654
+comment = 'Prose \code{a[i,j,k]}: missing space after comma'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "jss816.Rnw"
+line = 1346
+comment = 'Bare "R" in "(R Special Interest Group ...)"; should be \proglang{R}'

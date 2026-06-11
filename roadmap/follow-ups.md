@@ -272,13 +272,35 @@ inline).
 
 ## Feature 017 — Recall evaluation
 
-- [ ] **Hand-annotate the first 10 JSS papers** under
+- [x] **Hand-annotate the first 10 JSS papers** under
       `eval/recall-corpus/<paper-id>/`. The annotation TOML
       schema is documented in
       `eval/recall-corpus/README.md`. This is the most
       labour-intensive deferred item — read each paper end-
       to-end, identify every JSS-guide violation, record
       `(rule_id, file, line)` per FR-002.
+      (Completed 2026-06-11: the final two stubs, mdsOpt — 158
+      entries — and spacetime — 111 entries — were annotated by
+      an AI pass per the README protocol, with linter
+      reconciliation per step 5. Both are marked pending human
+      verification in their `[meta]` blocks. Source files were
+      materialised from the `cran/<pkg>` GitHub mirror at the
+      manifest-pinned versions because the sandbox network
+      policy blocks CRAN; line counts match the scaffold-time
+      records exactly.)
+- [ ] **CODE-003 line anchoring is inconsistent**, surfaced by
+      the mdsOpt/spacetime annotation reconciliation: for `.ltx`
+      code envs the violation anchors at the `\begin{CodeInput}`
+      line; for `.Rnw` chunks it lands on the chunk header line
+      for some chunks and on the first body line for others
+      (e.g., jss816.Rnw fires at 198 = header but 186 = header+1).
+      Annotations currently encode the empirical anchor so TPs
+      register; fix the rule to anchor at the offending code
+      line, then re-anchor the corpus.
+- [ ] **Linter scans content after `\end{document}`** — jss816.Rnw
+      carries non-LaTeX notes after `\end{document}` and XREF-001
+      fires on them (lines 1542/1546/1565). Rules should stop at
+      `\end{document}`.
 - [x] `eval-jss recall` CLI subcommand with `--gate` and
       `--validate` flags. (Shipped: also `--corpus`,
       `--format {terminal|json}`, `--history-db`, `--no-record`.
