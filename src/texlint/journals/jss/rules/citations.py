@@ -563,17 +563,7 @@ def check_jss_cite_004(
 # ---------------------------------------------------------------------------
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
-    meta = _catalogue_data.RULES[rule_id]
-    return Rule(
-        id=rule_id,
-        category=meta["category"],
-        severity=meta["severity"],
-        message_template=meta["message_template"],
-        authority=meta["authority"],
-        check=check_fn,
-        formats=None,
-    )
+_rule = _helpers.make_rule
 
 
 jss_cite_002 = _rule("JSS-CITE-002", check_jss_cite_002)

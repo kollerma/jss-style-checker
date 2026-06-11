@@ -28,7 +28,6 @@ from texlint.api import (
     ToolConfig,
     Violation,
 )
-from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 
 # Envs where code lives — the shared code-display subset of the
@@ -116,26 +115,9 @@ _SCIENTIFIC_NOTATION_RE = re.compile(
 _STRING_LITERAL_RE = re.compile(r"\"[^\"\n]*\"|'[^'\n]*'")
 
 
-def _violation(
-    *,
-    tex: Any,
-    pos: int,
-    rule_id: str,
-    suggestion: str,
-    fix: Fix | None = None,
-) -> Violation:
-    meta = _catalogue_data.RULES[rule_id]
-    line, col = _helpers._lineno_col(tex, pos)
-    return Violation(
-        file=tex.path,
-        line=line,
-        column=col,
-        rule_id=rule_id,
-        severity=meta["severity"],
-        message=meta["message_template"],
-        suggestion=suggestion,
-        fix=fix,
-    )
+# Catalogue-backed factories live in _helpers (one definition for all
+# rule modules); the module-local names are kept for call-site brevity.
+_violation = _helpers.tex_violation
 
 
 # ---------------------------------------------------------------------------
@@ -380,17 +362,7 @@ def _group_plain_text(group: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
-    meta = _catalogue_data.RULES[rule_id]
-    return Rule(
-        id=rule_id,
-        category=meta["category"],
-        severity=meta["severity"],
-        message_template=meta["message_template"],
-        authority=meta["authority"],
-        check=check_fn,
-        formats=None,
-    )
+_rule = _helpers.make_rule
 
 
 jss_code_001 = _rule("JSS-CODE-001", check_jss_code_001)

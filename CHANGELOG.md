@@ -54,6 +54,17 @@ version bump and an entry in this file — see the spec's Clarification Q2.
   the `JSS-CITE-001` / `JSS-SRC-001` / clean code paths; the 10-paper
   real-CRAN corpus is planned follow-up work.
 
+### Changed
+
+- Internal: the fourteen per-module `_violation` and fifteen
+  per-module `_rule` factory copies in `texlint.journals.jss.rules.*`
+  are consolidated into shared catalogue-backed factories in
+  `rules/_helpers.py` (`make_rule`, `tex_violation`, `entry_violation`,
+  `make_violation`, `entry_line`). No behaviour change; net −280
+  lines. New rules get severity/message/confidence wiring for free,
+  and future cross-cutting changes (suppression, confidence) have one
+  seam instead of fifteen.
+
 ### Fixed
 
 - Markup / prose rules no longer fire inside `lstlisting`, `alltt`,

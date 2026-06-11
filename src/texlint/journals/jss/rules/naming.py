@@ -17,7 +17,6 @@ from typing import Any
 from pylatexenc.latexwalker import LatexCharsNode
 
 from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
-from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import (
     CANONICAL,
@@ -37,26 +36,9 @@ _BARE_URL_RE = re.compile(
 )
 
 
-def _violation(
-    *,
-    file: Any,
-    line: int,
-    column: int | None,
-    rule_id: str,
-    suggestion: str,
-    fix: Fix | None = None,
-) -> Violation:
-    meta = _catalogue_data.RULES[rule_id]
-    return Violation(
-        file=file,
-        line=line,
-        column=column,
-        rule_id=rule_id,
-        severity=meta["severity"],
-        message=meta["message_template"],
-        suggestion=suggestion,
-        fix=fix,
-    )
+# Catalogue-backed factories live in _helpers (one definition for all
+# rule modules); the module-local names are kept for call-site brevity.
+_violation = _helpers.make_violation
 
 
 # ---------------------------------------------------------------------------
@@ -127,9 +109,7 @@ def _field_value(entry: Any, name: str) -> str:
     return str(f.value).strip()
 
 
-def _entry_line(entry: Any) -> int:
-    start = getattr(entry, "start_line", 0) or 0
-    return start + 1
+_entry_line = _helpers.entry_line
 
 
 def _entry_source_span(source: str, entry: Any) -> tuple[int, int]:
@@ -265,17 +245,7 @@ def check_jss_name_002(
 # ---------------------------------------------------------------------------
 
 
-def _rule(rule_id: str, check_fn) -> Rule:
-    meta = _catalogue_data.RULES[rule_id]
-    return Rule(
-        id=rule_id,
-        category=meta["category"],
-        severity=meta["severity"],
-        message_template=meta["message_template"],
-        authority=meta["authority"],
-        check=check_fn,
-        formats=None,
-    )
+_rule = _helpers.make_rule
 
 
 jss_name_001 = _rule("JSS-NAME-001", check_jss_name_001)
