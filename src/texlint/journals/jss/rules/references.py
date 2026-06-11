@@ -145,6 +145,22 @@ def _strip_latex(text: str) -> str:
     return no_macros.replace("{", "").replace("}", "")
 
 
+def _strip_markup_content(text: str) -> str:
+    """Drop ``\\macro{content}`` entirely (both wrapper and inner words).
+
+    Companion to :func:`_strip_latex` for the REFS-006 principal-word
+    check: we want to see only user-prose words, not author-dictated
+    package/language identifiers wrapped in JSS markup macros. Iterates
+    until no more `\\macro{...}` substrings remain so nested wrappers
+    like ``\\code{\\pkg{x}}`` are fully removed.
+    """
+    prev: str | None = None
+    while prev != text:
+        prev = text
+        text = re.sub(r"\\[A-Za-z]+\*?\s*\{[^{}]*\}", " ", text)
+    return text.replace("{", "").replace("}", "")
+
+
 # ---------------------------------------------------------------------------
 # JSS-REFS-003 — DOI advisory (info severity)
 # ---------------------------------------------------------------------------
@@ -291,7 +307,10 @@ def _starts_with_markup(title: str) -> bool:
 # convention, so this leading token is the package name itself, not a
 # title-case violation.
 _PACKAGE_LIKE_TITLE_RE = re.compile(
-    r"^\{?\s*[a-z][a-zA-Z0-9._]*\s*:"
+    # ``vegan: ...`` (bare), ``{vegan}: ...`` (case-protection),
+    # ``{{vegan}: ...}`` (BibTeX-wrapped). The leading-brace group is
+    # optional but balanced via a non-capturing alternation.
+    r"^\{*\s*\{?[a-z][a-zA-Z0-9._]*\}?\s*:"
 )
 
 
@@ -354,6 +373,96 @@ def check_jss_refs_006(
                         "Capitalize the first word after ':' in the title."
                     ),
                 )
+                continue
+        # Sentence-case detection: walk principal words after the first;
+        # flag when any are lowercase. JSS Chicago-style title case
+        # capitalises every word that isn't a short stop word
+        # (article, conjunction, short preposition). This catches the
+        # large bib-FN class of "Flexible nonhomogeneous Markov models
+        # for panel observed data" — first word capped but principals
+        # like "nonhomogeneous", "models", "observed" left lowercase.
+        #
+        # Use a markup-aware projection: words inside `\pkg{...}`,
+        # `\code{...}`, `\proglang{...}` are removed entirely so the
+        # check sees only user-prose words. Without this, a title like
+        # ``Unifying Algorithms: \pkg{optimx} for \proglang{R}`` would
+        # falsely flag the lowercase ``optimx``.
+        prose_only = _visible_words_for_titlecase(
+            _strip_markup_content(title)
+        )
+        # Skip the first prose-only word; the first-word check above
+        # already covered it via the original title context.
+        offenders = [
+            w for w in prose_only[1:] if _is_lowercase_principal(w)
+        ]
+        if offenders:
+            sample = ", ".join(repr(w) for w in offenders[:3])
+            yield _violation(
+                bib=bib,
+                entry=entry,
+                rule_id="JSS-REFS-006",
+                suggestion=(
+                    f"Capitalize the principal words in the title "
+                    f"(found lowercase: {sample})."
+                ),
+            )
+
+
+# Chicago-style stop words that legally stay lowercase mid-title in
+# JSS title case: articles, coordinating conjunctions, and the short
+# prepositions (≤ 4 letters) listed in Chicago Manual of Style §8.159.
+# Longer prepositions ("between", "across", "through", "within",
+# "under") get capitalised, matching the user's per-paper FN comments.
+_TITLE_STOP_WORDS: frozenset[str] = frozenset({
+    "a", "an", "the",
+    "and", "or", "but", "nor", "for", "yet", "so", "if",
+    "as", "at", "by", "in", "of", "on", "to", "up", "via", "vs",
+    "with", "from", "into", "onto", "than", "per", "off",
+    # Latin connectives that appear in titles ("et al.", etc.)
+    "et", "al",
+    # Common short conjunctions / particles
+    "is", "be", "do",
+})
+
+
+_PUNCT_TRIM_RE = re.compile(r"^[^A-Za-z]+|[^A-Za-z0-9]+$")
+
+
+def _visible_words_for_titlecase(title: str) -> list[str]:
+    """Whitespace-only tokenizer for the principal-word check.
+
+    Differs from ``_visible_words`` (which also splits on hyphens and
+    slashes): we want hyphenated compounds like ``Date-time`` and
+    ``Spatio-temporal`` to stay intact so their leading capital
+    suffices to mark them title-cased. Splitting them would falsely
+    flag the lowercase second element of an author-chosen compound.
+    """
+    return [w for w in re.split(r"\s+", title) if re.search(r"[A-Za-z]", w)]
+
+
+def _is_lowercase_principal(word: str) -> bool:
+    """True if ``word`` looks like a principal word that should be
+    capitalised under JSS title case but appears all lowercase.
+
+    Strips wrapping punctuation (parens, quotes, commas, periods) so
+    title-fragment tokens like ``(with`` and ``discussion).`` don't
+    falsely trigger on their punctuation tail. Conservative on
+    word-shape: skips short words (< 4 letters), known stop words,
+    and known R-package identifiers (those are REFS-004 markup
+    issues, not title-case issues).
+    """
+    stripped = _PUNCT_TRIM_RE.sub("", word)
+    if not stripped:
+        return False
+    if stripped != stripped.lower():
+        return False
+    if len(stripped) < 4:
+        return False
+    if stripped in _TITLE_STOP_WORDS:
+        return False
+    if stripped in R_PACKAGES:
+        return False
+    return True
 
 
 # ---------------------------------------------------------------------------

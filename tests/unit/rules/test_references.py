@@ -292,26 +292,104 @@ class TestRefs006:
         assert run_rule(jss_refs_006, src, kind="bib") == []
 
     def test_lowercase_package_idiom_first_word_silent(self, run_rule):
-        # ``vegan: Community Ecology Package`` / ``nloptr: R interface
-        # to NLopt`` / ``latticeExtra: Extra Graphical Utilities Based
-        # on Lattice`` — bibtex titles for R packages conventionally
-        # open with the lowercase package name unwrapped. Reproduces
-        # FPs from cran_WeightedCluster, cran_seqHMM, cran_stm,
-        # cran_effects.
+        # ``vegan: Community Ecology Package`` / ``latticeExtra: Extra
+        # Graphical Utilities Based on Lattice`` — bibtex titles for R
+        # packages conventionally open with the lowercase package name
+        # unwrapped. When the rest of the title is in title case, the
+        # lowercase first word is exempt. Reproduces FPs from
+        # cran_WeightedCluster, cran_seqHMM, cran_stm, cran_effects.
         for title in (
             "vegan: Community Ecology Package",
-            "nloptr: R interface to NLopt",
             "latticeExtra: Extra Graphical Utilities Based on Lattice",
             "topicmodels: An R Package for Fitting Topic Models",
         ):
             src = f'@manual{{a, title={{{title}}}, year={{2020}}}}\n'
             assert run_rule(jss_refs_006, src, kind="bib") == [], title
 
+    def test_lowercase_package_idiom_with_sentence_case_description_flagged(
+        self, run_rule,
+    ):
+        # The first-word lowercase exemption does NOT extend to the rest
+        # of the title: ``nloptr: R interface to NLopt`` and similar
+        # ``pkg: <sentence-case description>`` titles still violate JSS
+        # title case because ``interface`` is a principal word. Matches
+        # corpus annotations like DBR/goodrich2018rstanarm.
+        src = (
+            '@manual{a, title={nloptr: R interface to NLopt}, year={2020}}\n'
+        )
+        violations = run_rule(jss_refs_006, src, kind="bib")
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-REFS-006"
+
     def test_word_is_uppercase_start_empty_letters(self):
         # A word with no letters (e.g., '1984') counts as "capitalised" for the
         # first-word check — exercise the empty-letters branch directly.
         from texlint.journals.jss.rules.references import _word_is_uppercase_start
         assert _word_is_uppercase_start("1984") is True
+
+    # --- sentence-case detection (lowercase principal words) -------------
+
+    def test_sentence_case_title_flagged(self, run_rule):
+        # "The use of multiple measurements in taxonomic problems" — first
+        # word capped but principals ('use', 'multiple', 'measurements',
+        # 'taxonomic', 'problems') are lowercase.
+        src = (
+            '@article{a, title={The use of multiple measurements in '
+            'taxonomic problems}, year={1936}}\n'
+        )
+        violations = run_rule(jss_refs_006, src, kind="bib")
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-REFS-006"
+
+    def test_single_lowercase_principal_flagged(self, run_rule):
+        # "Econometric Analysis of Panel Data, 3rd edition" — single
+        # lowercase principal ('edition') still fires.
+        src = (
+            '@book{a, title={Econometric Analysis of Panel Data, '
+            '3rd edition}, year={2001}}\n'
+        )
+        violations = run_rule(jss_refs_006, src, kind="bib")
+        assert len(violations) == 1
+
+    def test_hyphenated_compound_silent(self, run_rule):
+        # ``Spatio-temporal`` / ``Date-time`` — hyphenated compounds stay
+        # one token under the principal-word check; the leading cap
+        # marks them title-cased. Without whitespace-only tokenization
+        # the lowercase second element would falsely trigger.
+        src = (
+            '@book{a, title={Statistics for Spatio-temporal Data}, '
+            'year={2011}}\n'
+        )
+        assert run_rule(jss_refs_006, src, kind="bib") == []
+
+    def test_lowercase_principal_after_markup_silent(self, run_rule):
+        # Words wrapped in `\pkg{...}` / `\code{...}` are stripped before
+        # the principal-word check — author-dictated lowercase identifiers
+        # don't false-positive.
+        src = (
+            '@article{a, title={Unifying Optimization Algorithms: '
+            r'\pkg{optimx} for \proglang{R}}, year={2020}}'
+        ) + "\n"
+        assert run_rule(jss_refs_006, src, kind="bib") == []
+
+    def test_parenthesized_stopword_silent(self, run_rule):
+        # ``(with Discussion)`` at end of title — the leading "(" gets
+        # stripped, "with" is a stop word, "Discussion)" trailing ")"
+        # gets stripped → all capitalised, no fire.
+        src = (
+            '@article{a, title={Long-Memory Dependence (with '
+            'Discussion)}, year={1989}}\n'
+        )
+        assert run_rule(jss_refs_006, src, kind="bib") == []
+
+    def test_brace_protected_pkg_idiom_silent(self, run_rule):
+        # ``{robustlmm}: An ...`` — case-protection braces around the
+        # package idiom should also exempt the first-word check.
+        src = (
+            '@article{a, title={{robustlmm}: An {R} Package for Robust '
+            'Estimation}, year={2016}}\n'
+        )
+        assert run_rule(jss_refs_006, src, kind="bib") == []
 
 
 # ---------------------------------------------------------------------------
