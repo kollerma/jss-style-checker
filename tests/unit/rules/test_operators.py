@@ -122,19 +122,41 @@ class TestOper003:
     def test_good_silent(self, run_rule):
         assert run_rule(jss_oper_003, _tex("JSS-OPER-003-good.tex")) == []
 
-    def test_period_carveout_silent(self, run_rule):
-        # Equation body ends with a period → sentence ends; no violation.
+    def test_period_carveout_after_only_silent(self, run_rule):
+        # Equation body ends with a period → sentence ends; the blank
+        # line AFTER \end{} is allowed. The period exemption does NOT
+        # extend to a blank line BEFORE \begin{} (that's still wrong
+        # regardless of whether the equation closes a sentence — JSS
+        # wants ``%`` suppression at the prose↔display boundary).
         src = (
             "\\documentclass[article]{jss}\n"
             "\\begin{document}\n"
             "Intro.\n"
-            "\n"
             "\\begin{equation}x = 1.\\end{equation}\n"
             "\n"
             "Next paragraph starts.\n"
             "\\end{document}\n"
         )
         assert run_rule(jss_oper_003, src) == []
+
+    def test_blank_before_fires_even_when_equation_ends_with_period(
+        self, run_rule,
+    ):
+        # The user's recall annotations flag blank-line-BEFORE-\begin{}
+        # even when the equation body ends with a period (matches
+        # corpus FNs at CARBayesST/CARBayesST.Rnw:181 and friends).
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "Intro that ends.\n"
+            "\n"
+            "\\begin{equation}x = 1.\\end{equation}\n"
+            "Next.\n"
+            "\\end{document}\n"
+        )
+        violations = run_rule(jss_oper_003, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-OPER-003"
 
     def test_non_display_env_silent(self, run_rule):
         src = (

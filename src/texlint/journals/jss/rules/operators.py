@@ -222,14 +222,17 @@ def check_jss_oper_003(
                 and node.environmentname in _DISPLAY_EQ_ENVS
             ):
                 continue
-            if _equation_body_ends_with_period(node):
-                continue
             before = parent[idx - 1] if idx > 0 else None
             after = parent[idx + 1] if idx + 1 < len(parent) else None
-            if (
-                _chars_ends_with_blank_line(before)
-                or _chars_starts_with_blank_line(after)
-            ):
+            # The period-exemption only applies to the blank-line-AFTER
+            # check: a display equation that ends a sentence (period in
+            # the body) legitimately gets a blank line after, but a
+            # blank line BEFORE \begin{} is wrong regardless of whether
+            # the equation is sentence-terminal.
+            ends_period = _equation_body_ends_with_period(node)
+            blank_before = _chars_ends_with_blank_line(before)
+            blank_after = _chars_starts_with_blank_line(after) and not ends_period
+            if blank_before or blank_after:
                 yield _violation(
                     tex=tex,
                     pos=node.pos,
@@ -408,15 +411,15 @@ _rule = _helpers.make_rule
 
 jss_oper_001 = _rule("JSS-OPER-001", check_jss_oper_001)
 jss_oper_002 = _rule("JSS-OPER-002", check_jss_oper_002)
-# OPER-003 is structural: it walks tex_like sibling nodes around a
-# display-equation env and checks for blank-line text between them. In
-# .Rnw input the Rnw stripper replaces R chunks with whitespace, which
-# manufactures spurious blank-line text immediately before/after the
-# equation env even when the source had a chunk there. Narrow to the
-# native LaTeX surface only until we have a "pre-stripped whitespace
-# is figure content" signal.
+# OPER-003 walks tex_like sibling nodes around a display-equation env
+# and checks for blank-line text between them. The Rnw stripper
+# replaces R chunks with whitespace runs; ``_chars_ends_with_blank_line``
+# / ``_chars_starts_with_blank_line`` handle this by collapsing runs of
+# ≥ 3 newlines (the fingerprint of a stripped multi-line chunk) before
+# checking for a single blank-line separator, so the rule applies to
+# both tex and rnw inputs.
 jss_oper_003 = _rule(
-    "JSS-OPER-003", check_jss_oper_003, formats=frozenset({"tex"})
+    "JSS-OPER-003", check_jss_oper_003, formats=frozenset({"tex", "rnw"})
 )
 jss_oper_004 = _rule("JSS-OPER-004", check_jss_oper_004)
 
