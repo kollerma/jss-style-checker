@@ -145,13 +145,19 @@ class TestCap002:
         src = r"\section{Regression in R}"
         assert run_rule(jss_cap_002, src) == []
 
-    def test_stopword_capitalised_doesnt_count(self, run_rule):
-        # "Models And X" — And is stopword, X is proper-noun-adjacent.
-        # Only one non-first, non-stopword capitalised word → no violation.
+    def test_single_offender_section_title_fires(self, run_rule):
+        # ``\section{Models And Statistics}`` — even though "And" is a
+        # stopword and only "Statistics" is a non-first non-stopword
+        # offender, the JSS sentence-style rule for section titles fires
+        # on single-word offenders too. Would render as "Models and
+        # Statistics" in title case versus the expected sentence-style
+        # "Models and statistics". Updated 2026-06-11 to align with the
+        # recall-corpus annotations (DBR/DBR.Rnw:265 "Bayesian
+        # Estimation" et al.).
         src = r"\section{Models And Statistics}"
-        # "Statistics" isn't in PROPER_NOUNS, so offenders=1; threshold is 2
-        # → no violation from a single extra capitalisation.
-        assert run_rule(jss_cap_002, src) == []
+        violations = run_rule(jss_cap_002, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-CAP-002"
 
     def test_section_without_group_silent(self, run_rule):
         src = r"\section"
@@ -451,9 +457,14 @@ def test_cap_002_section_no_group_silent():
 
 def test_sentence_style_offender_skips_non_letter_words(run_rule):
     src = r"\section{Models 123 With Numbers}"
-    # "123" no letters → bare empty → continue; With is stopword; Numbers
-    # offender = 1 → below threshold → silent.
-    assert run_rule(jss_cap_002, src) == []
+    # "123" no letters → bare empty → continue; "With" is stopword;
+    # "Numbers" is the sole capitalised offender. Under the
+    # corpus-aligned single-offender threshold (CAP-002), this still
+    # fires — single-word offenders in section titles are real
+    # sentence-case violations.
+    violations = run_rule(jss_cap_002, src)
+    assert len(violations) == 1
+    assert violations[0].rule_id == "JSS-CAP-002"
 
 
 def test_cap_004_keyword_proper_noun_skipped(run_rule):

@@ -439,6 +439,14 @@ def check_jss_cap_002(
                 tex, node.pos, group, "JSS-CAP-002",
                 "Use sentence style: capitalise only the first word "
                 "(proper names remain capitalised).",
+                # Section titles are short and the user's recall
+                # annotations flag single-offender titles like
+                # "Bayesian Estimation" / "Model Training" / "MCMC
+                # Diagnostics". Lower the threshold to 1; the existing
+                # proper-noun set and stopword anchoring still suppress
+                # acceptable "Bayesian"-only and "Markov Chain"-style
+                # runs (those words are in the proper-noun set).
+                min_offenders=1,
             )
 
 
@@ -590,6 +598,7 @@ def _check_sentence_style(
     collapse_runs: bool = False,
     proper_nouns: frozenset[str] = _PROPER_NOUNS,
     text_preprocessor: Callable[[str], str] | None = None,
+    min_offenders: int = 2,
 ) -> Iterator[Violation]:
     """Fire when ≥2 distinct offending capitalisations appear in ``group``.
 
@@ -699,7 +708,7 @@ def _check_sentence_style(
                 offenders += 1
         i = j
 
-    if offenders >= 2:
+    if offenders >= min_offenders:
         yield _violation(
             tex=tex, pos=pos, rule_id=rule_id, suggestion=suggestion
         )
