@@ -4,37 +4,859 @@
 # record every JSS-guide violation you spot. Identity tuple is
 # (rule_id, file, line); column does NOT participate. See
 # eval/recall-corpus/README.md for the full protocol.
-#
-# Lint surface for recall measurement: `eval-jss recall` runs the
-# linter on every .tex / .ltx / .rnw / .rmd / .bib file in this
-# directory. The annotator should annotate against the same surface
-# the reviewer reads (the rendered .tex / PDF — not the .Rnw source)
-# to keep the comparison fair.
-#
-# This is a STUB. Linter output for reference (do not pre-populate
-# the [[violations]] section from this list — the recall measurement
-# depends on independent annotation):
-#
-# Linter says: 76 violations across 17 rules.
-# Rules fired: JSS-CAP-004, JSS-CITE-002, JSS-CODE-001, JSS-CODE-002, JSS-CODE-003, JSS-HOUSE-001, JSS-MARKUP-001, JSS-NAME-002, JSS-PRE-003, JSS-PRE-007, JSS-REFS-003, JSS-REFS-004, JSS-REFS-006, JSS-REFS-007, JSS-STRUCT-002, JSS-WIDTH-001, JSS-XREF-001
-# Manuscript: jss816.Rnw (1566 loc)
-# Sibling .bib(s): jss816.bib
 
 [meta]
 paper_id = "spacetime"
-annotator = ""             # fill in your name / handle
-date = "2026-05-07"
-notes = """
-Stub created 2026-05-07. Replace this notes block when annotation begins.
-"""
+annotator = "Manuel Koller"
+date = "2026-06-10"
+notes = '''
+The North Carolina Sudden Infant Death Syndrome (sids) data set is cited using
+\citep{nc}, but there's no bibtex entry with key nc.
 
-# Add one [[violations]] entry per ground-truth defect.
-# Schema:
-#
-# [[violations]]
-# rule_id = "JSS-CITE-002"
-# file = "jss816.Rnw"
-# line = 42
-# comment = "<optional rationale>"
+Citation of package maps in line 1129 is not added as violations as the package is
+cited on line 964 already, but there incorrectly as package map.
 
-# (no violations recorded yet)
+Removed several violations of JSS-XREF-001 after \end{document} (line 1509).
+No need to check after the end of the document.
+'''
+
+[[violations]]
+rule_id = "JSS-PRE-003"
+file = "jss816.Rnw"
+line = 37
+comment = '''\title contains markup but there's no \Plaintitle.'''
+
+[[violations]]
+rule_id = "JSS-PRE-007"
+file = "jss816.Rnw"
+line = 41
+comment = '''\author contains markup but there's no \Plainauthor'''
+
+[[violations]]
+rule_id = "JSS-CAP-004"
+file = "jss816.Rnw"
+line = 81
+comment = 'Keywords should be sentence case, should be "geographic information systems" and not "Geographic Information Systems"'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "jss816.Rnw"
+line = 183
+comment = 'Missing reference for package sf, citation only comes later on line 494'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 186
+comment = '''
+Missing spaces around operators and after commas.
+```
+if (require(foreign, quietly = TRUE) && require(sf, quietly = TRUE))
+  read.dbf(system.file("shape/nc.dbf", package="sf"))[1:5,c(5,9:14)]
+```
+should be
+```
+if (require(foreign, quietly = TRUE) && require(sf, quietly = TRUE))
+  read.dbf(system.file("shape/nc.dbf", package = "sf"))[1:5, c(5, 9:14)]
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 198
+comment = 'Missing space after comma, `wind[1:6,1:12]` should be `wind[1:6, 1:12]`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 216
+comment = 'Missing space after comma, `Produc[1:5,1:9]` should be `Produc[1:5,1:9]`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 585
+comment = 'Missing spaces around operator, `sep=""` should be `sep = ""`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 588
+comment = 'Package names should be quoted in library calls, `library(sp)` should be `library("sp")`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 594
+comment = '''
+Missing spaces around operators and after commas.
+```
+time = as.POSIXct("2010-08-05", tz = "GMT")+3600*(10:13)
+```
+should be
+```
+time = as.POSIXct("2010-08-05", tz = "GMT") + 3600 * (10:13)
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 597
+comment = '''
+Missing spaces around operators and after commas.
+```
+m = c(10,20,30)
+values = rnorm(length(sp)*length(time), mean = rep(m, 4))
+IDs = paste("ID",1:length(values), sep = "_")
+mydata = data.frame(values = signif(values, 3), ID=IDs)
+```
+should be
+```
+m = c(10,20,30)
+values = rnorm(length(sp) * length(time), mean = rep(m, 4))
+IDs = paste("ID", 1:length(values), sep = "_")
+mydata = data.frame(values = signif(values, 3), ID = IDs)
+```
+(Removed comment that is the cause of a violation of JSS-CODE-001.)
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss816.Rnw"
+line = 598
+comment = "Comments should move to the surrounding text and not be in code blocks"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 608
+comment = 'Package names should be quoted in library calls, `library(spacetime)` should be `library("spacetime")`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 615
+comment = 'Missing spaces around operator, `time+60` should be `time + 60`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 645
+comment = 'Missing spaces after comma, `a[i,j]` should be `a[i, j]`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 649
+comment = 'Missing spaces after comma, `a[i,j,k]` should be `a[i, j, k]`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 654
+comment = 'Missing spaces after comma, `a[i,j,k]` should be `a[i, j, k]`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 656
+comment = 'Missing spaces around operator, `drop=FALSE` should be `drop = FALSE`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 703
+comment = 'Missing spaces after comma, `xs2[1:4,]` should be `xs2[1:4, ]`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 728
+comment = 'Missing spaces around operator, `mode="tp"` should be `mode = "tp"`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 731
+comment = 'Missing spaces around operator, `mode="ts"` should be `mode = "ts"`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 737
+comment = '''Missing spaces around operator, `mode='p'` should be `mode = 'p'`'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 755
+comment = 'Missing spaces around operator, `scales=list(x=list(rot = 45))` should be `scales = list(x = list(rot = 45))`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 783
+comment = 'Missing spaces around operator, `mode="tp"` should be `mode = "tp"`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 783
+comment = 'Missing spaces around operator, `mode="ts"` should be `mode = "ts"`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 858
+comment = 'Package names should be quoted in library calls, `library(xts)` should be `library("xts")`'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "jss816.Rnw"
+line = 862
+comment = 'Missing comma after "e.g."'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 937
+comment = 'Package names should be quoted in require calls, `require(sf, quietly = TRUE)` should be `require("sf", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 965
+comment = 'Several missing spaces around operators and after in code block.'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 966
+comment = 'Package names should be quoted in require calls, `require(maps, quietly = TRUE)` should be `require("maps", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 970
+comment = 'Package names should be quoted in require calls, `require(sf, quietly = TRUE)` should be `require("sf", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 974
+comment = 'Missing spaces around operator, `sep=""` should be `sep = ""`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 980
+comment = 'Package names should be quoted in require calls, `require(plm, quietly = TRUE)` should be `require("plm", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 988
+comment = "Several missing spaces after commas in code block"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 989
+comment = 'Package names should be quoted in require calls, `require(plm, quietly = TRUE)` should be `require("plm", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss816.Rnw"
+line = 990
+comment = "Comments should not be included in code blocks"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "jss816.Rnw"
+line = 991
+comment = "Code line overflows text-width"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 993
+comment = "Several missing spaces after commas and around operators in code block"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 994
+comment = 'Package names should be quoted in require calls, `require(plm, quietly = TRUE)` should be `require("plm", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 994
+comment = 'Package names should be quoted in require calls, `require(RColorBrewer, quietly = TRUE)` should be `require("RColorBrewer", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "jss816.Rnw"
+line = 995
+comment = "Code line overflows text-width"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1019
+comment = 'Package names should be quoted in require calls, `require(plm, quietly = TRUE)` should be `require("plm", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1042
+comment = "Several missing spaces after commas and around operators in code block"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1043
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1073
+comment = "Missing space after comma, `wind[1:3,]` should be `wind[1:3, ]`"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1074
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1080
+comment = "Missing space around operator, `wind$year+1900` should be `wind$year + 1900`"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1081
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1090
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss816.Rnw"
+line = 1092
+comment = "Code blocks should not contain comments"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1103
+comment = "Two missing spaces after commas in code block"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1104
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss816.Rnw"
+line = 1118
+comment = "Code blocks should not contain comments"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1123
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "jss816.Rnw"
+line = 1124
+comment = "Code line overflows text-width"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1130
+comment = "Several missing spaces after commas and around operators in code block"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "jss816.Rnw"
+line = 1132
+comment = "Code line overflows text-width"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1139
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1145
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1150
+comment = "Missing spaces around operator, `length=n` should be `length = n`"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1151
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1153
+comment = 'Package names should be quoted in library calls, `library(xts)` should be `library("xts")`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1161
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "jss816.Rnw"
+line = 1162
+comment = "Code line overflows text-width"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1172
+comment = "Several missing spaces after commas and around operators in code block"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1173
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1226
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1230
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1237
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1270
+comment = "Missing spaces around operators, `100*3600*24` should be `100 * 3600 * 24`"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1271
+comment = 'Package names should be quoted in require calls, `require(adehabitatLT, quietly = TRUE)` should be `require("adehabitatLT", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1287
+comment = '''Missing spaces around operators, `by="time*id"` should be `by = "time*id"`'''
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1312
+comment = 'Package names should be quoted in require calls, `require(cshapes, quietly = TRUE)` should be `require("cshapes", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1313
+comment = 'Package names should be quoted in library calls, `library(sf)` should be `library("sf")`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1328
+comment = 'Package names should be quoted in require calls, `require(cshapes, quietly = TRUE)` should be `require("cshapes", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss816.Rnw"
+line = 1334
+comment = "Missing spaces after comma, `st[pt,,1:5]` should be `st[pt, , 1:5]`"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1335
+comment = 'Package names should be quoted in require calls, `require(cshapes, quietly = TRUE)` should be `require("cshapes", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "jss816.Rnw"
+line = 1346
+comment = '"R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1360
+comment = 'Package names should be quoted in library calls, `library(spacetime)` should be `library("spacetime")`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1373
+comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "jss816.Rnw"
+line = 1379
+comment = '"R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1382
+comment = 'Package names should be quoted in library calls, `library(spacetime)` should be `library("spacetime")`'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "jss816.Rnw"
+line = 1389
+comment = '"R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1396
+comment = 'Package names should be quoted in library calls, `library(spacetime)` should be `library("spacetime")`'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "jss816.Rnw"
+line = 1475
+comment = '\cite used inside parentheses, should use \citealt instead'
+
+[[violations]]
+rule_id = "JSS-STRUCT-002"
+file = "jss816.Rnw"
+line = 1496
+comment = 'Should be "Acknowledgments" not "Acknowledgements"'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 9
+comment = 'sids — DOI 10.2307/2530819 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/2530819".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 17
+comment = 'cressiechan — DOI 10.1080/01621459.1989.10478783 found on Crossref (title similarity 1.00); add to the entry as doi="10.1080/01621459.1989.10478783".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 25
+comment = 'sfs — no doi field; DOI 10.62973/06-103r4 found via Crossref (this is an OGC document, not a journal article).'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 25
+comment = 'sfs — title "OpenGIS Implementation Standard for Geographic information - Simple feature access - Part 1: Common architecture" has lowercase "information", "feature", "access" mid-title.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 35
+comment = 'hov — no doi field; DOI 10.3402/tellusa.v1i2.8498 found via Crossref.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 230
+comment = 'pebesma04 — no doi field; doi 10.1016/j.cageo.2004.03.012 is available on Crossref.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 230
+comment = 'pebesma04 — title "Multivariable Geostatistics in S: the gstat Package" needs \\proglang{S} (language) and \\pkg{gstat} (package) markup.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 230
+comment = 'pebesma04 — title "Multivariable Geostatistics in S: the gstat Package" — "the" after colon should be "The"; also "gstat" needs \pkg{} (REFS-004 territory).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 257
+comment = 'rhg — @book entry, no doi field; DOI 10.1016/B978-0-12-088799-6.X5000-2 exists and should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 472
+comment = 'asdar — no doi field; doi 10.1007/978-1-4614-7618-4 is available on Crossref.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 481
+comment = 'calenge — no doi field; doi 10.1016/j.ecoinf.2008.10.002 is available on Crossref.'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "jss816.bib"
+line = 481
+comment = 'calenge — journal "Ecological informatics" has lowercase "informatics" (should be "Informatics").'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 489
+comment = 'baltagi — title "Econometric Analysis of Panel Data, 3rd edition" has lowercase "edition" (should be "Edition").'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 497
+comment = 'botts — DOI 10.1007/978-3-540-79996-2_10 found on Crossref (title similarity 0.99); add to the entry as doi="10.1007/978-3-540-79996-2_10".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 497
+comment = 'botts — title "OGC Sensor Web Enablement: Overview And High Level Architecture" — "And" overcapped (should be "and").'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 504
+comment = 'cressie — @book entry (Cressie & Wikle 2011), no doi field; Wiley book doi 10.1002/9781119243045 is available.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 512
+comment = 'croissant — JSS article, no doi field; doi 10.18637/jss.v027.i02 should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 512
+comment = 'croissant — title "Panel Data Econometrics in R: The plm Package" needs \proglang{R} and \pkg{plm} markup.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 521
+comment = 'galton — no doi field; Galton 2004 in "Spatial Cognition & Computation" — DOI 10.1207/s15427633scc0401_3 is available.'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "jss816.bib"
+line = 521
+comment = 'galton — journal "Spatial cognition and computation" has lowercase "cognition" and "computation" (should be "Spatial Cognition and Computation"). Note: actual journal name uses "&", so REFS-005/NAME-002 territory too.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 533
+comment = 'haslett — DOI 10.2307/2347679 found on Crossref (title similarity 0.91); add to the entry as doi="10.2307/2347679".'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "jss816.bib"
+line = 542
+comment = 'schabenberger — publisher "Chapman and Hall" — JSS convention is "Chapman \& Hall/CRC" for Schabenberger & Gotway 2004 (which was actually published by Chapman & Hall/CRC).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 542
+comment = 'schabenberger — @book entry, no doi field. DOI 10.1201/9781315275086 found on Crossref'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 569
+comment = 'grothendieck — title "R Help Desk: Date and Time Classes in R" needs \proglang{R} markup for both "R" occurrences.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 588
+comment = 'grolemund — JSS article, no doi field; doi 10.18637/jss.v040.i03 should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 588
+comment = 'grolemund — title "Dates and Times Made Easy with lubridate" — package name "lubridate" should be wrapped in \pkg{...}.'
+
+[[violations]]
+rule_id = "JSS-REFS-005"
+file = "jss816.bib"
+line = 598
+comment = 'allen — journal "Commun. ACM" is abbreviated; should be "Communications of the ACM" per JSS no-abbreviation rule.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 617
+comment = 'zeileis — JSS article, no doi field; doi 10.18637/jss.v014.i06 should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 617
+comment = 'zeileis — title "zoo: S3 Infrastructure for Regular and Irregular Time Series" needs \pkg{zoo} markup.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 628
+comment = 'pebesma — title "Classes and Methods for Spatial Data in R" needs \proglang{R} markup.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 639
+comment = 'bivand — Springer book, no doi field; doi 10.1007/978-0-387-78171-6 is available.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 639
+comment = 'bivand — title "Applied Spatial Data Analysis with R" needs \proglang{R} markup.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 647
+comment = 'RR — DOI 10.32614/r.manuals exists and should be added'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 647
+comment = 'RR — title "R: A Language and Environment for Statistical Computing" needs \proglang{R} markup.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 656
+comment = 'ryan — DOI 10.32614/CRAN.package.xts exists and should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 656
+comment = 'ryan — title "xts: eXtensible Time Series" needs \pkg{xts} markup.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 663
+comment = 'weidmann — no doi field; doi 10.1080/03050620903554614 is available on Crossref.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 683
+comment = 'sarkar — Springer book, no doi field; doi 10.1007/978-0-387-75969-2 is available.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 683
+comment = 'sarkar — title "Lattice: Multivariate Data Visualization with R" needs \proglang{R} markup; "Lattice" may also need \pkg{lattice} (note lowercase package name).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 692
+comment = 'neuwirth — CRAN package, DOI 10.32614/CRAN.package.RColorBrewer exists and should be added'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 692
+comment = 'neuwirth — title "RColorBrewer: ColorBrewer palettes" — package name "RColorBrewer" should be wrapped in \pkg{...}.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "jss816.bib"
+line = 692
+comment = 'neuwirth — title "RColorBrewer: ColorBrewer palettes" has lowercase "palettes" mid-title.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 706
+comment = 'maps — title "maps: Draw Geographical Maps" — package name "maps" should be wrapped in \pkg{...} and also has "R" not wrapped in \proglang{}.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 706
+comment = 'maps — R package, no doi field; doi 10.32614/CRAN.package.maps should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 732
+comment = 'millo — JSS article, no doi field; doi 10.18637/jss.v047.i01 should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 732
+comment = 'millo — title "splm: Spatial Panel Data Models in R" needs \pkg{splm} and \proglang{R} markup.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 745
+comment = 'jss816 — JSS article (the spacetime paper itself), no doi field; doi 10.18637/jss.v051.i07 should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 745
+comment = 'jss816 — title "{spacetime}: Spatio-Temporal Data in {R}" needs \pkg{spacetime} and \proglang{R} markup (currently uses brace-protection only).'
+
