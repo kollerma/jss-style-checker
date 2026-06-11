@@ -302,6 +302,36 @@ def check_jss_markup_003(
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
         for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
+            if isinstance(node, LatexMacroNode) and node.macroname == "texttt":
+                # \texttt{...} in JSS papers should be \code{...} for code,
+                # \pkg{...} for packages, \proglang{...} for languages.
+                # Skip verbatim envs (where \texttt is literal), bibliography
+                # envs, and content already inside JSS markup wrappers.
+                if _helpers._is_inside_verbatim(ancestors):
+                    continue
+                if _is_inside_bibliography(ancestors):
+                    continue
+                if _is_inside_jss_markup(ancestors):
+                    continue
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-MARKUP-003",
+                    suggestion=(
+                        "Replace \\texttt{...} with the appropriate JSS "
+                        "markup: \\code{...} for inline code, \\pkg{...} "
+                        "for package names, \\proglang{...} for language "
+                        "names."
+                    ),
+                    fix=Fix(
+                        start=node.pos,
+                        end=node.pos + len("\\texttt"),
+                        replacement="\\code",
+                        description="replace \\texttt with \\code",
+                        confidence="safe",
+                    ),
+                )
+                continue
             if not isinstance(node, LatexCharsNode):
                 continue
             if not _helpers._is_in_prose_context(ancestors):
@@ -352,6 +382,22 @@ def check_jss_markup_003(
                     ),
                     fix=fix,
                 )
+
+
+def _is_inside_jss_markup(ancestors: Any) -> bool:
+    """True when any ancestor is a JSS markup wrapper (\\code, \\pkg, etc.).
+
+    Used to avoid firing on ``\\texttt{...}`` that is already nested inside
+    a JSS markup macro — the outer wrapper conveys the intent and the
+    inner ``\\texttt`` is unusual but not the rule's target.
+    """
+    for anc in ancestors:
+        if (
+            isinstance(anc, LatexMacroNode)
+            and anc.macroname in _helpers._MARKUP_MACROS
+        ):
+            return True
+    return False
 
 
 # ---------------------------------------------------------------------------

@@ -406,6 +406,64 @@ class TestMarkup003:
         assert v.fix.replacement == "\\code{NULL}"
         assert v.fix.confidence == "safe"
 
+    # --- \texttt{...} → \code{...} ---------------------------------------
+
+    def test_texttt_in_prose_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The function \texttt{glm} fits a model." "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-MARKUP-003"
+
+    def test_texttt_in_math_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"$y = \beta_1 \texttt{age} + \beta_2 \texttt{nodes}$" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        # Two \texttt occurrences → 2 hits.
+        assert len(violations) == 2
+
+    def test_texttt_inside_code_skipped(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\code{\texttt{glm}} oddly nested but already wrapped." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_texttt_in_verbatim_skipped(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{verbatim}" "\n"
+            r"\texttt{not_a_real_macro}" "\n"
+            r"\end{verbatim}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_texttt_emits_safe_fix_replacing_macro_name(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"See \texttt{sample}." "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        assert v.fix.replacement == "\\code"
+        assert v.fix.confidence == "safe"
+
 
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-004 — section titles with markup
