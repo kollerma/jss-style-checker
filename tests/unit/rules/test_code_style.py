@@ -208,11 +208,12 @@ class TestCode003:
         )
         assert run_rule(jss_code_003, src) == []
 
-    def test_keyword_arg_silent(self, run_rule):
-        # Reviewer-confirmed FPs from cran_CARBayes, cran_CARBayesST:
-        # ``\code{n.cores=1}`` / ``\code{W.binary=TRUE}`` /
-        # ``\code{interaction=TRUE}`` are function-argument keywords;
-        # R/Python style omits spaces around ``=`` in this position.
+    def test_keyword_arg_flagged(self, run_rule):
+        # JSS style requires spaces around ``=`` even in function-
+        # argument keyword position. Updated 2026-06-11 to align with
+        # the recall-corpus hand annotations (CARBayesST.Rnw:52 et al.):
+        # the previous reviewer "FP" classification was over-cautious —
+        # JSS overrides R/Python convention here.
         for snippet in (
             "n.cores=1",
             "W.binary=TRUE",
@@ -227,7 +228,7 @@ class TestCode003:
                 f"\\code{{{snippet}}}"
                 r"\end{document}"
             )
-            assert run_rule(jss_code_003, src) == [], snippet
+            assert len(run_rule(jss_code_003, src)) == 1, snippet
 
     def test_assignment_with_operator_still_flagged(self, run_rule):
         # ``y=a+b`` — has multiple operators, not a keyword-arg form;

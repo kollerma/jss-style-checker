@@ -253,16 +253,16 @@ def check_jss_code_003(
             # Filesystem path — slashes are separators, not division.
             if _PATH_LIKE_RE.match(stripped):
                 continue
-            # Single function-argument keyword (``n.cores=1`` /
-            # ``interaction=TRUE``) — R/Python style omits spaces here.
-            if _KEYWORD_ARG_RE.match(stripped):
-                continue
             # Mask scientific notation and bare string literals before
             # the operator check so the exponent sign in 2.22e-16
             # doesn't look like subtraction and the dash in
             # "plot3logit-overview" doesn't look like an operator.
+            # Replace strings with an identifier-shaped placeholder so
+            # patterns like ``method="exact"`` still expose the missing
+            # space around ``=`` (else the empty-string replacement
+            # would collapse the right-of-= context to EOL and miss it).
             cleaned = _SCIENTIFIC_NOTATION_RE.sub("", text)
-            cleaned = _STRING_LITERAL_RE.sub("", cleaned)
+            cleaned = _STRING_LITERAL_RE.sub("S", cleaned)
             if _MISSING_SPACES_RE.search(cleaned):
                 yield _violation(
                     tex=tex,
@@ -277,21 +277,25 @@ def check_jss_code_003(
 
 def _scan_code_env_for_spacing(tex: Any, env: Any) -> Iterator[Violation]:
     """Yield a single CODE-003 violation per code env that contains a
-    missing-space-after-comma pattern. One violation per env keeps the
-    output proportional to the defect — authors fix one chunk at a time
-    and per-line repetition is noisy.
+    missing-space-after-comma or missing-space-around-operator pattern.
+    One violation per env keeps the output proportional to the defect —
+    authors fix one chunk at a time and per-line repetition is noisy.
     """
     nodelist = env.nodelist or ()
     for child in nodelist:
         if not isinstance(child, LatexCharsNode):
             continue
         text = child.chars
-        # Mask comments and string literals so commas inside them
-        # don't trip the rule.
+        # Mask comments first, then scientific notation, then strings.
+        # Strings are replaced with an identifier-shaped placeholder so
+        # ``col="red"`` still exposes the missing space around ``=``.
         cleaned = _CODE_ENV_COMMENT_RE.sub("", text)
-        cleaned = _CODE_ENV_STRING_RE.sub("", cleaned)
-        match = _CODE_ENV_MISSING_COMMA_SPACE_RE.search(cleaned)
-        if match is None:
+        cleaned = _SCIENTIFIC_NOTATION_RE.sub("", cleaned)
+        cleaned = _CODE_ENV_STRING_RE.sub("S", cleaned)
+        if not (
+            _CODE_ENV_MISSING_COMMA_SPACE_RE.search(cleaned)
+            or _MISSING_SPACES_RE.search(cleaned)
+        ):
             continue
         # Map the offset back into the original text. The cleaned-string
         # offset doesn't equal the original offset once we've stripped
@@ -302,8 +306,9 @@ def _scan_code_env_for_spacing(tex: Any, env: Any) -> Iterator[Violation]:
             pos=child.pos,
             rule_id="JSS-CODE-003",
             suggestion=(
-                "Add a space after each comma in the code sample "
-                "(e.g., 'f(x, y)' rather than 'f(x,y)')."
+                "Add spaces around operators and after commas in the "
+                "code sample (e.g., 'f(x = 1, y = 2)' rather than "
+                "'f(x=1,y=2)')."
             ),
         )
         return  # one violation per env
