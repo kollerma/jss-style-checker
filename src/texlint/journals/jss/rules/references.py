@@ -213,6 +213,16 @@ def _title_mentions_unwrapped(text: str, names: frozenset[str]) -> str | None:
     return None
 
 
+_TITLE_PACKAGE_PREFIX_RE = re.compile(
+    # Identifier (letter then alphanum/dot, MixedCase or all-lowercase)
+    # followed by ``:`` — the canonical ``pkgname: description`` form.
+    # Tolerates BibTeX case-protection braces (``{pkgname}:`` /
+    # ``{{pkgname}: ...}``) and a leading ``\pkg{`` (already-wrapped —
+    # skip via the upstream ``_title_mentions_unwrapped`` exit).
+    r"^\{*\s*\{?([A-Za-z][A-Za-z0-9.]*)\}?\s*:"
+)
+
+
 def check_jss_refs_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -241,6 +251,38 @@ def check_jss_refs_004(
                     f"Wrap {pkg!r} in \\pkg{{{pkg}}} in the title."
                 ),
             )
+            continue
+        # Pattern-based fallback for package titles whose name is NOT in
+        # the R_PACKAGES set — the canonical ``pkgname: description``
+        # shape (e.g., ``cascsim: Casualty Actuarial Society ...``,
+        # ``pmclust: Parallel Model-Based Clustering``). If the source
+        # title already starts with ``\pkg{...}`` or ``\proglang{...}``
+        # the author-dictated wrapping wins and we skip.
+        if _starts_with_markup(title):
+            continue
+        prefix_match = _TITLE_PACKAGE_PREFIX_RE.match(title)
+        if prefix_match is None:
+            continue
+        name = prefix_match.group(1)
+        # Don't fire on first-word stop words ("The ...:", "An ...:")
+        # or canonical-author titles ("R: A Language ...") — keep the
+        # check tight on package-shaped identifiers.
+        if name.lower() in _TITLE_STOP_WORDS:
+            continue
+        if name in LANGUAGES:
+            continue
+        # Avoid double-firing when the language scan already matched
+        # this name (defensive — the early-return above already handles
+        # the common case).
+        yield _violation(
+            bib=bib,
+            entry=entry,
+            rule_id="JSS-REFS-004",
+            suggestion=(
+                f"The leading identifier {name!r} looks like a package "
+                f"name; wrap it in \\pkg{{{name}}} in the title."
+            ),
+        )
 
 
 # ---------------------------------------------------------------------------
