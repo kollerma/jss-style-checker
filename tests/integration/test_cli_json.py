@@ -70,6 +70,8 @@ class TestJsonShape:
             # Spec 007 follow-up — citation fields surface per violation.
             "guide_section",
             "guide_url",
+            # Measured-precision confidence tier per violation.
+            "confidence",
         }
         assert v["rule_id"] == "JSS-CITE-002"
         assert v["fix"] is None
@@ -77,6 +79,9 @@ class TestJsonShape:
         # surface to flow through.
         assert v["guide_section"] == "§3.2 Citations"
         assert v["guide_url"].startswith("https://")
+        # JSS-CITE-002 carries a narrowed tier in the catalogue
+        # (82.7% pinned-corpus precision at iter-78).
+        assert v["confidence"] == "medium"
 
 
 class TestDeterminism:

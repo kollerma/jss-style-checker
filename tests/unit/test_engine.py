@@ -248,6 +248,47 @@ class TestRunCrashIsolation:
         assert reasons["JSS-PROJ-001"].startswith("internal error: ValueError")
 
 
+class TestConfidenceGate:
+    def _doc_and_rule(self, tmp_path: Path, confidence: str):
+        from dataclasses import replace
+
+        doc = _make_doc(tmp_path, "a.tex")
+        tex = doc.tex_files[0]
+        rule = replace(
+            _rule("JSS-X-001", fires_on=(str(tex.path),)),
+            confidence=confidence,
+        )
+        journal = _Journal(
+            "j", (RuleCategory(id="x", title="X", rules=(rule,)),)
+        )
+        return doc, journal
+
+    def test_default_floor_runs_low_confidence_rule(self, tmp_path: Path):
+        doc, journal = self._doc_and_rule(tmp_path, "low")
+        report = run(ToolConfig(), doc, journal)
+        assert len(report.violations) == 1
+        assert report.skipped_rules == ()
+
+    def test_floor_skips_rule_below_it(self, tmp_path: Path):
+        doc, journal = self._doc_and_rule(tmp_path, "low")
+        report = run(ToolConfig(min_confidence="medium"), doc, journal)
+        assert report.violations == ()
+        assert [s.rule_id for s in report.skipped_rules] == ["JSS-X-001"]
+        assert "min_confidence=medium" in report.skipped_rules[0].reason
+        # The category is SKIPPED, not silently PASS.
+        assert report.categories[0].status == CategoryStatus.SKIPPED
+
+    def test_floor_keeps_rule_at_threshold(self, tmp_path: Path):
+        doc, journal = self._doc_and_rule(tmp_path, "medium")
+        report = run(ToolConfig(min_confidence="medium"), doc, journal)
+        assert len(report.violations) == 1
+
+    def test_high_floor_keeps_default_high_rules(self, tmp_path: Path):
+        doc, journal = self._doc_and_rule(tmp_path, "high")
+        report = run(ToolConfig(min_confidence="high"), doc, journal)
+        assert len(report.violations) == 1
+
+
 class TestRunParseError:
     def test_parse_error_adds_synthetic_parse_category_excluded_from_percentage(
         self, tmp_path: Path

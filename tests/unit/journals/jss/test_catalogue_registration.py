@@ -142,3 +142,23 @@ def test_no_top_level_import_side_effects():
         and not m.endswith(".rules")
     ]
     assert not leaked, f"rule modules imported at top-level: {leaked}"
+
+
+def test_rules_carry_catalogue_confidence_tier():
+    """Rules are stamped with the catalogue's measured-precision tier at
+    journal assembly (one stamping point instead of fourteen per-module
+    factories). The four sub-90%-precision rules from iter-78 carry a
+    narrowed tier; everything else stays at the "high" default.
+    """
+    from texlint.journals.jss import JSSJournal
+
+    by_id = {r.id: r for r in JSSJournal().rules()}
+
+    assert by_id["JSS-CAP-003"].confidence == "low"
+    for rid in ("JSS-CITE-002", "JSS-CAP-002", "JSS-MARKUP-001"):
+        assert by_id[rid].confidence == "medium", rid
+
+    narrowed = {rid for rid, r in by_id.items() if r.confidence != "high"}
+    assert narrowed == {
+        "JSS-CAP-003", "JSS-CITE-002", "JSS-CAP-002", "JSS-MARKUP-001",
+    }

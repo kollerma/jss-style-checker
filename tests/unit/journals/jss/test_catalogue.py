@@ -373,6 +373,8 @@ def test_no_forbidden_keys_on_rules(catalogue_doc: dict) -> None:
         "explanation",
         "example_bad",
         "example_good",
+        # architecture-review follow-up — measured-precision tier.
+        "confidence",
     }
     forbidden_examples = {"fix", "fix_suggestion", "formats", "status", "owner"}
     for rule in catalogue_doc["rules"]:

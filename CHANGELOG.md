@@ -10,6 +10,22 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Added
 
+- Per-rule measured-precision **confidence tiers**. The catalogue now
+  carries an optional `confidence` key (`high` default / `medium` /
+  `low`) sourced from the eval-jss precision history; the four
+  sub-90%-precision rules at iter-78 are tiered (`JSS-CAP-003` low;
+  `JSS-CITE-002`, `JSS-CAP-002`, `JSS-MARKUP-001` medium). The tier
+  surfaces in the terminal table (dim marker under the rule id), the
+  JSON `confidence` field, and `jss-lint explain`. New
+  `--min-confidence {low,medium,high}` flag (and `min_confidence`
+  config key) skips rules below the floor, reporting them as skipped
+  rules; default `low` runs everything.
+- `--fail-on {error,warning,info}` flag (and `fail_on` config key):
+  the minimum violation severity that exits 1. Default `info` keeps
+  the historical behaviour (any violation fails); `--fail-on error`
+  stops info/warning advisories (e.g. the missing-DOI rule) from
+  flipping CI red while still reporting them. Parse errors always
+  exit 2.
 - Inline suppression: `% jss-lint: ignore [RULE-IDS]` on a finding's
   line (or on a comment-only line directly above it) silences matching
   findings in place, so one false positive no longer forces disabling a

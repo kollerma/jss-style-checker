@@ -55,6 +55,10 @@ def _violation_dict(v: Violation) -> dict[str, Any]:
         # Spec 007 follow-up — citation surface per violation.
         "guide_section": meta.get("guide_section") or "",
         "guide_url": meta.get("guide_url"),
+        # Measured-precision confidence tier of the originating rule
+        # ("high" / "medium" / "low"); "high" for tool-side rules and
+        # rules without a narrowed tier in the catalogue.
+        "confidence": meta.get("confidence", "high"),
     }
 
 

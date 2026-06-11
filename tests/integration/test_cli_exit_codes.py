@@ -56,3 +56,66 @@ class TestStreamSeparation:
         )
         assert result.exit_code == 1
         assert "JSS-CITE-002" in result.output
+
+
+class TestFailOnPolicy:
+    """--fail-on raises the severity threshold that flips exit 1.
+
+    The CITE-002 fixture yields exactly one warning-severity violation,
+    so it cleanly separates the policy tiers.
+    """
+
+    FIXTURE = FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"
+
+    def test_default_fails_on_any_violation(self, runner: CliRunner):
+        result = runner.invoke(main, [str(self.FIXTURE)])
+        assert result.exit_code == 1
+
+    def test_fail_on_error_passes_warning_only_report(self, runner: CliRunner):
+        result = runner.invoke(main, ["--fail-on", "error", str(self.FIXTURE)])
+        assert result.exit_code == 0, result.output
+        # The finding is still rendered — the policy affects the exit
+        # code only.
+        assert "JSS-CITE-002" in result.output
+
+    def test_fail_on_warning_fails_warning_report(self, runner: CliRunner):
+        result = runner.invoke(main, ["--fail-on", "warning", str(self.FIXTURE)])
+        assert result.exit_code == 1
+
+    def test_parse_error_still_exits_two_under_fail_on_error(
+        self, tmp_path: Path, runner: CliRunner
+    ):
+        bad = tmp_path / "broken.tex"
+        bad.write_text("\\begin{tabular}{ll}\n", encoding="utf-8")
+        result = runner.invoke(main, ["--fail-on", "error", str(bad)])
+        assert result.exit_code == 2
+
+
+class TestMinConfidence:
+    """--min-confidence skips rules below the measured-precision floor."""
+
+    FIXTURE = FIXTURES / "violations" / "citations" / "JSS-CITE-002-bad.tex"
+
+    def test_high_floor_skips_medium_confidence_rule(self, runner: CliRunner):
+        # JSS-CITE-002 is a medium-confidence rule (82.7% pinned-corpus
+        # precision at iter-78); a high floor skips it entirely.
+        result = runner.invoke(
+            main, ["--min-confidence", "high", str(self.FIXTURE)]
+        )
+        assert result.exit_code == 0, result.output
+        assert "JSS-CITE-002" not in result.output
+
+    def test_medium_floor_keeps_medium_confidence_rule(self, runner: CliRunner):
+        result = runner.invoke(
+            main, ["--min-confidence", "medium", str(self.FIXTURE)]
+        )
+        assert result.exit_code == 1
+        assert "JSS-CITE-002" in result.output
+
+    def test_skipped_rule_reported_in_verbose(self, runner: CliRunner):
+        result = runner.invoke(
+            main,
+            ["--min-confidence", "high", "--verbose", str(self.FIXTURE)],
+        )
+        assert result.exit_code == 0
+        assert "min_confidence" in result.output

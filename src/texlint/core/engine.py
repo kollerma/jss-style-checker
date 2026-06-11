@@ -100,6 +100,9 @@ _PARSE_RULE_ID = "JSS-PARSE-000"
 _PARSE_CATEGORY_ID = "parse"
 _PARSE_CATEGORY_TITLE = "Parse errors"
 
+# Confidence-tier ordering for the ``min_confidence`` gate.
+_CONFIDENCE_RANK: dict[str, int] = {"low": 0, "medium": 1, "high": 2}
+
 
 def load_journal(journal_id: str) -> JournalRuleModule:
     eps = _im.entry_points(group=_ENTRY_POINT_GROUP)
@@ -169,10 +172,26 @@ def run(
     suppression_index = _suppress.build_index(documents)
 
     categories = journal.categories()
+    min_confidence_rank = _CONFIDENCE_RANK.get(config.min_confidence, 0)
 
     for category in categories:
         for rule in category.rules:
             if rule.id in ignore:
+                continue
+            # Confidence gate (spec follow-up to the architecture
+            # review): rules whose measured-precision tier sits below
+            # ``--min-confidence`` are skipped, visibly (--verbose), so
+            # the trade-off stays a presentation-time decision instead
+            # of a code-time one.
+            rule_confidence = getattr(rule, "confidence", "high")
+            if _CONFIDENCE_RANK.get(rule_confidence, 2) < min_confidence_rank:
+                skipped.append(SkippedRule(
+                    rule_id=rule.id,
+                    reason=(
+                        f"confidence {rule_confidence} below "
+                        f"min_confidence={config.min_confidence}"
+                    ),
+                ))
                 continue
             # Format filter: skip rules whose formats don't intersect the
             # document's input formats (spec 005 FR-008). The format

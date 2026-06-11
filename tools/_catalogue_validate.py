@@ -27,6 +27,8 @@ AUTHORITIES: frozenset[str] = frozenset(
 
 SEVERITIES: frozenset[str] = frozenset({"error", "warning", "info"})
 
+CONFIDENCES: frozenset[str] = frozenset({"high", "medium", "low"})
+
 INSPECTS: frozenset[str] = frozenset({"tex_files", "bib_files", "raw_source"})
 
 # category -> rule_id prefix (contracts/catalogue-schema.md §rule_id).
@@ -89,6 +91,12 @@ OPTIONAL_RULE_KEYS: frozenset[str] = frozenset(
         "explanation",
         "example_bad",
         "example_good",
+        # Measured-precision confidence tier. Absent means "high".
+        # Set from the eval-jss precision history (see
+        # eval/improvement-log.md); rules whose corpus precision sits
+        # below the Constitution §VI gate carry "medium" or "low" so
+        # the linter can present / filter / exit-code them accordingly.
+        "confidence",
     }
 )
 
@@ -317,6 +325,14 @@ def _validate_rule(
         yield CatalogueError(
             where,
             f"severity {severity!r} not in {sorted(SEVERITIES)}",
+        )
+
+    # confidence (optional; absent means "high")
+    confidence = rule.get("confidence")
+    if confidence is not None and confidence not in CONFIDENCES:
+        yield CatalogueError(
+            where,
+            f"confidence {confidence!r} not in {sorted(CONFIDENCES)}",
         )
 
     # description

@@ -97,6 +97,10 @@ def render(doc: Mapping[str, Any]) -> str:
         out.append(f"        \"authority_ref\": {authority_ref},\n")
         out.append(f"        \"inspects\": {inspects_literal},\n")
         out.append(f"        \"auto_fixable\": {auto_fixable},\n")
+        # Measured-precision confidence tier; emit only when the YAML
+        # narrows it ("high" is the runtime default for absent keys).
+        if rule.get("confidence"):
+            out.append(f"        \"confidence\": {_py_str(rule['confidence'])},\n")
         # spec 007: optional citation surface; emit only when present
         # in the YAML so existing rules without a backfill stay clean.
         if rule.get("guide_section"):

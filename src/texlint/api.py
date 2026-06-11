@@ -169,6 +169,13 @@ class Rule:
     # Spec 013 follow-up: optional whole-project check. ``None`` means
     # the rule is per-document only.
     check_project: RuleCheckProject | None = None
+    # Measured-precision confidence tier. ``"high"`` is the default for
+    # mechanical rules; heuristic rules whose corpus precision sits
+    # below the gate carry ``"medium"`` or ``"low"`` (sourced from the
+    # eval-jss precision history via the rule catalogue). The engine
+    # skips rules below ``ToolConfig.min_confidence``; renderers may
+    # surface the tier so readers can weigh a finding accordingly.
+    confidence: Literal["high", "medium", "low"] = "high"
 
 
 @dataclass(frozen=True)
@@ -245,6 +252,16 @@ class ToolConfig:
     verbose: bool = False
     code_width: int = 80
     source_root: Path = field(default_factory=Path.cwd)
+    # Confidence floor: rules whose measured-precision tier sits below
+    # this are skipped (reported in ``skipped_rules``). ``"low"`` (the
+    # default) runs everything; ``"medium"`` drops low-confidence rules;
+    # ``"high"`` keeps only the mechanical ~100%-precision rules.
+    min_confidence: Literal["low", "medium", "high"] = "low"
+    # Exit-code policy: the minimum severity that makes the CLI exit 1.
+    # ``"info"`` (the default, the historical behaviour) fails on any
+    # violation; ``"warning"`` ignores info-severity advisories;
+    # ``"error"`` fails only on errors. Parse errors always exit 2.
+    fail_on: Literal["error", "warning", "info"] = "info"
 
 
 @dataclass(frozen=True)
