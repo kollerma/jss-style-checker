@@ -301,6 +301,17 @@ inline).
       carries non-LaTeX notes after `\end{document}` and XREF-001
       fires on them (lines 1542/1546/1565). Rules should stop at
       `\end{document}`.
+- [ ] **OPER-004 bare literal E / P in math mode**
+      (`src/texlint/journals/jss/rules/operators.py`) — the rule
+      catches `\mathbf{E}`, `\text{var}`, etc. but misses bare
+      capital `E` / `P` used as expectation / probability
+      operators (e.g., `E_{\bm{Z}}(\phi(...))` in rstpm2,
+      `P(y = y_k)` in DBR — 8 corpus FNs). A naive regex
+      (`(?<![\\A-Za-z])[EP](?:_\{[^{}]*\})?\s*\(`) over-fires on
+      same-shaped function patterns like `P_{ij}(t)` (transition-
+      matrix entries are not the canonical `\Prob{}` operator).
+      Needs either author-context heuristics (preceding prose
+      mentions "expectation" / "probability") or per-paper opt-in.
 - [x] `eval-jss recall` CLI subcommand with `--gate` and
       `--validate` flags. (Shipped: also `--corpus`,
       `--format {terminal|json}`, `--history-db`, `--no-record`.
