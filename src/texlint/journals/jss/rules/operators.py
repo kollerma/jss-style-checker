@@ -39,11 +39,19 @@ _SYMBOL_NOUN_RE = re.compile(
 )
 
 # Non-canonical probabilistic-function macros flagged by OPER-004.
+# ``mathbf`` and ``text`` join the original mathbb/mathsf/mathrm/
+# operatorname set: papers commonly write ``\mathbf{E}`` (bold E for
+# expectation, CARBayesST/rstpm2 pattern) or ``\text{var}`` (text-style
+# variance, multistate.Rnw pattern) — both should use the jss.cls
+# shortcuts (\E, \VAR, \COV, \Prob).
 _NONCANON_PROB_MACROS: frozenset[str] = frozenset(
-    {"mathbb", "mathsf", "mathrm", "operatorname", "Pr"}
+    {"mathbb", "mathsf", "mathrm", "mathbf", "text", "operatorname", "Pr"}
 )
+# Probability/expectation/variance/covariance argument tokens. JSS
+# uses \E / \VAR / \COV / \Prob; common variants appear in the corpus
+# in mixed case (``\mathrm{VAR}``) and shorthand (``\text{var}``).
 _NONCANON_PROB_ARGS: frozenset[str] = frozenset(
-    {"E", "Var", "Cov", "P", "Prob"}
+    {"E", "Var", "VAR", "var", "Cov", "COV", "cov", "P", "Prob"}
 )
 
 
