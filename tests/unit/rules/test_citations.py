@@ -422,14 +422,20 @@ class TestCite003:
         )
         assert run_rule(jss_cite_003, src) == []
 
-    def test_citep_in_parens_not_flagged(self, run_rule):
+    def test_citep_in_parens_flagged(self, run_rule):
+        # ``(\citep{Key})`` renders as ``((Author Year))`` —
+        # bracket-in-bracket. The recommended fix is ``\citealp{}``
+        # (cite without inner parens). Updated 2026-06-11 to align with
+        # the recall-corpus annotations (DBR.Rnw:124, mdsOpt.ltx:72).
         src = (
             r"\documentclass[article]{jss}" "\n"
             r"\begin{document}" "\n"
             r"Regression models (\citep{Key}) are common." "\n"
             r"\end{document}" "\n"
         )
-        assert run_rule(jss_cite_003, src) == []
+        violations = run_rule(jss_cite_003, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-CITE-003"
 
     def test_cite_first_node_no_prev_sibling(self, run_rule):
         src = r"\cite{Key}"

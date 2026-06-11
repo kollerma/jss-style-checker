@@ -386,34 +386,54 @@ def check_jss_cite_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     meta = _catalogue_data.RULES["JSS-CITE-003"]
+    # Cite-family macros whose presence inside a (...) group constitutes
+    # bracket-in-bracket. ``\citealp`` / ``\citealt`` are the JSS-
+    # recommended forms for cites that go inside an outer paren —
+    # excluded from the trigger set.
+    triggering = frozenset(
+        {"cite", "citep", "citet", "citeauthor", "citeyear"}
+    )
     for tex in doc.all_tex_like():
+        emitted: set[int] = set()
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not isinstance(node, LatexMacroNode):
                 continue
-            if node.macroname != "cite":
+            if node.macroname not in triggering:
                 continue
-            # Need a LatexCharsNode right before ending with "(" and one right
-            # after starting with ")". Walk backwards skipping whitespace-only
-            # chars nodes — stop on the first non-whitespace text.
-            before = parent[idx - 1] if idx > 0 else None
-            after = parent[idx + 1] if idx + 1 < len(parent) else None
-            if not _chars_ends_with_open_paren(before):
+            if node.pos in emitted:
                 continue
-            if not _chars_starts_with_close_paren(after):
+            # Look for an enclosing (...) within the same paragraph in
+            # the source text. Stop scanning at paragraph breaks
+            # (``\n\n``) and at any nested ``(``/``)`` that would
+            # change the depth.
+            open_paren = _find_enclosing_open_paren(tex.source, node.pos)
+            if open_paren is None:
+                continue
+            close_paren = _find_matching_close_paren(
+                tex.source, node.pos + node.len
+            )
+            if close_paren is None:
                 continue
             line, col = _helpers._lineno_col(tex, node.pos)
-            # Auto-fix: replace the bracketed `(\cite{key})` form with
-            # `\citep{key}`. The `(` lives at the end of the
-            # whitespace-stripped `before` chars node and `)` at the
-            # start of the whitespace-stripped `after` chars node; the
-            # macro body itself is verbatim except for the `\cite` →
-            # `\citep` swap, so we keep multi-key arguments as-is.
-            paren_open = before.pos + len(before.chars.rstrip(" \t")) - 1
-            paren_close = after.pos + (
-                len(after.chars) - len(after.chars.lstrip(" \t"))
-            )
-            macro_body = tex.source[node.pos : node.pos + node.len]
-            replacement = "\\citep" + macro_body[len("\\cite") :]
+            emitted.add(node.pos)
+            # Auto-fix only for the immediate ``(\cite{...})`` shape so
+            # we don't accidentally rewrite a phrase like
+            # ``(\cite{x}, p.~3)`` whose comma-tail must survive.
+            fix: Fix | None = None
+            if (
+                node.macroname == "cite"
+                and tex.source[open_paren + 1 : node.pos].strip() == ""
+                and tex.source[node.pos + node.len : close_paren].strip() == ""
+            ):
+                macro_body = tex.source[node.pos : node.pos + node.len]
+                replacement = "\\citep" + macro_body[len("\\cite") :]
+                fix = Fix(
+                    start=open_paren,
+                    end=close_paren + 1,
+                    replacement=replacement,
+                    description=r"Replace (\cite{...}) with \citep{...}.",
+                    confidence="safe",
+                )
             yield Violation(
                 file=tex.path,
                 line=line,
@@ -421,15 +441,62 @@ def check_jss_cite_003(
                 rule_id="JSS-CITE-003",
                 severity=meta["severity"],
                 message=meta["message_template"],
-                suggestion=r"Replace (\cite{...}) with \citep{...}.",
-                fix=Fix(
-                    start=paren_open,
-                    end=paren_close + 1,
-                    replacement=replacement,
-                    description=r"Replace (\cite{...}) with \citep{...}.",
-                    confidence="safe",
+                suggestion=(
+                    r"Citation inside parens: replace (\cite{...}) "
+                    r"with \citep{...}, or use \citealp{...} when "
+                    "additional text shares the parens."
                 ),
+                fix=fix,
             )
+
+
+_PARAGRAPH_BREAK_RE = re.compile(r"\n\s*\n")
+
+
+def _find_enclosing_open_paren(source: str, pos: int) -> int | None:
+    """Scan ``source[:pos]`` backwards for an unmatched ``(`` in the
+    same paragraph. Returns the source index of the open paren, or
+    ``None`` if no enclosing paren exists.
+
+    Stops at a paragraph break (``\\n\\s*\\n``) — citations split across
+    paragraphs are not bracket-in-bracket. Tracks balanced inner
+    ``(`` / ``)`` so that a closed inner pair doesn't get mistaken for
+    the enclosing open.
+    """
+    depth = 0
+    for i in range(pos - 1, -1, -1):
+        c = source[i]
+        if c == ")":
+            depth += 1
+        elif c == "(":
+            if depth == 0:
+                return i
+            depth -= 1
+        elif c == "\n":
+            # Paragraph break? Look at the next line.
+            if i > 0 and source[i - 1] == "\n":
+                return None
+    return None
+
+
+def _find_matching_close_paren(source: str, pos: int) -> int | None:
+    """Scan ``source[pos:]`` forwards for the matching ``)`` in the same
+    paragraph. See :func:`_find_enclosing_open_paren` for the symmetric
+    rationale.
+    """
+    depth = 0
+    for i in range(pos, len(source)):
+        c = source[i]
+        if c == "(":
+            depth += 1
+        elif c == ")":
+            if depth == 0:
+                return i
+            depth -= 1
+        elif c == "\n":
+            if i + 1 < len(source) and source[i + 1] == "\n":
+                return None
+    return None
 
 
 # ---------------------------------------------------------------------------
