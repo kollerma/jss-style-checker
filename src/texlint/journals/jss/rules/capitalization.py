@@ -384,27 +384,20 @@ def check_jss_cap_001(
                 continue
             first = words[0]
             first_lower = _word_letters_lower(first)
-            # Skip when the first word is a known package / language /
-            # corpus-observed proper noun; these have their own case
-            # conventions (lowercase package names, mixed-case method
-            # names) and shouldn't trigger the title-case check.
-            if first_lower in proper_lower:
-                continue
-            # Skip when the first word matches a package name the
-            # document itself wraps in \pkg{} elsewhere. JSS papers
-            # conventionally start the title with the package name
-            # (e.g., ``flexsurv: A Platform for ...``); whether to
-            # wrap it in ``\pkg{}`` is a separate MARKUP-002 /
-            # REFS-006 concern, not a title-case issue.
-            if _pkg_token(first) in doc_pkgs_lower:
-                continue
-            # Skip when the first word looks like a function call
-            # (`covMcd()`, `data.frame()`); these are code identifiers
-            # the author intentionally left unwrapped.
-            if _FUNCTION_CALL_RE.match(first):
-                continue
-            if not _is_capitalised_word(first) or all(
-                w == w.lower() for w in words
+            # Determine whether the first word is exempt (proper noun,
+            # self-package, function call). These exemptions only
+            # suppress the FIRST-WORD check, not the principal-word
+            # check — clifford's title ``Clifford algebra in R`` has
+            # ``Clifford`` as a self-package first-word (exempt) but
+            # ``algebra`` mid-title is still a real lowercase principal.
+            first_word_exempt = (
+                first_lower in proper_lower
+                or _pkg_token(first) in doc_pkgs_lower
+                or _FUNCTION_CALL_RE.match(first) is not None
+            )
+            if not first_word_exempt and (
+                not _is_capitalised_word(first)
+                or all(w == w.lower() for w in words)
             ):
                 yield _violation(
                     tex=tex,
