@@ -136,13 +136,19 @@ class _OffsetWalker:
         return getattr(self._inner, name)
 
 
-def _parse_error(path: Path, *, line: int, message: str) -> Violation:
+def _parse_error(
+    path: Path,
+    *,
+    line: int,
+    message: str,
+    severity: Severity = Severity.ERROR,
+) -> Violation:
     return Violation(
         file=path,
         line=line,
         column=None,
         rule_id=_PARSE_RULE_ID,
-        severity=Severity.ERROR,
+        severity=severity,
         message=message,
         suggestion=None,
         fix=None,
@@ -218,9 +224,17 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
                     )
                     frontmatter = loaded if isinstance(loaded, dict) else {}
                 except yaml.YAMLError as exc:
+                    # knitr tolerates frontmatter that strict YAML
+                    # rejects (e.g. unindented `%\VignetteIndexEntry`
+                    # continuation lines under `vignette: >` — seen in
+                    # real CRAN vignettes). The prose and code blocks
+                    # are unaffected, so lint them and degrade the
+                    # frontmatter finding to a warning instead of
+                    # failing the file.
                     violations.append(_parse_error(
                         path, line=fm_start_line,
-                        message=f"Malformed YAML frontmatter: {exc}",
+                        severity=Severity.WARNING,
+                        message=f"Malformed YAML frontmatter (ignored): {exc}",
                     ))
                 state = "BODY"
             else:
