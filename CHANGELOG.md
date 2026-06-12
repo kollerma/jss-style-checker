@@ -10,6 +10,15 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Changed
 
+- **Default `--fail-on` is now `warning`** (was `info`). Info-severity
+  advisories (e.g. the missing-DOI rule JSS-REFS-003) are still
+  reported but no longer flip CI red by default; pass
+  `--fail-on info` for the old behaviour.
+- **JSS-CAP-003 demoted to info severity.** The caption
+  sentence-style heuristic sits at ~60% measured precision after five
+  improvement attempts; it still runs and is shown by default, but no
+  longer fails a run. Hide it entirely with `--min-confidence medium`.
+
 - **Degraded-parse exit semantics.** Only error-severity
   `JSS-PARSE-000` findings force exit 2. Warning-severity parse
   findings mark a *recovered* parse (the file was fully linted, e.g.

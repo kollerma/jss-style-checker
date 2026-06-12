@@ -25,7 +25,7 @@ class TestDefaults:
         # policy default to the historical behaviour (run everything,
         # fail on any violation).
         assert cfg.min_confidence == "low"
-        assert cfg.fail_on == "info"
+        assert cfg.fail_on == "warning"
 
     def test_file_sets_min_confidence_and_fail_on(self, tmp_path: Path):
         (tmp_path / ".jss-lint.toml").write_text(

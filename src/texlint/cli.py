@@ -101,9 +101,9 @@ def _determine_exit_code(report: Any, fail_on: str = "info") -> int:
     other finding.
 
     ``fail_on`` is the minimum severity that flips the exit code:
-    ``"info"`` (the default and the historical behaviour) fails on any
-    violation; ``"warning"`` lets info-severity advisories (e.g. the
-    missing-DOI rule) pass CI; ``"error"`` fails only on errors.
+    ``"warning"`` (the default) lets info-severity advisories (e.g.
+    the missing-DOI rule) pass CI; ``"info"`` (the pre-0.2 default)
+    fails on any violation; ``"error"`` fails only on errors.
     Violations below the threshold are still rendered — the policy
     affects the exit code only.
     """
@@ -213,8 +213,9 @@ def _lint_paths_with_doc(
     type=click.Choice(["error", "warning", "info"], case_sensitive=False),
     default=None,
     help=(
-        "Minimum violation severity that exits 1 (default: info — any "
-        "violation fails). Lower-severity findings are still reported."
+        "Minimum violation severity that exits 1 (default: warning — "
+        "info-severity advisories pass). Lower-severity findings are "
+        "still reported."
     ),
 )
 @click.option(
