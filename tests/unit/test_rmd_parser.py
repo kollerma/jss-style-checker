@@ -251,3 +251,32 @@ class TestFenceSpaceBeforeInfoString:
         assert all(
             "loo_compare" not in p.text for p in parsed.prose_blocks
         )
+
+
+class TestMalformedFrontmatterRecovery:
+    """Strict-YAML-invalid frontmatter that knitr tolerates degrades to
+    a warning; prose and code blocks still lint (extremefit vignette)."""
+
+    def test_unindented_vignette_continuation_degrades(self, tmp_path: Path):
+        src = (
+            "---\n"
+            'title: "Extremefit"\n'
+            "vignette: >\n"
+            "%\\VignetteIndexEntry{Estimation}\n"
+            "%\\VignetteEngine{knitr::rmarkdown}\n"
+            "---\n"
+            "\n"
+            "Some prose to lint.\n"
+        )
+        parsed = parse_rmd_source(src, tmp_path / "m.Rmd")
+        assert len(parsed.violations) == 1
+        v = parsed.violations[0]
+        assert v.rule_id == "JSS-PARSE-000"
+        assert v.severity.value == "warning"
+        assert parsed.yaml_frontmatter == {}
+        assert any("prose to lint" in p.text for p in parsed.prose_blocks)
+
+    def test_unterminated_frontmatter_still_error(self, tmp_path: Path):
+        src = "---\ntitle: x\nnever closed\n"
+        parsed = parse_rmd_source(src, tmp_path / "m.Rmd")
+        assert [v.severity.value for v in parsed.violations] == ["error"]
