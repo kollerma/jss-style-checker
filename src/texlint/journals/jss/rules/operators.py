@@ -197,6 +197,23 @@ def check_jss_oper_002(
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
         ):
+            if isinstance(node, LatexMacroNode):
+                if not _helpers._is_inside_math(ancestors):
+                    continue
+                # ``\prime`` (with or without an explicit ``^``) is used
+                # as a transpose marker in some papers (pmclust:
+                # ``(6, 7)^\prime``). JSS wants ``\top`` instead.
+                if node.macroname == "prime":
+                    yield _violation(
+                        tex=tex,
+                        pos=node.pos,
+                        rule_id="JSS-OPER-002",
+                        suggestion=(
+                            "Use '\\top' for transpose instead of "
+                            "'\\prime': e.g., 'X^\\top X'."
+                        ),
+                    )
+                continue
             if not isinstance(node, LatexCharsNode):
                 continue
             if not _helpers._is_inside_math(ancestors):
@@ -212,6 +229,23 @@ def check_jss_oper_002(
                     pos=abs_pos,
                     rule_id="JSS-OPER-002",
                     suggestion="Use '\\top' for transpose: e.g., 'X^\\top X'.",
+                )
+            # Single-quote prime used as transpose for a vector or
+            # matrix: ``(w_0, ..., w_p)'`` / ``\mathbf{X}'`` /
+            # ``[A | B]'``. Only fire when ``'`` immediately follows a
+            # closing bracket — letter / digit followed by ``'`` is
+            # almost always derivative notation (``f'(x)``, ``x'``,
+            # ``y_{k'}``), not transpose.
+            for match in re.finditer(r"[)}\]]['′]", node.chars):
+                abs_pos = node.pos + match.start() + 1
+                yield _violation(
+                    tex=tex,
+                    pos=abs_pos,
+                    rule_id="JSS-OPER-002",
+                    suggestion=(
+                        "Use '\\top' for transpose instead of "
+                        "single-quote prime: e.g., 'X^\\top X'."
+                    ),
                 )
 
 
