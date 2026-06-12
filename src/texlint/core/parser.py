@@ -331,6 +331,15 @@ def parse_rnw_file(path: Path) -> ParsedTexFile:
         return ParsedTexFile(
             path=path, source="", nodes=(), walker=None, violations=(read_err,)
         )
+    return parse_rnw_source(source, path)
+
+
+def parse_rnw_source(source: str, path: Path) -> ParsedTexFile:
+    """Parse already-read ``.Rnw`` source into a :class:`ParsedTexFile`.
+
+    Source-based seam mirroring :func:`parse_tex_source`; used by the
+    LSP server to lint in-memory editor buffers without touching disk.
+    """
     rewritten = wrap_rnw_chunks_as_sinput(source)
     return parse_tex_source(rewritten, path)
 
@@ -349,7 +358,15 @@ def parse_bib_file(path: Path) -> ParsedBibFile:
     source, read_err = _read_utf8(path)
     if read_err is not None:
         return ParsedBibFile(path=path, source="", library=None, violations=(read_err,))
+    return parse_bib_source(source, path)
 
+
+def parse_bib_source(source: str, path: Path) -> ParsedBibFile:
+    """Parse already-read BibTeX source into a :class:`ParsedBibFile`.
+
+    Source-based seam mirroring :func:`parse_tex_source`; used by the
+    LSP server to lint in-memory editor buffers without touching disk.
+    """
     library = bibtexparser.parse_string(source)
     violations: list[Violation] = []
     for failed in getattr(library, "failed_blocks", ()):
