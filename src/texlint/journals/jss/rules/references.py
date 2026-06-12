@@ -297,6 +297,28 @@ def check_jss_refs_004(
             ),
         )
 
+    # `note=` field scan. R-package CRAN entries commonly include
+    # ``note = {R package version 0.1-5}`` where the bare ``R`` is a
+    # programming-language reference that should be
+    # ``\proglang{R}``. Same intent as the title scan, scoped to the
+    # note field. Title-side firing already returned via ``continue``
+    # above; entries with no title-side defect still get this check.
+    for bib, entry in _iter_entries(doc):
+        note = _field_value(entry, "note")
+        if not note:
+            continue
+        lang = _title_mentions_unwrapped(note, LANGUAGES)
+        if lang is not None:
+            yield _violation(
+                bib=bib,
+                entry=entry,
+                rule_id="JSS-REFS-004",
+                suggestion=(
+                    f"Wrap {lang!r} in \\proglang{{{lang}}} in the "
+                    "note field."
+                ),
+            )
+
 
 # ---------------------------------------------------------------------------
 # JSS-REFS-005 — journal not abbreviated
