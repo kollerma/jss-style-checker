@@ -48,8 +48,10 @@ class TestParseTexBomHandling:
 
 
 class TestParseTexEncoding:
-    def test_non_utf8_produces_parse_error(self, tmp_path: Path):
+    def test_non_utf8_recovered_via_latin1_fallback(self, tmp_path: Path):
         # latin-1 e-acute; not a valid UTF-8 sequence on its own.
+        # Decoded via the Latin-1 fallback with a warning-severity
+        # advisory (see TestLatin1Fallback for the full matrix).
         path = _write(tmp_path, "latin1.tex", b"caf\xe9\n")
 
         parsed = parse_tex_file(path)
@@ -57,10 +59,8 @@ class TestParseTexEncoding:
         assert len(parsed.violations) == 1
         v = parsed.violations[0]
         assert v.rule_id == "JSS-PARSE-000"
-        assert v.severity.value == "error"
-        assert v.line == 1
-        # source is empty / sentinel because decoding failed
-        assert parsed.nodes == ()
+        assert v.severity.value == "warning"
+        assert parsed.source == "café\n"
 
 
 class TestParseTexParseFailure:
@@ -206,3 +206,73 @@ class TestParseTexMissingFile:
         parsed = parse_tex_file(tmp_path / "nope.tex")
         assert len(parsed.violations) == 1
         assert parsed.violations[0].rule_id == "JSS-PARSE-000"
+
+
+class TestLatin1Fallback:
+    """A readable file that is not valid UTF-8 decodes as Latin-1 and
+    lints fully, carrying a warning-severity degraded-parse advisory
+    (pre-2015 CRAN vignettes commonly ship Latin-1 sources)."""
+
+    def test_latin1_tex_parses_with_advisory(self, tmp_path: Path):
+        path = tmp_path / "old.tex"
+        path.write_bytes(
+            b"\\begin{document}\ncaf\xe9 con leche\n\\end{document}\n"
+        )
+
+        parsed = parse_tex_file(path)
+
+        assert len(parsed.violations) == 1
+        v = parsed.violations[0]
+        assert v.rule_id == "JSS-PARSE-000"
+        assert v.severity.value == "warning"
+        assert "Latin-1" in v.message
+        assert "café" in parsed.source
+        assert parsed.nodes  # rules can still run
+
+    def test_latin1_rnw_parses_with_advisory(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+
+        path = tmp_path / "old.Rnw"
+        path.write_bytes(
+            b"text caf\xe9\n<<a>>=\nx <- 1\n@\nmore\n"
+        )
+
+        parsed = parse_rnw_file(path)
+
+        severities = [v.severity.value for v in parsed.violations]
+        assert severities == ["warning"]
+        assert "Sinput" in parsed.source
+
+    def test_latin1_bib_parses_with_advisory(self, tmp_path: Path):
+        from texlint.core.parser import parse_bib_file
+
+        path = tmp_path / "old.bib"
+        path.write_bytes(
+            b"@article{k, author = {Jos\xe9}, title = {T}}\n"
+        )
+
+        parsed = parse_bib_file(path)
+
+        assert [v.severity.value for v in parsed.violations] == ["warning"]
+        assert [e.key for e in parsed.library.entries] == ["k"]
+
+    def test_latin1_rmd_parses_with_advisory(self, tmp_path: Path):
+        from texlint.core.parser import parse_rmd_file
+
+        path = tmp_path / "old.Rmd"
+        path.write_bytes(b"---\ntitle: caf\xe9\n---\nprose\n")
+
+        parsed = parse_rmd_file(path)
+
+        assert any(
+            v.severity.value == "warning" and "Latin-1" in v.message
+            for v in parsed.violations
+        )
+
+    def test_unreadable_file_still_fatal(self, tmp_path: Path):
+        path = tmp_path / "gone.tex"  # never created
+
+        parsed = parse_tex_file(path)
+
+        assert len(parsed.violations) == 1
+        assert parsed.violations[0].severity.value == "error"
