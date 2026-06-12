@@ -59,7 +59,7 @@ Unknown keys emit a warning on stderr when `--verbose` is set; they are otherwis
 |------|---------|
 | `0` | Tool ran to completion; no violation at or above the `--fail-on` threshold (default: `warning`) was produced. Findings below the threshold are still reported. |
 | `1` | Tool ran to completion; at least one violation at or above the `--fail-on` threshold was produced. |
-| `2` | Tool could not complete: unknown CLI option; unknown `--journal`; missing/unreadable input path; unsupported file suffix; configuration error; uncaught internal exception. |
+| `2` | Tool could not complete: unknown CLI option; unknown `--journal`; missing/unreadable input path; unsupported file suffix; directory with no lintable files; configuration error; uncaught internal exception. |
 
 Exit 1 and exit 2 are NOT mutually exclusive in intent but ARE in effect: if a parse error occurs (exit-2 condition) and also a style rule fires (exit-1 condition), the result is exit 2. Parse failures dominate because they signal the report is incomplete.
 
