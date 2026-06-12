@@ -113,14 +113,10 @@ def create_server(
             logger.info("skipping unsupported file: %s", path)
             return
 
-        # Write the editor's buffer to a temp file? In a stricter
-        # implementation we'd parse the in-memory `source`. For
-        # spec-011 v1, we delegate to the engine's path-based parser:
-        # callers writing to the underlying file before calling this
-        # is the typical editor flow. If `source` differs from disk
-        # we still re-parse from disk for simplicity.
-        path.write_text(source, encoding="utf-8")
-        document = parse_document([path])
+        # Parse the in-memory editor buffer via the engine's source
+        # overlay — the buffer may be unsaved, and the server must
+        # never write the user's file to disk.
+        document = parse_document([path], sources={path: source})
         cfg = config_state.cfg or ToolConfig()
         try:
             journal = load_journal(cfg.journal)

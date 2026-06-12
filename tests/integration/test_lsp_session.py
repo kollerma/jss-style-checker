@@ -118,6 +118,59 @@ class TestDidOpen:
         assert isinstance(published[0].diagnostics, list)
 
 
+class TestDidOpenDoesNotTouchDisk:
+    """The server lints the in-memory buffer; the file on disk must
+    never be written (or even required to exist)."""
+
+    def test_buffer_differs_from_disk_disk_untouched(self, tmp_path: Path) -> None:
+        server = create_server()
+        manuscript = tmp_path / "m.tex"
+        disk_bytes = b"% disk content, deliberately not the buffer\n"
+        manuscript.write_bytes(disk_bytes)
+        stat_before = manuscript.stat()
+        published: list[lsp.PublishDiagnosticsParams] = []
+        server.text_document_publish_diagnostics = (  # type: ignore[assignment]
+            lambda p: published.append(p)
+        )
+
+        handler = server.protocol.fm.features["textDocument/didOpen"]
+        handler(
+            lsp.DidOpenTextDocumentParams(
+                text_document=lsp.TextDocumentItem(
+                    uri=manuscript.as_uri(),
+                    language_id="latex",
+                    version=1,
+                    text=_FIXTURE_TEX,  # buffer != disk
+                )
+            )
+        )
+        assert len(published) == 1
+        assert manuscript.read_bytes() == disk_bytes
+        assert manuscript.stat().st_mtime_ns == stat_before.st_mtime_ns
+
+    def test_unsaved_buffer_without_disk_file(self, tmp_path: Path) -> None:
+        server = create_server()
+        manuscript = tmp_path / "never-saved.tex"  # does not exist
+        published: list[lsp.PublishDiagnosticsParams] = []
+        server.text_document_publish_diagnostics = (  # type: ignore[assignment]
+            lambda p: published.append(p)
+        )
+
+        handler = server.protocol.fm.features["textDocument/didOpen"]
+        handler(
+            lsp.DidOpenTextDocumentParams(
+                text_document=lsp.TextDocumentItem(
+                    uri=manuscript.as_uri(),
+                    language_id="latex",
+                    version=1,
+                    text=_FIXTURE_TEX,
+                )
+            )
+        )
+        assert len(published) == 1
+        assert not manuscript.exists()
+
+
 class TestDidClose:
     def test_did_close_publishes_empty(self, tmp_path: Path) -> None:
         server = create_server()
