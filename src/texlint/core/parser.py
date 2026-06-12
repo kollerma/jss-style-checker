@@ -21,11 +21,20 @@ older behaviour, but it is no longer used by :func:`parse_rnw_file`.
 from __future__ import annotations
 
 import dataclasses
+import logging
 import re
 from pathlib import Path
 
 import bibtexparser
 from pylatexenc.latexwalker import LatexWalker, LatexWalkerError
+
+# bibtexparser's middleware chain logs a noisy "Unknown block type
+# <class '...DuplicateFieldKeyBlock'>" warning to stderr for every
+# failed block it routes past (bibtexparser/middlewares/middleware.py).
+# Those blocks are exactly what parse_bib_source handles below, so the
+# log line is pure noise to the CLI user — same suppression pattern as
+# the pygls json-rpc logger in lsp/server.py.
+logging.getLogger("bibtexparser").setLevel(logging.ERROR)
 
 from texlint.api import (
     VERBATIM_ENVS,
@@ -593,7 +602,41 @@ def parse_bib_source(source: str, path: Path) -> ParsedBibFile:
             continue
         start = getattr(failed, "start_line", None)
         line = (start + 1) if isinstance(start, int) else 1
-        message = getattr(failed, "error", None) or "BibTeX parse error"
+        if type(failed).__name__ == "DuplicateFieldKeyBlock":
+            # Also recoverable: BibTeX itself tolerates a duplicated
+            # field (last occurrence wins). bibtexparser hands us the
+            # deduplicated entry on `.ignore_error_block` — put it back
+            # into the library so bib rules lint it, and surface the
+            # defect as a warning-severity degraded-parse finding
+            # instead of failing the whole file.
+            entry = getattr(failed, "ignore_error_block", None)
+            if entry is not None:
+                # The recovered entry skipped the parse middlewares, so
+                # its field values still carry the enclosing braces /
+                # quotes that regular entries have stripped — normalise
+                # it to the same shape before it rejoins the library.
+                from bibtexparser.middlewares import RemoveEnclosingMiddleware
+
+                entry = RemoveEnclosingMiddleware().transform_entry(entry, None)
+                library.add(entry)
+                keys = sorted(getattr(failed, "duplicate_keys", ()) or ())
+                violations.append(
+                    _parse_error(
+                        path,
+                        line=line,
+                        severity=Severity.WARNING,
+                        message=(
+                            f"Duplicate field key(s) {', '.join(keys)} in "
+                            f"entry '{entry.key}'; the last occurrence of "
+                            "each field was used."
+                        ),
+                    )
+                )
+                continue
+        raw_error = getattr(failed, "error", None)
+        message = str(raw_error).strip() if raw_error is not None else ""
+        if not message:
+            message = "block could not be parsed"
         violations.append(
             _parse_error(path, line=line, message=f"BibTeX parse error: {message}")
         )

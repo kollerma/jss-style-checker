@@ -24,7 +24,7 @@
                 }
               ],
               "message": {
-                "text": "BibTeX parse error: "
+                "text": "BibTeX parse error: block could not be parsed"
               }
             }
           ]
