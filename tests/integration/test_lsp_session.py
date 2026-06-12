@@ -311,3 +311,119 @@ class TestApplyAllFixes:
         command = server.protocol.fm.commands["jss-lint.applyAllFixes"]
         assert command([]) is None
         assert applied == []
+
+
+class TestClientSettings:
+    """workspace/didChangeConfiguration pushes the jssStyleChecker
+    section; the server layers it over .jss-lint.toml and re-lints."""
+
+    _SRC = (
+        "\\documentclass[article]{jss}\n"
+        "\\title{T}\n"
+        "\\author{A}\n"
+        "\\Plainauthor{A}\n"
+        "\\Abstract{D.}\n"
+        "\\Keywords{k}\n"
+        "\\Address{Z}\n"
+        "\\begin{document}\n"
+        "We implement everything in R for speed.\n"
+        "\\end{document}\n"
+    )
+
+    def _server_with_doc(self, tmp_path: Path):
+        from pygls.workspace import Workspace
+
+        server = create_server()
+        published: list[lsp.PublishDiagnosticsParams] = []
+        server.text_document_publish_diagnostics = (  # type: ignore[assignment]
+            lambda p: published.append(p)
+        )
+        if server.protocol._workspace is None:
+            server.protocol._workspace = Workspace(None)
+        uri = (tmp_path / "m.tex").as_uri()
+        item = lsp.TextDocumentItem(
+            uri=uri, language_id="latex", version=1, text=self._SRC
+        )
+        server.workspace.put_text_document(item)
+        server.protocol.fm.features["textDocument/didOpen"](
+            lsp.DidOpenTextDocumentParams(text_document=item)
+        )
+        return server, uri, published
+
+    def test_ignore_rules_setting_suppresses_diagnostic(
+        self, tmp_path: Path
+    ) -> None:
+        server, uri, published = self._server_with_doc(tmp_path)
+        assert any(
+            d.code == "JSS-MARKUP-001" for d in published[-1].diagnostics
+        )
+
+        handler = server.protocol.fm.features[
+            "workspace/didChangeConfiguration"
+        ]
+        handler(
+            lsp.DidChangeConfigurationParams(
+                settings={
+                    "jssStyleChecker": {"ignoreRules": ["JSS-MARKUP-001"]}
+                }
+            )
+        )
+        # The handler re-lints open docs; the last publish must no
+        # longer contain the ignored rule.
+        assert all(
+            d.code != "JSS-MARKUP-001" for d in published[-1].diagnostics
+        )
+
+    def test_severity_override_setting_applied(self, tmp_path: Path) -> None:
+        server, uri, published = self._server_with_doc(tmp_path)
+        handler = server.protocol.fm.features[
+            "workspace/didChangeConfiguration"
+        ]
+        handler(
+            lsp.DidChangeConfigurationParams(
+                settings={
+                    "jssStyleChecker": {
+                        "severityOverrides": {"JSS-MARKUP-001": "error"}
+                    }
+                }
+            )
+        )
+        target = [
+            d for d in published[-1].diagnostics if d.code == "JSS-MARKUP-001"
+        ]
+        assert target
+        assert all(
+            d.severity == lsp.DiagnosticSeverity.Error for d in target
+        )
+
+    def test_run_on_save_gates_did_change(self, tmp_path: Path) -> None:
+        server, uri, published = self._server_with_doc(tmp_path)
+        handler = server.protocol.fm.features[
+            "workspace/didChangeConfiguration"
+        ]
+        handler(
+            lsp.DidChangeConfigurationParams(
+                settings={"jssStyleChecker": {"runOn": "save"}}
+            )
+        )
+        n_before = len(published)
+
+        change = server.protocol.fm.features["textDocument/didChange"]
+        change(
+            lsp.DidChangeTextDocumentParams(
+                text_document=lsp.VersionedTextDocumentIdentifier(
+                    uri=uri, version=2
+                ),
+                content_changes=[],
+            )
+        )
+        # No lint scheduled, nothing published.
+        assert len(published) == n_before
+
+        save = server.protocol.fm.features["textDocument/didSave"]
+        save(
+            lsp.DidSaveTextDocumentParams(
+                text_document=lsp.TextDocumentIdentifier(uri=uri)
+            )
+        )
+        assert len(published) == n_before + 1

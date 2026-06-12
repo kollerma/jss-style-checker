@@ -36,7 +36,7 @@ from urllib.parse import unquote, urlparse
 from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
-from texlint.api import Fix, ToolConfig
+from texlint.api import Fix
 from texlint.core.engine import (
     InvalidJournalError,
     JournalNotFoundError,
@@ -118,7 +118,7 @@ def create_server(
         # overlay — the buffer may be unsaved, and the server must
         # never write the user's file to disk.
         document = parse_document([path], sources={path: source})
-        cfg = config_state.cfg or ToolConfig()
+        cfg = config_state.effective()
         try:
             journal = load_journal(cfg.journal)
         except (JournalNotFoundError, InvalidJournalError) as exc:
@@ -185,6 +185,10 @@ def create_server(
 
     @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
     def _did_change(params: lsp.DidChangeTextDocumentParams) -> None:
+        if config_state.run_on == "save":
+            # The user asked for lint-on-save only; didSave (and
+            # didOpen) still lint.
+            return
         td = params.text_document
         # `pygls` keeps the in-memory document; pull current text.
         doc = server.workspace.get_text_document(td.uri)
@@ -256,14 +260,27 @@ def create_server(
 
     @server.feature(lsp.WORKSPACE_DID_CHANGE_CONFIGURATION)
     def _did_change_configuration(
-        params: lsp.DidChangeConfigurationParams,  # noqa: ARG001
+        params: lsp.DidChangeConfigurationParams,
     ) -> None:
-        # VS Code (and other clients) push a notification whenever the
-        # user edits settings. Config reload is wired through the file
-        # watcher on `.jss-lint.toml` rather than client-pushed
-        # settings, so we accept-and-ignore — without a registered
-        # handler pygls logs a noisy warning for every settings save.
-        return
+        # VS Code pushes the full `jssStyleChecker` section at startup
+        # and on every settings edit (the extension declares it in
+        # `synchronize.configurationSection`). Layer it over the
+        # `.jss-lint.toml` config and re-lint every open document.
+        settings = getattr(params, "settings", None) or {}
+        if not isinstance(settings, dict):  # defensive: non-dict payload
+            return
+        section = settings.get("jssStyleChecker") or {}
+        if not isinstance(section, dict):
+            return
+        config_state.client_settings = section
+        run_on = section.get("runOn")
+        config_state.run_on = "save" if run_on == "save" else "change"
+        for uri in tuple(cache.open_uris()):
+            try:
+                doc = server.workspace.get_text_document(uri)
+            except KeyError:
+                continue
+            _lint_uri(uri, version=doc.version, source=doc.source)
 
     @server.feature(lsp.WORKSPACE_DID_CHANGE_WATCHED_FILES)
     def _config_changed(params: lsp.DidChangeWatchedFilesParams) -> None:

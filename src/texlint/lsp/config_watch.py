@@ -8,12 +8,18 @@ re-linted". The actual re-lint dispatch happens in the server.
 
 from __future__ import annotations
 
+import dataclasses
 import sys
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from texlint.api import ToolConfig
+from texlint.config import (
+    _normalise_ignore_rules,
+    _normalise_severity_overrides,
+)
 from texlint.config import load as load_config
 
 if sys.version_info >= (3, 11):
@@ -24,21 +30,75 @@ else:  # pragma: no cover - covered only on 3.10
 
 @dataclass
 class ConfigState:
-    """Running cache of the active ``.jss-lint.toml``.
+    """Running cache of the active ``.jss-lint.toml`` plus the
+    client-pushed (VS Code settings) layer.
 
     ``path`` is the file we're watching (or ``None`` when no config
     has been picked up yet). ``cfg`` is the most-recent parsed
     config; on a malformed reload we keep the previous ``cfg`` and
-    surface a log message via *log*.
+    surface a log message via *log*. ``client_settings`` is the raw
+    ``jssStyleChecker`` section from the latest
+    ``workspace/didChangeConfiguration`` push; ``run_on`` controls
+    whether ``didChange`` lints ("change", the default) or only
+    ``didSave``/``didOpen`` do ("save").
     """
 
     path: Path | None = None
     cfg: ToolConfig = None  # type: ignore[assignment]
     last_error: str | None = None
+    client_settings: dict[str, Any] = field(default_factory=dict)
+    run_on: str = "change"
 
     def __post_init__(self) -> None:
         if self.cfg is None:
             self.cfg = ToolConfig()
+
+    def effective(self) -> ToolConfig:
+        """The config rules actually run with: ``.jss-lint.toml`` as
+        the base, client settings layered on top."""
+        return merge_client_settings(self.cfg, self.client_settings)
+
+
+def merge_client_settings(
+    cfg: ToolConfig, settings: Mapping[str, Any]
+) -> ToolConfig:
+    """Layer the client's ``jssStyleChecker`` settings over *cfg*.
+
+    Precedence rules (additive, never wholesale — VS Code pushes its
+    defaults for every key on every change, so "client replaces file"
+    would silently erase ``.jss-lint.toml`` values):
+
+    * ``ignoreRules`` **unions** into ``ignore_rules``;
+    * ``severityOverrides`` **dict-updates** over file overrides
+      (client wins per rule id);
+    * ``codeWidth`` replaces ``code_width`` (the extension default 80
+      equals the tool default, so an unset client is a no-op).
+
+    ``runOn`` is deliberately not a ToolConfig concern — the server
+    stores it on :class:`ConfigState` and gates ``didChange`` lints.
+    """
+    if not settings:
+        return cfg
+    changes: dict[str, Any] = {}
+    if settings.get("ignoreRules"):
+        extra = _normalise_ignore_rules(settings["ignoreRules"])
+        if extra:
+            changes["ignore_rules"] = cfg.ignore_rules | extra
+    if settings.get("severityOverrides"):
+        client_overrides = _normalise_severity_overrides(
+            settings["severityOverrides"]
+        )
+        if client_overrides:
+            changes["severity_overrides"] = {
+                **cfg.severity_overrides,
+                **client_overrides,
+            }
+    code_width = settings.get("codeWidth")
+    if isinstance(code_width, (int, float)) and int(code_width) > 0:
+        changes["code_width"] = int(code_width)
+    if not changes:
+        return cfg
+    return dataclasses.replace(cfg, **changes)
 
 
 def reload(state: ConfigState, path: Path, log: Callable[[str], None]) -> bool:

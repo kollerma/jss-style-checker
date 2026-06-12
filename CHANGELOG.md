@@ -23,6 +23,17 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Added
 
+- **VS Code settings are now honoured by the LSP server.**
+  `jssStyleChecker.ignoreRules` (unioned with `ignore_rules` from
+  `.jss-lint.toml`), `jssStyleChecker.severityOverrides` (per-rule,
+  client wins over the file), `jssStyleChecker.codeWidth`, and
+  `jssStyleChecker.runOn` (`"save"` lints on save only). Settings
+  changes re-lint open documents immediately.
+- `severity_overrides` config key (`[severity_overrides]` table in
+  `.jss-lint.toml`): per-rule severity remap applied centrally in the
+  engine so terminal/JSON/SARIF/LSP output and the exit-code policy
+  all agree.
+
 - Per-rule measured-precision **confidence tiers**. The catalogue now
   carries an optional `confidence` key (`high` default / `medium` /
   `low`) sourced from the eval-jss precision history; the four
