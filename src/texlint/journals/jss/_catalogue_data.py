@@ -447,7 +447,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
     }),
     'JSS-CAP-003': MappingProxyType({
         "category": 'capitalization',
-        "severity": Severity.WARNING,
+        "severity": Severity.INFO,
         "message_template": 'Figure / table captions are in sentence style',
         "authority": 'style_guide',
         "authority_ref": '#how-to-format-figuretable-captions',
@@ -456,7 +456,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "confidence": 'low',
         "guide_section": '§6.2 Capitalisation',
         "guide_url": 'https://www.jstatsoft.org/about/submissions#capitalisation',
-        "explanation": 'Figure and table captions in JSS submissions use sentence style:\nonly the first word is capitalised, with proper nouns retaining\ntheir capitalisation. The rule is heuristic and known to over-fire\non captions containing dense technical identifiers (R^2, p-values\nwith embedded statistics, dataset / cohort label prefixes); 5\nsuccessive precision-improvement attempts could not lift it above\n60% on the pinned 240-paper corpus, so it ships at `confidence:\nlow` and is hidden by default with `--min-confidence medium`.\nWhen reviewing a CAP-003 finding, sanity-check the caption against\nthe example fix below; the rule prefers false-positives over\nmissed real defects, so a no-op finding is the expected failure\nmode.\n',
+        "explanation": 'Figure and table captions in JSS submissions use sentence style:\nonly the first word is capitalised, with proper nouns retaining\ntheir capitalisation. The rule is heuristic and known to over-fire\non captions containing dense technical identifiers (R^2, p-values\nwith embedded statistics, dataset / cohort label prefixes); 5\nsuccessive precision-improvement attempts could not lift it above\n60% on the pinned 240-paper corpus, so it ships at info severity\nand `confidence: low`. It runs (and is shown) by default but\nnever fails a run under the default `--fail-on warning` policy;\npass `--min-confidence medium` to hide it entirely.\nWhen reviewing a CAP-003 finding, sanity-check the caption against\nthe example fix below; the rule prefers false-positives over\nmissed real defects, so a no-op finding is the expected failure\nmode.\n',
     }),
     'JSS-CAP-004': MappingProxyType({
         "category": 'capitalization',

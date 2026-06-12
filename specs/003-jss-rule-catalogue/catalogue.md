@@ -100,7 +100,7 @@ _capitalization_ — 4 rule(s)
 |---|---|---|---|---|---|
 | `JSS-CAP-001` | warning | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-CAP-002` | warning | Section titles are in sentence style (first word capitalised; others lowercase except proper names) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-CAP-003` | warning | Figure / table captions are in sentence style | style_guide | `#how-to-format-figuretable-captions` | — |
+| `JSS-CAP-003` | info | Figure / table captions are in sentence style | style_guide | `#how-to-format-figuretable-captions` | — |
 | `JSS-CAP-004` | warning | \Keywords{} is comma-separated and in sentence case | article_tex | `article.tex:48` | — |
 
 ## Typography
@@ -1551,7 +1551,7 @@ terms.LANGUAGES and terms.R_PACKAGES). Tuned via the precision gate.
 
 ### JSS-CAP-003
 
-**Category**: `capitalization` · **Severity**: `warning` · **Auto-fixable**: no
+**Category**: `capitalization` · **Severity**: `info` · **Auto-fixable**: no
 
 Figure / table captions are in sentence style
 

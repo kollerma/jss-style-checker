@@ -407,11 +407,11 @@ class TestXref002Fix:
 
         result = runner.invoke(main, ["--fix", str(target)])
 
-        # The CLI exits with the report's exit code (1 — the in-memory
-        # report carries the JSS-XREF-002 violation, computed before
-        # the fixer rewrote the file). The point of this test is the
-        # post-rewrite byte-equality below.
-        assert result.exit_code == 1, result.output
+        # The CLI exits with the report's exit code (0 — XREF-002 is
+        # info severity, below the default --fail-on=warning
+        # threshold). The point of this test is the post-rewrite
+        # byte-equality below.
+        assert result.exit_code == 0, result.output
         expected = (XREF_002 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
 
