@@ -22,7 +22,32 @@ from texlint.journals.jss.terms import (
     CANONICAL,
     JOURNAL_CANONICAL,
     PUBLISHER_CANONICAL,
+    PUBLISHER_PREFIX_CANONICAL,
 )
+
+
+def _publisher_canonical(value: str) -> str | None:
+    """Resolve a publisher field to its JSS-canonical form.
+
+    Checks the exact-match map first (``PUBLISHER_CANONICAL``), then
+    the prefix-match table (``PUBLISHER_PREFIX_CANONICAL``) so corpus
+    variants like ``"Springer, Heidelberg, New York"`` still
+    canonicalise to ``"Springer-Verlag"``. Returns ``None`` when no
+    canonical form is known.
+    """
+    direct = PUBLISHER_CANONICAL.get(value)
+    if direct is not None:
+        return direct
+    for prefix, canonical in PUBLISHER_PREFIX_CANONICAL:
+        # Match the prefix at a word boundary so ``Springerwell`` (a
+        # hypothetical other publisher) does not match.
+        if (
+            value == prefix
+            or value.startswith(prefix + " ")
+            or value.startswith(prefix + ",")
+        ):
+            return canonical
+    return None
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9+\-]*")
 
@@ -207,21 +232,23 @@ def check_jss_name_002(
 ) -> Iterator[Violation]:
     for bib, entry in _helpers._iter_referenced_entries(doc):
         publisher = _field_value(entry, "publisher")
-        if publisher and publisher in PUBLISHER_CANONICAL:
-            canonical = PUBLISHER_CANONICAL[publisher]
-            yield _violation(
-                file=bib.path,
-                line=_entry_line(entry),
-                column=None,
-                rule_id="JSS-NAME-002",
-                suggestion=(
-                    f"Replace publisher {publisher!r} with "
-                    f"{canonical!r}."
-                ),
-                fix=_build_fix(
-                    bib.source, entry, "publisher", publisher, canonical,
-                ),
-            )
+        if publisher:
+            canonical = _publisher_canonical(publisher)
+            if canonical is not None and canonical != publisher:
+                yield _violation(
+                    file=bib.path,
+                    line=_entry_line(entry),
+                    column=None,
+                    rule_id="JSS-NAME-002",
+                    suggestion=(
+                        f"Replace publisher {publisher!r} with "
+                        f"{canonical!r}."
+                    ),
+                    fix=_build_fix(
+                        bib.source, entry, "publisher",
+                        publisher, canonical,
+                    ),
+                )
         journal = _field_value(entry, "journal")
         if journal and journal in JOURNAL_CANONICAL:
             canonical = JOURNAL_CANONICAL[journal]

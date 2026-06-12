@@ -106,6 +106,13 @@ _PUBLISHER_CANONICAL_RAW: Mapping[str, str] = {
     # noise. (Re-confirmed 2026-04-29 after a tentative drop was
     # reverted.)
     "Springer": "Springer-Verlag",
+    # Corpus variants of the same publisher — the bib field carries an
+    # imprint suffix ("Springer Science+Business Media") or city list
+    # ("Springer, Heidelberg, New York, ..."), but the canonical JSS
+    # form is still "Springer-Verlag". Listed explicitly so the
+    # substitution stays mechanical and the Fix range covers only the
+    # publisher field's value bytes.
+    "Springer Science+Business Media": "Springer-Verlag",
     # SG-049: Chapman & Hall / CRC
     "Chapman and Hall": "Chapman & Hall/CRC",
     "Chapman and Hall/CRC": "Chapman & Hall/CRC",
@@ -115,11 +122,28 @@ _PUBLISHER_CANONICAL_RAW: Mapping[str, str] = {
 }
 
 _JOURNAL_CANONICAL_RAW: Mapping[str, str] = {
-    # SG-051: Annals of Statistics → "The Annals of Statistics"
+    # SG-051: Annals of Statistics → "The Annals of Statistics".
+    # Lowercase-tail variant ("Annals of statistics") also canonicalises.
     "Annals of Statistics": "The Annals of Statistics",
+    "Annals of statistics": "The Annals of Statistics",
     # SG-052: JASA canonical
     "JASA": "Journal of the American Statistical Association",
+    # Royal Statistical Society Series B — JSS drops the "Series"
+    # token. Common corpus variants captured explicitly.
+    "Journal of the Royal Statistical Society Series B":
+        "Journal of the Royal Statistical Society B",
+    "Journal of the Royal Statistical Society, Series B":
+        "Journal of the Royal Statistical Society B",
 }
+
+
+# Publisher-field prefix canonicalisations. Some bib entries decorate
+# the publisher with city / imprint information ("Springer, Heidelberg,
+# New York, ..."); the canonical JSS form is still "Springer-Verlag".
+# Listed as a tuple of (prefix, canonical) — first match wins.
+PUBLISHER_PREFIX_CANONICAL: tuple[tuple[str, str], ...] = (
+    ("Springer", "Springer-Verlag"),
+)
 
 PUBLISHER_CANONICAL: Mapping[str, str] = MappingProxyType(dict(_PUBLISHER_CANONICAL_RAW))
 JOURNAL_CANONICAL: Mapping[str, str] = MappingProxyType(dict(_JOURNAL_CANONICAL_RAW))
