@@ -322,6 +322,100 @@ def check_jss_markup_002(
         doc, terms=R_PACKAGES, rule_id="JSS-MARKUP-002",
         wrap_macro="pkg", skip_initials=False, emit_fix=True,
     )
+    yield from _check_title_package_idiom(doc)
+
+
+# A lowercase-or-mixedCase identifier in the package-idiom shape
+# (``mdsOpt``, ``ggplot2``, ``rstanarm``, ``robustlmm``) followed by
+# a description separator (``:``, ``--``, ``—``). Matches the title
+# convention ``\title{pkgname: description}`` and ``\title{pkgname --
+# description}`` that authors of vignette papers use. Excludes
+# fully-capitalised first words (``"MASS: ..."`` — also a package
+# idiom but caught separately) so we only flag the cases where
+# CAP-001's title-case check would otherwise spuriously fire.
+_TITLE_PKG_IDIOM_RE = re.compile(
+    r"^\s*([a-z][A-Za-z0-9.]*)\s*(?::|--|—|\\-\\-|\Z)"
+)
+
+
+def _check_title_package_idiom(
+    doc: ParsedDocument,
+) -> Iterator[Violation]:
+    """Flag ``\\title{pkgname ...}`` openings as MARKUP-002.
+
+    Carrier: mdsOpt.ltx:27 — ``\\title{mdsOpt -- Searching for ...}``
+    where ``mdsOpt`` is a bare package-name first word that should be
+    ``\\pkg{mdsOpt}``. This is the JSS-MARKUP-002-scope half of the
+    JSS-CAP-001 / MARKUP-002 split documented in
+    roadmap/follow-ups.md L439: CAP-001 already defers on titles
+    whose first word is in the document's existing ``\\pkg{}`` set,
+    but the underlying defect (missing markup) needs to surface
+    somewhere — that's here.
+    """
+    for tex in doc.all_tex_like():
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+            if not (
+                isinstance(node, LatexMacroNode)
+                and node.macroname == "title"
+            ):
+                continue
+            argd = getattr(node, "nodeargd", None)
+            if argd is None:
+                continue
+            group = None
+            for arg in argd.argnlist or ():
+                if isinstance(arg, LatexGroupNode):
+                    group = arg
+                    break
+            if group is None:
+                continue
+            # Plain-text projection of the title group; if the FIRST
+            # word looks like a package-idiom identifier and is NOT
+            # already inside \pkg{...} in the source, fire.
+            text = _project_title_plain_text(group)
+            match = _TITLE_PKG_IDIOM_RE.match(text)
+            if match is None:
+                continue
+            pkg_name = match.group(1)
+            # Skip when the title source itself opens with \pkg{...}
+            # (author already wrapped it).
+            source = tex.source[node.pos : node.pos + node.len]
+            if re.search(r"\\title\s*\{\s*\\pkg\s*\{", source):
+                continue
+            yield _violation(
+                tex=tex,
+                pos=node.pos,
+                rule_id="JSS-MARKUP-002",
+                suggestion=(
+                    f"Wrap the leading package name {pkg_name!r} in "
+                    f"\\pkg{{{pkg_name}}} in the \\title{{}} body."
+                ),
+            )
+
+
+def _project_title_plain_text(group: Any) -> str:
+    """Char-only projection of a title group (drops macros, math,
+    nested groups). Used for the package-idiom prefix check.
+
+    ``LatexSpecialsNode`` (typesetting punctuation such as ``--``,
+    ``---``, ``~``, ``\\&``) contributes its ``specials_chars``
+    verbatim — without it, ``\\title{pkg -- Description}`` would
+    project to ``"pkg  Description"`` and the package-idiom regex
+    would miss the ``--`` separator.
+    """
+    parts: list[str] = []
+    for child in group.nodelist or ():
+        if isinstance(child, LatexCharsNode):
+            parts.append(child.chars)
+        elif isinstance(child, LatexMacroNode):
+            # Drop macro contents — we only care about the leading
+            # bare-word prefix.
+            break
+        else:
+            specials = getattr(child, "specials_chars", None)
+            if specials:
+                parts.append(specials)
+    return "".join(parts).lstrip()
 
 
 # ---------------------------------------------------------------------------
