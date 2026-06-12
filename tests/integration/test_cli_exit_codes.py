@@ -174,3 +174,50 @@ class TestDegradedParseSeverity:
         report, determine = self._report_with(Severity.WARNING)
         assert determine(report, fail_on="warning") == 1
         assert determine(report, fail_on="error") == 0
+
+
+class TestDirectoryInputs:
+    """`jss-lint <dir>` expands recursively to lintable files."""
+
+    def test_directory_lints_nested_files(
+        self, tmp_path: Path, runner: CliRunner
+    ):
+        (tmp_path / "sub").mkdir()
+        (tmp_path / "a.tex").write_text(
+            "\\documentclass[nojss]{jss}\n\\begin{document}\nWe use R "
+            "daily \\citep{k}.\n\\end{document}\n",
+            encoding="utf-8",
+        )
+        (tmp_path / "sub" / "refs.bib").write_text(
+            "@article{k, title = {a lowercase title of things},"
+            " author = {A. Author}, year = {2020}}\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(main, [str(tmp_path)])
+        assert result.exit_code == 1, result.output
+        assert "a.tex" in result.output
+        assert "refs.bib" in result.output
+
+    def test_empty_directory_exits_two(self, tmp_path: Path, runner: CliRunner):
+        result = runner.invoke(main, [str(tmp_path)])
+        assert result.exit_code == 2
+        assert "no lintable files" in result.output
+
+    def test_mixed_directory_and_file_args(
+        self, tmp_path: Path, runner: CliRunner
+    ):
+        d = tmp_path / "d"
+        d.mkdir()
+        (d / "x.tex").write_text(
+            "\\documentclass[nojss]{jss}\n\\begin{document}\nok\n"
+            "\\end{document}\n",
+            encoding="utf-8",
+        )
+        f = tmp_path / "y.tex"
+        f.write_text(
+            "\\documentclass[nojss]{jss}\n\\begin{document}\nok\n"
+            "\\end{document}\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(main, [str(d), str(f)])
+        assert result.exit_code in {0, 1}, result.output

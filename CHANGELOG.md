@@ -32,6 +32,10 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Added
 
+- **Directory arguments.** `jss-lint .` (or any directory path)
+  recursively lints every supported file beneath it, in deterministic
+  sorted order; an empty expansion exits 2 with a clear message.
+
 - **VS Code settings are now honoured by the LSP server.**
   `jssStyleChecker.ignoreRules` (unioned with `ignore_rules` from
   `.jss-lint.toml`), `jssStyleChecker.severityOverrides` (per-rule,

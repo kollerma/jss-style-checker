@@ -34,8 +34,23 @@ def _eprint(message: str) -> None:
     click.echo(message, err=True)
 
 
+def _expand_directory(path: Path) -> list[Path]:
+    """All lintable files under *path*, recursively, in deterministic
+    sorted order (report byte-stability)."""
+    return sorted(
+        p
+        for p in path.rglob("*")
+        if p.is_file() and p.suffix.lower() in _SUPPORTED_SUFFIXES
+    )
+
+
 def _parse_inputs(paths: tuple[str, ...]) -> tuple[ParsedDocument | None, int]:
     """Parse each input file. Return (document, exit_code_if_any).
+
+    A directory argument expands recursively to every lintable file
+    beneath it (``jss-lint .`` is the natural first invocation); an
+    empty expansion is exit-2 with a clear message. Explicit file
+    arguments keep strict suffix validation.
 
     The exit-code is 2 when any path is missing or has an unsupported
     suffix. Delegates to :func:`texlint.core.engine.parse_document` for
@@ -45,6 +60,16 @@ def _parse_inputs(paths: tuple[str, ...]) -> tuple[ParsedDocument | None, int]:
     path_objs: list[Path] = []
     for raw in paths:
         path = Path(raw)
+        if path.is_dir():
+            found = _expand_directory(path)
+            if not found:
+                _eprint(
+                    f"jss-lint: no lintable files under {path} "
+                    f"(looked for: {', '.join(sorted(_SUPPORTED_SUFFIXES))})"
+                )
+                return None, 2
+            path_objs.extend(found)
+            continue
         if path.suffix.lower() not in _SUPPORTED_SUFFIXES:
             _eprint(
                 f"jss-lint: unsupported file extension '{path.suffix}' for {path} "
