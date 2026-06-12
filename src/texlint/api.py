@@ -262,6 +262,11 @@ class ToolConfig:
     # violation; ``"warning"`` ignores info-severity advisories;
     # ``"error"`` fails only on errors. Parse errors always exit 2.
     fail_on: Literal["error", "warning", "info"] = "info"
+    # Per-rule severity overrides, keyed by rule id. Applied centrally
+    # by the engine after suppression filtering, so every renderer
+    # (terminal / JSON / SARIF / LSP) and the exit-code policy agree.
+    # TOML shape: ``[severity_overrides]`` with ``"JSS-CAP-003" = "info"``.
+    severity_overrides: Mapping[str, Severity] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

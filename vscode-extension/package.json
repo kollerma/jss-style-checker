@@ -45,7 +45,7 @@
               "info"
             ]
           },
-          "description": "Per-rule severity override map."
+          "description": "Per-rule severity override map (e.g. {\"JSS-CAP-003\": \"info\"}). Merged over any [severity_overrides] in .jss-lint.toml; per rule id, this setting wins."
         },
         "jssStyleChecker.ignoreRules": {
           "type": "array",
@@ -53,7 +53,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Rule ids to suppress."
+          "description": "Rule ids to suppress. Unioned with ignore_rules from .jss-lint.toml."
         },
         "jssStyleChecker.codeWidth": {
           "type": "number",

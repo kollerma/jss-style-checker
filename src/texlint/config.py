@@ -17,7 +17,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from texlint.api import ToolConfig
+from collections.abc import Mapping
+
+from texlint.api import Severity, ToolConfig
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -36,6 +38,22 @@ def _normalise_ignore_rules(value: Any) -> frozenset[str]:
     if isinstance(value, (list, tuple, set)):
         return frozenset(str(v).strip() for v in value if str(v).strip())
     return frozenset()
+
+
+def _normalise_severity_overrides(value: Any) -> dict[str, Severity]:
+    """Coerce a ``{rule_id: "error"|"warning"|"info"}`` mapping into
+    ``{rule_id: Severity}``. Rule ids are upper-cased; entries with an
+    invalid severity value are dropped (the rule keeps its catalogue
+    severity rather than failing the whole config)."""
+    if not isinstance(value, Mapping):
+        return {}
+    out: dict[str, Severity] = {}
+    for rule_id, sev in value.items():
+        try:
+            out[str(rule_id).strip().upper()] = Severity(str(sev).lower())
+        except ValueError:
+            continue
+    return out
 
 
 def _read_toml(cwd: Path) -> dict[str, Any]:
@@ -64,6 +82,11 @@ def load(cli_overrides: dict[str, Any], cwd: Path) -> ToolConfig:
 
     if "ignore_rules" in merged:
         merged["ignore_rules"] = _normalise_ignore_rules(merged["ignore_rules"])
+
+    if "severity_overrides" in merged:
+        merged["severity_overrides"] = _normalise_severity_overrides(
+            merged["severity_overrides"]
+        )
 
     cfg = ToolConfig(**merged)
 

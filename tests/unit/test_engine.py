@@ -433,3 +433,26 @@ class TestParseDocumentSourceOverlay:
         path.write_text("DISK", encoding="utf-8")
         doc = parse_document([path])
         assert "DISK" in doc.tex_files[0].source
+
+
+class TestSeverityOverrideRemap:
+    """config.severity_overrides remaps violation severity centrally in
+    the engine, so every renderer and the exit policy agree."""
+
+    def test_override_demotes_severity(self, tmp_path: Path):
+        doc = _make_doc(tmp_path, "a.tex")
+        target = str(doc.tex_files[0].path)
+        rule = _rule("JSS-X-001", fires_on=(target,))
+        journal = _Journal("j", (RuleCategory(id="x", title="X", rules=(rule,)),))
+        cfg = ToolConfig(severity_overrides={"JSS-X-001": Severity.INFO})
+        report = run(cfg, doc, journal)
+        assert [v.severity for v in report.violations] == [Severity.INFO]
+
+    def test_unmentioned_rule_unchanged(self, tmp_path: Path):
+        doc = _make_doc(tmp_path, "a.tex")
+        target = str(doc.tex_files[0].path)
+        rule = _rule("JSS-X-001", fires_on=(target,))
+        journal = _Journal("j", (RuleCategory(id="x", title="X", rules=(rule,)),))
+        cfg = ToolConfig(severity_overrides={"JSS-OTHER-999": Severity.INFO})
+        report = run(cfg, doc, journal)
+        assert [v.severity for v in report.violations] == [Severity.ERROR]

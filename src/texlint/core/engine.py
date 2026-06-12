@@ -19,6 +19,7 @@ The engine is the one module that knows how to:
 
 from __future__ import annotations
 
+import dataclasses as _dc
 import importlib.metadata as _im
 from collections import defaultdict
 from collections.abc import Mapping
@@ -282,6 +283,16 @@ def run(
                     v
                     for v in rule_violations
                     if not _suppress.is_suppressed(suppression_index, v)
+                ]
+
+            if config.severity_overrides:
+                # Central remap so every renderer (terminal / JSON /
+                # SARIF / LSP) and the exit-code policy agree.
+                rule_violations = [
+                    _dc.replace(v, severity=config.severity_overrides[v.rule_id])
+                    if v.rule_id in config.severity_overrides
+                    else v
+                    for v in rule_violations
                 ]
 
             applied_by_category[category.id] += 1
