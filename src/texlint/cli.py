@@ -89,11 +89,16 @@ _SEVERITY_RANK: dict[str, int] = {"info": 0, "warning": 1, "error": 2}
 
 
 def _determine_exit_code(report: Any, fail_on: str = "info") -> int:
-    """Exit 2 if any parse error present; else 1 if any violation at or
-    above the ``fail_on`` severity; else 0.
+    """Exit 2 if any *error-severity* parse failure is present; else 1
+    if any violation at or above the ``fail_on`` severity; else 0.
 
-    Parse failures dominate style violations because the report is incomplete
-    when the parser could not process a file — see contracts/cli.md §Exit codes.
+    Error-severity parse failures dominate style violations because the
+    report is incomplete when the parser could not process a file — see
+    contracts/cli.md §Exit codes. Warning-severity ``JSS-PARSE-000``
+    findings mark a *degraded* parse (the file was recovered and fully
+    linted, e.g. via an encoding fallback or duplicate-bib-field
+    recovery); those obey the normal ``fail_on`` threshold like any
+    other finding.
 
     ``fail_on`` is the minimum severity that flips the exit code:
     ``"info"`` (the default and the historical behaviour) fails on any
@@ -102,7 +107,10 @@ def _determine_exit_code(report: Any, fail_on: str = "info") -> int:
     Violations below the threshold are still rendered — the policy
     affects the exit code only.
     """
-    if any(v.rule_id == _PARSE_RULE_ID for v in report.violations):
+    if any(
+        v.rule_id == _PARSE_RULE_ID and v.severity.value == "error"
+        for v in report.violations
+    ):
         return 2
     threshold = _SEVERITY_RANK.get(fail_on, 0)
     if any(

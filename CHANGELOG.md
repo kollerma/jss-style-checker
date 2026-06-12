@@ -8,6 +8,19 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ## [Unreleased]
 
+### Changed
+
+- **Degraded-parse exit semantics.** Only error-severity
+  `JSS-PARSE-000` findings force exit 2. Warning-severity parse
+  findings mark a *recovered* parse (the file was fully linted, e.g.
+  after an encoding fallback) and obey the normal `--fail-on`
+  threshold like any other finding. Previously any `JSS-PARSE-000`
+  finding exited 2.
+- The LSP server lints the in-memory editor buffer directly instead
+  of writing it to the file on disk. Unsaved edits no longer hit the
+  filesystem, file encodings are preserved, and opening a file no
+  longer bumps its mtime.
+
 ### Added
 
 - Per-rule measured-precision **confidence tiers**. The catalogue now

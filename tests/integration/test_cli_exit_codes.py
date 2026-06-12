@@ -119,3 +119,41 @@ class TestMinConfidence:
         )
         assert result.exit_code == 0
         assert "min_confidence" in result.output
+
+
+class TestDegradedParseSeverity:
+    """Warning-severity JSS-PARSE-000 marks a *recovered* parse and obeys
+    --fail-on; only error-severity parse failures force exit 2
+    (contracts/cli.md §Exit codes)."""
+
+    @staticmethod
+    def _report_with(severity):
+        from texlint.api import Severity, Violation
+        from texlint.cli import _determine_exit_code
+
+        violation = Violation(
+            file=Path("m.tex"),
+            line=1,
+            column=None,
+            rule_id="JSS-PARSE-000",
+            severity=severity,
+            message="parse finding",
+        )
+
+        class _Report:
+            violations = (violation,)
+
+        return _Report(), _determine_exit_code
+
+    def test_error_parse_violation_exits_two(self):
+        from texlint.api import Severity
+
+        report, determine = self._report_with(Severity.ERROR)
+        assert determine(report, fail_on="error") == 2
+
+    def test_warning_parse_violation_obeys_fail_on(self):
+        from texlint.api import Severity
+
+        report, determine = self._report_with(Severity.WARNING)
+        assert determine(report, fail_on="warning") == 1
+        assert determine(report, fail_on="error") == 0
