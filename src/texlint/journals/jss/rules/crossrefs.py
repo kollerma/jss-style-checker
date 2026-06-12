@@ -258,6 +258,23 @@ def _eqref_label_text(node: Any) -> str:
     return label_text
 
 
+_EQ_ABBREV_TAIL_RE = re.compile(r"\b(Eqs?|Eqns?)\.?\s*~?\s*$")
+
+
+def _chars_ends_with_eq_abbrev(node: Any) -> tuple[int, str] | None:
+    """If ``node`` is a chars node whose trailing text ends with ``Eq.``
+    or ``Eqs.`` (the equation abbreviation reviewers want rewritten to
+    ``Equation`` / ``Equations``), return the start offset of the
+    abbreviation match and its raw match text. Otherwise ``None``.
+    """
+    if not isinstance(node, LatexCharsNode):
+        return None
+    m = _EQ_ABBREV_TAIL_RE.search(node.chars)
+    if m is None:
+        return None
+    return m.start(), m.group(0)
+
+
 def check_jss_xref_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -269,6 +286,59 @@ def check_jss_xref_002(
             if node.macroname == "ref":
                 before = parent[idx - 1] if idx > 0 else None
                 after = parent[idx + 1] if idx + 1 < len(parent) else None
+                # ``Eq.~\ref{...}`` / ``Eqs.~\ref{...}`` — the
+                # abbreviated form. The corpus convention (DBR.Rnw:183
+                # et al.) wants ``Equation~\ref{...}`` /
+                # ``Equations~\ref{...}`` instead. The ``~``
+                # non-breaking space parses as a LatexSpecialsNode
+                # sibling between the chars node carrying "Eq." and
+                # the ``\ref`` macro — walk back past one such
+                # specials sibling when present.
+                tilde_idx: int | None = None
+                if (
+                    before is not None
+                    and not isinstance(before, LatexCharsNode)
+                    and getattr(before, "specials_chars", None) == "~"
+                ):
+                    tilde_idx = idx - 1
+                    before = parent[idx - 2] if idx > 1 else None
+                eq_abbrev = _chars_ends_with_eq_abbrev(before)
+                if eq_abbrev is not None and not _label_has_non_equation_prefix(node):
+                    abbrev_offset, abbrev_text = eq_abbrev
+                    is_plural = abbrev_text.lower().startswith(("eqs", "eqns"))
+                    canonical = "Equations" if is_plural else "Equation"
+                    abbrev_start = before.pos + abbrev_offset
+                    # Fix range: from the abbreviation through the
+                    # macro itself, replacing everything in between
+                    # (chars tail + optional ``~`` + macro body) with
+                    # the canonical form. node.pos+node.len gives the
+                    # end of the macro.
+                    line, col = _helpers._lineno_col(tex, node.pos)
+                    macro_body = tex.source[node.pos : node.pos + node.len]
+                    yield Violation(
+                        file=tex.path,
+                        line=line,
+                        column=col,
+                        rule_id="JSS-XREF-002",
+                        severity=meta["severity"],
+                        message=meta["message_template"],
+                        suggestion=(
+                            f"Replace {abbrev_text.strip()!r} before "
+                            f"\\ref with '{canonical}~' (capitalised, "
+                            "non-breaking space)."
+                        ),
+                        fix=Fix(
+                            start=abbrev_start,
+                            end=node.pos + node.len,
+                            replacement=f"{canonical}~{macro_body}",
+                            description=(
+                                f"replace '{abbrev_text.strip()}' with "
+                                f"'{canonical}~'"
+                            ),
+                            confidence="safe",
+                        ),
+                    )
+                    continue
                 if not _chars_ends_with_open_paren(before):
                     continue
                 if not _chars_starts_with_close_paren(after):
