@@ -490,26 +490,24 @@ corpus carrier so the change can be test-driven from real text.
       ToC vs body and either can violate sentence-style).
       **Severity**: existing CAP-002 severity (warning).
 
-- [ ] **`JSS-MARKUP-002` / `JSS-MARKUP-003` should also flag known
+- [x] **`JSS-MARKUP-002` / `JSS-MARKUP-003` should also flag known
       package / function names wrapped in `\texttt{}`**
-      (`src/texlint/journals/jss/rules/markup.py`). Both rules
-      currently inspect prose only; bare names wrapped in the wrong
-      macro (`\texttt{MASS}` instead of `\pkg{MASS}`,
-      `\texttt{hubers}` instead of `\code{hubers}`) are invisible.
-      **Carrier**: robustlmm `simulationStudies.Rnw:591` — both
-      defects on a single line. Likely common across the corpus
-      (authors reach for `\texttt{}` because it renders the same).
-      **Fix**: extend the rules to also walk `\texttt{...}` /
-      `\verb|...|` arguments, matching the inner token against the
-      same package-name / R-function lookups already used for prose.
-      **Severity**: existing rule severity (warning each).
-      *(Partial — 2026-06-11 in commit `44e1c33`: MARKUP-003 now
-      flags every `\texttt{...}` outside of bibliography / verbatim
-      / JSS-markup wrappers and emits a safe fix replacing `\texttt`
-      with `\code`. Recall jumped 0.064 → 0.915. Still open: when
-      the `\texttt{X}` argument matches a known PACKAGE name, the
-      remediation is `\pkg{X}` not `\code{X}` (MARKUP-002 territory)
-      — same for known FUNCTION lookups.)*
+      (`src/texlint/journals/jss/rules/markup.py`).
+      (Shipped in three steps:
+      • commit `44e1c33` (2026-06-11): MARKUP-003 fires on every
+        `\texttt{...}` outside bibliography / verbatim / JSS-markup
+        wrappers, with a safe `\texttt` → `\code` fix. Recall
+        0.064 → 0.915.
+      • commit `1057110` (2026-06-12): the suggestion text and Fix
+        replacement are content-aware — `\texttt{R}` → `\proglang{R}`,
+        `\texttt{ggplot2}` → `\pkg{ggplot2}`, others →
+        `\code{...}`. Rule_id stays MARKUP-003 so corpus tuples
+        don't shift; only the proposed remediation changes.
+      • Coverage of `\verb|...|` arguments deferred: pylatexenc
+        parses verb spans as opaque LatexSpecialsNode runs, and a
+        bare-name detection inside verb is materially different
+        scope (and rare in the corpus). File as a separate item if
+        a carrier surfaces.)
 
 - [x] **`JSS-REFS-006` brace-defeats-`_starts_with_package_idiom`
       exemption** (`src/texlint/journals/jss/rules/references.py`).
@@ -523,18 +521,20 @@ corpus carrier so the change can be test-driven from real text.
       `^\{*\s*\{?[a-z][a-zA-Z0-9.]*\}?\s*:` and matches
       brace-protected leading identifiers.)
 
-- [ ] **`JSS-CAP-001` should defer when the first word of the
+- [x] **`JSS-CAP-001` should defer when the first word of the
       title is an unwrapped package name** (`src/texlint/journals/jss/rules/capitalization.py`).
-      *(Partial — 2026-06-11 in commit `8d9744f`: CAP-001 already
-      defers on titles whose first word is in `doc_pkgs_lower`
-      (i.e., the document wraps the same name in `\pkg{}`
-      elsewhere). Still open: the carrier mdsOpt.ltx:27 doesn't
-      `\pkg{mdsOpt}` anywhere, so `doc_pkgs_lower` doesn't help; a
-      MARKUP-002-recognised-set check (or `_starts_with_package_idiom`
-      regex applied to manuscript `\title{}`) is the remaining
-      step. Lower priority now — the title-case principal-word
-      check still catches the in-corpus defects from CAP-001's
-      original FN set.)*
+      (Shipped in two commits:
+      • commit `8d9744f` (2026-06-11): CAP-001's first-word check
+        now defers when `_pkg_token(first) in doc_pkgs_lower`
+        (i.e., the document `\pkg{}`-wraps the same name
+        elsewhere). The principal-word check still runs so
+        mid-title lowercase principals are still caught.
+      • commit `8b4ff98` (2026-06-12): JSS-MARKUP-002 picks up the
+        complementary half — bare package-name first word in
+        `\title{...}` now fires MARKUP-002 with a `\pkg{pkgname}`
+        suggestion. Carrier mdsOpt.ltx:27 now correctly surfaces
+        under MARKUP-002 instead of (spuriously) under CAP-001.
+        MARKUP-002 recall 0.333 → 0.667.)
       Mirror the `_starts_with_package_idiom` exemption that
       `JSS-REFS-006` already carries for bib titles. When the
       manuscript `\title{}` opens with a lowercase token that
@@ -624,17 +624,18 @@ corpus carrier so the change can be test-driven from real text.
       defect is field-placement, not absence.
       **Severity**: info (advisory) — unchanged.
 
-- [ ] **`JSS-REFS-004` (proglang / pkg / code markup in bib titles)
+- [x] **`JSS-REFS-004` (proglang / pkg / code markup in bib titles)
       scope is incomplete** (`src/texlint/journals/jss/rules/references.py`).
-      *(Partial — 2026-06-11 in commit `dc5844f`: added a
-      pattern-based fallback for titles matching `^pkgname:
-      description` where `pkgname` is a single identifier
-      followed by a colon. Covers many corpus FNs (pmclust,
-      cascsim, MixSim, pbdMPI/SLAP/BASE, PROreg, SMACOF, smds,
-      clusterSim, leaflet). Recall jumped 0.538 → 0.846. Still
-      open: the `note=` field is not scanned — e.g.
-      `note = {R package version 0.1-5}` where `R` should be
-      `\proglang{R}` still slips through.)*
+      (Shipped in two commits:
+      • commit `dc5844f` (2026-06-11): pattern-based fallback for
+        titles matching `^pkgname: description` covers most
+        title-side FNs (pmclust, cascsim, MixSim, pbdMPI/SLAP/BASE,
+        PROreg, SMACOF, smds, clusterSim, leaflet). Recall
+        0.538 → 0.846.
+      • commit `2abfd52` (2026-06-12): rule now also scans the
+        `note=` field for bare language tokens. DBR.bib:316,
+        deSolve/integration.bib:66, pmclust.bib:120 — all the
+        carriers from the original follow-up. Recall 0.846 → 0.892.)
       The rule fires on a fraction of real cases: pmclust caught
       3 of 11 cases the annotator marked; robustlmm caught 5 of 14.
       Common miss pattern: `note = {R package version 0.1-5}` and
