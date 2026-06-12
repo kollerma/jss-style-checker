@@ -9,8 +9,9 @@ import * as path from "path";
 import * as cp from "child_process";
 import {
   workspace,
-window,
+  window,
   commands,
+  extensions,
   ExtensionContext,
   StatusBarItem,
   StatusBarAlignment,
@@ -28,24 +29,79 @@ import {
 let client: LanguageClient | undefined;
 let statusBar: StatusBarItem;
 
-function discoverPythonPath(): string {
-  // Three-layer discovery (research §2):
-  //   1. `jssStyleChecker.python.path` setting.
+function canRunServer(python: string): Promise<boolean> {
+  // A candidate interpreter qualifies iff it exists AND has the
+  // texlint package (`pip install "jss-lint[lsp]"`).
+  return new Promise((resolve) => {
+    cp.execFile(python, ["-c", "import texlint"], (err) => resolve(!err));
+  });
+}
+
+async function resolvePython(): Promise<string | undefined> {
+  // Four-layer discovery (research §2):
+  //   1. `jssStyleChecker.python.path` setting — explicit, validated;
+  //      a broken value surfaces an error instead of being silently
+  //      replaced by a fallback the user did not choose.
   //   2. The VS Code Python extension's selected interpreter.
-  //   3. `python` on PATH.
+  //   3. `python3` on PATH (modern macOS / most Linux distros ship no
+  //      bare `python`).
+  //   4. `python` on PATH.
   const setting = workspace
     .getConfiguration("jssStyleChecker")
     .get<string>("python.path");
   if (setting) {
-    return setting;
+    if (await canRunServer(setting)) {
+      return setting;
+    }
+    window.showErrorMessage(
+      `JSS Style Checker: "jssStyleChecker.python.path" (${setting}) ` +
+        `is not a Python interpreter with jss-lint installed. ` +
+        `Install with: ${setting} -m pip install "jss-lint[lsp]"`
+    );
+    return undefined;
   }
-  // (2) requires a runtime probe via the Python extension API; we keep
-  // it simple in v1 and fall through to (3).
-  return "python";
+
+  const candidates: string[] = [];
+  const pythonExt = extensions.getExtension("ms-python.python");
+  if (pythonExt) {
+    try {
+      const api = await pythonExt.activate();
+      // Modern environments API (2023+), then the legacy settings API.
+      const active = api?.environments?.getActiveEnvironmentPath?.();
+      if (active?.path) {
+        candidates.push(active.path);
+      }
+      const exec = api?.settings?.getExecutionDetails?.()?.execCommand;
+      if (Array.isArray(exec) && exec.length > 0) {
+        candidates.push(exec[0]);
+      }
+    } catch {
+      // Python extension misbehaving — fall through to PATH probing.
+    }
+  }
+  candidates.push("python3", "python");
+
+  for (const candidate of candidates) {
+    if (await canRunServer(candidate)) {
+      return candidate;
+    }
+  }
+  window.showErrorMessage(
+    'JSS Style Checker: no Python interpreter with jss-lint found ' +
+      `(tried: ${candidates.join(", ")}). Install the server with ` +
+      '`pip install "jss-lint[lsp]"` or point ' +
+      '"jssStyleChecker.python.path" at the right interpreter.'
+  );
+  return undefined;
 }
 
-export function activate(context: ExtensionContext): void {
-  const pythonPath = discoverPythonPath();
+export async function activate(context: ExtensionContext): Promise<void> {
+  const pythonPath = await resolvePython();
+  if (!pythonPath) {
+    // No usable interpreter — the error message above tells the user
+    // how to fix it; starting a doomed client would only add noise.
+    return;
+  }
 
   const serverOptions: ServerOptions = {
     command: pythonPath,
