@@ -60,3 +60,69 @@ class TestParseBibEncoding:
         parsed = parse_bib_file(path)
         assert len(parsed.violations) == 1
         assert parsed.violations[0].rule_id == "JSS-PARSE-000"
+
+
+class TestDuplicateFieldKeyRecovery:
+    """A duplicated field within an entry is recoverable: BibTeX itself
+    tolerates it (last wins). The entry rejoins the library for bib
+    rules and the defect surfaces as a warning-severity degraded-parse
+    finding instead of failing the file (robustbase, distrMod et al.
+    in the eval corpus)."""
+
+    SRC = "@article{k, url = {a}, url = {b}, title = {T}}\n"
+
+    def test_entry_recovered_into_library(self, tmp_path: Path):
+        path = tmp_path / "refs.bib"
+        path.write_text(self.SRC, encoding="utf-8")
+
+        parsed = parse_bib_file(path)
+
+        assert [e.key for e in parsed.library.entries] == ["k"]
+        # Last occurrence of the duplicated field wins.
+        assert parsed.library.entries[0].fields_dict["url"].value == "b"
+
+    def test_warning_violation_names_field_and_entry(self, tmp_path: Path):
+        path = tmp_path / "refs.bib"
+        path.write_text(self.SRC, encoding="utf-8")
+
+        parsed = parse_bib_file(path)
+
+        assert len(parsed.violations) == 1
+        v = parsed.violations[0]
+        assert v.rule_id == "JSS-PARSE-000"
+        assert v.severity.value == "warning"
+        assert "url" in v.message
+        assert "'k'" in v.message
+
+    def test_unrecoverable_block_still_error(self, tmp_path: Path):
+        path = tmp_path / "refs.bib"
+        path.write_text("@article{x, title = {never closed\n", encoding="utf-8")
+
+        parsed = parse_bib_file(path)
+
+        assert len(parsed.violations) == 1
+        assert parsed.violations[0].severity.value == "error"
+        # The fallback text replaces the previously empty message.
+        assert parsed.violations[0].message != "BibTeX parse error: "
+
+    def test_no_stderr_noise_from_middleware(self, tmp_path: Path, capsys):
+        path = tmp_path / "refs.bib"
+        path.write_text(self.SRC, encoding="utf-8")
+
+        parse_bib_file(path)
+
+        captured = capsys.readouterr()
+        assert "Unknown block type" not in captured.err
+
+    def test_duplicate_block_keys_unchanged(self, tmp_path: Path):
+        # Sibling behaviour guard: duplicate *citation keys* stay out
+        # of the parse channel (JSS-BIBTEX-002 reports them).
+        path = tmp_path / "refs.bib"
+        path.write_text(
+            "@article{k, title = {A}}\n@article{k, title = {B}}\n",
+            encoding="utf-8",
+        )
+
+        parsed = parse_bib_file(path)
+
+        assert parsed.violations == ()
