@@ -202,3 +202,112 @@ class TestCodeAction:
         )
         actions = handler(params)
         assert actions == []
+
+
+class TestApplyAllFixes:
+    """The command must push the aggregated WorkspaceEdit via
+    workspace/applyEdit (clients discard executeCommand results) and
+    re-lint stale buffers before computing edits."""
+
+    _SRC_WITH_FIX = (
+        "\\documentclass[article]{jss}\n"
+        "\\title{T}\n"
+        "\\author{A}\n"
+        "\\Plainauthor{A}\n"
+        "\\Abstract{D.}\n"
+        "\\Keywords{k}\n"
+        "\\Address{Z}\n"
+        "\\begin{document}\n"
+        "We implement everything in R for speed.\n"
+        "\\end{document}\n"
+    )
+
+    def _open(self, server, uri: str, text: str, version: int = 1) -> None:
+        from pygls.workspace import Workspace
+
+        # Handler-direct tests skip `initialize`; give the protocol a
+        # real Workspace so workspace.get_text_document works.
+        if server.protocol._workspace is None:
+            server.protocol._workspace = Workspace(None)
+        item = lsp.TextDocumentItem(
+            uri=uri, language_id="latex", version=version, text=text
+        )
+        server.workspace.put_text_document(item)
+        handler = server.protocol.fm.features["textDocument/didOpen"]
+        handler(lsp.DidOpenTextDocumentParams(text_document=item))
+
+    def test_sends_workspace_apply_edit(self, tmp_path: Path) -> None:
+        server = create_server()
+        server.text_document_publish_diagnostics = lambda p: None  # type: ignore[assignment]
+        applied: list[lsp.ApplyWorkspaceEditParams] = []
+        server.workspace_apply_edit = (  # type: ignore[assignment]
+            lambda params: applied.append(params) or None
+        )
+        manuscript = tmp_path / "m.tex"
+        uri = manuscript.as_uri()
+        self._open(server, uri, self._SRC_WITH_FIX)
+
+        command = server.protocol.fm.commands["jss-lint.applyAllFixes"]
+        summary = command([])
+
+        assert len(applied) == 1
+        params = applied[0]
+        assert params.label == "jss-lint: Apply all fixes"
+        edits = params.edit.changes[uri]
+        assert len(edits) >= 1
+        assert any(e.new_text == "\\proglang{R}" for e in edits)
+        assert summary == {"files": 1, "edits": len(edits)}
+
+    def test_stale_cache_relinted_before_edit(self, tmp_path: Path) -> None:
+        from texlint.lsp.cache import CachedDocument
+
+        server = create_server()
+        server.text_document_publish_diagnostics = lambda p: None  # type: ignore[assignment]
+        applied: list[lsp.ApplyWorkspaceEditParams] = []
+        server.workspace_apply_edit = (  # type: ignore[assignment]
+            lambda params: applied.append(params) or None
+        )
+        manuscript = tmp_path / "m.tex"
+        uri = manuscript.as_uri()
+        self._open(server, uri, self._SRC_WITH_FIX)
+
+        # Make the cache stale: the editor advanced the buffer (the R
+        # sentence moved one line down) without a re-lint.
+        new_text = self._SRC_WITH_FIX.replace(
+            "\\begin{document}\n", "\\begin{document}\nA new first line.\n"
+        )
+        server.workspace.put_text_document(
+            lsp.TextDocumentItem(
+                uri=uri, language_id="latex", version=7, text=new_text
+            )
+        )
+        # Cache still holds version-1 diagnostics with version-1 offsets.
+
+        command = server.protocol.fm.commands["jss-lint.applyAllFixes"]
+        command([])
+
+        assert len(applied) == 1
+        edits = applied[0].edit.changes[uri]
+        wrap = next(e for e in edits if e.new_text == "\\proglang{R}")
+        # The R now sits on line 9 (0-based) — one lower than at lint
+        # time. A stale edit would target line 8.
+        assert wrap.range.start.line == 9
+        new_lines = new_text.splitlines()
+        target = new_lines[wrap.range.start.line]
+        assert target[wrap.range.start.character] == "R"
+
+    def test_no_fixes_returns_none_and_sends_nothing(
+        self, tmp_path: Path
+    ) -> None:
+        server = create_server()
+        server.text_document_publish_diagnostics = lambda p: None  # type: ignore[assignment]
+        applied: list[lsp.ApplyWorkspaceEditParams] = []
+        server.workspace_apply_edit = (  # type: ignore[assignment]
+            lambda params: applied.append(params) or None
+        )
+        manuscript = tmp_path / "clean.tex"
+        self._open(server, manuscript.as_uri(), _FIXTURE_TEX)
+
+        command = server.protocol.fm.commands["jss-lint.applyAllFixes"]
+        assert command([]) is None
+        assert applied == []
