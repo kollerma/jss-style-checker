@@ -89,7 +89,7 @@ def runner() -> CliRunner:
             [
                 "--output",
                 "sarif",
-                str(FIXTURES / "violations" / "JSS-PARSE-000.tex"),
+                str(FIXTURES / "violations" / "JSS-PARSE-000.bib"),
             ],
         ),
         (

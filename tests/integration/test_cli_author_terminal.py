@@ -38,7 +38,7 @@ class TestExitCodes:
 
     def test_parse_error_exits_two(self, runner: CliRunner):
         result = runner.invoke(
-            main, [str(FIXTURES / "violations" / "JSS-PARSE-000.tex")]
+            main, [str(FIXTURES / "violations" / "JSS-PARSE-000.bib")]
         )
         assert result.exit_code == 2
         assert "JSS-PARSE-000" in result.output
@@ -94,7 +94,7 @@ class TestGuideSectionSuffix:
     def test_parse_failure_has_no_see_suffix(self, runner: CliRunner):
         result = runner.invoke(
             main,
-            [str(FIXTURES / "violations" / "JSS-PARSE-000.tex")],
+            [str(FIXTURES / "violations" / "JSS-PARSE-000.bib")],
         )
         assert result.exit_code == 2
         assert "(see " not in result.output

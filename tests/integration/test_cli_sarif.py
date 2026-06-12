@@ -146,7 +146,7 @@ class TestSarifParseError:
             [
                 "--output",
                 "sarif",
-                str(FIXTURES / "violations" / "JSS-PARSE-000.tex"),
+                str(FIXTURES / "violations" / "JSS-PARSE-000.bib"),
             ],
         )
         # Per spec FR-008 / contract C-7, parse failures still raise the
