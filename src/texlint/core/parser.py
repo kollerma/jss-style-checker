@@ -20,6 +20,7 @@ older behaviour, but it is no longer used by :func:`parse_rnw_file`.
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from pathlib import Path
 
@@ -416,8 +417,14 @@ def _parse_error(
 def _read_utf8(path: Path) -> tuple[str | None, Violation | None]:
     """Read ``path`` as UTF-8 text with BOM stripping.
 
-    Returns ``(source, None)`` on success; ``(None, violation)`` on any
-    read or decode failure.
+    Returns ``(source, None)`` on success and ``(None, violation)``
+    when the file cannot be read at all. A file that is readable but
+    not valid UTF-8 is decoded as Latin-1 instead (which cannot fail —
+    every byte maps to a code point) and returned as
+    ``(source, advisory)`` with a warning-severity degraded-parse
+    finding: pre-2015 CRAN vignettes commonly ship Latin-1 ``.tex`` /
+    ``.Rnw`` sources, and refusing the file entirely left those
+    manuscripts with zero diagnostics.
     """
     try:
         raw = path.read_bytes()
@@ -429,8 +436,15 @@ def _read_utf8(path: Path) -> tuple[str | None, Violation | None]:
     try:
         source = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
-        return None, _parse_error(
-            path, message=f"File is not valid UTF-8: {exc.reason} at byte {exc.start}"
+        source = raw.decode("latin-1")
+        return source, _parse_error(
+            path,
+            severity=Severity.WARNING,
+            message=(
+                f"File is not valid UTF-8 ({exc.reason} at byte "
+                f"{exc.start}); decoded as Latin-1 — check the result "
+                "for mojibake and consider converting the file to UTF-8."
+            ),
         )
 
     if source.startswith(_UTF8_BOM):
@@ -440,11 +454,16 @@ def _read_utf8(path: Path) -> tuple[str | None, Violation | None]:
 
 def parse_tex_file(path: Path) -> ParsedTexFile:
     source, read_err = _read_utf8(path)
-    if read_err is not None:
+    if source is None:
         return ParsedTexFile(
             path=path, source="", nodes=(), walker=None, violations=(read_err,)
         )
-    return parse_tex_source(source, path)
+    parsed = parse_tex_source(source, path)
+    if read_err is not None:  # degraded read (e.g. Latin-1 fallback)
+        parsed = dataclasses.replace(
+            parsed, violations=(read_err, *parsed.violations)
+        )
+    return parsed
 
 
 def parse_tex_source(source: str, path: Path) -> ParsedTexFile:
@@ -513,11 +532,16 @@ def parse_rnw_file(path: Path) -> ParsedTexFile:
     (spec 005 FR-003).
     """
     source, read_err = _read_utf8(path)
-    if read_err is not None:
+    if source is None:
         return ParsedTexFile(
             path=path, source="", nodes=(), walker=None, violations=(read_err,)
         )
-    return parse_rnw_source(source, path)
+    parsed = parse_rnw_source(source, path)
+    if read_err is not None:  # degraded read (e.g. Latin-1 fallback)
+        parsed = dataclasses.replace(
+            parsed, violations=(read_err, *parsed.violations)
+        )
+    return parsed
 
 
 def parse_rnw_source(source: str, path: Path) -> ParsedTexFile:
@@ -542,9 +566,14 @@ def _extract_line(exc: LatexWalkerError) -> int | None:
 
 def parse_bib_file(path: Path) -> ParsedBibFile:
     source, read_err = _read_utf8(path)
-    if read_err is not None:
+    if source is None:
         return ParsedBibFile(path=path, source="", library=None, violations=(read_err,))
-    return parse_bib_source(source, path)
+    parsed = parse_bib_source(source, path)
+    if read_err is not None:  # degraded read (e.g. Latin-1 fallback)
+        parsed = dataclasses.replace(
+            parsed, violations=(read_err, *parsed.violations)
+        )
+    return parsed
 
 
 def parse_bib_source(source: str, path: Path) -> ParsedBibFile:
@@ -581,11 +610,16 @@ def parse_rmd_file(path: Path) -> ParsedRmdFile:
     from texlint.core.rmd_parser import parse_rmd_source
 
     source, read_err = _read_utf8(path)
-    if read_err is not None:
+    if source is None:
         return ParsedRmdFile(
             path=path,
             source="",
             yaml_frontmatter={},
             violations=(read_err,),
         )
-    return parse_rmd_source(source, path)
+    parsed = parse_rmd_source(source, path)
+    if read_err is not None:  # degraded read (e.g. Latin-1 fallback)
+        parsed = dataclasses.replace(
+            parsed, violations=(read_err, *parsed.violations)
+        )
+    return parsed
