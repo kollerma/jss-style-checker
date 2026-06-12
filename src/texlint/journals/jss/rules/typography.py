@@ -271,15 +271,18 @@ def check_jss_typo_003(
 def check_jss_typo_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    # JSS style: figure captions go BELOW the figure, table captions
-    # go ABOVE the table. The rule's "caption appears after content"
-    # check applies only to figures — caption-above is the correct
-    # placement for tables and must not fire on table envs.
+    # JSS style places both figure AND table captions BELOW the
+    # content (per corpus annotations: deSolve.Rnw:1849/1877/1918 and
+    # pmclust/02-example.tex:211 — "Table caption should be below
+    # table, not above"). The rule fires when ``\caption{}`` appears
+    # before any visible body content of a figure / table env.
     for tex in doc.all_tex_like():
         for node in _helpers._walk(tex.nodes):
             if not (
                 isinstance(node, LatexEnvironmentNode)
-                and node.environmentname in {"figure", "figure*"}
+                and node.environmentname in {
+                    "figure", "figure*", "table", "table*",
+                }
             ):
                 continue
             children = list(node.nodelist or ())

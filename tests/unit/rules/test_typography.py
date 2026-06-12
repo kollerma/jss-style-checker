@@ -314,11 +314,12 @@ class TestTypo004:
         )
         assert len(run_rule(jss_typo_004, src)) == 1
 
-    def test_table_caption_above_silent(self, run_rule):
-        # JSS style: table captions go ABOVE the table content. The
-        # rule must not fire on table envs even when caption is at the
-        # top. Reproduces FPs from cran_WeightedCluster (and the
-        # table-env mislabel-TPs across the corpus).
+    def test_table_caption_above_flagged(self, run_rule):
+        # Updated 2026-06-11: JSS style places BOTH figure and table
+        # captions BELOW the content (per recall-corpus annotations:
+        # deSolve.Rnw:1849 et al. "Table caption should be below
+        # table, not above"). The rule fires on table envs whose
+        # ``\caption{}`` precedes the body content.
         src = (
             r"\documentclass[article]{jss}" "\n"
             r"\begin{document}" "\n"
@@ -329,7 +330,9 @@ class TestTypo004:
             r"\end{table}" "\n"
             r"\end{document}"
         )
-        assert run_rule(jss_typo_004, src) == []
+        violations = run_rule(jss_typo_004, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-TYPO-004"
 
 
 def test_group_visible_children_skips_label(parse_tex_source):
