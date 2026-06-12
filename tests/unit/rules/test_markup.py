@@ -582,3 +582,146 @@ def test_is_initial_branches():
     assert _is_initial("R.", 0) is True
     # next char is not period → False.
     assert _is_initial("R;", 0) is False
+
+
+# ---------------------------------------------------------------------------
+# JSS-MARKUP-001 — context guards from labelled corpus FPs (iter-78+)
+# ---------------------------------------------------------------------------
+
+
+def _wrap(body: str) -> str:
+    return (
+        "\\documentclass[article]{jss}\n"
+        "\\begin{document}\n"
+        f"{body}\n"
+        "\\end{document}"
+    )
+
+
+class TestMarkup001ContextGuards:
+    """Each guard has a false-positive case (silent) and a nearby
+    true-positive case (still fires) so precision gains never come
+    from recall collapse."""
+
+    # -- macro-definition lines ------------------------------------- #
+
+    def test_macro_def_line_silent(self, run_rule):
+        src = _wrap("\\def \\calC {\\mathcal C}\n\\newcolumntype{C}[1]{>{\\centering}p{#1}}")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_prose_after_macro_def_still_fires(self, run_rule):
+        src = _wrap("\\def \\calC {\\mathcal C}\nWe implement it in R for speed.")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    # -- CRAN expansion: NOT guarded ----------------------------------- #
+
+    def test_cran_expansion_fires(self, run_rule):
+        # The hand-annotated recall corpus plants this phrase as a
+        # genuine violation (CARBayesST:441); the AI precision labels
+        # disagree with each other on it. Ground truth wins.
+        src = _wrap("Available from the Comprehensive R Archive Network site.")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    def test_bare_r_near_cran_still_fires(self, run_rule):
+        src = _wrap("CRAN hosts R packages.")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    # -- eponym / statistic letters ----------------------------------- #
+
+    def test_possessive_eponym_silent(self, run_rule):
+        src = _wrap("We compare Hubert's C with the gap statistic.")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_index_follower_silent(self, run_rule):
+        src = _wrap("the Harell C index measures concordance")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_c_steps_silent(self, run_rule):
+        src = _wrap("iteratively improve via C steps until convergence")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_plain_c_language_still_fires(self, run_rule):
+        src = _wrap("rewritten in C for speed")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    # -- enumeration / label letters ---------------------------------- #
+
+    def test_panel_label_silent(self, run_rule):
+        src = _wrap("as shown in panel C of the figure")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_compartment_enumeration_silent(self, run_rule):
+        src = _wrap("a single compartment (S, I or R) as well as events")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_letter_list_silent(self, run_rule):
+        src = _wrap("the groups A, B, C and D give identical results")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_r_and_python_still_fires_twice(self, run_rule):
+        src = _wrap("implementations in R and Python exist")
+        assert len(run_rule(jss_markup_001, src)) == 2
+
+    def test_c_or_fortran_still_fires_twice(self, run_rule):
+        src = _wrap("without having to write, say, C or Fortran code.")
+        assert len(run_rule(jss_markup_001, src)) == 2
+
+    # -- R\&D ---------------------------------------------------------- #
+
+    def test_amp_compound_silent(self, run_rule):
+        src = _wrap("patent applications, R\\&D spending and firm size")
+        assert run_rule(jss_markup_001, src) == []
+
+    # -- table cells ---------------------------------------------------- #
+
+    def test_lone_table_cell_letter_silent(self, run_rule):
+        src = _wrap(
+            "\\begin{tabular}{lll}\n"
+            "Model & R & S \\\\\n"
+            "\\end{tabular}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_language_in_table_prose_still_fires(self, run_rule):
+        src = _wrap(
+            "\\begin{tabular}{ll}\n"
+            "Implemented & in the R language \\\\\n"
+            "\\end{tabular}"
+        )
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    # -- path-segment prefix ------------------------------------------- #
+
+    def test_path_prefix_silent(self, run_rule):
+        src = _wrap("the class is defined in \\emph{R/models.R} files")
+        assert run_rule(jss_markup_001, src) == []
+
+
+class TestMarkup001GuardRecallProtection:
+    """Surface forms one refinement away from the guards — all must
+    still fire (sourced from labelled TPs the first guard draft
+    swallowed)."""
+
+    def test_slash_pair_r_s_still_fires(self, run_rule):
+        src = _wrap("conversions between DBMS data types and R/S objects")
+        assert len(run_rule(jss_markup_001, src)) >= 1
+
+    def test_slash_pair_c_cpp_still_fires(self, run_rule):
+        src = _wrap("commercial C/C++ applications and RDBMS")
+        assert len(run_rule(jss_markup_001, src)) >= 1
+
+    def test_pair_r_and_s_still_fires(self, run_rule):
+        # NB: lone "S" is not in the LANGUAGES catalogue; the "R" of
+        # the pair is the token at stake here.
+        src = _wrap("the mapping is straightforward in R and S, but slow")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    def test_label_word_with_colon_still_fires(self, run_rule):
+        src = _wrap("Sightability Models: R SightabilityModel Package")
+        assert len(run_rule(jss_markup_001, src)) >= 1
+
+    def test_language_chain_without_label_word_still_fires(self, run_rule):
+        # Identical surface form to a label enumeration, but no label
+        # word nearby — these are languages (DBI-proposal).
+        src = _wrap("self-contained tools (R, S, and C APIs) would be")
+        assert len(run_rule(jss_markup_001, src)) >= 1
