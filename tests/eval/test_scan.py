@@ -192,3 +192,57 @@ def test_scan_malformed_json_records_parse_failure(
         assert "scan_failed" in statuses
     finally:
         cx.close()
+
+
+class TestVersionedPaperLayout:
+    """`<paper>/<revision>/*.tex` layouts (jss5342-versions): final/
+    wins, rendered .tex beats same-stem .Rnw, correspondence skipped."""
+
+    def _mk(self, root: Path, rel: str) -> Path:
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("x", encoding="utf-8")
+        return p
+
+    def test_final_revision_wins(self, tmp_path: Path) -> None:
+        from eval.scan import _source_files
+
+        self._mk(tmp_path, "initial/article.tex")
+        self._mk(tmp_path, "final/paper.tex")
+        bib = self._mk(tmp_path, "final/refs.bib")
+        self._mk(tmp_path, "_analysis/notes.tex")
+
+        files = _source_files(tmp_path)
+
+        assert files == [tmp_path / "final/paper.tex", bib]
+
+    def test_tex_beats_same_stem_rnw_and_comments_skipped(
+        self, tmp_path: Path
+    ) -> None:
+        from eval.scan import _source_files
+
+        self._mk(tmp_path, "final/paper.Rnw")
+        tex = self._mk(tmp_path, "final/paper.tex")
+        other_rnw = self._mk(tmp_path, "final/extra.Rnw")
+        self._mk(tmp_path, "final/reviewer-comments.tex")
+
+        files = _source_files(tmp_path)
+
+        assert files == [other_rnw, tex]
+
+    def test_all_revisions_without_final(self, tmp_path: Path) -> None:
+        from eval.scan import _source_files
+
+        a = self._mk(tmp_path, "draft1/p.tex")
+        b = self._mk(tmp_path, "draft2/p.tex")
+        self._mk(tmp_path, ".hidden/x.tex")
+
+        assert _source_files(tmp_path) == [a, b]
+
+    def test_vignette_layout_still_preferred(self, tmp_path: Path) -> None:
+        from eval.scan import _source_files
+
+        v = self._mk(tmp_path, "pkg/vignettes/v.Rnw")
+        self._mk(tmp_path, "final/decoy.tex")
+
+        assert _source_files(tmp_path) == [v]

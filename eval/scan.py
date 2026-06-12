@@ -79,6 +79,20 @@ def _source_files(paper_dir: Path) -> list[Path]:
     `vignettes/` yielded nothing — `inst/doc/` typically contains a
     build-time copy of the same vignettes plus their compiled outputs,
     so scanning both manufactures duplicate violations.
+
+    Last fallback: *versioned* papers laid out as
+    ``<paper>/<revision>/*.tex`` (e.g. ``jss5342-versions/{initial,
+    resubmission,final}``). A ``final/`` revision wins outright when it
+    has sources — every revision is a draft of the SAME manuscript, so
+    scanning all of them would manufacture the duplicate-violation
+    problem described above. Without a ``final/``, all non-hidden,
+    non-underscore subdirectories are gathered (underscore dirs such as
+    ``_analysis/`` hold tooling artifacts, not manuscript sources).
+    Within a revision, the conventions documented in
+    ``jss5342-versions/_analysis/analyze.py`` apply: the rendered
+    ``.tex`` wins over a same-stem ``.Rnw`` (the .tex is the surface a
+    JSS reviewer reads; linting both double-counts), and
+    ``reviewer-comments*`` files are correspondence, not manuscript.
     """
     top = sorted(
         p for p in paper_dir.iterdir() if p.is_file() and p.suffix in _SOURCE_SUFFIXES
@@ -93,7 +107,34 @@ def _source_files(paper_dir: Path) -> list[Path]:
         )
         if nested:
             return nested
-    return []
+    final = _revision_files(paper_dir / "final")
+    if final:
+        return final
+    return sorted(
+        p
+        for sub in sorted(paper_dir.iterdir())
+        if sub.is_dir() and not sub.name.startswith((".", "_"))
+        for p in _revision_files(sub)
+    )
+
+
+def _revision_files(revision_dir: Path) -> list[Path]:
+    """Lintable files of one manuscript revision: skip correspondence
+    (``reviewer-comments*``) and prefer the rendered ``.tex`` over a
+    same-stem ``.Rnw`` (see ``_source_files`` docstring)."""
+    if not revision_dir.is_dir():
+        return []
+    files = [
+        p
+        for p in revision_dir.iterdir()
+        if p.is_file()
+        and p.suffix in _SOURCE_SUFFIXES
+        and not p.name.startswith("reviewer-comments")
+    ]
+    tex_stems = {p.stem for p in files if p.suffix == ".tex"}
+    return sorted(
+        p for p in files if not (p.suffix == ".Rnw" and p.stem in tex_stems)
+    )
 
 
 def _invoke_linter(paper_dir: Path, jss_lint: str) -> api.LinterResult:
