@@ -15,6 +15,7 @@ The texlint engine is 1-based for both line and column (see
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from texlint.api import Fix, Severity, Violation
@@ -26,14 +27,41 @@ LSP_SEVERITY: dict[Severity, int] = {
 }
 
 
-def violation_to_diagnostic(v: Violation, *, guide_url: str | None = None) -> dict[str, Any]:
-    """Project a :class:`Violation` to an LSP ``Diagnostic`` dict."""
+_TOKEN_AT_RE = re.compile(r"\S+")
+
+
+def violation_to_diagnostic(
+    v: Violation,
+    *,
+    guide_url: str | None = None,
+    source: str | None = None,
+) -> dict[str, Any]:
+    """Project a :class:`Violation` to an LSP ``Diagnostic`` dict.
+
+    With ``source`` (the document text), the range spans the token at
+    the violation's column — or, when the violation carries no column,
+    the whole (rstripped) line — so editors render a visible squiggle.
+    Without ``source`` the range is zero-width (back-compat for
+    callers that have no document text at hand).
+    """
     line = max(v.line - 1, 0)
     col = max((v.column or 1) - 1, 0)
+    end_col = col
+    if source is not None:
+        lines = source.splitlines()
+        if line < len(lines):
+            text = lines[line].rstrip()
+            if v.column is None:
+                col = 0
+                end_col = len(text)
+            else:
+                col = min(col, len(text))
+                m = _TOKEN_AT_RE.match(text, col)
+                end_col = m.end() if m else len(text)
     diag: dict[str, Any] = {
         "range": {
             "start": {"line": line, "character": col},
-            "end": {"line": line, "character": col},
+            "end": {"line": line, "character": end_col},
         },
         "severity": LSP_SEVERITY[v.severity],
         "code": v.rule_id,

@@ -93,3 +93,50 @@ class TestFixToTextEdit:
         assert edit["range"]["start"] == {"line": 1, "character": 0}
         assert edit["range"]["end"] == {"line": 1, "character": 5}
         assert edit["newText"] == "JSS"
+
+
+class TestRangedDiagnostics:
+    """With document text available, diagnostics span the offending
+    token (or whole line) so editors render visible squiggles."""
+
+    SRC = "first line\nWe use R daily here.\n   trailing ws line   \n"
+
+    def _v(self, line, column):
+        return Violation(
+            file=Path("m.tex"),
+            line=line,
+            column=column,
+            rule_id="JSS-X-001",
+            severity=Severity.WARNING,
+            message="msg",
+        )
+
+    def test_token_width_range(self):
+        # column 8 (1-based) → the "R" token on line 2.
+        d = violation_to_diagnostic(self._v(2, 8), source=self.SRC)
+        assert d["range"]["start"] == {"line": 1, "character": 7}
+        assert d["range"]["end"] == {"line": 1, "character": 8}
+
+    def test_multichar_token(self):
+        # column 4 → "use" spans 3 chars.
+        d = violation_to_diagnostic(self._v(2, 4), source=self.SRC)
+        assert d["range"]["end"]["character"] == 6
+
+    def test_no_column_spans_line(self):
+        d = violation_to_diagnostic(self._v(2, None), source=self.SRC)
+        assert d["range"]["start"]["character"] == 0
+        assert d["range"]["end"]["character"] == len("We use R daily here.")
+
+    def test_column_past_eol_clamped(self):
+        d = violation_to_diagnostic(self._v(1, 99), source=self.SRC)
+        assert d["range"]["start"]["character"] == len("first line")
+        assert d["range"]["end"]["character"] == len("first line")
+
+    def test_line_past_eof_zero_width(self):
+        d = violation_to_diagnostic(self._v(42, 3), source=self.SRC)
+        assert d["range"]["start"] == d["range"]["end"]
+
+    def test_no_source_back_compat_zero_width(self):
+        d = violation_to_diagnostic(self._v(2, 8))
+        assert d["range"]["start"] == d["range"]["end"]
+        assert d["range"]["start"] == {"line": 1, "character": 7}
