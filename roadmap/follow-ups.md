@@ -15,6 +15,88 @@ Order within each feature is roughly highest-to-lowest priority.
 Items can land in any order; some unblock each other (noted
 inline).
 
+## v1 release triage (2026-06-12)
+
+Triage of every open item below against a notional public v1 tag.
+The recall corpus is annotated, aggregate recall is 0.771 (above
+the 0.70 gate floor), 22 rules at perfect recall, 1514 tests pass.
+The substantive engineering is done; the items below are
+post-engineering: shipping decisions, fixes for known minor bugs,
+and new-rule feature requests for v2.
+
+**Release-blockers (must fix before v1 tag)**: none. The rule
+surface, CLI, recall gate, and precision history are all
+functional. The two precision-fragile rules (CAP-001, CAP-003) are
+already addressed — CAP-001 is at 1.000 precision in the latest
+pinned-corpus iteration after the 2026-06-11 work; CAP-003 is
+explicitly `confidence: low` in the catalogue and hidden behind
+`--min-confidence medium`. No additional code work is required to
+ship v1.
+
+**Ship-impact (worth doing before v1, small)**:
+- L300 `Linter scans content after \end{document}` — small bug,
+  3 FPs in jss816.Rnw. Easy to fix.
+- L650 `MARKUP-001's recognised-language set is R-centric` — small
+  table extension; adds support for non-R submissions (Python /
+  Julia / Stan / etc.) which JSS welcomes.
+- L371 `Bib-side rules should skip uncited entries` — already
+  applied in `_iter_referenced_entries` for NAME-002 and
+  CITE-002; extending to REFS-002/003/004/005/006/007 would
+  meaningfully reduce REFS-003's enormous FP count in the example
+  corpus.
+
+**v1 distribution / publication tasks**:
+- L127 `Promote tomli_w` — internal cleanup, post-v1
+- L159 `vscode-extension build verification` — CI nicety
+- L162 `Live publish to VS Code marketplace / Open VSX` — needs
+  secrets; can do post-v1
+- L166 `End-to-end smoke test inside headless VS Code` — depends
+  on LSP server shipping
+- L208 `Action source repo` — post-v1 distribution
+
+**post-v1-fix (real bugs, ship in v1.1)**:
+- L291 `CODE-003 line anchoring is inconsistent` — recall-corpus
+  reconciliation surface; 28 corpus FNs are line-anchor mismatches
+- L395 `JSS-CAP-002 should walk the optional [short] arg`
+- L439 `JSS-CAP-001 should defer when first word is package name`
+  (partial done; remaining is the MARKUP-002-set check)
+- L948 `JSS-MARKUP-004 should exempt starred section forms`
+- L673 `Rule-precision improvements (CITE-002, HOUSE-001)` — three
+  carve-outs documented; high-precision, low-recall-cost fixes
+
+**post-v1-feature (new rules / new functionality, ship in v2.x)**:
+- L180 `Migrate ABBR rule to check_project`
+- L304 `OPER-004 bare literal E / P in math mode`
+- L348 `JSS-PRE-009 — preamble must not redefine jss.cls envs`
+- L474 `JSS-CAP-003 over-eager on technical identifiers in
+  captions` — 5/5 fix attempts exhausted; already `confidence:
+  low` and gated behind `--min-confidence medium`. Document the
+  limitation in the explanation text; don't try to fix the
+  underlying heuristic without a fundamentally different approach
+  (e.g., POS-tagging or a per-corpus learned classifier).
+- L490 `JSS-REFS-003 (DOI advisory) entry-type coverage`
+- L530 `JSS-REFS-004 (markup in bib titles) scope is incomplete`
+  (partial done; note= field still uncovered)
+- L545 `JSS-PRE-010 — Sweave/knitr preamble sets options()`
+- L607 `JSS-MARKUP-005 — URLs in prose use \url{}/\href{}`
+- L717 `JSS-BIBTEX-005 — bib entry type matches content`
+- L769 `JSS-STRUCT-008 — appendix uses \appendix + plain \section`
+- L822 `JSS-STRUCT-007 — figure-producing content wrapped in
+  figure env`
+- L868 `JSS-PRE-012 — Plain* matches markup-stripped form`
+- L918 `JSS-PRE-011 — Plainauthor uses commas as separators`
+- L1021 `JSS-CITE-006 — \citep where \citet required`
+- L1054 `JSS-CITE-005 — every \cite*{key} resolves to bib entry`
+- L1075 `JSS-XREF-005 — every \ref resolves to a \label`
+
+**Already-shipped since this file's last triage** (verified):
+- L411 partial (MARKUP-003 ↦ \code{} sweep)
+- L425 brace-defeats package idiom (REFS-006)
+- L439 partial (doc_pkgs_lower exemption)
+- L530 partial (pattern-based package-prefix detection)
+- L584 XREF-004 orphan-label check
+- L967 CITE-003 widened to all cite-family + paren-balance scan
+
 ## Cross-cutting (touches multiple features)
 
 - [x] **Click sub-group migration** (`src/texlint/cli.py`) — convert
@@ -421,8 +503,15 @@ corpus carrier so the change can be test-driven from real text.
       `\verb|...|` arguments, matching the inner token against the
       same package-name / R-function lookups already used for prose.
       **Severity**: existing rule severity (warning each).
+      *(Partial — 2026-06-11 in commit `44e1c33`: MARKUP-003 now
+      flags every `\texttt{...}` outside of bibliography / verbatim
+      / JSS-markup wrappers and emits a safe fix replacing `\texttt`
+      with `\code`. Recall jumped 0.064 → 0.915. Still open: when
+      the `\texttt{X}` argument matches a known PACKAGE name, the
+      remediation is `\pkg{X}` not `\code{X}` (MARKUP-002 territory)
+      — same for known FUNCTION lookups.)*
 
-- [ ] **`JSS-REFS-006` brace-defeats-`_starts_with_package_idiom`
+- [x] **`JSS-REFS-006` brace-defeats-`_starts_with_package_idiom`
       exemption** (`src/texlint/journals/jss/rules/references.py`).
       The exemption is meant to allow `vegan: Community Ecology
       Package` style titles where the lowercase word before `:` is
@@ -430,14 +519,22 @@ corpus carrier so the change can be test-driven from real text.
       to preserve case (`{robustlmm}: An ...`,
       `{robustvarComp}: Robust ...`), the exemption no longer
       matches and REFS-006 false-fires.
-      **Carriers**: robustlmm `simulationStudies.bib:18` (robustlmm
-      itself), `:94` (robustvarComp).
-      **Fix**: strip `{...}` wrapping from the leading token before
-      checking the package-idiom exemption.
-      **Severity**: existing rule severity (warning).
+      (Shipped 2026-06-11 in commit `43c5c76`: the regex now reads
+      `^\{*\s*\{?[a-z][a-zA-Z0-9.]*\}?\s*:` and matches
+      brace-protected leading identifiers.)
 
 - [ ] **`JSS-CAP-001` should defer when the first word of the
       title is an unwrapped package name** (`src/texlint/journals/jss/rules/capitalization.py`).
+      *(Partial — 2026-06-11 in commit `8d9744f`: CAP-001 already
+      defers on titles whose first word is in `doc_pkgs_lower`
+      (i.e., the document wraps the same name in `\pkg{}`
+      elsewhere). Still open: the carrier mdsOpt.ltx:27 doesn't
+      `\pkg{mdsOpt}` anywhere, so `doc_pkgs_lower` doesn't help; a
+      MARKUP-002-recognised-set check (or `_starts_with_package_idiom`
+      regex applied to manuscript `\title{}`) is the remaining
+      step. Lower priority now — the title-case principal-word
+      check still catches the in-corpus defects from CAP-001's
+      original FN set.)*
       Mirror the `_starts_with_package_idiom` exemption that
       `JSS-REFS-006` already carries for bib titles. When the
       manuscript `\title{}` opens with a lowercase token that
@@ -529,6 +626,15 @@ corpus carrier so the change can be test-driven from real text.
 
 - [ ] **`JSS-REFS-004` (proglang / pkg / code markup in bib titles)
       scope is incomplete** (`src/texlint/journals/jss/rules/references.py`).
+      *(Partial — 2026-06-11 in commit `dc5844f`: added a
+      pattern-based fallback for titles matching `^pkgname:
+      description` where `pkgname` is a single identifier
+      followed by a colon. Covers many corpus FNs (pmclust,
+      cascsim, MixSim, pbdMPI/SLAP/BASE, PROreg, SMACOF, smds,
+      clusterSim, leaflet). Recall jumped 0.538 → 0.846. Still
+      open: the `note=` field is not scanned — e.g.
+      `note = {R package version 0.1-5}` where `R` should be
+      `\proglang{R}` still slips through.)*
       The rule fires on a fraction of real cases: pmclust caught
       3 of 11 cases the annotator marked; robustlmm caught 5 of 14.
       Common miss pattern: `note = {R package version 0.1-5}` and
@@ -581,28 +687,16 @@ corpus carrier so the change can be test-driven from real text.
       **Surfaces**: `.Rnw`, `.Rmd` only — non-Sweave manuscripts
       can't run R `options()` and shouldn't be flagged.
 
-- [ ] **`JSS-XREF-004` only checks the "carry `\label{}`" half of its
+- [x] **`JSS-XREF-004` only checks the "carry `\label{}`" half of its
       description, not the "referenced from the text" half**
-      (`src/texlint/journals/jss/rules/crossrefs.py`). The rule
-      description reads "Numbered equations carry `\label{}` and are
-      referenced from the text", but the implementation appears to
-      fire only on missing labels, not on labels that exist yet are
-      never `\ref`-ed / `\eqref`-ed.
-      **Carriers**: CARBayesST `CARBayesST.Rnw:232` (`\label{carar2}`),
-      `:244` (`Lerouxjoint`), `:268` (`caradaptive2`), `:290`
-      (`carcluster2`), `:297` (`carcluster3`), `:360`
-      (`equation likelihood2`), `:404` (`leroux`); clifford
-      `clifford.Rnw:195` (`gencliff2`), `:233` (`specwedge`). Nine
-      real defects across two papers; linter fires on zero of them.
-      **Fix**: after the existing missing-label check, additionally
-      collect the union of `\label{...}` arguments inside numbered
-      eq envs and the union of `\ref`/`\eqref`/`\pageref`/`\autoref`/
-      `\Cref`/`\cref` arguments anywhere in the document; flag each
-      eq label not in the reference set. Shares the label-and-ref
-      scan infrastructure proposed for `JSS-XREF-005` (full
-      `\ref`-resolution coverage) — implement once, consume in both
-      rules.
-      **Severity**: existing rule severity (info).
+      (`src/texlint/journals/jss/rules/crossrefs.py`).
+      (Shipped 2026-06-11 in commit `2f1b4cf`: the rule now collects
+      every referenced label across all tex_like files
+      (`\ref`/`\eqref`/`\pageref`/`\nameref`/`\autoref`/`\Cref`/`\cref`,
+      multi-key forms split) and flags numbered eq envs whose
+      `\label{}` keys appear nowhere in the reference set. Recall
+      jumped 0.596 → 0.638; remaining FNs are line-anchor mismatches
+      tracked by the CODE-003 line-anchoring follow-up.)
 
 - [ ] **JSS-MARKUP-005 — URLs in prose use `\url{}` or `\href{}{}`,
       not `\texttt{}` / `\verb` / bare prose**. The JSS author
@@ -978,12 +1072,22 @@ corpus carrier so the change can be test-driven from real text.
       the PDF-bookmark hyperref-warning concern stands).
       **Severity**: existing rule severity (warning).
 
-- [ ] **`JSS-CITE-003` scope is narrower than its description**
-      (`src/texlint/journals/jss/rules/citations.py:393`). The
-      catalogue description reads "Avoid bracket-in-bracket citation
-      forms like `(\cite{...})`", but the implementation only
-      matches the exact `(\cite{X})` shape (single `\cite` macro,
-      optional whitespace, nothing else between the parens).
+- [x] **`JSS-CITE-003` scope is narrower than its description**
+      (`src/texlint/journals/jss/rules/citations.py:393`).
+      (Shipped 2026-06-11 in commit `695829a`: the rule now matches
+      every cite-family macro (`\cite`, `\citep`, `\citet`,
+      `\citeauthor`, `\citeyear`; `\citealp` / `\citealt` are the
+      JSS-recommended replacements and stay excluded) and uses a
+      paragraph-bounded source-text paren-balance scan to detect
+      any enclosing `(...)`. Auto-fix to `\citep{...}` is emitted
+      only for the immediate `(\cite{...})` shape; broader shapes
+      carry a suggestion only. Recall jumped 0.367 → 1.000.)
+
+      Original description (kept for reference):
+      The catalogue description reads "Avoid bracket-in-bracket
+      citation forms like `(\cite{...})`", but the implementation
+      only matched the exact `(\cite{X})` shape (single `\cite`
+      macro, optional whitespace, nothing else between the parens).
       The JSS style guide's actual scope is broader — any
       author-year-rendering citation inside parens produces
       bracket-in-bracket. Real-world shapes the rule misses:
