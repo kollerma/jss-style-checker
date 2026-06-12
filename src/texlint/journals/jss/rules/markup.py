@@ -356,7 +356,9 @@ def check_jss_markup_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
-        for node, ancestors in _helpers._walk_with_ancestors(tex.nodes):
+        for node, ancestors, parent, idx in _helpers._walk_with_context(
+            tex.nodes
+        ):
             if isinstance(node, LatexMacroNode) and node.macroname == "texttt":
                 # \texttt{...} in JSS papers should be \code{...} for code,
                 # \pkg{...} for packages, \proglang{...} for languages.
@@ -368,21 +370,42 @@ def check_jss_markup_003(
                     continue
                 if _is_inside_jss_markup(ancestors):
                     continue
-                yield _violation(
-                    tex=tex,
-                    pos=node.pos,
-                    rule_id="JSS-MARKUP-003",
-                    suggestion=(
+                # Content-aware suggestion and fix. When the argument is a
+                # known language token (R, C, Stan, ...) → \proglang{X};
+                # when it's a known R package → \pkg{X}; otherwise → \code.
+                inner = _helpers._macro_args_text(node, parent, idx).strip()
+                if inner in LANGUAGES:
+                    target_macro = "proglang"
+                    suggestion = (
+                        f"\\texttt{{{inner}}} names a programming language; "
+                        f"wrap as \\proglang{{{inner}}}."
+                    )
+                elif inner in R_PACKAGES:
+                    target_macro = "pkg"
+                    suggestion = (
+                        f"\\texttt{{{inner}}} names an R package; "
+                        f"wrap as \\pkg{{{inner}}}."
+                    )
+                else:
+                    target_macro = "code"
+                    suggestion = (
                         "Replace \\texttt{...} with the appropriate JSS "
                         "markup: \\code{...} for inline code, \\pkg{...} "
                         "for package names, \\proglang{...} for language "
                         "names."
-                    ),
+                    )
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-MARKUP-003",
+                    suggestion=suggestion,
                     fix=Fix(
                         start=node.pos,
                         end=node.pos + len("\\texttt"),
-                        replacement="\\code",
-                        description="replace \\texttt with \\code",
+                        replacement=f"\\{target_macro}",
+                        description=(
+                            f"replace \\texttt with \\{target_macro}"
+                        ),
                         confidence="safe",
                     ),
                 )
