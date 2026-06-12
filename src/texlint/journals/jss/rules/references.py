@@ -37,13 +37,26 @@ _DOI_ENTRY_TYPES: frozenset[str] = frozenset(
 # advisory, not a hard rule.
 _DOI_ERA_CUTOFF_YEAR = 2000
 
-# Journal-abbreviation signals.
+# Journal-abbreviation signals — tokens ending in a period. These are
+# unambiguous because the trailing period flags the abbreviation.
 _ABBREV_RE = re.compile(
     r"\b(?:"
     r"J|Jnl|Proc|Trans|Conf|Rev|Stat|Sci|Appl|Math|Comp|Comput|Softw|Bull|"
-    r"Ann|Lett|Res|Assoc|Theor"
+    r"Ann|Lett|Res|Assoc|Theor|Commun|Med"
     r")\.",
     flags=re.IGNORECASE,
+)
+
+# Periodless journal-abbreviation tokens — a single occurrence is
+# ambiguous (``Stat`` could be a real word in some titles), but the
+# co-occurrence of two or more in the same journal field is the
+# distinctive signature of an abbreviated journal name (``Stat Methods
+# Med Res`` for "Statistical Methods in Medical Research").
+_ABBREV_BAREWORD_RE = re.compile(
+    r"\b(?:"
+    r"Stat|Sci|Appl|Math|Comp|Comput|Softw|Bull|Ann|Lett|Res|"
+    r"Assoc|Theor|Commun|Med|Proc|Trans|Conf|Rev|Mol|Cell|Biol"
+    r")\b"
 )
 
 # Stop-words that legitimately remain lowercase in title-case titles.
@@ -298,7 +311,14 @@ def check_jss_refs_005(
         if not journal:
             continue
         plain = _strip_latex(journal)
-        if _ABBREV_RE.search(plain):
+        # Strong signal: a single periodled abbreviation (``J.`` /
+        # ``Commun.`` / ``Proc.``). Weaker signal: two or more
+        # periodless abbreviation tokens in the same journal field
+        # (``Stat Methods Med Res``); a single periodless token can be
+        # an honest title word, so two are required.
+        if _ABBREV_RE.search(plain) or (
+            len(_ABBREV_BAREWORD_RE.findall(plain)) >= 2
+        ):
             yield _violation(
                 bib=bib,
                 entry=entry,

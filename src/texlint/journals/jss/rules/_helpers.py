@@ -494,8 +494,7 @@ _META_MACROS: frozenset[str] = frozenset(
      "Keywords", "Plainkeywords",
      "Address",
      "documentclass", "usepackage", "include", "input",
-     "label", "ref", "pageref", "cite", "citep", "citet",
-     "citealp", "citealt", "citeauthor", "citeyear",
+     "label", "ref", "pageref",
      "bibliographystyle", "bibliography",
      # Sweave/Rnw directives — option lists, not prose.
      "SweaveOpts", "SweaveInput", "SweaveSyntax",
@@ -507,6 +506,10 @@ _META_MACROS: frozenset[str] = frozenset(
      # the ``R`` token inside ``\lstinputlisting[language=R, ...]``.
      "lstinputlisting", "lstset", "inputminted", "VerbatimInput"}
 )
+# Cite-family macros are NOT in _META_MACROS so that their optional-arg
+# prose (``\citep[e.g.][]{key}`` — the prenote / postnote slots) gets
+# scanned by HOUSE-001 etc. Cite-key contents don't typically contain
+# language / package terms that would false-positive other rules.
 
 
 def _is_in_prose_context(ancestors: Sequence[Any]) -> bool:

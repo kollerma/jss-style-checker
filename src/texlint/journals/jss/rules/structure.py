@@ -21,6 +21,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from pylatexenc.latexwalker import (
+    LatexCharsNode,
     LatexEnvironmentNode,
     LatexGroupNode,
     LatexMacroNode,
@@ -339,6 +340,44 @@ def check_jss_struct_005(
                     ),
                     fix=fix,
                 )
+            # Literal-word ``and`` inside ``\author{}`` — same defect
+            # class as ``\and`` (lowercase macro): both render the
+            # word "and" rather than the JSS-canonical ``\And`` /
+            # ``\AND`` separator.
+            for chars_node, offset in _iter_text_and_offsets(group):
+                # Position the violation at the source byte where the
+                # whitespace-flanked ``and`` begins.
+                match = _TEXT_AND_RE.search(chars_node.chars, offset)
+                if match is None:
+                    continue
+                and_start = (
+                    chars_node.pos + match.start()
+                    + (len(match.group(0)) - len(match.group(0).lstrip()))
+                )
+                and_end = and_start + len("and")
+                line, col = _helpers._lineno_col(tex, and_start)
+                yield Violation(
+                    file=tex.path,
+                    line=line,
+                    column=col,
+                    rule_id="JSS-STRUCT-005",
+                    severity=meta["severity"],
+                    message=meta["message_template"],
+                    suggestion=(
+                        "Separate authors with \\And (inline) or \\AND "
+                        "(line break), not the literal word 'and'."
+                    ),
+                    fix=Fix(
+                        start=and_start,
+                        end=and_end,
+                        replacement="\\And",
+                        description=(
+                            "Replace literal 'and' with \\And — the "
+                            "JSS-canonical author separator."
+                        ),
+                        confidence="safe",
+                    ),
+                )
 
 
 def _first_group_arg(macro: Any, parent: Any, idx: int) -> Any:
@@ -355,6 +394,30 @@ def _iter_lowercase_and(group: Any) -> Iterator[Any]:
     for node in _helpers._walk(group.nodelist or ()):
         if isinstance(node, LatexMacroNode) and node.macroname == "and":
             yield node
+
+
+_TEXT_AND_RE = re.compile(r"\s+and\s+")
+
+
+def _iter_text_and_offsets(
+    group: Any,
+) -> Iterator[tuple[Any, int]]:
+    """Yield ``(chars_node, offset)`` for every literal ``and`` word that
+    separates two author names in ``group`` (rather than the
+    JSS-canonical ``\\And`` macro).
+
+    Heuristic: a whitespace-flanked ``and`` token inside ``\author{}``
+    is, in JSS, an author separator that should be replaced with
+    ``\\And``. The check is conservative — we require the surrounding
+    text to be a sibling chars node directly under the author group
+    (not nested inside an inner macro), so cosmetic / commented uses
+    of "and" in helper macros stay silent.
+    """
+    for child in group.nodelist or ():
+        if not isinstance(child, LatexCharsNode):
+            continue
+        for match in _TEXT_AND_RE.finditer(child.chars):
+            yield child, match.start(1) if match.lastindex else match.start()
 
 
 # ---------------------------------------------------------------------------

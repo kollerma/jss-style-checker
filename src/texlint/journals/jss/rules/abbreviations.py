@@ -45,6 +45,17 @@ _AUTHOR_INITIAL_FOLLOWER_RE = re.compile(
     r"[~ ][A-Z][a-z]+"
 )
 
+
+# Country / region / organisation abbreviations that are unambiguously
+# NOT author initials, even when followed by a capitalised word
+# ("U.S. National Science Foundation", "U.K. Met Office"). Keeps
+# ABBR-001 firing on these well-known forms despite the surname-like
+# follower context. ``No.`` is a "Number" abbreviation that the same
+# author-initial heuristic over-suppresses.
+_KNOWN_DOTTED_ABBREVS: frozenset[str] = frozenset(
+    {"U.S.", "U.K.", "U.N.", "E.U.", "No."}
+)
+
 # Author-initial pattern in the OPPOSITE direction: bibliography-style
 # ``Cochran, W.G.`` — surname comes first, then a comma + space, then
 # the initials. Detects the immediate ``Surname, `` prefix so the
@@ -111,8 +122,16 @@ def check_jss_abbr_001(
                 # Author-initial heuristic only applies to the
                 # 2-letter form (``X.Y.``); 3+-letter abbrevs
                 # (``U.S.A.``, ``Ph.D.``) are real abbreviations.
-                if match.group(3) is None and _looks_like_author_initial(
-                    node.chars, match.start(), match.end(), parent, idx
+                # Known country / org abbreviations (``U.S.``, ``U.K.``)
+                # are never author initials even when followed by a
+                # surname-shaped word.
+                if (
+                    match.group(3) is None
+                    and raw not in _KNOWN_DOTTED_ABBREVS
+                    and _looks_like_author_initial(
+                        node.chars, match.start(), match.end(),
+                        parent, idx,
+                    )
                 ):
                     continue
                 collapsed = raw.replace(".", "")
