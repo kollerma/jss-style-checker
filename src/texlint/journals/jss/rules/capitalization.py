@@ -415,6 +415,34 @@ def check_jss_cap_001(
                         "the title."
                     ),
                 )
+                continue
+            # Title-case principal-word check: any non-first word that
+            # is all lowercase, ≥ 4 letters, and not a stopword is a
+            # title-case violation. Catches clifford ("Clifford algebra
+            # in R" — ``algebra``) and rstpm2 ("Predictions for
+            # parametric and penalised..." — ``parametric``,
+            # ``penalised``). Proper-noun set, known-package set, and
+            # stopwords still keep the check tight.
+            for word in words[1:]:
+                bare = _word_letters_lower(word)
+                if not bare or len(bare) < 4:
+                    continue
+                if word == word.lower() and bare not in _TITLE_STOPWORDS:
+                    if bare in proper_lower:
+                        continue
+                    if bare in doc_pkgs_lower:
+                        continue
+                    yield _violation(
+                        tex=tex,
+                        pos=node.pos,
+                        rule_id="JSS-CAP-001",
+                        suggestion=(
+                            "Use title style: capitalise principal "
+                            f"words in the title (found lowercase "
+                            f"{word!r})."
+                        ),
+                    )
+                    break
 
 
 # ---------------------------------------------------------------------------
