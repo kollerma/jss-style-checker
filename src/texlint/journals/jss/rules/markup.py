@@ -85,17 +85,158 @@ def _is_superscripted(chars: str, offset: int, token_len: int) -> bool:
     return chars[tail_start] == "^"
 
 
-def _is_filename_context(chars: str, offset: int) -> bool:
+def _is_filename_context(chars: str, offset: int, token_len: int = 1) -> bool:
     """True when the token at ``offset`` is a file-extension or
-    path-segment suffix, not a bare language / package mention.
+    path-segment, not a bare language / package mention.
 
     A leading ``.`` means the token is the extension of a filename
     (``foo.R``, ``algo.tex``, ``data.table.R``). A leading ``/``
-    means it's a path-segment suffix (``include/R``).
+    means it's a path-segment suffix (``include/R``); a trailing
+    ``/`` means it's a path-segment prefix (``R/models.R``).
     """
-    if offset == 0:
+    if offset > 0 and chars[offset - 1] in {".", "/"}:
+        return True
+    tail = offset + token_len
+    # Trailing slash counts as a path only when an extension-bearing
+    # segment follows (``R/models.R``). Slash-joined language pairs —
+    # ``R/S``, ``C/C++`` — are bare language mentions and must fire.
+    return (
+        tail < len(chars)
+        and chars[tail] == "/"
+        and bool(_PATH_SEGMENT_RE.match(chars, tail + 1))
+    )
+
+
+_PATH_SEGMENT_RE = re.compile(
+    r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.[A-Za-z0-9]+"
+)
+
+
+# Lines that *define* macros mention math-alphabet letters that are
+# not prose: ``\def \calC {\mathcal C}``, ``\DeclareMathOperator
+# {\Real}{\mathbb{R}}``, ``\newcolumntype{C}[1]{...}``. Eight labelled
+# corpus FPs came from shared ``defs.tex`` preambles of this shape.
+# NB: no leading ``^`` — the pattern is applied with ``match(src, pos)``
+# at a computed line start, where ``^`` would not assert.
+_MACRO_DEF_LINE_RE = re.compile(
+    r"[ \t]*\\(?:(?:re)?new(?:command|environment)|providecommand|def"
+    r"|DeclareMathOperator|DeclareRobustCommand|newcolumntype|newtheorem)\b"
+)
+
+
+def _is_macro_definition_line(source: str, abs_pos: int) -> bool:
+    """True when the token at ``abs_pos`` (offset into ``source``) sits
+    on a line whose first content is a macro-definition head."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    return bool(_MACRO_DEF_LINE_RE.match(source, line_start))
+
+
+# NB: no guard for the ``R`` in "Comprehensive R Archive Network" —
+# the AI precision labels disagree with each other on that phrase
+# (5 FP vs 6 TP labels on identical text), and the hand-annotated
+# recall corpus (CARBayesST line 441) plants it as a genuine
+# violation. Ground truth wins: it fires.
+
+
+# Followers that turn a lone capital letter into an eponym / labelled
+# statistic ("Hubert's C index", "C-steps", "C statistic") rather than
+# a language mention.
+_EPONYM_FOLLOWERS_RE = re.compile(
+    r"[\s~]+(?:index|indices|statistic|statistics|criterion|criteria"
+    r"|step|steps)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_eponym_letter(chars: str, offset: int, token: str) -> bool:
+    """True when a single-letter token is possessively attributed
+    (``Hubert's C``) or names a statistic (``Harell C index``)."""
+    if len(token) != 1:
         return False
-    return chars[offset - 1] in {".", "/"}
+    head = chars[:offset].rstrip()
+    # Possessive: the previous word ends with 's (also typographic ').
+    if re.search(r"[A-Za-z](?:'|’)s$", head):
+        return True
+    return bool(_EPONYM_FOLLOWERS_RE.match(chars, offset + 1))
+
+
+# Single capital letters used as enumeration labels: "panel C",
+# "Group C", "Class A'', ``Class B''", "(S, I or R)", "A, B, C and D".
+_LABEL_WORDS: frozenset[str] = frozenset({
+    "panel", "panels", "group", "groups", "class", "classes",
+    "model", "models", "compartment", "compartments", "column",
+    "columns", "plate", "arm", "arms", "factor", "factors",
+    "level", "levels", "label", "labels", "letter", "letters",
+})
+
+# A chain of THREE or more comma/and/or-joined single capitals is an
+# enumeration ("S, I or R", "A, B, C and D") — but only when a label
+# word sits next to the chain ("compartment (S, I or R)", "factors
+# S, C and F", "groups of A, B, C and D"). Without that cue, identical
+# surface forms are language lists ("tools (R, S, and C API's)") and
+# must fire. Pairs — "R and S", "R and Python" — never qualify.
+_ENUM_CHAIN_RE = re.compile(
+    r"\b[A-Z]\b(?:\s*,\s*[A-Z]\b)+\s*(?:,\s*)?(?:or|and)\s+[A-Z]\b"
+)
+
+_LABEL_WORDS_RE = None  # built lazily from _LABEL_WORDS below
+
+
+def _near_label_word(chars: str, start: int, end: int) -> bool:
+    global _LABEL_WORDS_RE
+    if _LABEL_WORDS_RE is None:
+        _LABEL_WORDS_RE = re.compile(
+            r"\b(?:" + "|".join(sorted(_LABEL_WORDS)) + r")\b",
+            re.IGNORECASE,
+        )
+    head = chars[max(0, start - 24) : start]
+    tail = chars[end : end + 24]
+    return bool(_LABEL_WORDS_RE.search(head) or _LABEL_WORDS_RE.search(tail))
+
+
+def _is_label_letter(chars: str, offset: int, token: str) -> bool:
+    """True when a single-letter token is an enumeration label, judged
+    by a label word immediately before it (``panel C`` — whitespace
+    adjacency only, so ``Models: R package`` still fires) or by being
+    part of a label-word-adjacent chain of three or more single-letter
+    labels (``S, I or R compartments``)."""
+    if len(token) != 1:
+        return False
+    prev_word = re.search(r"([A-Za-z]+)\s+$", chars[:offset])
+    if prev_word and prev_word.group(1).lower() in _LABEL_WORDS:
+        return True
+    for m in _ENUM_CHAIN_RE.finditer(
+        chars, max(0, offset - 40), offset + 41
+    ):
+        if m.start() <= offset < m.end():
+            return _near_label_word(chars, m.start(), m.end())
+    return False
+
+
+def _is_tex_amp_adjacent(source: str, abs_pos: int, abs_end: int) -> bool:
+    """True when the token is glued to a literal ``\\&`` on either side
+    (``R\\&D``): an abbreviation, not a language mention. The ``\\&``
+    parses as a sibling macro node, so only the source shows it."""
+    return source[abs_end : abs_end + 2] == "\\&" or (
+        abs_pos >= 2 and source[abs_pos - 2 : abs_pos] == "\\&"
+    )
+
+
+def _is_table_cell_letter(source: str, abs_pos: int, abs_end: int) -> bool:
+    """True when a single-letter token is a lone tabular cell —
+    ``Model & R & S \\\\`` — judged by alignment chars on both sides on
+    the same line. A lone letter column label is not a language
+    mention."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    line_end = source.find("\n", abs_end)
+    if line_end == -1:
+        line_end = len(source)
+    before = source[line_start:abs_pos].rstrip().rstrip("{")
+    after = source[abs_end:line_end].lstrip().lstrip("}")
+    return (
+        before.endswith("&")
+        and (after.startswith("&") or after.startswith("\\\\"))
+    )
 
 
 # Option-list keys that take a language / package identifier as
@@ -256,14 +397,26 @@ def _check_bare_terms(
                     continue
                 if _is_superscripted(node.chars, offset, len(token)):
                     continue
-                if _is_filename_context(node.chars, offset):
+                if _is_filename_context(node.chars, offset, len(token)):
                     continue
                 if _is_option_list_value(node.chars, offset):
                     continue
                 if _disambiguates_to_method(node.chars, offset, token):
                     continue
+                if _is_eponym_letter(node.chars, offset, token):
+                    continue
+                if _is_label_letter(node.chars, offset, token):
+                    continue
                 abs_pos = node.pos + offset
                 abs_end = abs_pos + len(token)
+                if _is_macro_definition_line(tex.source, abs_pos):
+                    continue
+                if _is_tex_amp_adjacent(tex.source, abs_pos, abs_end):
+                    continue
+                if len(token) == 1 and _is_table_cell_letter(
+                    tex.source, abs_pos, abs_end
+                ):
+                    continue
                 # Spec 008 follow-up: MARKUP-001 / MARKUP-002 each emit
                 # a ``safe`` Fix that wraps the bare token in
                 # ``\proglang{...}`` / ``\pkg{...}`` respectively. The
