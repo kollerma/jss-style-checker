@@ -129,15 +129,19 @@ def create_server(
         diagnostics: list[lsp.Diagnostic] = []
         for v in report.violations:
             d_dict = violation_to_diagnostic(
-                v, guide_url=_guide_url_for(v.rule_id)
+                v, guide_url=_guide_url_for(v.rule_id), source=source
             )
-            line = d_dict["range"]["start"]["line"]
-            col = d_dict["range"]["start"]["character"]
+            start = d_dict["range"]["start"]
+            end = d_dict["range"]["end"]
             diagnostics.append(
                 lsp.Diagnostic(
                     range=lsp.Range(
-                        start=lsp.Position(line=line, character=col),
-                        end=lsp.Position(line=line, character=col),
+                        start=lsp.Position(
+                            line=start["line"], character=start["character"]
+                        ),
+                        end=lsp.Position(
+                            line=end["line"], character=end["character"]
+                        ),
                     ),
                     message=d_dict["message"],
                     severity=lsp.DiagnosticSeverity(d_dict["severity"]),
