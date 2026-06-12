@@ -30,6 +30,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from lsprotocol import types as lsp
@@ -292,16 +293,27 @@ def create_server(
     def _apply_all_fixes(args: list) -> dict | None:  # noqa: ARG001
         """Workspace command: aggregate every safe-confidence Fix
         across the open documents into a single WorkspaceEdit and
-        return it for the editor to apply."""
+        request the client apply it via ``workspace/applyEdit``.
+
+        Returning the edit from ``executeCommand`` does NOT apply it —
+        clients discard command results — so the server must push the
+        edit itself. The returned summary dict is informational only.
+        """
         changes: dict[str, list[lsp.TextEdit]] = {}
         for uri in cache.open_uris():
+            try:
+                doc = server.workspace.get_text_document(uri)
+            except KeyError:  # pragma: no cover
+                continue
+            if not cache.is_current(uri, doc.version):
+                # Cached fixes were computed against an older buffer;
+                # re-lint synchronously so every edit below targets
+                # the exact text the client is about to modify.
+                _lint_uri(uri, version=doc.version, source=doc.source)
             entry = cache.get(uri)
             if entry is None:
                 continue
-            try:
-                source = server.workspace.get_text_document(uri).source
-            except KeyError:  # pragma: no cover
-                continue
+            source = doc.source
             edits: list[lsp.TextEdit] = []
             for v in entry.diagnostics:
                 if not isinstance(v.fix, Fix):
@@ -334,10 +346,31 @@ def create_server(
                 changes[uri] = edits
         if not changes:
             return None
-        # pygls returns the WorkspaceEdit dict for the client.
-        we = lsp.WorkspaceEdit(changes=changes)
-        # WorkspaceEdit serialises to a dict shape; pygls JSON-encodes.
-        return we
+
+        def _log_apply_result(future: Any) -> None:
+            try:
+                result = future.result()
+            except Exception as exc:  # pragma: no cover - transport error
+                logger.error("applyAllFixes: applyEdit failed: %s", exc)
+                return
+            if result is not None and getattr(result, "applied", True) is False:
+                logger.warning(
+                    "applyAllFixes: client rejected the edit: %s",
+                    getattr(result, "failure_reason", None),
+                )
+
+        future = server.workspace_apply_edit(
+            lsp.ApplyWorkspaceEditParams(
+                edit=lsp.WorkspaceEdit(changes=changes),
+                label="jss-lint: Apply all fixes",
+            )
+        )
+        if future is not None:  # pragma: no branch
+            future.add_done_callback(_log_apply_result)
+        return {
+            "files": len(changes),
+            "edits": sum(len(e) for e in changes.values()),
+        }
 
     return server
 
