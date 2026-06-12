@@ -32,6 +32,14 @@ _WORDY_EDITION_RE = re.compile(
     flags=re.IGNORECASE,
 )
 
+# Redundant ``edition`` suffix: ``2nd edition``, ``3rd edition``, etc.
+# BibTeX style adds the word "edition" automatically when rendering;
+# the field value should be just the short ordinal.
+_REDUNDANT_EDITION_RE = re.compile(
+    r"^\s*(\d+(?:st|nd|rd|th))\s+edition\s*$",
+    flags=re.IGNORECASE,
+)
+
 # Mapping from non-canonical edition shorthand to the JSS-canonical
 # short-ordinal form. Covers every form `_WORDY_EDITION_RE` matches.
 _EDITION_CANONICAL: dict[str, str] = {
@@ -164,15 +172,20 @@ def check_jss_house_002(
         if field is None:
             continue
         value = str(field.value).strip()
-        if not _WORDY_EDITION_RE.match(value):
-            continue
+        canonical: str | None = None
+        if _WORDY_EDITION_RE.match(value):
+            canonical = _EDITION_CANONICAL.get(value.lower())
+        else:
+            m = _REDUNDANT_EDITION_RE.match(value)
+            if m is None:
+                continue
+            canonical = m.group(1).lower()
         start = getattr(entry, "start_line", 0) or 0
         meta = _catalogue_data.RULES["JSS-HOUSE-002"]
 
         # Auto-fix: emit a safe Fix(...) payload covering exactly the
         # edition value (without the surrounding ``{}`` / ``""``) so
         # the rewrite preserves the surrounding delimiter style.
-        canonical = _EDITION_CANONICAL.get(value.lower())
         fix: Fix | None = None
         if canonical is not None:
             field_line = getattr(field, "start_line", None)
