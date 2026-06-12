@@ -124,7 +124,7 @@ class TestParseErrorInJson:
     def test_parse_error_produces_valid_json_exit_two(self, runner: CliRunner):
         result = runner.invoke(
             main,
-            ["--output", "json", str(FIXTURES / "violations" / "JSS-PARSE-000.tex")],
+            ["--output", "json", str(FIXTURES / "violations" / "JSS-PARSE-000.bib")],
         )
         assert result.exit_code == 2
         payload = json.loads(result.output)

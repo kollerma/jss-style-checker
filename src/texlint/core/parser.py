@@ -240,15 +240,173 @@ def strip_rnw_chunks(src: str) -> str:
     return stripped
 
 
+# Macro-definition heads whose brace-group bodies routinely contain
+# *unbalanced* \begin / \end pairs split across the begin-code and
+# end-code arguments — the canonical LaTeX idiom
+#
+#     \newenvironment{smallexample}{\begin{alltt}\small}{\end{alltt}}
+#
+# trips pylatexenc's strict environment tracking ("mismatching closing
+# brace/environment") even though the document is perfectly valid.
+# 21% of the eval corpus failed to parse on this class alone.
+_MACRO_DEF_HEAD = re.compile(
+    r"\\(?:(?P<env>(?:re)?newenvironment)|(?P<cmd>(?:re)?newcommand|providecommand)|(?P<def>def))\*?"
+)
+
+# A TeX control sequence: multi-letter control word or single-char
+# control symbol (`\x`, `\@foo`, `\%`).
+_CONTROL_SEQ = re.compile(r"\\(?:[A-Za-z@]+|.)")
+
+# \begin / \end tokens (only when introducing an environment group).
+_BEGIN_END_TOKEN = re.compile(r"\\(begin|end)(?=\s*\{)")
+
+
+def _match_brace_group(src: str, i: int) -> int:
+    """``src[i]`` must be ``{``; return the index one past the matching
+    ``}``, honouring backslash escapes (``\\{`` / ``\\}``). Returns -1
+    when the group never closes (then the caller leaves the definition
+    untouched — never guess on imbalance)."""
+    depth = 0
+    n = len(src)
+    j = i
+    while j < n:
+        c = src[j]
+        if c == "\\":
+            j += 2
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return j + 1
+        j += 1
+    return -1
+
+
+def _skip_ws(src: str, i: int) -> int:
+    n = len(src)
+    while i < n and src[i].isspace():
+        i += 1
+    return i
+
+
+def _skip_bracket_group(src: str, i: int) -> int:
+    """``src[i]`` must be ``[``; return the index one past the matching
+    ``]``, tolerating nested brace groups inside (e.g. a ``[{dflt}]``
+    default argument). Returns -1 when unclosed."""
+    n = len(src)
+    j = i + 1
+    while j < n:
+        c = src[j]
+        if c == "\\":
+            j += 2
+            continue
+        if c == "{":
+            j = _match_brace_group(src, j)
+            if j == -1:
+                return -1
+            continue
+        if c == "]":
+            return j + 1
+        j += 1
+    return -1
+
+
+def _neutralize_macro_definition_bodies(src: str) -> str:
+    """Neutralize ``\\begin`` / ``\\end`` tokens inside the body groups
+    of ``\\newcommand`` / ``\\newenvironment`` / ``\\providecommand`` /
+    ``\\def`` (and the ``re``-variants): ``\\begin`` → `` begin`` —
+    length-preserving, so line / column positions stay
+    source-authoritative. Only the begin/end *tokens* are touched; the
+    rest of the body stays intact for preamble-inspecting rules.
+
+    Brace balance inside a body is guaranteed by the scanner (a body is
+    exactly one balanced brace group), so removing the environment
+    tokens is sufficient to stop pylatexenc's strict parser from
+    chasing an ``\\end`` that lives in a different brace group.
+    """
+    out = list(src)
+    pos = 0
+    n = len(src)
+    while True:
+        m = _MACRO_DEF_HEAD.search(src, pos)
+        if m is None:
+            break
+        pos = m.end()
+        i = _skip_ws(src, m.end())
+        if i >= n:
+            break
+
+        # --- the defined name -------------------------------------- #
+        if m.group("def") is not None:
+            # \def\name<param text>{body}
+            cs = _CONTROL_SEQ.match(src, i)
+            if cs is None:
+                continue
+            i = cs.end()
+            # Parameter text: everything up to the body's opening brace.
+            brace = src.find("{", i)
+            if brace == -1:
+                continue
+            i = brace
+        else:
+            # \newcommand{\name} | \newcommand\name | \newenvironment{name}
+            if src[i] == "{":
+                i = _match_brace_group(src, i)
+                if i == -1:
+                    continue
+            else:
+                cs = _CONTROL_SEQ.match(src, i)
+                if cs is None:
+                    continue
+                i = cs.end()
+            # Optional arg-count / default-value groups.
+            i = _skip_ws(src, i)
+            while i < n and src[i] == "[":
+                i = _skip_bracket_group(src, i)
+                if i == -1:
+                    break
+                i = _skip_ws(src, i)
+            if i == -1:
+                continue
+
+        # --- the body group(s) ------------------------------------- #
+        n_bodies = 2 if m.group("env") is not None else 1
+        for _ in range(n_bodies):
+            i = _skip_ws(src, i)
+            if i >= n or src[i] != "{":
+                break
+            end = _match_brace_group(src, i)
+            if end == -1:
+                break
+            for tok in _BEGIN_END_TOKEN.finditer(src, i + 1, end - 1):
+                out[tok.start()] = " "
+            i = end
+            pos = i
+
+    return "".join(out)
+
+
 def _parse_error(
-    path: Path, *, line: int = 1, column: int | None = None, message: str
+    path: Path,
+    *,
+    line: int = 1,
+    column: int | None = None,
+    message: str,
+    severity: Severity = Severity.ERROR,
 ) -> Violation:
+    """A ``JSS-PARSE-000`` violation. ``severity=ERROR`` (default) marks
+    a failed parse and forces exit 2; ``severity=WARNING`` marks a
+    *degraded* parse — the file was recovered and fully linted — and
+    obeys the normal ``--fail-on`` threshold (contracts/cli.md §Exit
+    codes)."""
     return Violation(
         file=path,
         line=line,
         column=column,
         rule_id=_PARSE_RULE_ID,
-        severity=Severity.ERROR,
+        severity=severity,
         message=message,
         suggestion=None,
         fix=None,
@@ -296,6 +454,7 @@ def parse_tex_source(source: str, path: Path) -> ParsedTexFile:
     and by :mod:`texlint.core.rmd_parser` (which parses raw-LaTeX
     islands extracted from Rmd prose blocks).
     """
+    source = _neutralize_macro_definition_bodies(source)
     source = _neutralize_verbatim_envs(source)
     source = _neutralize_verbatim_args(source)
     walker = LatexWalker(source, tolerant_parsing=False)
@@ -303,13 +462,40 @@ def parse_tex_source(source: str, path: Path) -> ParsedTexFile:
         nodes, _pos, _length = walker.get_latex_nodes()
     except LatexWalkerError as exc:
         line = _extract_line(exc) or 1
+        # Strict parse failed; retry tolerantly so the author still
+        # gets a full lint. The degraded parse is surfaced as a
+        # warning-severity JSS-PARSE-000 (obeys --fail-on; exit != 2).
+        tolerant_walker = LatexWalker(source, tolerant_parsing=True)
+        try:
+            nodes, _pos, _length = tolerant_walker.get_latex_nodes()
+        except LatexWalkerError:
+            return ParsedTexFile(
+                path=path,
+                source=source,
+                nodes=(),
+                walker=walker,
+                violations=(
+                    _parse_error(
+                        path, line=line, message=f"LaTeX parse error: {exc}"
+                    ),
+                ),
+            )
         return ParsedTexFile(
             path=path,
             source=source,
-            nodes=(),
-            walker=walker,
+            nodes=tuple(nodes),
+            walker=tolerant_walker,
             violations=(
-                _parse_error(path, line=line, message=f"LaTeX parse error: {exc}"),
+                _parse_error(
+                    path,
+                    line=line,
+                    severity=Severity.WARNING,
+                    message=(
+                        f"LaTeX strict parse failed ({exc}); linted with the "
+                        "tolerant parser — results may be incomplete near the "
+                        "reported location."
+                    ),
+                ),
             ),
         )
 

@@ -15,16 +15,16 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "tests/fixtures/violations/JSS-PARSE-000.tex"
+                      "uri": "tests/fixtures/violations/JSS-PARSE-000.bib"
                     },
                     "region": {
-                      "startLine": 4
+                      "startLine": 1
                     }
                   }
                 }
               ],
               "message": {
-                "text": "LaTeX parse error: Unexpected closing environment: 'document' @(4,0)\nOpen LaTeX blocks:\n            @(2,0)  begin environment \"document\"\n           @(3,23)  open brace\n"
+                "text": "BibTeX parse error: "
               }
             }
           ]

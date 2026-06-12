@@ -85,10 +85,27 @@ class TestFailOnPolicy:
     def test_parse_error_still_exits_two_under_fail_on_error(
         self, tmp_path: Path, runner: CliRunner
     ):
-        bad = tmp_path / "broken.tex"
-        bad.write_text("\\begin{tabular}{ll}\n", encoding="utf-8")
+        # A truncated BibTeX entry cannot be recovered — error-severity
+        # parse failure, exit 2 regardless of --fail-on.
+        bad = tmp_path / "broken.bib"
+        bad.write_text("@article{x, title = {never closed\n", encoding="utf-8")
         result = runner.invoke(main, ["--fail-on", "error", str(bad)])
         assert result.exit_code == 2
+
+    def test_recovered_tex_parse_is_degraded_not_fatal(
+        self, tmp_path: Path, runner: CliRunner
+    ):
+        # The tolerant-parser retry recovers a mismatched environment:
+        # warning-severity JSS-PARSE-000, normal --fail-on semantics.
+        bad = tmp_path / "broken.tex"
+        bad.write_text(
+            "\\begin{tabular}{ll}\n\\end{itemize}\n", encoding="utf-8"
+        )
+        result = runner.invoke(main, ["--fail-on", "error", str(bad)])
+        assert result.exit_code == 0, result.output
+        assert "JSS-PARSE-000" in result.output
+        result = runner.invoke(main, ["--fail-on", "warning", str(bad)])
+        assert result.exit_code == 1
 
 
 class TestMinConfidence:

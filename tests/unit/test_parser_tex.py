@@ -64,8 +64,12 @@ class TestParseTexEncoding:
 
 
 class TestParseTexParseFailure:
-    def test_unterminated_group_produces_parse_error(self, tmp_path: Path):
-        # pylatexenc raises LatexWalkerError on unclosed group / bad token.
+    def test_unterminated_group_recovered_as_degraded_parse(
+        self, tmp_path: Path
+    ):
+        # pylatexenc's strict parser raises on the unclosed group; the
+        # tolerant retry recovers a node tree, so the finding is a
+        # warning-severity (degraded-parse) PARSE-000, not a failure.
         path = _write(tmp_path, "bad.tex", r"\begin{document")
 
         parsed = parse_tex_file(path)
@@ -73,9 +77,37 @@ class TestParseTexParseFailure:
         assert len(parsed.violations) == 1
         v = parsed.violations[0]
         assert v.rule_id == "JSS-PARSE-000"
-        assert v.severity.value == "error"
+        assert v.severity.value == "warning"
         assert v.line >= 1
+        assert parsed.nodes  # rules can still run
         # Does not raise.
+
+    def test_unrecoverable_parse_produces_error(
+        self, tmp_path: Path, monkeypatch
+    ):
+        # When the tolerant retry *also* fails, the finding stays an
+        # error-severity PARSE-000 (exit-2 path).
+        from pylatexenc.latexwalker import LatexWalkerError
+
+        from texlint.core import parser as parser_mod
+
+        class _AlwaysFails:
+            def __init__(self, source, tolerant_parsing=False):
+                pass
+
+            def get_latex_nodes(self):
+                raise LatexWalkerError("synthetic failure")
+
+        monkeypatch.setattr(parser_mod, "LatexWalker", _AlwaysFails)
+        path = _write(tmp_path, "bad.tex", r"\begin{document")
+
+        parsed = parser_mod.parse_tex_file(path)
+
+        assert len(parsed.violations) == 1
+        v = parsed.violations[0]
+        assert v.rule_id == "JSS-PARSE-000"
+        assert v.severity.value == "error"
+        assert parsed.nodes == ()
 
 
 class TestParseTexVerbatimMacroArgs:
