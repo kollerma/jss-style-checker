@@ -484,11 +484,15 @@ _MARKUP_MACROS: frozenset[str] = frozenset(
 )
 
 # Preamble / meta-data / citation macros whose arg is not prose to scan.
+# ``Abstract`` is NOT in this set even though it's a JSS meta-data macro
+# — the abstract IS prose and the JSS markup rules (MARKUP-001/002/003)
+# should fire on bare ``R`` / package mentions inside it (corpus FNs in
+# mdsOpt/mdsOpt.ltx:43-45).
 _META_MACROS: frozenset[str] = frozenset(
     {"title", "Plaintitle", "Shorttitle",
      "author", "Plainauthor",
      "Keywords", "Plainkeywords",
-     "Address", "Abstract",
+     "Address",
      "documentclass", "usepackage", "include", "input",
      "label", "ref", "pageref", "cite", "citep", "citet",
      "citealp", "citealt", "citeauthor", "citeyear",

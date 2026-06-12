@@ -40,6 +40,22 @@ _violation = _helpers.tex_violation
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9+\-]*")
 
 
+# Tails that turn a ``LANG-tail`` token into a stats / domain term
+# rather than a language reference. ``R-squared`` is the coefficient
+# of determination, ``R-package`` is a generic phrase (the bare ``R``
+# inside is intended as a literal label, not a code reference).
+_LANG_HYPHEN_STATS_TAILS: frozenset[str] = frozenset(
+    {"squared", "package", "packages"}
+)
+
+
+def _is_lang_hyphen_term(prefix: str, tail: str) -> bool:
+    """True when ``<prefix>-<tail>`` is a domain term, not a bare
+    language reference (e.g., ``R-squared``)."""
+    del prefix
+    return tail.lower() in _LANG_HYPHEN_STATS_TAILS
+
+
 def _iter_tokens_in_chars(chars: str) -> Iterator[tuple[int, str]]:
     """Yield ``(start_offset, token)`` for every word-like token."""
     for match in _TOKEN_RE.finditer(chars):
@@ -185,6 +201,45 @@ def _check_bare_terms(
             in_bib = _is_inside_bibliography(ancestors)
             for offset, token in _iter_tokens_in_chars(node.chars):
                 if token not in terms:
+                    # Hyphenated prefix: ``R-code`` / ``R-centric`` /
+                    # ``Sage-related``. The leading element is a bare
+                    # language (or package) reference that JSS wants
+                    # wrapped — emit a violation on just the prefix.
+                    # ``R-squared`` is a stats term (coefficient of
+                    # determination), not an R-code reference; skip.
+                    if "-" in token:
+                        prefix, tail = token.split("-", 1)
+                        if (
+                            prefix in terms
+                            and not _is_lang_hyphen_term(prefix, tail)
+                        ):
+                            abs_pos = node.pos + offset
+                            abs_end = abs_pos + len(prefix)
+                            fix: Fix | None = None
+                            if emit_fix:
+                                fix = Fix(
+                                    start=abs_pos,
+                                    end=abs_end,
+                                    replacement=(
+                                        f"\\{wrap_macro}{{{prefix}}}"
+                                    ),
+                                    description=(
+                                        f"wrap {prefix} in "
+                                        f"\\{wrap_macro}{{}}"
+                                    ),
+                                    confidence="safe",
+                                )
+                            yield _violation(
+                                tex=tex,
+                                pos=abs_pos,
+                                rule_id=rule_id,
+                                suggestion=(
+                                    f"Wrap {prefix!r} in "
+                                    f"\\{wrap_macro}{{{prefix}}} "
+                                    f"(found bare in {token!r})."
+                                ),
+                                fix=fix,
+                            )
                     continue
                 if in_bib and len(token) == 1:
                     # Single-letter ``R`` / ``C`` / ``B`` inside the
