@@ -280,6 +280,15 @@ class LlamaServerClient:
     model: str = "qwen3-30b-a3b"
     base_url: str = "http://localhost:8080"
     timeout: float = 60.0
+    # When set, sent as ``chat_template_kwargs.enable_thinking`` to
+    # toggle a reasoning model's chain-of-thought. Qwen3 / Qwen3.5
+    # otherwise spend the whole token budget in ``reasoning_content``
+    # and emit empty ``content`` on the long review prompts — every row
+    # then parses as UNCERTAIN. ``False`` makes them answer directly
+    # (~30x faster). ``None`` sends nothing (back-compat for
+    # non-thinking backends and Bonsai, which routes its JSON through
+    # ``reasoning_content`` by design).
+    enable_thinking: bool | None = None
     _resolved_model_id: str | None = None
 
     def _resolve_model_id(self) -> str:
@@ -339,6 +348,10 @@ class LlamaServerClient:
             "response_format": {"type": "json_object"},
             "stream": False,
         }
+        if self.enable_thinking is not None:
+            body["chat_template_kwargs"] = {
+                "enable_thinking": self.enable_thinking
+            }
         data = json.dumps(body).encode("utf-8")
         req = urllib.request.Request(
             f"{self.base_url.rstrip('/')}/v1/chat/completions",
@@ -422,7 +435,11 @@ def _load_routing(
 
         [models]
         bonsai = "http://host.docker.internal:8081"
-        qwen3-30b = "http://host.docker.internal:8080"
+        # A model may be a bare URL string or a table that also pins
+        # reasoning-model options:
+        [models.qwen3]
+        url = "http://host.docker.internal:8080"
+        enable_thinking = false
 
         [default]
         model = "bonsai"
@@ -430,7 +447,7 @@ def _load_routing(
         [rules.JSS-CAP-002]
         model = "bonsai"
         [rules.JSS-MARKUP-003]
-        model = "qwen3-30b"
+        model = "qwen3"
     """
     if routing_path is None or not routing_path.exists():
         return {}, {}, None
@@ -440,10 +457,18 @@ def _load_routing(
         import tomli as tomllib  # type: ignore[no-redef]
     cfg = tomllib.loads(routing_path.read_text(encoding="utf-8"))
     models_cfg = cfg.get("models", {})
-    clients: dict[str, ReviewClient] = {
-        name: LlamaServerClient(model=name, base_url=base_url)
-        for name, base_url in models_cfg.items()
-    }
+    clients: dict[str, ReviewClient] = {}
+    for name, spec in models_cfg.items():
+        # Each model is either a bare URL string (back-compat) or a
+        # table ``{url = "...", enable_thinking = false}``.
+        if isinstance(spec, dict):
+            clients[name] = LlamaServerClient(
+                model=name,
+                base_url=spec["url"],
+                enable_thinking=spec.get("enable_thinking"),
+            )
+        else:
+            clients[name] = LlamaServerClient(model=name, base_url=spec)
     rules_cfg = cfg.get("rules", {})
     rule_to_model: dict[str, str] = {
         rule_id: spec["model"]

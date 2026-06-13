@@ -590,12 +590,24 @@ def recall_cmd(
     default=None,
     help="Append per-row outcomes (one JSON line per model) to this file.",
 )
+@click.option(
+    "--no-think",
+    "no_think",
+    is_flag=True,
+    default=False,
+    help=(
+        "Disable chain-of-thought for reasoning models (Qwen3/Qwen3.5): "
+        "send chat_template_kwargs.enable_thinking=false so they answer "
+        "directly instead of burning the token budget on reasoning."
+    ),
+)
 @click.pass_context
 def benchmark_cmd(
     ctx: click.Context,
     models: tuple[str, ...],
     limit: int | None,
     write_json: Path | None,
+    no_think: bool,
 ) -> None:
     """Score AI models against the human-labelled gold set."""
     from eval import benchmark as bench_mod
@@ -610,6 +622,7 @@ def benchmark_cmd(
         models=specs,
         limit=limit,
         write_json=write_json,
+        enable_thinking=False if no_think else None,
     )
     ctx.exit(code)
 

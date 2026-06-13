@@ -12,8 +12,16 @@
 # from eval/iteration-policy.toml.
 
 [models]
-bonsai     = "http://host.docker.internal:8081"
-qwen3-30b  = "http://host.docker.internal:8080"
+bonsai = "http://host.docker.internal:8081"
+# Qwen3.5-35B is a reasoning model: with thinking ON it spends the
+# whole token budget in reasoning_content and emits empty content on
+# the long review prompts (every row -> UNCERTAIN). Disable thinking
+# so it answers directly. NOTE: the per-rule pins below were
+# calibrated against the older Qwen3-30B — re-run the full benchmark
+# (eval-jss benchmark) after this model swap before trusting them.
+[models.qwen35]
+url = "http://host.docker.internal:8080"
+enable_thinking = false
 
 [default]
 # Fallback when a rule has no [rules.<rule_id>] entry. Bonsai wins on
@@ -58,17 +66,17 @@ model = "bonsai"  # 100% on 10
 
 # Qwen3 dominates these — Bonsai is overwhelmingly "uncertain" on them.
 [rules.JSS-MARKUP-001]
-model = "qwen3-30b"  # 92% on 188 (Bonsai: 78%, 161/188 uncertain)
+model = "qwen35"  # 92% on 188 (Bonsai: 78%, 161/188 uncertain)
 [rules.JSS-MARKUP-003]
-model = "qwen3-30b"  # 100% on 105 (Bonsai: 100% uncertain — useless)
+model = "qwen35"  # 100% on 105 (Bonsai: 100% uncertain — useless)
 [rules.JSS-MARKUP-004]
-model = "qwen3-30b"  # 87% on 17 (Bonsai: only decides 3/17)
+model = "qwen35"  # 87% on 17 (Bonsai: only decides 3/17)
 [rules.JSS-CITE-002]
-model = "qwen3-30b"  # 94% on 43 (Bonsai: 100% uncertain)
+model = "qwen35"  # 94% on 43 (Bonsai: 100% uncertain)
 [rules.JSS-XREF-004]
-model = "qwen3-30b"  # 97% on 45 (Bonsai: only decides 2/45)
+model = "qwen35"  # 97% on 45 (Bonsai: only decides 2/45)
 [rules.JSS-NAME-002]
-model = "qwen3-30b"  # 100% on 38 (Bonsai: 63%, flips publishers)
+model = "qwen35"  # 100% on 38 (Bonsai: 63%, flips publishers)
 
 # Both perfect — pick Bonsai (cheaper / faster).
 [rules.JSS-CITE-004]

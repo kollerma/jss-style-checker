@@ -89,10 +89,17 @@ def _classify_one(client: LlamaServerClient, row: dict) -> api.ClassifyResult:
 
 
 def _score_model(
-    spec: ModelSpec, gold: list[dict], console: Console
+    spec: ModelSpec,
+    gold: list[dict],
+    console: Console,
+    enable_thinking: bool | None = None,
 ) -> dict[str, dict]:
     """Run classifier across `gold`, return raw per-row outcomes."""
-    client = LlamaServerClient(model=spec.name, base_url=spec.base_url)
+    client = LlamaServerClient(
+        model=spec.name,
+        base_url=spec.base_url,
+        enable_thinking=enable_thinking,
+    )
     outcomes: list[dict] = []
     n = len(gold)
     console.print(f"[bold]{spec.name}[/bold] · {spec.base_url} · {n} rows")
@@ -206,7 +213,7 @@ def _render(summaries: list[dict], console: Console) -> None:
 
 def run(
     *, db_path: Path, models: list[ModelSpec], limit: int | None,
-    write_json: Path | None,
+    write_json: Path | None, enable_thinking: bool | None = None,
 ) -> int:
     if not models:
         print("eval-jss benchmark: no --model supplied.")
@@ -224,7 +231,7 @@ def run(
     console.print(f"[bold]Gold set:[/bold] {len(gold)} rows")
     summaries: list[dict] = []
     for spec in models:
-        score = _score_model(spec, gold, console)
+        score = _score_model(spec, gold, console, enable_thinking)
         summaries.append(_summarise(score))
         if write_json is not None:
             with write_json.open("a", encoding="utf-8") as f:
