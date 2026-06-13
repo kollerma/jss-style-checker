@@ -334,7 +334,7 @@ def test_review_routing_drops_pin_to_unknown_model(tmp_path: Path) -> None:
 
 
 def test_review_routing_dispatches_to_pinned_client(
-    tmp_db: Path, tmp_path: Path,
+    tmp_db: Path, tmp_path: Path, monkeypatch,
 ) -> None:
     """End-to-end: routing config sends each rule to its pinned client.
     Reviewer label reflects the routed model, not --model."""
@@ -367,24 +367,19 @@ def test_review_routing_dispatches_to_pinned_client(
         seen.append(("classify", self.model + ":" + violation["rule_id"]))
         return api.ClassifyResult(api.Verdict.TRUE_POSITIVE, 0.95, "ok")
 
-    review.LlamaServerClient.__init__ = _fake_init  # type: ignore[method-assign]
-    review.LlamaServerClient.classify = _fake_classify  # type: ignore[method-assign]
-    try:
-        review.run(
-            db_path=tmp_db,
-            limit=None,
-            confidence_threshold=0.8,
-            model="ignored-when-routing",
-            base_url="http://ignored",
-            skip_list_path=None,
-            routing_path=routing,
-        )
-    finally:
-        review.LlamaServerClient.__init__ = real_client_init  # type: ignore[method-assign]
-        # Restore real classify (defined further up the class).
-        from eval.review import LlamaServerClient as _Restore
-        if hasattr(_Restore, "_resolve_model_id"):
-            pass  # leave the patched classify; tests are isolated by tmp_db
+    # `monkeypatch` auto-restores both methods at teardown — direct
+    # assignment here used to leak the fake `classify` into later tests.
+    monkeypatch.setattr(review.LlamaServerClient, "__init__", _fake_init)
+    monkeypatch.setattr(review.LlamaServerClient, "classify", _fake_classify)
+    review.run(
+        db_path=tmp_db,
+        limit=None,
+        confidence_threshold=0.8,
+        model="ignored-when-routing",
+        base_url="http://ignored",
+        skip_list_path=None,
+        routing_path=routing,
+    )
 
     cx = db.connect(tmp_db)
     try:
@@ -399,3 +394,73 @@ def test_review_routing_dispatches_to_pinned_client(
 
     assert rows["JSS-A"] == "ai:mA"  # default
     assert rows["JSS-B"] == "ai:mB"  # pinned override
+
+
+def test_client_sends_enable_thinking_when_set(monkeypatch) -> None:
+    """enable_thinking=False adds chat_template_kwargs to the request;
+    None omits it (back-compat)."""
+    import json as _json
+    from eval import review
+
+    captured: dict = {}
+
+    class _FakeResp:
+        def __init__(self, body: bytes):
+            self._body = body
+
+        def read(self):
+            return self._body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def _fake_urlopen(req, timeout=None):
+        if getattr(req, "data", None) is None:  # /v1/models GET probe
+            return _FakeResp(b'{"data":[{"id":"m"}]}')
+        captured["body"] = _json.loads(req.data.decode())
+        return _FakeResp(
+            b'{"choices":[{"message":{"content":'
+            b'"{\\"verdict\\":\\"true_positive\\",\\"confidence\\":0.9,'
+            b'\\"reason\\":\\"x\\"}"}}]}'
+        )
+
+    monkeypatch.setattr(review.urllib.request, "urlopen", _fake_urlopen)
+
+    violation = {"rule_id": "JSS-X-001", "message": "m", "line": 1, "column": 1}
+
+    review.LlamaServerClient(
+        base_url="http://x:1", enable_thinking=False
+    ).classify(violation, "ctx")
+    assert captured["body"]["chat_template_kwargs"] == {"enable_thinking": False}
+
+    captured.clear()
+    review.LlamaServerClient(base_url="http://x:1").classify(violation, "ctx")
+    assert "chat_template_kwargs" not in captured["body"]
+
+
+def test_routing_table_form_sets_enable_thinking(tmp_path: Path) -> None:
+    """A model declared as a table carries url + enable_thinking; a
+    bare-string model stays back-compatible (enable_thinking None)."""
+    from eval import review
+
+    routing = tmp_path / "routing.toml"
+    routing.write_text(
+        '[models]\n'
+        'bonsai = "http://b:1"\n'
+        '[models.qwen35]\n'
+        'url = "http://q:1"\n'
+        'enable_thinking = false\n'
+        '[default]\n'
+        'model = "bonsai"\n'
+        '[rules.JSS-MARKUP-001]\n'
+        'model = "qwen35"\n',
+        encoding="utf-8",
+    )
+    clients, rule_to_model, default = review._load_routing(routing)
+    assert clients["qwen35"].base_url == "http://q:1"
+    assert clients["qwen35"].enable_thinking is False
+    assert clients["bonsai"].enable_thinking is None
+    assert rule_to_model == {"JSS-MARKUP-001": "qwen35"}
