@@ -247,14 +247,20 @@ def _parse_github_version(version: str) -> tuple[str, str]:
 def _fetch_github(row: ManifestRow, target_dir: Path) -> _Gap | None:
     """Materialise a ``github`` row from an immutable commit-pinned archive.
 
-    Downloads ``https://codeload.github.com/<owner/repo>/tar.gz/<sha>``,
-    verifies the tarball SHA256, then copies just the pinned manuscript
-    file and the ``.bib`` files sitting beside it into
-    ``<paper_dir>/vignettes/`` (flattened to basenames). Putting the
-    source under ``vignettes/`` lets the scanner discover it with no
-    special-casing — it already walks that directory — and keeps
-    ``vignette_file`` (``vignettes/<basename>``) a valid paper-relative
-    path for the pinned-precision report.
+    Downloads ``https://codeload.github.com/<owner/repo>/tar.gz/<sha>``
+    and copies just the pinned manuscript file and the ``.bib`` files
+    sitting beside it into ``<paper_dir>/vignettes/`` (flattened to
+    basenames). Putting the source under ``vignettes/`` lets the scanner
+    discover it with no special-casing — it already walks that directory
+    — and keeps ``vignette_file`` (``vignettes/<basename>``) a valid
+    paper-relative path for the pinned-precision report.
+
+    Integrity is checked against the SHA256 of the extracted *manuscript
+    bytes*, not the downloaded tarball: GitHub's archive gzip framing has
+    drifted in the past for a fixed commit, but the manuscript blob is
+    stable. The commit SHA in ``version`` already pins all repo content;
+    the ``sha256`` column is the secondary check on the one file that
+    actually enters the corpus.
 
     Only the manuscript plus its sibling bibliography travel into the
     corpus; the rest of the repository (figures, code, revision history)
@@ -270,7 +276,7 @@ def _fetch_github(row: ManifestRow, target_dir: Path) -> _Gap | None:
 
     url = f"https://codeload.github.com/{row.source_id}/tar.gz/{sha}"
     try:
-        data, actual_sha = _stream_fetch(url)
+        data, _tarball_sha = _stream_fetch(url)
     except urllib.error.HTTPError as err:
         return _Gap(
             manifest_row=0, source=row.source, source_id=row.source_id,
@@ -280,13 +286,6 @@ def _fetch_github(row: ManifestRow, target_dir: Path) -> _Gap | None:
         return _Gap(
             manifest_row=0, source=row.source, source_id=row.source_id,
             version=row.version, reason=f"network: {type(err).__name__}",
-        )
-
-    if row.sha256 and actual_sha != row.sha256:
-        return _Gap(
-            manifest_row=0, source=row.source, source_id=row.source_id,
-            version=row.version,
-            reason=f"hash mismatch: expected {row.sha256}, got {actual_sha}",
         )
 
     # GitHub archives nest everything under a single `<repo>-<sha>/` dir.
@@ -300,7 +299,7 @@ def _fetch_github(row: ManifestRow, target_dir: Path) -> _Gap | None:
     vign_dir = paper_dir / "vignettes"
     try:
         buf = io.BytesIO(data)
-        copied_manuscript = False
+        manuscript_bytes: bytes | None = None
         with tarfile.open(fileobj=buf, mode="r:*") as tar:
             members = tar.getmembers()
             prefix = members[0].name.split("/", 1)[0] if members else ""
@@ -321,12 +320,13 @@ def _fetch_github(row: ManifestRow, target_dir: Path) -> _Gap | None:
                 f = tar.extractfile(m)
                 if f is None:
                     continue
+                payload = f.read()
                 # Basename only — defends against any path traversal and
                 # flattens the manuscript dir into vignettes/.
                 dest = vign_dir / Path(m.name).name
-                dest.write_bytes(f.read())
+                dest.write_bytes(payload)
                 if is_manuscript:
-                    copied_manuscript = True
+                    manuscript_bytes = payload
     except (tarfile.TarError, EOFError, OSError) as err:
         if paper_dir.exists():
             shutil.rmtree(paper_dir, ignore_errors=True)
@@ -335,7 +335,7 @@ def _fetch_github(row: ManifestRow, target_dir: Path) -> _Gap | None:
             version=row.version, reason=f"unreadable archive: {err}",
         )
 
-    if not copied_manuscript:
+    if manuscript_bytes is None:
         if paper_dir.exists():
             shutil.rmtree(paper_dir, ignore_errors=True)
         return _Gap(
@@ -344,7 +344,19 @@ def _fetch_github(row: ManifestRow, target_dir: Path) -> _Gap | None:
             reason=f"manuscript {in_repo_path!r} not found in archive",
         )
 
-    _write_sha_marker(paper_dir, actual_sha)
+    # Integrity check is on the manuscript blob, not the (gzip-unstable)
+    # tarball. Mismatch ⇒ scrub the partial extraction and log a gap.
+    manuscript_sha = hashlib.sha256(manuscript_bytes).hexdigest()
+    if row.sha256 and manuscript_sha != row.sha256:
+        if paper_dir.exists():
+            shutil.rmtree(paper_dir, ignore_errors=True)
+        return _Gap(
+            manifest_row=0, source=row.source, source_id=row.source_id,
+            version=row.version,
+            reason=f"hash mismatch: expected {row.sha256}, got {manuscript_sha}",
+        )
+
+    _write_sha_marker(paper_dir, manuscript_sha)
     return None
 
 

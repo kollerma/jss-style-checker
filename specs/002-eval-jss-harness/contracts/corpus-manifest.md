@@ -16,7 +16,7 @@ Authoritative definition of "the corpus" at this git commit. Checked in.
 | `version`       | string   | yes      | CRAN `cran_version` (e.g. `7.3-60`), Bioc release (e.g. `3.18`), arXiv `vN` (e.g. `v2`), SWH content id (`sha1_git:...`), the literal `manual`, or — for `github` — `<commit_sha>:<in-repo-manuscript-path>` (e.g. `c075a0d…:paper/main.tex`). |
 | `vignette_file` | string   | yes      | Path *inside* `local_path` to the `.tex` file. E.g. `vignettes/paper.tex`.              |
 | `local_path`    | path     | yes      | Filesystem path, relative to the `--target` directory (default `examples/`). Typically `<source>_<source_id>_<version>/`. |
-| `sha256`        | hex(64)  | yes      | SHA256 of the fetched tarball or single file, lowercase. Empty for `manual` rows until the file is stable. |
+| `sha256`        | hex(64)  | yes      | SHA256 of the fetched tarball or single file, lowercase. For `github` rows it is the SHA256 of the *extracted manuscript file* (GitHub archive gzip framing is not byte-stable; the manuscript blob is). Empty for `manual` rows until the file is stable. |
 
 ### Encoding
 
