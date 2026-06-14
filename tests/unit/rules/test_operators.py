@@ -324,3 +324,32 @@ def test_all_checks_silent_on_empty_tex():
         check_jss_oper_003, check_jss_oper_004,
     ):
         assert list(check(doc, ToolConfig())) == []
+
+
+class TestOper002PrimeNotFlagged:
+    """OPER-002 flags literal ^T transpose only; prime notation (X',
+    X^\\prime) is no longer flagged (31% precision on the corpus —
+    usually a derivative or distinct variable, not transpose)."""
+
+    def _n(self, run_rule, math):
+        src = (
+            "\\documentclass{jss}\n\\begin{document}\n"
+            f"${math}$\n\\end{{document}}"
+        )
+        return len(run_rule(jss_oper_002, src))
+
+    def test_prime_variable_silent(self, run_rule):
+        assert self._n(run_rule, "J_{ij}(x, x^\\prime)") == 0
+
+    def test_single_quote_after_bracket_silent(self, run_rule):
+        assert self._n(run_rule, "(w_0, w_p)'") == 0
+
+    def test_derivative_prime_silent(self, run_rule):
+        assert self._n(run_rule, "\\dZ^\\prime(t)") == 0
+
+    def test_literal_caret_T_still_fires(self, run_rule):
+        assert self._n(run_rule, "X^T X") == 1
+
+    def test_sum_upper_bound_T_still_silent(self, run_rule):
+        # ^T as a big-operator bound is not transpose (existing carve-out)
+        assert self._n(run_rule, "\\sum_{t=1}^T x_t") == 0
