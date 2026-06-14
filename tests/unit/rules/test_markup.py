@@ -813,3 +813,42 @@ class TestMarkup003InvisibleMacros:
         # No \index here: a code-styling wrapper def is still a TP.
         src = _wrap("\\newcommand{\\cmdtxt}[1]{\\texttt{#1}}")
         assert len(run_rule(jss_markup_003, src)) == 1
+
+
+class TestMarkup003NonCodeAndContexts:
+    """Audit-driven FP guards: \\texttt of email/URL/DOI/numeric-label,
+    algorithm-float pseudocode, plain short captions, possessive
+    sentinels — without suppressing real code TPs."""
+
+    def test_texttt_email_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("Mail \\texttt{a.b@cran.org}.")) == []
+
+    def test_texttt_url_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("At \\texttt{https://x.org/p}.")) == []
+
+    def test_texttt_doi_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("\\texttt{10.18637/jss.v067.i01}")) == []
+
+    def test_texttt_numeric_label_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("Row \\texttt{13:} here.")) == []
+
+    def test_texttt_r_sequence_still_fires(self, run_rule):
+        # 1:10 is an R sequence (code), not a label — keep firing.
+        assert len(run_rule(jss_markup_003, _wrap("Use \\texttt{1:10}."))) == 1
+
+    def test_algorithm_pseudocode_silent(self, run_rule):
+        src = _wrap("\\begin{algorithmic}\n\\STATE biclust(BCCC())\n\\end{algorithmic}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_caption_short_optarg_silent(self, run_rule):
+        src = _wrap("\\begin{table}\n\\caption[Args of texreg() here]{\\code{x}}\n\\end{table}")
+        assert not any("texreg" in (v.suggestion or "") for v in run_rule(jss_markup_003, src))
+
+    def test_possessive_NA_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("There are no NA's left.")) == []
+
+    def test_body_texttt_still_fires(self, run_rule):
+        assert len(run_rule(jss_markup_003, _wrap("Call \\texttt{configTable}."))) == 1
+
+    def test_bare_null_still_fires(self, run_rule):
+        assert len(run_rule(jss_markup_003, _wrap("Returns NULL when empty."))) == 1

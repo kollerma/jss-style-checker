@@ -686,6 +686,12 @@ def check_jss_markup_003(
                 # visible-markup issue.
                 if _is_inside_invisible_macro(ancestors):
                     continue
+                # Pseudocode in an algorithm float, or the plain short
+                # arg of a caption/section — not visible body markup.
+                if _is_inside_algorithm(ancestors):
+                    continue
+                if _in_short_optarg(tex.source, node.pos):
+                    continue
                 # NB: \texttt inside a macro-definition body
                 # (``\newcommand{\Rcmd}[1]{\texttt{#1}}``) is deliberately
                 # NOT skipped. Those helpers (\Rcmd, \Rarg, \fct, \File,
@@ -697,6 +703,10 @@ def check_jss_markup_003(
                 # known language token (R, C, Stan, ...) → \proglang{X};
                 # when it's a known R package → \pkg{X}; otherwise → \code.
                 inner = _helpers._macro_args_text(node, parent, idx).strip()
+                # E-mail / URL / DOI / bare numeric label is not code —
+                # \code/\pkg/\proglang would all be wrong.
+                if _texttt_is_noncode(inner):
+                    continue
                 if inner in LANGUAGES:
                     target_macro = "proglang"
                     suggestion = (
@@ -747,6 +757,9 @@ def check_jss_markup_003(
             # not rendered as body text — not a visible-markup issue.
             if _is_inside_invisible_macro(ancestors):
                 continue
+            # Algorithm-float pseudocode is not body prose.
+            if _is_inside_algorithm(ancestors):
+                continue
             # Skip bibliography environments — those go through the
             # references.py rules, not the JSS markup rules. Avoids
             # false-positives on ``NA`` / ``NULL`` appearing inside
@@ -760,6 +773,10 @@ def check_jss_markup_003(
                 # check above misses these on tolerant-parsed documents
                 # whose degraded node tree drops the macro parent.
                 if _already_code_wrapped(tex.source, abs_pos):
+                    continue
+                # Plain short arg of a caption/section (\caption[... f()
+                # ...]) — markup omitted by design.
+                if _in_short_optarg(tex.source, abs_pos):
                     continue
                 yield _violation(
                     tex=tex,
@@ -783,6 +800,13 @@ def check_jss_markup_003(
                 # and knitr chunk options (``comment=NA``). Look back
                 # over whitespace for an ``=``.
                 if node.chars[:start].rstrip().endswith("="):
+                    continue
+                # Possessive / English plural — ``NA's`` / ``NA’s`` is
+                # prose about NA values, not a bare sentinel mention.
+                if node.chars[end:end + 1] in ("'", "’"):
+                    continue
+                # Plain short caption/section arg (markup omitted).
+                if _in_short_optarg(tex.source, node.pos + start):
                     continue
                 abs_pos = node.pos + start
                 abs_end = node.pos + end
@@ -829,6 +853,64 @@ def _is_inside_invisible_macro(ancestors: Any) -> bool:
     return any(
         isinstance(a, LatexMacroNode) and a.macroname in _INVISIBLE_TEXT_MACROS
         for a in ancestors
+    )
+
+
+# Algorithm/pseudocode environments (algorithmicx, algorithm2e, ...):
+# their body is displayed pseudocode, not body prose, so function
+# calls / sentinels there aren't a markup issue (Anthropometry.Rnw:847
+# `\STATE biclust(..., method = BCCC(), ...)`).
+_ALGORITHM_ENVS: frozenset[str] = frozenset(
+    {"algorithmic", "algorithm", "algorithm2e", "algorithmicx",
+     "algorithmial", "pseudocode", "ALC@g"}
+)
+
+
+def _is_inside_algorithm(ancestors: Any) -> bool:
+    return any(
+        isinstance(a, LatexEnvironmentNode)
+        and a.environmentname in _ALGORITHM_ENVS
+        for a in ancestors
+    )
+
+
+# Short / list-of version optional argument of a sectioning or caption
+# command: ``\caption[plain text]{markup}`` / ``\section[plain]{...}``.
+# The bracketed text is the LoF/LoT/ToC version, which is plain by
+# design (cf. MARKUP-004) — flagging code tokens there is wrong
+# (texreg.Rnw:312 `\caption[... texreg() ...]{...}`). pylatexenc drops
+# the optional arg, so this is checked against the raw source line.
+_OPEN_SHORT_OPTARG_RE = re.compile(
+    r"\\(?:caption|(?:sub)*section|paragraph|subparagraph|chapter|part)"
+    r"\*?\[[^\]]*\Z"
+)
+
+
+def _in_short_optarg(source: str, abs_pos: int) -> bool:
+    """True when ``abs_pos`` sits inside the ``[...]`` short argument of
+    a caption/sectioning command on its source line."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    return bool(_OPEN_SHORT_OPTARG_RE.search(source, line_start, abs_pos))
+
+
+# \texttt content that is NOT code — sentence style / \code does not
+# apply: e-mail addresses, URLs, DOIs, and bare numeric row/line labels
+# (``\texttt{1:}``). A numeric RANGE like ``1:10`` IS R code, so only a
+# lone integer (optionally with a trailing colon) is excused.
+_EMAIL_RE = re.compile(r"^[\w.+-]+@[\w-]+\.[\w.-]+$")
+_URL_RE = re.compile(r"^(?:https?://|www\.|ftp://)")
+_DOI_RE = re.compile(r"^10\.\d{4,}/")
+_NUM_LABEL_RE = re.compile(r"^\d+:?$")
+
+
+def _texttt_is_noncode(inner: str) -> bool:
+    inner = inner.strip()
+    return bool(
+        _EMAIL_RE.match(inner)
+        or _URL_RE.match(inner)
+        or "//" in inner
+        or _DOI_RE.match(inner)
+        or _NUM_LABEL_RE.match(inner)
     )
 
 
