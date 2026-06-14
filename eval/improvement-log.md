@@ -13605,3 +13605,176 @@ _(fill in)_
 ### Results (post-implementation)
 
 _(fill in after the next `eval-jss iterate record` run)_
+
+## Iteration 89 — 2026-06-14T10:53:04Z — rnw-chunk-regex-audit
+
+- **Corpus size:** 239 papers
+- **Tool version:** `0.1.0`
+- **Parse failures:** full=33, pinned=28
+
+**Note:** Focused chunk-regex audit: fixed A2 (@ <text>/@ %def terminators were over-running, 33 files) and A1 (> in chunk options unrecognised, 3 files). Tolerant-parsed papers 32->29; aggregate 95.58->95.60%. Documented limitations: A3 global opts_chunk$set(echo=FALSE) not simulated (20 files), A4 \Sexpr nested-brace/multiline (6), A5 <<>>= inside verbatim wrongly wrapped (3, low lint impact).
+
+### Stats — full corpus
+
+| category | rule | tp | fp | pending | precision | status |
+|---|---|---:|---:|---:|---:|---|
+| citation | JSS-CITE-002 | 245 | 30 | 3 | 89.09% | FAIL |
+| citation | JSS-CITE-003 | 264 | 0 | 49 | 100.00% | PASS |
+| citation | JSS-CITE-004 | 20 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-ABBR-001 | 31 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-002 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-003 | 54 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-004 | 96 | 0 | 11 | 100.00% | PASS |
+| unknown | JSS-CAP-001 | 110 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-CAP-002 | 523 | 19 | 11 | 96.49% | PASS |
+| unknown | JSS-CAP-003 | 11 | 39 | 7 | 22.00% | FAIL |
+| unknown | JSS-CAP-004 | 21 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-CODE-001 | 457 | 0 | 5 | 100.00% | PASS |
+| unknown | JSS-CODE-002 | 268 | 0 | 3 | 100.00% | PASS |
+| unknown | JSS-CODE-003 | 2309 | 18 | 77 | 99.23% | PASS |
+| unknown | JSS-HOUSE-001 | 625 | 2 | 8 | 99.68% | PASS |
+| unknown | JSS-HOUSE-002 | 35 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-003 | 57 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-MARKUP-001 | 1113 | 283 | 108 | 79.73% | FAIL |
+| unknown | JSS-MARKUP-002 | 273 | 15 | 8 | 94.79% | PASS |
+| unknown | JSS-MARKUP-003 | 1499 | 136 | 117 | 91.68% | PASS |
+| unknown | JSS-MARKUP-004 | 146 | 0 | 2 | 100.00% | PASS |
+| unknown | JSS-NAME-001 | 11 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-002 | 105 | 1 | 62 | 99.06% | PASS |
+| unknown | JSS-OPER-001 | 89 | 1 | 4 | 98.89% | PASS |
+| unknown | JSS-OPER-002 | 70 | 1 | 259 | 98.59% | PASS |
+| unknown | JSS-OPER-003 | 405 | 0 | 2 | 100.00% | PASS |
+| unknown | JSS-OPER-004 | 86 | 3 | 12 | 96.63% | PASS |
+| unknown | JSS-PRE-001 | 71 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-002 | 4 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-PRE-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-004 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-005 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-006 | 23 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-PRE-007 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-002 | 0 | 0 | 1 | — | NOT MEASURED |
+| unknown | JSS-REFS-003 | 2184 | 61 | 17 | 97.28% | PASS |
+| unknown | JSS-REFS-004 | 576 | 0 | 6 | 100.00% | PASS |
+| unknown | JSS-REFS-005 | 50 | 2 | 0 | 96.15% | PASS |
+| unknown | JSS-REFS-006 | 946 | 29 | 15 | 97.03% | PASS |
+| unknown | JSS-REFS-007 | 155 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-001 | 89 | 2 | 3 | 97.80% | PASS |
+| unknown | JSS-STRUCT-002 | 31 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-STRUCT-003 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-004 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-005 | 22 | 0 | 22 | 100.00% | PASS |
+| unknown | JSS-STRUCT-006 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-001 | 244 | 0 | 3 | 100.00% | PASS |
+| unknown | JSS-TYPO-002 | 0 | 0 | 1 | — | NOT MEASURED |
+| unknown | JSS-TYPO-003 | 10 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-004 | 67 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-WIDTH-001 | 538 | 47 | 13 | 91.97% | PASS |
+| unknown | JSS-XREF-001 | 39 | 1 | 14 | 97.50% | PASS |
+| unknown | JSS-XREF-002 | 733 | 0 | 169 | 100.00% | PASS |
+| unknown | JSS-XREF-004 | 644 | 19 | 225 | 97.13% | PASS |
+
+### Stats — pinned only
+
+| category | rule | tp | fp | pending | precision | status |
+|---|---|---:|---:|---:|---:|---|
+| citation | JSS-CITE-002 | 130 | 26 | 1 | 83.33% | FAIL |
+| citation | JSS-CITE-003 | 202 | 0 | 44 | 100.00% | PASS |
+| citation | JSS-CITE-004 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-ABBR-001 | 26 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-002 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-003 | 54 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-004 | 82 | 0 | 5 | 100.00% | PASS |
+| unknown | JSS-CAP-001 | 55 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CAP-002 | 311 | 15 | 7 | 95.40% | PASS |
+| unknown | JSS-CAP-003 | 4 | 32 | 7 | 11.11% | FAIL |
+| unknown | JSS-CAP-004 | 18 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-001 | 278 | 0 | 3 | 100.00% | PASS |
+| unknown | JSS-CODE-002 | 183 | 0 | 3 | 100.00% | PASS |
+| unknown | JSS-CODE-003 | 1470 | 14 | 59 | 99.06% | PASS |
+| unknown | JSS-HOUSE-001 | 320 | 2 | 5 | 99.38% | PASS |
+| unknown | JSS-HOUSE-002 | 35 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-003 | 48 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-MARKUP-001 | 489 | 214 | 78 | 69.56% | FAIL |
+| unknown | JSS-MARKUP-002 | 148 | 3 | 5 | 98.01% | PASS |
+| unknown | JSS-MARKUP-003 | 529 | 70 | 23 | 88.31% | FAIL |
+| unknown | JSS-MARKUP-004 | 43 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-002 | 105 | 1 | 62 | 99.06% | PASS |
+| unknown | JSS-OPER-001 | 36 | 1 | 4 | 97.30% | PASS |
+| unknown | JSS-OPER-002 | 53 | 1 | 182 | 98.15% | PASS |
+| unknown | JSS-OPER-003 | 292 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-004 | 66 | 2 | 10 | 97.06% | PASS |
+| unknown | JSS-PRE-001 | 20 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-002 | 4 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-PRE-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-004 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-005 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-006 | 15 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-PRE-007 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-002 | 0 | 0 | 1 | — | NOT MEASURED |
+| unknown | JSS-REFS-003 | 2181 | 61 | 17 | 97.28% | PASS |
+| unknown | JSS-REFS-004 | 575 | 0 | 6 | 100.00% | PASS |
+| unknown | JSS-REFS-005 | 50 | 2 | 0 | 96.15% | PASS |
+| unknown | JSS-REFS-006 | 945 | 29 | 15 | 97.02% | PASS |
+| unknown | JSS-REFS-007 | 155 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-001 | 49 | 1 | 2 | 98.00% | PASS |
+| unknown | JSS-STRUCT-002 | 22 | 0 | 1 | 100.00% | PASS |
+| unknown | JSS-STRUCT-003 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-004 | 8 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-005 | 14 | 0 | 13 | 100.00% | PASS |
+| unknown | JSS-STRUCT-006 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-001 | 138 | 0 | 3 | 100.00% | PASS |
+| unknown | JSS-TYPO-002 | 0 | 0 | 1 | — | NOT MEASURED |
+| unknown | JSS-TYPO-003 | 3 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-004 | 49 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-WIDTH-001 | 332 | 41 | 5 | 89.01% | FAIL |
+| unknown | JSS-XREF-001 | 26 | 0 | 12 | 100.00% | PASS |
+| unknown | JSS-XREF-002 | 581 | 0 | 127 | 100.00% | PASS |
+| unknown | JSS-XREF-004 | 479 | 17 | 173 | 96.57% | PASS |
+
+### Delta vs. previous iteration
+
+**Full corpus**
+
+- `JSS-CITE-002`: tp +246→245 (-1), fp +30→30 (+0), pending 1→3 (+2)
+- `JSS-BIBTEX-004`: tp +98→96 (-2), fp +0→0 (+0), pending 9→11 (+2)
+- `JSS-CAP-002`: tp +523→523 (+0), fp +19→19 (+0), pending 9→11 (+2)
+- `JSS-CODE-003`: tp +2316→2309 (-7), fp +18→18 (+0), pending 72→77 (+5)
+- `JSS-HOUSE-001`: tp +625→625 (+0), fp +2→2 (+0), pending 5→8 (+3)
+- `JSS-MARKUP-001`: tp +1113→1113 (+0), fp +283→283 (+0), pending 106→108 (+2)
+- `JSS-MARKUP-002`: tp +273→273 (+0), fp +16→15 (-1), pending 8→8 (+0)
+- `JSS-MARKUP-003`: tp +1477→1499 (+22), fp +134→136 (+2), pending 140→117 (-23)
+- `JSS-MARKUP-004`: tp +146→146 (+0), fp +0→0 (+0), pending 0→2 (+2)
+- `JSS-REFS-003`: tp +2184→2184 (+0), fp +61→61 (+0), pending 16→17 (+1)
+- `JSS-REFS-004`: tp +576→576 (+0), fp +0→0 (+0), pending 5→6 (+1)
+- `JSS-REFS-006`: tp +946→946 (+0), fp +29→29 (+0), pending 14→15 (+1)
+- `JSS-WIDTH-001`: tp +541→538 (-3), fp +50→47 (-3), pending 11→13 (+2)
+- `JSS-XREF-002`: tp +733→733 (+0), fp +0→0 (+0), pending 168→169 (+1)
+- `JSS-XREF-004`: tp +644→644 (+0), fp +19→19 (+0), pending 226→225 (-1)
+
+**Pinned only**
+
+- `JSS-CAP-002`: tp +311→311 (+0), fp +15→15 (+0), pending 6→7 (+1)
+- `JSS-CODE-003`: tp +1475→1470 (-5), fp +14→14 (+0), pending 57→59 (+2)
+- `JSS-MARKUP-002`: tp +148→148 (+0), fp +4→3 (-1), pending 5→5 (+0)
+- `JSS-MARKUP-003`: tp +528→529 (+1), fp +68→70 (+2), pending 26→23 (-3)
+- `JSS-REFS-003`: tp +2181→2181 (+0), fp +61→61 (+0), pending 16→17 (+1)
+- `JSS-REFS-004`: tp +575→575 (+0), fp +0→0 (+0), pending 5→6 (+1)
+- `JSS-REFS-006`: tp +945→945 (+0), fp +29→29 (+0), pending 14→15 (+1)
+- `JSS-WIDTH-001`: tp +332→332 (+0), fp +41→41 (+0), pending 3→5 (+2)
+- `JSS-XREF-002`: tp +581→581 (+0), fp +0→0 (+0), pending 126→127 (+1)
+- `JSS-XREF-004`: tp +479→479 (+0), fp +17→17 (+0), pending 174→173 (-1)
+
+### Findings / suggestions
+
+_(fill in)_
+
+### Plan
+
+_(fill in)_
+
+### Results (post-implementation)
+
+_(fill in after the next `eval-jss iterate record` run)_
