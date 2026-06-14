@@ -790,3 +790,26 @@ class TestMarkup003CustomCodeWrappers:
         src = self._doc("Body text without code.")
         out = run_rule(jss_markup_003, src)
         assert any(v.rule_id == "JSS-MARKUP-003" for v in out)
+
+
+class TestMarkup003InvisibleMacros:
+    """\\index{} (and \\nomenclature etc.) content is registered, not
+    rendered as body text, so MARKUP-003 must not flag \\texttt /
+    function calls / sentinels inside it."""
+
+    def test_texttt_inside_index_silent(self, run_rule):
+        src = _wrap("\\newcommand{\\fi}[1]{\\code{#1}\\index{\\texttt{#1}}}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_funccall_inside_index_silent(self, run_rule):
+        src = _wrap("\\index{triangles()}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_sentinel_inside_index_silent(self, run_rule):
+        src = _wrap("\\index{NULL}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_def_body_texttt_still_fires(self, run_rule):
+        # No \index here: a code-styling wrapper def is still a TP.
+        src = _wrap("\\newcommand{\\cmdtxt}[1]{\\texttt{#1}}")
+        assert len(run_rule(jss_markup_003, src)) == 1
