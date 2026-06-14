@@ -315,3 +315,33 @@ class TestRnwCommentedChunkHeader:
         path.write_text(src, encoding="utf-8")
         parsed = parse_rnw_file(path)
         assert "Sinput" in parsed.source
+
+
+class TestRnwChunkTrailingWhitespace:
+    """Sweave/knitr accept trailing whitespace after >>= on the chunk
+    header. Regression for multcomp generalsiminf.Rnw, where an
+    `echo=FALSE` chunk with `>>=  ` trailing spaces wasn't recognised,
+    so its hidden R code leaked into the linted prose."""
+
+    def test_hidden_chunk_with_trailing_ws_is_blanked(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+        src = (
+            "Prose before.\n"
+            "<<demo, echo = FALSE>>=  \n"
+            "x <- NULL\n"
+            "@\n"
+            "Prose after.\n"
+        )
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        parsed = parse_rnw_file(path)
+        # Hidden chunk blanked: the R code (and its NULL) is gone.
+        assert "NULL" not in parsed.source
+        assert "x <- " not in parsed.source
+
+    def test_visible_chunk_trailing_ws_wrapped(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+        src = "<<demo>>=\t\ny <- 1\n@\n"
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        assert "Sinput" in parse_rnw_file(path).source

@@ -68,8 +68,15 @@ _UTF8_BOM = "﻿"
 # real CRAN vignettes indent them inside `minipage` / `figure` envs
 # (e.g. CUBvignette-knitr.Rnw). A comment prefix (`%`) is non-whitespace
 # so it still won't match — keeping the cna.Rnw fix intact.
+#
+# TRAILING horizontal whitespace after `>>=` is also tolerated
+# (`>>=[ \t]*`): both Sweave and knitr accept a chunk header with
+# trailing spaces, and real vignettes ship them (multcomp's
+# `<<alzheimer-K, echo = FALSE>>=  `). Without it the header isn't
+# recognised, so an `echo=FALSE` chunk isn't blanked and its R code
+# (e.g. `... <- NULL`) leaks into the linted prose, tripping MARKUP-*.
 _RNW_CHUNK = re.compile(
-    r"^[ \t]*<<[^>]*>>=\r?\n.*?^[ \t]*@[ \t]*\r?$",
+    r"^[ \t]*<<[^>]*>>=[ \t]*\r?\n.*?^[ \t]*@[ \t]*\r?$",
     re.DOTALL | re.MULTILINE,
 )
 
