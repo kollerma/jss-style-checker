@@ -198,6 +198,64 @@ _CHUNK_BODY_NEUTRALIZE = str.maketrans({"{": " ", "}": " ", "\\": " "})
 # case-sensitive: R / knitr treat ``False`` / ``false`` as undefined.
 _HIDDEN_CHUNK_OPT = re.compile(r"\b(?:echo|include)\s*=\s*(?:FALSE|F)\b")
 
+# Document-global chunk defaults: ``\SweaveOpts{echo=FALSE}`` (Sweave)
+# and ``opts_chunk$set(echo=FALSE)`` (knitr) set the DEFAULT echo /
+# include for every chunk, which a per-chunk option can override. ~20
+# corpus vignettes hide all code this way; without honouring the
+# global default we'd wrap that hidden code as visible Sinput and lint
+# it (false positives on code the reader never sees). ``[^)}]*`` keeps
+# each scan to one options block (nested parens, e.g. an
+# ``out.width=paste0(...)`` before the echo setting, can truncate the
+# scan — a documented limitation).
+_GLOBAL_OPTS_BLOCK = re.compile(
+    r"(?:\\SweaveOpts\s*\{|opts_chunk\$set\s*\()([^)}]*)"
+)
+_OPT_ECHO = re.compile(r"\becho\s*=\s*(\w+)")
+_OPT_INCLUDE = re.compile(r"\binclude\s*=\s*(\w+)")
+_FALSEY = frozenset({"FALSE", "F"})
+_TRUTHY = frozenset({"TRUE", "T"})
+
+
+def _global_chunk_defaults(src: str) -> tuple[bool, bool]:
+    """Return ``(echo_default_hidden, include_default_hidden)`` from the
+    document's global ``\\SweaveOpts`` / ``opts_chunk$set`` statements.
+
+    Textually-last value wins per option (the common case sets each
+    once near the top). Absent any setting, the default is *not* hidden
+    — Sweave/knitr default to ``echo=TRUE`` / ``include=TRUE``."""
+    echo_hidden = include_hidden = False
+    for m in _GLOBAL_OPTS_BLOCK.finditer(src):
+        block = m.group(1)
+        e = _OPT_ECHO.search(block)
+        if e and e.group(1) in _FALSEY:
+            echo_hidden = True
+        elif e and e.group(1) in _TRUTHY:
+            echo_hidden = False
+        i = _OPT_INCLUDE.search(block)
+        if i and i.group(1) in _FALSEY:
+            include_hidden = True
+        elif i and i.group(1) in _TRUTHY:
+            include_hidden = False
+    return echo_hidden, include_hidden
+
+
+def _chunk_is_hidden(
+    header: str, echo_default_hidden: bool, include_default_hidden: bool
+) -> bool:
+    """True when a chunk's rendered output is suppressed (so its code
+    must be blanked, not linted as visible). A per-chunk ``echo=`` /
+    ``include=`` overrides the document global; otherwise the global
+    default applies."""
+    def _effective(opt: re.Pattern[str], default_hidden: bool) -> bool:
+        m = opt.search(header)
+        if m is None:
+            return default_hidden
+        return m.group(1) in _FALSEY
+
+    return _effective(_OPT_ECHO, echo_default_hidden) or _effective(
+        _OPT_INCLUDE, include_default_hidden
+    )
+
 
 def wrap_rnw_chunks_as_sinput(src: str) -> str:
     """Rewrite Sweave / knitr R code chunks to ``\\begin{Sinput}`` /
@@ -219,6 +277,10 @@ def wrap_rnw_chunks_as_sinput(src: str) -> str:
     CODE-* / WIDTH-001 rule. CODE-* / WIDTH-001 already iterate Sinput,
     so re-emitting chunks as Sinput needs zero rule-level changes.
     """
+    # Document-global echo/include defaults (\SweaveOpts /
+    # opts_chunk$set) — a chunk with no per-chunk override inherits these.
+    echo_default_hidden, include_default_hidden = _global_chunk_defaults(src)
+
     def _rewrite(m: re.Match[str]) -> str:
         whole = m.group(0)
         # Locate header line (`<<...>>=`) and trailing `@` line.
@@ -226,13 +288,16 @@ def wrap_rnw_chunks_as_sinput(src: str) -> str:
         if nl == -1:
             return whole
         header = whole[:nl]
-        # Hidden chunks (echo=FALSE / include=FALSE) do not appear in
-        # the rendered manuscript, so manuscript rules must not lint
-        # them. Blank to whitespace, preserving line count exactly as
+        # Hidden chunks (echo=FALSE / include=FALSE, per-chunk OR via a
+        # document-global default) do not appear in the rendered
+        # manuscript, so manuscript rules must not lint them. Blank to
+        # whitespace, preserving line count exactly as
         # ``strip_rnw_chunks`` would, so downstream line numbers stay
         # source-authoritative for any rule that does fire on the
         # surrounding prose.
-        if _HIDDEN_CHUNK_OPT.search(header):
+        if _chunk_is_hidden(
+            header, echo_default_hidden, include_default_hidden
+        ):
             return "\n" * whole.count("\n")
         # Strip CR if present so we re-emit a clean LF.
         header_nl = "\r\n" if header.endswith("\r") else "\n"

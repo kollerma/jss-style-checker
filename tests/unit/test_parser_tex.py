@@ -382,3 +382,40 @@ class TestRnwChunkTerminatorAndOptions:
         from texlint.core.parser import _RNW_CHUNK
         m = _RNW_CHUNK.search("<<a>>=\n@foo <- slot\nmore\n@\n")
         assert m is not None and m.group(0).count("\n") == 3
+
+
+class TestRnwGlobalChunkOptions:
+    """A3: \\SweaveOpts / opts_chunk$set global echo/include defaults,
+    overridable per chunk."""
+
+    def _parse(self, tmp_path, src):
+        from texlint.core.parser import parse_rnw_file
+        p = tmp_path / "v.Rnw"
+        p.write_text(src, encoding="utf-8")
+        return parse_rnw_file(p)
+
+    def test_global_echo_false_blanks_chunk(self, tmp_path: Path):
+        src = "\\SweaveOpts{echo=FALSE}\n<<a>>=\nx <- NULL\n@\nProse.\n"
+        out = self._parse(tmp_path, src)
+        assert "NULL" not in out.source  # hidden chunk blanked
+
+    def test_per_chunk_echo_true_overrides_global(self, tmp_path: Path):
+        src = (
+            "\\SweaveOpts{echo=FALSE}\n"
+            "<<a>>=\nhidden <- 1\n@\n"
+            "<<b, echo=TRUE>>=\nshown <- 2\n@\n"
+        )
+        out = self._parse(tmp_path, src)
+        assert "hidden" not in out.source       # global FALSE -> blanked
+        assert "Sinput" in out.source           # override -> wrapped
+        assert out.source.count("\\begin{Sinput}") == 1
+
+    def test_optschunk_set_include_false(self, tmp_path: Path):
+        src = "<<s>>=\nopts_chunk$set(include=FALSE)\n@\n<<a>>=\nz <- 3\n@\n"
+        out = self._parse(tmp_path, src)
+        assert "z <- 3" not in out.source
+
+    def test_no_global_setting_unchanged(self, tmp_path: Path):
+        src = "<<a>>=\nvisible <- 1\n@\n"
+        out = self._parse(tmp_path, src)
+        assert "Sinput" in out.source           # still wrapped (visible)
