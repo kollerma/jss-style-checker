@@ -75,8 +75,22 @@ _UTF8_BOM = "﻿"
 # `<<alzheimer-K, echo = FALSE>>=  `). Without it the header isn't
 # recognised, so an `echo=FALSE` chunk isn't blanked and its R code
 # (e.g. `... <- NULL`) leaks into the linted prose, tripping MARKUP-*.
+# Header option list is matched non-greedily up to the FIRST line-final
+# `>>=` (`[^\n]*?` rather than `[^>]*`): knitr/Sweave options can contain
+# `>` — comparison operators (`eval=a>b`) or `>` inside a quoted
+# `fig.cap`/`out.width` string — which `[^>]*` truncated, leaving the
+# chunk unrecognised (sets.Rnw, hhh4_spacetime.Rnw, hetGP).
+#
+# Terminator accepts trailing text after `@` (`@(?:[ \t][^\n]*)?`): the
+# Sweave/noweb chunk end is a line whose first non-space char is `@`
+# followed by whitespace or end-of-line — `@ %def` and `@ <comment>`
+# are valid terminators. Requiring a *bare* `@` made those chunks
+# over-run to the next `@`, swallowing (and blanking) intervening prose
+# (arules.Rnw and 30+ other vignettes). `@foo` (no space) is NOT a
+# terminator — and `@` never starts a line of R code (it's the S4 slot
+# operator, always infix), so this can't truncate a chunk early.
 _RNW_CHUNK = re.compile(
-    r"^[ \t]*<<[^>]*>>=[ \t]*\r?\n.*?^[ \t]*@[ \t]*\r?$",
+    r"^[ \t]*<<[^\n]*?>>=[ \t]*\r?\n.*?^[ \t]*@(?:[ \t][^\n]*)?\r?$",
     re.DOTALL | re.MULTILINE,
 )
 
