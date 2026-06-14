@@ -2,7 +2,6 @@
 
 Rules in this module (rollout position: references):
   - JSS-REFS-001 — BibTeX entries must declare a year field.
-  - JSS-REFS-002 — title is not entirely lowercase (tight title-case heuristic).
   - JSS-REFS-003 — article / inproceedings / incollection / book entries
     should declare a doi field (advisory).
   - JSS-REFS-004 — BibTeX titles use JSS markup (\\pkg, \\proglang) for
@@ -120,34 +119,13 @@ def check_jss_refs_001(
 
 
 # ---------------------------------------------------------------------------
-# JSS-REFS-002 — tight title-case heuristic (all-lowercase)
+# Title helpers (shared by the REFS-006 title-case heuristic)
 # ---------------------------------------------------------------------------
 
 
 def _visible_words(title: str) -> list[str]:
     """Split on whitespace and punctuation; drop pure-punctuation tokens."""
     return [w for w in re.split(r"[\s\-/]+", title) if re.search(r"[A-Za-z]", w)]
-
-
-def check_jss_refs_002(
-    doc: ParsedDocument, _cfg: ToolConfig
-) -> Iterator[Violation]:
-    for bib, entry in _iter_entries(doc):
-        title = _field_value(entry, "title")
-        if not title:
-            continue
-        # Strip LaTeX braces/macros to get the plain string.
-        plain = _strip_latex(title)
-        words = _visible_words(plain)
-        if not words:
-            continue
-        if all(w == w.lower() for w in words):
-            yield _violation(
-                bib=bib,
-                entry=entry,
-                rule_id="JSS-REFS-002",
-                suggestion="Capitalize the principal words in the title.",
-            )
 
 
 def _strip_latex(text: str) -> str:
@@ -424,8 +402,12 @@ def check_jss_refs_006(
         words = _visible_words(plain)
         if not words:
             continue
-        # REFS-002 already catches all-lowercase; don't double-fire.
-        if all(w == w.lower() for w in words):
+        # A single all-lowercase word is a legitimate coined title
+        # (e.g. Wilf's "generatingfunctionology"), not a forgotten
+        # capitalization — exempt it. Multi-word all-lowercase titles
+        # ("the theory of partitions") fall through to the first-word /
+        # principal-word checks below, which flag them correctly.
+        if len(words) == 1 and words[0] == words[0].lower():
             continue
         # First word must be capitalised — unless the source wraps it in
         # \pkg{...} / \proglang{...} / \code{...}, in which case the
@@ -595,7 +577,6 @@ _rule = _helpers.make_rule
 
 
 jss_refs_001 = _rule("JSS-REFS-001", check_jss_refs_001)
-jss_refs_002 = _rule("JSS-REFS-002", check_jss_refs_002)
 jss_refs_003 = _rule("JSS-REFS-003", check_jss_refs_003)
 jss_refs_004 = _rule("JSS-REFS-004", check_jss_refs_004)
 jss_refs_005 = _rule("JSS-REFS-005", check_jss_refs_005)
@@ -605,7 +586,6 @@ jss_refs_007 = _rule("JSS-REFS-007", check_jss_refs_007)
 
 rules: tuple[Rule, ...] = (
     jss_refs_001,
-    jss_refs_002,
     jss_refs_003,
     jss_refs_004,
     jss_refs_005,

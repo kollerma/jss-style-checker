@@ -8,7 +8,6 @@ from texlint.api import ParsedDocument, Severity, ToolConfig
 from texlint.journals.jss.rules.references import (
     check_jss_refs_001,
     jss_refs_001,
-    jss_refs_002,
     jss_refs_003,
     jss_refs_004,
     jss_refs_005,
@@ -25,13 +24,14 @@ def _bib_from_fixture(name: str) -> str:
     return (FIXTURE_DIR / name).read_text(encoding="utf-8")
 
 
-def test_rules_tuple_has_seven_rules():
-    assert len(rules) == 7
+def test_rules_tuple_has_six_rules():
+    # JSS-REFS-002 retired 2026-06-14 (subsumed by REFS-006).
+    assert len(rules) == 6
 
 
 def test_rules_tuple_ids():
     assert {r.id for r in rules} == {
-        f"JSS-REFS-00{i}" for i in range(1, 8)
+        f"JSS-REFS-00{i}" for i in (1, 3, 4, 5, 6, 7)
     }
 
 
@@ -78,43 +78,6 @@ class TestRefs001:
         violations = run_rule(jss_refs_001, src, kind="bib")
         assert len(violations) == 1
         assert "<unknown>" in violations[0].suggestion
-
-
-# ---------------------------------------------------------------------------
-# JSS-REFS-002 — tight title-case (all-lowercase)
-# ---------------------------------------------------------------------------
-
-
-class TestRefs002:
-    def test_positive(self, run_rule):
-        violations = run_rule(jss_refs_002, _bib_from_fixture("JSS-REFS-002-bad.bib"), kind="bib")
-        assert len(violations) == 1
-        assert violations[0].rule_id == "JSS-REFS-002"
-
-    def test_good_fixture_no_violation(self, run_rule):
-        assert run_rule(jss_refs_002, _bib_from_fixture("JSS-REFS-002-good.bib"), kind="bib") == []
-
-    def test_title_missing_is_silent(self, run_rule):
-        src = "@article{a, author={x}, year={2020}}\n"
-        assert run_rule(jss_refs_002, src, kind="bib") == []
-
-    def test_title_with_non_letter_words_only(self, run_rule):
-        # "1984" — no letter words → silent (len(words)==0 branch).
-        src = "@article{a, title={1984}, year={1984}}\n"
-        assert run_rule(jss_refs_002, src, kind="bib") == []
-
-    def test_mixed_case_is_ok(self, run_rule):
-        src = "@article{a, title={Some Title}, year={2020}}\n"
-        assert run_rule(jss_refs_002, src, kind="bib") == []
-
-    def test_macro_wrapped_is_ok(self, run_rule):
-        # After \pkg-stripping: 'mass: a guide' → still all-lowercase → fires.
-        src = "@article{a, title={\\pkg{MASS}: a guide}, year={2020}}\n"
-        violations = run_rule(jss_refs_002, src, kind="bib")
-        # Stripped LaTeX leaves 'MASS: a guide' — MASS upper → not all lowercase → silent.
-        # Actually we strip the \pkg macro name but keep the braced content.
-        # Expected: 'MASS: a guide' → 'MASS' has upper → silent.
-        assert violations == []
 
 
 # ---------------------------------------------------------------------------
@@ -245,9 +208,19 @@ class TestRefs006:
         src = "@article{a, year={2020}}\n"
         assert run_rule(jss_refs_006, src, kind="bib") == []
 
-    def test_all_lowercase_is_refs002s_job(self, run_rule):
-        # REFS-006 skips the entirely-lowercase case (REFS-002 owns it).
+    def test_multiword_all_lowercase_fires(self, run_rule):
+        # Entirely-lowercase multi-word titles are forgotten title-case;
+        # REFS-006 now flags them directly (the role formerly split into
+        # the retired JSS-REFS-002). First word lowercase → fires.
         src = "@article{a, title={literate programming}, year={2020}}\n"
+        violations = run_rule(jss_refs_006, src, kind="bib")
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-REFS-006"
+
+    def test_single_lowercase_word_exempt(self, run_rule):
+        # A single coined word (Wilf's "generatingfunctionology") is a
+        # legitimate stylization, not a title-case error.
+        src = "@article{a, title={generatingfunctionology}, year={1994}}\n"
         assert run_rule(jss_refs_006, src, kind="bib") == []
 
     def test_word_after_colon_lowercase(self, run_rule):
