@@ -444,3 +444,64 @@ def test_by_format_and_by_source_mutually_exclusive(tmp_db: Path) -> None:
     )
     assert r.exit_code == 2
     assert "mutually exclusive" in r.output
+
+
+def _seed_with_class(cx, rule_id, category, doc_class, tp, fp):
+    """Seed violations on a paper carrying the given doc_class. Reuses
+    the latest run (one scan covers all papers) so last_seen_run_id
+    stays at MAX(run) for every seeded row."""
+    run_id = cx.execute("SELECT MAX(id) FROM runs").fetchone()[0]
+    if run_id is None:
+        cx.execute(
+            "INSERT INTO runs (ts, tool_version, papers_scanned, violations_found)"
+            " VALUES ('2026-04-23T00:00:00Z', '0.1.0', 1, ?)", (tp + fp,))
+        run_id = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
+    cx.execute(
+        "INSERT INTO papers (path, source, status, doc_class)"
+        " VALUES (?, 'cran', 'scanned', ?)",
+        (f"p_{rule_id}_{doc_class}", doc_class))
+    pid = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
+    for i in range(tp):
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message,"
+            " severity, verdict, reviewer, first_seen_run_id, last_seen_run_id)"
+            " VALUES (?, ?, ?, ?, ?, 'warning', 'true_positive', 'human:t', ?, ?)",
+            (pid, rule_id, category, 100 + i, f"{doc_class}-tp-{i}", run_id, run_id))
+    for i in range(fp):
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message,"
+            " severity, verdict, reviewer, first_seen_run_id, last_seen_run_id)"
+            " VALUES (?, ?, ?, ?, ?, 'warning', 'false_positive', 'human:t', ?, ?)",
+            (pid, rule_id, category, 200 + i, f"{doc_class}-fp-{i}", run_id, run_id))
+
+
+def test_by_class_partitions_jss_and_non_jss(tmp_db: Path) -> None:
+    from eval import report
+    cx = db.connect(tmp_db)
+    try:
+        # Same rule, different document classes, different precision.
+        _seed_with_class(cx, "JSS-MARKUP-001", "markup", "jss", tp=9, fp=1)
+        _seed_with_class(cx, "JSS-MARKUP-001", "markup", "non-jss", tp=2, fp=8)
+    finally:
+        cx.close()
+    table = report.compute_precision_by_class(tmp_db)
+    by_class = {
+        r.source: (r.tp, r.fp)
+        for r in table.rows
+        if r.rule_id == "JSS-MARKUP-001" and r.source in {"jss", "non-jss", "overall"}
+    }
+    assert by_class["jss"] == (9, 1)
+    assert by_class["non-jss"] == (2, 8)
+    assert by_class["overall"] == (11, 9)  # overall layer still aggregates both
+
+
+def test_by_class_null_doc_class_bucketed_unknown(tmp_db: Path) -> None:
+    from eval import report
+    cx = db.connect(tmp_db)
+    try:
+        _seed(cx, "JSS-X-001", "x", tp=3, fp=0, pending=0)  # no doc_class set
+    finally:
+        cx.close()
+    table = report.compute_precision_by_class(tmp_db)
+    src = {r.source for r in table.rows if r.rule_id == "JSS-X-001"}
+    assert "unknown" in src

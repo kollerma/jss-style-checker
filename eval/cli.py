@@ -189,6 +189,17 @@ def review_cmd(
     help="Partition precision by violation file suffix (tex | bib | rnw | rmd).",
 )
 @click.option(
+    "--by-class",
+    "by_class",
+    is_flag=True,
+    default=False,
+    help=(
+        "Partition precision by document class (jss | non-jss | unknown). "
+        "Headline is the jss rows; non-jss covers CRAN vignettes of JSS "
+        "papers shipped in \\documentclass{article}."
+    ),
+)
+@click.option(
     "--with-recall",
     "with_recall",
     is_flag=True,
@@ -255,6 +266,7 @@ def report_cmd(
     ctx: click.Context,
     by_source: bool,
     by_format: bool,
+    by_class: bool,
     with_recall: bool,
     diff: bool,
     against: int | None,
@@ -265,8 +277,12 @@ def report_cmd(
     csv_path: str | None,
 ) -> None:
     """Print the per-rule precision table."""
-    if by_source and by_format:
-        click.echo("eval-jss: --by-source and --by-format are mutually exclusive", err=True)
+    if sum((by_source, by_format, by_class)) > 1:
+        click.echo(
+            "eval-jss: --by-source, --by-format and --by-class are mutually "
+            "exclusive",
+            err=True,
+        )
         ctx.exit(2)
 
     from eval import report as report_mod
@@ -277,6 +293,7 @@ def report_cmd(
             db_path=ctx.obj["db"],
             by_source=by_source,
             by_format=by_format,
+            by_class=by_class,
             csv_path=csv_path,
             pinned_only=pinned_only,
             manifest_path=manifest_path if pinned_only else None,

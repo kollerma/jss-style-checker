@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS papers (
     year   INTEGER,
     path   TEXT NOT NULL,
     source TEXT NOT NULL,                   -- cran | bioc | arxiv | jss_archive | manual
-    status TEXT NOT NULL DEFAULT 'pending'  -- pending | scanned | scanned_clean | scan_failed
+    status TEXT NOT NULL DEFAULT 'pending', -- pending | scanned | scanned_clean | scan_failed
+    doc_class TEXT                          -- jss | non-jss | unknown (set by scan); report --by-class dimension
 );
 
 CREATE TABLE IF NOT EXISTS runs (

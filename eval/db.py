@@ -45,8 +45,22 @@ def init(path: Path) -> None:
         _migrate_violations_file_suffix(cx)
         _migrate_violations_file(cx)
         _migrate_violations_last_seen(cx)
+        _migrate_papers_doc_class(cx)
     finally:
         cx.close()
+
+
+def _migrate_papers_doc_class(cx: sqlite3.Connection) -> None:
+    """Add `papers.doc_class` if missing (jss | non-jss | unknown).
+
+    Populated by `scan`; powers the report's `--by-class` dimension so
+    jss-class precision (the headline) and non-jss-class precision (a
+    robustness check on the ~10% of CRAN vignettes that ship in
+    `\\documentclass{article}`) are reported separately. Existing rows
+    stay NULL until the next scan repopulates them."""
+    cols = {r["name"] for r in cx.execute("PRAGMA table_info(papers)").fetchall()}
+    if "doc_class" not in cols:
+        cx.execute("ALTER TABLE papers ADD COLUMN doc_class TEXT")
 
 
 def _migrate_violations_file_suffix(cx: sqlite3.Connection) -> None:
