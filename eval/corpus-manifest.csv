@@ -237,3 +237,8 @@ jss_doi,source,source_id,version,vignette_file,local_path,sha256
 ,cran,untb,1.7-7-1,untb/vignettes/untb.Rnw,cran_untb/,eb3f0a0106de86e15eb968104a65233673d90139dd0f97ffaff6580cf5200cec
 ,cran,wflo,1.9,wflo/vignettes/wflo.Rnw,cran_wflo/,b803451ab23a6974a4d4ac9fae2101858f0a5cfb32f1f0f6c1e94b54aa6bb6d3
 ,cran,rstpm2,1.7.1,rstpm2/vignettes/multistate.Rnw,cran_rstpm2/,5e11679a69f0ec4e643ba9af0a6b076414b71efa516c0b5951b9c49504418bc9
+10.18637/jss.v110.i02,github,givasile/ROMC-SW,4cda7a4650c35acffe5dc1523f2c987301e53c3a:jss-camera-ready/jss4678.tex,vignettes/jss4678.tex,github_romc/,049450331443ddc626dd6833f68e3ea9b6aee4904d3c65c97814771d8ed0eefb
+10.18637/jss.v112.i06,github,glandfried/TrueSkillThroughTime,b85fd25f53e5320a3b4a5ebe8e8cf46f9c557fb7:doc/article.tex,vignettes/article.tex,github_trueskill/,1661ce570f59b10dee5961efb7233f85885e938b5455b85bf26453a34f8a3651
+10.18637/jss.v109.i03,github,pavlin-policar/opentsne-paper,c075a0dbc2a4ecaef8120e10fd53694007d2e10a:paper/main.tex,vignettes/main.tex,github_opentsne/,ba3eb9f5a09dd9dc9a283c35b4356cb00578d20f35b1de4ec59b3644d33686c6
+10.18637/jss.v053.i01,github,yihui/animation,c5d971804f72db2893b6d7181684a36417bec134:inst/articles/jss725.Rnw,vignettes/jss725.Rnw,github_animation/,38d1799ad3c61d471c73f005f512c2110b184e97e4e4c7c68e60803c6f7592ee
+10.18637/jss.v023.i08,github,jinghuazhao/tests,8a6da839f4137fdb61d8003c3fb0fcde3943f02b:gap/jss/jss.Rnw,vignettes/jss.Rnw,github_gap/,33679217eac58190908b3cbef4c7727154a3315159aff442d7c46f3c0ae2a393

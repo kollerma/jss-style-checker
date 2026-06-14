@@ -18,6 +18,31 @@ PDF and keep replication code, with the source living in the gated JSS
 supplement archive. The productive vein is repos that keep a `paper/` or
 `manuscript/` directory — both R and non-R.
 
+## Wired into the corpus
+
+The following Tier-1 papers are now pinned in `eval/corpus-manifest.csv`
+as `github` rows (commit-pinned; `corpus fetch` copies the manuscript +
+sibling `.bib` into `<paper>/vignettes/`). All five lint cleanly with
+real style violations (69–312 each):
+
+`github_romc` (v110.i02), `github_trueskill` (v112.i06),
+`github_opentsne` (v109.i03), `github_animation` (v053.i01),
+`github_gap` (v023.i08).
+
+Tier-1 entries deliberately NOT wired:
+- **DNest4 (v086.i07)** — `paper/ms.tex` trips the LaTeX parser on an
+  unbalanced brace inside a `CodeInput` verbatim block, yielding only
+  `JSS-PARSE-000` (no style signal). Worth a separate linter-robustness
+  investigation.
+- **hyper2 / Plackett-Luce (v109.i08)** — manuscript sits in the package's
+  `inst/` dumping ground alongside ~100 unrelated files incl. three other
+  `.bib`s, which would pollute BibTeX-rule precision.
+- **RAppArmor (v055.i07)** — `paper/v55i07.Rnw` is an `\documentclass{article}`
+  wrapper that `\input`s `content.tex`; not a clean single jss-class file.
+- **effects / Predictor Effects (v087.i09)** — same paper is already in the
+  corpus as the CRAN vignette `cran_effects`; wiring it again would
+  double-count.
+
 ## Tier 1 — Published JSS, standalone source on GitHub, NOT a CRAN vignette
 
 | DOI | Title / software | Lang | Repo | Source path |

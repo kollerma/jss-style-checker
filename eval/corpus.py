@@ -8,9 +8,17 @@
   rows in `corpus-manifest-gaps.csv`.
 - `run_status(...)` reports per-row state without fetching.
 
+A `github` source materialises a JSS manuscript that lives in a public
+GitHub repository rather than on CRAN (typically the paper source for
+non-R software, kept in a `paper/` or `doc/` directory). The row pins an
+immutable commit and the in-repo manuscript path; the fetcher copies the
+manuscript plus its sibling `.bib` into `<paper_dir>/vignettes/`. See
+`_fetch_github` for the `version` encoding.
+
 Discovery sources (GitHub code search, arXiv listing API, etc.) are
 deliberately NOT implemented here — see research.md §"Discovery is NOT
-in this spec".
+in this spec". The `github` source consumes already-discovered repos
+(see `eval/non-cran-jss-sources.md`); it does not search.
 """
 
 from __future__ import annotations
@@ -39,7 +47,7 @@ MANIFEST_HEADER = [
     "sha256",
 ]
 
-VALID_SOURCES = {"cran", "bioc", "arxiv", "jss_archive", "manual", "swh"}
+VALID_SOURCES = {"cran", "bioc", "arxiv", "jss_archive", "manual", "swh", "github"}
 
 
 class ManifestError(Exception):
@@ -222,12 +230,133 @@ def _write_sha_marker(target_paper_dir: Path, sha: str) -> None:
     (target_paper_dir / ".sha256").write_text(sha, encoding="utf-8")
 
 
+def _parse_github_version(version: str) -> tuple[str, str]:
+    """Split a ``github`` row's ``version`` into ``(commit_sha, in_repo_path)``.
+
+    GitHub manuscript rows overload ``version`` (the way ``arxiv`` and
+    ``swh`` rows do) as ``"<commit_sha>:<in-repo-manuscript-path>"`` — e.g.
+    ``"c075a0d…:paper/main.tex"``. The commit SHA is hex so it never
+    contains a colon; the first colon delimits the in-repo path. The SHA
+    pins immutable content (a git commit hash is itself a cryptographic
+    content id), and the path locates the manuscript inside the archive.
+    """
+    sha, _, in_repo = version.partition(":")
+    return sha, in_repo
+
+
+def _fetch_github(row: ManifestRow, target_dir: Path) -> _Gap | None:
+    """Materialise a ``github`` row from an immutable commit-pinned archive.
+
+    Downloads ``https://codeload.github.com/<owner/repo>/tar.gz/<sha>``,
+    verifies the tarball SHA256, then copies just the pinned manuscript
+    file and the ``.bib`` files sitting beside it into
+    ``<paper_dir>/vignettes/`` (flattened to basenames). Putting the
+    source under ``vignettes/`` lets the scanner discover it with no
+    special-casing — it already walks that directory — and keeps
+    ``vignette_file`` (``vignettes/<basename>``) a valid paper-relative
+    path for the pinned-precision report.
+
+    Only the manuscript plus its sibling bibliography travel into the
+    corpus; the rest of the repository (figures, code, revision history)
+    is intentionally dropped so the scan sees exactly the JSS source.
+    """
+    sha, in_repo_path = _parse_github_version(row.version)
+    if not sha or not in_repo_path:
+        return _Gap(
+            manifest_row=0, source=row.source, source_id=row.source_id,
+            version=row.version,
+            reason="github version must be '<sha>:<in-repo-path>'",
+        )
+
+    url = f"https://codeload.github.com/{row.source_id}/tar.gz/{sha}"
+    try:
+        data, actual_sha = _stream_fetch(url)
+    except urllib.error.HTTPError as err:
+        return _Gap(
+            manifest_row=0, source=row.source, source_id=row.source_id,
+            version=row.version, reason=f"http {err.code}",
+        )
+    except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
+        return _Gap(
+            manifest_row=0, source=row.source, source_id=row.source_id,
+            version=row.version, reason=f"network: {type(err).__name__}",
+        )
+
+    if row.sha256 and actual_sha != row.sha256:
+        return _Gap(
+            manifest_row=0, source=row.source, source_id=row.source_id,
+            version=row.version,
+            reason=f"hash mismatch: expected {row.sha256}, got {actual_sha}",
+        )
+
+    # GitHub archives nest everything under a single `<repo>-<sha>/` dir.
+    # The manuscript lives at `<prefix>/<in_repo_path>`; copy it plus the
+    # sibling `.bib` files into `<paper_dir>/vignettes/`.
+    in_repo_dir = str(Path(in_repo_path).parent)
+    if in_repo_dir == ".":
+        in_repo_dir = ""
+    wanted_suffixes = (".bib",)
+    paper_dir = target_dir / row.local_path
+    vign_dir = paper_dir / "vignettes"
+    try:
+        buf = io.BytesIO(data)
+        copied_manuscript = False
+        with tarfile.open(fileobj=buf, mode="r:*") as tar:
+            members = tar.getmembers()
+            prefix = members[0].name.split("/", 1)[0] if members else ""
+            manuscript_member = f"{prefix}/{in_repo_path}"
+            sibling_prefix = f"{prefix}/{in_repo_dir}/" if in_repo_dir else f"{prefix}/"
+            vign_dir.mkdir(parents=True, exist_ok=True)
+            for m in members:
+                if not m.isfile():
+                    continue
+                is_manuscript = m.name == manuscript_member
+                is_sibling_bib = (
+                    m.name.startswith(sibling_prefix)
+                    and "/" not in m.name[len(sibling_prefix):]
+                    and m.name.lower().endswith(wanted_suffixes)
+                )
+                if not (is_manuscript or is_sibling_bib):
+                    continue
+                f = tar.extractfile(m)
+                if f is None:
+                    continue
+                # Basename only — defends against any path traversal and
+                # flattens the manuscript dir into vignettes/.
+                dest = vign_dir / Path(m.name).name
+                dest.write_bytes(f.read())
+                if is_manuscript:
+                    copied_manuscript = True
+    except (tarfile.TarError, EOFError, OSError) as err:
+        if paper_dir.exists():
+            shutil.rmtree(paper_dir, ignore_errors=True)
+        return _Gap(
+            manifest_row=0, source=row.source, source_id=row.source_id,
+            version=row.version, reason=f"unreadable archive: {err}",
+        )
+
+    if not copied_manuscript:
+        if paper_dir.exists():
+            shutil.rmtree(paper_dir, ignore_errors=True)
+        return _Gap(
+            manifest_row=0, source=row.source, source_id=row.source_id,
+            version=row.version,
+            reason=f"manuscript {in_repo_path!r} not found in archive",
+        )
+
+    _write_sha_marker(paper_dir, actual_sha)
+    return None
+
+
 def _fetch_one(row: ManifestRow, target_dir: Path) -> _Gap | None:
     """Materialise one row under `target_dir`. Returns a `_Gap` on failure, else `None`."""
     paper_dir = target_dir / row.local_path
 
     if _check_existing(paper_dir, row.sha256):
         return None
+
+    if row.source == "github":
+        return _fetch_github(row, target_dir)
 
     if row.source == "jss_archive":
         return _Gap(

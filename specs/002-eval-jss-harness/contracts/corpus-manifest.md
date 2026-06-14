@@ -11,9 +11,9 @@ Authoritative definition of "the corpus" at this git commit. Checked in.
 | Column          | Type     | Required | Description                                                                             |
 |-----------------|----------|----------|-----------------------------------------------------------------------------------------|
 | `jss_doi`       | string   | no       | JSS DOI if known — e.g. `10.18637/jss.v085.i01`. Empty string when the paper has no DOI (arXiv-only, manual). |
-| `source`        | enum     | yes      | One of `cran`, `bioc`, `arxiv`, `jss_archive`, `manual`, `swh`.                         |
-| `source_id`     | string   | yes      | Package name (`MASS`), arXiv identifier (`2401.12345`), JSS article id (`v085i01`), or a `swh:` prefix for SWHIDs. |
-| `version`       | string   | yes      | CRAN `cran_version` (e.g. `7.3-60`), Bioc release (e.g. `3.18`), arXiv `vN` (e.g. `v2`), SWH content id (`sha1_git:...`), or the literal `manual`. |
+| `source`        | enum     | yes      | One of `cran`, `bioc`, `arxiv`, `jss_archive`, `manual`, `swh`, `github`.               |
+| `source_id`     | string   | yes      | Package name (`MASS`), arXiv identifier (`2401.12345`), JSS article id (`v085i01`), a `swh:` prefix for SWHIDs, or an `owner/repo` slug for `github`. |
+| `version`       | string   | yes      | CRAN `cran_version` (e.g. `7.3-60`), Bioc release (e.g. `3.18`), arXiv `vN` (e.g. `v2`), SWH content id (`sha1_git:...`), the literal `manual`, or — for `github` — `<commit_sha>:<in-repo-manuscript-path>` (e.g. `c075a0d…:paper/main.tex`). |
 | `vignette_file` | string   | yes      | Path *inside* `local_path` to the `.tex` file. E.g. `vignettes/paper.tex`.              |
 | `local_path`    | path     | yes      | Filesystem path, relative to the `--target` directory (default `examples/`). Typically `<source>_<source_id>_<version>/`. |
 | `sha256`        | hex(64)  | yes      | SHA256 of the fetched tarball or single file, lowercase. Empty for `manual` rows until the file is stable. |
@@ -36,6 +36,7 @@ jss_doi,source,source_id,version,vignette_file,local_path,sha256
 | `jss_archive` | (no fetch — manual placement required; `corpus fetch` logs a gap)                     |
 | `manual`      | (no fetch — file must already be at `local_path`)                                     |
 | `swh`         | `https://archive.softwareheritage.org/api/1/content/{version}/raw/` (where `version` is the full `sha1_git:...` identifier) |
+| `github`      | `https://codeload.github.com/{source_id}/tar.gz/{commit_sha}` (the commit SHA is the part of `version` before the first `:`). The fetcher copies the pinned manuscript plus the `.bib` files beside it into `<local_path>/vignettes/`, so `vignette_file` is `vignettes/<basename>`. |
 
 All URLs are **immutable, version-pinned** (Constitution §XII). Mutable discovery sources (GitHub, arXiv listing API, Zenodo search) are **never** used for fetching — they are how the manifest gets populated by hand, not how reviewers reproduce the corpus.
 
