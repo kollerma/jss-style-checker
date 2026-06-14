@@ -345,3 +345,40 @@ class TestRnwChunkTrailingWhitespace:
         path = tmp_path / "v.Rnw"
         path.write_text(src, encoding="utf-8")
         assert "Sinput" in parse_rnw_file(path).source
+
+
+class TestRnwChunkTerminatorAndOptions:
+    """Audit fixes: '@ <text>' terminators (Sweave noweb '@ %def') and
+    '>' inside chunk options."""
+
+    def test_at_def_terminator_does_not_overrun(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+        src = (
+            "<<demo>>=\n"
+            "x <- 1\n"
+            "@ %def\n"
+            "Prose with NULL afterwards.\n"
+            "<<demo2>>=\n"
+            "y <- 2\n"
+            "@\n"
+        )
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        parsed = parse_rnw_file(path)
+        # Prose between the '@ %def' terminator and the next chunk is
+        # NOT swallowed/blanked.
+        assert "NULL afterwards" in parsed.source
+        assert parsed.source.count("\\begin{Sinput}") == 2
+
+    def test_gt_in_chunk_option_recognised(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+        src = "<<x, eval=a>b>>=\nz <- 1\n@\nprose\n"
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        assert "Sinput" in parse_rnw_file(path).source
+
+    def test_at_without_space_not_a_terminator(self, tmp_path: Path):
+        # '@foo' is not a Sweave terminator; the chunk runs to the real @.
+        from texlint.core.parser import _RNW_CHUNK
+        m = _RNW_CHUNK.search("<<a>>=\n@foo <- slot\nmore\n@\n")
+        assert m is not None and m.group(0).count("\n") == 3
