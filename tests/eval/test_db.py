@@ -110,3 +110,48 @@ def test_executemany_ignore_applies_or_ignore(tmp_db: Path) -> None:
         assert cx.execute("SELECT COUNT(*) FROM violations").fetchone()[0] == 1
     finally:
         cx.close()
+
+
+def test_migration_adds_and_backfills_last_seen(tmp_path: Path) -> None:
+    """A pre-migration DB (no last_seen_run_id) gains the column on init,
+    backfilled from first_seen_run_id."""
+    import sqlite3
+
+    path = tmp_path / "legacy.db"
+    # Build a minimal legacy schema WITHOUT last_seen_run_id.
+    cx = sqlite3.connect(path)
+    cx.executescript(
+        """
+        CREATE TABLE runs (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT, tool_version TEXT, papers_scanned INT, violations_found INT);
+        CREATE TABLE papers (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doi TEXT, title TEXT, year INT, path TEXT, source TEXT, status TEXT);
+        CREATE TABLE violations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, paper_id INT, rule_id TEXT,
+            category TEXT, line INT, column INT, message TEXT, severity TEXT,
+            verdict TEXT, verdict_reason TEXT, reviewer TEXT,
+            first_seen_run_id INT, file_suffix TEXT, file TEXT);
+        INSERT INTO runs (id, ts, tool_version, papers_scanned, violations_found)
+            VALUES (7, '2026-01-01T00:00:00Z', '0.1.0', 1, 1);
+        INSERT INTO papers (id, path, source, status)
+            VALUES (1, 'p', 'manual', 'scanned');
+        INSERT INTO violations (paper_id, rule_id, category, line, message,
+            severity, first_seen_run_id) VALUES (1, 'JSS-X-001', 'x', 1, 'm',
+            'warning', 7);
+        """
+    )
+    cx.commit()
+    cx.close()
+
+    db.init(path)  # runs the migration
+
+    cx = db.connect(path)
+    try:
+        cols = {r["name"] for r in cx.execute("PRAGMA table_info(violations)")}
+        assert "last_seen_run_id" in cols
+        row = cx.execute(
+            "SELECT first_seen_run_id, last_seen_run_id FROM violations"
+        ).fetchone()
+        assert row["last_seen_run_id"] == row["first_seen_run_id"] == 7
+    finally:
+        cx.close()

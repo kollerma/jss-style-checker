@@ -83,6 +83,13 @@ _PER_RULE_SQL = """
       FROM violations v JOIN papers p ON p.id = v.paper_id
      {pinned_join}
      WHERE v.rule_id != 'JSS-PARSE-000'
+       -- Only count violations the tool STILL emits (latest run), so
+       -- guard-silenced / fixed findings stop dragging precision down.
+       -- NULL = staleness untracked (pre-migration / direct insert) →
+       -- count it; the migration backfills live rows so NULL never
+       -- leaks a stale row in practice.
+       AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
+            OR v.last_seen_run_id IS NULL)
      GROUP BY v.rule_id
      ORDER BY MIN(v.category), v.rule_id
 """
@@ -97,6 +104,13 @@ _PER_RULE_BY_SOURCE_SQL = """
       FROM violations v JOIN papers p ON p.id = v.paper_id
      {pinned_join}
      WHERE v.rule_id != 'JSS-PARSE-000'
+       -- Only count violations the tool STILL emits (latest run), so
+       -- guard-silenced / fixed findings stop dragging precision down.
+       -- NULL = staleness untracked (pre-migration / direct insert) →
+       -- count it; the migration backfills live rows so NULL never
+       -- leaks a stale row in practice.
+       AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
+            OR v.last_seen_run_id IS NULL)
      GROUP BY v.rule_id, p.source
      ORDER BY MIN(v.category), v.rule_id, p.source
 """
@@ -111,6 +125,13 @@ _PER_RULE_BY_FORMAT_SQL = """
       FROM violations v JOIN papers p ON p.id = v.paper_id
      {pinned_join}
      WHERE v.rule_id != 'JSS-PARSE-000'
+       -- Only count violations the tool STILL emits (latest run), so
+       -- guard-silenced / fixed findings stop dragging precision down.
+       -- NULL = staleness untracked (pre-migration / direct insert) →
+       -- count it; the migration backfills live rows so NULL never
+       -- leaks a stale row in practice.
+       AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
+            OR v.last_seen_run_id IS NULL)
      GROUP BY v.rule_id, format
      ORDER BY MIN(v.category), v.rule_id, format
 """
@@ -118,6 +139,8 @@ _PER_RULE_BY_FORMAT_SQL = """
 _PARSE_FAILURE_COUNT_SQL = (
     "SELECT COUNT(*) AS c FROM violations v JOIN papers p ON p.id = v.paper_id"
     " {pinned_join} WHERE v.rule_id = 'JSS-PARSE-000'"
+    " AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)"
+    "      OR v.last_seen_run_id IS NULL)"
 )
 
 

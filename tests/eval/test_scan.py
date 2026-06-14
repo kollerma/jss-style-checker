@@ -246,3 +246,88 @@ class TestVersionedPaperLayout:
         self._mk(tmp_path, "final/decoy.tex")
 
         assert _source_files(tmp_path) == [v]
+
+
+def test_rerun_bumps_last_seen_and_preserves_verdict(
+    monkeypatch, tmp_db: Path, fake_corpus: FakeCorpus
+) -> None:
+    """A violation that re-fires has last_seen bumped to the new run;
+    its verdict survives the upsert."""
+    _install_fake_linter(monkeypatch, fake_corpus)
+    scan.run(db_path=tmp_db, corpus_dir=fake_corpus.root, batch_size=None, force=True)
+
+    cx = db.connect(tmp_db)
+    try:
+        cx.execute(
+            "UPDATE violations SET verdict='true_positive', reviewer='human:x'"
+            " WHERE rule_id != 'JSS-PARSE-000'"
+        )
+    finally:
+        cx.close()
+
+    scan.run(db_path=tmp_db, corpus_dir=fake_corpus.root, batch_size=None, force=True)
+
+    cx = db.connect(tmp_db)
+    try:
+        max_run = cx.execute("SELECT MAX(id) FROM runs").fetchone()[0]
+        rows = cx.execute(
+            "SELECT verdict, last_seen_run_id FROM violations"
+            " WHERE rule_id != 'JSS-PARSE-000'"
+        ).fetchall()
+        assert rows  # sanity
+        for r in rows:
+            assert r["last_seen_run_id"] == max_run  # bumped to latest run
+            assert r["verdict"] == "true_positive"   # preserved through upsert
+    finally:
+        cx.close()
+
+
+def test_stale_violation_excluded_from_precision(
+    monkeypatch, tmp_db: Path
+) -> None:
+    """A labelled FP that the tool stops emitting must NOT count against
+    precision once a later run no longer re-fires it."""
+    from eval import report
+
+    paper = "paper_solo"
+
+    def _invoke(fires: bool):
+        def _fake(paper_dir: Path, jss_lint: str) -> api.LinterResult:
+            vs = (
+                [{"rule_id": "JSS-MARKUP-001", "category": "markup",
+                  "line": 3, "column": 1, "message": "bare R", "file": "m.tex"}]
+                if fires else []
+            )
+            return _fake_result(paper_dir, violations=vs, exit_code=1 if vs else 0)
+        return _fake
+
+    corpus = tmp_db.parent / "corpus"
+    (corpus / paper).mkdir(parents=True)
+    (corpus / paper / "m.tex").write_text("x", encoding="utf-8")
+
+    # Run 1: the violation fires; label it a false positive.
+    monkeypatch.setattr(scan, "_invoke_linter", _invoke(fires=True))
+    scan.run(db_path=tmp_db, corpus_dir=corpus, batch_size=None, force=True)
+    cx = db.connect(tmp_db)
+    try:
+        cx.execute(
+            "UPDATE violations SET verdict='false_positive', reviewer='human:x'"
+            " WHERE rule_id='JSS-MARKUP-001'"
+        )
+    finally:
+        cx.close()
+
+    # Before the fix lands, the FP is the only labelled row → 0% precision.
+    t0 = report.compute_precision(tmp_db)
+    row0 = next(r for r in t0.rows if r.rule_id == "JSS-MARKUP-001")
+    assert (row0.tp, row0.fp) == (0, 1)
+
+    # Run 2: a guard now silences it — the tool no longer emits it.
+    monkeypatch.setattr(scan, "_invoke_linter", _invoke(fires=False))
+    scan.run(db_path=tmp_db, corpus_dir=corpus, batch_size=None, force=True)
+
+    # The stale FP must drop out of the precision table entirely.
+    t1 = report.compute_precision(tmp_db)
+    assert all(r.rule_id != "JSS-MARKUP-001" for r in t1.rows), (
+        "stale FP still counted against precision"
+    )
