@@ -331,3 +331,51 @@ def test_stale_violation_excluded_from_precision(
     assert all(r.rule_id != "JSS-MARKUP-001" for r in t1.rows), (
         "stale FP still counted against precision"
     )
+
+
+class TestDetectDocClass:
+    def _mk(self, root: Path, rel: str, text: str) -> None:
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8")
+
+    def test_jss_class(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        self._mk(tmp_path, "a.tex", "\\documentclass[nojss]{jss}\n\\begin{document}x")
+        assert _detect_doc_class(tmp_path) == "jss"
+
+    def test_article_class_is_non_jss(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        self._mk(tmp_path, "a.tex", "\\documentclass[11pt]{article}\n")
+        assert _detect_doc_class(tmp_path) == "non-jss"
+
+    def test_commented_jss_ignored_uses_article(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        # The clValid pattern: real jss line commented out, article active.
+        self._mk(tmp_path, "a.tex",
+                 "%\\documentclass[shortnames]{jss}\n\\documentclass{article}\n")
+        assert _detect_doc_class(tmp_path) == "non-jss"
+
+    def test_rmd_only_is_jss(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        self._mk(tmp_path, "v.Rmd", "---\ntitle: x\n---\nprose\n")
+        assert _detect_doc_class(tmp_path) == "jss"
+
+    def test_no_class_no_rmd_is_unknown(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        self._mk(tmp_path, "refs.bib", "@article{k, title={t}}\n")
+        assert _detect_doc_class(tmp_path) == "unknown"
+
+
+def test_scan_populates_doc_class(monkeypatch, tmp_db: Path, fake_corpus) -> None:
+    _install_fake_linter(monkeypatch, fake_corpus)
+    scan.run(db_path=tmp_db, corpus_dir=fake_corpus.root, batch_size=None, force=True)
+    cx = db.connect(tmp_db)
+    try:
+        # Every scanned paper got a non-NULL doc_class.
+        nulls = cx.execute(
+            "SELECT COUNT(*) FROM papers WHERE doc_class IS NULL"
+        ).fetchone()[0]
+        assert nulls == 0
+    finally:
+        cx.close()

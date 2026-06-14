@@ -136,6 +136,22 @@ _PER_RULE_BY_FORMAT_SQL = """
      ORDER BY MIN(v.category), v.rule_id, format
 """
 
+_PER_RULE_BY_CLASS_SQL = """
+    SELECT v.rule_id,
+           MIN(v.category) AS category,
+           COALESCE(p.doc_class, 'unknown') AS doc_class,
+           SUM(CASE WHEN v.verdict = 'true_positive'  THEN 1 ELSE 0 END) AS tp,
+           SUM(CASE WHEN v.verdict = 'false_positive' THEN 1 ELSE 0 END) AS fp,
+           SUM(CASE WHEN v.verdict IS NULL OR v.verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
+      FROM violations v JOIN papers p ON p.id = v.paper_id
+     {pinned_join}
+     WHERE v.rule_id != 'JSS-PARSE-000'
+       AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
+            OR v.last_seen_run_id IS NULL)
+     GROUP BY v.rule_id, doc_class
+     ORDER BY MIN(v.category), v.rule_id, doc_class
+"""
+
 _PARSE_FAILURE_COUNT_SQL = (
     "SELECT COUNT(*) AS c FROM violations v JOIN papers p ON p.id = v.paper_id"
     " {pinned_join} WHERE v.rule_id = 'JSS-PARSE-000'"
@@ -294,6 +310,47 @@ def compute_precision_by_format(
     )
 
 
+def compute_precision_by_class(
+    db_path: Path,
+    *,
+    pinned: list[tuple[str, str]] | None = None,
+) -> PrecisionTable:
+    """Overall + per-document-class breakdown using `papers.doc_class`.
+
+    Per-class rows carry the class (`jss` / `non-jss` / `unknown`) in
+    `.source`. The headline is the `jss` rows; `non-jss` is a
+    robustness check on CRAN vignettes of JSS papers shipped in
+    `\\documentclass{article}`. Only `overall` rows gate the exit code.
+    """
+    overall = compute_precision(db_path, pinned=pinned)
+    join_sql, join_params = _pinned_join(pinned)
+    per_class = _PER_RULE_BY_CLASS_SQL.format(pinned_join=join_sql)
+    cx = db.connect(db_path)
+    try:
+        per_class_rows: list[RuleRow] = []
+        for r in cx.execute(per_class, join_params).fetchall():
+            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            per_class_rows.append(
+                RuleRow(
+                    rule_id=r["rule_id"],
+                    category=r["category"] or "unknown",
+                    tp=r["tp"],
+                    fp=r["fp"],
+                    pending=r["pending"],
+                    precision=precision,
+                    status=status,
+                    source=r["doc_class"] or "unknown",
+                )
+            )
+    finally:
+        cx.close()
+    return PrecisionTable(
+        rows=overall.rows + per_class_rows,
+        parse_failures=overall.parse_failures,
+        breakdown="class",
+    )
+
+
 def compute_precision_by_source(
     db_path: Path,
     *,
@@ -442,9 +499,14 @@ def render_terminal(
         console.print(t)
 
     if per_source_rows:
-        is_format = table.breakdown == "format"
-        title = "Per-format breakdown" if is_format else "Per-source breakdown"
-        col_label = "Format" if is_format else "Source"
+        _titles = {
+            "format": ("Per-format breakdown", "Format"),
+            "class": ("Per-document-class breakdown", "Class"),
+            "source": ("Per-source breakdown", "Source"),
+        }
+        title, col_label = _titles.get(
+            table.breakdown, ("Per-source breakdown", "Source")
+        )
         t = Table(title=title)
         t.add_column(col_label)
         t.add_column("Rule")
@@ -674,6 +736,7 @@ def run(
     db_path: Path,
     by_source: bool = False,
     by_format: bool = False,
+    by_class: bool = False,
     csv_path: str | None = None,
     pinned_only: bool = False,
     manifest_path: Path | None = None,
@@ -700,6 +763,8 @@ def run(
 
     if by_format:
         table = compute_precision_by_format(db_path, pinned=pinned)
+    elif by_class:
+        table = compute_precision_by_class(db_path, pinned=pinned)
     elif by_source:
         table = compute_precision_by_source(db_path, pinned=pinned)
     else:
