@@ -33,10 +33,9 @@ rule_id       = "JSS-OPER-002"
 reason        = "RETAINED: Qwen3 polarity inversion (48% agreement at iter-71). Bonsai handles it well (96%) but the skip-list is single-model-agnostic; see eval/labeler-benchmark-summary.md routing notes for per-rule model selection. Move to per-rule routing when (b) lands; remove from skip-list at that time."
 added_in_iter = "5"
 
-[[rules]]
-rule_id       = "JSS-REFS-002"
-reason        = "BibTeX title-case tight heuristic; the gold set has 0 rows for this rule (REFS-002 hasn't fired in the corpus), so benchmark agreement is unmeasurable. Retained pending evidence."
-added_in_spec = "004"
+# JSS-REFS-002 removed from skip-list 2026-06-14: the rule itself was
+# retired (subsumed by REFS-006; its only corpus firing was the
+# generatingfunctionology FP).
 
 [[rules]]
 rule_id       = "JSS-NAME-002"

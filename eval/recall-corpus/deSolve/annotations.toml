@@ -670,16 +670,16 @@ line = 1918
 comment = "Table caption should be below table, not above"
 
 [[violations]]
-rule_id = "JSS-REFS-002"
+rule_id = "JSS-REFS-006"
 file = "integration.bib"
 line = 66
-comment = 'Article title not in title style'
+comment = 'Article title not in title style (re-assigned from retired JSS-REFS-002 2026-06-14; REFS-006 owns title-case)'
 
 [[violations]]
-rule_id = "JSS-REFS-002"
+rule_id = "JSS-REFS-006"
 file = "integration.bib"
 line = 88
-comment = 'Article title not in title style, should be "A Family of Embedded Runge-Kutta Formulae."'
+comment = 'Article title not in title style, should be "A Family of Embedded Runge-Kutta Formulae." (re-assigned from retired JSS-REFS-002 2026-06-14)'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -694,10 +694,10 @@ line = 127
 comment = "Hairer2 - DOI 10.1007/978-3-642-05221-7 found on springer.com"
 
 [[violations]]
-rule_id = "JSS-REFS-002"
+rule_id = "JSS-REFS-006"
 file = "integration.bib"
 line = 198
-comment = 'Article title not in title style, should be "ReacTran: Reactive Transport Modelling in 1D, 2D and 3D"'
+comment = 'Article title not in title style, should be "ReacTran: Reactive Transport Modelling in 1D, 2D and 3D" (re-assigned from retired JSS-REFS-002 2026-06-14)'
 
 [[violations]]
 rule_id = "JSS-REFS-004"

@@ -276,18 +276,6 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
         "explanation": 'BibTeX entries carry a year field so natbib author-year citations render correctly.',
     }),
-    'JSS-REFS-002': MappingProxyType({
-        "category": 'references',
-        "severity": Severity.WARNING,
-        "message_template": 'BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase)',
-        "authority": 'style_guide',
-        "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
-        "inspects": ('bib_files',),
-        "auto_fixable": False,
-        "guide_section": '§3.3 References',
-        "guide_url": 'https://www.jstatsoft.org/about/submissions#references',
-        "explanation": 'BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase).',
-    }),
     'JSS-REFS-003': MappingProxyType({
         "category": 'references',
         "severity": Severity.INFO,
