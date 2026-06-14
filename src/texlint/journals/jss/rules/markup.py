@@ -599,6 +599,46 @@ def _already_code_wrapped(source: str, abs_pos: int) -> bool:
     line_start = source.rfind("\n", 0, abs_pos) + 1
     return bool(_OPEN_CODE_MACRO_RE.search(source, line_start, abs_pos))
 
+
+# A paper-defined *inline-code wrapper* macro: a ``\def`` / ``\newcommand``
+# whose body renders its argument as inline code/verbatim — e.g.
+# ``\def\cmd{\lstinline[...]}`` or ``\newcommand{\cmdtxt}[1]{\texttt{#1}}``
+# (interp's tri/partDeriv/interp vignettes). A USE such as
+# ``\cmd{interp::triangles()}`` is already code-marked, so MARKUP-003's
+# function-call / sentinel detectors must not flag the tokens inside it
+# (premise "bare name in prose" is false; the fix would nest \code in
+# the wrapper). The wrapper's *definition* is unaffected and still
+# flagged where it uses \texttt (handled by the \texttt branch).
+_WRAPPER_DEF_RE = re.compile(
+    r"\\(?:def\s*\\([A-Za-z@]+)"
+    r"|(?:re)?newcommand\*?\s*\{\s*\\([A-Za-z@]+)\s*\})"
+    r"[^\n]*?"
+    r"(?:\\lstinline\b|\\(?:e|E)?[vV]erb\b|\\mintinline\b"
+    r"|\\texttt\s*\{\s*#|\\code\s*\{\s*#)"
+)
+
+
+def _custom_code_wrapper_macros(source: str) -> frozenset[str]:
+    """Names (without backslash) of paper-defined inline-code wrapper
+    macros found in ``source`` — see :data:`_WRAPPER_DEF_RE`."""
+    names: set[str] = set()
+    for m in _WRAPPER_DEF_RE.finditer(source):
+        names.add(m.group(1) or m.group(2))
+    return frozenset(names)
+
+
+def _inside_custom_wrapper(
+    ancestors: Any, wrappers: frozenset[str]
+) -> bool:
+    """True when any ancestor macro is one of the paper's custom
+    inline-code wrappers (so its content is already code-marked)."""
+    if not wrappers:
+        return False
+    return any(
+        isinstance(a, LatexMacroNode) and a.macroname in wrappers
+        for a in ancestors
+    )
+
 # R sentinel values that should be wrapped in ``\code{}`` when they
 # appear as standalone words in prose. Reviewer R5-r3 on jss5342
 # explicitly called out ``NULL -> \code{NULL}`` in Table 3; the same
@@ -624,6 +664,9 @@ def check_jss_markup_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
+        # Paper-defined inline-code wrapper macros (\cmd, \cmdtxt, ...);
+        # content inside their USES is already code-marked.
+        wrappers = _custom_code_wrapper_macros(tex.source)
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
         ):
@@ -688,6 +731,12 @@ def check_jss_markup_003(
             if not isinstance(node, LatexCharsNode):
                 continue
             if not _helpers._is_in_prose_context(ancestors):
+                continue
+            # Already inside a paper-defined inline-code wrapper
+            # (\cmd{...}, \cmdtxt{...}): the content is code-marked, so
+            # neither the function-call nor the sentinel detector should
+            # flag tokens within it.
+            if _inside_custom_wrapper(ancestors, wrappers):
                 continue
             # Skip bibliography environments — those go through the
             # references.py rules, not the JSS markup rules. Avoids
