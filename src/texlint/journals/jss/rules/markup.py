@@ -681,6 +681,11 @@ def check_jss_markup_003(
                     continue
                 if _is_inside_jss_markup(ancestors):
                     continue
+                # \texttt inside \index{} (or other non-rendered macro)
+                # only formats the index entry, not body text — not a
+                # visible-markup issue.
+                if _is_inside_invisible_macro(ancestors):
+                    continue
                 # NB: \texttt inside a macro-definition body
                 # (``\newcommand{\Rcmd}[1]{\texttt{#1}}``) is deliberately
                 # NOT skipped. Those helpers (\Rcmd, \Rarg, \fct, \File,
@@ -737,6 +742,10 @@ def check_jss_markup_003(
             # neither the function-call nor the sentinel detector should
             # flag tokens within it.
             if _inside_custom_wrapper(ancestors, wrappers):
+                continue
+            # Inside \index{}/\nomenclature{} etc.: content is registered,
+            # not rendered as body text — not a visible-markup issue.
+            if _is_inside_invisible_macro(ancestors):
                 continue
             # Skip bibliography environments — those go through the
             # references.py rules, not the JSS markup rules. Avoids
@@ -798,6 +807,29 @@ def check_jss_markup_003(
                     ),
                     fix=fix,
                 )
+
+
+# Macros whose argument is NOT rendered as body text — its content is
+# registered elsewhere (the back-of-book index) or is invisible. A
+# ``\texttt`` / function call / R sentinel inside one of these is not a
+# visible-markup issue, so MARKUP-003 must not flag it: e.g.
+# ``\newcommand{\codefunind}[1]{\codefun{#1}\index{\texttt{#1}}}`` —
+# the visible styling is \codefun; the \texttt only formats the index
+# entry (where \texttt is conventional and \code would be wrong). NB:
+# deliberately NOT the broader _META_MACROS (which includes
+# \newcommand) — a def-body \texttt that styles VISIBLE code is still a
+# TP (\Rcmd / \cmdtxt), so only genuinely non-rendered commands belong
+# here.
+_INVISIBLE_TEXT_MACROS: frozenset[str] = frozenset(
+    {"index", "nomenclature", "glossary", "glsadd"}
+)
+
+
+def _is_inside_invisible_macro(ancestors: Any) -> bool:
+    return any(
+        isinstance(a, LatexMacroNode) and a.macroname in _INVISIBLE_TEXT_MACROS
+        for a in ancestors
+    )
 
 
 def _is_inside_jss_markup(ancestors: Any) -> bool:
