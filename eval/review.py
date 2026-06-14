@@ -402,6 +402,10 @@ def _select_unlabelled(
         " v.severity, v.file, p.path AS paper_path"
         " FROM violations v JOIN papers p ON p.id = v.paper_id"
         " WHERE v.verdict IS NULL"
+        # Only classify violations the tool STILL emits (latest run);
+        # a finding silenced by a rule/parser fix shouldn't be relabelled.
+        " AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)"
+        "      OR v.last_seen_run_id IS NULL)"
         " ORDER BY p.path, v.line, v.id"
     )
     rows = cx.execute(sql).fetchall()

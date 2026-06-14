@@ -609,6 +609,14 @@ def _select_violations(
         )
     else:
         sql += " WHERE (v.verdict IS NULL OR v.verdict = 'uncertain')"
+    # Only surface violations the tool STILL emits (latest run), so a
+    # finding that stopped firing after a rule/parser fix isn't queued
+    # for review. Mirrors the precision report's scoping; NULL =
+    # staleness untracked (legacy / direct insert) → keep it.
+    sql += (
+        " AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)"
+        "      OR v.last_seen_run_id IS NULL)"
+    )
     params: list = []
     if rule_ids is not None:
         placeholders = ", ".join("?" * len(rule_ids))
