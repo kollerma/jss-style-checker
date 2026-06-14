@@ -742,3 +742,51 @@ class TestMarkup003OptionValueGuard:
     def test_bare_prose_sentinel_still_fires(self, run_rule):
         src = _wrap("The function returns NULL when the input is empty.")
         assert len(run_rule(jss_markup_003, src)) == 1
+
+
+class TestMarkup003CustomCodeWrappers:
+    """Paper-defined inline-code wrappers (\\def\\cmd{\\lstinline...},
+    \\newcommand{\\cmdtxt}[1]{\\texttt{#1}}): tokens inside their USES are
+    already code-marked, so the function-call / sentinel detectors must
+    not flag them — but the wrapper DEFINITION's \\texttt still fires."""
+
+    PREAMBLE = (
+        "\\def\\cmd{\\lstinline[basicstyle=\\ttfamily]}\n"
+        "\\newcommand{\\cmdtxt}[1]{\\texttt{#1}}\n"
+    )
+
+    def _doc(self, body: str) -> str:
+        return (
+            "\\documentclass[article]{jss}\n"
+            + self.PREAMBLE
+            + "\\begin{document}\n" + body + "\n\\end{document}"
+        )
+
+    def test_detects_wrapper_names(self):
+        from texlint.journals.jss.rules.markup import (
+            _custom_code_wrapper_macros,
+        )
+        names = _custom_code_wrapper_macros(self.PREAMBLE)
+        assert names == frozenset({"cmd", "cmdtxt"})
+
+    def test_funccall_inside_cmd_silent(self, run_rule):
+        src = self._doc("Compare \\cmd{interp::triangles()} here.")
+        # only the \cmdtxt definition's \texttt may fire, not the \cmd use
+        out = run_rule(jss_markup_003, src)
+        assert all(v.line != 4 for v in out) or out == []  # use line silent
+        # no function-call violation for triangles()
+        assert not any("triangles" in (v.suggestion or "") for v in out)
+
+    def test_sentinel_inside_cmd_silent(self, run_rule):
+        src = self._doc("If \\cmd{TRUE} then smooth.")
+        assert not any("TRUE" in (v.suggestion or "") for v in run_rule(jss_markup_003, src))
+
+    def test_funccall_in_plain_prose_still_fires(self, run_rule):
+        src = self._doc("Compare interp::triangles() here.")
+        assert any("triangles()" in (v.suggestion or "") for v in run_rule(jss_markup_003, src))
+
+    def test_wrapper_definition_texttt_still_fires(self, run_rule):
+        # \newcommand{\cmdtxt}[1]{\texttt{#1}} — the def-body \texttt is TP.
+        src = self._doc("Body text without code.")
+        out = run_rule(jss_markup_003, src)
+        assert any(v.rule_id == "JSS-MARKUP-003" for v in out)
