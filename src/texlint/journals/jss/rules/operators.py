@@ -3,7 +3,10 @@
 Rules:
   - JSS-OPER-001 — symbol-plus-noun constructs like ``p-value`` use a
     typeset form ``$p$~value`` (no hyphen).
-  - JSS-OPER-002 — transpose is typeset with ``\\top``, not ``^T`` or ``^\\prime``.
+  - JSS-OPER-002 — transpose written as literal ``^T`` should be ``\\top``.
+    (Prime notation ``X'`` / ``^\\prime`` is NOT flagged — 31% precision
+    on the labelled corpus; it's usually a derivative or a distinct
+    variable, not a transpose. See check_jss_oper_002.)
   - JSS-OPER-003 — display equations have no blank lines immediately
     before or after; carve-out: equation body ending with a period
     closes a sentence and doesn't need the ``%`` wrapper.
@@ -193,27 +196,19 @@ def _t_caret_follows_big_operator(
 def check_jss_oper_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    # NB: prime notation (``X'`` / ``X^\prime``) is deliberately NOT
+    # flagged. The full human-labelled corpus showed the prime branch
+    # at 31% precision (73 TP / 163 FP): in statistics prose a prime is
+    # overwhelmingly a *different variable* (``(x, x')``), a derivative
+    # (``f'(t)``, ``\dZ^\prime``), or a paired sample (``\bX - \bX'``),
+    # not a transpose. The literal ``^T`` form is 99% precise (91/1) and
+    # is the only convention the recall corpus tests, so OPER-002 now
+    # flags ``^T`` only. (Authors using ``'`` for transpose are missed —
+    # an accepted scope bound; see eval/improvement-log.md.)
     for tex in doc.all_tex_like():
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
         ):
-            if isinstance(node, LatexMacroNode):
-                if not _helpers._is_inside_math(ancestors):
-                    continue
-                # ``\prime`` (with or without an explicit ``^``) is used
-                # as a transpose marker in some papers (pmclust:
-                # ``(6, 7)^\prime``). JSS wants ``\top`` instead.
-                if node.macroname == "prime":
-                    yield _violation(
-                        tex=tex,
-                        pos=node.pos,
-                        rule_id="JSS-OPER-002",
-                        suggestion=(
-                            "Use '\\top' for transpose instead of "
-                            "'\\prime': e.g., 'X^\\top X'."
-                        ),
-                    )
-                continue
             if not isinstance(node, LatexCharsNode):
                 continue
             if not _helpers._is_inside_math(ancestors):
@@ -229,23 +224,6 @@ def check_jss_oper_002(
                     pos=abs_pos,
                     rule_id="JSS-OPER-002",
                     suggestion="Use '\\top' for transpose: e.g., 'X^\\top X'.",
-                )
-            # Single-quote prime used as transpose for a vector or
-            # matrix: ``(w_0, ..., w_p)'`` / ``\mathbf{X}'`` /
-            # ``[A | B]'``. Only fire when ``'`` immediately follows a
-            # closing bracket — letter / digit followed by ``'`` is
-            # almost always derivative notation (``f'(x)``, ``x'``,
-            # ``y_{k'}``), not transpose.
-            for match in re.finditer(r"[)}\]]['′]", node.chars):
-                abs_pos = node.pos + match.start() + 1
-                yield _violation(
-                    tex=tex,
-                    pos=abs_pos,
-                    rule_id="JSS-OPER-002",
-                    suggestion=(
-                        "Use '\\top' for transpose instead of "
-                        "single-quote prime: e.g., 'X^\\top X'."
-                    ),
                 )
 
 
