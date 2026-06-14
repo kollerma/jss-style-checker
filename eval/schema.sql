@@ -36,11 +36,15 @@ CREATE TABLE IF NOT EXISTS violations (
     verdict_reason    TEXT,
     reviewer          TEXT,                 -- "ai:<model>" | "human:<user>" | NULL
     first_seen_run_id INTEGER NOT NULL REFERENCES runs(id),
+    last_seen_run_id  INTEGER REFERENCES runs(id),  -- most recent run that re-emitted this violation; NULL only on pre-migration rows. Precision counts rows whose last_seen == the latest run, so guard-silenced / fixed violations stop counting.
     file_suffix       TEXT,                 -- '.tex' | '.bib' | '.Rnw' | '.Rmd' (spec 005) — NULL for pre-005 rows
     file              TEXT,                 -- source file path relative to the paper dir (e.g. 'dplyr/vignettes/rowwise.Rmd'); NULL for pre-p8 rows
     UNIQUE(paper_id, rule_id, line, message, file)
 );
 
-CREATE INDEX IF NOT EXISTS idx_viol_rule    ON violations(rule_id);
-CREATE INDEX IF NOT EXISTS idx_viol_verdict ON violations(verdict);
-CREATE INDEX IF NOT EXISTS idx_viol_paper   ON violations(paper_id);
+CREATE INDEX IF NOT EXISTS idx_viol_rule     ON violations(rule_id);
+CREATE INDEX IF NOT EXISTS idx_viol_verdict  ON violations(verdict);
+CREATE INDEX IF NOT EXISTS idx_viol_paper    ON violations(paper_id);
+-- idx_viol_lastseen is created in db._migrate_violations_last_seen, not
+-- here: on a legacy DB the column is added by that migration AFTER this
+-- script runs, so indexing it here would fail with "no such column".

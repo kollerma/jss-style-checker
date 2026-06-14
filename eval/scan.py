@@ -202,7 +202,12 @@ def _persist_violations(
     run_id: int,
     violations: list[dict],
 ) -> int:
-    """Insert-or-ignore all `violations` for one paper. Returns count emitted."""
+    """Upsert all `violations` for one paper. New rows insert with
+    first_seen = last_seen = run_id; rows that re-fire bump
+    last_seen_run_id (verdict / reviewer are preserved). The report
+    scopes precision to the latest run via last_seen_run_id, so a
+    violation the tool no longer emits drops out instead of counting
+    against precision forever. Returns count emitted."""
     rows = [
         (
             paper_id,
@@ -212,7 +217,8 @@ def _persist_violations(
             v.get("column"),
             v["message"],
             v.get("severity", "error"),
-            run_id,
+            run_id,            # first_seen_run_id
+            run_id,            # last_seen_run_id
             Path(v["file"]).suffix if v.get("file") else None,
             _relative_file(v.get("file"), paper_dir),
         )
@@ -220,11 +226,12 @@ def _persist_violations(
     ]
     if not rows:
         return 0
-    db.executemany_ignore(
-        cx,
-        "INSERT OR IGNORE INTO violations (paper_id, rule_id, category, line, column,"
-        " message, severity, first_seen_run_id, file_suffix, file)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    cx.executemany(
+        "INSERT INTO violations (paper_id, rule_id, category, line, column,"
+        " message, severity, first_seen_run_id, last_seen_run_id, file_suffix, file)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        " ON CONFLICT(paper_id, rule_id, line, message, file)"
+        " DO UPDATE SET last_seen_run_id = excluded.last_seen_run_id",
         rows,
     )
     return len(violations)

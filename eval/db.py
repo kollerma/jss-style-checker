@@ -44,6 +44,7 @@ def init(path: Path) -> None:
         cx.executescript(_SCHEMA_PATH.read_text(encoding="utf-8"))
         _migrate_violations_file_suffix(cx)
         _migrate_violations_file(cx)
+        _migrate_violations_last_seen(cx)
     finally:
         cx.close()
 
@@ -53,6 +54,33 @@ def _migrate_violations_file_suffix(cx: sqlite3.Connection) -> None:
     cols = {r["name"] for r in cx.execute("PRAGMA table_info(violations)").fetchall()}
     if "file_suffix" not in cols:
         cx.execute("ALTER TABLE violations ADD COLUMN file_suffix TEXT")
+
+
+def _migrate_violations_last_seen(cx: sqlite3.Connection) -> None:
+    """Add `violations.last_seen_run_id` and backfill it.
+
+    Before this column the precision report counted every row that ever
+    fired, so a violation the tool no longer emits (guard-silenced or
+    fixed) still dragged precision down forever. ``scan`` now bumps
+    ``last_seen_run_id`` on every re-emit, and the report scopes to the
+    latest run. Existing rows are backfilled to their ``first_seen_run_id``
+    as a best guess; the next ``scan --force`` corrects every still-firing
+    row to the new run id, leaving truly-stale rows behind.
+    """
+    cols = {r["name"] for r in cx.execute("PRAGMA table_info(violations)").fetchall()}
+    if "last_seen_run_id" not in cols:
+        cx.execute("ALTER TABLE violations ADD COLUMN last_seen_run_id INTEGER")
+        cx.execute(
+            "UPDATE violations SET last_seen_run_id = first_seen_run_id"
+            " WHERE last_seen_run_id IS NULL"
+        )
+    # Created here (not in schema.sql) so it works for both fresh DBs
+    # (column from CREATE TABLE) and legacy DBs (column from the ALTER
+    # above) — schema.sql runs before this migration.
+    cx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_viol_lastseen"
+        " ON violations(last_seen_run_id)"
+    )
 
 
 def _migrate_violations_file(cx: sqlite3.Connection) -> None:
