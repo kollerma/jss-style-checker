@@ -408,3 +408,36 @@ def test_human_review_reviewer_defaults_to_env(monkeypatch, tmp_db: Path) -> Non
         assert row["reviewer"] == "human:envuser"
     finally:
         cx.close()
+
+
+def test_select_violations_excludes_stale_rows(tmp_db) -> None:
+    """human-review queue likewise drops violations the tool no longer
+    emits (stale last_seen_run_id)."""
+    from pathlib import Path
+    from eval import db, human_review
+    cx = db.connect(tmp_db)
+    try:
+        for _ in range(2):
+            cx.execute(
+                "INSERT INTO runs (ts, tool_version, papers_scanned, violations_found)"
+                " VALUES ('2026-04-23T00:00:00Z', '0.1.0', 1, 1)")
+        cx.execute("INSERT INTO papers (path, source, status)"
+                   " VALUES ('p', 'manual', 'scanned')")
+        pid = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
+        runs = [r[0] for r in cx.execute("SELECT id FROM runs ORDER BY id")]
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message,"
+            " severity, first_seen_run_id, last_seen_run_id)"
+            " VALUES (?, 'JSS-A', 'x', 1, 'cur', 'warning', ?, ?)",
+            (pid, runs[0], runs[1]))
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message,"
+            " severity, first_seen_run_id, last_seen_run_id)"
+            " VALUES (?, 'JSS-B', 'x', 2, 'stale', 'warning', ?, ?)",
+            (pid, runs[0], runs[0]))
+        cx.commit()
+        rows = human_review._select_violations(cx, rule_ids=None, limit=None)
+        msgs = {r["message"] for r in rows}
+        assert "cur" in msgs and "stale" not in msgs
+    finally:
+        cx.close()

@@ -464,3 +464,40 @@ def test_routing_table_form_sets_enable_thinking(tmp_path: Path) -> None:
     assert clients["qwen35"].enable_thinking is False
     assert clients["bonsai"].enable_thinking is None
     assert rule_to_model == {"JSS-MARKUP-001": "qwen35"}
+
+
+def test_select_unlabelled_excludes_stale_rows(tmp_db: Path) -> None:
+    """A pending violation the tool no longer emits (last_seen behind the
+    latest run) is excluded from the review queue, so rule/parser fixes
+    don't leave dead rows queued for labelling."""
+    from eval import review
+    cx = db.connect(tmp_db)
+    try:
+        # Two runs: run1 (old), run2 (latest).
+        for _ in range(2):
+            cx.execute(
+                "INSERT INTO runs (ts, tool_version, papers_scanned, violations_found)"
+                " VALUES ('2026-04-23T00:00:00Z', '0.1.0', 1, 1)")
+        cx.execute("INSERT INTO papers (path, source, status)"
+                   " VALUES ('p', 'manual', 'scanned')")
+        pid = cx.execute("SELECT last_insert_rowid()").fetchone()[0]
+        runs = [r[0] for r in cx.execute("SELECT id FROM runs ORDER BY id")]
+        # current: still fires in the latest run
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message,"
+            " severity, first_seen_run_id, last_seen_run_id)"
+            " VALUES (?, 'JSS-A', 'x', 1, 'cur', 'warning', ?, ?)",
+            (pid, runs[0], runs[1]))
+        # stale: last seen in the OLD run only
+        cx.execute(
+            "INSERT INTO violations (paper_id, rule_id, category, line, message,"
+            " severity, first_seen_run_id, last_seen_run_id)"
+            " VALUES (?, 'JSS-B', 'x', 2, 'stale', 'warning', ?, ?)",
+            (pid, runs[0], runs[0]))
+        cx.commit()
+        rows = review._select_unlabelled(cx, skip_rules=set(), limit=None)
+        msgs = {r["message"] for r in rows}
+        assert "cur" in msgs
+        assert "stale" not in msgs
+    finally:
+        cx.close()
