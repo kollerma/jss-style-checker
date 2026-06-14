@@ -578,6 +578,27 @@ def _project_title_plain_text(group: Any) -> str:
 
 _FUNCTION_CALL_RE = re.compile(r"\b[a-zA-Z][a-zA-Z0-9_.]*\(\s*\)")
 
+# A code-like markup macro left open (no closing brace yet) on the
+# stretch of source preceding a match — i.e. the match sits *inside*
+# ``\code{...}`` / ``\texttt{...}`` / ``\pkg{...}`` etc. This is a
+# source-level guard that does NOT rely on the parsed node tree: when
+# a document falls back to the tolerant parser (mismatched
+# environment, etc.), the tree degrades and a ``\code{f()}`` argument
+# may lose its macro parent, so the ancestor-based
+# ``_is_in_prose_context`` check stops recognising the wrapper and the
+# function-call detector fires on already-wrapped code. Checking the
+# raw source is robust to that degradation.
+_OPEN_CODE_MACRO_RE = re.compile(
+    r"\\(?:code|texttt|pkg|proglang|verb|fct|command|samp|file)\*?\{[^{}]*\Z"
+)
+
+
+def _already_code_wrapped(source: str, abs_pos: int) -> bool:
+    """True when ``abs_pos`` sits inside an unclosed code-like markup
+    macro on its source line (``\\code{ … <abs_pos> … }``)."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    return bool(_OPEN_CODE_MACRO_RE.search(source, line_start, abs_pos))
+
 # R sentinel values that should be wrapped in ``\code{}`` when they
 # appear as standalone words in prose. Reviewer R5-r3 on jss5342
 # explicitly called out ``NULL -> \code{NULL}`` in Table 3; the same
@@ -669,6 +690,12 @@ def check_jss_markup_003(
                 continue
             for match in _FUNCTION_CALL_RE.finditer(node.chars):
                 abs_pos = node.pos + match.start()
+                # Source-level belt-and-suspenders: skip matches already
+                # inside \code{}/\texttt{} etc. The ancestor-based prose
+                # check above misses these on tolerant-parsed documents
+                # whose degraded node tree drops the macro parent.
+                if _already_code_wrapped(tex.source, abs_pos):
+                    continue
                 yield _violation(
                     tex=tex,
                     pos=abs_pos,

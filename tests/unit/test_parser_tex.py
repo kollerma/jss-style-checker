@@ -276,3 +276,42 @@ class TestLatin1Fallback:
 
         assert len(parsed.violations) == 1
         assert parsed.violations[0].severity.value == "error"
+
+
+class TestRnwCommentedChunkHeader:
+    """A commented-out chunk header (`% <<x>>=`) must NOT open a chunk;
+    only column-0 `<<x>>=` does (Sweave/knitr requirement). Regression
+    for cna.Rnw, where a commented `% # <<data type>>=` swallowed real
+    LaTeX prose and blanked its markup."""
+
+    def test_commented_header_does_not_swallow_prose(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+
+        src = (
+            "<<real, eval=TRUE>>=\n"
+            "x <- 1\n"
+            "@\n"
+            "% # <<commented, eval=F>>=\n"
+            "% # foo()\n"
+            "% # @\n"
+            "\n"
+            "Prose with \\code{configTable()} and \\pkg{cna}.\n"
+        )
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        parsed = parse_rnw_file(path)
+        # The real prose macros survive (backslashes/braces intact),
+        # i.e. the phantom chunk did not blank them.
+        assert "\\code{configTable()}" in parsed.source
+        assert "\\pkg{cna}" in parsed.source
+        # The real chunk body was still wrapped as Sinput.
+        assert "Sinput" in parsed.source
+
+    def test_real_column0_chunk_still_wrapped(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+
+        src = "<<c>>=\ny <- 2\n@\nprose\n"
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        parsed = parse_rnw_file(path)
+        assert "Sinput" in parsed.source

@@ -54,8 +54,16 @@ _UTF8_BOM = "﻿"
 # `\r\n` line endings; without `\r?\n` the chunk-header line break never
 # matches and the entire chunk is left in the stripped source, exposing
 # code identifiers to MARKUP-001 / -003 etc.
+#
+# The `^` anchor is load-bearing: Sweave/knitr require the `<<...>>=`
+# chunk header at column 0. Without it, a *commented-out* chunk header
+# (`% # <<data type, eval=F>>=` in cna.Rnw) is matched as a real
+# opener; since its commented `% # @` is not a column-0 terminator,
+# the phantom chunk swallows everything down to the next real `@` —
+# blanking the `\`/`{`/`}` of intervening LaTeX prose and producing
+# both spurious MARKUP findings and a broken parse.
 _RNW_CHUNK = re.compile(
-    r"<<[^>]*>>=\r?\n.*?^@\s*$",
+    r"^<<[^>]*>>=\r?\n.*?^@\s*$",
     re.DOTALL | re.MULTILINE,
 )
 
