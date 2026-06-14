@@ -742,20 +742,3 @@ class TestMarkup003OptionValueGuard:
     def test_bare_prose_sentinel_still_fires(self, run_rule):
         src = _wrap("The function returns NULL when the input is empty.")
         assert len(run_rule(jss_markup_003, src)) == 1
-
-
-class TestMarkup003MacroDefinitionBody:
-    """\\texttt inside a \\newcommand/\\def body is the macro's
-    implementation (parameter #1, not inline code) — must not fire."""
-
-    def test_newcommand_texttt_body_silent(self, run_rule):
-        src = _wrap("\\newcommand{\\Rlevel}[1]{\\texttt{#1}}")
-        assert run_rule(jss_markup_003, src) == []
-
-    def test_newcommand_texttt_with_call_silent(self, run_rule):
-        src = _wrap("\\newcommand{\\fct}[1]{{\\texttt{#1()}}}")
-        assert run_rule(jss_markup_003, src) == []
-
-    def test_body_texttt_still_fires(self, run_rule):
-        src = _wrap("Call \\texttt{configTable} to build it.")
-        assert len(run_rule(jss_markup_003, src)) == 1

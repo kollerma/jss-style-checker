@@ -638,14 +638,13 @@ def check_jss_markup_003(
                     continue
                 if _is_inside_jss_markup(ancestors):
                     continue
-                # Macro-definition body: ``\newcommand{\Rlevel}[1]{\texttt{#1}}``
-                # is a custom helper's *implementation* (the argument is a
-                # parameter like ``#1``, not inline code), not a \texttt
-                # misuse in prose. The rule targets body usage, not a
-                # paper's macro internals; flagging defs is noise and any
-                # "fix" would rewrite the macro's behaviour.
-                if _is_macro_definition_line(tex.source, node.pos):
-                    continue
+                # NB: \texttt inside a macro-definition body
+                # (``\newcommand{\Rcmd}[1]{\texttt{#1}}``) is deliberately
+                # NOT skipped. Those helpers (\Rcmd, \Rarg, \fct, \File,
+                # \Rlevel ...) are code-styling wrappers that JSS wants
+                # defined with \code, and fixing the definition fixes
+                # every use — reviewers (humans included) consistently
+                # label these TP. A guard here regressed ~97 such TPs.
                 # Content-aware suggestion and fix. When the argument is a
                 # known language token (R, C, Stan, ...) → \proglang{X};
                 # when it's a known R package → \pkg{X}; otherwise → \code.
