@@ -711,6 +711,14 @@ def check_jss_markup_003(
                     continue
                 start = match.start()
                 end = match.end()
+                # Option-value guard: a sentinel that is the RHS of a
+                # ``key=`` assignment is an option value, not bare R
+                # prose — e.g. ``\includegraphics[clip=TRUE]{...}`` or
+                # ``\includegraphics[..., trim = 5 5, clip = TRUE]``,
+                # and knitr chunk options (``comment=NA``). Look back
+                # over whitespace for an ``=``.
+                if node.chars[:start].rstrip().endswith("="):
+                    continue
                 abs_pos = node.pos + start
                 abs_end = node.pos + end
                 # Wrap is mechanical and self-stabilising: the rewritten

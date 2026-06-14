@@ -55,15 +55,21 @@ _UTF8_BOM = "﻿"
 # matches and the entire chunk is left in the stripped source, exposing
 # code identifiers to MARKUP-001 / -003 etc.
 #
-# The `^` anchor is load-bearing: Sweave/knitr require the `<<...>>=`
-# chunk header at column 0. Without it, a *commented-out* chunk header
-# (`% # <<data type, eval=F>>=` in cna.Rnw) is matched as a real
-# opener; since its commented `% # @` is not a column-0 terminator,
-# the phantom chunk swallows everything down to the next real `@` —
-# blanking the `\`/`{`/`}` of intervening LaTeX prose and producing
-# both spurious MARKUP findings and a broken parse.
+# The line-start anchor is load-bearing: a chunk header must be the
+# first non-whitespace on its line. Without it, a *commented-out*
+# header (`% # <<data type, eval=F>>=` in cna.Rnw) is matched as a real
+# opener; since its commented `% # @` is not a real terminator, the
+# phantom chunk swallows everything down to the next `@` — blanking the
+# `\`/`{`/`}` of intervening LaTeX prose and producing both spurious
+# MARKUP findings and a broken parse.
+#
+# Leading horizontal whitespace IS allowed (`^[ \t]*`): knitr (unlike
+# classic Sweave's strict column 0) accepts indented chunk headers, and
+# real CRAN vignettes indent them inside `minipage` / `figure` envs
+# (e.g. CUBvignette-knitr.Rnw). A comment prefix (`%`) is non-whitespace
+# so it still won't match — keeping the cna.Rnw fix intact.
 _RNW_CHUNK = re.compile(
-    r"^<<[^>]*>>=\r?\n.*?^@\s*$",
+    r"^[ \t]*<<[^>]*>>=\r?\n.*?^[ \t]*@[ \t]*\r?$",
     re.DOTALL | re.MULTILINE,
 )
 
