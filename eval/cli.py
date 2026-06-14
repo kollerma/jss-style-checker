@@ -627,6 +627,84 @@ def benchmark_cmd(
     ctx.exit(code)
 
 
+@cli.command("cap003-recheck")
+@click.option(
+    "--apply",
+    "apply_file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help=(
+        "Apply judge verdicts from this JSON file "
+        "([{id, verdict, reason}]). Without it, prints the worksheet."
+    ),
+)
+@click.pass_context
+def cap003_recheck_cmd(ctx: click.Context, apply_file: Path | None) -> None:
+    """Double-check JSS-CAP-003 (caption sentence-style) verdicts.
+
+    Without --apply: emit a JSON worksheet of every currently-firing
+    CAP-003 violation with a per-word capitalisation analysis, for a
+    strong judge to label. With --apply FILE: ingest that judge's
+    verdicts, validate against real-human labels (never overwriting
+    them) and report inter-rater agreement, then write the judge's
+    verdict for the remaining (claude-proxy / pending) rows.
+    """
+    import json
+
+    from eval import cap003_recheck as rc
+
+    cx = db.connect(ctx.obj["db"])
+    try:
+        if apply_file is None:
+            rows = rc.collect_rows(cx)
+            worksheet = [
+                {
+                    "id": r.violation_id,
+                    "paper": r.paper_path,
+                    "file": r.file,
+                    "line": r.line,
+                    "existing_verdict": r.verdict,
+                    "existing_reviewer": r.reviewer,
+                    "caption": r.analysis.clean if r.analysis else None,
+                    "raw": r.analysis.raw if r.analysis else None,
+                    "ordinary_capitals": (
+                        r.analysis.ordinary_capitals if r.analysis else []
+                    ),
+                    "heuristic_offenders": (
+                        r.analysis.heuristic_offenders if r.analysis else None
+                    ),
+                    "extraction_failed": r.analysis is None,
+                }
+                for r in rows
+            ]
+            click.echo(json.dumps(worksheet, indent=2))
+            return
+
+        verdicts = json.loads(Path(apply_file).read_text(encoding="utf-8"))
+        report = rc.apply_verdicts(cx, verdicts)
+        rate = report.human_agreement_rate
+        click.echo(
+            f"eval-jss cap003-recheck: wrote {report.written} judge "
+            f"verdict(s); validated against {report.human_checked} "
+            f"human label(s) — "
+            f"{('%.1f%%' % (rate * 100)) if rate is not None else 'n/a'} "
+            f"agreement."
+        )
+        for d in report.human_disagreements:
+            click.echo(
+                f"  DISAGREE id={d['id']}: human={d['human']} "
+                f"judge={d['judge']} — {d['reason']}",
+                err=True,
+            )
+        if report.skipped_unknown_id:
+            click.echo(
+                f"  (ignored {len(report.skipped_unknown_id)} unknown id(s))",
+                err=True,
+            )
+    finally:
+        cx.close()
+
+
 @cli.group("jss-archive")
 def jss_archive_group() -> None:
     """Scrape and consult the JSS archive (OAI-PMH)."""
