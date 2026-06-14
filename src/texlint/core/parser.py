@@ -162,6 +162,15 @@ def _neutralize_verbatim_envs(src: str) -> str:
     table since ``\\n`` isn't in the map)."""
     def _sub(m: re.Match[str]) -> str:
         whole = m.group(0)
+        # A commented-out verbatim env (``%\begin{Code} ... \end{Code}``)
+        # is not a real env — leave it untouched so pylatexenc keeps
+        # treating its lines as LaTeX comments. Otherwise the `%`
+        # markers INSIDE the span get neutralised to `?`, un-commenting
+        # the block and exposing its (commented-out) code to the markup
+        # rules (networkVignette.Rnw:232, multivator.Rnw:62).
+        line_start = m.string.rfind("\n", 0, m.start()) + 1
+        if re.search(r"(?<!\\)%", m.string[line_start:m.start()]):
+            return whole
         # Locate the env body (everything between \begin{...} and \end{...}).
         head_re = re.match(r"\\begin\{[^}]+\}", whole)
         if head_re is None:

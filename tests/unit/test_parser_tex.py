@@ -419,3 +419,27 @@ class TestRnwGlobalChunkOptions:
         src = "<<a>>=\nvisible <- 1\n@\n"
         out = self._parse(tmp_path, src)
         assert "Sinput" in out.source           # still wrapped (visible)
+
+
+class TestCommentedVerbatimEnv:
+    """A commented-out verbatim env (% \\begin{Code} ... \\end{Code})
+    must not be neutralised — else its inner % markers become ? and the
+    commented code is exposed to the markup rules."""
+
+    def test_commented_code_block_stays_commented(self, tmp_path: Path):
+        from texlint.core.parser import parse_tex_source
+        src = (
+            "Prose.\n"
+            "%\\begin{Code}\n"
+            "%x <- as.network(nmat, loops = TRUE)\n"
+            "%\\end{Code}\n"
+            "More prose.\n"
+        )
+        parsed = parse_tex_source(src, Path("t.tex"))
+        # Leading % markers preserved (not turned into ?).
+        assert "%x <- as.network" in parsed.source
+
+    def test_real_code_env_still_neutralised(self, tmp_path: Path):
+        from texlint.core.parser import _neutralize_verbatim_envs
+        out = _neutralize_verbatim_envs("\\begin{Code}\ncost $x$\n\\end{Code}\n")
+        assert "?" in out  # $ neutralised
