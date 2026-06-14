@@ -725,3 +725,20 @@ class TestMarkup001GuardRecallProtection:
         # word nearby — these are languages (DBI-proposal).
         src = _wrap("self-contained tools (R, S, and C APIs) would be")
         assert len(run_rule(jss_markup_001, src)) >= 1
+
+
+class TestMarkup003OptionValueGuard:
+    """R sentinels that are the RHS of a key=value option (LaTeX optional
+    args, knitr chunk options) are not bare prose — must not fire."""
+
+    def test_includegraphics_clip_true_silent(self, run_rule):
+        src = _wrap("See \\includegraphics[width=5cm, clip=TRUE]{fig}.")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_spaced_option_value_silent(self, run_rule):
+        src = _wrap("Plot \\includegraphics[trim = 5 5, clip = TRUE]{f}.")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_bare_prose_sentinel_still_fires(self, run_rule):
+        src = _wrap("The function returns NULL when the input is empty.")
+        assert len(run_rule(jss_markup_003, src)) == 1
