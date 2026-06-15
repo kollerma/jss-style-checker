@@ -52,11 +52,14 @@ _MISSING_SPACES_RE = re.compile(
     r"|(?:,[A-Za-z0-9_\.\(\[])"
 )
 
-# Code-env (Sinput / CodeInput / verbatim) line scanner — narrower than
-# the ``\code{...}`` heuristic because R style allows ``f(x=1)`` (no
-# spaces around ``=`` inside function calls) and chunk content has many
-# such legitimate keyword args. Only the comma-without-following-space
-# pattern is unambiguous in any R style guide.
+# Comma-without-following-space inside a code env (Sinput / CodeInput /
+# verbatim). The code-env scan applies this *alongside*
+# ``_MISSING_SPACES_RE`` (operator spacing, including ``=``): JSS requires
+# spaces around ``=`` even in function-argument keyword position —
+# ``f(x = 1)``, not ``f(x=1)`` — overriding the usual R/Python
+# convention (recall-corpus annotation CARBayesST.Rnw:52 et al.,
+# 2026-06-11). So ``group=mvad`` in a chunk is a genuine violation, not a
+# tolerated keyword arg.
 _CODE_ENV_MISSING_COMMA_SPACE_RE = re.compile(r",[A-Za-z0-9_\.\(\[\"']")
 # An R / shell comment from ``#`` to end-of-line — used to mask comments
 # before scanning operator spacing so prose-style commas inside comments
