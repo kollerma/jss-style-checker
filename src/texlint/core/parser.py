@@ -38,6 +38,17 @@ from texlint.api import (
 _PARSE_RULE_ID = "JSS-PARSE-000"
 _UTF8_BOM = "﻿"
 
+# bibtexparser routes recoverable defects (it keeps a usable entry) into
+# `failed_blocks` alongside genuine parse failures. These are recoverable and
+# owned by dedicated rules, so parse_bib_file must NOT raise a catastrophic
+# JSS-PARSE-000 for them (which would fail the whole document):
+#   * DuplicateBlockKeyBlock — duplicate citation key → JSS-BIBTEX-002.
+#   * DuplicateFieldKeyBlock — a field repeated within one entry (first
+#     occurrence kept) → JSS-BIBTEX-005.
+_RECOVERABLE_BIB_BLOCKS = frozenset(
+    {"DuplicateBlockKeyBlock", "DuplicateFieldKeyBlock"}
+)
+
 # Spec 005 FR-001: line-preserving regex substitution over Sweave / knitr
 # R code chunks. Handles `<<>>=` (no label) and `<<lbl, opts>>=` forms.
 # CRLF tolerant: real CRAN vignettes (e.g., zoo-quickref.Rnw) ship with
@@ -353,11 +364,7 @@ def parse_bib_file(path: Path) -> ParsedBibFile:
     library = bibtexparser.parse_string(source)
     violations: list[Violation] = []
     for failed in getattr(library, "failed_blocks", ()):
-        # DuplicateBlockKeyBlock is a recoverable warning, not a parse
-        # failure — bibtexparser kept the first occurrence and routed
-        # the rest here. JSS-BIBTEX-002 reports duplicate citation
-        # keys directly; we must not double-flag them as parse errors.
-        if type(failed).__name__ == "DuplicateBlockKeyBlock":
+        if type(failed).__name__ in _RECOVERABLE_BIB_BLOCKS:
             continue
         start = getattr(failed, "start_line", None)
         line = (start + 1) if isinstance(start, int) else 1

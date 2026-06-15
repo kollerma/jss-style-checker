@@ -10,6 +10,14 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Added
 
+- **`JSS-BIBTEX-005`** — flags a field key repeated within a single
+  BibTeX entry (e.g. two `author =` lines, or duplicate
+  `volume`/`pages`). BibTeX keeps only the first occurrence and silently
+  drops the rest, so the rendered citation loses data. Previously such an
+  entry tripped a catastrophic `JSS-PARSE-000` that failed the whole
+  document; the parser now treats `bibtexparser`'s recoverable
+  `DuplicateFieldKeyBlock` like its `DuplicateBlockKeyBlock` sibling and
+  reports the dropped field(s) via this rule instead.
 - Per-rule measured-precision **confidence tiers**. The catalogue now
   carries an optional `confidence` key (`high` default / `medium` /
   `low`) sourced from the eval-jss precision history; the four

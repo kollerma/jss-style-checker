@@ -396,6 +396,18 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "guide_url": 'https://www.jstatsoft.org/about/submissions#bibliography',
         "explanation": 'Entries with 6+ authors use \\shortcites{} or the shortnames class option is enabled.',
     }),
+    'JSS-BIBTEX-005': MappingProxyType({
+        "category": 'bibtex',
+        "severity": Severity.ERROR,
+        "message_template": 'No BibTeX field key is repeated within a single entry',
+        "authority": 'style_guide',
+        "authority_ref": '#how-to-cite-r-packages',
+        "inspects": ('bib_files',),
+        "auto_fixable": False,
+        "guide_section": '§5.1 Bibliography',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#bibliography',
+        "explanation": 'No BibTeX field key is repeated within a single entry.',
+    }),
     'JSS-NAME-001': MappingProxyType({
         "category": 'naming',
         "severity": Severity.WARNING,

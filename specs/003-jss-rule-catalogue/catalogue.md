@@ -4,7 +4,7 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 58  
+**Rule count**: 59  
 **Category count**: 15
 
 ---
@@ -74,7 +74,7 @@ _references_ — 7 rule(s)
 
 ## BibTeX
 
-_bibtex_ — 4 rule(s)
+_bibtex_ — 5 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
@@ -82,6 +82,7 @@ _bibtex_ — 4 rule(s)
 | `JSS-BIBTEX-002` | error | BibTeX citation keys are unique within the database | style_guide | `#how-to-cite-r-packages` | — |
 | `JSS-BIBTEX-003` | error | BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …) | style_guide | `#how-to-cite-r-packages` | — |
 | `JSS-BIBTEX-004` | warning | Entries with 6+ authors use \shortcites{} or the shortnames class option is enabled | jss_cls | `jss.cls:45` | — |
+| `JSS-BIBTEX-005` | error | No BibTeX field key is repeated within a single entry | style_guide | `#how-to-cite-r-packages` | — |
 
 ## Naming
 
@@ -1405,6 +1406,55 @@ E. Patel, F. Nguyen, and G. Walker (2020)" which overflows line wrapping and clu
 jss.cls:45 defines the `shortnames` class option (passed through to natbib) that collapses to
 "Smith et al. (2020)" on first mention. Alternative: \shortcites{key} in the preamble for per-entry
 control. The rule fires when an entry has ≥6 authors AND the preamble lacks both mitigations.
+
+---
+
+### JSS-BIBTEX-005
+
+**Category**: `bibtex` · **Severity**: `error` · **Auto-fixable**: no
+
+No BibTeX field key is repeated within a single entry
+
+**Authority**: `style_guide` → `#how-to-cite-r-packages`
+
+**Inspects**: `bib_files`
+
+<details>
+<summary>Example violation</summary>
+
+```bibtex
+@article{Knuth1984,
+  author = {Donald Knuth},
+  author = {Leslie Lamport},
+  title  = {Literate Programming},
+  journal = {Journal of Examples},
+  year   = {1984}
+}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```bibtex
+@article{Knuth1984,
+  author = {Donald Knuth and Leslie Lamport},
+  title  = {Literate Programming},
+  journal = {Journal of Examples},
+  year   = {1984}
+}
+```
+
+</details>
+
+**Notes**: Style-guide SG-017 requires valid BibTeX. A field repeated within one
+entry (e.g., two `author =` lines) is malformed: BibTeX keeps only the
+first occurrence and silently drops the rest, so the rendered citation
+loses data. bibtexparser routes such an entry into `failed_blocks` as a
+DuplicateFieldKeyBlock; the parser treats it as recoverable (the kept
+first value still parses) rather than a fatal JSS-PARSE-000, and this
+rule reports the dropped duplicate field(s).
 
 ---
 

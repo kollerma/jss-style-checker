@@ -863,6 +863,41 @@ rules:
       "Smith et al. (2020)" on first mention. Alternative: \shortcites{key} in the preamble for per-entry
       control. The rule fires when an entry has ≥6 authors AND the preamble lacks both mitigations.
 
+  - rule_id: JSS-BIBTEX-005
+    category: bibtex
+    severity: error
+    description: No BibTeX field key is repeated within a single entry
+    authority: style_guide
+    authority_ref: "#how-to-cite-r-packages"
+    example_violation: |
+      @article{Knuth1984,
+        author = {Donald Knuth},
+        author = {Leslie Lamport},
+        title  = {Literate Programming},
+        journal = {Journal of Examples},
+        year   = {1984}
+      }
+    example_fix: |
+      @article{Knuth1984,
+        author = {Donald Knuth and Leslie Lamport},
+        title  = {Literate Programming},
+        journal = {Journal of Examples},
+        year   = {1984}
+      }
+    inspects: [bib_files]
+    auto_fixable: false
+    guide_section: "§5.1 Bibliography"
+    guide_url: "https://www.jstatsoft.org/about/submissions#bibliography"
+    explanation: "No BibTeX field key is repeated within a single entry."
+    notes: |
+      Style-guide SG-017 requires valid BibTeX. A field repeated within one
+      entry (e.g., two `author =` lines) is malformed: BibTeX keeps only the
+      first occurrence and silently drops the rest, so the rendered citation
+      loses data. bibtexparser routes such an entry into `failed_blocks` as a
+      DuplicateFieldKeyBlock; the parser treats it as recoverable (the kept
+      first value still parses) rather than a fatal JSS-PARSE-000, and this
+      rule reports the dropped duplicate field(s).
+
   # ---------------------------------------------------------------------------
   # naming — SG-044..SG-052
   # ---------------------------------------------------------------------------
