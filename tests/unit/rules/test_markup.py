@@ -68,6 +68,51 @@ class TestMarkup001:
         )
         assert run_rule(jss_markup_001, src) == []
 
+    def test_skip_language_in_cite_key(self, run_rule):
+        # `\citep{R:2018}` / `\cite{R}` — the language name is part of a
+        # bibliography key, not a bare prose mention. A bare prose `R`
+        # on the same line still fires.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Statistical computing \citep{R:2018} with \cite{R}." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_language_in_cite_key_but_prose_mention_still_flagged(
+        self, run_rule
+    ):
+        # The cite-key guard must not suppress a genuine prose mention.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use R \citep{R:2018} for the analysis." "\n"
+            r"\end{document}"
+        )
+        # Exactly the bare prose `R` fires, not the `R:2018` cite key.
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    def test_skip_pandoc_cite_key(self, run_rule):
+        # `[@R-knitr]` — a pandoc / R Markdown citation key, not prose.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The knitr package [@R-knitr] is an alternative." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_skip_package_in_cite_key(self, run_rule):
+        # `\citep{MASS}` — the package name is a bibliography key.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Standard CLMs \citep{MASS} are implemented." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_002, src) == []
+
     def test_skip_initial(self, run_rule):
         # 'J. R. Statistical' — R is an initial, not the language.
         src = (

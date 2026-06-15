@@ -183,6 +183,24 @@ def _is_inside_bibliography(ancestors: list[Any]) -> bool:
     return False
 
 
+def _is_inside_citation(ancestors: list[Any]) -> bool:
+    """True when a char node sits inside a ``\\cite*`` / ``\\nocite``
+    argument. The mandatory ``{...}`` arg is a list of bibliography keys
+    (``R:2018``, ``MASS``, ``wickham:2009:ggplot2``) — a language or
+    package name appearing in a key is a reference, not a bare prose
+    mention needing ``\\proglang`` / ``\\pkg``. pylatexenc parses the
+    natbib cite macros, so the macro lands on the ancestor stack of the
+    key content (including for cites with prenote / postnote ``[...]``
+    options)."""
+    for anc in ancestors:
+        if (
+            isinstance(anc, LatexMacroNode)
+            and anc.macroname in _helpers._CITE_MACROS_FOR_SCOPE
+        ):
+            return True
+    return False
+
+
 def _check_bare_terms(
     doc: ParsedDocument,
     *,
@@ -198,8 +216,19 @@ def _check_bare_terms(
                 continue
             if not _helpers._is_in_prose_context(ancestors):
                 continue
+            if _is_inside_citation(ancestors):
+                # Cite-key contents are bibliography references, not
+                # prose — a language / package name in a key (``\citep{
+                # R:2018}``, ``\citep{MASS}``) is not a bare mention.
+                continue
             in_bib = _is_inside_bibliography(ancestors)
             for offset, token in _iter_tokens_in_chars(node.chars):
+                if offset > 0 and node.chars[offset - 1] == "@":
+                    # Pandoc / R Markdown citation key (``[@R-knitr]``,
+                    # ``[@knitr]``) — a bibliography reference, not a bare
+                    # prose mention. The LaTeX ``\cite*`` equivalent is
+                    # handled by _is_inside_citation above.
+                    continue
                 if token not in terms:
                     # Hyphenated prefix: ``R-code`` / ``R-centric`` /
                     # ``Sage-related``. The leading element is a bare
