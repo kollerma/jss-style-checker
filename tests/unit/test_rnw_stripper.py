@@ -171,6 +171,59 @@ def test_wrap_blanks_echo_false_chunk():
     assert out.count("\n") == src.count("\n")
 
 
+def test_wrap_handles_trailing_comment_after_header():
+    # Sweave/knitr tolerate an inline comment after ``>>=`` on the header
+    # line. The chunk must still be recognised and rewritten, not left in
+    # the source where its body leaks into prose-rule scanning.
+    src = "<<example>>=  # a trailing note\nx <- 1\n@\n"
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" in out
+    assert "<<example>>=" not in out
+    assert out.count("\n") == src.count("\n")
+
+
+def test_wrap_blanks_hidden_chunk_with_trailing_comment():
+    # echo=FALSE header with a trailing inline comment (the cias.Rnw:136
+    # regression) — must blank, not leak ``echo=FALSE`` into prose where
+    # MARKUP-003 fires on the bare ``FALSE`` sentinel.
+    src = "<<lbl,echo=FALSE>>=  # we have the real data\nx <- 1\n@\n"
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" not in out
+    assert "FALSE" not in out
+    assert "<<lbl" not in out
+    assert out.count("\n") == src.count("\n")
+
+
+def test_wrap_handles_indented_chunk():
+    # knitr chunks may be indented; the header must still be recognised.
+    src = "Intro text.\n  <<lbl>>=\n  x <- 1\n  @\nMore prose.\n"
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" in out
+    assert "x <- 1" in out
+    assert out.count("\n") == src.count("\n")
+
+
+def test_wrap_ignores_midline_chunk_mention_in_prose():
+    # A ``<<...>>=`` appearing mid-line (e.g. a LaTeX comment describing
+    # chunk options) is prose, NOT a chunk header. Treating it as one
+    # makes ``.*?^@`` swallow the intervening prose up to the next ``@``.
+    # Regression: entropy_np.Rnw:75 over-masking 120 lines of prose.
+    src = (
+        "%% making use of <<..., width = ...>>= for better ratios\n"
+        "\\section{Real Heading}\n"
+        "Prose citing \\citet{key} here.\n"
+        "<<realchunk>>=\n"
+        "x <- 1\n"
+        "@\n"
+    )
+    out = wrap_rnw_chunks_as_sinput(src)
+    # The prose section/citation survive; only the real chunk is wrapped.
+    assert "\\section{Real Heading}" in out
+    assert "\\citet{key}" in out
+    assert out.count("\\begin{Sinput}") == 1
+    assert out.count("\n") == src.count("\n")
+
+
 def test_wrap_blanks_echo_F_short_form():
     # R / knitr accept the bare ``F`` shorthand for FALSE.
     src = "<<setup, echo=F>>=\nlibrary(MASS)\n@\n"

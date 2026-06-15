@@ -56,7 +56,16 @@ _RECOVERABLE_BIB_BLOCKS = frozenset(
 # matches and the entire chunk is left in the stripped source, exposing
 # code identifiers to MARKUP-001 / -003 etc.
 _RNW_CHUNK = re.compile(
-    r"<<[^>]*>>=\r?\n.*?^@\s*$",
+    # ``^[ \t]*`` — the header must be the first non-whitespace on its
+    # line. knitr chunks may be indented, but a ``<<...>>=`` appearing
+    # mid-line is prose (e.g. a LaTeX comment describing chunk options,
+    # ``%% ... <<..., width=...>>= ...``); treating that as a chunk start
+    # makes ``.*?^@`` swallow the intervening prose up to the next ``@``.
+    # ``[ \t]*(?:#[^\n]*)?`` allows a trailing inline comment after
+    # ``>>=`` (``<<lbl,echo=FALSE>>=  # note``) — without it such a
+    # header never matches and the whole chunk leaks into the stripped
+    # source, exposing chunk options / code identifiers to prose rules.
+    r"^[ \t]*<<[^>]*>>=[ \t]*(?:#[^\n]*)?\r?\n.*?^[ \t]*@\s*$",
     re.DOTALL | re.MULTILINE,
 )
 
