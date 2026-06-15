@@ -208,6 +208,25 @@ class TestCode003:
         )
         assert run_rule(jss_code_003, src) == []
 
+    def test_code_env_violation_anchored_at_env_opening(self, run_rule):
+        # A code-env (Sinput / CodeInput / chunk) violation reports at the
+        # env opening (``\begin{...}`` column), consistent with the
+        # ``\code{}`` pass reporting at the macro ``\`` — not mid-line at
+        # the content offset after the ``\begin`` tag.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{CodeInput}\n"
+            "f(x=1)\n"
+            "\\end{CodeInput}\n"
+            "\\end{document}\n"
+        )
+        violations = run_rule(jss_code_003, src)
+        assert len(violations) == 1
+        # `\begin{CodeInput}` is on line 3, column 1.
+        assert violations[0].line == 3
+        assert violations[0].column == 1
+
     def test_keyword_arg_flagged(self, run_rule):
         # JSS style requires spaces around ``=`` even in function-
         # argument keyword position. Updated 2026-06-11 to align with

@@ -301,13 +301,17 @@ def _scan_code_env_for_spacing(tex: Any, env: Any) -> Iterator[Violation]:
             or _MISSING_SPACES_RE.search(cleaned)
         ):
             continue
-        # Map the offset back into the original text. The cleaned-string
-        # offset doesn't equal the original offset once we've stripped
-        # comments / strings; for line-level reporting it's enough to
-        # report on the env opening — line numbers stay accurate.
+        # Anchor the violation at the environment opening (the
+        # ``\begin{Sinput}`` / chunk header), not the content start.
+        # This is one violation per env, and reporting at ``env.pos``
+        # keeps it consistent with the ``\code{...}`` pass (which
+        # reports at the macro's ``\``) and lands on column 1 of the
+        # chunk rather than mid-line after the ``\begin`` tag. The
+        # cleaned-string match offset doesn't map back to the original
+        # source anyway once comments / strings are stripped.
         yield _violation(
             tex=tex,
-            pos=child.pos,
+            pos=env.pos,
             rule_id="JSS-CODE-003",
             suggestion=(
                 "Add spaces around operators and after commas in the "
