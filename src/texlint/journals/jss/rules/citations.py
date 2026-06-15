@@ -414,6 +414,28 @@ def check_jss_cite_003(
             )
             if close_paren is None:
                 continue
+            # Skip cites inside a macro-definition body: a ``#``
+            # parameter reference in the key (e.g.
+            # ``\def\citepos#1{(\citeyear{#1})}``) means this is a
+            # template, not a real citation — any bracket-in-bracket
+            # only materialises at each expansion site, which the
+            # parser sees separately.
+            key_match = re.match(
+                r"\\[a-zA-Z]+\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}",
+                tex.source[node.pos :],
+            )
+            if key_match and "#" in key_match.group(1):
+                continue
+            # A lone ``\citeauthor`` renders just the author name (no
+            # year, no parens of its own), so ``(... \citeauthor{X} ...)``
+            # is ordinary prose ("(again using the Lindsey device)"),
+            # not a doubled bracket. Only treat it as bracket-in-bracket
+            # when a ``\citeyear`` shares the parens — i.e. the
+            # hand-rolled ``(\citeauthor{X} \citeyear{X})`` == ``\citep``
+            # reconstruction.
+            if node.macroname == "citeauthor":
+                if "\\citeyear" not in tex.source[open_paren : close_paren + 1]:
+                    continue
             line, col = _helpers._lineno_col(tex, node.pos)
             emitted.add(node.pos)
             # Auto-fix only for the immediate ``(\cite{...})`` shape so

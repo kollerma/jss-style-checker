@@ -475,6 +475,47 @@ class TestCite003:
         assert len(violations) == 1
         assert violations[0].rule_id == "JSS-CITE-003"
 
+    def test_lone_citeauthor_in_parens_not_flagged(self, run_rule):
+        # `(... \citeauthor{X} ...)` renders the bare author name as a
+        # prose noun ("(again using the Lindsey device)") — no year, no
+        # doubled bracket. Regression: MM.Rnw:413 etc. bonsai false +ve.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "We fit a model (again using the \\citeauthor{lindsey1992} "
+            "Poisson device).\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_cite_003, src) == []
+
+    def test_citeauthor_with_citeyear_companion_flagged(self, run_rule):
+        # `(\citeauthor{X} \citeyear{X})` is a hand-rolled `\citep`
+        # ("(Author year)") and SHOULD be flagged — the lone-author skip
+        # must not suppress it. Regression: brms_overview.ltx:63.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "Bayesian inference (cf., \\citeauthor{fox2011} "
+            "\\citeyear{fox2011}) is used.\n"
+            "\\end{document}\n"
+        )
+        violations = run_rule(jss_cite_003, src)
+        assert len(violations) >= 1
+        assert all(v.rule_id == "JSS-CITE-003" for v in violations)
+
+    def test_macro_definition_body_not_flagged(self, run_rule):
+        # A cite inside a `\def`/`\newcommand` body carries a `#`
+        # parameter in its key — a template, not a citation. Regression:
+        # lbfgs/Vignette.Rnw:22-23, stm:66.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\def\\citepos#1{\\citeauthor{#1}'s (\\citeyear{#1})}\n"
+            "\\begin{document}\n"
+            "Text.\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_cite_003, src) == []
+
     def test_cite_after_macro_no_chars_siblings(self, run_rule):
         # \emph{x}\cite{Key} — the preceding sibling is a macro, not chars,
         # so the open-paren check must return False (line 116/123 branch).
