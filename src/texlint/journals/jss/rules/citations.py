@@ -473,8 +473,17 @@ def _find_enclosing_open_paren(source: str, pos: int) -> int | None:
                 return i
             depth -= 1
         elif c == "\n":
-            # Paragraph break? Look at the next line.
-            if i > 0 and source[i - 1] == "\n":
+            # Paragraph break = a blank line (the docstring's
+            # ``\n\s*\n``). Tolerate CRLF endings and trailing
+            # whitespace between the two newlines: scan back over
+            # ``\r`` / spaces / tabs and check for a second newline.
+            # A literal ``source[i - 1] == "\n"`` test never fires on
+            # CRLF files (blank line is ``\r\n\r\n``), which let the
+            # scan run across the whole document.
+            j = i - 1
+            while j >= 0 and source[j] in " \t\r":
+                j -= 1
+            if j >= 0 and source[j] == "\n":
                 return None
     return None
 
@@ -494,7 +503,10 @@ def _find_matching_close_paren(source: str, pos: int) -> int | None:
                 return i
             depth -= 1
         elif c == "\n":
-            if i + 1 < len(source) and source[i + 1] == "\n":
+            j = i + 1
+            while j < len(source) and source[j] in " \t\r":
+                j += 1
+            if j < len(source) and source[j] == "\n":
                 return None
     return None
 

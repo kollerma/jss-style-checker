@@ -449,6 +449,32 @@ class TestCite003:
         src = r"Before (\cite{Key} rest"
         assert run_rule(jss_cite_003, src) == []
 
+    def test_crlf_blank_line_stops_paragraph_scan(self, run_rule):
+        # Regression (eRm.Rnw:572): on a CRLF file a blank line is
+        # `\r\n\r\n`, so the paragraph-break guard must not require two
+        # *adjacent* `\n`s. A stray `(` in a math paragraph above and a
+        # `)` in a paragraph below must NOT pair with a bare `\citep`.
+        src = (
+            "A display with a paren: $\\frac{exp(x)}{1}$.\r\n"
+            "\r\n"
+            "A graphical test \\citep{Ra:60} is produced.\r\n"
+            "\r\n"
+            "Critical items can be eliminated (features).\r\n"
+        )
+        assert run_rule(jss_cite_003, src) == []
+
+    def test_crlf_real_paren_cite_still_flagged(self, run_rule):
+        # The CRLF fix must not suppress a genuine `(\citep{...})`: the
+        # enclosing parens are right around the macro in the same line.
+        src = (
+            "Some text here for context.\r\n"
+            "\r\n"
+            "Regression models (\\citep{Key}) are common.\r\n"
+        )
+        violations = run_rule(jss_cite_003, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-CITE-003"
+
     def test_cite_after_macro_no_chars_siblings(self, run_rule):
         # \emph{x}\cite{Key} — the preceding sibling is a macro, not chars,
         # so the open-paren check must return False (line 116/123 branch).
