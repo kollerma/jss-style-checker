@@ -371,6 +371,19 @@ class TestMarkup003:
         assert len(violations) == 1
         assert violations[0].rule_id == "JSS-MARKUP-003"
 
+    def test_sentinel_in_includegraphics_option_not_flagged(self, run_rule):
+        # `\includegraphics[clip = TRUE]{...}` — TRUE is a graphics
+        # boolean option, not a bare R sentinel in prose. Regression:
+        # hetGP_vignette.Rnw:1632.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\includegraphics[width=0.49\textwidth, trim = 3 5 5 5, "
+            r"clip = TRUE]{./figure/x.pdf}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
     def test_bare_na_true_false_in_prose_flagged(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

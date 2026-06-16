@@ -504,7 +504,13 @@ _META_MACROS: frozenset[str] = frozenset(
      # Listings / minted / inputlisting directives — option lists like
      # ``language=R``, not prose. Without this, MARKUP-001 fires on
      # the ``R`` token inside ``\lstinputlisting[language=R, ...]``.
-     "lstinputlisting", "lstset", "inputminted", "VerbatimInput"}
+     "lstinputlisting", "lstset", "inputminted", "VerbatimInput",
+     # Graphics inclusion — the optional arg is a key=value option list
+     # (``clip = TRUE``, ``trim = 5 5 5 5``) and the mandatory arg is a
+     # filename; neither is prose. Without this, MARKUP-003 fires on the
+     # ``TRUE`` / ``FALSE`` graphics booleans inside
+     # ``\includegraphics[clip = TRUE]{...}``.
+     "includegraphics", "includepdf", "graphicspath"}
 )
 # Cite-family macros are NOT in _META_MACROS so that their optional-arg
 # prose (``\citep[e.g.][]{key}`` — the prenote / postnote slots) gets
