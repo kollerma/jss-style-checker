@@ -222,9 +222,15 @@ def wrap_rnw_chunks_as_sinput(src: str) -> str:
         # own line. Find the start of that final line.
         last_nl = rest.rfind("\n")
         if last_nl == -1:
-            # Shouldn't happen given the regex shape, but bail safely.
-            return whole
-        body = rest[:last_nl + 1]  # keeps the trailing newline
+            # Empty-body chunk: the header line is immediately followed
+            # by the ``@`` terminator (e.g. a ``ref.label`` chunk that
+            # reuses another chunk's code). ``rest`` is just the bare
+            # ``@`` with no newline, so there is no body — still wrap as
+            # an empty Sinput so the header options (``eval=FALSE`` etc.)
+            # don't leak into prose-rule scanning.
+            body = ""
+        else:
+            body = rest[:last_nl + 1]  # keeps the trailing newline
         # Trailer is the bare `@` (regex anchors ^@\s*$ on its own line).
         # Length-preserving neutralisation of body-only TeX-special chars.
         body_safe = body.translate(_CHUNK_BODY_NEUTRALIZE)

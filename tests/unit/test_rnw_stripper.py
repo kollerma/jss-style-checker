@@ -194,6 +194,25 @@ def test_wrap_blanks_hidden_chunk_with_trailing_comment():
     assert out.count("\n") == src.count("\n")
 
 
+def test_wrap_handles_empty_body_chunk():
+    # A ref.label chunk reuses another chunk's code, so its body is empty
+    # — the header is immediately followed by ``@``. It must still be
+    # wrapped so the header options don't leak. Regression:
+    # simcausalVignette.Rnw:2937 (eval=FALSE, echo=TRUE leaking).
+    src = (
+        "<<appendix, ref.label='other', eval=FALSE, echo=TRUE>>=\n"
+        "@\n"
+        "prose\n"
+    )
+    out = wrap_rnw_chunks_as_sinput(src)
+    assert "\\begin{Sinput}" in out
+    assert "\\end{Sinput}" in out
+    assert "eval=FALSE" not in out
+    assert "echo=TRUE" not in out
+    assert "prose" in out
+    assert out.count("\n") == src.count("\n")
+
+
 def test_wrap_handles_gt_inside_header_option():
     # A knitr fig.cap (or other option) string may contain a ``>`` —
     # ``fig.cap="... $a_i > 0$"`` — which must not stop the header scan
