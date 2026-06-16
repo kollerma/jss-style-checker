@@ -194,6 +194,23 @@ def test_wrap_blanks_hidden_chunk_with_trailing_comment():
     assert out.count("\n") == src.count("\n")
 
 
+def test_wrap_handles_gt_inside_header_option():
+    # A knitr fig.cap (or other option) string may contain a ``>`` —
+    # ``fig.cap="... $a_i > 0$"`` — which must not stop the header scan
+    # short of the real ``>>=``. Regression: hetGP_vignette.Rnw:683.
+    src = (
+        '<<motofig, echo=FALSE, fig.cap="error bars when $a_i > 0$">>=\n'
+        "plot(x)\n"
+        "@\n"
+    )
+    out = wrap_rnw_chunks_as_sinput(src)
+    # echo=FALSE -> hidden chunk, fully blanked; nothing leaks to prose.
+    assert "\\begin{Sinput}" not in out
+    assert "FALSE" not in out
+    assert "fig.cap" not in out
+    assert out.count("\n") == src.count("\n")
+
+
 def test_wrap_handles_indented_chunk():
     # knitr chunks may be indented; the header must still be recognised.
     src = "Intro text.\n  <<lbl>>=\n  x <- 1\n  @\nMore prose.\n"

@@ -65,7 +65,13 @@ _RNW_CHUNK = re.compile(
     # ``>>=`` (``<<lbl,echo=FALSE>>=  # note``) — without it such a
     # header never matches and the whole chunk leaks into the stripped
     # source, exposing chunk options / code identifiers to prose rules.
-    r"^[ \t]*<<[^>]*>>=[ \t]*(?:#[^\n]*)?\r?\n.*?^[ \t]*@\s*$",
+    # ``[^\n]*?`` (single-line, non-greedy) rather than ``[^>]*`` so a
+    # ``>`` *inside* the header — e.g. a knitr ``fig.cap`` string with
+    # ``$a_i > 0$`` — doesn't stop the scan short of the real ``>>=``.
+    # The trailing ``[ \t]*(?:#…)?\r?\n`` anchor pins the match to the
+    # ``>>=`` that ends the header line, so an earlier stray ``>>=``
+    # inside an option string can't terminate it early.
+    r"^[ \t]*<<[^\n]*?>>=[ \t]*(?:#[^\n]*)?\r?\n.*?^[ \t]*@\s*$",
     re.DOTALL | re.MULTILINE,
 )
 
