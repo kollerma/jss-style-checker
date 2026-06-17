@@ -488,6 +488,29 @@ class TestMarkup003:
         # Two \texttt occurrences → 2 hits.
         assert len(violations) == 2
 
+    def test_texttt_in_superscript_label_skipped(self, run_rule):
+        # `\hat p^{\texttt{KMW}}` — \texttt is a method-abbreviation label
+        # in a superscript, not inline code. Regression: TPmsm.Rnw:382.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"$\hat p_{12}^{\texttt{KMW}}(s,t) = \frac{a}{b}$" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_code_alias_com_skipped(self, run_rule):
+        # \Com / \Comt are paper-defined \code aliases (TraMineR,
+        # WeightedCluster); their content is code, not prose.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\newcommand{\Com}[1]{\code{#1}}" "\n"
+            r"\begin{document}" "\n"
+            r"The \Com{seqtab()} function summarises the sequences." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
     def test_texttt_inside_code_skipped(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

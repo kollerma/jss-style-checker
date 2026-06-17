@@ -475,6 +475,10 @@ _MARKUP_MACROS: frozenset[str] = frozenset(
      # it as markup avoids MARKUP-001 firing on ``R`` extensions
      # inside ``\script{convergence.R}`` etc.
      "script",
+     # Paper-defined ``\code`` aliases — TraMineR / WeightedCluster
+     # define ``\newcommand{\Com}[1]{\code{#1}}`` (and ``\Comt``) for
+     # inline code, so their content is code, not prose.
+     "Com", "Comt",
      # ``highlight`` package code-highlighting macros — knitr / Rnw
      # output uses ``\hlstd{}``, ``\hlkwa{}``, ``\hlopt{}``,
      # ``\hlkwd{}``, ``\hlstr{}``, ``\hlcom{}`` to wrap tokens of

@@ -489,6 +489,18 @@ def check_jss_markup_003(
                 # envs, and content already inside JSS markup wrappers.
                 if _helpers._is_inside_verbatim(ancestors):
                     continue
+                # Skip a ``\texttt`` that is the content of a sub/superscript
+                # group in math (e.g. ``\hat p^{\texttt{KMW}}``) — an upright
+                # method-abbreviation label, not inline code. A bare
+                # ``\texttt`` sitting directly in math (``$y = \texttt{age}$``)
+                # is a code identifier and still flagged: there the immediate
+                # ancestor is the math node, not a ``{...}`` group.
+                if (
+                    _helpers._is_inside_math(ancestors)
+                    and ancestors
+                    and isinstance(ancestors[-1], LatexGroupNode)
+                ):
+                    continue
                 if _is_inside_bibliography(ancestors):
                     continue
                 if _is_inside_jss_markup(ancestors):
