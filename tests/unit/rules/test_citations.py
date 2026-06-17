@@ -284,6 +284,38 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_pkg_in_href_with_sibling_cite_not_flagged(self, run_rule):
+        # `\href{url}{\pkg{X}} \citep{X}` — the citation sits beside the
+        # \href wrapper, not as a sibling of \pkg. Regression: cna.Rnw:157.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \href{https://cran.r-project.org/package=LogicReg}"
+            r"{\pkg{LogicReg}} \citep{LogicReg} for the analysis." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_in_mbox_with_paragraph_cite_not_flagged(self, run_rule):
+        # `\mbox{\pkg{X}}` with a \citep elsewhere in the paragraph.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The \mbox{\pkg{RcppArmadillo}} interface \citep{rcpparma}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_in_href_without_cite_still_flagged(self, run_rule):
+        # The wrapper guard must NOT suppress a genuine uncited mention.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \href{https://example.org}{\pkg{LonelyPkg}} here." "\n"
+            r"\end{document}" "\n"
+        )
+        assert len(run_rule(jss_cite_002, src)) == 1
+
     def test_pkg_inside_citealp_optarg_not_flagged(self, run_rule):
         # Same as above, with \citealp.
         src = (

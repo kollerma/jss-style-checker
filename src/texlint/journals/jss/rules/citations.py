@@ -157,6 +157,18 @@ def _has_cite_in_span(parent: Any, start: int, end: int) -> bool:
     return False
 
 
+# Inline wrappers a ``\pkg{X}`` is commonly nested inside — links,
+# boxes, and text-style formatting. When ``\pkg`` sits alone inside one
+# (``\href{url}{\pkg{X}}``, ``\mbox{\pkg{X}}``), a ``\citep`` beside the
+# WRAPPER is not a sibling of ``\pkg`` and the pkg-level paragraph-span
+# check can't see it. ``_cited_in_wrapper_paragraph`` re-checks the span
+# at each wrapper ancestor's own position.
+_INLINE_WRAPPERS: frozenset[str] = frozenset({
+    "href", "url", "mbox", "fbox", "emph", "textbf", "textit", "texttt",
+    "textsf", "textsc", "textnormal", "textrm", "text", "uline", "underline",
+})
+
+
 # ---------------------------------------------------------------------------
 # JSS-CITE-002 — \pkg{X} needs a citation in the same paragraph.
 # ---------------------------------------------------------------------------
@@ -257,6 +269,50 @@ def _has_textual_citation_in_span(
     return False
 
 
+def _cited_in_wrapper_paragraph(
+    ancestors: Any, pos_map: dict[int, tuple[Any, int]], in_tab: bool
+) -> bool:
+    """True when a ``\\pkg{X}`` nested inside an inline wrapper has a
+    citation in the paragraph that surrounds the wrapper.
+
+    The pkg-level span check only sees the wrapper's argument group; a
+    ``\\citep`` sitting beside the wrapper (``\\href{u}{\\pkg{X}} \\citep{k}``)
+    lives one level up. Re-check the paragraph span at each enclosing
+    group / wrapper ancestor's own position in its parent. Groups are
+    included because pylatexenc parses an unknown ``\\href`` as a macro
+    followed by sibling ``{...}`` groups, so the ``\\pkg``'s container is
+    a bare group rather than an arg attached to ``\\href``.
+
+    Skipped inside tabulars: dense table cells pack several ``\\pkg``s and
+    a stray cite for one (``\\cite{R:2019}`` beside ``\\pkg{base}``) must
+    not be credited to another (``\\pkg{clusterSim}``) via the row-level
+    span. The pkg's own immediate-span check still applies there.
+    """
+    if in_tab:
+        return False
+    for anc in ancestors:
+        if not (
+            isinstance(anc, LatexGroupNode)
+            or (
+                isinstance(anc, LatexMacroNode)
+                and anc.macroname in _INLINE_WRAPPERS
+            )
+        ):
+            continue
+        loc = pos_map.get(id(anc))
+        if loc is None:
+            continue
+        wp, wi = loc
+        ws, we = _paragraph_span_in_parent(wp, wi, in_tabular=in_tab)
+        if (
+            _has_cite_in_span(wp, ws, we)
+            or _has_rmd_citation_in_span(wp, ws, we)
+            or _has_textual_citation_in_span(wp, ws, we)
+        ):
+            return True
+    return False
+
+
 def check_jss_cite_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -268,6 +324,13 @@ def check_jss_cite_002(
     # earlier in the document.
     seen: set[str] = set()
     for tex in doc.all_tex_like():
+        # Position map (node -> its parent list + index) so a \pkg nested
+        # inside an inline wrapper can locate that wrapper's own paragraph
+        # span and see a citation sitting beside the wrapper.
+        pos_map = {
+            id(n): (p, i)
+            for n, _a, p, i in _helpers._walk_with_context(tex.nodes)
+        }
         for node, ancestors, parent, idx in _helpers._walk_with_context(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode) and node.macroname == "pkg"
@@ -346,6 +409,13 @@ def check_jss_cite_002(
                 # in quote envs and footnote glosses where the
                 # citation is spelled out rather than wrapped in
                 # ``\citep{}``.
+                continue
+            if _cited_in_wrapper_paragraph(ancestors, pos_map, in_tab):
+                # ``\pkg{X}`` nested in an inline wrapper
+                # (``\href{url}{\pkg{X}}``, ``\mbox{\pkg{X}}``): a cite
+                # beside the wrapper isn't a sibling of ``\pkg``, so the
+                # checks above miss it. Re-check the paragraph span at
+                # each wrapper ancestor's own position.
                 continue
             line, col = _helpers._lineno_col(tex, node.pos)
             yield Violation(
