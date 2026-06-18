@@ -291,6 +291,20 @@ class TestXref005:
         )
         assert run_rule(jss_xref_005, src) == []
 
+    def test_referenced_via_vref_silent(self, run_rule):
+        # \vref (varioref) has no pylatexenc spec, so its {label} parses as
+        # a standalone group; _collect_referenced_labels must still pick it
+        # up via the next-sibling-group fallback (regression for the
+        # TraMineR fg_cluster-seqrplot false positive).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\caption{F}\label{fig:x}\end{figure}" "\n"
+            r"Figure~\vref{fig:x} shows it." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_005, src) == []
+
     def test_non_float_env_silent(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

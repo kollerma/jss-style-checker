@@ -475,23 +475,21 @@ def _collect_referenced_labels(doc: ParsedDocument) -> set[str]:
     """
     refs: set[str] = set()
     for tex in doc.all_tex_like():
-        for node in _helpers._walk(tex.nodes):
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not isinstance(node, LatexMacroNode):
                 continue
             if node.macroname not in _REF_MACROS:
                 continue
-            argd = getattr(node, "nodeargd", None)
-            if argd is None:
-                continue
-            for arg in argd.argnlist or ():
-                if not isinstance(arg, LatexGroupNode):
-                    continue
-                for child in arg.nodelist or ():
-                    if isinstance(child, LatexCharsNode):
-                        for key in child.chars.split(","):
-                            key = key.strip()
-                            if key:
-                                refs.add(key)
+            # Use the shared arg extractor: it reads pylatexenc's parsed
+            # argument for known macros (\ref, \pageref) and falls back to
+            # the next sibling group for macros pylatexenc has no spec for
+            # (\vref, \cref, \autoref, …) — otherwise their {label} parses
+            # as a standalone group and the reference is missed.
+            text = _helpers._macro_args_text(node, parent, idx)
+            for key in text.split(","):
+                key = key.strip()
+                if key:
+                    refs.add(key)
     return refs
 
 
