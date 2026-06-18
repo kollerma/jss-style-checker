@@ -76,6 +76,11 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 # (https://www.jstatsoft.org/authors#manuscript-preparation), and the
 # canonical template zip (https://www.jstatsoft.org/public/journals/1/
 # jss-article-tex.zip) used to refresh docs/jss-template/.
+#
+# api.crossref.org feeds the recall-corpus DOI lookup
+# (eval/crossref_doi_lookup.py): it queries https://api.crossref.org/works
+# to find DOIs for cited bib entries that lack a doi field, used to seed
+# JSS-REFS-003 ground-truth annotations.
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
@@ -92,6 +97,7 @@ for domain in \
     "export.arxiv.org" \
     "archive.softwareheritage.org" \
     "crandb.r-pkg.org" \
+    "api.crossref.org" \
     "www.jstatsoft.org"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
