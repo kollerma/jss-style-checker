@@ -45,7 +45,7 @@ MANIFEST = REPO_ROOT / "eval" / "corpus-manifest.csv"
 CORPUS_ROOT = REPO_ROOT / "eval" / "recall-corpus"
 
 # V1 paper picks (rationale: see eval/recall-corpus/README.md "V1 paper picks").
-PICKS = (
+_PICKS_V1 = (
     "robustlmm",
     "CARBayesST",
     "mdsOpt",
@@ -58,16 +58,54 @@ PICKS = (
     "clifford",
 )
 
+# V2 paper picks (rationale: see eval/recall-corpus/README.md "V2 paper picks").
+# Two goals: (1) non-CRAN language coverage — Python/Julia JSS manuscripts
+# fetched from GitHub; (2) close absent / thinly-observed rules.
+_PICKS_V2 = (
+    # Goal 1 — Python / Julia (github source). Also carry goal-2 coverage:
+    "opentsne",    # Python; MARKUP-004 (absent), STRUCT-001/005 (thin)
+    "romc",        # Python; OPER-002, CITE-002 (thin), CODE-001
+    "trueskill",   # Julia (+Python); BIBTEX-005 (absent), BIBTEX-002/CAP-003 (thin)
+    # Goal 2 — absent / thin rule sources (cran source):
+    "HardyWeinberg",     # OPER-001 (thin -> rich, ~22 firings)
+    "CUB",               # STRUCT-004 (absent) + PRE-006 (thin)
+    "mlt.docreg",        # STRUCT-003 (absent) + CAP-003/BIBTEX-003 (thin)
+    "SightabilityModel", # CITE-004 (thin -> rich, ~14 firings)
+)
+
+PICKS = _PICKS_V1 + _PICKS_V2
+
+
+# Source prefixes stripped from a manifest `local_path` to yield the recall
+# paper_id (= directory name). `cran_HardyWeinberg/` -> `HardyWeinberg`,
+# `github_opentsne/` -> `opentsne`. Keying on the local_path basename (rather
+# than `source_id`) unifies CRAN package names and GitHub `owner/repo` slugs
+# into one clean id space that matches the on-disk recall directory names.
+_SOURCE_PREFIXES = ("cran_", "github_")
+
+
+def _paper_id(local_path: str) -> str:
+    pid = local_path.rstrip("/")
+    for pref in _SOURCE_PREFIXES:
+        if pid.startswith(pref):
+            return pid[len(pref):]
+    return pid
+
 
 def _manifest_lookup() -> dict[str, tuple[Path, Path]]:
-    """source_id -> (manuscript_path, manuscript_dir) within examples/."""
+    """paper_id -> (manuscript_path, manuscript_dir) within examples/.
+
+    Covers both `cran` and `github` source rows; both pin a SHA256 and are
+    materialised under `examples/` by `eval-jss corpus fetch`, so the recall
+    scaffolder copies from the same place regardless of upstream source.
+    """
     out: dict[str, tuple[Path, Path]] = {}
     with MANIFEST.open() as f:
         for row in csv.DictReader(f):
-            if row["source"] != "cran":
+            if row["source"] not in ("cran", "github"):
                 continue
             local = EXAMPLES / row["local_path"].rstrip("/") / row["vignette_file"]
-            out[row["source_id"]] = (local, local.parent)
+            out[_paper_id(row["local_path"])] = (local, local.parent)
     return out
 
 

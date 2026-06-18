@@ -191,3 +191,51 @@ Suggested annotation order: `pmclust` (1 hour, calibrates the
 process cheaply), then `robustlmm` (author-familiar territory),
 then the diverse pair `CARBayesST` / `mdsOpt`, then the rest in
 order of length.
+
+## V2 paper picks (scaffolded 2026-06-17)
+
+Seven papers added with two goals at once. Their `annotations.toml` are
+**pre-seeded** from the precision-review verdicts already in `eval.db`
+(via `python -m eval.recall_corpus_seed`): every review-confirmed *true
+positive* on a file in the paper's lint surface is emitted as a
+`[[violations]]` entry to **verify**, and reviewed *false positives* are
+listed (commented) at the bottom of each file. The annotator's remaining
+job is to verify the seeded entries and — the part the linter can't give
+you — add the *false negatives* (real violations the linter missed). The
+seeder only writes files whose `annotator` is still `"TODO"`, so it never
+clobbers hand-annotation; re-run it to refresh seeds after a re-review.
+Review decisions on secondary vignettes outside a paper's recall surface
+(e.g. HardyWeinberg's example-session `.Rmd`) are omitted and noted in
+that file's `meta.notes`.
+
+**Goal 1 — non-CRAN language coverage.** The corpus was 100 % R
+(`.Rnw`/`.ltx`). These three are bona-fide JSS manuscripts whose
+software is written in Python / Julia, fetched from GitHub
+(`source = github` in the manifest, `.tex` so no Sweave rendering is
+needed):
+
+| paper | language | DOI | also helps cover |
+|---|---|---|---|
+| `opentsne` | Python | v109.i03 | MARKUP-004 (absent), STRUCT-001/005 (thin) |
+| `romc` | Python | v110.i02 | OPER-002, CITE-002 (thin), CODE-001 |
+| `trueskill` | Julia (+Python) | v112.i06 | **BIBTEX-005** (absent — sole natural source), BIBTEX-002 / CAP-003 (thin) |
+
+**Goal 2 — close absent / thinly-observed rules.** Four CRAN papers,
+each chosen for a specific gap:
+
+| paper | target rules | why |
+|---|---|---|
+| `HardyWeinberg` | OPER-001 | thin → rich (~22 firings) makes its recall measurable |
+| `CUB` | STRUCT-004 (absent), PRE-006 | closes a v1-deferred rule; no `.bib` (inline `thebibliography`) |
+| `mlt.docreg` | STRUCT-003 (absent), CAP-003, BIBTEX-003 | closes a v1-deferred rule |
+| `SightabilityModel` | CITE-004 | thin → rich (~14 firings) |
+
+This closes three of the four v1-deferred rules (STRUCT-003 / -004 via
+the CRAN pair, STRUCT-005 via `opentsne`) and the new `BIBTEX-005`.
+
+**Still uncovered — need synthetic mutation plants, not papers.** These
+rules have no natural source in any JSS vignette in the corpus, so a new
+paper can't carry them; plant them under `tests/fixtures/recall/` or a
+dedicated mutated paper instead:
+`JSS-BIBTEX-001`, `JSS-PRE-001`, `JSS-PRE-002`, `JSS-PRE-008`,
+`JSS-REFS-001`, `JSS-TYPO-002`, `JSS-XREF-003`.
