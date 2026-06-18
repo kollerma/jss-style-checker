@@ -10,10 +10,12 @@ from texlint.journals.jss.rules.crossrefs import (
     check_jss_xref_002,
     check_jss_xref_003,
     check_jss_xref_004,
+    check_jss_xref_005,
     jss_xref_001,
     jss_xref_002,
     jss_xref_003,
     jss_xref_004,
+    jss_xref_005,
     rules,
 )
 
@@ -25,12 +27,12 @@ def _tex(name: str) -> str:
     return (FIXTURE_DIR / name).read_text(encoding="utf-8")
 
 
-def test_rules_tuple_has_four_rules():
-    assert len(rules) == 4
+def test_rules_tuple_has_five_rules():
+    assert len(rules) == 5
 
 
 def test_rules_tuple_ids():
-    assert {r.id for r in rules} == {f"JSS-XREF-00{i}" for i in range(1, 5)}
+    assert {r.id for r in rules} == {f"JSS-XREF-00{i}" for i in range(1, 6)}
 
 
 # ---------------------------------------------------------------------------
@@ -232,11 +234,78 @@ class TestXref004:
         assert run_rule(jss_xref_004, src) == []
 
 
+# ---------------------------------------------------------------------------
+# JSS-XREF-005 — figures / tables carry \label{} and are referenced
+# ---------------------------------------------------------------------------
+
+
+class TestXref005:
+    def test_positive_missing_label(self, run_rule):
+        violations = run_rule(jss_xref_005, _tex("JSS-XREF-005-bad.tex"))
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-XREF-005"
+        assert violations[0].severity == Severity.WARNING
+
+    def test_good_fixture_silent(self, run_rule):
+        assert run_rule(jss_xref_005, _tex("JSS-XREF-005-good.tex")) == []
+
+    def test_orphan_label_fires(self, run_rule):
+        # Captioned float with a \label that is never referenced.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{table}\caption{T}\label{tab:x}\end{table}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_xref_005, src)
+        assert len(violations) == 1
+        assert "tab:x" in violations[0].suggestion
+
+    def test_captionless_float_silent(self, run_rule):
+        # No \caption -> unnumbered -> not a cross-ref target -> silent.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\includegraphics{x}\end{figure}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_005, src) == []
+
+    def test_starred_float_in_scope(self, run_rule):
+        # figure* is a numbered float too; captioned + orphan label fires.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure*}\caption{F}\label{fig:wide}\end{figure*}" "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_xref_005, src)) == 1
+
+    def test_referenced_via_autoref_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\caption{F}\label{fig:x}\end{figure}" "\n"
+            r"\autoref{fig:x} shows it." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_005, src) == []
+
+    def test_non_float_env_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{itemize}\item x\end{itemize}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_005, src) == []
+
+
 def test_all_checks_silent_on_empty_tex():
     tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)
     doc = ParsedDocument(tex_files=(tex,))
     for check in (
         check_jss_xref_001, check_jss_xref_002,
-        check_jss_xref_003, check_jss_xref_004,
+        check_jss_xref_003, check_jss_xref_004, check_jss_xref_005,
     ):
         assert list(check(doc, ToolConfig())) == []

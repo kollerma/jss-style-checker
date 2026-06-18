@@ -10,6 +10,14 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Added
 
+- **`JSS-XREF-005`** — the figure/table analogue of `JSS-XREF-004`: a
+  captioned (numbered) `figure`/`table` (or starred variant) must carry a
+  `\label{}` and be referenced from the text; an unlabelled or never-
+  referenced (orphan) float is flagged at warning severity. Captionless
+  (unnumbered) floats are out of scope. `JSS-XREF-001`'s catalogue
+  wording was corrected to describe only what it enforces — the
+  cross-reference *form* (use `\ref{}`, not a hardcoded "Figure 2") — now
+  that the label/orphan concern lives in `JSS-XREF-005`.
 - **`JSS-BIBTEX-005`** — flags a field key repeated within a single
   BibTeX entry (e.g. two `author =` lines, or duplicate
   `volume`/`pages`). BibTeX keeps only the first occurrence and silently

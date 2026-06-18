@@ -1346,7 +1346,7 @@ rules:
   - rule_id: JSS-XREF-001
     category: crossrefs
     severity: warning
-    description: Figures and tables carry \label{} and are referenced by \ref{} rather than manual numbering
+    description: Figures and tables are referenced via \ref{} rather than by manual numbering
     authority: style_guide
     authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
     example_violation: |
@@ -1357,11 +1357,12 @@ rules:
     auto_fixable: false
     guide_section: "§4.5 Cross-references"
     guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
-    explanation: "Figures and tables carry \\label{} and are referenced by \\ref{} rather than manual numbering."
+    explanation: "Figures and tables are referenced via \\ref{} rather than by manual numbering (e.g. \"Figure 2\")."
     notes: |
-      Scope narrowed 2026-04-23 (reviewer split): figures and tables carry the warning severity; numbered
-      equations are covered separately by JSS-XREF-004 at info severity. An unreferenced figure/table suggests
-      a missing callout from the prose; an unreferenced numbered equation is a milder style nit.
+      This rule covers only the cross-reference *form*: a prose mention of a float by hardcoded number
+      ("Figure 2", "Table 3") should instead use Figure~\ref{...} / Table~\ref{...}. The complementary
+      orphan check — that every captioned figure/table actually carries a \label{} and is referenced from
+      the text — lives in JSS-XREF-005 (the float analogue of JSS-XREF-004 for equations).
 
   - rule_id: JSS-XREF-002
     category: crossrefs
@@ -1422,6 +1423,38 @@ rules:
       Companion to JSS-XREF-001 for numbered equations only; info severity because unreferenced numbered
       equations are a style nit, not a missing-callout signal (the reader still sees the equation in place).
       `{equation*}` / unnumbered displays are out of scope — they have no counter to label.
+
+  - rule_id: JSS-XREF-005
+    category: crossrefs
+    severity: warning
+    description: Figures and tables carry \label{} and are referenced from the text
+    authority: style_guide
+    authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
+    example_violation: |
+      \begin{figure}
+      \includegraphics{quine}
+      \caption{Frequency distribution.}
+      \end{figure}
+    example_fix: |
+      \begin{figure}
+      \includegraphics{quine}
+      \caption{Frequency distribution.}
+      \label{fig:quine}
+      \end{figure}
+      Figure~\ref{fig:quine} shows the frequency distribution.
+    inspects: [tex_files]
+    auto_fixable: false
+    guide_section: "§4.5 Cross-references"
+    guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Figures and tables carry \\label{} and are referenced from the text."
+    notes: |
+      The float analogue of JSS-XREF-004 (which covers numbered equations). Walks `figure` / `table`
+      environments (and their starred variants) that carry a `\caption` — i.e. numbered floats — and fires
+      when the float has no `\label{}`, or has label(s) none of which is referenced anywhere via a
+      `\ref`-family macro (an orphan float, signalling a missing prose callout). Warning severity matches
+      JSS-XREF-001's reasoning: an unreferenced figure/table is a missing-callout signal, stronger than the
+      info-severity equation nit. Captionless (unnumbered) floats are out of scope — they have no counter to
+      label. JSS-XREF-001 separately covers the reference *form* (use `\ref{}`, not a hardcoded number).
 
   # ---------------------------------------------------------------------------
   # house_style

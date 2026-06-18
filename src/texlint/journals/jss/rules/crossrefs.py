@@ -7,7 +7,9 @@ Rules:
     the same parenthesised form the reviewer discourages).
   - JSS-XREF-003 — subsection references say "Section x.y", not
     "Subsection x.y".
-  - JSS-XREF-004 — numbered equation environments carry \\label{}.
+  - JSS-XREF-004 — numbered equations carry \\label{} and are referenced.
+  - JSS-XREF-005 — captioned figures / tables carry \\label{} and are
+    referenced from the text (the float analogue of JSS-XREF-004).
 """
 
 from __future__ import annotations
@@ -610,6 +612,71 @@ def _env_has_label(env: Any) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# JSS-XREF-005 — figures / tables carry \label{} and are referenced
+# ---------------------------------------------------------------------------
+
+# Float environments that get a number (via \caption). Starred variants
+# (figure*, table*) span both columns but are still numbered floats.
+_FLOAT_ENVS: frozenset[str] = frozenset(
+    {"figure", "figure*", "table", "table*"}
+)
+
+_CAPTION_MACROS: frozenset[str] = frozenset({"caption", "captionof"})
+
+
+def _env_has_caption(env: Any) -> bool:
+    for child in _helpers._walk(env.nodelist or ()):
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _CAPTION_MACROS
+        ):
+            return True
+    return False
+
+
+def check_jss_xref_005(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    """Float analogue of JSS-XREF-004: a captioned (numbered) figure / table
+    should carry a ``\\label{}`` and be referenced from the prose."""
+    referenced = _collect_referenced_labels(doc)
+    for tex in doc.all_tex_like():
+        for node in _helpers._walk(tex.nodes):
+            if not isinstance(node, LatexEnvironmentNode):
+                continue
+            if node.environmentname not in _FLOAT_ENVS:
+                continue
+            # Captionless floats aren't numbered, so they're not cross-ref
+            # targets and a missing \label{} is not a defect (parallels the
+            # \nonumber carve-out in JSS-XREF-004).
+            if not _env_has_caption(node):
+                continue
+            label_keys = _env_label_keys(node)
+            if not label_keys:
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-XREF-005",
+                    suggestion=(
+                        "Add \\label{fig:<name>} / \\label{tab:<name>} to the "
+                        "float so it can be referenced from the text."
+                    ),
+                )
+                continue
+            if not any(k in referenced for k in label_keys):
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-XREF-005",
+                    suggestion=(
+                        f"Float label(s) {', '.join(label_keys)!r} are never "
+                        "referenced from the text. Add a Figure~\\ref{} / "
+                        "Table~\\ref{} callout in the prose."
+                    ),
+                )
+
+
+# ---------------------------------------------------------------------------
 # Rule objects
 # ---------------------------------------------------------------------------
 
@@ -621,6 +688,9 @@ jss_xref_001 = _rule("JSS-XREF-001", check_jss_xref_001)
 jss_xref_002 = _rule("JSS-XREF-002", check_jss_xref_002)
 jss_xref_003 = _rule("JSS-XREF-003", check_jss_xref_003)
 jss_xref_004 = _rule("JSS-XREF-004", check_jss_xref_004)
+jss_xref_005 = _rule("JSS-XREF-005", check_jss_xref_005)
 
 
-rules: tuple[Rule, ...] = (jss_xref_001, jss_xref_002, jss_xref_003, jss_xref_004)
+rules: tuple[Rule, ...] = (
+    jss_xref_001, jss_xref_002, jss_xref_003, jss_xref_004, jss_xref_005,
+)
