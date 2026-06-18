@@ -770,3 +770,111 @@ rule_id = "JSS-REFS-003"
 file = "integration.bib"
 line = 198
 comment = 'ReacTran — DOI 10.32614/cran.package.reactran found on Crossref (title similarity 1.00); add to the entry as doi="10.32614/cran.package.reactran".'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 283
+comment = "float fig:dae is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 584
+comment = "float fig:aphid is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 617
+comment = "float fig:matplot1d is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 693
+comment = "float fig:dae2 is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 754
+comment = "float fig:pendulum is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 967
+comment = "float fig:event1 is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1024
+comment = "float fig:event2 is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1194
+comment = "float fig:dde is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1256
+comment = "float fig:difference is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1316
+comment = "float fig:plotdeSolve is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1375
+comment = "float fig:plotobs is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1402
+comment = "float fig:plotobs2 is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1425
+comment = "float fig:plothist is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1546
+comment = "float fig:plotimg is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1608
+comment = "float fig:twoD is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1836
+comment = "float fig:err is captioned (numbered) but never referenced from the text (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1876
+comment = "captioned float carries no label so it cannot be referenced (XREF-005)"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "deSolve.Rnw"
+line = 1917
+comment = "captioned float carries no label so it cannot be referenced (XREF-005)"

@@ -853,3 +853,9 @@ rule_id = "JSS-OPER-004"
 file = "multistate.Rnw"
 line = 394
 comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "multistate.Rnw"
+line = 192
+comment = "captioned float carries no label so it cannot be referenced (XREF-005)"
