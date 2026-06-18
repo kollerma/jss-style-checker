@@ -64,6 +64,13 @@ SEED_CONFIG: dict[str, tuple[str, str]] = {
 
 SEED_DATE = "2026-06-17"
 
+# Rules NOT seeded as ground-truth from review verdicts because they have a
+# dedicated, more authoritative annotation source. JSS-REFS-003 (missing DOI)
+# is produced by `eval.crossref_doi_lookup`, which records the actual
+# Crossref-found DOI — seeding the review's bare firings here would block that
+# tool (it skips lines already carrying a REFS-003 annotation).
+SEED_EXCLUDE_RULES = frozenset({"JSS-REFS-003"})
+
 
 def _clean(s: str) -> str:
     """Collapse all whitespace (incl. stray tabs/newlines that some review
@@ -116,6 +123,8 @@ def _seed_one(cx, pid: str, examples_path: str, rationale: str, *, write: bool) 
             skipped_off_surface += 1
             continue
         if r["verdict"] == "true_positive":
+            if r["rule_id"] in SEED_EXCLUDE_RULES:
+                continue
             key = (r["rule_id"], base, r["line"])
             cur = tp.get(key)
             reason = (r["verdict_reason"] or "").strip()
@@ -147,6 +156,11 @@ def _seed_one(cx, pid: str, examples_path: str, rationale: str, *, write: bool) 
     lines.append(f"# linter missed (those are not in eval.db). Reviewed FALSE")
     lines.append(f"# POSITIVES are listed (commented) at the bottom: do NOT add")
     lines.append(f"# them as violations, but confirm the FP judgement as you read.")
+    if SEED_EXCLUDE_RULES:
+        excl = ", ".join(sorted(SEED_EXCLUDE_RULES))
+        lines.append("#")
+        lines.append(f"# {excl} is NOT seeded here — it is populated separately by")
+        lines.append(f"# `python -m eval.crossref_doi_lookup` (records the actual DOI).")
     lines.append("")
     lines.append("[meta]")
     lines.append(f'paper_id = "{pid}"')
