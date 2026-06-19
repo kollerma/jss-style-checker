@@ -81,7 +81,10 @@ def process(path: Path, drop_prefill: bool) -> tuple[int, int]:
 
 def main(argv):
     drop = "--drop-prefill" in argv
+    only = {a for a in argv if not a.startswith("--")}
     for d in sorted(p for p in RECALL.iterdir() if p.is_dir() and p.name != "__pycache__"):
+        if only and d.name not in only:
+            continue
         ann = d / "annotations.toml"
         if not ann.exists():
             continue
