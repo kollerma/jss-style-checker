@@ -156,6 +156,24 @@ line = 126
 comment = "First of multiple # comments in this code block; per CODE-001 convention, the rule fires once per block at the first comment line."
 
 [[violations]]
+rule_id = "JSS-CODE-002"
+file = "02-example.tex"
+line = 127
+comment = 'Quote the argument: e.g., `library("pmclust", quiet = TRUE)`.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "02-example.tex"
+line = 166
+comment = "Move the comment into the surrounding LaTeX text."
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "02-example.tex"
+line = 169
+comment = 'Quote the argument: e.g., `library("Rmpi")`.'
+
+[[violations]]
 rule_id = "JSS-CAP-002"
 file = "02-example.tex"
 line = 179

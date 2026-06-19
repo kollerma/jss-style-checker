@@ -214,6 +214,12 @@ line = 69
 comment = "Blaser_Vizcaya_Estill_Zahnd_Kalesan_Egger_Gsponer_Keiser_2015 is cited without using shortcite nor with the shortnames option enabled"
 
 [[violations]]
+rule_id = "JSS-CITE-003"
+file = "multistate.Rnw"
+line = 88
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
+
+[[violations]]
 rule_id = "JSS-OPER-002"
 file = "multistate.Rnw"
 line = 93

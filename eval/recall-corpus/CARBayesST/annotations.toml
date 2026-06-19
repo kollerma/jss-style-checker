@@ -120,7 +120,7 @@ comment = 'Blank lines BEFORE \begin.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
-line = 232
+line = 230
 comment = '\label{carar2} exists in eqnarray but is never \ref-ed from the text.'
 
 [[violations]]
@@ -138,7 +138,7 @@ comment = 'Blank lines BEFORE \begin AND AFTER \end.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
-line = 244
+line = 242
 comment = '\label{Lerouxjoint} exists but is never \ref-ed from the text.'
 
 [[violations]]
@@ -156,7 +156,7 @@ comment = 'Blank lines BEFORE \begin.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
-line = 268
+line = 266
 comment = '\label{caradaptive2} exists but is never \ref-ed from the text.'
 
 [[violations]]
@@ -174,7 +174,7 @@ comment = 'Blank lines BEFORE \begin AND AFTER \end.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
-line = 290
+line = 288
 comment = '\label{carcluster2} exists but is never \ref-ed from the text.'
 
 [[violations]]
@@ -186,7 +186,7 @@ comment = 'Blank lines BEFORE \begin.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
-line = 297
+line = 295
 comment = '\label{carcluster3} exists but is never \ref-ed from the text.'
 
 [[violations]]
@@ -246,7 +246,7 @@ comment = 'Blank lines BEFORE \begin AND AFTER \end.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
-line = 360
+line = 358
 comment = '\label{equation likelihood2} exists but is never \ref-ed from the text.'
 
 [[violations]]
@@ -288,7 +288,7 @@ comment = 'Blank lines BEFORE \begin.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
-line = 404
+line = 402
 comment = '\label{leroux} exists but is never \ref-ed from the text.'
 
 # -------------------------------------------------------------------

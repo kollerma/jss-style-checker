@@ -102,6 +102,12 @@ line = 140
 comment = 'Equation with neither \label nor \nonumber'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 151
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
 rule_id = "JSS-XREF-004"
 file = "clifford.Rnw"
 line = 151
@@ -128,7 +134,7 @@ comment = 'Blank lines AFTER \end.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "clifford.Rnw"
-line = 195
+line = 194
 comment = '\label{gencliff2} exists in equation env but is never \ref-ed from the text.'
 
 [[violations]]
@@ -152,7 +158,7 @@ comment = 'Blank lines BEFORE \begin AND AFTER \end.'
 [[violations]]
 rule_id = "JSS-XREF-004"
 file = "clifford.Rnw"
-line = 233
+line = 232
 comment = '\label{specwedge} exists in equation env but is never \ref-ed from the text.'
 
 # -------------------------------------------------------------------
@@ -360,6 +366,12 @@ Missing spaces, should be
 > (y <- as.kform(rbind(1:3, c(1, 4, 5), 4:6), 1:3))
 ```
 """
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "clifford.Rnw"
+line = 406
+comment = 'Citation inside parens: replace \cite{...} \citealp{...}'
 
 [[violations]]
 rule_id = "JSS-OPER-003"

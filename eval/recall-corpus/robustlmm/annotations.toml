@@ -112,6 +112,12 @@ comment = 'Should have used shortnames option or \shortcites'
 [[violations]]
 rule_id = "JSS-TYPO-004"
 file = "simulationStudies.Rnw"
+line = 468
+comment = 'Place \caption{} after the figure / table content.'
+
+[[violations]]
+rule_id = "JSS-TYPO-004"
+file = "simulationStudies.Rnw"
 line = 500
 comment = '\caption{...} before \includegraphics content (same pattern as L358).'
 

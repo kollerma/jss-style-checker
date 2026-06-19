@@ -189,6 +189,12 @@ line = 245
 comment = 'Section title not in sentence case, should be "Handling extreme responses"'
 
 [[violations]]
+rule_id = "JSS-XREF-002"
+file = "DBR.Rnw"
+line = 249
+comment = "Replace 'Eq.' before \\ref with 'Equation~' (capitalised, non-breaking space)."
+
+[[violations]]
 rule_id = "JSS-OPER-004"
 file = "DBR.Rnw"
 line = 251
@@ -203,7 +209,7 @@ comment = '"Eqs.~\ref{eq-left-buffer} and \ref{eq-right-buffer}" should be "Equa
 [[violations]]
 rule_id = "JSS-XREF-002"
 file = "DBR.Rnw"
-line = 261
+line = 263
 comment = '"Eq.~\ref{eq-dbr-inflated-mixture}" should be "Equation~\ref{eq-dbr-inflated-mixturer}"'
 
 [[violations]]

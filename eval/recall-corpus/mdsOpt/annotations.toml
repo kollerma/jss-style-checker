@@ -457,6 +457,12 @@ line = 306
 comment = 'Language name "R" should be wrapped \proglang{R}.'
 
 [[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 313
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
+
+[[violations]]
 rule_id = "JSS-HOUSE-001"
 file = "mdsOpt.ltx"
 line = 313
@@ -467,6 +473,12 @@ rule_id = "JSS-XREF-001"
 file = "mdsOpt.ltx"
 line = 313
 comment = '"(see Table 3)" — bare numerical reference; should use "Table~\ref{tab:3}".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 323
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
 
 [[violations]]
 rule_id = "JSS-CITE-003"
@@ -529,10 +541,22 @@ line = 449
 comment = '`(\cite{Mlodak:2014})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
 
 [[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 495
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
+
+[[violations]]
 rule_id = "JSS-TYPO-001"
 file = "mdsOpt.ltx"
 line = 495
 comment = 'Figure / table caption does not end with a period: "\caption{Distance measures for interval-valued data (based on \cite{Billard+Dida".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 496
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
 
 [[violations]]
 rule_id = "JSS-HOUSE-001"
@@ -557,6 +581,12 @@ rule_id = "JSS-CITE-003"
 file = "mdsOpt.ltx"
 line = 584
 comment = '`(\cite{Walesiak+Dudek:2017})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 599
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
 
 [[violations]]
 rule_id = "JSS-HOUSE-001"

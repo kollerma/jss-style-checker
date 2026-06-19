@@ -45,6 +45,12 @@ line = 183
 comment = 'Missing reference for package sf, citation only comes later on line 494'
 
 [[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 186
+comment = 'Quote the argument: e.g., `require("foreign", quietly = TRUE) && require("sf", quietly = TRUE)`'
+
+[[violations]]
 rule_id = "JSS-CODE-003"
 file = "jss816.Rnw"
 line = 186
@@ -56,7 +62,7 @@ if (require(foreign, quietly = TRUE) && require(sf, quietly = TRUE))
 ```
 should be
 ```
-if (require(foreign, quietly = TRUE) && require(sf, quietly = TRUE))
+if (require("foreign", quietly = TRUE) && require("sf", quietly = TRUE))
   read.dbf(system.file("shape/nc.dbf", package = "sf"))[1:5, c(5, 9:14)]
 ```
 '''
@@ -68,10 +74,22 @@ line = 198
 comment = 'Missing space after comma, `wind[1:6,1:12]` should be `wind[1:6, 1:12]`'
 
 [[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 199
+comment = 'Quote the argument: e.g., `require("gstat", quietly = TRUE)`'
+
+[[violations]]
 rule_id = "JSS-CODE-003"
 file = "jss816.Rnw"
 line = 216
 comment = 'Missing space after comma, `Produc[1:5,1:9]` should be `Produc[1:5,1:9]`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 217
+comment = 'Quote the argument: e.g., `require("plm", quietly = TRUE)`'
 
 [[violations]]
 rule_id = "JSS-CODE-003"
@@ -205,6 +223,12 @@ rule_id = "JSS-CODE-003"
 file = "jss816.Rnw"
 line = 783
 comment = 'Missing spaces around operator, `mode="ts"` should be `mode = "ts"`'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "jss816.Rnw"
+line = 848
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
 
 [[violations]]
 rule_id = "JSS-CODE-002"
@@ -393,6 +417,12 @@ line = 1130
 comment = "Several missing spaces after commas and around operators in code block"
 
 [[violations]]
+rule_id = "JSS-CODE-002"
+file = "jss816.Rnw"
+line = 1131
+comment = 'Quote the argument: e.g., `require("sf", quietly = TRUE) && require("mapdata", quietly = TRUE)`'
+
+[[violations]]
 rule_id = "JSS-WIDTH-001"
 file = "jss816.Rnw"
 line = 1132
@@ -461,7 +491,7 @@ comment = 'Package names should be quoted in require calls, `require(gstat, quie
 [[violations]]
 rule_id = "JSS-CODE-002"
 file = "jss816.Rnw"
-line = 1230
+line = 1231
 comment = 'Package names should be quoted in require calls, `require(gstat, quietly = TRUE)` should be `require("gstat", quietly = TRUE)`'
 
 [[violations]]
