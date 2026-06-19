@@ -18,6 +18,12 @@ misspelled chisolm2012.
 """
 
 [[violations]]
+rule_id = "JSS-CAP-001"
+file = "clifford.Rnw"
+line = 13
+comment = '\title{Clifford algebra in \proglang{R}} — "algebra" is a principal noun and should be capitalised; title should read "Clifford Algebra in \proglang{R}".'
+
+[[violations]]
 rule_id = "JSS-MARKUP-001"
 file = "clifford.Rnw"
 line = 74
@@ -36,10 +42,22 @@ line = 86
 comment = '"R-centric" should be "\proglang{R}-centric"'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 97
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
 rule_id = "JSS-XREF-004"
 file = "clifford.Rnw"
 line = 97
 comment = 'Eqnarray including a line with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 105
+comment = 'Blank lines BEFORE \begin.'
 
 [[violations]]
 rule_id = "JSS-XREF-004"
@@ -48,16 +66,34 @@ line = 105
 comment = 'Eqnarray including a line with neither \label nor \nonumber'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 116
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
 rule_id = "JSS-XREF-004"
 file = "clifford.Rnw"
 line = 116
 comment = 'Eqnarray including a line with neither \label nor \nonumber'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 131
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
 rule_id = "JSS-XREF-004"
 file = "clifford.Rnw"
 line = 131
 comment = 'Equation with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 140
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
 
 [[violations]]
 rule_id = "JSS-XREF-004"
@@ -72,10 +108,63 @@ line = 151
 comment = 'Equation with neither \label nor \nonumber'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 170
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 190
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 194
+comment = 'Blank lines AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 195
+comment = '\label{gencliff2} exists in equation env but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 216
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
 rule_id = "JSS-XREF-004"
 file = "clifford.Rnw"
 line = 216
 comment = 'Equation with neither \label nor \nonumber'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 232
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "clifford.Rnw"
+line = 233
+comment = '\label{specwedge} exists in equation env but is never \ref-ed from the text.'
+
+# -------------------------------------------------------------------
+# OPER-003 sweep (post-annotation): display equations with blank
+# lines immediately before or after the env (rule fires unless the
+# eq body ends with a period, which closes a sentence). Linter does
+# not fire on most of these on .Rnw input — appears to need the
+# rendered .tex / .ltx surface for the rule to see paragraph breaks.
+# Each entry below is a CANDIDATE — please review against the
+# rendered PDF and delete any that are intentional paragraph breaks
+# (eq is end-of-section, next text is a new paragraph, etc.).
+# -------------------------------------------------------------------
 
 [[violations]]
 rule_id = "JSS-MARKUP-001"
@@ -273,6 +362,12 @@ Missing spaces, should be
 """
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 409
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
 rule_id = "JSS-XREF-004"
 file = "clifford.Rnw"
 line = 409
@@ -289,6 +384,12 @@ rule_id = "JSS-CODE-003"
 file = "clifford.Rnw"
 line = 418
 comment = 'Missing spaces, should be `\code{righttick(A, B)}`'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "clifford.Rnw"
+line = 453
+comment = 'Blank lines BEFORE \begin.'
 
 [[violations]]
 rule_id = "JSS-XREF-004"
@@ -369,103 +470,4 @@ comment = "hankin2022_freealg appears twice in clifford.bib"
 # these (rule scope appears narrower than its description).
 # -------------------------------------------------------------------
 
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "clifford.Rnw"
-line = 195
-comment = '\label{gencliff2} exists in equation env but is never \ref-ed from the text.'
 
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "clifford.Rnw"
-line = 233
-comment = '\label{specwedge} exists in equation env but is never \ref-ed from the text.'
-
-# -------------------------------------------------------------------
-# OPER-003 sweep (post-annotation): display equations with blank
-# lines immediately before or after the env (rule fires unless the
-# eq body ends with a period, which closes a sentence). Linter does
-# not fire on most of these on .Rnw input — appears to need the
-# rendered .tex / .ltx surface for the rule to see paragraph breaks.
-# Each entry below is a CANDIDATE — please review against the
-# rendered PDF and delete any that are intentional paragraph breaks
-# (eq is end-of-section, next text is a new paragraph, etc.).
-# -------------------------------------------------------------------
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 97
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 105
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 116
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 131
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 140
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 170
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 190
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 194
-comment = 'Blank lines AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 216
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 232
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 409
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "clifford.Rnw"
-line = 453
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-CAP-001"
-file = "clifford.Rnw"
-line = 13
-comment = '\title{Clifford algebra in \proglang{R}} — "algebra" is a principal noun and should be capitalised; title should read "Clifford Algebra in \proglang{R}".'

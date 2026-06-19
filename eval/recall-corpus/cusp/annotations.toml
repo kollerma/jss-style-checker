@@ -177,12 +177,6 @@ should be
 '''
 
 [[violations]]
-rule_id = "JSS-XREF-002"
-file = "Cusp-JSS.Rnw"
-line = 457
-comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}"'
-
-[[violations]]
 rule_id = "JSS-CODE-003"
 file = "Cusp-JSS.Rnw"
 line = 371
@@ -192,6 +186,12 @@ Missing spaces around operators:
 should be
 `\code{y \tilde\ z1 + z2 - 1}, \code{alpha \tilde\ x1 + x2 + x3 - 1},$\;$\code{beta \tilde\ y1 + y2 + y3 + y4 - 1}. {\em Model II:} \code{y \tilde\ z1 + z2}, \code{alpha, beta \tilde\ x1 + x2 + x3 + y1 + y2 + y3 + y4}`
 '''
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 457
+comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}"'
 
 [[violations]]
 rule_id = "JSS-XREF-002"
@@ -444,3 +444,5 @@ rule_id = "JSS-REFS-003"
 file = "cusp_papers_jss.bib"
 line = 620
 comment = 'GrasmanEtAl2009 — Article DOI exists on Crossref; missing from the entry.'
+
+

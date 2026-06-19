@@ -825,16 +825,16 @@ line = 692
 comment = 'neuwirth — title "RColorBrewer: ColorBrewer palettes" has lowercase "palettes" mid-title.'
 
 [[violations]]
-rule_id = "JSS-REFS-004"
-file = "jss816.bib"
-line = 706
-comment = 'maps — title "maps: Draw Geographical Maps" — package name "maps" should be wrapped in \pkg{...} and also has "R" not wrapped in \proglang{}.'
-
-[[violations]]
 rule_id = "JSS-REFS-003"
 file = "jss816.bib"
 line = 706
 comment = 'maps — R package, no doi field; doi 10.32614/CRAN.package.maps should be added.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "jss816.bib"
+line = 706
+comment = 'maps — title "maps: Draw Geographical Maps" — package name "maps" should be wrapped in \pkg{...} and also has "R" not wrapped in \proglang{}.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -859,4 +859,5 @@ rule_id = "JSS-REFS-004"
 file = "jss816.bib"
 line = 745
 comment = 'jss816 — title "{spacetime}: Spatio-Temporal Data in {R}" needs \pkg{spacetime} and \proglang{R} markup (currently uses brace-protection only).'
+
 

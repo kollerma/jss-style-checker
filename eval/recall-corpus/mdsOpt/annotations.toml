@@ -174,7 +174,6 @@ file = "mdsOpt.ltx"
 line = 27
 comment = '''\title{mdsOpt -- ...} — "mdsOpt" is a package name and should be wrapped \pkg{mdsOpt}. (Linter incorrectly fires CAP-001 here because the heuristic doesn't recognise unwrapped package names; the title-case "violation" disappears once the \pkg{} wrap goes in.)'''
 
-
 [[violations]]
 rule_id = "JSS-MARKUP-001"
 file = "mdsOpt.ltx"
@@ -186,7 +185,6 @@ rule_id = "JSS-MARKUP-001"
 file = "mdsOpt.ltx"
 line = 45
 comment = 'Plain `R` (programming language) should be wrapped `\proglang{R}` (JSS MARKUP-001).'
-
 
 [[violations]]
 rule_id = "JSS-CAP-004"
@@ -463,6 +461,12 @@ rule_id = "JSS-HOUSE-001"
 file = "mdsOpt.ltx"
 line = 313
 comment = '"e.g." not followed by a comma.'
+
+[[violations]]
+rule_id = "JSS-XREF-001"
+file = "mdsOpt.ltx"
+line = 313
+comment = '"(see Table 3)" — bare numerical reference; should use "Table~\ref{tab:3}".'
 
 [[violations]]
 rule_id = "JSS-CITE-003"
@@ -872,8 +876,4 @@ file = "mdsOpt.ltx"
 line = 1267
 comment = '`(\cite{Leeuw+Mair:2015})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
 
-[[violations]]
-rule_id = "JSS-XREF-001"
-file = "mdsOpt.ltx"
-line = 313
-comment = '"(see Table 3)" — bare numerical reference; should use "Table~\ref{tab:3}".'
+

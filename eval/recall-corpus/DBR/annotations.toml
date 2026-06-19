@@ -163,6 +163,7 @@ rule_id = "JSS-XREF-004"
 file = "DBR.Rnw"
 line = 230
 comment = "Equation without a label"
+
 [[violations]]
 rule_id = "JSS-OPER-004"
 file = "DBR.Rnw"
@@ -236,16 +237,16 @@ line = 281
 comment = '"Eq.~\ref{eq-log-posterior}" should be "Equation~\ref{eq-log-posterior}"'
 
 [[violations]]
-rule_id = "JSS-MARKUP-002"
-file = "DBR.Rnw"
-line = 283
-comment = 'DBR should be \pkg{DBR}, and this section title now requires the plain text argument without \pkg{}'
-
-[[violations]]
 rule_id = "JSS-CAP-002"
 file = "DBR.Rnw"
 line = 283
 comment = 'Section title not in sentence case, should be "Using the \pkg{DBR} package"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "DBR.Rnw"
+line = 283
+comment = 'DBR should be \pkg{DBR}, and this section title now requires the plain text argument without \pkg{}'
 
 [[violations]]
 rule_id = "JSS-CAP-002"
@@ -298,12 +299,6 @@ comment = 'The line uses \texttt instead of \code several times.'
 [[violations]]
 rule_id = "JSS-MARKUP-003"
 file = "DBR.Rnw"
-line = 394
-comment = 'The line uses \texttt instead of \code twice.'
-
-[[violations]]
-rule_id = "JSS-MARKUP-003"
-file = "DBR.Rnw"
 line = 383
 comment = 'The line uses \texttt instead of \code twice.'
 
@@ -312,6 +307,12 @@ rule_id = "JSS-MARKUP-003"
 file = "DBR.Rnw"                                                                                                                              
 line = 383
 comment = '"\pkg{plot} function in the \pkg{MfUSampler} package" — "plot" is a function name and should be \code{plot}, not \pkg{plot}. (The second \pkg{MfUSampler} is correct.)' 
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "DBR.Rnw"
+line = 394
+comment = 'The line uses \texttt instead of \code twice.'
 
 [[violations]]
 rule_id = "JSS-CAP-002"
@@ -626,6 +627,12 @@ line = 154
 comment = 'armstrong1981parametric — title not in title case; should be "Parametric Statistics and Ordinal Data: A Pervasive Misconception".'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 165
+comment = 'knapp1990treating — Article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
 rule_id = "JSS-REFS-006"
 file = "DBR.bib"
 line = 165
@@ -636,12 +643,6 @@ rule_id = "JSS-REFS-007"
 file = "DBR.bib"
 line = 165
 comment = 'knapp1990treating — journal not in title case; should be "Nursing Research".'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "DBR.bib"
-line = 165
-comment = 'knapp1990treating — Article DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-BIBTEX-003"
@@ -806,6 +807,12 @@ line = 282
 comment = 'plummer206coda — R News article DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 282
+comment = 'geweke1992evaluating — book chapter DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "DBR.bib"
 line = 283
@@ -814,8 +821,8 @@ comment = 'CODA should be \pkg{CODA} and R should be \proglang{R}'
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "DBR.bib"
-line = 282
-comment = 'geweke1992evaluating — book chapter DOI exists on Crossref; missing from the entry.'
+line = 295
+comment = 'geweke1992evaluating — DOI 10.21034/sr.148 found on Crossref (title similarity 0.99); add to the entry as doi="10.21034/sr.148".'
 
 [[violations]]
 rule_id = "JSS-REFS-006"
@@ -847,8 +854,4 @@ file = "DBR.bib"
 line = 305
 comment = 'venables2002mass — Springer book DOI exists on Crossref; missing from the entry.'
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "DBR.bib"
-line = 295
-comment = 'geweke1992evaluating — DOI 10.21034/sr.148 found on Crossref (title similarity 0.99); add to the entry as doi="10.21034/sr.148".'
+
