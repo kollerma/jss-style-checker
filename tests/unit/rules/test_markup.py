@@ -545,6 +545,76 @@ class TestMarkup003:
         assert v.fix.replacement == "\\code"
         assert v.fix.confidence == "safe"
 
+    # --- \pkg{...()} (function name abused as package) -> \code{...} ------
+
+    def test_pkg_with_parens_flagged(self, run_rule):
+        # \pkg{} is for packages, which never contain parentheses; a "()"
+        # inside means a function call was wrapped — it belongs in \code{}.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"In \pkg{MASS} the \pkg{polr()} function fits the model." "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        # Only the parenthesised \pkg{polr()} fires; \pkg{MASS} is fine.
+        assert len(violations) == 1
+        assert "polr()" in violations[0].suggestion
+        assert "\\code{polr()}" in violations[0].suggestion
+
+    def test_pkg_with_parens_emits_safe_fix(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\pkg{lrm()} is available.\end{document}"
+        )
+        violations = run_rule(jss_markup_003, src)
+        assert len(violations) == 1
+        v = violations[0]
+        assert v.fix is not None
+        assert v.fix.replacement == "\\code"
+        assert v.fix.confidence == "safe"
+
+    def test_pkg_with_argument_call_flagged(self, run_rule):
+        # Non-empty parens (a call with an argument) are still a function.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\pkg{predict(model)} returns.\end{document}"
+        )
+        assert len(run_rule(jss_markup_003, src)) == 1
+
+    def test_plain_pkg_silent(self, run_rule):
+        # A normal package name (no parens) must not fire.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}We rely on \pkg{data.table} and \pkg{lme4}."
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_pkg_acronym_in_parens_silent(self, run_rule):
+        # \pkg{Engine for likelihood-free inference (ELFI)} — the parens
+        # hold an acronym in a descriptive name (space before "("), not a
+        # function call. Misuse of \pkg{} perhaps, but NOT a code call, so
+        # this rule must stay silent (no glued identifier-paren).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}"
+            r"\pkg{Engine for likelihood-free inference (ELFI)} is used."
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_pkg_with_parens_in_verbatim_skipped(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{verbatim}" "\n"
+            r"\pkg{polr()}" "\n"
+            r"\end{verbatim}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_003, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-MARKUP-004 — section titles with markup

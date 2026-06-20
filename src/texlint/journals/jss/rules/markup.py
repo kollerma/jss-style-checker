@@ -454,6 +454,13 @@ def _project_title_plain_text(group: Any) -> str:
 
 _FUNCTION_CALL_RE = re.compile(r"\b[a-zA-Z][a-zA-Z0-9_.]*\(\s*\)")
 
+# Function call glued inside ``\pkg{...}``: an identifier character
+# immediately followed by ``(`` (``polr(``, ``predict(``). Requiring the
+# paren to abut the identifier excludes acronym-in-parens product names
+# such as ``\pkg{Engine for likelihood-free inference (ELFI)}`` where a
+# space precedes the paren.
+_PKG_FUNCTION_CALL_RE = re.compile(r"[A-Za-z0-9_.]\(")
+
 # R sentinel values that should be wrapped in ``\code{}`` when they
 # appear as standalone words in prose. Reviewer R5-r3 on jss5342
 # explicitly called out ``NULL -> \code{NULL}`` in Table 3; the same
@@ -541,6 +548,39 @@ def check_jss_markup_003(
                         description=(
                             f"replace \\texttt with \\{target_macro}"
                         ),
+                        confidence="safe",
+                    ),
+                )
+                continue
+            if isinstance(node, LatexMacroNode) and node.macroname == "pkg":
+                # \pkg{} is for package names, which are alphanumeric plus
+                # dots. When the author glues an identifier directly to an
+                # opening paren (``\pkg{polr()}``, ``\pkg{predict(model)}``)
+                # they wrapped a function call, which belongs in \code{}.
+                # The "glued" test (identifier immediately before ``(``)
+                # avoids descriptive names whose parens hold an acronym
+                # (``\pkg{Engine for ... inference (ELFI)}`` — space before
+                # the paren), keeping the detector zero-FP.
+                if _helpers._is_inside_verbatim(ancestors):
+                    continue
+                if _is_inside_bibliography(ancestors):
+                    continue
+                inner = _helpers._macro_args_text(node, parent, idx).strip()
+                if not _PKG_FUNCTION_CALL_RE.search(inner):
+                    continue
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-MARKUP-003",
+                    suggestion=(
+                        f"\\pkg{{{inner}}} wraps a function call, not a "
+                        f"package name; use \\code{{{inner}}}."
+                    ),
+                    fix=Fix(
+                        start=node.pos,
+                        end=node.pos + len("\\pkg"),
+                        replacement="\\code",
+                        description="replace \\pkg with \\code",
                         confidence="safe",
                     ),
                 )
