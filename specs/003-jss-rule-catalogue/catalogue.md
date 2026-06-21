@@ -4,7 +4,7 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 60  
+**Rule count**: 61  
 **Category count**: 15
 
 ---
@@ -154,7 +154,7 @@ _operators_ — 4 rule(s)
 
 ## Cross-references
 
-_crossrefs_ — 5 rule(s)
+_crossrefs_ — 6 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
@@ -163,6 +163,7 @@ _crossrefs_ — 5 rule(s)
 | `JSS-XREF-003` | warning | Cross-references to subsections use "Section x.y" rather than "Subsection x.y" | style_guide | `#miscellaneous` | — |
 | `JSS-XREF-004` | info | Numbered equations carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-XREF-005` | warning | Figures and tables carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-XREF-006` | warning | Figure and table floats carry a \caption{} | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 
 ## House style
 
@@ -2299,6 +2300,50 @@ when the float has no `\label{}`, or has label(s) none of which is referenced an
 JSS-XREF-001's reasoning: an unreferenced figure/table is a missing-callout signal, stronger than the
 info-severity equation nit. Captionless (unnumbered) floats are out of scope — they have no counter to
 label. JSS-XREF-001 separately covers the reference *form* (use `\ref{}`, not a hardcoded number).
+
+---
+
+### JSS-XREF-006
+
+**Category**: `crossrefs` · **Severity**: `warning` · **Auto-fixable**: no
+
+Figure and table floats carry a \caption{}
+
+**Authority**: `style_guide` → `#what-are-the-most-important-style-guidelines-in-jss`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\begin{figure}
+\includegraphics{quine}
+\end{figure}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\begin{figure}
+\includegraphics{quine}
+\caption{Frequency distribution.}
+\label{fig:quine}
+\end{figure}
+```
+
+</details>
+
+**Notes**: The precondition for JSS-XREF-005: a `figure` / `table` float (and starred variants) with no `\caption`
+(or `\captionof`) is unnumbered and cannot be cross-referenced, so XREF-005 deliberately skips it. This
+rule catches the missing caption itself. Sub-float environments (`subfigure`, `subtable`, `subfloat`,
+`minipage`, `wrapfigure` / `wraptable`, sideways variants) are carved out: a panel nested inside a parent
+float legitimately relies on the parent's caption. A float that contains a sub-float is therefore not
+flagged for its own caption either, since the sub-float wrapper signals a composite figure whose caption
+may sit on an inner panel.
 
 ---
 

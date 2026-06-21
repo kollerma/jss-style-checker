@@ -621,12 +621,31 @@ _FLOAT_ENVS: frozenset[str] = frozenset(
 
 _CAPTION_MACROS: frozenset[str] = frozenset({"caption", "captionof"})
 
+# Sub-float environments: a panel nested inside a parent float relies on
+# the parent's caption (or carries its own panel caption). A float that
+# contains one of these is a composite figure and is not flagged by
+# JSS-XREF-006 for lacking its own top-level caption.
+_SUBFLOAT_ENVS: frozenset[str] = frozenset(
+    {"subfigure", "subtable", "subfloat", "minipage", "wrapfigure",
+     "wraptable", "sidewaysfigure", "sidewaystable"}
+)
+
 
 def _env_has_caption(env: Any) -> bool:
     for child in _helpers._walk(env.nodelist or ()):
         if (
             isinstance(child, LatexMacroNode)
             and child.macroname in _CAPTION_MACROS
+        ):
+            return True
+    return False
+
+
+def _env_contains_subfloat(env: Any) -> bool:
+    for child in _helpers._walk(env.nodelist or ()):
+        if (
+            isinstance(child, LatexEnvironmentNode)
+            and child.environmentname in _SUBFLOAT_ENVS
         ):
             return True
     return False
@@ -675,6 +694,42 @@ def check_jss_xref_005(
 
 
 # ---------------------------------------------------------------------------
+# JSS-XREF-006 — figure / table floats carry a \caption{}
+# ---------------------------------------------------------------------------
+
+
+def check_jss_xref_006(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    """A ``figure`` / ``table`` float must carry a ``\\caption{}`` so it is
+    numbered and can be cross-referenced. This is the precondition JSS-XREF-005
+    assumes: a captionless float is unnumbered and silently skipped there."""
+    for tex in doc.all_tex_like():
+        for node in _helpers._walk(tex.nodes):
+            if not isinstance(node, LatexEnvironmentNode):
+                continue
+            if node.environmentname not in _FLOAT_ENVS:
+                continue
+            if _env_has_caption(node):
+                continue
+            # Composite figure: a panel nested inside relies on the parent's
+            # caption (or carries its own), so a missing top-level caption is
+            # not a defect here.
+            if _env_contains_subfloat(node):
+                continue
+            kind = "table" if node.environmentname.startswith("table") else "figure"
+            yield _violation(
+                tex=tex,
+                pos=node.pos,
+                rule_id="JSS-XREF-006",
+                suggestion=(
+                    f"Add a \\caption{{...}} to the {kind} so it is numbered "
+                    "and can be referenced from the text."
+                ),
+            )
+
+
+# ---------------------------------------------------------------------------
 # Rule objects
 # ---------------------------------------------------------------------------
 
@@ -687,8 +742,10 @@ jss_xref_002 = _rule("JSS-XREF-002", check_jss_xref_002)
 jss_xref_003 = _rule("JSS-XREF-003", check_jss_xref_003)
 jss_xref_004 = _rule("JSS-XREF-004", check_jss_xref_004)
 jss_xref_005 = _rule("JSS-XREF-005", check_jss_xref_005)
+jss_xref_006 = _rule("JSS-XREF-006", check_jss_xref_006)
 
 
 rules: tuple[Rule, ...] = (
     jss_xref_001, jss_xref_002, jss_xref_003, jss_xref_004, jss_xref_005,
+    jss_xref_006,
 )

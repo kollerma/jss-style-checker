@@ -11,11 +11,13 @@ from texlint.journals.jss.rules.crossrefs import (
     check_jss_xref_003,
     check_jss_xref_004,
     check_jss_xref_005,
+    check_jss_xref_006,
     jss_xref_001,
     jss_xref_002,
     jss_xref_003,
     jss_xref_004,
     jss_xref_005,
+    jss_xref_006,
     rules,
 )
 
@@ -27,12 +29,12 @@ def _tex(name: str) -> str:
     return (FIXTURE_DIR / name).read_text(encoding="utf-8")
 
 
-def test_rules_tuple_has_five_rules():
-    assert len(rules) == 5
+def test_rules_tuple_has_six_rules():
+    assert len(rules) == 6
 
 
 def test_rules_tuple_ids():
-    assert {r.id for r in rules} == {f"JSS-XREF-00{i}" for i in range(1, 6)}
+    assert {r.id for r in rules} == {f"JSS-XREF-00{i}" for i in range(1, 7)}
 
 
 # ---------------------------------------------------------------------------
@@ -315,11 +317,90 @@ class TestXref005:
         assert run_rule(jss_xref_005, src) == []
 
 
+class TestXref006:
+    def test_figure_missing_caption_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\includegraphics{x}\end{figure}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_xref_006, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-XREF-006"
+        assert violations[0].severity == Severity.WARNING
+        assert "figure" in violations[0].suggestion
+
+    def test_table_missing_caption_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{table}\begin{tabular}{c}1\end{tabular}\end{table}" "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_xref_006, src)
+        assert len(violations) == 1
+        assert "table" in violations[0].suggestion
+
+    def test_captioned_float_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\includegraphics{x}\caption{F}\label{fig:x}\end{figure}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_006, src) == []
+
+    def test_captionof_counts_as_caption(self, run_rule):
+        # \captionof (capt-of / floatrow idiom) also numbers the float.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}\captionof{figure}{F}\end{figure}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_006, src) == []
+
+    def test_starred_float_in_scope(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{table*}\begin{tabular}{c}1\end{tabular}\end{table*}" "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_xref_006, src)) == 1
+
+    def test_composite_subfloat_carveout_silent(self, run_rule):
+        # A parent figure whose own caption is absent but which contains
+        # subfigure panels is a composite float; the parent caption may
+        # live on an inner panel, so do not flag the parent.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{figure}" "\n"
+            r"\begin{subfigure}{0.5\textwidth}\includegraphics{a}\caption{A}\end{subfigure}" "\n"
+            r"\begin{subfigure}{0.5\textwidth}\includegraphics{b}\caption{B}\end{subfigure}" "\n"
+            r"\end{figure}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_006, src) == []
+
+    def test_non_float_env_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{itemize}\item x\end{itemize}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_006, src) == []
+
+
 def test_all_checks_silent_on_empty_tex():
     tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)
     doc = ParsedDocument(tex_files=(tex,))
     for check in (
         check_jss_xref_001, check_jss_xref_002,
         check_jss_xref_003, check_jss_xref_004, check_jss_xref_005,
+        check_jss_xref_006,
     ):
         assert list(check(doc, ToolConfig())) == []

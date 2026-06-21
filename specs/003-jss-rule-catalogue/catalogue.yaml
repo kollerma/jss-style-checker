@@ -1456,9 +1456,35 @@ rules:
       info-severity equation nit. Captionless (unnumbered) floats are out of scope — they have no counter to
       label. JSS-XREF-001 separately covers the reference *form* (use `\ref{}`, not a hardcoded number).
 
-  # ---------------------------------------------------------------------------
-  # house_style
-  # ---------------------------------------------------------------------------
+  - rule_id: JSS-XREF-006
+    category: crossrefs
+    severity: warning
+    description: Figure and table floats carry a \caption{}
+    authority: style_guide
+    authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
+    example_violation: |
+      \begin{figure}
+      \includegraphics{quine}
+      \end{figure}
+    example_fix: |
+      \begin{figure}
+      \includegraphics{quine}
+      \caption{Frequency distribution.}
+      \label{fig:quine}
+      \end{figure}
+    inspects: [tex_files]
+    auto_fixable: false
+    guide_section: "§4.5 Cross-references"
+    guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Figure and table floats carry a \\caption{} so they are numbered and can be referenced from the text."
+    notes: |
+      The precondition for JSS-XREF-005: a `figure` / `table` float (and starred variants) with no `\caption`
+      (or `\captionof`) is unnumbered and cannot be cross-referenced, so XREF-005 deliberately skips it. This
+      rule catches the missing caption itself. Sub-float environments (`subfigure`, `subtable`, `subfloat`,
+      `minipage`, `wrapfigure` / `wraptable`, sideways variants) are carved out: a panel nested inside a parent
+      float legitimately relies on the parent's caption. A float that contains a sub-float is therefore not
+      flagged for its own caption either, since the sub-float wrapper signals a composite figure whose caption
+      may sit on an inner panel.
 
   - rule_id: JSS-HOUSE-001
     category: house_style

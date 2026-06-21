@@ -698,6 +698,18 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "guide_url": 'https://www.jstatsoft.org/about/submissions#cross-references',
         "explanation": 'Figures and tables carry \\label{} and are referenced from the text.',
     }),
+    'JSS-XREF-006': MappingProxyType({
+        "category": 'crossrefs',
+        "severity": Severity.WARNING,
+        "message_template": 'Figure and table floats carry a \\caption{}',
+        "authority": 'style_guide',
+        "authority_ref": '#what-are-the-most-important-style-guidelines-in-jss',
+        "inspects": ('tex_files',),
+        "auto_fixable": False,
+        "guide_section": '§4.5 Cross-references',
+        "guide_url": 'https://www.jstatsoft.org/about/submissions#cross-references',
+        "explanation": 'Figure and table floats carry a \\caption{} so they are numbered and can be referenced from the text.',
+    }),
     'JSS-HOUSE-001': MappingProxyType({
         "category": 'house_style',
         "severity": Severity.WARNING,
