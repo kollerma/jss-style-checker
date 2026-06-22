@@ -198,6 +198,31 @@ class TestCode003:
         )
         assert run_rule(jss_code_003, src) == []
 
+    def test_assignment_arrow_no_spaces_flagged(self, run_rule):
+        # R assignment ``<-`` needs surrounding spaces; ``x<-y`` was missed
+        # because ``<`` is not a single-char operator (recall-corpus
+        # CUB.Rnw:798/931).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{pai1<-coef(x)}\end{document}"
+        )
+        assert len(run_rule(jss_code_003, src)) == 1
+
+    def test_assignment_arrow_well_spaced_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{x <- coef(y)}\end{document}"
+        )
+        assert run_rule(jss_code_003, src) == []
+
+    def test_right_and_super_assign_flagged(self, run_rule):
+        for op in ("->", "<<-"):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}\code{{a{op}b}}\end{{document}}"
+            )
+            assert len(run_rule(jss_code_003, src)) == 1, op
+
     def test_dash_inside_string_literal_silent(self, run_rule):
         # \code{vignette("plot3logit-overview")} — the dash in the
         # string literal is a vignette filename, not a subtraction

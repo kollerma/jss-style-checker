@@ -83,6 +83,12 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-CODE-003` now flags missing spaces around R's multi-character
+  assignment operators `<-`, `->`, and `<<-` (e.g. `x<-coef(y)` →
+  `x <- coef(y)`). The missing-space matcher only recognised single-char
+  operators, so the `<` broke the ident-operator-ident pattern and glued
+  assignments slipped through entirely (recall-corpus CUB false
+  negatives). Comparison operators (`==`, `<=`, …) remain a follow-up.
 - Markup / prose rules no longer fire inside `lstlisting`, `alltt`,
   `tabbing`, and `verbatim*` bodies. The parser's neutraliser and the
   rules' non-prose check had drifted into two different environment
