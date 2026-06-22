@@ -223,6 +223,21 @@ class TestCode003:
             )
             assert len(run_rule(jss_code_003, src)) == 1, op
 
+    def test_comparison_operators_no_spaces_flagged(self, run_rule):
+        for op in ("==", "!=", "<=", ">="):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}\code{{n{op}10}}\end{{document}}"
+            )
+            assert len(run_rule(jss_code_003, src)) == 1, op
+
+    def test_comparison_operators_well_spaced_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{n <= 10}\end{document}"
+        )
+        assert run_rule(jss_code_003, src) == []
+
     def test_dash_inside_string_literal_silent(self, run_rule):
         # \code{vignette("plot3logit-overview")} — the dash in the
         # string literal is a vignette filename, not a subtraction

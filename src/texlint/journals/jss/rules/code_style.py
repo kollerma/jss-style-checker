@@ -48,12 +48,13 @@ _LIBRARY_UNQUOTED_RE = re.compile(
     r"([A-Za-z][A-Za-z0-9_.]*)\s*[,)]"
 )
 _MISSING_SPACES_RE = re.compile(
-    # R multi-char assignment operators (``<-``, ``->``, ``<<-``) need
-    # surrounding spaces too. Match them as a unit *before* the single-char
-    # class — otherwise the embedded ``-`` sits next to ``<`` (not an
-    # identifier char), the ident-op-ident pattern never matches, and
-    # ``x<-y`` slips through entirely.
-    r"(?:[A-Za-z0-9_\.\)\]](?:<<-|<-|->)[A-Za-z0-9_\.\(\[])"
+    # R multi-char operators that also need surrounding spaces: assignment
+    # (``<-``, ``->``, ``<<-``) and comparison (``==``, ``!=``, ``<=``,
+    # ``>=``). Match them as a unit *before* the single-char class —
+    # otherwise the embedded ``-`` / ``=`` sits next to ``<`` / ``=`` (not
+    # identifier chars), the ident-op-ident pattern never matches, and
+    # ``x<-y`` / ``a==b`` slip through entirely.
+    r"(?:[A-Za-z0-9_\.\)\]](?:<<-|<-|->|==|!=|<=|>=)[A-Za-z0-9_\.\(\[])"
     r"|(?:[A-Za-z0-9_\.\)\]][=+\-*/][A-Za-z0-9_\.\(\[])"
     r"|(?:,[A-Za-z0-9_\.\(\[])"
 )
