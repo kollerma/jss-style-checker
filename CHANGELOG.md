@@ -83,6 +83,13 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-XREF-004` now checks each label in a multi-line equation
+  environment (`align` / `eqnarray` / `gather`) independently: those envs
+  number every line, so an orphan numbered line is a defect even when a
+  sibling line *is* referenced. The old per-environment "any label
+  referenced" test missed these (recall-corpus romc `eq:1D_example`).
+  Envs containing `\nonumber`/`\notag` fall back to the conservative
+  per-env check to avoid flagging a label on an unnumbered line.
 - `JSS-MARKUP-001` no longer flags the emphasised first letter of a word
   as a language name: `\emph{C}ombination`, `\textbf{S}helter` (the
   acronym typesetting device, e.g. CUB/CUSH) read the `\emph{C}` as the C

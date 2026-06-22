@@ -202,6 +202,48 @@ class TestXref004:
         )
         assert run_rule(jss_xref_004, src) == []
 
+    def test_multiline_per_label_orphan_flagged(self, run_rule):
+        # gather numbers each line; one label referenced, the other an
+        # orphan — the orphan must still fire (recall-corpus romc
+        # eq:1D_example). Per-env "any referenced" missed this.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{gather} \label{eq:a}" "\n"
+            r"x = 1 \\ \label{eq:b}" "\n"
+            r"y = 2" "\n"
+            r"\end{gather}" "\n"
+            r"See Equation~\ref{eq:b}." "\n"
+            r"\end{document}"
+        )
+        violations = run_rule(jss_xref_004, src)
+        assert len(violations) == 1
+        assert "eq:a" in violations[0].suggestion
+        assert "eq:b" not in violations[0].suggestion
+
+    def test_multiline_all_referenced_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{align} x = 1 \label{eq:a} \\ y = 2 \label{eq:b} \end{align}" "\n"
+            r"Equations~\ref{eq:a} and \ref{eq:b}." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_004, src) == []
+
+    def test_multiline_with_nonumber_falls_back(self, run_rule):
+        # A \nonumber in the env -> conservative per-env check: one
+        # referenced label keeps it silent (avoids flagging the label on
+        # the unnumbered line).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{align} x = 1 \label{eq:a} \\ y = 2 \nonumber \label{eq:b} \end{align}" "\n"
+            r"See Equation~\ref{eq:a}." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_004, src) == []
+
     def test_nonumber_equation_silent(self, run_rule):
         # Reviewer-confirmed FPs from cran_sphet, cran_synthpop:
         # \nonumber inside an equation env suppresses the equation

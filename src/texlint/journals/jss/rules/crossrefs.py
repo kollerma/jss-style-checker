@@ -75,6 +75,12 @@ _NUMBERED_EQ_ENVS: frozenset[str] = frozenset(
     {"equation", "align", "eqnarray", "gather", "multline"}
 )
 
+# Subset that numbers each line independently — every \label{} marks its
+# own numbered equation, so each must be referenced (not just one per env).
+_MULTILINE_EQ_ENVS: frozenset[str] = frozenset(
+    {"align", "eqnarray", "gather"}
+)
+
 
 # Catalogue-backed factories live in _helpers (one definition for all
 # rule modules); the module-local names are kept for call-site brevity.
@@ -557,18 +563,32 @@ def check_jss_xref_004(
                     ),
                 )
                 continue
-            # Label(s) present — check that at least one is referenced
-            # somewhere in the document. JSS wants every numbered
-            # equation to be cited from the prose; an orphan label is
-            # a defect (the equation has a number but the text never
-            # mentions it).
-            if not any(k in referenced for k in label_keys):
+            # Label(s) present. In a multi-line env (align / eqnarray /
+            # gather) every line is independently numbered, so EACH label
+            # marks a separately-numbered equation that should be
+            # referenced — a sibling line being referenced doesn't excuse
+            # an orphan one (recall-corpus romc eq:1D_example). We only
+            # apply the strict per-label check when the env has no
+            # \nonumber/\notag (which would unnumber a line and make its
+            # label a non-target); otherwise fall back to the conservative
+            # per-env check. Single-line envs (equation, multline) carry a
+            # single number, so one referenced label suffices.
+            if (
+                node.environmentname in _MULTILINE_EQ_ENVS
+                and not _env_has_nonumber(node)
+            ):
+                orphans = [k for k in label_keys if k not in referenced]
+            elif not any(k in referenced for k in label_keys):
+                orphans = label_keys
+            else:
+                orphans = []
+            if orphans:
                 yield _violation(
                     tex=tex,
                     pos=node.pos,
                     rule_id="JSS-XREF-004",
                     suggestion=(
-                        f"Equation label(s) {', '.join(label_keys)!r} "
+                        f"Equation label(s) {', '.join(orphans)!r} "
                         "are never referenced from the text. Either "
                         "cite the equation via \\ref{} / \\eqref{} or "
                         "suppress the number with \\nonumber."
