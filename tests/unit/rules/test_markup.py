@@ -123,6 +123,29 @@ class TestMarkup001:
         )
         assert run_rule(jss_markup_001, src) == []
 
+    def test_skip_emphasised_acronym_initial(self, run_rule):
+        # \emph{C}ombination — the emphasised first letter of a word
+        # (acronym device, e.g. CUB), not the C language (recall-corpus
+        # CUB.Rnw:123/208 false positives).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"the \emph{C}ombination of a \emph{U}niform model." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_emphasised_standalone_language_still_fires(self, run_rule):
+        # \emph{C} followed by a space is a standalone language mention,
+        # not an acronym initial — it should still be flagged.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"written in \emph{C} for speed." "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_markup_001, src)) == 1
+
     def test_skip_section_title(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

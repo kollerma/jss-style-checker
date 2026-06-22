@@ -83,6 +83,13 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-MARKUP-001` no longer flags the emphasised first letter of a word
+  as a language name: `\emph{C}ombination`, `\textbf{S}helter` (the
+  acronym typesetting device, e.g. CUB/CUSH) read the `\emph{C}` as the C
+  language. It's skipped when a single-letter language token sits alone in
+  an emphasis macro whose closing brace is glued to a lowercase letter; a
+  standalone `\emph{C}` (space/punctuation after) still fires
+  (recall-corpus CUB false positives).
 - `JSS-CODE-003` now flags missing spaces around R's multi-character
   assignment operators `<-`, `->`, and `<<-` (e.g. `x<-coef(y)` →
   `x <- coef(y)`). The missing-space matcher only recognised single-char

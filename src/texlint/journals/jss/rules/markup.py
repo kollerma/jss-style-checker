@@ -85,6 +85,43 @@ def _is_superscripted(chars: str, offset: int, token_len: int) -> bool:
     return chars[tail_start] == "^"
 
 
+# Emphasis macros used for the acronym-initial typesetting device
+# (``\emph{C}ombination``): the first letter is emphasised and the rest of
+# the word continues, glued, right after the closing brace.
+_EMPHASIS_MACROS: frozenset[str] = frozenset(
+    {"emph", "textit", "textbf", "textsc", "textsl", "textup",
+     "textmd", "textrm", "textnormal"}
+)
+
+
+def _is_emphasised_word_initial(
+    ancestors: list[Any], source: str, token: str
+) -> bool:
+    """True when a single-letter language token (``C`` / ``S`` / ``R``) is
+    the emphasised first letter of a longer word — ``\\emph{C}ombination``,
+    ``\\textbf{S}helter`` — i.e. an acronym device, not a standalone
+    language mention. Detected when the token sits alone inside an emphasis
+    macro whose closing brace is immediately followed by a lowercase letter
+    (the word continues, glued to the macro).
+    """
+    if len(token) != 1:
+        return False
+    for anc in reversed(ancestors):
+        if isinstance(anc, LatexGroupNode):
+            continue  # the ``{C}`` arg group wrapping the single letter
+        if isinstance(anc, LatexMacroNode):
+            if anc.macroname not in _EMPHASIS_MACROS:
+                return False
+            end = (anc.pos or 0) + (anc.len or 0)
+            return (
+                end < len(source)
+                and source[end].isalpha()
+                and source[end].islower()
+            )
+        return False
+    return False
+
+
 def _is_filename_context(chars: str, offset: int) -> bool:
     """True when the token at ``offset`` is a file-extension or
     path-segment suffix, not a bare language / package mention.
@@ -281,6 +318,10 @@ def _check_bare_terms(
                     continue
                 if skip_initials and len(token) == 1 and _is_initial(
                     node.chars, offset
+                ):
+                    continue
+                if skip_initials and _is_emphasised_word_initial(
+                    ancestors, tex.source, token
                 ):
                     continue
                 if _is_superscripted(node.chars, offset, len(token)):
