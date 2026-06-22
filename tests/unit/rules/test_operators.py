@@ -122,6 +122,31 @@ class TestOper003:
     def test_good_silent(self, run_rule):
         assert run_rule(jss_oper_003, _tex("JSS-OPER-003-good.tex")) == []
 
+    def test_bracket_display_math_blank_before_flagged(self, run_rule):
+        # ``\[ ... \]`` is a display-math node, not an environment; it was
+        # skipped entirely (recall-corpus deSolve \[ blank-before FNs).
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "With the initial conditions:\n"
+            "\n"
+            "\\[\nX(0) = 1\n\\]\n"
+            "then we solve.\n"
+            "\\end{document}\n"
+        )
+        assert len(run_rule(jss_oper_003, src)) == 1
+
+    def test_bracket_display_math_well_spaced_silent(self, run_rule):
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "With the initial conditions\n"
+            "\\[\nX(0) = 1\n\\]\n"
+            "then we solve.\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_oper_003, src) == []
+
     def test_period_carveout_after_only_silent(self, run_rule):
         # Equation body ends with a period → sentence ends; the blank
         # line AFTER \end{} is allowed. The period exemption does NOT

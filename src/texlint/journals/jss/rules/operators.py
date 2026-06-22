@@ -22,6 +22,7 @@ from pylatexenc.latexwalker import (
     LatexEnvironmentNode,
     LatexGroupNode,
     LatexMacroNode,
+    LatexMathNode,
 )
 
 from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
@@ -259,10 +260,19 @@ def check_jss_oper_003(
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
-            if not (
+            # Display equations come in two node shapes: environments
+            # (\begin{equation} …) and display-math nodes (``\[ … \]`` /
+            # ``$$ … $$``), which pylatexenc parses as a LatexMathNode with
+            # displaytype == "display" rather than an environment.
+            is_env = (
                 isinstance(node, LatexEnvironmentNode)
                 and node.environmentname in _DISPLAY_EQ_ENVS
-            ):
+            )
+            is_display_math = (
+                isinstance(node, LatexMathNode)
+                and getattr(node, "displaytype", None) == "display"
+            )
+            if not (is_env or is_display_math):
                 continue
             before = parent[idx - 1] if idx > 0 else None
             after = parent[idx + 1] if idx + 1 < len(parent) else None

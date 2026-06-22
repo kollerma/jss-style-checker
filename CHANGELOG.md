@@ -83,6 +83,10 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-OPER-003` now also checks `\[ … \]` / `$$ … $$` display math for
+  blank lines before/after. These parse as a display-math node (not an
+  environment), so the rule skipped them entirely (recall-corpus deSolve
+  false negatives).
 - `JSS-XREF-004` now checks each label in a multi-line equation
   environment (`align` / `eqnarray` / `gather`) independently: those envs
   number every line, so an orphan numbered line is a defect even when a
