@@ -1,0 +1,1448 @@
+# Hand-annotated ground truth for paper "trueskill".
+#
+# Read the rendered manuscript end-to-end and record EVERY
+# JSS-guide violation. Identity tuple is (rule_id, file, line);
+# column does NOT participate. See ../README.md for the protocol.
+#
+# Goal 1 (non-CRAN language coverage): TrueSkillThroughTime manuscript (Julia + Python, JSS v112.i06).
+# Sole natural source of BIBTEX-005 (absent); also BIBTEX-002 / CAP-003 (thin).
+#
+# The [[violations]] below are SEEDED from precision-review
+# verdicts (eval.db, 2026-06-17): each is a review-confirmed
+# TRUE POSITIVE — VERIFY it, and add the false negatives the
+# linter missed (those are not in eval.db). Reviewed FALSE
+# POSITIVES are listed (commented) at the bottom: do NOT add
+# them as violations, but confirm the FP judgement as you read.
+#
+# JSS-REFS-003 is NOT seeded here — it is populated separately by
+# `python -m eval.crossref_doi_lookup` (records the actual DOI).
+
+[meta]
+paper_id = "trueskill"
+annotator = "Manuel Koller"
+date = "2026-06-22"
+notes = '''
+The author uses both P and P for probability.
+ - lowercase p(·) = a density over a continuous variable (skills s, performances p, differences d): priors, posteriors, likelihoods-as-densities.
+ - uppercase P(·) = the probability of the discrete result r (the game outcome — win/draw/loss): a probability mass.
+Only the uppercase P(·) should become \Prob. The lowercase p(·) should stay as italic p. I've annotated accordingly.
+
+Line 1573 and others use {equation} but also set a tag, e.g.,
+    \begin{equation}\label{eq:p*_d} \tag{\texttt{approx()}}
+Since there's a tag, there's no equation number. approx, the tag, is referenced in code -> FP
+
+Listings lst:tb_lose and lst:d2 are not marked as unreferenced as they are referenced implicitly on line 1912, where it says:
+    The codes \ref{lst:d1} to \ref{lst:tb_win}
+
+'''
+
+
+[[violations]]
+rule_id = "JSS-CAP-001"
+file = "article.tex"
+line = 119
+comment = "\\title{} not in title style"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 190
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 199
+comment = "Equation with label not referenced from text"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 200
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 260
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 268
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 274
+comment = "float fig:posterior_win is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 287
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 288
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 304
+comment = "no reference to equation"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 313
+comment = "missing reference to equation"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 330
+comment = "no text reference to equation"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 459
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 460
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 467
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 468
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 469
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 471
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 472
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 473
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 480
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 481
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 482
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 483
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 484
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 498
+comment = "\\texttt{sigma} [seeded from review: ai:qwen3-30b]"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 514
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 543
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 564
+comment = "float lst:evidence_likelihoods is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 570
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 571
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 605
+comment = "float lst:game_posterior is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 649
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 656
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 657
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 658
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 687
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 695
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 696
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 731
+comment = "float lst:trueskill is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 735
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 737
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 738
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 743
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 794
+comment = "float lst:simulated_skill is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 803
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 804
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 816
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 817
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 818
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 819
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 820
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 824
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 825
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 853
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 854
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 855
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 856
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 870
+comment = '\texttt{...} should be replaced by \code{...}, except for \texttt{atp.csv} which is a filename'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 872
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 874
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 875
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 947
+comment = "float lst:atp_ground is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 957
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 958
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 959
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 960
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 961
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 989
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1004
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 1016
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 1030
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 1031
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1164
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1165
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1167
+comment = "float lst:N1_N2 is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1170
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1172
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1176
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1182
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1190
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1309
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1313
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1318
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1322
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1346
+comment = "float lst:performance is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1348
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1350
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1357
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1358
+comment = "float lst:team_performance is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1363
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1371
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1379
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1400
+comment = "float lst:difference is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1403
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1410
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1419
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1430
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1442
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1486
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1490
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1516
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1544
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1547
+comment = "equation labeled but not referenced [seeded from review: ai:qwen3-30b]"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1558
+comment = "numbered equation labelled ['eq:mean_aprox_double']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1562
+comment = "numbered equation labelled ['eq:variance_aprox_double']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1573
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1594
+comment = "float lst:d_approx is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1598
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1599
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1602
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1611
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1618
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1627
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1637
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1646
+comment = '\texttt{...} in \tag{} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1650
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1685
+comment = "float lst:posterior_s1_approx is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1693
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1694
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1795
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1797
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1799
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1801
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1803
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1805
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1807
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1809
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1811
+comment = "These labels are symbolizing code, so they should use \\code{...} instead of \\texttt{...}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1829
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1868
+comment = "float lst:graphical_model is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 1884
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1915
+comment = "float lst:multi_bordes is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 1923
+comment = "float lst:multi_ascendente is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 1995
+comment = "numbered equation labelled ['eq:posterior_history']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2021
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2024
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2031
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2042
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2064
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2065
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2068
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2071
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2077
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2078
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2086
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2197
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2202
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2203
+comment = '\texttt{rate()} should be replaced by \code{rate()}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2235
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2245
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2246
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2247
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2251
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2259
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2263
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2271
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2275
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2282
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2295
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "article.tex"
+line = 2310
+comment = '\texttt{...} should be replaced by \code{...}'
+
+[[violations]]
+rule_id = "JSS-STRUCT-001"
+file = "article.tex"
+line = 2319
+comment = "Summary should come before bibliography, but here there are two sections after sec:summary"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 2383
+comment = "float with missing label is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 2395
+comment = "float with missing label is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "article.tex"
+line = 2416
+comment = "float atp_trueskill is captioned (numbered) but never referenced from the text"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2427
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2432
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2440
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2445
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2450
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2455
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2460
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2467
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2472
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2477
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2487
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2492
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2500
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2505
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2510
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2523
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2525
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2529
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2533
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2541
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2543
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2546
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2547
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2550
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2552
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2553
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2557
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2562
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2567
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "article.tex"
+line = 2571
+comment = 'Should use \Prob instead of plain P'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2576
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2581
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2585
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2590
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2598
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2603
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2608
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2614
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2619
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2628
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2637
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2647
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2651
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2656
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2661
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2670
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2675
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2680
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "article.tex"
+line = 2688
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-005"
+file = "gaming.bib"
+line = 279
+comment = "Duplicate author key in entry"
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "gaming.bib"
+line = 1160
+comment = "Should be \"Springer-Verlag\" for publisher"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "gaming.bib"
+line = 2223
+comment = 'glickman2001 — DOI 10.1080/02664760120059219 found on Crossref (title similarity 1.00); add to the entry as doi="10.1080/02664760120059219".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "gaming.bib"
+line = 2223
+comment = "Title in sentence case and not title case"
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "gaming.bib"
+line = 2500
+comment = "Should be \"Springer-Verlag\" for publisher"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "gaming.bib"
+line = 2785
+comment = 'Herbrich2007 — DOI 10.7551/mitpress/7503.003.0076 found on Crossref (title similarity 0.98); add to the entry as doi="10.7551/mitpress/7503.003.0076".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "gaming.bib"
+line = 3645
+comment = 'Title should use \proglang{Julia}, \proglang{Python} and \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "gaming.bib"
+line = 3645
+comment = 'Title not in title case, should captialize "the" (after :) and "packages"'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "gaming.bib"
+line = 3645
+comment = "Journal title should be in title case"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-002"
+file = "gaming.bib"
+line = 4196
+comment = "Duplicate citation key 'Mahmassani'"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "gaming.bib"
+line = 4465
+comment = 'MicrobenchmarkR — DOI 10.32614/cran.package.microbenchmark found on Crossref (title similarity 0.99); add to the entry as doi="10.32614/cran.package.microbenchmark".'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-003"
+file = "gaming.bib"
+line = 4535
+comment = "Missing fields for techreport entry type"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "gaming.bib"
+line = 4535
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-003"
+file = "gaming.bib"
+line = 4664
+comment = "Missing fields for TECHREPORT entry"
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "gaming.bib"
+line = 4672
+comment = "Should be \"Springer-Verlag\" for publisher"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "gaming.bib"
+line = 4672
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "gaming.bib"
+line = 4686
+comment = "Should be \"Springer-Verlag\" for publisher"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "gaming.bib"
+line = 4686
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "gaming.bib"
+line = 4700
+comment = "Should be \"Springer-Verlag\" for publisher"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "gaming.bib"
+line = 4700
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-005"
+file = "gaming.bib"
+line = 7007
+comment = "Volume and number fields are repeated"
