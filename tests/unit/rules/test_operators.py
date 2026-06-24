@@ -136,6 +136,36 @@ class TestOper003:
         )
         assert len(run_rule(jss_oper_003, src)) == 1
 
+    def test_blank_after_before_sectioning_silent(self, run_rule):
+        # A blank line before a \subsection is required structure (can't be
+        # %-suppressed), so a display equation followed by it isn't a defect
+        # (recall-corpus trueskill).
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "Intro\n"
+            "\\begin{equation}x = 1\\end{equation}\n"
+            "\n"
+            "\\subsection{Next}\n"
+            "More.\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_oper_003, src) == []
+
+    def test_blank_after_before_prose_still_flagged(self, run_rule):
+        # Blank line after the equation before ordinary prose is still a
+        # violation — only the sectioning case is carved out.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "Intro\n"
+            "\\begin{equation}x = 1\\end{equation}\n"
+            "\n"
+            "More prose follows.\n"
+            "\\end{document}\n"
+        )
+        assert len(run_rule(jss_oper_003, src)) == 1
+
     def test_bracket_display_math_well_spaced_silent(self, run_rule):
         src = (
             "\\documentclass[article]{jss}\n"

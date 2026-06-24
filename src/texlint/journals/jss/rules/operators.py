@@ -255,6 +255,31 @@ def check_jss_oper_002(
 # ---------------------------------------------------------------------------
 
 
+# Sectioning commands: a blank line before one of these is required
+# structure, not a suppressible paragraph break.
+_SECTIONING_MACROS: frozenset[str] = frozenset({
+    "part", "chapter", "section", "subsection", "subsubsection",
+    "paragraph", "subparagraph",
+    "part*", "chapter*", "section*", "subsection*", "subsubsection*",
+    "paragraph*", "subparagraph*",
+})
+
+
+def _blank_after_precedes_sectioning(parent: Any, idx: int) -> bool:
+    """True when the node right after the display equation is a
+    whitespace-only chars node followed by a sectioning macro — i.e. the
+    blank line is the required break before a heading, not a paragraph
+    break around the equation."""
+    after = parent[idx + 1] if idx + 1 < len(parent) else None
+    if not (isinstance(after, LatexCharsNode) and after.chars.strip() == ""):
+        return False
+    nxt = parent[idx + 2] if idx + 2 < len(parent) else None
+    return (
+        isinstance(nxt, LatexMacroNode)
+        and nxt.macroname in _SECTIONING_MACROS
+    )
+
+
 def check_jss_oper_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -284,6 +309,13 @@ def check_jss_oper_003(
             ends_period = _equation_body_ends_with_period(node)
             blank_before = _chars_ends_with_blank_line(before)
             blank_after = _chars_starts_with_blank_line(after) and not ends_period
+            # A blank line before a sectioning command is required LaTeX
+            # structure — it can't be %-suppressed like a prose paragraph
+            # break — so a display equation immediately followed by a blank
+            # line and a \section/\subsection is not a defect (recall-corpus
+            # trueskill).
+            if blank_after and _blank_after_precedes_sectioning(parent, idx):
+                blank_after = False
             if blank_before or blank_after:
                 yield _violation(
                     tex=tex,

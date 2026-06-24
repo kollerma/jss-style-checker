@@ -83,6 +83,15 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-XREF-004` exempts equations carrying `\tag{}` / `\tag*{}`: a `\tag`
+  replaces the automatic number with a custom label (e.g.
+  `\tag{\texttt{approx()}}`), so the equation isn't a standard
+  auto-numbered cross-ref target — the same reasoning as the existing
+  `\nonumber` exemption (recall-corpus trueskill false positives).
+- `JSS-OPER-003` no longer flags the blank line between a display equation
+  and a following sectioning command (`\section` / `\subsection` / …): a
+  blank line before a heading is required structure and can't be
+  `%`-suppressed like a prose paragraph break (recall-corpus trueskill).
 - `JSS-OPER-003` now also checks `\[ … \]` / `$$ … $$` display math for
   blank lines before/after. These parse as a display-math node (not an
   environment), so the rule skipped them entirely (recall-corpus deSolve
