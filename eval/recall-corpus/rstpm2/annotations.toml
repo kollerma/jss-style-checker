@@ -864,5 +864,3 @@ comment = '"Stata" should be "\proglang{Stata}"'
 # from the text. Distinct sub-defect from missing-label cases; linter
 # does not fire on either (filed as a follow-up).
 # -------------------------------------------------------------------
-
-

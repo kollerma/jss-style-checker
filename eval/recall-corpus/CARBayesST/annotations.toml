@@ -1037,4 +1037,14 @@ comment = 'watanabe2010 — JMLR article DOI exists on Crossref; missing from th
 # / NAME-002 / BIBTEX-004 entries the linter doesn't reach.
 # -------------------------------------------------------------------
 
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 211
+comment = 'GGally — DOI 10.32614/CRAN.package.GGally registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.GGally".'
 
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 228
+comment = 'gtools — DOI 10.32614/CRAN.package.gtools registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.gtools".'

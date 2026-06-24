@@ -425,4 +425,32 @@ file = "pmclust.bib"
 line = 177
 comment = '"Rmpi" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
 
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 112
+comment = 'Chen2014pbdMPIvignette — DOI 10.32614/CRAN.package.pbdMPI registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdMPI".'
 
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 120
+comment = 'Chen2012pbdSLAPvignette — DOI 10.32614/CRAN.package.pbdSLAP registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdSLAP".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 127
+comment = 'Schmidt2012pbdBASEvignette — DOI 10.32614/CRAN.package.pbdBASE registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdBASE".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 134
+comment = 'Schmidt2012pbdDMATvignette — DOI 10.32614/CRAN.package.pbdDMAT registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdDMAT".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 149
+comment = 'Schmidt2013pbdDEMOvignette — DOI 10.32614/CRAN.package.pbdDEMO registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdDEMO".'

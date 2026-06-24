@@ -421,4 +421,32 @@ file = "simulationStudies.bib"
 line = 172
 comment = 'belenky03sleepstudy — DOI exists on Crossref; missing from the entry.'
 
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "rlmer.bib"
+line = 204
+comment = 'rlme — DOI 10.32614/rj-2013-027 found on Crossref (title similarity 0.89); add to the entry as doi="10.32614/rj-2013-027".'
 
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "rlmer.bib"
+line = 32
+comment = 'robustlmm — DOI 10.32614/CRAN.package.robustlmm registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.robustlmm".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "rlmer.bib"
+line = 49
+comment = 'heavy — DOI 10.32614/CRAN.package.heavy registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.heavy".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "rlmer.bib"
+line = 224
+comment = 'R — DOI 10.32614/r.manuals registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/r.manuals".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "simulationStudies.bib"
+line = 66
+comment = 'heavy — DOI 10.32614/CRAN.package.heavy registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.heavy".'

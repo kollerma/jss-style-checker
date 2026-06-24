@@ -906,4 +906,8 @@ file = "mdsOpt.ltx"
 line = 1267
 comment = '`(\cite{Leeuw+Mair:2015})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
 
-
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 232
+comment = 'R:2019 — DOI 10.32614/r.manuals registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/r.manuals".'

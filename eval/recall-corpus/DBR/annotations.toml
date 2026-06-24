@@ -860,4 +860,8 @@ file = "DBR.bib"
 line = 305
 comment = 'venables2002mass — Springer book DOI exists on Crossref; missing from the entry.'
 
-
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "DBR.bib"
+line = 316
+comment = 'lesnoff2012aod — DOI 10.32614/CRAN.package.aod registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.aod".'

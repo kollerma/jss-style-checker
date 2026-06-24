@@ -890,4 +890,8 @@ file = "jss816.bib"
 line = 745
 comment = 'jss816 — title "{spacetime}: Spatio-Temporal Data in {R}" needs \pkg{spacetime} and \proglang{R} markup (currently uses brace-protection only).'
 
-
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss816.bib"
+line = 628
+comment = 'pebesma — DOI 10.32614/cran.package.sp found on Crossref (title similarity 0.89); add to the entry as doi="10.32614/cran.package.sp".'

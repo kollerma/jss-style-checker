@@ -8,7 +8,15 @@ For each paper in ``eval/recall-corpus/``:
    no recall signal).
 2. Parse the paper's ``.bib`` file(s); for each cited entry that has
    no ``doi`` field and no existing ``JSS-REFS-003`` annotation in
-   ``annotations.toml``, query Crossref.
+   ``annotations.toml``:
+
+   a. If the entry is an R package or R itself, assign its DOI from
+      the R Foundation's registered scheme without any network call
+      (``10.32614/CRAN.package.<name>`` for packages,
+      ``10.32614/r.manuals`` for R). These ``@Manual`` citations are
+      not indexed by Crossref, so the deterministic scheme is the
+      only way to recover their DOIs.
+   b. Otherwise query Crossref.
 3. If Crossref returns a high-confidence match (title similarity,
    first-author surname match, year within ±1), append a
    ``JSS-REFS-003`` annotation to ``annotations.toml`` with a
@@ -66,6 +74,26 @@ _CITE_RE = re.compile(
 
 # Strip LaTeX commands and braces for fuzzy title comparison.
 _LATEX_MACRO = re.compile(r"\\[a-zA-Z]+\*?")
+
+# The R Foundation registers a DOI for every CRAN package and for the
+# R manuals under a deterministic scheme, so these resolve without a
+# Crossref query (and aren't indexed by Crossref anyway):
+#
+#   R package  →  10.32614/CRAN.package.<canonical-name>
+#   R itself   →  10.32614/r.manuals
+#
+# The canonical, case-sensitive package name is recovered from the
+# ``package=<name>`` / ``web/packages/<name>`` CRAN URL that
+# ``citation()`` / ``toBibtex()`` emit. Package names match
+# ``[A-Za-z][A-Za-z0-9.]*`` (dots allowed, e.g. ``mlt.docreg``).
+_CRAN_PKG_URL_RE = re.compile(
+    r"cran\.r-project\.org/(?:web/)?packages?[=/]([A-Za-z][A-Za-z0-9.]*)",
+    re.IGNORECASE,
+)
+# R base: the project home page, but not a /package= URL.
+_RPROJECT_URL_RE = re.compile(
+    r"(?<![A-Za-z0-9.=])(?:www\.)?r-project\.org/?$", re.IGNORECASE
+)
 
 
 @dataclass
@@ -204,6 +232,47 @@ def extract_first_author_surname(authors_field: str) -> str | None:
     return parts[-1].strip().lower() if parts else None
 
 
+def deterministic_doi(entry: BibEntry) -> str | None:
+    """Return the R-Foundation-registered DOI for an R-package or
+    R-base citation, or ``None`` if the entry is neither.
+
+    No network call: the DOI is derived from the entry's CRAN /
+    r-project URL (falling back to the title for a CRAN ``@Manual``
+    whose URL is absent). This covers the ``@Manual`` package and R
+    citations that Crossref does not index."""
+    url = entry.fields.get("url", "")
+    note = entry.fields.get("note", "")
+    title = entry.fields.get("title", "")
+    author = entry.fields.get("author", "")
+
+    # A CRAN package — canonical name straight from the package URL.
+    m = _CRAN_PKG_URL_RE.search(url)
+    if m:
+        return f"10.32614/CRAN.package.{m.group(1)}"
+
+    # R itself — "R Core Team" published via the r-project.org home page.
+    if _RPROJECT_URL_RE.search(url) and "r core team" in normalize_title(
+        author
+    ):
+        return "10.32614/r.manuals"
+
+    # CRAN @Manual with no URL: recover the name from the title prefix
+    # that citation() emits ("<pkg>: Description"), stripping the \pkg
+    # wrapper. Only when the note marks it an R package, to stay clear
+    # of unrelated @Manual entries.
+    if entry.type.lower() == "manual" and re.search(
+        r"R package version", note, re.IGNORECASE
+    ):
+        # Preserve case — package names are case-sensitive
+        # (e.g. CARBayesST), so don't run this through normalize_title.
+        name = _LATEX_MACRO.sub("", title.split(":", 1)[0])
+        name = re.sub(r"[{}\s]", "", name)
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9.]*", name):
+            return f"10.32614/CRAN.package.{name}"
+
+    return None
+
+
 def crossref_lookup(entry: BibEntry, *, timeout: float = 10.0) -> dict | None:
     """Query Crossref for `entry` and return the top match's metadata
     or ``None`` if no high-confidence match exists."""
@@ -301,14 +370,25 @@ def lookup_paper(paper_dir: Path, *, dry_run: bool = False, sleep: float = 0.5):
             if entry.line in existing:
                 continue
             print(f"  → {entry.key} ({entry.type}, L{entry.line}):", end=" ")
-            match = crossref_lookup(entry)
-            time.sleep(sleep)
-            if match is None:
-                print("no confident match")
-                continue
-            doi = match["doi"]
-            sim = match["similarity"]
-            print(f"DOI {doi}  (title sim {sim:.2f})")
+            # CRAN packages and R itself resolve from the registered
+            # DOI scheme — no network call, and Crossref wouldn't match
+            # them anyway.
+            doi = deterministic_doi(entry)
+            if doi is not None:
+                provenance = "registered under the CRAN/R DOI scheme"
+                print(f"DOI {doi}  ({provenance})")
+            else:
+                match = crossref_lookup(entry)
+                time.sleep(sleep)
+                if match is None:
+                    print("no confident match")
+                    continue
+                doi = match["doi"]
+                provenance = (
+                    f"found on Crossref (title similarity "
+                    f"{match['similarity']:.2f})"
+                )
+                print(f"DOI {doi}  (title sim {match['similarity']:.2f})")
             if dry_run:
                 continue
             with ann_path.open("a") as out:
@@ -317,9 +397,8 @@ def lookup_paper(paper_dir: Path, *, dry_run: bool = False, sleep: float = 0.5):
                     f'rule_id = "JSS-REFS-003"\n'
                     f'file = "{bib_path.name}"\n'
                     f"line = {entry.line}\n"
-                    f"comment = '{entry.key} — DOI {doi} found on "
-                    f"Crossref (title similarity {sim:.2f}); add to "
-                    f"the entry as doi=\"{doi}\".'\n"
+                    f"comment = '{entry.key} — DOI {doi} {provenance}; "
+                    f"add to the entry as doi=\"{doi}\".'\n"
                 )
             existing.add(entry.line)
             added += 1
