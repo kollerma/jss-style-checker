@@ -231,6 +231,20 @@ class TestXref004:
         )
         assert run_rule(jss_xref_004, src) == []
 
+    def test_tagged_equation_silent(self, run_rule):
+        # \tag{} replaces the auto-number with a custom label, so the
+        # equation isn't a standard numbered cross-ref target — exempt,
+        # like \nonumber (recall-corpus trueskill \tag'd equations).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{equation}\label{eq:x} \tag{approx()}" "\n"
+            r"x = 1" "\n"
+            r"\end{equation}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_004, src) == []
+
     def test_multiline_with_nonumber_falls_back(self, run_rule):
         # A \nonumber in the env -> conservative per-env check: one
         # referenced label keeps it silent (avoids flagging the label on

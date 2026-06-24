@@ -539,6 +539,13 @@ def check_jss_xref_004(
             # below shouldn't fire on the outer either.
             if _inside_subequations(ancestors):
                 continue
+            # ``\tag{...}`` / ``\tag*{...}`` replaces the automatic equation
+            # number with a custom label (e.g. ``\tag{\texttt{approx()}}``),
+            # so the equation isn't a standard auto-numbered cross-ref
+            # target — analogous to ``\nonumber``. Don't require it to be
+            # \ref'd (recall-corpus trueskill \tag'd equations).
+            if _env_has_tag(node):
+                continue
             label_keys = _env_label_keys(node)
             if not label_keys:
                 # ``\nonumber`` / ``\notag`` inside a single-line equation
@@ -597,6 +604,7 @@ def check_jss_xref_004(
 
 
 _NONUMBER_MACROS: frozenset[str] = frozenset({"nonumber", "notag"})
+_TAG_MACROS: frozenset[str] = frozenset({"tag", "tag*"})
 
 
 def _env_has_nonumber(env: Any) -> bool:
@@ -604,6 +612,16 @@ def _env_has_nonumber(env: Any) -> bool:
         if (
             isinstance(child, LatexMacroNode)
             and child.macroname in _NONUMBER_MACROS
+        ):
+            return True
+    return False
+
+
+def _env_has_tag(env: Any) -> bool:
+    for child in _helpers._walk(env.nodelist or ()):
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _TAG_MACROS
         ):
             return True
     return False
