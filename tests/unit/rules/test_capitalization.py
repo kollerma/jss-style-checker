@@ -340,8 +340,30 @@ class TestCap004:
         src = r"\Keywords{JSS, MASS, R}"
         assert run_rule(jss_cap_004, src) == []
 
+    def test_lowercase_first_keyword_flagged(self, run_rule):
+        # Keywords are sentence case: the first word of the list is
+        # capitalised (recall-corpus HardyWeinberg:30).
+        src = r"\Keywords{ternary plot, Q-Q plot, chi-square test}"
+        assert len(run_rule(jss_cap_004, src)) == 1
+
+    def test_capitalised_first_keyword_silent(self, run_rule):
+        src = r"\Keywords{Ternary plot, Q-Q plot, chi-square test}"
+        assert run_rule(jss_cap_004, src) == []
+
+    def test_markup_wrapped_first_keyword_silent(self, run_rule):
+        # A \pkg{}-wrapped first keyword keeps its lowercase package-name
+        # case — don't demand a leading capital.
+        src = r"\Keywords{\pkg{ggplot2}, visualization, R}"
+        assert run_rule(jss_cap_004, src) == []
+
+    def test_plainkeywords_never_fires(self, run_rule):
+        # \Plainkeywords is PDF metadata the reader never sees — out of
+        # scope for CAP-004 even with a lowercase first keyword.
+        src = r"\Plainkeywords{ternary plot, q-q plot, chi-square test}"
+        assert run_rule(jss_cap_004, src) == []
+
     def test_stopword_capitalised_not_offender(self, run_rule):
-        src = r"\Keywords{statistics And things}"
+        src = r"\Keywords{Statistics And things}"
         # The "And" is stopword → no offender; single-offender threshold not met.
         assert run_rule(jss_cap_004, src) == []
 
@@ -468,12 +490,12 @@ def test_sentence_style_offender_skips_non_letter_words(run_rule):
 
 
 def test_cap_004_keyword_proper_noun_skipped(run_rule):
-    src = r"\Keywords{the MASS package, other stuff}"
+    src = r"\Keywords{The MASS package, other stuff}"
     assert run_rule(jss_cap_004, src) == []
 
 
 def test_cap_004_keyword_non_letter_word(run_rule):
-    src = r"\Keywords{basic 123 test, other stuff}"
+    src = r"\Keywords{Basic 123 test, other stuff}"
     assert run_rule(jss_cap_004, src) == []
 
 

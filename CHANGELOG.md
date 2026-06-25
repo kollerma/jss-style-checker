@@ -83,6 +83,15 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-CAP-004` now also flags a `\Keywords{}` list whose **first** keyword
+  starts with a lowercase letter — JSS keywords are sentence case, so the
+  list's first word is capitalised (`ternary plot, …` → `Ternary plot, …`;
+  recall-corpus HardyWeinberg). Previously the rule only caught the
+  opposite direction (a non-first word in title case). A first keyword
+  wrapped in markup (`\pkg{}`, `\proglang{}`, `\code{}`) or a known
+  package/language name keeps its own lowercase case and is exempt.
+  `\Plainkeywords{}` is deliberately *not* checked — it is PDF metadata the
+  reader never sees.
 - `JSS-XREF-004` exempts equations carrying `\tag{}` / `\tag*{}`: a `\tag`
   replaces the automatic number with a custom label (e.g.
   `\tag{\texttt{approx()}}`), so the equation isn't a standard
