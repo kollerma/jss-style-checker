@@ -1,0 +1,742 @@
+# Hand-annotated ground truth for paper "HardyWeinberg".
+#
+# Read the rendered manuscript end-to-end and record EVERY
+# JSS-guide violation. Identity tuple is (rule_id, file, line);
+# column does NOT participate. See ../README.md for the protocol.
+#
+# Goal 2 (rule coverage): rich source of OPER-001 (thin -> measurable).
+#
+# The [[violations]] below are SEEDED from precision-review
+# verdicts (eval.db, 2026-06-17): each is a review-confirmed
+# TRUE POSITIVE — VERIFY it, and add the false negatives the
+# linter missed (those are not in eval.db). Reviewed FALSE
+# POSITIVES are listed (commented) at the bottom: do NOT add
+# them as violations, but confirm the FP judgement as you read.
+#
+# JSS-REFS-003 is NOT seeded here — it is populated separately by
+# `python -m eval.crossref_doi_lookup` (records the actual DOI).
+
+[meta]
+paper_id = "HardyWeinberg"
+annotator = "Manuel Koller"
+date = "2026-06-25"
+notes = '''
+Seeded from precision review on 2026-06-17: 75 confirmed-TP entries to verify, 3 reviewed FPs recorded below. 24 review decisions on secondary vignettes outside this recall surface were omitted.
+
+Line 371 (and again with \citeyear{Puig2} a few lines down) writes the authors by hand and delegates only the year to natbib:
+      Puig, Ginebra and Graffelman~(\citeyear{Puig})
+This is a hand-rolled narrative citation — equivalent output to \citet{Puig}, almost certainly done to spell out all three authors (plain \citet truncates 3+ authors to "Puig et al."; \citet*{Puig} would be the idiomatic way to force the full list). Not a violation: CITE-004 only fires on a bare parenthetical year, and here the year comes from \citeyear, so the cite is registered and back-linked. The downside is the typed author names aren't linked to the bib and won't track edits to the entry — a soft style nit, not annotated.
+'''
+
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "HardyWeinberg.Rnw"
+line = 7
+comment = "jss.cls includes hyperref package"
+
+[[violations]]
+rule_id = "JSS-PRE-006"
+file = "HardyWeinberg.Rnw"
+line = 24
+comment = '\Plaintitle should not include markup, drop \pkg{}'
+
+[[violations]]
+rule_id = "JSS-CAP-004"
+file = "HardyWeinberg.Rnw"
+line = 30
+comment = 'Keywords are in sentence case, "ternary" should be capitalised'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 186
+comment = "numbered equation labelled ['eq:chisq1']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 192
+comment = "numbered equation labelled ['eq:chisq2']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 289
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 297
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 306
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 314
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "HardyWeinberg.Rnw"
+line = 338
+comment = "e.g. not followed by comma in text"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 344
+comment = "numbered equation labelled ['eq:theta']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 349
+comment = "middle equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 371
+comment = 'Missing space around operator, \code{x.linked=TRUE} should be \code{x.linked = TRUE}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "HardyWeinberg.Rnw"
+line = 514
+comment = "Equation labels 'eq:alr, eq:clr, eq:ilr' are never referenced from the text. Either cite the equation via \\ref{} / \\eqref{} or suppress the number with \\nonumber."
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "HardyWeinberg.Rnw"
+line = 580
+comment = 'Should use \code{} instead of {\tt } for function names'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "HardyWeinberg.Rnw"
+line = 587
+comment = "R in prose not wrapped in \\proglang{}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "HardyWeinberg.Rnw"
+line = 589
+comment = "R in prose not wrapped in \\proglang{}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "HardyWeinberg.Rnw"
+line = 589
+comment = 'Should use \code{} instead of {\tt } for function names'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "HardyWeinberg.Rnw"
+line = 589
+comment = 'Equation reference "Eq.~\ref{eq:exact}" should be "Equation~\ref{eq:exact}"'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "HardyWeinberg.Rnw"
+line = 590
+comment = 'Should use \code{} instead of {\tt } for function names'
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "HardyWeinberg.Rnw"
+line = 590
+comment = 'p-value should be $p$~value'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "HardyWeinberg.Rnw"
+line = 591
+comment = 'Should use \code{} instead of {\tt } for function names'
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "HardyWeinberg.Rnw"
+line = 650
+comment = '$\chi^2$-statistic should be $\chi^2$~statistic'
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "HardyWeinberg.Rnw"
+line = 662
+comment = '$G^2$-statistic should be $G^2$~statistic'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "HardyWeinberg.Rnw"
+line = 699
+comment = "Code overflows the textwidth by a tiny amount"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 708
+comment = 'Missing space after comma, `Markers[1:12,]` should be `Markers[1:12, ]`'
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "HardyWeinberg.Rnw"
+line = 709
+comment = "data() call should quote the first argument"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 716
+comment = '''
+'Missing space after comma and around operators
+`Markers[,1]` should be `Markers[, 1]`
+and
+`HWChisq(Xv,cc=0,verbose=TRUE)` should be `HWChisq(Xv, cc = 0, verbose = TRUE)`
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 727
+comment = 'Missing space after comma, `Markers[,1]` should be `Markers[, 1]`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 742
+comment = 'Missing space after comma, `statistic="exact"` should be `statistic = "exact"`'
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "HardyWeinberg.Rnw"
+line = 746
+comment = "Code overflows the textwidth"
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "HardyWeinberg.Rnw"
+line = 749
+comment = '$p$-value should be $p$~value'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 755
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "HardyWeinberg.Rnw"
+line = 756
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "HardyWeinberg.Rnw"
+line = 757
+comment = "Code overflows the textwidth"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "HardyWeinberg.Rnw"
+line = 760
+comment = 'Should use \code{} instead of {\tt } for inline code'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 764
+comment = "Code missing spaces after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "HardyWeinberg.Rnw"
+line = 765
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 777
+comment = "Code missing space after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 785
+comment = "Code missing spaces around operator and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 793
+comment = "Code missing spaces around operator and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 805
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 812
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 818
+comment = "Code missing spaces around operator"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 821
+comment = "Code missing spaces around operator and after comma"
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "HardyWeinberg.Rnw"
+line = 825
+comment = '$p$-value should be $p$~value (two times on the same line)'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 827
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 840
+comment = "Code missing spaces around operator and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 846
+comment = "Code missing spaces around operator and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 852
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 869
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "HardyWeinberg.Rnw"
+line = 882
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "HardyWeinberg.Rnw"
+line = 882
+comment = 'Plain R and C++ should be wrapped in \proglang{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 902
+comment = 'Code missing spaces around operator, `test="chisq"` should be `test = "chisq"`'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "HardyWeinberg.Rnw"
+line = 913
+comment = "i.e. not followed by comma in text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 914
+comment = 'Code missing spaces around operator, `conditional=TRUE` should be `conditional = TRUE`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 917
+comment = 'Code missing spaces around operator, `,mar` should be `, mar`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 946
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 1004
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 1015
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "HardyWeinberg.Rnw"
+line = 1020
+comment = 'Plain R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "HardyWeinberg.Rnw"
+line = 1020
+comment = 'p-value should be $p$~value'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 1022
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "HardyWeinberg.Rnw"
+line = 1029
+comment = 'p-value should be $p$~value'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 1031
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 1039
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 1047
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-OPER-001"
+file = "HardyWeinberg.Rnw"
+line = 1054
+comment = 'p-value should be $p$~value'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "HardyWeinberg.Rnw"
+line = 1058
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "HardyWeinberg.Rnw"
+line = 1060
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 1
+comment = 'aitchison — DOI 10.1007/978-94-009-4109-0 found on Crossref; add to the entry as doi="10.1007/978-94-009-4109-0".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 9
+comment = 'Aoki — DOI 10.1002/bimj.200390026 found on Crossref (title similarity 0.97); add to the entry as doi="10.1002/bimj.200390026".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 9
+comment = "Title contains with lowercase 'algorithm', should be upper case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 19
+comment = 'ayres — DOI 10.1038/sj.hdy.6883600 found on Crossref (title similarity 0.99); add to the entry as doi="10.1038/sj.hdy.6883600".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 31
+comment = 'buuren — DOI 10.18637/jss.v045.i03 found on Crossref; add to the entry as doi="10.18637/jss.v045.i03 ".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 43
+comment = 'cannings — DOI 10.1111/j.1469-1809.1968.tb00575.x found on Crossref; add to the entry as doi="10.1111/j.1469-1809.1968.tb00575.x".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 53
+comment = 'consonni — DOI 10.1002/sim.4084 found on Crossref; add to the entry as doi="10.1002/sim.4084".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 64
+comment = 'crow — 10.1093/genetics/119.3.473 found on Crossref; add to the entry as doi="10.1093/genetics/119.3.473".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 75
+comment = 'crow2 — DOI 10.2307/1529706 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/1529706".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 93
+comment = 'egozcue2 — 10.1023/a:1023818214614 found on Crossref; add to the entry as doi="10.1023/a:1023818214614".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 105
+comment = 'Engels — DOI 10.1534/genetics.109.108977 found on Crossref (title similarity 0.94); add to the entry as doi="10.1534/genetics.109.108977".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 113
+comment = 'graffel18 — 10.1159/000108939 found on Crossref; add to the entry as doi="10.1159/000108939".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 124
+comment = 'graffel21 — 10.1002/9781119976462.ch15 found on Crossref; add to the entry as doi="10.1002/9781119976462.ch15".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 136
+comment = 'graffel22 — 10.1515/sagmb-2012-0039 found on Crossref; add to the entry as doi="10.1515/sagmb-2012-0039".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 157
+comment = 'graffel24 — DOI 10.1371/journal.pone.0083316 found on Crossref (title similarity 1.00); add to the entry as doi="10.1371/journal.pone.0083316".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "HardyWeinberg.bib"
+line = 169
+comment = 'R package HardyWeinberg should be wrapped in \pkg{}'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 169
+comment = "Title not in title style"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 181
+comment = 'Graffel27 — DOI 10.1534/g3.115.022111 found on Crossref (title similarity 1.00); add to the entry as doi="10.1534/g3.115.022111".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 189
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 202
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 211
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 222
+comment = 'Guo — DOI 10.2307/2532296 found on Crossref (title similarity 0.98); add to the entry as doi="10.2307/2532296".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 222
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 232
+comment = 'haldane — DOI 10.1007/bf02985085 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/bf02985085".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 242
+comment = 'hapmap3 — DOI 10.1038/nature06258 found on Crossref; add to the entry as doi="10.1038/nature06258".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 253
+comment = 'hardy — DOI 10.1126/science.28.706.49 found on Crossref (title similarity 1.00); add to the entry as doi="10.1126/science.28.706.49".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 280
+comment = 'Huber — DOI 10.1111/j.1541-0420.2005.00418.x found on Crossref (title similarity 0.95); add to the entry as doi="10.1111/j.1541-0420.2005.00418.x".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 280
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 290
+comment = 'lancaster — DOI 10.1080/01621459.1961.10482105 found on Crossref (title similarity 1.00); add to the entry as doi="10.1080/01621459.1961.10482105".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 300
+comment = 'leisch — DOI 10.1007/978-3-642-57489-4_89 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/978-3-642-57489-4_89".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 312
+comment = 'levene — DOI 10.1214/aoms/1177730093 found on Crossref (title similarity 1.00); add to the entry as doi="10.1214/aoms/1177730093".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 344
+comment = 'Louis — DOI 10.2307/2531534 found on Crossref (title similarity 0.97); add to the entry as doi="10.2307/2531534".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 344
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 353
+comment = 'maindonald — DOI 10.32614/CRAN.package.hwde registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.hwde".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 375
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 387
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 398
+comment = 'purcell — DOI 10.1086/519795 found on Crossref (title similarity 0.98); add to the entry as doi="10.1086/519795".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 413
+comment = 'rrr — DOI 10.32614/r.manuals registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/r.manuals".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 423
+comment = 'rohlfs — DOI 10.1534/genetics.108.088005 found on Crossref (title similarity 0.98); add to the entry as doi="10.1534/genetics.108.088005".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 434
+comment = 'shoemaker — DOI 10.1093/genetics/149.4.2079 found on Crossref (title similarity 1.00); add to the entry as doi="10.1093/genetics/149.4.2079".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 445
+comment = 'stern — DOI 10.1126/science.97.2510.137 found on Crossref (title similarity 1.00); add to the entry as doi="10.1126/science.97.2510.137".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 455
+comment = 'venturini — DOI 10.32614/CRAN.package.HWEintrinsic registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.HWEintrinsic".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 464
+comment = 'wakefield — DOI 10.1111/j.1541-0420.2009.01267.x found on Crossref (title similarity 0.98); add to the entry as doi="10.1111/j.1541-0420.2009.01267.x".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 475
+comment = 'warnes — DOI 10.32614/CRAN.package.genetics registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.genetics".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 494
+comment = 'weir — DOI 10.2307/2533134 registered under the CRAN/R DOI scheme; add to the entry as doi="10.2307/2533134".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 502
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "HardyWeinberg.bib"
+line = 512
+comment = 'Rserve — DOI 10.32614/CRAN.package.Rserve registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.Rserve".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "HardyWeinberg.bib"
+line = 512
+comment = "Title not in title case"
