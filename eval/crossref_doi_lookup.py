@@ -212,9 +212,17 @@ def existing_refs003_lines(annotations: dict) -> set[int]:
 
 
 def normalize_title(s: str) -> str:
-    """Lowercase, strip LaTeX macros / braces, collapse whitespace."""
+    """Lowercase, strip LaTeX macros / braces / math, collapse whitespace.
+
+    BibTeX capitalisation-protection braces (``{T}he``, ``de {F}inetti``,
+    ``{H}ardy-{W}einberg``) must be *removed*, not replaced by a space —
+    splitting them turns ``{T}he`` into ``t he`` and tanks the Crossref
+    title-similarity score below the match threshold. Inline math
+    delimiters (``$p$``) are dropped too so ``$p$-value`` lines up with
+    Crossref's ``p-value``."""
     s = _LATEX_MACRO.sub(" ", s)
-    s = re.sub(r"[{}]", " ", s)
+    s = s.replace("$", "")
+    s = re.sub(r"[{}]", "", s)
     s = re.sub(r"\s+", " ", s).strip().lower()
     return s
 
@@ -286,7 +294,12 @@ def crossref_lookup(entry: BibEntry, *, timeout: float = 10.0) -> dict | None:
     # with query.author if available.
     params = {
         "query.bibliographic": title,
-        "rows": "3",
+        # Crossref's relevance ranking can bury the right record: a book's
+        # individual chapters often outrank the book itself (e.g.
+        # Aitchison 1986, where the book is the 4th hit behind three of its
+        # chapters). Fetch enough candidates to reach it — the
+        # sim>=0.80 + author + year gate below keeps precision safe.
+        "rows": "8",
         "mailto": CROSSREF_MAILTO,
     }
     if author:
