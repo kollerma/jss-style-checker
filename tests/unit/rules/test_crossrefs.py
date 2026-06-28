@@ -51,6 +51,18 @@ class TestXref001:
     def test_good_silent(self, run_rule):
         assert run_rule(jss_xref_001, _tex("JSS-XREF-001-good.tex")) == []
 
+    def test_cite_locator_not_flagged(self, run_rule):
+        # ``\citet[Table 2.5]{X}`` — the optional arg is a locator into the
+        # cited work, not a manuscript cross-ref (recall-corpus
+        # HardyWeinberg \citet[Table ...]/\cite[Table ...]).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}"
+            r"compiled by~\citet[Table 2.5]{Mourant} originally."
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_001, src) == []
+
     def test_table_also_flagged(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

@@ -135,6 +135,22 @@ def _is_cross_paper_reference(
     # cited paper.
     if _is_in_cited_footnote(ancestors):
         return True
+    # Citation-locator shape: ``\citet[Table 2.5]{X}`` / ``\cite[Figure 3]{X}``
+    # — the optional argument is a locator into the *cited* work, parsed as
+    # a chars node inside the cite macro. A cite-macro ancestor means the
+    # "Table N" is the cited paper's float, not a manuscript cross-ref.
+    if _is_inside_cite_macro(ancestors):
+        return True
+    return False
+
+
+def _is_inside_cite_macro(ancestors: list[Any]) -> bool:
+    for anc in ancestors:
+        if (
+            isinstance(anc, LatexMacroNode)
+            and anc.macroname in _helpers._CITE_MACROS_FOR_SCOPE
+        ):
+            return True
     return False
 
 
