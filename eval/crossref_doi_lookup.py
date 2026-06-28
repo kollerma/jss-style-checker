@@ -75,6 +75,10 @@ _CITE_RE = re.compile(
 # Strip LaTeX commands and braces for fuzzy title comparison.
 _LATEX_MACRO = re.compile(r"\\[a-zA-Z]+\*?")
 
+# Bib entry types that denote a standalone book: a Crossref
+# ``journal-article`` hit for one of these is a review, not the book.
+_BOOK_LIKE_TYPES = frozenset({"book", "inbook", "booklet"})
+
 # The R Foundation registers a DOI for every CRAN package and for the
 # R manuals under a deterministic scheme, so these resolve without a
 # Crossref query (and aren't indexed by Crossref anyway):
@@ -185,7 +189,10 @@ def _parse_fields(body: str) -> dict[str, str]:
 
 
 def collect_cited_keys(paper_dir: Path) -> set[str]:
-    """Walk all manuscript files; return the set of cited bib keys."""
+    """Walk all manuscript files; return the set of cited bib keys,
+    lowercased. BibTeX/LaTeX citation keys are case-insensitive, so
+    ``\\citep{Graffel24}`` resolves the ``@Article{graffel24}`` entry —
+    compare case-insensitively (callers must lowercase the bib key too)."""
     cited: set[str] = set()
     for src in paper_dir.rglob("*"):
         if not src.is_file() or src.suffix.lower() not in {
@@ -195,7 +202,7 @@ def collect_cited_keys(paper_dir: Path) -> set[str]:
         text = src.read_text(errors="ignore")
         for m in _CITE_RE.finditer(text):
             for k in m.group(1).split(","):
-                cited.add(k.strip())
+                cited.add(k.strip().lower())
     return cited
 
 
@@ -325,6 +332,17 @@ def crossref_lookup(entry: BibEntry, *, timeout: float = 10.0) -> dict | None:
         cand_titles = item.get("title") or []
         if not cand_titles:
             continue
+        # A ``@Book`` matched to a Crossref ``journal-article`` is almost
+        # always a book *review* (JSTOR indexes these), not the book — the
+        # review carries the book's title and year, so similarity/author
+        # don't catch it (deSolve Press92, HardyWeinberg hartl/weir/mourant
+        # all matched reviews). Books live in Crossref as book / monograph,
+        # so reject journal-article candidates for book-like entries.
+        if (
+            entry.type.lower() in _BOOK_LIKE_TYPES
+            and item.get("type") == "journal-article"
+        ):
+            continue
         cand_title = normalize_title(cand_titles[0])
         sim = difflib.SequenceMatcher(None, title, cand_title).ratio()
         # Year match (Crossref's "published-print" / "issued" path).
@@ -376,7 +394,7 @@ def lookup_paper(paper_dir: Path, *, dry_run: bool = False, sleep: float = 0.5):
         bib_text = bib_path.read_text(errors="ignore")
         entries = parse_bib(bib_text)
         for entry in entries:
-            if entry.key not in cited:
+            if entry.key.lower() not in cited:
                 continue
             if entry.fields.get("doi", "").strip():
                 continue
