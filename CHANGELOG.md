@@ -83,6 +83,17 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-XREF-001` no longer flags a "Figure/Table N" that sits inside a
+  citation locator (`\citet[Table 2.5]{X}` / `\cite[Figure 3]{X}`): the
+  optional argument points at a float in the *cited* work, not this
+  manuscript (recall-corpus HardyWeinberg false positives). Matches with a
+  cite-macro ancestor are skipped.
+- `JSS-CITE-003` no longer flags a lone `Author~(\citeyear{X})`: that's the
+  legitimate narrative-citation idiom (author names in prose, year in
+  parens), not a bracket-in-bracket. `\citeyear` was dropped from the
+  trigger set; the hand-rolled `(\citeauthor{X} \citeyear{X})`
+  reconstruction of `\citep` is still caught via the `\citeauthor` branch
+  (recall-corpus HardyWeinberg false positives).
 - `JSS-CAP-004` now also flags a `\Keywords{}` list whose **first** keyword
   starts with a lowercase letter — JSS keywords are sentence case, so the
   list's first word is capitalised (`ternary plot, …` → `Ternary plot, …`;

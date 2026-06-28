@@ -445,6 +445,29 @@ class TestCite003:
         good = (FIXTURE_DIR / "JSS-CITE-003-good.tex").read_text(encoding="utf-8")
         assert run_rule(jss_cite_003, good) == []
 
+    def test_lone_citeyear_in_parens_ok(self, run_rule):
+        # ``Author~(\citeyear{X})`` — narrative citation (names in prose,
+        # year in parens), not a bracket-in-bracket (recall-corpus
+        # HardyWeinberg "Puig, Ginebra and Graffelman~(\citeyear{Puig})").
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}"
+            r"as proposed by Puig, Ginebra and Graffelman~(\citeyear{Puig})."
+            r"\end{document}"
+        )
+        assert run_rule(jss_cite_003, src) == []
+
+    def test_handrolled_citep_still_flagged(self, run_rule):
+        # ``(\citeauthor{X} \citeyear{X})`` is a hand-rolled \citep — still
+        # a bracket-in-bracket, caught via the \citeauthor branch.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}"
+            r"the device (\citeauthor{Lindsey} \citeyear{Lindsey})."
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_cite_003, src)) == 1
+
     def test_cite_without_parens_ok(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

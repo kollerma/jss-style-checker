@@ -459,9 +459,14 @@ def check_jss_cite_003(
     # Cite-family macros whose presence inside a (...) group constitutes
     # bracket-in-bracket. ``\citealp`` / ``\citealt`` are the JSS-
     # recommended forms for cites that go inside an outer paren —
-    # excluded from the trigger set.
+    # excluded from the trigger set. ``\citeyear`` is excluded too: a lone
+    # ``Author~(\citeyear{X})`` is the legitimate narrative-citation idiom
+    # (names in prose, year in parens), not a doubled bracket. The
+    # hand-rolled ``(\citeauthor{X} \citeyear{X})`` reconstruction of
+    # ``\citep`` is still caught via the ``\citeauthor`` branch below,
+    # which fires when a ``\citeyear`` shares its parens.
     triggering = frozenset(
-        {"cite", "citep", "citet", "citeauthor", "citeyear"}
+        {"cite", "citep", "citet", "citeauthor"}
     )
     for tex in doc.all_tex_like():
         emitted: set[int] = set()
