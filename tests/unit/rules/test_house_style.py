@@ -246,13 +246,30 @@ class TestHouse003:
         assert run_rule(jss_house_003, src) == []
 
     def test_usepackage_with_options(self, run_rule):
+        # Options present -> advise \PassOptionsToPackage and DON'T offer
+        # the delete-the-line fix (it would drop the options silently;
+        # recall-corpus romc \usepackage[usenames,dvipsnames]{xcolor}).
         src = (
             r"\documentclass[article]{jss}" "\n"
-            r"\usepackage[utf8]{graphicx}" "\n"
+            r"\usepackage[usenames,dvipsnames]{xcolor}" "\n"
             r"\begin{document}\end{document}"
         )
         violations = run_rule(jss_house_003, src)
         assert len(violations) == 1
+        v = violations[0]
+        assert "PassOptionsToPackage{usenames,dvipsnames}{xcolor}" in v.suggestion
+        assert v.fix is None
+
+    def test_usepackage_empty_options_treated_as_bare(self, run_rule):
+        # ``[]`` is no real option -> still the redundant bare load.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\usepackage[]{xcolor}" "\n"
+            r"\begin{document}\end{document}"
+        )
+        violations = run_rule(jss_house_003, src)
+        assert len(violations) == 1
+        assert violations[0].fix is not None
 
     def test_usepackage_missing_group_silent(self, run_rule):
         # Malformed \usepackage with no arg (edge case).

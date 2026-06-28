@@ -247,6 +247,28 @@ def check_jss_house_003(
                 continue
             if name not in _JSS_LOADED_PACKAGES:
                 continue
+            options = _usepackage_options(node)
+            if options:
+                # Not a pure redundant load: the author wants options
+                # jss.cls's plain ``\RequirePackage`` doesn't pass (e.g.
+                # ``[dvipsnames]`` for named colours). But the package is
+                # already loaded, so re-\\usepackage-ing it with options is
+                # an option clash — the JSS-correct form is
+                # ``\PassOptionsToPackage`` before ``\documentclass``. Don't
+                # offer the delete-the-line fix here: it would silently drop
+                # the options and can break compilation.
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-HOUSE-003",
+                    suggestion=(
+                        f"Move the options to "
+                        f"\\PassOptionsToPackage{{{options}}}{{{name}}} before "
+                        f"\\documentclass — jss.cls already loads {name} "
+                        "(re-loading it with options is an option clash)."
+                    ),
+                )
+                continue
             macro_end = node.pos + (node.len or 0)
             line_range = _whole_line_range(tex.source, node.pos, macro_end)
             fix: Fix | None = None
@@ -324,6 +346,21 @@ def _usepackage_name(macro: Any, parent: Any, idx: int) -> str:
     sibling = _helpers._next_group_arg(parent, idx)
     if sibling is not None:
         return _group_chars(sibling)
+    return ""
+
+
+def _usepackage_options(macro: Any) -> str:
+    """Return the ``[options]`` text of ``\\usepackage[...]{pkg}`` (e.g.
+    ``"usenames,dvipsnames"``), or ``""`` when there's no option group or
+    it's empty (``[]``)."""
+    argd = getattr(macro, "nodeargd", None)
+    if argd is None:
+        return ""
+    for arg in argd.argnlist or ():
+        if isinstance(arg, LatexGroupNode):
+            delim = getattr(arg, "delimiters", None)
+            if delim and delim[0] == "[":
+                return _group_chars(arg)
     return ""
 
 

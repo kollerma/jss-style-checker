@@ -83,6 +83,15 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-HOUSE-003` now handles a jss-loaded package loaded **with options**
+  (`\usepackage[usenames,dvipsnames]{xcolor}`) differently from a bare
+  redundant load. jss.cls loads these packages without options, so
+  re-loading with options is an option clash, not a valid way to get them
+  — the rule now advises moving them to `\PassOptionsToPackage{...}{pkg}`
+  before `\documentclass` and **withholds the delete-the-line autofix**
+  (deleting would silently drop the options and can break compilation).
+  A bare `\usepackage{pkg}` (or empty `[]`) keeps the safe auto-delete
+  (recall-corpus romc).
 - `JSS-XREF-001` no longer flags a "Figure/Table N" that sits inside a
   citation locator (`\citet[Table 2.5]{X}` / `\cite[Figure 3]{X}`): the
   optional argument points at a float in the *cited* work, not this
