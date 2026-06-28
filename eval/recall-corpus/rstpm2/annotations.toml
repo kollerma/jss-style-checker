@@ -58,6 +58,12 @@ line = 10
 comment = 'Brinks_Hoyer_2018 — title not in title case; should be "Illness-Death Model: Statistical Perspective and Differential Equations".'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "lib.bib"
+line = 12
+comment = 'Andersen_Borgan_Gill_Keiding_1993 — DOI 10.1007/978-1-4612-4348-9 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/978-1-4612-4348-9".'
+
+[[violations]]
 rule_id = "JSS-REFS-006"
 file = "lib.bib"
 line = 14
@@ -864,3 +870,5 @@ comment = '"Stata" should be "\proglang{Stata}"'
 # from the text. Distinct sub-defect from missing-label cases; linter
 # does not fire on either (filed as a follow-up).
 # -------------------------------------------------------------------
+
+
