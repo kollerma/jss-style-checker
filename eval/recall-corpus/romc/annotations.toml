@@ -1,0 +1,410 @@
+# Hand-annotated ground truth for paper "romc".
+#
+# Read the rendered manuscript end-to-end and record EVERY
+# JSS-guide violation. Identity tuple is (rule_id, file, line);
+# column does NOT participate. See ../README.md for the protocol.
+#
+# Goal 1 (non-CRAN language coverage): ROMC Python manuscript (JSS v110.i02).
+# Helps cover OPER-002, CITE-002 (thin), CODE-001.
+#
+# The [[violations]] below are SEEDED from precision-review
+# verdicts (eval.db, 2026-06-17): each is a review-confirmed
+# TRUE POSITIVE — VERIFY it, and add the false negatives the
+# linter missed (those are not in eval.db). Reviewed FALSE
+# POSITIVES are listed (commented) at the bottom: do NOT add
+# them as violations, but confirm the FP judgement as you read.
+#
+# JSS-REFS-003 is NOT seeded here — it is populated separately by
+# `python -m eval.crossref_doi_lookup` (records the actual DOI).
+
+[meta]
+paper_id = "romc"
+annotator = "Manuel Koller"
+date = "2026-06-28"
+notes = "Seeded from precision review on 2026-06-17: 55 confirmed-TP entries to verify, 0 reviewed FPs recorded below."
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 13
+comment = 'Lintusaari2017 — DOI 10.1093/sysbio/syw077 found on Crossref (title similarity 1.00); add to the entry as doi="10.1093/sysbio/syw077".'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "jss4678.bib"
+line = 43
+comment = 'Should be "Springer-Verlag" for publisher'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 43
+comment = 'Marin2012 — DOI 10.1007/s11222-011-9288-2 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/s11222-011-9288-2".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 118
+comment = 'Cranmer2020 — DOI 10.1073/pnas.1912789117 found on Crossref (title similarity 1.00); add to the entry as doi="10.1073/pnas.1912789117".'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "jss4678.bib"
+line = 143
+comment = 'Should be "Springer-Verlag" for publisher'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 143
+comment = 'Blum2010 — DOI 10.1007/s11222-009-9116-0 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/s11222-009-9116-0".'
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "jss4678.bib"
+line = 154
+comment = "Journal not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 173
+comment = 'Forneron2016 — DOI 10.1108/s0731-905320160000036020 found on Crossref (title similarity 1.00); add to the entry as doi="10.1108/s0731-905320160000036020".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 181
+comment = 'hagberg2008exploring — DOI 10.25080/tcwv9851 found on Crossref (title similarity 1.00); add to the entry as doi="10.25080/tcwv9851".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 195
+comment = 'Thomas2020 — DOI 10.1214/20-ba1238 found on Crossref (title similarity 1.00); add to the entry as doi="10.1214/20-ba1238".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 219
+comment = 'Shahriari2016 — DOI 10.1109/jproc.2015.2494218 found on Crossref (title similarity 1.00); add to the entry as doi="10.1109/jproc.2015.2494218".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "jss4678.bib"
+line = 241
+comment = 'harris2020array — DOI 10.1038/s41586-020-2649-2 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41586-020-2649-2".'
+
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "jss4678.tex"
+line = 4
+comment = 'Preamble loads xcolor package, options should be specified as \PassOptionsToPackage{usenames,dvipsnames}{xcolor} before \documentclass'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 240
+comment = "Display equation has blank line before, either remove the line or make it a comment"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 262
+comment = "Display equation has blank line before and after, either remove the lines or make them a comment"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 269
+comment = "Display equation has blank line before, either remove the line or make it a comment"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "jss4678.tex"
+line = 290
+comment = "numbered equation labelled ['eq:indicator']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 303
+comment = "Display equation has blank line before and after, either remove the lines or make them a comment"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "jss4678.tex"
+line = 303
+comment = "numbered gather labelled ['eq:approx_likelihood_omc']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 311
+comment = "Display equation has blank line before, either remove the line or make it a comment"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 324
+comment = "Display equation has blank line before and after, either remove the lines or make them a comment"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "jss4678.tex"
+line = 324
+comment = "numbered equation labelled ['eq:alt_view_theta']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 329
+comment = "Display equation has blank line before, either remove the line or make it a comment"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "jss4678.tex"
+line = 347
+comment = "numbered equation labelled ['eq:omc_opt_prob']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 380
+comment = "Display equation has blank line before, either remove the line or make it a comment"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 407
+comment = "Display equation has blank line before, either remove the line or make it a comment"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "jss4678.tex"
+line = 488
+comment = "e.g. not followed by a comma"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "jss4678.tex"
+line = 507
+comment = "Caption does not end with a period."
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "jss4678.tex"
+line = 537
+comment = "Caption does not end with a period."
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "jss4678.tex"
+line = 558
+comment = 'Equation should be referenced to as "Equation~\ref{...}" not "eq.~\eqref{...}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "jss4678.tex"
+line = 559
+comment = 'Equation should be referenced to as "Equation~\ref{...}" not "eq.~\eqref{...}"'
+
+[[violations]]
+rule_id = "JSS-OPER-002"
+file = "jss4678.tex"
+line = 599
+comment = 'Use ^\top instead of ^T to typeset transpose'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "jss4678.tex"
+line = 610
+comment = "Caption does not end with a period."
+
+[[violations]]
+rule_id = "JSS-OPER-002"
+file = "jss4678.tex"
+line = 616
+comment = 'Use ^\top instead of ^T to typeset transpose'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "jss4678.tex"
+line = 644
+comment = "Section title in title style but should be sentence style"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "jss4678.tex"
+line = 672
+comment = "Caption does not end with a period."
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "jss4678.tex"
+line = 724
+comment = '\pkg{multiprocessing} first mention without a citation. It is part of the Python standard library, so the fix is to cite Python the language (e.g. a Python 3 Reference Manual entry), not a multiprocessing-specific package — citepy only finds the obsolete 2.4/2.5 backport.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 735
+comment = "Display equation has blank line before and after, either remove the lines or make them a comment"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "jss4678.tex"
+line = 735
+comment = "numbered gather line eq:1D_example is never referenced (only its sibling eq:1D_example_eq_2 is, at L747); the linter checks per-environment so it misses this orphan line, also, two equations do not have labels"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss4678.tex"
+line = 755
+comment = 'Code uses spaces around operators and after commas, `-t1-c`, `t1**4` and `t1-c` should be `-t1 - c`, `t1**4` (same treatment as ^) and `t1 - c`'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 770
+comment = "Comment should move to the text outside of the code"
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "jss4678.tex"
+line = 829
+comment = "Should cite matplotlib's original foundational journal paper published by John D. Hunter"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss4678.tex"
+line = 844
+comment = "Operator missing surrounding spaces"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss4678.tex"
+line = 862
+comment = "Operators missing surrounding spaces"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 872
+comment = "Comments should move to the text outside of the code"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss4678.tex"
+line = 947
+comment = "Comma missing spaces after, `(-3,3)` should be `(-3, 3)`"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 948
+comment = "Comments should move to the text outside of the code"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 1012
+comment = "Comments should move to the text outside of the code"
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "jss4678.tex"
+line = 1052
+comment = "Missing citation for scikit-learn"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss4678.tex"
+line = 1058
+comment = "Comma missing spaces after, `(10,10)` should be `(10, 10)`"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 1065
+comment = "Comments should move to the text outside of the code"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "jss4678.tex"
+line = 1106
+comment = "Comma missing spaces after, several ranges"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 1136
+comment = "Comments should move to the text outside of the code"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "jss4678.tex"
+line = 1153
+comment = "Section title in title style but should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 1165
+comment = "Code block lacks comments [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 1197
+comment = "Comments should move to the text outside of the code"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "jss4678.tex"
+line = 1228
+comment = "Comments should move to the text outside of the code"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "jss4678.tex"
+line = 1258
+comment = "Section title in title style but should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 1263
+comment = "Display equation has blank line before and after, either remove the lines or make them a comment"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "jss4678.tex"
+line = 1263
+comment = "numbered equation labelled ['eq:ma2']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 1277
+comment = "Display equation has blank line before and after, either remove the lines or make them a comment"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "jss4678.tex"
+line = 1277
+comment = "numbered equation labelled ['eq:ma2_prior']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "jss4678.tex"
+line = 1293
+comment = "Display equation has blank line before and after, either remove the lines or make them a comment"
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "jss4678.tex"
+line = 1408
+comment = "Missing citation for multiprocess package"
+
+
