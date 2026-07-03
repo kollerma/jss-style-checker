@@ -740,3 +740,5 @@ rule_id = "JSS-REFS-006"
 file = "HardyWeinberg.bib"
 line = 512
 comment = "Title not in title case"
+
+

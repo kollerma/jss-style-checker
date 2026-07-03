@@ -693,6 +693,12 @@ line = 202
 comment = 'geweke1992 — DOI 10.21034/sr.148 found on Crossref (title similarity 1.00); add to the entry as doi="10.21034/sr.148".'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 211
+comment = 'GGally — DOI 10.32614/CRAN.package.GGally registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.GGally".'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "JSS2728.bib"
 line = 211
@@ -709,6 +715,12 @@ rule_id = "JSS-REFS-004"
 file = "JSS2728.bib"
 line = 219
 comment = 'ggplot2 — title "ggplot2: Elegant Graphics for Data Analysis" has package name "ggplot2" not wrapped in \pkg{}.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 228
+comment = 'gtools — DOI 10.32614/CRAN.package.gtools registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.gtools".'
 
 [[violations]]
 rule_id = "JSS-REFS-004"
@@ -1037,14 +1049,4 @@ comment = 'watanabe2010 — JMLR article DOI exists on Crossref; missing from th
 # / NAME-002 / BIBTEX-004 entries the linter doesn't reach.
 # -------------------------------------------------------------------
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 211
-comment = 'GGally — DOI 10.32614/CRAN.package.GGally registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.GGally".'
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 228
-comment = 'gtools — DOI 10.32614/CRAN.package.gtools registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.gtools".'

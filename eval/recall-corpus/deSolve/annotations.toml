@@ -804,6 +804,12 @@ comment = 'Butcher1987 — DOI 10.2307/2008600 found on Crossref (title similari
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "integration.bib"
+line = 40
+comment = 'bvpSolve — DOI 10.32614/CRAN.package.bvpSolve registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.bvpSolve".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
 line = 49
 comment = 'Cash1990 — DOI 10.1145/79505.79507 found on Crossref (title similarity 1.00); add to the entry as doi="10.1145/79505.79507".'
 
@@ -812,6 +818,12 @@ rule_id = "JSS-REFS-002"
 file = "integration.bib"
 line = 66
 comment = 'Article title not in title style'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 66
+comment = 'deSolve — DOI 10.32614/CRAN.package.deSolve registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.deSolve".'
 
 [[violations]]
 rule_id = "JSS-REFS-002"
@@ -879,14 +891,4 @@ file = "integration.bib"
 line = 220
 comment = "Soetaert08 - DOI 10.1007/978-1-4020-8624-3 found on springer.com"
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "integration.bib"
-line = 40
-comment = 'bvpSolve — DOI 10.32614/CRAN.package.bvpSolve registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.bvpSolve".'
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "integration.bib"
-line = 66
-comment = 'deSolve — DOI 10.32614/CRAN.package.deSolve registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.deSolve".'

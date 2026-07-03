@@ -865,10 +865,9 @@ file = "multistate.Rnw"
 line = 523
 comment = '"Stata" should be "\proglang{Stata}"'
 
+
 # -------------------------------------------------------------------
 # XREF-004 sweep: equations with \label{} present but never \ref-ed
 # from the text. Distinct sub-defect from missing-label cases; linter
 # does not fire on either (filed as a follow-up).
 # -------------------------------------------------------------------
-
-

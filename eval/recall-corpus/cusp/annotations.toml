@@ -352,6 +352,12 @@ comment = 'vanderMaas:2003p626 — Article DOI exists on Crossref; missing from 
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "cusp_papers_jss.bib"
+line = 320
+comment = 'Cobb:1980p4118 — DOI 10.1002/bs.3830260107 found on Crossref (title similarity 0.83); add to the entry as doi="10.1002/bs.3830260107".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
 line = 344
 comment = 'Furstenau:2006p4789 — Article DOI exists on Crossref; missing from the entry.'
 
@@ -436,6 +442,12 @@ comment = 'Zhu:1997p4854 — Article DOI exists on Crossref; missing from the en
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "cusp_papers_jss.bib"
+line = 561
+comment = 'mcmc — DOI 10.32614/CRAN.package.mcmc registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.mcmc".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
 line = 599
 comment = 'Zeeman1974 — Article DOI exists on Crossref; missing from the entry.'
 
@@ -445,14 +457,4 @@ file = "cusp_papers_jss.bib"
 line = 620
 comment = 'GrasmanEtAl2009 — Article DOI exists on Crossref; missing from the entry.'
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "cusp_papers_jss.bib"
-line = 320
-comment = 'Cobb:1980p4118 — DOI 10.1002/bs.3830260107 found on Crossref (title similarity 0.83); add to the entry as doi="10.1002/bs.3830260107".'
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "cusp_papers_jss.bib"
-line = 561
-comment = 'mcmc — DOI 10.32614/CRAN.package.mcmc registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.mcmc".'

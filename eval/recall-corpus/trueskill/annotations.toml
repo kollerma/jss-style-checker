@@ -36,7 +36,6 @@ Listings lst:tb_lose and lst:d2 are not marked as unreferenced as they are refer
 
 '''
 
-
 [[violations]]
 rule_id = "JSS-CAP-001"
 file = "article.tex"
@@ -1446,3 +1445,5 @@ rule_id = "JSS-BIBTEX-005"
 file = "gaming.bib"
 line = 7007
 comment = "Volume and number fields are repeated"
+
+
