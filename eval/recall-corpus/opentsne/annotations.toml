@@ -42,7 +42,7 @@ line = 93
 comment = "Bib entry sheth2019spatial: 6+ authors use \\shortcites{} or shortnames"
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 93
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
@@ -66,7 +66,7 @@ line = 102
 comment = "Used \\citep{...} inside parentheses, should use \\citealt{...} instead"
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 102
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
@@ -78,31 +78,31 @@ line = 105
 comment = "Bib entry pedregosa2011scikit: 6+ authors use \\shortcites{} or shortnames"
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 105
 comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 122
 comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 123
 comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 124
 comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 126
 comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
@@ -120,7 +120,7 @@ line = 193
 comment = "Bib entry belkina2019automated: 6+ authors use \\shortcites{} or shortnames"
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 361
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
@@ -132,13 +132,13 @@ line = 363
 comment = "Bib tex entry sklearn_api: 6+ authors use \\shortcites{} or shortnames"
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 420
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 439
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
@@ -168,31 +168,25 @@ line = 572
 comment = "Missing spaces surrounding ="
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 579
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 583
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 591
-comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+comment = 'Figures referenced by Fig.~\ref{}/Figs.~\ref{} rather than Figure~\ref{}/Figures~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
-file = "main.tex"
-line = 591
-comment = 'Figures are referenced by Figures~\ref{} rathern than Figs.~\ref{}'
-
-[[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 593
 comment = 'Figures are referenced by Figures~\ref{} rathern than Figs.~\ref{}'
@@ -216,19 +210,19 @@ line = 626
 comment = "Missing spaces surrounding ="
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 641
 comment = 'Figures are referenced by Figures~\ref{} rathern than Figs.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 643
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 645
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
@@ -240,7 +234,7 @@ line = 647
 comment = "Missing spaces surrounding ="
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 653
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
@@ -258,43 +252,43 @@ line = 667
 comment = "Bib tex entry harris2018classes: 6+ authors use \\shortcites{} or shortnames"
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 667
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 672
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 689
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 707
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 712
 comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 722
 comment = 'Figures are referenced by Figures~\ref{} rathern than Figs.~\ref{}'
 
 [[violations]]
-rule_id = "JSS-XREF-???"
+rule_id = "JSS-XREF-007"
 file = "main.tex"
 line = 728
 comment = 'Tables are referenced by Table~\ref{} rathern than Tab.~\ref{}'
@@ -658,3 +652,5 @@ rule_id = "JSS-REFS-006"
 file = "references.bib"
 line = 382
 comment = "Title not in title case"
+
+
