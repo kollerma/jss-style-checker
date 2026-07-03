@@ -191,6 +191,22 @@ def _t_caret_follows_big_operator(
     return False
 
 
+def _prime_follows_bracket(source: str, prime_pos: int) -> bool:
+    """True when the ``\\prime`` macro at ``prime_pos`` immediately follows a
+    closing bracket ``)`` / ``}`` / ``]`` (optionally across a ``^`` caret
+    and whitespace) — i.e. the transpose of a grouped expression
+    (``(6,7)^\\prime``, ``\\mathbf{X}^\\prime``). A ``\\prime`` after a bare
+    symbol or function name (``\\h^\\prime``) is derivative notation."""
+    i = prime_pos - 1
+    while i >= 0 and source[i] in " \t\n":
+        i -= 1
+    if i >= 0 and source[i] == "^":
+        i -= 1
+        while i >= 0 and source[i] in " \t\n":
+            i -= 1
+    return i >= 0 and source[i] in ")}]"
+
+
 def check_jss_oper_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -201,19 +217,33 @@ def check_jss_oper_002(
             if isinstance(node, LatexMacroNode):
                 if not _helpers._is_inside_math(ancestors):
                     continue
-                # ``\prime`` (with or without an explicit ``^``) is used
-                # as a transpose marker in some papers (pmclust:
-                # ``(6, 7)^\prime``). JSS wants ``\top`` instead.
+                # ``\prime`` is a transpose marker in some papers
+                # (pmclust: ``(6, 7)^\prime``); JSS wants ``\top``. But
+                # ``\prime`` is far more often *derivative* notation
+                # (``\h^\prime``, ``\basisy^\prime``, ``\bern{M}^\prime(\ry)``
+                # — recall-corpus mlt.docreg). Mirror the single-quote
+                # branch: only treat it as transpose when it follows a
+                # closing bracket ``)}]`` (a grouped expression), and never
+                # when it's immediately applied to an argument ``(...)``
+                # (a derivative like ``f^\prime(x)``).
                 if node.macroname == "prime":
-                    yield _violation(
-                        tex=tex,
-                        pos=node.pos,
-                        rule_id="JSS-OPER-002",
-                        suggestion=(
-                            "Use '\\top' for transpose instead of "
-                            "'\\prime': e.g., 'X^\\top X'."
-                        ),
+                    end = (node.pos or 0) + (node.len or 0)
+                    followed_by_paren = (
+                        tex.source[end:].lstrip()[:1] == "("
                     )
+                    if (
+                        _prime_follows_bracket(tex.source, node.pos)
+                        and not followed_by_paren
+                    ):
+                        yield _violation(
+                            tex=tex,
+                            pos=node.pos,
+                            rule_id="JSS-OPER-002",
+                            suggestion=(
+                                "Use '\\top' for transpose instead of "
+                                "'\\prime': e.g., 'X^\\top X'."
+                            ),
+                        )
                 continue
             if not isinstance(node, LatexCharsNode):
                 continue

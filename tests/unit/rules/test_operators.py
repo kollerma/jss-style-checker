@@ -108,6 +108,27 @@ class TestOper002:
         )
         assert run_rule(jss_oper_002, src) == []
 
+    def test_prime_derivative_silent(self, run_rule):
+        # ``\prime`` after a bare symbol / applied to an argument is
+        # derivative notation, not transpose (recall-corpus mlt.docreg
+        # ``\h^\prime(\ry)``, ``\basisy^\prime``, ``\bern{M}^\prime(\ry)``).
+        for math in (r"h^\prime", r"h^\prime(x)", r"\bern{M}^\prime(y)",
+                     r"{h^\prime}^\top"):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}${math}$\end{{document}}"
+            )
+            assert run_rule(jss_oper_002, src) == [], math
+
+    def test_prime_transpose_after_bracket_flagged(self, run_rule):
+        # ``\prime`` transposing a grouped expression still fires.
+        for math in (r"(6, 7)^\prime", r"\mathbf{X}^\prime"):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}${math}$\end{{document}}"
+            )
+            assert len(run_rule(jss_oper_002, src)) == 1, math
+
 
 # ---------------------------------------------------------------------------
 # JSS-OPER-003 — blank lines around display equations

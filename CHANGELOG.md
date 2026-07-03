@@ -83,6 +83,14 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-OPER-002` no longer flags `\prime` used as **derivative** notation
+  (`\h^\prime`, `\basisy^\prime`, `\bern{M}^\prime(\ry)`) as if it were a
+  transpose. The `\prime`-macro branch fired unconditionally while the
+  single-quote branch already exempted derivatives; it now matches that
+  design — a `\prime` is treated as transpose only when it follows a
+  closing bracket `)}]` (a grouped expression, e.g. `(6,7)^\prime`,
+  `\mathbf{X}^\prime`) and is not immediately applied to an argument
+  `(...)`. Real transposes still fire (recall-corpus mlt.docreg).
 - `JSS-HOUSE-003` now handles a jss-loaded package loaded **with options**
   (`\usepackage[usenames,dvipsnames]{xcolor}`) differently from a bare
   redundant load. jss.cls loads these packages without options, so
