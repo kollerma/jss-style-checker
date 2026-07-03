@@ -1,0 +1,1661 @@
+# Hand-annotated ground truth for paper "mlt.docreg".
+#
+# Read the rendered manuscript end-to-end and record EVERY
+# JSS-guide violation. Identity tuple is (rule_id, file, line);
+# column does NOT participate. See ../README.md for the protocol.
+#
+# Goal 2 (rule coverage): closes STRUCT-003 (absent) + de-thins CAP-003 / BIBTEX-003.
+#
+# The [[violations]] below are SEEDED from precision-review
+# verdicts (eval.db, 2026-06-17): each is a review-confirmed
+# TRUE POSITIVE — VERIFY it, and add the false negatives the
+# linter missed (those are not in eval.db). Reviewed FALSE
+# POSITIVES are listed (commented) at the bottom: do NOT add
+# them as violations, but confirm the FP judgement as you read.
+#
+# JSS-REFS-003 is NOT seeded here — it is populated separately by
+# `python -m eval.crossref_doi_lookup` (records the actual DOI).
+
+[meta]
+paper_id = "mlt.docreg"
+annotator = "Manuel Koller"
+date = "2026-06-29"
+notes = '''
+Seeded from precision review on 2026-06-17: 56 confirmed-TP entries to verify, 18 reviewed FPs recorded below.
+
+JSS-OPER-004: the paper defines \Ex (= \mathbb{E}) and redefines \Prob (= \mathbb{P}) in defs.tex:84-85 instead of the jss.cls shortcuts \E (= \mathsf{E}) / \Prob (= \mathsf{P}). Both the DEFINITION SITES (defs.tex:84-85, the root cause) and each body OCCURRENCE are annotated as OPER-004 false negatives (the linter misses them — they hide behind custom/redefined macros). Annotating both granularities is deliberate: the definition is where the fix lands; the occurrences are what a reviewer sees rendered.
+'''
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "defs.tex"
+line = 81
+comment = 'Definition site: \newcommand{\ie}{\textit{i.e.}~} is missing comma after i.e.; the definition itself is the root defect (all \ie body uses are also annotated).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "defs.tex"
+line = 82
+comment = 'Definition site: \newcommand{\ie}{\textit{e.g.}~} is missing comma after e.g.; the definition itself is the root defect (all \ie body uses are also annotated).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "defs.tex"
+line = 84
+comment = 'Definition site: \renewcommand{\Prob}{\mathbb{P}} redefines the jss.cls \Prob (= \mathsf{P}); the redefinition itself is the root defect (all \Prob body uses are also annotated).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "defs.tex"
+line = 85
+comment = 'Definition site: \newcommand{\Ex}{\mathbb{E}} introduces a custom expectation alias instead of jss.cls \E (= \mathsf{E}); the definition itself is the root defect (scalar \Ex body uses are also annotated; multi-dimensional ones are not — see meta note).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 19
+comment = 'Definition site: \newcommand{\cmd}[1]{\texttt{#1()}} introduces a custom code alias to show function names that does not use jss.cls \code; the definition itself is the root defect'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 208
+comment = 'Custom \eg (defs.tex:82 = \textit{e.g.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 211
+comment = 'Custom \Ex (defs.tex:85 = \mathbb{E}); jss.cls provides \E (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 213
+comment = 'Custom \Ex (= \mathbb{E}); jss.cls provides \E (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 223
+comment = 'Redefined \Prob (defs.tex:84 = \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN — non-canonical rendering).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 235
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 245
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 250
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 253
+comment = 'Custom \Ex (= \mathbb{E}); jss.cls provides \E (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 257
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 280
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 284
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 299
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 303
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 305
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 363
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 369
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 370
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 371
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 374
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 375
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 378
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 402
+comment = '\paragraph{} heading in title style; sentence style is "Density estimation: Old Faithful geyser data" (Old Faithful is a proper name). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 419
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 439
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 476
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 495
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 503
+comment = "Should be Old Faithful geyser, not Geyser."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 510
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 515
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 516
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 523
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 530
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 537
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 542
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 558
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 573
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 595
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 602
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 607
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 608
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 626
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 652
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 702
+comment = "Should be Old Faithful geyser, not Geyser."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 731
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 741
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 778
+comment = "Should be Deer-vehicle collisions, not Collisions."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 786
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 795
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 802
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 812
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 820
+comment = 'Custom \Ex (= \mathbb{E}); jss.cls provides \E (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 821
+comment = 'Custom \Ex (= \mathbb{E}); jss.cls provides \E (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 822
+comment = 'Custom \Ex (= \mathbb{E}); jss.cls provides \E (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 825
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 827
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 828
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 840
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 847
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 854
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 860
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 862
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 873
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 884
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 892
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 930
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 932
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 938
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 939
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 991
+comment = "Should be GBSG-2 trial, not Trial."
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 994
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 995
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 996
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 997
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 1031
+comment = "Should be GBSG-2 trial, not Trial."
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1033
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1034
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1053
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1054
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1070
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1083
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1084
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1090
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1105
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1115
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 1125
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1128
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1144
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1146
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1172
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1181
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1183
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 1224
+comment = "Should be Boston housing, not Housing."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1232
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1254
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mlt.Rnw"
+line = 1257
+comment = 'operator missing surrounding spaces, `(fincome - hours * wage)/1000` should be `(fincome - hours * wage) / 1000`'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1267
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mlt.Rnw"
+line = 1272
+comment = "R not in \\proglang{}"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1284
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1285
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1308
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 1315
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1321
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1323
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1326
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1328
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1330
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1341
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1351
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1358
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1360
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 1400
+comment = "Should be GBSG-2 trial, not Trial."
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1429
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1431
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1431
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1434
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1436
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1443
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1456
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1458
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1498
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1505
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1527
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1529
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 1532
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 1617
+comment = "Should be GBSG-2 trial, not Trial."
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 1669
+comment = "Should be GBSG-2 trial, not Trial."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1677
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mlt.Rnw"
+line = 1689
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 1725
+comment = "Should be Head circumference growth, not Circumference Growth."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1734
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 1739
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1747
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 1855
+comment = "Should be Boston housing, not Housing."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1864
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1869
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 1969
+comment = "Should be Tree pipit counts, not Pipit Counts."
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1972
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 1979
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 1981
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 2001
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2113
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2114
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2116
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 2119
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 2121
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2124
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2125
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2126
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2128
+comment = "Section title not in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2143
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 2146
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2155
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2176
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2220
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2223
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "mlt.Rnw"
+line = 2225
+comment = 'operator with surrounding spaces, `[,c(4, 5, 1:3)]` should be `[, c(4, 5, 1:3)]`'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2238
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2245
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2248
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2257
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2264
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 2309
+comment = "Should be Old Faithful geyser, not Geyser."
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2316
+comment = "Section title not in sentence style"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 2319
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 2321
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 2322
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2325
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2332
+comment = '\paragraph{} heading in title style; should be sentence style (proper names keep caps). Linter misses \paragraph (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 2368
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2376
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "mlt.Rnw"
+line = 2376
+comment = 'Redefined \Prob (= \mathbb{P}); jss.cls \Prob = \mathsf{P} (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 2393
+comment = "Should be Old Faithful geyser, not Geyser."
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2407
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2408
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2418
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 2433
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 2466
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2477
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2483
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 2496
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2501
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-STRUCT-003"
+file = "mlt.Rnw"
+line = 2525
+comment = "Appendix section lacks proper title"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2527
+comment = "Section title not in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2533
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2534
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2535
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2540
+comment = "Section title not in sentence style"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "mlt.Rnw"
+line = 2558
+comment = 'Custom \ie (defs.tex:81 = \textit{i.e.}~); house style is to follow with a , (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2563
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2582
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2584
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2604
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2629
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2635
+comment = "Section title not in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2637
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2656
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2659
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2666
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2671
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2672
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2675
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2678
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2694
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2699
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2708
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2729
+comment = "Section title not in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2748
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2754
+comment = "Section title not in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2757
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2758
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2775
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2809
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2811
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "mlt.Rnw"
+line = 2813
+comment = "R not in \\proglang{}"
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2857
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2859
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2860
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2862
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CAP-002"
+file = "mlt.Rnw"
+line = 2864
+comment = "Section title should be in sentence style"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2866
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2867
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2868
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2869
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2870
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2872
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2873
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2874
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "mlt.Rnw"
+line = 2875
+comment = 'Custom \cmd (mlt.Rnw:19 = \texttt{#1()}); jss.cls provides \code (FN).'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "mlt.Rnw"
+line = 2932
+comment = "Comment should move to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CAP-003"
+file = "mlt.Rnw"
+line = 2942
+comment = 'Should be $\chi^2_{20}$ data, not Data.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 11
+comment = 'pkg:coxinterval — DOI 10.32614/CRAN.package.coxinterval registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.coxinterval".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 19
+comment = 'pkg:MIICD — DOI 10.32614/CRAN.package.MIICD registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.MIICD".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 27
+comment = 'pkg:ICE — DOI 10.32614/CRAN.package.ICE registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.ICE".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 190
+comment = 'boxcox_1964 — DOI 10.1111/j.2517-6161.1964.tb00553.x found on Crossref (title similarity 1.00); add to the entry as doi="10.1111/j.2517-6161.1964.tb00553.x".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "mlt.bib"
+line = 221
+comment = "Title starts with lowercase word 'Survival [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 327
+comment = 'Fisher_1934 — DOI 10.1098/rspa.1934.0050 found on Crossref (title similarity 1.00); add to the entry as doi="10.1098/rspa.1934.0050".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 336
+comment = 'Lindsey_1996 — DOI 10.1093/oso/9780198523598.001.0001 found on Crossref (title similarity 1.00); add to the entry as doi="10.1093/oso/9780198523598.001.0001".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 393
+comment = 'gbsg2:1994 — DOI 10.1200/jco.1994.12.10.2086 found on Crossref (title similarity 0.86); add to the entry as doi="10.1200/jco.1994.12.10.2086".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 428
+comment = 'Fredriks_Buuren_Burgmeijer_2000 — DOI 10.1203/00006450-200003000-00006 found on Crossref (title similarity 0.98); add to the entry as doi="10.1203/00006450-200003000-00006".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 441
+comment = 'Stasinopoulos_Rigby_2007 — DOI 10.18637/jss.v023.i07 found on Crossref (title similarity 0.95); add to the entry as doi="10.18637/jss.v023.i07".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mlt.bib"
+line = 441
+comment = "BibTeX title uses JSS markup for R package name [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 1561
+comment = 'Varadhan_Gilbert_2009 — DOI 10.18637/jss.v032.i04 found on Crossref (title similarity 0.94); add to the entry as doi="10.18637/jss.v032.i04".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mlt.bib"
+line = 1561
+comment = "Title uses JSS markup for language and package names [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 1596
+comment = 'Koenker_Leorato_Peracchi_2013 — DOI 10.2139/ssrn.2368737 found on Crossref (title similarity 0.97); add to the entry as doi="10.2139/ssrn.2368737".'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-003"
+file = "mlt.bib"
+line = 1801
+comment = "Missing fields for @Article [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 1821
+comment = 'Mroz_1987 — DOI 10.2307/1911029 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/1911029".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 1844
+comment = 'Therneau_Grambsch_2000 — DOI 10.1007/978-1-4757-3294-8 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/978-1-4757-3294-8".'
+
+[[violations]]
+rule_id = "JSS-HOUSE-002"
+file = "mlt.bib"
+line = 1852
+comment = "edition = {Fourth} [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 1863
+comment = 'Zeileis_2004 — DOI 10.18637/jss.v011.i10 found on Crossref (title similarity 1.00); add to the entry as doi="10.18637/jss.v011.i10".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 1882
+comment = 'Scheike_Zhang_2011 — DOI 10.18637/jss.v038.i02 found on Crossref (title similarity 0.86); add to the entry as doi="10.18637/jss.v038.i02".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mlt.bib"
+line = 1882
+comment = "BibTeX title uses JSS markup [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "mlt.bib"
+line = 1882
+comment = "Title starts with lowercase word 'Analyzing' [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 1893
+comment = 'Gu_2014 — DOI 10.18637/jss.v058.i05 found on Crossref (title similarity 0.83); add to the entry as doi="10.18637/jss.v058.i05".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "mlt.bib"
+line = 1893
+comment = "BibTeX titles use JSS markup for language and package names [seeded from review: ai:bonsai]"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "mlt.bib"
+line = 1921
+comment = 'Yee_2010 — DOI 10.18637/jss.v032.i10 found on Crossref (title similarity 0.91); add to the entry as doi="10.18637/jss.v032.i10".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 1
+comment = 'pkg:ICsurv — DOI 10.32614/CRAN.package.ICsurv registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.ICsurv".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 8
+comment = 'pkg:polspline — DOI 10.32614/CRAN.package.polspline registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.polspline".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 15
+comment = 'pkg:logspline — DOI 10.32614/CRAN.package.logspline registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.logspline".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 22
+comment = 'pkg:bshazard — DOI 10.32614/CRAN.package.bshazard registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.bshazard".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 29
+comment = 'pkg:gss — DOI 10.32614/CRAN.package.gss registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.gss".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 36
+comment = 'pkg:TransModel — DOI 10.32614/CRAN.package.TransModel registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.TransModel".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 43
+comment = 'pkg:dynsurv — DOI 10.32614/CRAN.package.dynsurv registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.dynsurv".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 50
+comment = 'pkg:timereg — DOI 10.32614/CRAN.package.timereg registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.timereg".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 57
+comment = 'pkg:survivalMPL — DOI 10.32614/CRAN.package.survivalMPL registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.survivalMPL".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 71
+comment = 'pkg:muhaz — DOI 10.32614/CRAN.package.muhaz registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.muhaz".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 78
+comment = 'pkg:ordinal — DOI 10.32614/CRAN.package.ordinal registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.ordinal".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "packages_static.bib"
+line = 85
+comment = 'pkg:VGAM — DOI 10.32614/CRAN.package.VGAM registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.VGAM".'
+
+
