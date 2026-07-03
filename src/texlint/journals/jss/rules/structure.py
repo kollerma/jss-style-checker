@@ -341,10 +341,22 @@ def check_jss_struct_005(
                     fix=fix,
                 )
             # Literal-word ``and`` inside ``\author{}`` — same defect
-            # class as ``\and`` (lowercase macro): both render the
-            # word "and" rather than the JSS-canonical ``\And`` /
-            # ``\AND`` separator.
-            for chars_node, offset in _iter_text_and_offsets(group):
+            # class as ``\and`` (lowercase macro): both render the word
+            # "and" rather than the JSS-canonical ``\And`` / ``\AND``
+            # separator. BUT only when the block has no macro separator: if
+            # authors are already separated by ``\and`` / ``\And`` /
+            # ``\AND``, a literal "and" is part of an institution or name
+            # ("Computer and Information Science", "MIT and Harvard"), not a
+            # separator (recall-corpus opentsne false positives).
+            has_macro_separator = any(
+                isinstance(n, LatexMacroNode)
+                and n.macroname in ("and", "And", "AND")
+                for n in _helpers._walk(group.nodelist or ())
+            )
+            text_and_sites = (
+                () if has_macro_separator else _iter_text_and_offsets(group)
+            )
+            for chars_node, offset in text_and_sites:
                 # Position the violation at the source byte where the
                 # whitespace-flanked ``and`` begins.
                 match = _TEXT_AND_RE.search(chars_node.chars, offset)

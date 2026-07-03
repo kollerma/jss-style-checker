@@ -83,6 +83,12 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-STRUCT-005` no longer flags the literal word "and" inside
+  `\author{}` when the block already separates authors with a
+  `\and`/`\And`/`\AND` macro — in that case a literal "and" is part of an
+  institution or name ("Computer and Information Science", "MIT and
+  Harvard"), not a separator (recall-corpus opentsne false positives). A
+  block with no macro separator still flags a literal "and" joining names.
 - `JSS-OPER-002` no longer flags `\prime` used as **derivative** notation
   (`\h^\prime`, `\basisy^\prime`, `\bern{M}^\prime(\ry)`) as if it were a
   transpose. The `\prime`-macro branch fired unconditionally while the

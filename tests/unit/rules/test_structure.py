@@ -254,6 +254,21 @@ class TestStruct005:
         src = r"\author{Alice Smith}"
         assert run_rule(jss_struct_005, src) == []
 
+    def test_literal_and_in_institution_with_macro_sep_silent(self, run_rule):
+        # Authors already separated by \AND -> a literal "and" is part of
+        # an institution name, not a separator (recall-corpus opentsne).
+        src = (
+            r"\author{Alice Smith\\ Dept of Computer and Information Science"
+            r" \AND Bob Jones\\ MIT and Harvard}"
+        )
+        assert run_rule(jss_struct_005, src) == []
+
+    def test_literal_and_separator_without_macro_still_flagged(self, run_rule):
+        # No macro separator and a literal "and" joining names -> still a
+        # violation.
+        src = r"\author{Alice Smith and Bob Jones}"
+        assert len(run_rule(jss_struct_005, src)) == 1
+
     def test_first_group_arg_fallback(self, parse_tex_source):
         # Exercise the sibling-fallback path in _first_group_arg.
         from texlint.journals.jss.rules.structure import _first_group_arg
