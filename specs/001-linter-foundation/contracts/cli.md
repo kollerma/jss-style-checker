@@ -57,11 +57,13 @@ Unknown keys emit a warning on stderr when `--verbose` is set; they are otherwis
 
 | Code | Meaning |
 |------|---------|
-| `0` | Tool ran to completion; `ComplianceReport.violations` is empty. |
-| `1` | Tool ran to completion; at least one violation (style or parse-error) was produced. |
-| `2` | Tool could not complete: unknown CLI option; unknown `--journal`; missing/unreadable input path; unsupported file suffix; configuration error; uncaught internal exception. |
+| `0` | Tool ran to completion; no violation at or above the `--fail-on` threshold (default: `warning`) was produced. Findings below the threshold are still reported. |
+| `1` | Tool ran to completion; at least one violation at or above the `--fail-on` threshold was produced. |
+| `2` | Tool could not complete: unknown CLI option; unknown `--journal`; missing/unreadable input path; unsupported file suffix; directory with no lintable files; configuration error; uncaught internal exception. |
 
 Exit 1 and exit 2 are NOT mutually exclusive in intent but ARE in effect: if a parse error occurs (exit-2 condition) and also a style rule fires (exit-1 condition), the result is exit 2. Parse failures dominate because they signal the report is incomplete.
+
+Only **error-severity** `JSS-PARSE-000` findings trigger exit 2. A warning-severity `JSS-PARSE-000` marks a *degraded* parse — the file was recovered and fully linted (e.g. Latin-1 encoding fallback, duplicate-BibTeX-field recovery, tolerant-parser retry) — and obeys the normal `--fail-on` threshold like any other finding.
 
 Implemented via `sys.exit(code)` from `main()` (not `click.Context.exit(...)`), for cleaner interop with `click.testing.CliRunner.invoke(...).exit_code`.
 

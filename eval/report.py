@@ -18,7 +18,6 @@ Threshold constant `PRECISION_THRESHOLD` is the Constitution §VI gate.
 from __future__ import annotations
 
 import csv
-import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -83,7 +82,14 @@ _PER_RULE_SQL = """
            SUM(CASE WHEN v.verdict IS NULL OR v.verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
       FROM violations v JOIN papers p ON p.id = v.paper_id
      {pinned_join}
-     WHERE v.rule_id != 'JSS-PARSE-000'{live_filter}
+     WHERE v.rule_id != 'JSS-PARSE-000'
+       -- Only count violations the tool STILL emits (latest run), so
+       -- guard-silenced / fixed findings stop dragging precision down.
+       -- NULL = staleness untracked (pre-migration / direct insert) →
+       -- count it; the migration backfills live rows so NULL never
+       -- leaks a stale row in practice.
+       AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
+            OR v.last_seen_run_id IS NULL)
      GROUP BY v.rule_id
      ORDER BY MIN(v.category), v.rule_id
 """
@@ -97,7 +103,14 @@ _PER_RULE_BY_SOURCE_SQL = """
            SUM(CASE WHEN v.verdict IS NULL OR v.verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
       FROM violations v JOIN papers p ON p.id = v.paper_id
      {pinned_join}
-     WHERE v.rule_id != 'JSS-PARSE-000'{live_filter}
+     WHERE v.rule_id != 'JSS-PARSE-000'
+       -- Only count violations the tool STILL emits (latest run), so
+       -- guard-silenced / fixed findings stop dragging precision down.
+       -- NULL = staleness untracked (pre-migration / direct insert) →
+       -- count it; the migration backfills live rows so NULL never
+       -- leaks a stale row in practice.
+       AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
+            OR v.last_seen_run_id IS NULL)
      GROUP BY v.rule_id, p.source
      ORDER BY MIN(v.category), v.rule_id, p.source
 """
@@ -111,14 +124,39 @@ _PER_RULE_BY_FORMAT_SQL = """
            SUM(CASE WHEN v.verdict IS NULL OR v.verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
       FROM violations v JOIN papers p ON p.id = v.paper_id
      {pinned_join}
-     WHERE v.rule_id != 'JSS-PARSE-000'{live_filter}
+     WHERE v.rule_id != 'JSS-PARSE-000'
+       -- Only count violations the tool STILL emits (latest run), so
+       -- guard-silenced / fixed findings stop dragging precision down.
+       -- NULL = staleness untracked (pre-migration / direct insert) →
+       -- count it; the migration backfills live rows so NULL never
+       -- leaks a stale row in practice.
+       AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
+            OR v.last_seen_run_id IS NULL)
      GROUP BY v.rule_id, format
      ORDER BY MIN(v.category), v.rule_id, format
 """
 
+_PER_RULE_BY_CLASS_SQL = """
+    SELECT v.rule_id,
+           MIN(v.category) AS category,
+           COALESCE(p.doc_class, 'unknown') AS doc_class,
+           SUM(CASE WHEN v.verdict = 'true_positive'  THEN 1 ELSE 0 END) AS tp,
+           SUM(CASE WHEN v.verdict = 'false_positive' THEN 1 ELSE 0 END) AS fp,
+           SUM(CASE WHEN v.verdict IS NULL OR v.verdict = 'uncertain' THEN 1 ELSE 0 END) AS pending
+      FROM violations v JOIN papers p ON p.id = v.paper_id
+     {pinned_join}
+     WHERE v.rule_id != 'JSS-PARSE-000'
+       AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
+            OR v.last_seen_run_id IS NULL)
+     GROUP BY v.rule_id, doc_class
+     ORDER BY MIN(v.category), v.rule_id, doc_class
+"""
+
 _PARSE_FAILURE_COUNT_SQL = (
     "SELECT COUNT(*) AS c FROM violations v JOIN papers p ON p.id = v.paper_id"
-    " {pinned_join} WHERE v.rule_id = 'JSS-PARSE-000'{live_filter}"
+    " {pinned_join} WHERE v.rule_id = 'JSS-PARSE-000'"
+    " AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)"
+    "      OR v.last_seen_run_id IS NULL)"
 )
 
 
@@ -185,37 +223,6 @@ def _pinned_join(pinned: list[tuple[str, str]] | None) -> tuple[str, list]:
     return clause, params
 
 
-def _live_filter(
-    cx: sqlite3.Connection, include_stale: bool
-) -> tuple[str, list]:
-    """Return `(SQL fragment, params)` restricting to violations the tool
-    still emits on the latest scan run — `v.last_seen_run_id = <max run>`.
-
-    This makes the report describe the *current tool on the current corpus*
-    rather than the historical union of everything ever seen: a violation
-    the tool stopped firing (e.g. an FP silenced by a guard) keeps its DB
-    row and its label, but its `last_seen_run_id` freezes at an older run,
-    so it drops out of the denominator here.
-
-    Degrades to a no-op (empty fragment) when `include_stale` is set, when
-    there are no scan runs yet, or when no row has been stamped — i.e. on a
-    freshly migrated DB that hasn't been re-scanned, where filtering would
-    otherwise hide everything. In that transitional state the report falls
-    back to the old union semantics until the next `scan --force`.
-    """
-    if include_stale:
-        return "", []
-    max_run = cx.execute("SELECT MAX(id) FROM runs").fetchone()[0]
-    if max_run is None:
-        return "", []
-    any_stamped = cx.execute(
-        "SELECT 1 FROM violations WHERE last_seen_run_id IS NOT NULL LIMIT 1"
-    ).fetchone()
-    if any_stamped is None:
-        return "", []
-    return " AND v.last_seen_run_id = ?", [int(max_run)]
-
-
 def _classify(tp: int, fp: int, pending: int) -> tuple[float | None, str]:
     denom = tp + fp
     if denom == 0 and pending == 0:
@@ -234,19 +241,14 @@ def compute_precision(
     db_path: Path,
     *,
     pinned: list[tuple[str, str]] | None = None,
-    include_stale: bool = False,
 ) -> PrecisionTable:
     join_sql, join_params = _pinned_join(pinned)
+    per_rule = _PER_RULE_SQL.format(pinned_join=join_sql)
+    parse_count_sql = _PARSE_FAILURE_COUNT_SQL.format(pinned_join=join_sql)
     cx = db.connect(db_path)
     try:
-        live_sql, live_params = _live_filter(cx, include_stale)
-        per_rule = _PER_RULE_SQL.format(pinned_join=join_sql, live_filter=live_sql)
-        parse_count_sql = _PARSE_FAILURE_COUNT_SQL.format(
-            pinned_join=join_sql, live_filter=live_sql
-        )
-        params = join_params + live_params
         rows: list[RuleRow] = []
-        for r in cx.execute(per_rule, params).fetchall():
+        for r in cx.execute(per_rule, join_params).fetchall():
             precision, status = _classify(r["tp"], r["fp"], r["pending"])
             rows.append(
                 RuleRow(
@@ -261,7 +263,7 @@ def compute_precision(
                 )
             )
         parse_failures = int(
-            cx.execute(parse_count_sql, params).fetchone()["c"]
+            cx.execute(parse_count_sql, join_params).fetchone()["c"]
         )
         return PrecisionTable(rows=rows, parse_failures=parse_failures)
     finally:
@@ -272,7 +274,6 @@ def compute_precision_by_format(
     db_path: Path,
     *,
     pinned: list[tuple[str, str]] | None = None,
-    include_stale: bool = False,
 ) -> PrecisionTable:
     """Overall + per-format breakdown using `violations.file_suffix` (spec 005).
 
@@ -280,17 +281,13 @@ def compute_precision_by_format(
     `bib`, or `""` for pre-migration rows). Only `overall` rows gate
     the CLI exit code.
     """
-    overall = compute_precision(db_path, pinned=pinned, include_stale=include_stale)
+    overall = compute_precision(db_path, pinned=pinned)
     join_sql, join_params = _pinned_join(pinned)
+    per_format = _PER_RULE_BY_FORMAT_SQL.format(pinned_join=join_sql)
     cx = db.connect(db_path)
     try:
-        live_sql, live_params = _live_filter(cx, include_stale)
-        per_format = _PER_RULE_BY_FORMAT_SQL.format(
-            pinned_join=join_sql, live_filter=live_sql
-        )
-        params = join_params + live_params
         per_format_rows: list[RuleRow] = []
-        for r in cx.execute(per_format, params).fetchall():
+        for r in cx.execute(per_format, join_params).fetchall():
             precision, status = _classify(r["tp"], r["fp"], r["pending"])
             per_format_rows.append(
                 RuleRow(
@@ -313,11 +310,51 @@ def compute_precision_by_format(
     )
 
 
+def compute_precision_by_class(
+    db_path: Path,
+    *,
+    pinned: list[tuple[str, str]] | None = None,
+) -> PrecisionTable:
+    """Overall + per-document-class breakdown using `papers.doc_class`.
+
+    Per-class rows carry the class (`jss` / `non-jss` / `unknown`) in
+    `.source`. The headline is the `jss` rows; `non-jss` is a
+    robustness check on CRAN vignettes of JSS papers shipped in
+    `\\documentclass{article}`. Only `overall` rows gate the exit code.
+    """
+    overall = compute_precision(db_path, pinned=pinned)
+    join_sql, join_params = _pinned_join(pinned)
+    per_class = _PER_RULE_BY_CLASS_SQL.format(pinned_join=join_sql)
+    cx = db.connect(db_path)
+    try:
+        per_class_rows: list[RuleRow] = []
+        for r in cx.execute(per_class, join_params).fetchall():
+            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            per_class_rows.append(
+                RuleRow(
+                    rule_id=r["rule_id"],
+                    category=r["category"] or "unknown",
+                    tp=r["tp"],
+                    fp=r["fp"],
+                    pending=r["pending"],
+                    precision=precision,
+                    status=status,
+                    source=r["doc_class"] or "unknown",
+                )
+            )
+    finally:
+        cx.close()
+    return PrecisionTable(
+        rows=overall.rows + per_class_rows,
+        parse_failures=overall.parse_failures,
+        breakdown="class",
+    )
+
+
 def compute_precision_by_source(
     db_path: Path,
     *,
     pinned: list[tuple[str, str]] | None = None,
-    include_stale: bool = False,
 ) -> PrecisionTable:
     """Overall + per-source breakdown, one `PrecisionTable` with both layers.
 
@@ -325,17 +362,13 @@ def compute_precision_by_source(
     a concrete source value (`cran`, `arxiv`, ...) are informational only
     (see research.md §"Per-source breakdown").
     """
-    overall = compute_precision(db_path, pinned=pinned, include_stale=include_stale)
+    overall = compute_precision(db_path, pinned=pinned)
     join_sql, join_params = _pinned_join(pinned)
+    per_source = _PER_RULE_BY_SOURCE_SQL.format(pinned_join=join_sql)
     cx = db.connect(db_path)
     try:
-        live_sql, live_params = _live_filter(cx, include_stale)
-        per_source = _PER_RULE_BY_SOURCE_SQL.format(
-            pinned_join=join_sql, live_filter=live_sql
-        )
-        params = join_params + live_params
         per_source_rows: list[RuleRow] = []
-        for r in cx.execute(per_source, params).fetchall():
+        for r in cx.execute(per_source, join_params).fetchall():
             precision, status = _classify(r["tp"], r["fp"], r["pending"])
             per_source_rows.append(
                 RuleRow(
@@ -466,9 +499,14 @@ def render_terminal(
         console.print(t)
 
     if per_source_rows:
-        is_format = table.breakdown == "format"
-        title = "Per-format breakdown" if is_format else "Per-source breakdown"
-        col_label = "Format" if is_format else "Source"
+        _titles = {
+            "format": ("Per-format breakdown", "Format"),
+            "class": ("Per-document-class breakdown", "Class"),
+            "source": ("Per-source breakdown", "Source"),
+        }
+        title, col_label = _titles.get(
+            table.breakdown, ("Per-source breakdown", "Source")
+        )
         t = Table(title=title)
         t.add_column(col_label)
         t.add_column("Rule")
@@ -698,6 +736,7 @@ def run(
     db_path: Path,
     by_source: bool = False,
     by_format: bool = False,
+    by_class: bool = False,
     csv_path: str | None = None,
     pinned_only: bool = False,
     manifest_path: Path | None = None,
@@ -706,7 +745,6 @@ def run(
     history_db: Path | None = None,
     against: int | None = None,
     with_recall: bool = False,
-    include_stale: bool = False,
 ) -> int:
     if diff:
         render_diff(
@@ -724,17 +762,13 @@ def run(
         pinned = _pinned_pairs(manifest_path, corpus_dir)
 
     if by_format:
-        table = compute_precision_by_format(
-            db_path, pinned=pinned, include_stale=include_stale
-        )
+        table = compute_precision_by_format(db_path, pinned=pinned)
+    elif by_class:
+        table = compute_precision_by_class(db_path, pinned=pinned)
     elif by_source:
-        table = compute_precision_by_source(
-            db_path, pinned=pinned, include_stale=include_stale
-        )
+        table = compute_precision_by_source(db_path, pinned=pinned)
     else:
-        table = compute_precision(
-            db_path, pinned=pinned, include_stale=include_stale
-        )
+        table = compute_precision(db_path, pinned=pinned)
 
     recall_per_rule: dict[str, float | None] | None = None
     if with_recall:

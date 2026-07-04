@@ -44,9 +44,23 @@ def init(path: Path) -> None:
         cx.executescript(_SCHEMA_PATH.read_text(encoding="utf-8"))
         _migrate_violations_file_suffix(cx)
         _migrate_violations_file(cx)
-        _migrate_violations_last_seen_run_id(cx)
+        _migrate_violations_last_seen(cx)
+        _migrate_papers_doc_class(cx)
     finally:
         cx.close()
+
+
+def _migrate_papers_doc_class(cx: sqlite3.Connection) -> None:
+    """Add `papers.doc_class` if missing (jss | non-jss | unknown).
+
+    Populated by `scan`; powers the report's `--by-class` dimension so
+    jss-class precision (the headline) and non-jss-class precision (a
+    robustness check on the ~10% of CRAN vignettes that ship in
+    `\\documentclass{article}`) are reported separately. Existing rows
+    stay NULL until the next scan repopulates them."""
+    cols = {r["name"] for r in cx.execute("PRAGMA table_info(papers)").fetchall()}
+    if "doc_class" not in cols:
+        cx.execute("ALTER TABLE papers ADD COLUMN doc_class TEXT")
 
 
 def _migrate_violations_file_suffix(cx: sqlite3.Connection) -> None:
@@ -56,18 +70,31 @@ def _migrate_violations_file_suffix(cx: sqlite3.Connection) -> None:
         cx.execute("ALTER TABLE violations ADD COLUMN file_suffix TEXT")
 
 
-def _migrate_violations_last_seen_run_id(cx: sqlite3.Connection) -> None:
-    """Add `violations.last_seen_run_id` if the column is missing.
+def _migrate_violations_last_seen(cx: sqlite3.Connection) -> None:
+    """Add `violations.last_seen_run_id` and backfill it.
 
-    The column stays NULL on existing rows until the next `scan --force`
-    re-emits each violation and stamps it with the current run id. Rows that
-    never get re-stamped are stale (the tool stopped firing there) and are
-    excluded from the default precision report — see
-    `report._live_filter`.
+    Before this column the precision report counted every row that ever
+    fired, so a violation the tool no longer emits (guard-silenced or
+    fixed) still dragged precision down forever. ``scan`` now bumps
+    ``last_seen_run_id`` on every re-emit, and the report scopes to the
+    latest run. Existing rows are backfilled to their ``first_seen_run_id``
+    as a best guess; the next ``scan --force`` corrects every still-firing
+    row to the new run id, leaving truly-stale rows behind.
     """
     cols = {r["name"] for r in cx.execute("PRAGMA table_info(violations)").fetchall()}
     if "last_seen_run_id" not in cols:
         cx.execute("ALTER TABLE violations ADD COLUMN last_seen_run_id INTEGER")
+        cx.execute(
+            "UPDATE violations SET last_seen_run_id = first_seen_run_id"
+            " WHERE last_seen_run_id IS NULL"
+        )
+    # Created here (not in schema.sql) so it works for both fresh DBs
+    # (column from CREATE TABLE) and legacy DBs (column from the ALTER
+    # above) — schema.sql runs before this migration.
+    cx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_viol_lastseen"
+        " ON violations(last_seen_run_id)"
+    )
 
 
 def _migrate_violations_file(cx: sqlite3.Connection) -> None:

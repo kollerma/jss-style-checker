@@ -23,6 +23,7 @@ replace this inference with the real field.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import time
@@ -90,6 +91,20 @@ def _source_files(paper_dir: Path) -> list[Path]:
     `vignettes/` yielded nothing — `inst/doc/` typically contains a
     build-time copy of the same vignettes plus their compiled outputs,
     so scanning both manufactures duplicate violations.
+
+    Last fallback: *versioned* papers laid out as
+    ``<paper>/<revision>/*.tex`` (e.g. ``jss5342-versions/{initial,
+    resubmission,final}``). A ``final/`` revision wins outright when it
+    has sources — every revision is a draft of the SAME manuscript, so
+    scanning all of them would manufacture the duplicate-violation
+    problem described above. Without a ``final/``, all non-hidden,
+    non-underscore subdirectories are gathered (underscore dirs such as
+    ``_analysis/`` hold tooling artifacts, not manuscript sources).
+    Within a revision, the conventions documented in
+    ``jss5342-versions/_analysis/analyze.py`` apply: the rendered
+    ``.tex`` wins over a same-stem ``.Rnw`` (the .tex is the surface a
+    JSS reviewer reads; linting both double-counts), and
+    ``reviewer-comments*`` files are correspondence, not manuscript.
     """
     top = sorted(
         p for p in paper_dir.iterdir() if p.is_file() and p.suffix in _SOURCE_SUFFIXES
@@ -104,7 +119,73 @@ def _source_files(paper_dir: Path) -> list[Path]:
         )
         if nested:
             return nested
-    return []
+    final = _revision_files(paper_dir / "final")
+    if final:
+        return final
+    return sorted(
+        p
+        for sub in sorted(paper_dir.iterdir())
+        if sub.is_dir() and not sub.name.startswith((".", "_"))
+        for p in _revision_files(sub)
+    )
+
+
+def _revision_files(revision_dir: Path) -> list[Path]:
+    """Lintable files of one manuscript revision: skip correspondence
+    (``reviewer-comments*``) and prefer the rendered ``.tex`` over a
+    same-stem ``.Rnw`` (see ``_source_files`` docstring)."""
+    if not revision_dir.is_dir():
+        return []
+    files = [
+        p
+        for p in revision_dir.iterdir()
+        if p.is_file()
+        and p.suffix in _SOURCE_SUFFIXES
+        and not p.name.startswith("reviewer-comments")
+    ]
+    tex_stems = {p.stem for p in files if p.suffix == ".tex"}
+    return sorted(
+        p for p in files if not (p.suffix == ".Rnw" and p.stem in tex_stems)
+    )
+
+
+_DOCUMENTCLASS_RE = re.compile(
+    r"^\s*\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}"
+)
+
+
+def _detect_doc_class(paper_dir: Path) -> str:
+    """Classify a paper as ``jss`` / ``non-jss`` / ``unknown`` by its
+    document class.
+
+    The corpus is meant to be JSS-paper counterparts, but ~10% of CRAN
+    vignettes ship in ``\\documentclass{article}`` (or amsart/scrartcl)
+    because CRAN can't always build ``jss.cls`` — even though the paper
+    itself is a JSS publication. The report uses this dimension to show
+    jss-class precision as the headline and non-jss-class as a
+    robustness check, so the two aren't silently conflated.
+
+    Detection: the first *uncommented* ``\\documentclass`` in any
+    ``.tex`` / ``.Rnw`` / ``.ltx`` source decides it (``jss`` vs
+    anything else). An ``.Rmd``-only paper is ``jss`` (corpus Rmds use
+    the rmarkdown JSS template). No class found and no Rmd → ``unknown``
+    (multi-file inputs whose class lives in an unscanned wrapper)."""
+    files = _source_files(paper_dir)
+    has_rmd = any(f.suffix.lower() == ".rmd" for f in files)
+    for f in files:
+        if f.suffix.lower() not in {".tex", ".rnw", ".ltx"}:
+            continue
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for line in text.splitlines():
+            if line.lstrip().startswith("%"):
+                continue
+            m = _DOCUMENTCLASS_RE.match(line)
+            if m:
+                return "jss" if m.group(1).strip() == "jss" else "non-jss"
+    return "jss" if has_rmd else "unknown"
 
 
 def _invoke_linter(paper_dir: Path, jss_lint: str) -> api.LinterResult:
@@ -172,16 +253,12 @@ def _persist_violations(
     run_id: int,
     violations: list[dict],
 ) -> int:
-    """Upsert all `violations` for one paper. Returns count emitted.
-
-    New violations are inserted with both `first_seen_run_id` and
-    `last_seen_run_id` set to this run. A violation already present (same
-    `UNIQUE(paper_id, rule_id, line, message, file)` identity) has only its
-    `last_seen_run_id` bumped to this run — its verdict/label and
-    first-seen provenance are preserved. Violations that stop firing are
-    simply never touched, so their `last_seen_run_id` freezes at the last
-    run that saw them; the precision report treats those as stale.
-    """
+    """Upsert all `violations` for one paper. New rows insert with
+    first_seen = last_seen = run_id; rows that re-fire bump
+    last_seen_run_id (verdict / reviewer are preserved). The report
+    scopes precision to the latest run via last_seen_run_id, so a
+    violation the tool no longer emits drops out instead of counting
+    against precision forever. Returns count emitted."""
     rows = [
         (
             paper_id,
@@ -191,8 +268,8 @@ def _persist_violations(
             v.get("column"),
             v["message"],
             v.get("severity", "error"),
-            run_id,
-            run_id,
+            run_id,            # first_seen_run_id
+            run_id,            # last_seen_run_id
             Path(v["file"]).suffix if v.get("file") else None,
             _relative_file(v.get("file"), paper_dir),
         )
@@ -232,6 +309,10 @@ def _handle_one_paper(
 ) -> tuple[int, str, str]:
     """Scan one paper, persist its violations, return (count, status, tool_version)."""
     paper_id = _ensure_paper(cx, paper_dir)
+    cx.execute(
+        "UPDATE papers SET doc_class=? WHERE id=?",
+        (_detect_doc_class(paper_dir), paper_id),
+    )
     result = _invoke_linter(paper_dir, jss_lint)
 
     try:

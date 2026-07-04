@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texlint.api import ToolConfig
+from texlint.api import Severity, ToolConfig
 from texlint.config import load
 
 
@@ -25,7 +25,7 @@ class TestDefaults:
         # policy default to the historical behaviour (run everything,
         # fail on any violation).
         assert cfg.min_confidence == "low"
-        assert cfg.fail_on == "info"
+        assert cfg.fail_on == "warning"
 
     def test_file_sets_min_confidence_and_fail_on(self, tmp_path: Path):
         (tmp_path / ".jss-lint.toml").write_text(
@@ -112,3 +112,31 @@ class TestFrozen:
 
         with pytest.raises(dataclasses.FrozenInstanceError):
             cfg.journal = "other"  # type: ignore[misc]
+
+
+class TestSeverityOverrides:
+    """[severity_overrides] in .jss-lint.toml maps rule ids to demoted
+    or promoted severities."""
+
+    def test_toml_severity_overrides_parsed(self, tmp_path: Path):
+        (tmp_path / ".jss-lint.toml").write_text(
+            '[severity_overrides]\n"JSS-CAP-003" = "info"\n'
+            '"jss-markup-001" = "error"\n',
+            encoding="utf-8",
+        )
+        cfg = load({}, tmp_path)
+        assert cfg.severity_overrides == {
+            "JSS-CAP-003": Severity.INFO,
+            "JSS-MARKUP-001": Severity.ERROR,
+        }
+
+    def test_invalid_severity_value_dropped(self, tmp_path: Path):
+        (tmp_path / ".jss-lint.toml").write_text(
+            '[severity_overrides]\n"JSS-CAP-003" = "loud"\n',
+            encoding="utf-8",
+        )
+        cfg = load({}, tmp_path)
+        assert cfg.severity_overrides == {}
+
+    def test_default_is_empty(self, tmp_path: Path):
+        assert load({}, tmp_path).severity_overrides == {}

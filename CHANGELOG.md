@@ -8,6 +8,28 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ## [Unreleased]
 
+### Changed
+
+- **Default `--fail-on` is now `warning`** (was `info`). Info-severity
+  advisories (e.g. the missing-DOI rule JSS-REFS-003) are still
+  reported but no longer flip CI red by default; pass
+  `--fail-on info` for the old behaviour.
+- **JSS-CAP-003 demoted to info severity.** The caption
+  sentence-style heuristic sits at ~60% measured precision after five
+  improvement attempts; it still runs and is shown by default, but no
+  longer fails a run. Hide it entirely with `--min-confidence medium`.
+
+- **Degraded-parse exit semantics.** Only error-severity
+  `JSS-PARSE-000` findings force exit 2. Warning-severity parse
+  findings mark a *recovered* parse (the file was fully linted, e.g.
+  after an encoding fallback) and obey the normal `--fail-on`
+  threshold like any other finding. Previously any `JSS-PARSE-000`
+  finding exited 2.
+- The LSP server lints the in-memory editor buffer directly instead
+  of writing it to the file on disk. Unsaved edits no longer hit the
+  filesystem, file encodings are preserved, and opening a file no
+  longer bumps its mtime.
+
 ### Added
 
 - **`JSS-XREF-007`** (info, auto-fixable) — cross-reference nouns are
@@ -34,6 +56,21 @@ version bump and an entry in this file — see the spec's Clarification Q2.
   document; the parser now treats `bibtexparser`'s recoverable
   `DuplicateFieldKeyBlock` like its `DuplicateBlockKeyBlock` sibling and
   reports the dropped field(s) via this rule instead.
+- **Directory arguments.** `jss-lint .` (or any directory path)
+  recursively lints every supported file beneath it, in deterministic
+  sorted order; an empty expansion exits 2 with a clear message.
+
+- **VS Code settings are now honoured by the LSP server.**
+  `jssStyleChecker.ignoreRules` (unioned with `ignore_rules` from
+  `.jss-lint.toml`), `jssStyleChecker.severityOverrides` (per-rule,
+  client wins over the file), `jssStyleChecker.codeWidth`, and
+  `jssStyleChecker.runOn` (`"save"` lints on save only). Settings
+  changes re-lint open documents immediately.
+- `severity_overrides` config key (`[severity_overrides]` table in
+  `.jss-lint.toml`): per-rule severity remap applied centrally in the
+  engine so terminal/JSON/SARIF/LSP output and the exit-code policy
+  all agree.
+
 - Per-rule measured-precision **confidence tiers**. The catalogue now
   carries an optional `confidence` key (`high` default / `medium` /
   `low`) sourced from the eval-jss precision history; the four

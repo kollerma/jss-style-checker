@@ -58,7 +58,11 @@ _PARSE_RULE_ID = "JSS-PARSE-000"
 # Leading whitespace tolerated so fences nested inside Markdown list
 # items (where the list-item context indents the fence by 4 spaces)
 # are still recognised as code blocks.
-_FENCE_OPEN = re.compile(r"^\s*```(?:\{([^}]*)\}|\s*([A-Za-z0-9_.+-]+))?\s*$")
+# Pandoc / knitr tolerate whitespace between the backticks and the
+# info string (``` {r, label}` is valid and appears in real CRAN
+# vignettes, e.g. rstanarm); the leading \s* must therefore precede
+# BOTH alternatives, not just the bare-language form.
+_FENCE_OPEN = re.compile(r"^\s*```\s*(?:\{([^}]*)\}|([A-Za-z0-9_.+-]+))?\s*$")
 _FENCE_CLOSE = re.compile(r"^\s*```\s*$")
 
 # ATX heading: 1-6 '#' followed by space and text.
@@ -132,13 +136,19 @@ class _OffsetWalker:
         return getattr(self._inner, name)
 
 
-def _parse_error(path: Path, *, line: int, message: str) -> Violation:
+def _parse_error(
+    path: Path,
+    *,
+    line: int,
+    message: str,
+    severity: Severity = Severity.ERROR,
+) -> Violation:
     return Violation(
         file=path,
         line=line,
         column=None,
         rule_id=_PARSE_RULE_ID,
-        severity=Severity.ERROR,
+        severity=severity,
         message=message,
         suggestion=None,
         fix=None,
@@ -214,9 +224,17 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
                     )
                     frontmatter = loaded if isinstance(loaded, dict) else {}
                 except yaml.YAMLError as exc:
+                    # knitr tolerates frontmatter that strict YAML
+                    # rejects (e.g. unindented `%\VignetteIndexEntry`
+                    # continuation lines under `vignette: >` — seen in
+                    # real CRAN vignettes). The prose and code blocks
+                    # are unaffected, so lint them and degrade the
+                    # frontmatter finding to a warning instead of
+                    # failing the file.
                     violations.append(_parse_error(
                         path, line=fm_start_line,
-                        message=f"Malformed YAML frontmatter: {exc}",
+                        severity=Severity.WARNING,
+                        message=f"Malformed YAML frontmatter (ignored): {exc}",
                     ))
                 state = "BODY"
             else:

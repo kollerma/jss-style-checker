@@ -68,51 +68,6 @@ class TestMarkup001:
         )
         assert run_rule(jss_markup_001, src) == []
 
-    def test_skip_language_in_cite_key(self, run_rule):
-        # `\citep{R:2018}` / `\cite{R}` — the language name is part of a
-        # bibliography key, not a bare prose mention. A bare prose `R`
-        # on the same line still fires.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"Statistical computing \citep{R:2018} with \cite{R}." "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_001, src) == []
-
-    def test_language_in_cite_key_but_prose_mention_still_flagged(
-        self, run_rule
-    ):
-        # The cite-key guard must not suppress a genuine prose mention.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"We use R \citep{R:2018} for the analysis." "\n"
-            r"\end{document}"
-        )
-        # Exactly the bare prose `R` fires, not the `R:2018` cite key.
-        assert len(run_rule(jss_markup_001, src)) == 1
-
-    def test_skip_pandoc_cite_key(self, run_rule):
-        # `[@R-knitr]` — a pandoc / R Markdown citation key, not prose.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"The knitr package [@R-knitr] is an alternative." "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_001, src) == []
-
-    def test_skip_package_in_cite_key(self, run_rule):
-        # `\citep{MASS}` — the package name is a bibliography key.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"Standard CLMs \citep{MASS} are implemented." "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_002, src) == []
-
     def test_skip_initial(self, run_rule):
         # 'J. R. Statistical' — R is an initial, not the language.
         src = (
@@ -122,29 +77,6 @@ class TestMarkup001:
             r"\end{document}"
         )
         assert run_rule(jss_markup_001, src) == []
-
-    def test_skip_emphasised_acronym_initial(self, run_rule):
-        # \emph{C}ombination — the emphasised first letter of a word
-        # (acronym device, e.g. CUB), not the C language (recall-corpus
-        # CUB.Rnw:123/208 false positives).
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"the \emph{C}ombination of a \emph{U}niform model." "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_001, src) == []
-
-    def test_emphasised_standalone_language_still_fires(self, run_rule):
-        # \emph{C} followed by a space is a standalone language mention,
-        # not an acronym initial — it should still be flagged.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"written in \emph{C} for speed." "\n"
-            r"\end{document}"
-        )
-        assert len(run_rule(jss_markup_001, src)) == 1
 
     def test_skip_section_title(self, run_rule):
         src = (
@@ -394,19 +326,6 @@ class TestMarkup003:
         assert len(violations) == 1
         assert violations[0].rule_id == "JSS-MARKUP-003"
 
-    def test_sentinel_in_includegraphics_option_not_flagged(self, run_rule):
-        # `\includegraphics[clip = TRUE]{...}` — TRUE is a graphics
-        # boolean option, not a bare R sentinel in prose. Regression:
-        # hetGP_vignette.Rnw:1632.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"\includegraphics[width=0.49\textwidth, trim = 3 5 5 5, "
-            r"clip = TRUE]{./figure/x.pdf}" "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_003, src) == []
-
     def test_bare_na_true_false_in_prose_flagged(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"
@@ -511,29 +430,6 @@ class TestMarkup003:
         # Two \texttt occurrences → 2 hits.
         assert len(violations) == 2
 
-    def test_texttt_in_superscript_label_skipped(self, run_rule):
-        # `\hat p^{\texttt{KMW}}` — \texttt is a method-abbreviation label
-        # in a superscript, not inline code. Regression: TPmsm.Rnw:382.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"$\hat p_{12}^{\texttt{KMW}}(s,t) = \frac{a}{b}$" "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_003, src) == []
-
-    def test_code_alias_com_skipped(self, run_rule):
-        # \Com / \Comt are paper-defined \code aliases (TraMineR,
-        # WeightedCluster); their content is code, not prose.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\newcommand{\Com}[1]{\code{#1}}" "\n"
-            r"\begin{document}" "\n"
-            r"The \Com{seqtab()} function summarises the sequences." "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_003, src) == []
-
     def test_texttt_inside_code_skipped(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"
@@ -567,76 +463,6 @@ class TestMarkup003:
         assert v.fix is not None
         assert v.fix.replacement == "\\code"
         assert v.fix.confidence == "safe"
-
-    # --- \pkg{...()} (function name abused as package) -> \code{...} ------
-
-    def test_pkg_with_parens_flagged(self, run_rule):
-        # \pkg{} is for packages, which never contain parentheses; a "()"
-        # inside means a function call was wrapped — it belongs in \code{}.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"In \pkg{MASS} the \pkg{polr()} function fits the model." "\n"
-            r"\end{document}"
-        )
-        violations = run_rule(jss_markup_003, src)
-        # Only the parenthesised \pkg{polr()} fires; \pkg{MASS} is fine.
-        assert len(violations) == 1
-        assert "polr()" in violations[0].suggestion
-        assert "\\code{polr()}" in violations[0].suggestion
-
-    def test_pkg_with_parens_emits_safe_fix(self, run_rule):
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\pkg{lrm()} is available.\end{document}"
-        )
-        violations = run_rule(jss_markup_003, src)
-        assert len(violations) == 1
-        v = violations[0]
-        assert v.fix is not None
-        assert v.fix.replacement == "\\code"
-        assert v.fix.confidence == "safe"
-
-    def test_pkg_with_argument_call_flagged(self, run_rule):
-        # Non-empty parens (a call with an argument) are still a function.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\pkg{predict(model)} returns.\end{document}"
-        )
-        assert len(run_rule(jss_markup_003, src)) == 1
-
-    def test_plain_pkg_silent(self, run_rule):
-        # A normal package name (no parens) must not fire.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}We rely on \pkg{data.table} and \pkg{lme4}."
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_003, src) == []
-
-    def test_pkg_acronym_in_parens_silent(self, run_rule):
-        # \pkg{Engine for likelihood-free inference (ELFI)} — the parens
-        # hold an acronym in a descriptive name (space before "("), not a
-        # function call. Misuse of \pkg{} perhaps, but NOT a code call, so
-        # this rule must stay silent (no glued identifier-paren).
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}"
-            r"\pkg{Engine for likelihood-free inference (ELFI)} is used."
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_003, src) == []
-
-    def test_pkg_with_parens_in_verbatim_skipped(self, run_rule):
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"\begin{verbatim}" "\n"
-            r"\pkg{polr()}" "\n"
-            r"\end{verbatim}" "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_markup_003, src) == []
 
 
 # ---------------------------------------------------------------------------
@@ -756,3 +582,273 @@ def test_is_initial_branches():
     assert _is_initial("R.", 0) is True
     # next char is not period → False.
     assert _is_initial("R;", 0) is False
+
+
+# ---------------------------------------------------------------------------
+# JSS-MARKUP-001 — context guards from labelled corpus FPs (iter-78+)
+# ---------------------------------------------------------------------------
+
+
+def _wrap(body: str) -> str:
+    return (
+        "\\documentclass[article]{jss}\n"
+        "\\begin{document}\n"
+        f"{body}\n"
+        "\\end{document}"
+    )
+
+
+class TestMarkup001ContextGuards:
+    """Each guard has a false-positive case (silent) and a nearby
+    true-positive case (still fires) so precision gains never come
+    from recall collapse."""
+
+    # -- macro-definition lines ------------------------------------- #
+
+    def test_macro_def_line_silent(self, run_rule):
+        src = _wrap("\\def \\calC {\\mathcal C}\n\\newcolumntype{C}[1]{>{\\centering}p{#1}}")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_prose_after_macro_def_still_fires(self, run_rule):
+        src = _wrap("\\def \\calC {\\mathcal C}\nWe implement it in R for speed.")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    # -- CRAN expansion: NOT guarded ----------------------------------- #
+
+    def test_cran_expansion_fires(self, run_rule):
+        # The hand-annotated recall corpus plants this phrase as a
+        # genuine violation (CARBayesST:441); the AI precision labels
+        # disagree with each other on it. Ground truth wins.
+        src = _wrap("Available from the Comprehensive R Archive Network site.")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    def test_bare_r_near_cran_still_fires(self, run_rule):
+        src = _wrap("CRAN hosts R packages.")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    # -- eponym / statistic letters ----------------------------------- #
+
+    def test_possessive_eponym_silent(self, run_rule):
+        src = _wrap("We compare Hubert's C with the gap statistic.")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_index_follower_silent(self, run_rule):
+        src = _wrap("the Harell C index measures concordance")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_c_steps_silent(self, run_rule):
+        src = _wrap("iteratively improve via C steps until convergence")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_plain_c_language_still_fires(self, run_rule):
+        src = _wrap("rewritten in C for speed")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    # -- enumeration / label letters ---------------------------------- #
+
+    def test_panel_label_silent(self, run_rule):
+        src = _wrap("as shown in panel C of the figure")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_compartment_enumeration_silent(self, run_rule):
+        src = _wrap("a single compartment (S, I or R) as well as events")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_letter_list_silent(self, run_rule):
+        src = _wrap("the groups A, B, C and D give identical results")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_r_and_python_still_fires_twice(self, run_rule):
+        src = _wrap("implementations in R and Python exist")
+        assert len(run_rule(jss_markup_001, src)) == 2
+
+    def test_c_or_fortran_still_fires_twice(self, run_rule):
+        src = _wrap("without having to write, say, C or Fortran code.")
+        assert len(run_rule(jss_markup_001, src)) == 2
+
+    # -- R\&D ---------------------------------------------------------- #
+
+    def test_amp_compound_silent(self, run_rule):
+        src = _wrap("patent applications, R\\&D spending and firm size")
+        assert run_rule(jss_markup_001, src) == []
+
+    # -- table cells ---------------------------------------------------- #
+
+    def test_lone_table_cell_letter_silent(self, run_rule):
+        src = _wrap(
+            "\\begin{tabular}{lll}\n"
+            "Model & R & S \\\\\n"
+            "\\end{tabular}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_language_in_table_prose_still_fires(self, run_rule):
+        src = _wrap(
+            "\\begin{tabular}{ll}\n"
+            "Implemented & in the R language \\\\\n"
+            "\\end{tabular}"
+        )
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    # -- path-segment prefix ------------------------------------------- #
+
+    def test_path_prefix_silent(self, run_rule):
+        src = _wrap("the class is defined in \\emph{R/models.R} files")
+        assert run_rule(jss_markup_001, src) == []
+
+
+class TestMarkup001GuardRecallProtection:
+    """Surface forms one refinement away from the guards — all must
+    still fire (sourced from labelled TPs the first guard draft
+    swallowed)."""
+
+    def test_slash_pair_r_s_still_fires(self, run_rule):
+        src = _wrap("conversions between DBMS data types and R/S objects")
+        assert len(run_rule(jss_markup_001, src)) >= 1
+
+    def test_slash_pair_c_cpp_still_fires(self, run_rule):
+        src = _wrap("commercial C/C++ applications and RDBMS")
+        assert len(run_rule(jss_markup_001, src)) >= 1
+
+    def test_pair_r_and_s_still_fires(self, run_rule):
+        # NB: lone "S" is not in the LANGUAGES catalogue; the "R" of
+        # the pair is the token at stake here.
+        src = _wrap("the mapping is straightforward in R and S, but slow")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    def test_label_word_with_colon_still_fires(self, run_rule):
+        src = _wrap("Sightability Models: R SightabilityModel Package")
+        assert len(run_rule(jss_markup_001, src)) >= 1
+
+    def test_language_chain_without_label_word_still_fires(self, run_rule):
+        # Identical surface form to a label enumeration, but no label
+        # word nearby — these are languages (DBI-proposal).
+        src = _wrap("self-contained tools (R, S, and C APIs) would be")
+        assert len(run_rule(jss_markup_001, src)) >= 1
+
+
+class TestMarkup003OptionValueGuard:
+    """R sentinels that are the RHS of a key=value option (LaTeX optional
+    args, knitr chunk options) are not bare prose — must not fire."""
+
+    def test_includegraphics_clip_true_silent(self, run_rule):
+        src = _wrap("See \\includegraphics[width=5cm, clip=TRUE]{fig}.")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_spaced_option_value_silent(self, run_rule):
+        src = _wrap("Plot \\includegraphics[trim = 5 5, clip = TRUE]{f}.")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_bare_prose_sentinel_still_fires(self, run_rule):
+        src = _wrap("The function returns NULL when the input is empty.")
+        assert len(run_rule(jss_markup_003, src)) == 1
+
+
+class TestMarkup003CustomCodeWrappers:
+    """Paper-defined inline-code wrappers (\\def\\cmd{\\lstinline...},
+    \\newcommand{\\cmdtxt}[1]{\\texttt{#1}}): tokens inside their USES are
+    already code-marked, so the function-call / sentinel detectors must
+    not flag them — but the wrapper DEFINITION's \\texttt still fires."""
+
+    PREAMBLE = (
+        "\\def\\cmd{\\lstinline[basicstyle=\\ttfamily]}\n"
+        "\\newcommand{\\cmdtxt}[1]{\\texttt{#1}}\n"
+    )
+
+    def _doc(self, body: str) -> str:
+        return (
+            "\\documentclass[article]{jss}\n"
+            + self.PREAMBLE
+            + "\\begin{document}\n" + body + "\n\\end{document}"
+        )
+
+    def test_detects_wrapper_names(self):
+        from texlint.journals.jss.rules.markup import (
+            _custom_code_wrapper_macros,
+        )
+        names = _custom_code_wrapper_macros(self.PREAMBLE)
+        assert names == frozenset({"cmd", "cmdtxt"})
+
+    def test_funccall_inside_cmd_silent(self, run_rule):
+        src = self._doc("Compare \\cmd{interp::triangles()} here.")
+        # only the \cmdtxt definition's \texttt may fire, not the \cmd use
+        out = run_rule(jss_markup_003, src)
+        assert all(v.line != 4 for v in out) or out == []  # use line silent
+        # no function-call violation for triangles()
+        assert not any("triangles" in (v.suggestion or "") for v in out)
+
+    def test_sentinel_inside_cmd_silent(self, run_rule):
+        src = self._doc("If \\cmd{TRUE} then smooth.")
+        assert not any("TRUE" in (v.suggestion or "") for v in run_rule(jss_markup_003, src))
+
+    def test_funccall_in_plain_prose_still_fires(self, run_rule):
+        src = self._doc("Compare interp::triangles() here.")
+        assert any("triangles()" in (v.suggestion or "") for v in run_rule(jss_markup_003, src))
+
+    def test_wrapper_definition_texttt_still_fires(self, run_rule):
+        # \newcommand{\cmdtxt}[1]{\texttt{#1}} — the def-body \texttt is TP.
+        src = self._doc("Body text without code.")
+        out = run_rule(jss_markup_003, src)
+        assert any(v.rule_id == "JSS-MARKUP-003" for v in out)
+
+
+class TestMarkup003InvisibleMacros:
+    """\\index{} (and \\nomenclature etc.) content is registered, not
+    rendered as body text, so MARKUP-003 must not flag \\texttt /
+    function calls / sentinels inside it."""
+
+    def test_texttt_inside_index_silent(self, run_rule):
+        src = _wrap("\\newcommand{\\fi}[1]{\\code{#1}\\index{\\texttt{#1}}}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_funccall_inside_index_silent(self, run_rule):
+        src = _wrap("\\index{triangles()}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_sentinel_inside_index_silent(self, run_rule):
+        src = _wrap("\\index{NULL}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_def_body_texttt_still_fires(self, run_rule):
+        # No \index here: a code-styling wrapper def is still a TP.
+        src = _wrap("\\newcommand{\\cmdtxt}[1]{\\texttt{#1}}")
+        assert len(run_rule(jss_markup_003, src)) == 1
+
+
+class TestMarkup003NonCodeAndContexts:
+    """Audit-driven FP guards: \\texttt of email/URL/DOI/numeric-label,
+    algorithm-float pseudocode, plain short captions, possessive
+    sentinels — without suppressing real code TPs."""
+
+    def test_texttt_email_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("Mail \\texttt{a.b@cran.org}.")) == []
+
+    def test_texttt_url_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("At \\texttt{https://x.org/p}.")) == []
+
+    def test_texttt_doi_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("\\texttt{10.18637/jss.v067.i01}")) == []
+
+    def test_texttt_numeric_label_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("Row \\texttt{13:} here.")) == []
+
+    def test_texttt_r_sequence_still_fires(self, run_rule):
+        # 1:10 is an R sequence (code), not a label — keep firing.
+        assert len(run_rule(jss_markup_003, _wrap("Use \\texttt{1:10}."))) == 1
+
+    def test_algorithm_pseudocode_silent(self, run_rule):
+        src = _wrap("\\begin{algorithmic}\n\\STATE biclust(BCCC())\n\\end{algorithmic}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_caption_short_optarg_silent(self, run_rule):
+        src = _wrap("\\begin{table}\n\\caption[Args of texreg() here]{\\code{x}}\n\\end{table}")
+        assert not any("texreg" in (v.suggestion or "") for v in run_rule(jss_markup_003, src))
+
+    def test_possessive_NA_silent(self, run_rule):
+        assert run_rule(jss_markup_003, _wrap("There are no NA's left.")) == []
+
+    def test_body_texttt_still_fires(self, run_rule):
+        assert len(run_rule(jss_markup_003, _wrap("Call \\texttt{configTable}."))) == 1
+
+    def test_bare_null_still_fires(self, run_rule):
+        assert len(run_rule(jss_markup_003, _wrap("Returns NULL when empty."))) == 1

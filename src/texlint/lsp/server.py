@@ -30,12 +30,13 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
-from texlint.api import Fix, ToolConfig
+from texlint.api import Fix
 from texlint.core.engine import (
     InvalidJournalError,
     JournalNotFoundError,
@@ -113,15 +114,11 @@ def create_server(
             logger.info("skipping unsupported file: %s", path)
             return
 
-        # Write the editor's buffer to a temp file? In a stricter
-        # implementation we'd parse the in-memory `source`. For
-        # spec-011 v1, we delegate to the engine's path-based parser:
-        # callers writing to the underlying file before calling this
-        # is the typical editor flow. If `source` differs from disk
-        # we still re-parse from disk for simplicity.
-        path.write_text(source, encoding="utf-8")
-        document = parse_document([path])
-        cfg = config_state.cfg or ToolConfig()
+        # Parse the in-memory editor buffer via the engine's source
+        # overlay — the buffer may be unsaved, and the server must
+        # never write the user's file to disk.
+        document = parse_document([path], sources={path: source})
+        cfg = config_state.effective()
         try:
             journal = load_journal(cfg.journal)
         except (JournalNotFoundError, InvalidJournalError) as exc:
@@ -132,15 +129,19 @@ def create_server(
         diagnostics: list[lsp.Diagnostic] = []
         for v in report.violations:
             d_dict = violation_to_diagnostic(
-                v, guide_url=_guide_url_for(v.rule_id)
+                v, guide_url=_guide_url_for(v.rule_id), source=source
             )
-            line = d_dict["range"]["start"]["line"]
-            col = d_dict["range"]["start"]["character"]
+            start = d_dict["range"]["start"]
+            end = d_dict["range"]["end"]
             diagnostics.append(
                 lsp.Diagnostic(
                     range=lsp.Range(
-                        start=lsp.Position(line=line, character=col),
-                        end=lsp.Position(line=line, character=col),
+                        start=lsp.Position(
+                            line=start["line"], character=start["character"]
+                        ),
+                        end=lsp.Position(
+                            line=end["line"], character=end["character"]
+                        ),
                     ),
                     message=d_dict["message"],
                     severity=lsp.DiagnosticSeverity(d_dict["severity"]),
@@ -188,6 +189,10 @@ def create_server(
 
     @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
     def _did_change(params: lsp.DidChangeTextDocumentParams) -> None:
+        if config_state.run_on == "save":
+            # The user asked for lint-on-save only; didSave (and
+            # didOpen) still lint.
+            return
         td = params.text_document
         # `pygls` keeps the in-memory document; pull current text.
         doc = server.workspace.get_text_document(td.uri)
@@ -259,14 +264,27 @@ def create_server(
 
     @server.feature(lsp.WORKSPACE_DID_CHANGE_CONFIGURATION)
     def _did_change_configuration(
-        params: lsp.DidChangeConfigurationParams,  # noqa: ARG001
+        params: lsp.DidChangeConfigurationParams,
     ) -> None:
-        # VS Code (and other clients) push a notification whenever the
-        # user edits settings. Config reload is wired through the file
-        # watcher on `.jss-lint.toml` rather than client-pushed
-        # settings, so we accept-and-ignore — without a registered
-        # handler pygls logs a noisy warning for every settings save.
-        return
+        # VS Code pushes the full `jssStyleChecker` section at startup
+        # and on every settings edit (the extension declares it in
+        # `synchronize.configurationSection`). Layer it over the
+        # `.jss-lint.toml` config and re-lint every open document.
+        settings = getattr(params, "settings", None) or {}
+        if not isinstance(settings, dict):  # defensive: non-dict payload
+            return
+        section = settings.get("jssStyleChecker") or {}
+        if not isinstance(section, dict):
+            return
+        config_state.client_settings = section
+        run_on = section.get("runOn")
+        config_state.run_on = "save" if run_on == "save" else "change"
+        for uri in tuple(cache.open_uris()):
+            try:
+                doc = server.workspace.get_text_document(uri)
+            except KeyError:
+                continue
+            _lint_uri(uri, version=doc.version, source=doc.source)
 
     @server.feature(lsp.WORKSPACE_DID_CHANGE_WATCHED_FILES)
     def _config_changed(params: lsp.DidChangeWatchedFilesParams) -> None:
@@ -296,16 +314,27 @@ def create_server(
     def _apply_all_fixes(args: list) -> dict | None:  # noqa: ARG001
         """Workspace command: aggregate every safe-confidence Fix
         across the open documents into a single WorkspaceEdit and
-        return it for the editor to apply."""
+        request the client apply it via ``workspace/applyEdit``.
+
+        Returning the edit from ``executeCommand`` does NOT apply it —
+        clients discard command results — so the server must push the
+        edit itself. The returned summary dict is informational only.
+        """
         changes: dict[str, list[lsp.TextEdit]] = {}
         for uri in cache.open_uris():
+            try:
+                doc = server.workspace.get_text_document(uri)
+            except KeyError:  # pragma: no cover
+                continue
+            if not cache.is_current(uri, doc.version):
+                # Cached fixes were computed against an older buffer;
+                # re-lint synchronously so every edit below targets
+                # the exact text the client is about to modify.
+                _lint_uri(uri, version=doc.version, source=doc.source)
             entry = cache.get(uri)
             if entry is None:
                 continue
-            try:
-                source = server.workspace.get_text_document(uri).source
-            except KeyError:  # pragma: no cover
-                continue
+            source = doc.source
             edits: list[lsp.TextEdit] = []
             for v in entry.diagnostics:
                 if not isinstance(v.fix, Fix):
@@ -338,10 +367,31 @@ def create_server(
                 changes[uri] = edits
         if not changes:
             return None
-        # pygls returns the WorkspaceEdit dict for the client.
-        we = lsp.WorkspaceEdit(changes=changes)
-        # WorkspaceEdit serialises to a dict shape; pygls JSON-encodes.
-        return we
+
+        def _log_apply_result(future: Any) -> None:
+            try:
+                result = future.result()
+            except Exception as exc:  # pragma: no cover - transport error
+                logger.error("applyAllFixes: applyEdit failed: %s", exc)
+                return
+            if result is not None and getattr(result, "applied", True) is False:
+                logger.warning(
+                    "applyAllFixes: client rejected the edit: %s",
+                    getattr(result, "failure_reason", None),
+                )
+
+        future = server.workspace_apply_edit(
+            lsp.ApplyWorkspaceEditParams(
+                edit=lsp.WorkspaceEdit(changes=changes),
+                label="jss-lint: Apply all fixes",
+            )
+        )
+        if future is not None:  # pragma: no branch
+            future.add_done_callback(_log_apply_result)
+        return {
+            "files": len(changes),
+            "edits": sum(len(e) for e in changes.values()),
+        }
 
     return server
 

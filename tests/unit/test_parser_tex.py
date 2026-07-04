@@ -48,8 +48,10 @@ class TestParseTexBomHandling:
 
 
 class TestParseTexEncoding:
-    def test_non_utf8_produces_parse_error(self, tmp_path: Path):
+    def test_non_utf8_recovered_via_latin1_fallback(self, tmp_path: Path):
         # latin-1 e-acute; not a valid UTF-8 sequence on its own.
+        # Decoded via the Latin-1 fallback with a warning-severity
+        # advisory (see TestLatin1Fallback for the full matrix).
         path = _write(tmp_path, "latin1.tex", b"caf\xe9\n")
 
         parsed = parse_tex_file(path)
@@ -57,15 +59,17 @@ class TestParseTexEncoding:
         assert len(parsed.violations) == 1
         v = parsed.violations[0]
         assert v.rule_id == "JSS-PARSE-000"
-        assert v.severity.value == "error"
-        assert v.line == 1
-        # source is empty / sentinel because decoding failed
-        assert parsed.nodes == ()
+        assert v.severity.value == "warning"
+        assert parsed.source == "café\n"
 
 
 class TestParseTexParseFailure:
-    def test_unterminated_group_produces_parse_error(self, tmp_path: Path):
-        # pylatexenc raises LatexWalkerError on unclosed group / bad token.
+    def test_unterminated_group_recovered_as_degraded_parse(
+        self, tmp_path: Path
+    ):
+        # pylatexenc's strict parser raises on the unclosed group; the
+        # tolerant retry recovers a node tree, so the finding is a
+        # warning-severity (degraded-parse) PARSE-000, not a failure.
         path = _write(tmp_path, "bad.tex", r"\begin{document")
 
         parsed = parse_tex_file(path)
@@ -73,9 +77,37 @@ class TestParseTexParseFailure:
         assert len(parsed.violations) == 1
         v = parsed.violations[0]
         assert v.rule_id == "JSS-PARSE-000"
-        assert v.severity.value == "error"
+        assert v.severity.value == "warning"
         assert v.line >= 1
+        assert parsed.nodes  # rules can still run
         # Does not raise.
+
+    def test_unrecoverable_parse_produces_error(
+        self, tmp_path: Path, monkeypatch
+    ):
+        # When the tolerant retry *also* fails, the finding stays an
+        # error-severity PARSE-000 (exit-2 path).
+        from pylatexenc.latexwalker import LatexWalkerError
+
+        from texlint.core import parser as parser_mod
+
+        class _AlwaysFails:
+            def __init__(self, source, tolerant_parsing=False):
+                pass
+
+            def get_latex_nodes(self):
+                raise LatexWalkerError("synthetic failure")
+
+        monkeypatch.setattr(parser_mod, "LatexWalker", _AlwaysFails)
+        path = _write(tmp_path, "bad.tex", r"\begin{document")
+
+        parsed = parser_mod.parse_tex_file(path)
+
+        assert len(parsed.violations) == 1
+        v = parsed.violations[0]
+        assert v.rule_id == "JSS-PARSE-000"
+        assert v.severity.value == "error"
+        assert parsed.nodes == ()
 
 
 class TestParseTexVerbatimMacroArgs:
@@ -174,3 +206,240 @@ class TestParseTexMissingFile:
         parsed = parse_tex_file(tmp_path / "nope.tex")
         assert len(parsed.violations) == 1
         assert parsed.violations[0].rule_id == "JSS-PARSE-000"
+
+
+class TestLatin1Fallback:
+    """A readable file that is not valid UTF-8 decodes as Latin-1 and
+    lints fully, carrying a warning-severity degraded-parse advisory
+    (pre-2015 CRAN vignettes commonly ship Latin-1 sources)."""
+
+    def test_latin1_tex_parses_with_advisory(self, tmp_path: Path):
+        path = tmp_path / "old.tex"
+        path.write_bytes(
+            b"\\begin{document}\ncaf\xe9 con leche\n\\end{document}\n"
+        )
+
+        parsed = parse_tex_file(path)
+
+        assert len(parsed.violations) == 1
+        v = parsed.violations[0]
+        assert v.rule_id == "JSS-PARSE-000"
+        assert v.severity.value == "warning"
+        assert "Latin-1" in v.message
+        assert "café" in parsed.source
+        assert parsed.nodes  # rules can still run
+
+    def test_latin1_rnw_parses_with_advisory(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+
+        path = tmp_path / "old.Rnw"
+        path.write_bytes(
+            b"text caf\xe9\n<<a>>=\nx <- 1\n@\nmore\n"
+        )
+
+        parsed = parse_rnw_file(path)
+
+        severities = [v.severity.value for v in parsed.violations]
+        assert severities == ["warning"]
+        assert "Sinput" in parsed.source
+
+    def test_latin1_bib_parses_with_advisory(self, tmp_path: Path):
+        from texlint.core.parser import parse_bib_file
+
+        path = tmp_path / "old.bib"
+        path.write_bytes(
+            b"@article{k, author = {Jos\xe9}, title = {T}}\n"
+        )
+
+        parsed = parse_bib_file(path)
+
+        assert [v.severity.value for v in parsed.violations] == ["warning"]
+        assert [e.key for e in parsed.library.entries] == ["k"]
+
+    def test_latin1_rmd_parses_with_advisory(self, tmp_path: Path):
+        from texlint.core.parser import parse_rmd_file
+
+        path = tmp_path / "old.Rmd"
+        path.write_bytes(b"---\ntitle: caf\xe9\n---\nprose\n")
+
+        parsed = parse_rmd_file(path)
+
+        assert any(
+            v.severity.value == "warning" and "Latin-1" in v.message
+            for v in parsed.violations
+        )
+
+    def test_unreadable_file_still_fatal(self, tmp_path: Path):
+        path = tmp_path / "gone.tex"  # never created
+
+        parsed = parse_tex_file(path)
+
+        assert len(parsed.violations) == 1
+        assert parsed.violations[0].severity.value == "error"
+
+
+class TestRnwCommentedChunkHeader:
+    """A commented-out chunk header (`% <<x>>=`) must NOT open a chunk;
+    only column-0 `<<x>>=` does (Sweave/knitr requirement). Regression
+    for cna.Rnw, where a commented `% # <<data type>>=` swallowed real
+    LaTeX prose and blanked its markup."""
+
+    def test_commented_header_does_not_swallow_prose(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+
+        src = (
+            "<<real, eval=TRUE>>=\n"
+            "x <- 1\n"
+            "@\n"
+            "% # <<commented, eval=F>>=\n"
+            "% # foo()\n"
+            "% # @\n"
+            "\n"
+            "Prose with \\code{configTable()} and \\pkg{cna}.\n"
+        )
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        parsed = parse_rnw_file(path)
+        # The real prose macros survive (backslashes/braces intact),
+        # i.e. the phantom chunk did not blank them.
+        assert "\\code{configTable()}" in parsed.source
+        assert "\\pkg{cna}" in parsed.source
+        # The real chunk body was still wrapped as Sinput.
+        assert "Sinput" in parsed.source
+
+    def test_real_column0_chunk_still_wrapped(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+
+        src = "<<c>>=\ny <- 2\n@\nprose\n"
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        parsed = parse_rnw_file(path)
+        assert "Sinput" in parsed.source
+
+
+class TestRnwChunkTrailingWhitespace:
+    """Sweave/knitr accept trailing whitespace after >>= on the chunk
+    header. Regression for multcomp generalsiminf.Rnw, where an
+    `echo=FALSE` chunk with `>>=  ` trailing spaces wasn't recognised,
+    so its hidden R code leaked into the linted prose."""
+
+    def test_hidden_chunk_with_trailing_ws_is_blanked(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+        src = (
+            "Prose before.\n"
+            "<<demo, echo = FALSE>>=  \n"
+            "x <- NULL\n"
+            "@\n"
+            "Prose after.\n"
+        )
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        parsed = parse_rnw_file(path)
+        # Hidden chunk blanked: the R code (and its NULL) is gone.
+        assert "NULL" not in parsed.source
+        assert "x <- " not in parsed.source
+
+    def test_visible_chunk_trailing_ws_wrapped(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+        src = "<<demo>>=\t\ny <- 1\n@\n"
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        assert "Sinput" in parse_rnw_file(path).source
+
+
+class TestRnwChunkTerminatorAndOptions:
+    """Audit fixes: '@ <text>' terminators (Sweave noweb '@ %def') and
+    '>' inside chunk options."""
+
+    def test_at_def_terminator_does_not_overrun(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+        src = (
+            "<<demo>>=\n"
+            "x <- 1\n"
+            "@ %def\n"
+            "Prose with NULL afterwards.\n"
+            "<<demo2>>=\n"
+            "y <- 2\n"
+            "@\n"
+        )
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        parsed = parse_rnw_file(path)
+        # Prose between the '@ %def' terminator and the next chunk is
+        # NOT swallowed/blanked.
+        assert "NULL afterwards" in parsed.source
+        assert parsed.source.count("\\begin{Sinput}") == 2
+
+    def test_gt_in_chunk_option_recognised(self, tmp_path: Path):
+        from texlint.core.parser import parse_rnw_file
+        src = "<<x, eval=a>b>>=\nz <- 1\n@\nprose\n"
+        path = tmp_path / "v.Rnw"
+        path.write_text(src, encoding="utf-8")
+        assert "Sinput" in parse_rnw_file(path).source
+
+    def test_at_without_space_not_a_terminator(self, tmp_path: Path):
+        # '@foo' is not a Sweave terminator; the chunk runs to the real @.
+        from texlint.core.parser import _RNW_CHUNK
+        m = _RNW_CHUNK.search("<<a>>=\n@foo <- slot\nmore\n@\n")
+        assert m is not None and m.group(0).count("\n") == 3
+
+
+class TestRnwGlobalChunkOptions:
+    """A3: \\SweaveOpts / opts_chunk$set global echo/include defaults,
+    overridable per chunk."""
+
+    def _parse(self, tmp_path, src):
+        from texlint.core.parser import parse_rnw_file
+        p = tmp_path / "v.Rnw"
+        p.write_text(src, encoding="utf-8")
+        return parse_rnw_file(p)
+
+    def test_global_echo_false_blanks_chunk(self, tmp_path: Path):
+        src = "\\SweaveOpts{echo=FALSE}\n<<a>>=\nx <- NULL\n@\nProse.\n"
+        out = self._parse(tmp_path, src)
+        assert "NULL" not in out.source  # hidden chunk blanked
+
+    def test_per_chunk_echo_true_overrides_global(self, tmp_path: Path):
+        src = (
+            "\\SweaveOpts{echo=FALSE}\n"
+            "<<a>>=\nhidden <- 1\n@\n"
+            "<<b, echo=TRUE>>=\nshown <- 2\n@\n"
+        )
+        out = self._parse(tmp_path, src)
+        assert "hidden" not in out.source       # global FALSE -> blanked
+        assert "Sinput" in out.source           # override -> wrapped
+        assert out.source.count("\\begin{Sinput}") == 1
+
+    def test_optschunk_set_include_false(self, tmp_path: Path):
+        src = "<<s>>=\nopts_chunk$set(include=FALSE)\n@\n<<a>>=\nz <- 3\n@\n"
+        out = self._parse(tmp_path, src)
+        assert "z <- 3" not in out.source
+
+    def test_no_global_setting_unchanged(self, tmp_path: Path):
+        src = "<<a>>=\nvisible <- 1\n@\n"
+        out = self._parse(tmp_path, src)
+        assert "Sinput" in out.source           # still wrapped (visible)
+
+
+class TestCommentedVerbatimEnv:
+    """A commented-out verbatim env (% \\begin{Code} ... \\end{Code})
+    must not be neutralised — else its inner % markers become ? and the
+    commented code is exposed to the markup rules."""
+
+    def test_commented_code_block_stays_commented(self, tmp_path: Path):
+        from texlint.core.parser import parse_tex_source
+        src = (
+            "Prose.\n"
+            "%\\begin{Code}\n"
+            "%x <- as.network(nmat, loops = TRUE)\n"
+            "%\\end{Code}\n"
+            "More prose.\n"
+        )
+        parsed = parse_tex_source(src, Path("t.tex"))
+        # Leading % markers preserved (not turned into ?).
+        assert "%x <- as.network" in parsed.source
+
+    def test_real_code_env_still_neutralised(self, tmp_path: Path):
+        from texlint.core.parser import _neutralize_verbatim_envs
+        out = _neutralize_verbatim_envs("\\begin{Code}\ncost $x$\n\\end{Code}\n")
+        assert "?" in out  # $ neutralised

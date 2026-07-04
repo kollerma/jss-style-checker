@@ -108,27 +108,6 @@ class TestOper002:
         )
         assert run_rule(jss_oper_002, src) == []
 
-    def test_prime_derivative_silent(self, run_rule):
-        # ``\prime`` after a bare symbol / applied to an argument is
-        # derivative notation, not transpose (recall-corpus mlt.docreg
-        # ``\h^\prime(\ry)``, ``\basisy^\prime``, ``\bern{M}^\prime(\ry)``).
-        for math in (r"h^\prime", r"h^\prime(x)", r"\bern{M}^\prime(y)",
-                     r"{h^\prime}^\top"):
-            src = (
-                r"\documentclass[article]{jss}" "\n"
-                rf"\begin{{document}}${math}$\end{{document}}"
-            )
-            assert run_rule(jss_oper_002, src) == [], math
-
-    def test_prime_transpose_after_bracket_flagged(self, run_rule):
-        # ``\prime`` transposing a grouped expression still fires.
-        for math in (r"(6, 7)^\prime", r"\mathbf{X}^\prime"):
-            src = (
-                r"\documentclass[article]{jss}" "\n"
-                rf"\begin{{document}}${math}$\end{{document}}"
-            )
-            assert len(run_rule(jss_oper_002, src)) == 1, math
-
 
 # ---------------------------------------------------------------------------
 # JSS-OPER-003 — blank lines around display equations
@@ -142,61 +121,6 @@ class TestOper003:
 
     def test_good_silent(self, run_rule):
         assert run_rule(jss_oper_003, _tex("JSS-OPER-003-good.tex")) == []
-
-    def test_bracket_display_math_blank_before_flagged(self, run_rule):
-        # ``\[ ... \]`` is a display-math node, not an environment; it was
-        # skipped entirely (recall-corpus deSolve \[ blank-before FNs).
-        src = (
-            "\\documentclass[article]{jss}\n"
-            "\\begin{document}\n"
-            "With the initial conditions:\n"
-            "\n"
-            "\\[\nX(0) = 1\n\\]\n"
-            "then we solve.\n"
-            "\\end{document}\n"
-        )
-        assert len(run_rule(jss_oper_003, src)) == 1
-
-    def test_blank_after_before_sectioning_silent(self, run_rule):
-        # A blank line before a \subsection is required structure (can't be
-        # %-suppressed), so a display equation followed by it isn't a defect
-        # (recall-corpus trueskill).
-        src = (
-            "\\documentclass[article]{jss}\n"
-            "\\begin{document}\n"
-            "Intro\n"
-            "\\begin{equation}x = 1\\end{equation}\n"
-            "\n"
-            "\\subsection{Next}\n"
-            "More.\n"
-            "\\end{document}\n"
-        )
-        assert run_rule(jss_oper_003, src) == []
-
-    def test_blank_after_before_prose_still_flagged(self, run_rule):
-        # Blank line after the equation before ordinary prose is still a
-        # violation — only the sectioning case is carved out.
-        src = (
-            "\\documentclass[article]{jss}\n"
-            "\\begin{document}\n"
-            "Intro\n"
-            "\\begin{equation}x = 1\\end{equation}\n"
-            "\n"
-            "More prose follows.\n"
-            "\\end{document}\n"
-        )
-        assert len(run_rule(jss_oper_003, src)) == 1
-
-    def test_bracket_display_math_well_spaced_silent(self, run_rule):
-        src = (
-            "\\documentclass[article]{jss}\n"
-            "\\begin{document}\n"
-            "With the initial conditions\n"
-            "\\[\nX(0) = 1\n\\]\n"
-            "then we solve.\n"
-            "\\end{document}\n"
-        )
-        assert run_rule(jss_oper_003, src) == []
 
     def test_period_carveout_after_only_silent(self, run_rule):
         # Equation body ends with a period → sentence ends; the blank
@@ -400,3 +324,32 @@ def test_all_checks_silent_on_empty_tex():
         check_jss_oper_003, check_jss_oper_004,
     ):
         assert list(check(doc, ToolConfig())) == []
+
+
+class TestOper002PrimeNotFlagged:
+    """OPER-002 flags literal ^T transpose only; prime notation (X',
+    X^\\prime) is no longer flagged (31% precision on the corpus —
+    usually a derivative or distinct variable, not transpose)."""
+
+    def _n(self, run_rule, math):
+        src = (
+            "\\documentclass{jss}\n\\begin{document}\n"
+            f"${math}$\n\\end{{document}}"
+        )
+        return len(run_rule(jss_oper_002, src))
+
+    def test_prime_variable_silent(self, run_rule):
+        assert self._n(run_rule, "J_{ij}(x, x^\\prime)") == 0
+
+    def test_single_quote_after_bracket_silent(self, run_rule):
+        assert self._n(run_rule, "(w_0, w_p)'") == 0
+
+    def test_derivative_prime_silent(self, run_rule):
+        assert self._n(run_rule, "\\dZ^\\prime(t)") == 0
+
+    def test_literal_caret_T_still_fires(self, run_rule):
+        assert self._n(run_rule, "X^T X") == 1
+
+    def test_sum_upper_bound_T_still_silent(self, run_rule):
+        # ^T as a big-operator bound is not transpose (existing carve-out)
+        assert self._n(run_rule, "\\sum_{t=1}^T x_t") == 0

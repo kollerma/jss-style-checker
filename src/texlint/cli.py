@@ -34,8 +34,23 @@ def _eprint(message: str) -> None:
     click.echo(message, err=True)
 
 
+def _expand_directory(path: Path) -> list[Path]:
+    """All lintable files under *path*, recursively, in deterministic
+    sorted order (report byte-stability)."""
+    return sorted(
+        p
+        for p in path.rglob("*")
+        if p.is_file() and p.suffix.lower() in _SUPPORTED_SUFFIXES
+    )
+
+
 def _parse_inputs(paths: tuple[str, ...]) -> tuple[ParsedDocument | None, int]:
     """Parse each input file. Return (document, exit_code_if_any).
+
+    A directory argument expands recursively to every lintable file
+    beneath it (``jss-lint .`` is the natural first invocation); an
+    empty expansion is exit-2 with a clear message. Explicit file
+    arguments keep strict suffix validation.
 
     The exit-code is 2 when any path is missing or has an unsupported
     suffix. Delegates to :func:`texlint.core.engine.parse_document` for
@@ -45,6 +60,16 @@ def _parse_inputs(paths: tuple[str, ...]) -> tuple[ParsedDocument | None, int]:
     path_objs: list[Path] = []
     for raw in paths:
         path = Path(raw)
+        if path.is_dir():
+            found = _expand_directory(path)
+            if not found:
+                _eprint(
+                    f"jss-lint: no lintable files under {path} "
+                    f"(looked for: {', '.join(sorted(_SUPPORTED_SUFFIXES))})"
+                )
+                return None, 2
+            path_objs.extend(found)
+            continue
         if path.suffix.lower() not in _SUPPORTED_SUFFIXES:
             _eprint(
                 f"jss-lint: unsupported file extension '{path.suffix}' for {path} "
@@ -89,20 +114,28 @@ _SEVERITY_RANK: dict[str, int] = {"info": 0, "warning": 1, "error": 2}
 
 
 def _determine_exit_code(report: Any, fail_on: str = "info") -> int:
-    """Exit 2 if any parse error present; else 1 if any violation at or
-    above the ``fail_on`` severity; else 0.
+    """Exit 2 if any *error-severity* parse failure is present; else 1
+    if any violation at or above the ``fail_on`` severity; else 0.
 
-    Parse failures dominate style violations because the report is incomplete
-    when the parser could not process a file — see contracts/cli.md §Exit codes.
+    Error-severity parse failures dominate style violations because the
+    report is incomplete when the parser could not process a file — see
+    contracts/cli.md §Exit codes. Warning-severity ``JSS-PARSE-000``
+    findings mark a *degraded* parse (the file was recovered and fully
+    linted, e.g. via an encoding fallback or duplicate-bib-field
+    recovery); those obey the normal ``fail_on`` threshold like any
+    other finding.
 
     ``fail_on`` is the minimum severity that flips the exit code:
-    ``"info"`` (the default and the historical behaviour) fails on any
-    violation; ``"warning"`` lets info-severity advisories (e.g. the
-    missing-DOI rule) pass CI; ``"error"`` fails only on errors.
+    ``"warning"`` (the default) lets info-severity advisories (e.g.
+    the missing-DOI rule) pass CI; ``"info"`` (the pre-0.2 default)
+    fails on any violation; ``"error"`` fails only on errors.
     Violations below the threshold are still rendered — the policy
     affects the exit code only.
     """
-    if any(v.rule_id == _PARSE_RULE_ID for v in report.violations):
+    if any(
+        v.rule_id == _PARSE_RULE_ID and v.severity.value == "error"
+        for v in report.violations
+    ):
         return 2
     threshold = _SEVERITY_RANK.get(fail_on, 0)
     if any(
@@ -205,8 +238,9 @@ def _lint_paths_with_doc(
     type=click.Choice(["error", "warning", "info"], case_sensitive=False),
     default=None,
     help=(
-        "Minimum violation severity that exits 1 (default: info — any "
-        "violation fails). Lower-severity findings are still reported."
+        "Minimum violation severity that exits 1 (default: warning — "
+        "info-severity advisories pass). Lower-severity findings are "
+        "still reported."
     ),
 )
 @click.option(

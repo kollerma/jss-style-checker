@@ -60,12 +60,6 @@ line = 160
 comment = "e.g. without following comma"
 
 [[violations]]
-rule_id = "JSS-HOUSE-001"
-file = "deSolve.Rnw"
-line = 160
-comment = "a.o. without following comma, same spirit as for e.g. and i.e."
-
-[[violations]]
 rule_id = "JSS-MARKUP-001"
 file = "deSolve.Rnw"
 line = 166
@@ -96,16 +90,16 @@ line = 240
 comment = '''R's should be \proglang{R}'s'''
 
 [[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "deSolve.Rnw"
+line = 160
+comment = "a.o. without following comma, same spirit as for e.g. and i.e."
+
+[[violations]]
 rule_id = "JSS-CODE-002"
 file = "deSolve.Rnw"
 line = 259
 comment = '`library(deSolve)` should be `library("deSolve")`'
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 283
-comment = "float fig:dae is captioned (numbered) but never referenced from the text (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -192,12 +186,6 @@ line = 564
 comment = 'Missing spaces around operators, `head(out[,1:5])` should be `head(out[, 1:5])`'
 
 [[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 584
-comment = "float fig:aphid is captioned (numbered) but never referenced from the text (XREF-005)"
-
-[[violations]]
 rule_id = "JSS-TYPO-001"
 file = "deSolve.Rnw"
 line = 591
@@ -214,12 +202,6 @@ rule_id = "JSS-CODE-003"
 file = "deSolve.Rnw"
 line = 607
 comment = 'Missing spaces around operators: `col="red"` should be `col = "red"`'
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 617
-comment = "float fig:matplot1d is captioned (numbered) but never referenced from the text (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -264,12 +246,6 @@ line = 688
 comment = 'Missing spaces around operators, `out[,1], out[,2:3]` should be `out[, 1], out[, 2:3]`'
 
 [[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 693
-comment = "float fig:dae2 is captioned (numbered) but never referenced from the text (XREF-005)"
-
-[[violations]]
 rule_id = "JSS-TYPO-001"
 file = "deSolve.Rnw"
 line = 699
@@ -280,12 +256,6 @@ rule_id = "JSS-MARKUP-001"
 file = "deSolve.Rnw"
 line = 700
 comment = 'R-code should be \proglang{R}-code'
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 754
-comment = "float fig:pendulum is captioned (numbered) but never referenced from the text (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -347,12 +317,6 @@ line = 936
 comment = 'Missing spaces around operators: `-0.1*var` should be `-0.1 * var`'
 
 [[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 967
-comment = "float fig:event1 is captioned (numbered) but never referenced from the text (XREF-005)"
-
-[[violations]]
 rule_id = "JSS-TYPO-001"
 file = "deSolve.Rnw"
 line = 973
@@ -369,12 +333,6 @@ rule_id = "JSS-CODE-003"
 file = "deSolve.Rnw"
 line = 1000
 comment = 'Missing spaces around operators: `y[1]<-` should be `y[1] <-`, same for `y[2]<-`'
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1024
-comment = "float fig:event2 is captioned (numbered) but never referenced from the text (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -407,12 +365,6 @@ line = 1188
 comment = 'Missing spaces around operators: `yout[,2], yout[,3]` should be `yout[, 2], yout[, 3]`'
 
 [[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1194
-comment = "float fig:dde is captioned (numbered) but never referenced from the text (XREF-005)"
-
-[[violations]]
 rule_id = "JSS-TYPO-001"
 file = "deSolve.Rnw"
 line = 1200
@@ -429,12 +381,6 @@ rule_id = "JSS-CODE-003"
 file = "deSolve.Rnw"
 line = 1251
 comment = 'Missing spaces around operators: `out[,1], out[,-1]` should be `out[, 1], out[, -1]`'
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1256
-comment = "float fig:difference is captioned (numbered) but never referenced from the text (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -485,18 +431,6 @@ line = 1302
 comment = 'Missing spaces around operators: `yini*2` should be `yini * 2`, similar for the other cases `yini*`'
 
 [[violations]]
-rule_id = "JSS-CODE-003"
-file = "deSolve.Rnw"
-line = 1302
-comment = 'Missing spaces around operators: `c(1,2,3,NA)` should be `c(1, 2, 3, NA)`'
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1316
-comment = "float fig:plotdeSolve is captioned (numbered) but never referenced from the text (XREF-005)"
-
-[[violations]]
 rule_id = "JSS-TYPO-001"
 file = "deSolve.Rnw"
 line = 1322
@@ -509,22 +443,16 @@ line = 1326
 comment = 'Section title not in sentence style, \subsection{Plotting Output with Observations} should be \subsection{Plotting output with observations}'
 
 [[violations]]
-rule_id = "JSS-XREF-005"
+rule_id = "JSS-CODE-003"
 file = "deSolve.Rnw"
-line = 1375
-comment = "float fig:plotobs is captioned (numbered) but never referenced from the text (XREF-005)"
+line = 1302
+comment = 'Missing spaces around operators: `c(1,2,3,NA)` should be `c(1, 2, 3, NA)`'
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
 file = "deSolve.Rnw"
 line = 1381
 comment = "Figure caption missing period at the end"
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1402
-comment = "float fig:plotobs2 is captioned (numbered) but never referenced from the text (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -537,12 +465,6 @@ rule_id = "JSS-CAP-002"
 file = "deSolve.Rnw"
 line = 1412
 comment = 'Section title not in sentence style, \subsection{Plotting Summary Histograms} should be \subsection{Plotting summary histograms}'
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1425
-comment = "float fig:plothist is captioned (numbered) but never referenced from the text (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -600,22 +522,16 @@ line = 1507
 comment = "Comments in code should move to surrounding text"
 
 [[violations]]
-rule_id = "JSS-XREF-005"
+rule_id = "JSS-TYPO-001"
 file = "deSolve.Rnw"
-line = 1546
-comment = "float fig:plotimg is captioned (numbered) but never referenced from the text (XREF-005)"
+line = 1553
+comment = "Figure caption missing period at the end"
 
 [[violations]]
 rule_id = "JSS-CAP-003"
 file = "deSolve.Rnw"
 line = 1553
 comment = 'Figure caption not in sentence style. Should be "Image Plots"'
-
-[[violations]]
-rule_id = "JSS-TYPO-001"
-file = "deSolve.Rnw"
-line = 1553
-comment = "Figure caption missing period at the end"
 
 [[violations]]
 rule_id = "JSS-CODE-001"
@@ -645,12 +561,6 @@ rule_id = "JSS-CODE-001"
 file = "deSolve.Rnw"
 line = 1579
 comment = "Comments in code should move to surrounding text"
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1608
-comment = "float fig:twoD is captioned (numbered) but never referenced from the text (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -724,12 +634,6 @@ line = 1751
 comment = "Comments in code should move to surrounding text"
 
 [[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1836
-comment = "float fig:err is captioned (numbered) but never referenced from the text (XREF-005)"
-
-[[violations]]
 rule_id = "JSS-TYPO-001"
 file = "deSolve.Rnw"
 line = 1842
@@ -748,22 +652,10 @@ line = 1849
 comment = "Table caption should be below table, not above"
 
 [[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1876
-comment = "captioned float carries no label so it cannot be referenced (XREF-005)"
-
-[[violations]]
 rule_id = "JSS-TYPO-004"
 file = "deSolve.Rnw"
 line = 1877
 comment = "Table caption should be below table, not above"
-
-[[violations]]
-rule_id = "JSS-XREF-005"
-file = "deSolve.Rnw"
-line = 1917
-comment = "captioned float carries no label so it cannot be referenced (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-TYPO-001"
@@ -776,6 +668,54 @@ rule_id = "JSS-TYPO-004"
 file = "deSolve.Rnw"
 line = 1918
 comment = "Table caption should be below table, not above"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "integration.bib"
+line = 66
+comment = 'Article title not in title style (re-assigned from retired JSS-REFS-002 2026-06-14; REFS-006 owns title-case)'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "integration.bib"
+line = 88
+comment = 'Article title not in title style, should be "A Family of Embedded Runge-Kutta Formulae." (re-assigned from retired JSS-REFS-002 2026-06-14)'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 118
+comment = "Hairer1 - DOI 10.1007/978-3-540-78862-1 found on springer.com"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 127
+comment = "Hairer2 - DOI 10.1007/978-3-642-05221-7 found on springer.com"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "integration.bib"
+line = 198
+comment = 'Article title not in title style, should be "ReacTran: Reactive Transport Modelling in 1D, 2D and 3D" (re-assigned from retired JSS-REFS-002 2026-06-14)'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "integration.bib"
+line = 198
+comment = 'R in note should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "integration.bib"
+line = 220
+comment = "Springer should be Springer-Verlag"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "integration.bib"
+line = 220
+comment = "Soetaert08 - DOI 10.1007/978-1-4020-8624-3 found on springer.com"
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -804,32 +744,8 @@ comment = 'Butcher1987 — DOI 10.2307/2008600 found on Crossref (title similari
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "integration.bib"
-line = 40
-comment = 'bvpSolve — DOI 10.32614/CRAN.package.bvpSolve registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.bvpSolve".'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "integration.bib"
 line = 49
 comment = 'Cash1990 — DOI 10.1145/79505.79507 found on Crossref (title similarity 1.00); add to the entry as doi="10.1145/79505.79507".'
-
-[[violations]]
-rule_id = "JSS-REFS-002"
-file = "integration.bib"
-line = 66
-comment = 'Article title not in title style'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "integration.bib"
-line = 66
-comment = 'deSolve — DOI 10.32614/CRAN.package.deSolve registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.deSolve".'
-
-[[violations]]
-rule_id = "JSS-REFS-002"
-file = "integration.bib"
-line = 88
-comment = 'Article title not in title style, should be "A Family of Embedded Runge-Kutta Formulae."'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -846,55 +762,11 @@ comment = 'Dormand1981 — DOI 10.1016/0771-050x(81)90010-3 found on Crossref (t
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "integration.bib"
-line = 118
-comment = "Hairer1 - DOI 10.1007/978-3-540-78862-1 found on springer.com"
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "integration.bib"
-line = 127
-comment = "Hairer2 - DOI 10.1007/978-3-642-05221-7 found on springer.com"
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "integration.bib"
 line = 148
 comment = 'Petzold1983 — DOI 10.1137/0904010 found on Crossref (title similarity 1.00); add to the entry as doi="10.1137/0904010".'
-
-[[violations]]
-rule_id = "JSS-REFS-002"
-file = "integration.bib"
-line = 198
-comment = 'Article title not in title style, should be "ReacTran: Reactive Transport Modelling in 1D, 2D and 3D"'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "integration.bib"
 line = 198
 comment = 'ReacTran — DOI 10.32614/cran.package.reactran found on Crossref (title similarity 1.00); add to the entry as doi="10.32614/cran.package.reactran".'
-
-[[violations]]
-rule_id = "JSS-REFS-004"
-file = "integration.bib"
-line = 198
-comment = 'R in note should be \proglang{R}'
-
-[[violations]]
-rule_id = "JSS-NAME-002"
-file = "integration.bib"
-line = 220
-comment = "Springer should be Springer-Verlag"
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "integration.bib"
-line = 220
-comment = "Soetaert08 - DOI 10.1007/978-1-4020-8624-3 found on springer.com"
-
-# ---------------------------------------------------------
-# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
-# Recorded so the linter's over-fires here are documented.
-# (Sourced from eval.db review verdicts; entries the annotator
-#  judged real are in [[violations]] above, not here.)
-# ---------------------------------------------------------
-#   JSS-MARKUP-003  deSolve.Rnw:1282  — using \texttt{} instead of \code{}  (ai:qwen3-30b)

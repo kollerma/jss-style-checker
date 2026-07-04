@@ -21,6 +21,15 @@ from types import MappingProxyType
 # Canonical forms
 # ---------------------------------------------------------------------------
 
+# Deliberately ABSENT: bare "S" (the S language). Corpus evidence
+# (2026-06, 239 papers): exactly 2 papers use bare S as a language in
+# prose — 78/80 mentions sit in cran_dbi's vignettes, which are
+# reprinted 1999-2001 R-databases-SIG design documents, and the other
+# 2 are robustbase citing "their original S code" (1990s FAST-MCD
+# heritage). Modern manuscripts write S-PLUS (covered below) or
+# nothing, while a lone capital S in statistics prose is overwhelmingly
+# a covariance/scatter matrix, an SIR compartment, or a label — i.e.,
+# the false-positive cost dwarfs the recall of a historical footnote.
 LANGUAGES: frozenset[str] = frozenset(
     {
         "R",

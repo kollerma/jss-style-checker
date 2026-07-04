@@ -118,6 +118,59 @@ class TestDidOpen:
         assert isinstance(published[0].diagnostics, list)
 
 
+class TestDidOpenDoesNotTouchDisk:
+    """The server lints the in-memory buffer; the file on disk must
+    never be written (or even required to exist)."""
+
+    def test_buffer_differs_from_disk_disk_untouched(self, tmp_path: Path) -> None:
+        server = create_server()
+        manuscript = tmp_path / "m.tex"
+        disk_bytes = b"% disk content, deliberately not the buffer\n"
+        manuscript.write_bytes(disk_bytes)
+        stat_before = manuscript.stat()
+        published: list[lsp.PublishDiagnosticsParams] = []
+        server.text_document_publish_diagnostics = (  # type: ignore[assignment]
+            lambda p: published.append(p)
+        )
+
+        handler = server.protocol.fm.features["textDocument/didOpen"]
+        handler(
+            lsp.DidOpenTextDocumentParams(
+                text_document=lsp.TextDocumentItem(
+                    uri=manuscript.as_uri(),
+                    language_id="latex",
+                    version=1,
+                    text=_FIXTURE_TEX,  # buffer != disk
+                )
+            )
+        )
+        assert len(published) == 1
+        assert manuscript.read_bytes() == disk_bytes
+        assert manuscript.stat().st_mtime_ns == stat_before.st_mtime_ns
+
+    def test_unsaved_buffer_without_disk_file(self, tmp_path: Path) -> None:
+        server = create_server()
+        manuscript = tmp_path / "never-saved.tex"  # does not exist
+        published: list[lsp.PublishDiagnosticsParams] = []
+        server.text_document_publish_diagnostics = (  # type: ignore[assignment]
+            lambda p: published.append(p)
+        )
+
+        handler = server.protocol.fm.features["textDocument/didOpen"]
+        handler(
+            lsp.DidOpenTextDocumentParams(
+                text_document=lsp.TextDocumentItem(
+                    uri=manuscript.as_uri(),
+                    language_id="latex",
+                    version=1,
+                    text=_FIXTURE_TEX,
+                )
+            )
+        )
+        assert len(published) == 1
+        assert not manuscript.exists()
+
+
 class TestDidClose:
     def test_did_close_publishes_empty(self, tmp_path: Path) -> None:
         server = create_server()
@@ -149,3 +202,228 @@ class TestCodeAction:
         )
         actions = handler(params)
         assert actions == []
+
+
+class TestApplyAllFixes:
+    """The command must push the aggregated WorkspaceEdit via
+    workspace/applyEdit (clients discard executeCommand results) and
+    re-lint stale buffers before computing edits."""
+
+    _SRC_WITH_FIX = (
+        "\\documentclass[article]{jss}\n"
+        "\\title{T}\n"
+        "\\author{A}\n"
+        "\\Plainauthor{A}\n"
+        "\\Abstract{D.}\n"
+        "\\Keywords{k}\n"
+        "\\Address{Z}\n"
+        "\\begin{document}\n"
+        "We implement everything in R for speed.\n"
+        "\\end{document}\n"
+    )
+
+    def _open(self, server, uri: str, text: str, version: int = 1) -> None:
+        from pygls.workspace import Workspace
+
+        # Handler-direct tests skip `initialize`; give the protocol a
+        # real Workspace so workspace.get_text_document works.
+        if server.protocol._workspace is None:
+            server.protocol._workspace = Workspace(None)
+        item = lsp.TextDocumentItem(
+            uri=uri, language_id="latex", version=version, text=text
+        )
+        server.workspace.put_text_document(item)
+        handler = server.protocol.fm.features["textDocument/didOpen"]
+        handler(lsp.DidOpenTextDocumentParams(text_document=item))
+
+    def test_sends_workspace_apply_edit(self, tmp_path: Path) -> None:
+        server = create_server()
+        server.text_document_publish_diagnostics = lambda p: None  # type: ignore[assignment]
+        applied: list[lsp.ApplyWorkspaceEditParams] = []
+        server.workspace_apply_edit = (  # type: ignore[assignment]
+            lambda params: applied.append(params) or None
+        )
+        manuscript = tmp_path / "m.tex"
+        uri = manuscript.as_uri()
+        self._open(server, uri, self._SRC_WITH_FIX)
+
+        command = server.protocol.fm.commands["jss-lint.applyAllFixes"]
+        summary = command([])
+
+        assert len(applied) == 1
+        params = applied[0]
+        assert params.label == "jss-lint: Apply all fixes"
+        edits = params.edit.changes[uri]
+        assert len(edits) >= 1
+        assert any(e.new_text == "\\proglang{R}" for e in edits)
+        assert summary == {"files": 1, "edits": len(edits)}
+
+    def test_stale_cache_relinted_before_edit(self, tmp_path: Path) -> None:
+        from texlint.lsp.cache import CachedDocument
+
+        server = create_server()
+        server.text_document_publish_diagnostics = lambda p: None  # type: ignore[assignment]
+        applied: list[lsp.ApplyWorkspaceEditParams] = []
+        server.workspace_apply_edit = (  # type: ignore[assignment]
+            lambda params: applied.append(params) or None
+        )
+        manuscript = tmp_path / "m.tex"
+        uri = manuscript.as_uri()
+        self._open(server, uri, self._SRC_WITH_FIX)
+
+        # Make the cache stale: the editor advanced the buffer (the R
+        # sentence moved one line down) without a re-lint.
+        new_text = self._SRC_WITH_FIX.replace(
+            "\\begin{document}\n", "\\begin{document}\nA new first line.\n"
+        )
+        server.workspace.put_text_document(
+            lsp.TextDocumentItem(
+                uri=uri, language_id="latex", version=7, text=new_text
+            )
+        )
+        # Cache still holds version-1 diagnostics with version-1 offsets.
+
+        command = server.protocol.fm.commands["jss-lint.applyAllFixes"]
+        command([])
+
+        assert len(applied) == 1
+        edits = applied[0].edit.changes[uri]
+        wrap = next(e for e in edits if e.new_text == "\\proglang{R}")
+        # The R now sits on line 9 (0-based) — one lower than at lint
+        # time. A stale edit would target line 8.
+        assert wrap.range.start.line == 9
+        new_lines = new_text.splitlines()
+        target = new_lines[wrap.range.start.line]
+        assert target[wrap.range.start.character] == "R"
+
+    def test_no_fixes_returns_none_and_sends_nothing(
+        self, tmp_path: Path
+    ) -> None:
+        server = create_server()
+        server.text_document_publish_diagnostics = lambda p: None  # type: ignore[assignment]
+        applied: list[lsp.ApplyWorkspaceEditParams] = []
+        server.workspace_apply_edit = (  # type: ignore[assignment]
+            lambda params: applied.append(params) or None
+        )
+        manuscript = tmp_path / "clean.tex"
+        self._open(server, manuscript.as_uri(), _FIXTURE_TEX)
+
+        command = server.protocol.fm.commands["jss-lint.applyAllFixes"]
+        assert command([]) is None
+        assert applied == []
+
+
+class TestClientSettings:
+    """workspace/didChangeConfiguration pushes the jssStyleChecker
+    section; the server layers it over .jss-lint.toml and re-lints."""
+
+    _SRC = (
+        "\\documentclass[article]{jss}\n"
+        "\\title{T}\n"
+        "\\author{A}\n"
+        "\\Plainauthor{A}\n"
+        "\\Abstract{D.}\n"
+        "\\Keywords{k}\n"
+        "\\Address{Z}\n"
+        "\\begin{document}\n"
+        "We implement everything in R for speed.\n"
+        "\\end{document}\n"
+    )
+
+    def _server_with_doc(self, tmp_path: Path):
+        from pygls.workspace import Workspace
+
+        server = create_server()
+        published: list[lsp.PublishDiagnosticsParams] = []
+        server.text_document_publish_diagnostics = (  # type: ignore[assignment]
+            lambda p: published.append(p)
+        )
+        if server.protocol._workspace is None:
+            server.protocol._workspace = Workspace(None)
+        uri = (tmp_path / "m.tex").as_uri()
+        item = lsp.TextDocumentItem(
+            uri=uri, language_id="latex", version=1, text=self._SRC
+        )
+        server.workspace.put_text_document(item)
+        server.protocol.fm.features["textDocument/didOpen"](
+            lsp.DidOpenTextDocumentParams(text_document=item)
+        )
+        return server, uri, published
+
+    def test_ignore_rules_setting_suppresses_diagnostic(
+        self, tmp_path: Path
+    ) -> None:
+        server, uri, published = self._server_with_doc(tmp_path)
+        assert any(
+            d.code == "JSS-MARKUP-001" for d in published[-1].diagnostics
+        )
+
+        handler = server.protocol.fm.features[
+            "workspace/didChangeConfiguration"
+        ]
+        handler(
+            lsp.DidChangeConfigurationParams(
+                settings={
+                    "jssStyleChecker": {"ignoreRules": ["JSS-MARKUP-001"]}
+                }
+            )
+        )
+        # The handler re-lints open docs; the last publish must no
+        # longer contain the ignored rule.
+        assert all(
+            d.code != "JSS-MARKUP-001" for d in published[-1].diagnostics
+        )
+
+    def test_severity_override_setting_applied(self, tmp_path: Path) -> None:
+        server, uri, published = self._server_with_doc(tmp_path)
+        handler = server.protocol.fm.features[
+            "workspace/didChangeConfiguration"
+        ]
+        handler(
+            lsp.DidChangeConfigurationParams(
+                settings={
+                    "jssStyleChecker": {
+                        "severityOverrides": {"JSS-MARKUP-001": "error"}
+                    }
+                }
+            )
+        )
+        target = [
+            d for d in published[-1].diagnostics if d.code == "JSS-MARKUP-001"
+        ]
+        assert target
+        assert all(
+            d.severity == lsp.DiagnosticSeverity.Error for d in target
+        )
+
+    def test_run_on_save_gates_did_change(self, tmp_path: Path) -> None:
+        server, uri, published = self._server_with_doc(tmp_path)
+        handler = server.protocol.fm.features[
+            "workspace/didChangeConfiguration"
+        ]
+        handler(
+            lsp.DidChangeConfigurationParams(
+                settings={"jssStyleChecker": {"runOn": "save"}}
+            )
+        )
+        n_before = len(published)
+
+        change = server.protocol.fm.features["textDocument/didChange"]
+        change(
+            lsp.DidChangeTextDocumentParams(
+                text_document=lsp.VersionedTextDocumentIdentifier(
+                    uri=uri, version=2
+                ),
+                content_changes=[],
+            )
+        )
+        # No lint scheduled, nothing published.
+        assert len(published) == n_before
+
+        save = server.protocol.fm.features["textDocument/didSave"]
+        save(
+            lsp.DidSaveTextDocumentParams(
+                text_document=lsp.TextDocumentIdentifier(uri=uri)
+            )
+        )
+        assert len(published) == n_before + 1

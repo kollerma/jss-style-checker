@@ -189,6 +189,17 @@ def review_cmd(
     help="Partition precision by violation file suffix (tex | bib | rnw | rmd).",
 )
 @click.option(
+    "--by-class",
+    "by_class",
+    is_flag=True,
+    default=False,
+    help=(
+        "Partition precision by document class (jss | non-jss | unknown). "
+        "Headline is the jss rows; non-jss covers CRAN vignettes of JSS "
+        "papers shipped in \\documentclass{article}."
+    ),
+)
+@click.option(
     "--with-recall",
     "with_recall",
     is_flag=True,
@@ -228,15 +239,6 @@ def review_cmd(
     help="Restrict to violations from the manifest's pinned vignette_file per paper.",
 )
 @click.option(
-    "--include-stale",
-    is_flag=True,
-    default=False,
-    help=(
-        "Include violations the tool no longer emits (historical union). "
-        "Default reports only rows re-seen on the latest scan run."
-    ),
-)
-@click.option(
     "--manifest",
     "manifest_path",
     type=click.Path(path_type=Path),
@@ -264,6 +266,7 @@ def report_cmd(
     ctx: click.Context,
     by_source: bool,
     by_format: bool,
+    by_class: bool,
     with_recall: bool,
     diff: bool,
     against: int | None,
@@ -272,11 +275,14 @@ def report_cmd(
     manifest_path: Path,
     corpus_dir: Path,
     csv_path: str | None,
-    include_stale: bool,
 ) -> None:
     """Print the per-rule precision table."""
-    if by_source and by_format:
-        click.echo("eval-jss: --by-source and --by-format are mutually exclusive", err=True)
+    if sum((by_source, by_format, by_class)) > 1:
+        click.echo(
+            "eval-jss: --by-source, --by-format and --by-class are mutually "
+            "exclusive",
+            err=True,
+        )
         ctx.exit(2)
 
     from eval import report as report_mod
@@ -287,6 +293,7 @@ def report_cmd(
             db_path=ctx.obj["db"],
             by_source=by_source,
             by_format=by_format,
+            by_class=by_class,
             csv_path=csv_path,
             pinned_only=pinned_only,
             manifest_path=manifest_path if pinned_only else None,
@@ -295,7 +302,6 @@ def report_cmd(
             history_db=history_db,
             against=against,
             with_recall=with_recall,
-            include_stale=include_stale,
         )
     except (FileNotFoundError, ManifestError) as err:
         click.echo(f"eval-jss: {err}", err=True)
@@ -349,18 +355,6 @@ def report_cmd(
     default=False,
     help="Compute recall but do not persist to the history DB.",
 )
-@click.option(
-    "--min-plants",
-    type=int,
-    default=10,
-    show_default=True,
-    help=(
-        "Report per-rule recall only for rules with at least this many "
-        "ground-truth plants (tp + fn); rules below are pooled into one "
-        "below-threshold figure. Recording to the history DB is unaffected "
-        "(all rules are always persisted)."
-    ),
-)
 @click.pass_context
 def recall_cmd(
     ctx: click.Context,
@@ -370,7 +364,6 @@ def recall_cmd(
     fmt: str,
     history_db: Path,
     no_record: bool,
-    min_plants: int,
 ) -> None:
     """Spec 017 — measure recall against a hand-annotated corpus.
 
@@ -535,16 +528,11 @@ def recall_cmd(
             per_rule=per_rule,
         )
 
-    # Render. Per-rule figures are shown only for rules with >= min_plants
-    # ground-truth plants; the thin tail is pooled into one figure.
-    measured, pooled = recall_mod.partition_by_plants(
-        recall_report.per_rule, min_plants
-    )
+    # Render.
     if fmt == "json":
         payload = {
             "aggregate_recall": recall_report.aggregate_recall,
             "f1": recall_report.f1,
-            "min_plants": min_plants,
             "per_rule": [
                 {
                     "rule_id": r.rule_id,
@@ -552,15 +540,8 @@ def recall_cmd(
                     "fn": r.fn,
                     "recall": r.recall,
                 }
-                for r in measured
+                for r in recall_report.per_rule
             ],
-            "below_threshold": {
-                "rule_count": pooled.rule_count,
-                "tp": pooled.tp,
-                "fn": pooled.fn,
-                "recall": pooled.recall,
-                "rule_ids": list(pooled.rule_ids),
-            },
         }
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
     else:
@@ -571,22 +552,12 @@ def recall_cmd(
         click.echo(
             "Aggregate: "
             + (f"{agg:.3f}" if agg is not None else "n/a")
-            + f"  (per-rule reported at plants >= {min_plants}: "
-            + f"{len(measured)} rules; {pooled.rule_count} pooled)"
+            + f"  (per-rule rows: {len(recall_report.per_rule)})"
         )
-        for r in measured:
+        for r in recall_report.per_rule:
             recall_text = f"{r.recall:.3f}" if r.recall is not None else "n/a"
             click.echo(
                 f"  {r.rule_id}: TP={r.tp} FN={r.fn} recall={recall_text}"
-            )
-        if pooled.rule_count:
-            pooled_text = (
-                f"{pooled.recall:.3f}" if pooled.recall is not None else "n/a"
-            )
-            click.echo(
-                f"  below threshold ({pooled.rule_count} rules, plants < "
-                f"{min_plants}): TP={pooled.tp} FN={pooled.fn} "
-                f"recall={pooled_text}"
             )
 
     # Gate logic.
@@ -636,12 +607,24 @@ def recall_cmd(
     default=None,
     help="Append per-row outcomes (one JSON line per model) to this file.",
 )
+@click.option(
+    "--no-think",
+    "no_think",
+    is_flag=True,
+    default=False,
+    help=(
+        "Disable chain-of-thought for reasoning models (Qwen3/Qwen3.5): "
+        "send chat_template_kwargs.enable_thinking=false so they answer "
+        "directly instead of burning the token budget on reasoning."
+    ),
+)
 @click.pass_context
 def benchmark_cmd(
     ctx: click.Context,
     models: tuple[str, ...],
     limit: int | None,
     write_json: Path | None,
+    no_think: bool,
 ) -> None:
     """Score AI models against the human-labelled gold set."""
     from eval import benchmark as bench_mod
@@ -656,8 +639,87 @@ def benchmark_cmd(
         models=specs,
         limit=limit,
         write_json=write_json,
+        enable_thinking=False if no_think else None,
     )
     ctx.exit(code)
+
+
+@cli.command("cap003-recheck")
+@click.option(
+    "--apply",
+    "apply_file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help=(
+        "Apply judge verdicts from this JSON file "
+        "([{id, verdict, reason}]). Without it, prints the worksheet."
+    ),
+)
+@click.pass_context
+def cap003_recheck_cmd(ctx: click.Context, apply_file: Path | None) -> None:
+    """Double-check JSS-CAP-003 (caption sentence-style) verdicts.
+
+    Without --apply: emit a JSON worksheet of every currently-firing
+    CAP-003 violation with a per-word capitalisation analysis, for a
+    strong judge to label. With --apply FILE: ingest that judge's
+    verdicts, validate against real-human labels (never overwriting
+    them) and report inter-rater agreement, then write the judge's
+    verdict for the remaining (claude-proxy / pending) rows.
+    """
+    import json
+
+    from eval import cap003_recheck as rc
+
+    cx = db.connect(ctx.obj["db"])
+    try:
+        if apply_file is None:
+            rows = rc.collect_rows(cx)
+            worksheet = [
+                {
+                    "id": r.violation_id,
+                    "paper": r.paper_path,
+                    "file": r.file,
+                    "line": r.line,
+                    "existing_verdict": r.verdict,
+                    "existing_reviewer": r.reviewer,
+                    "caption": r.analysis.clean if r.analysis else None,
+                    "raw": r.analysis.raw if r.analysis else None,
+                    "ordinary_capitals": (
+                        r.analysis.ordinary_capitals if r.analysis else []
+                    ),
+                    "heuristic_offenders": (
+                        r.analysis.heuristic_offenders if r.analysis else None
+                    ),
+                    "extraction_failed": r.analysis is None,
+                }
+                for r in rows
+            ]
+            click.echo(json.dumps(worksheet, indent=2))
+            return
+
+        verdicts = json.loads(Path(apply_file).read_text(encoding="utf-8"))
+        report = rc.apply_verdicts(cx, verdicts)
+        rate = report.human_agreement_rate
+        click.echo(
+            f"eval-jss cap003-recheck: wrote {report.written} judge "
+            f"verdict(s); validated against {report.human_checked} "
+            f"human label(s) — "
+            f"{('%.1f%%' % (rate * 100)) if rate is not None else 'n/a'} "
+            f"agreement."
+        )
+        for d in report.human_disagreements:
+            click.echo(
+                f"  DISAGREE id={d['id']}: human={d['human']} "
+                f"judge={d['judge']} — {d['reason']}",
+                err=True,
+            )
+        if report.skipped_unknown_id:
+            click.echo(
+                f"  (ignored {len(report.skipped_unknown_id)} unknown id(s))",
+                err=True,
+            )
+    finally:
+        cx.close()
 
 
 @cli.group("jss-archive")

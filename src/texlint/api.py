@@ -258,10 +258,17 @@ class ToolConfig:
     # ``"high"`` keeps only the mechanical ~100%-precision rules.
     min_confidence: Literal["low", "medium", "high"] = "low"
     # Exit-code policy: the minimum severity that makes the CLI exit 1.
-    # ``"info"`` (the default, the historical behaviour) fails on any
-    # violation; ``"warning"`` ignores info-severity advisories;
-    # ``"error"`` fails only on errors. Parse errors always exit 2.
-    fail_on: Literal["error", "warning", "info"] = "info"
+    # ``"warning"`` (the default) lets info-severity advisories (e.g.
+    # the missing-DOI rule) pass CI while still reporting them;
+    # ``"info"`` (the pre-0.2 behaviour) fails on any violation;
+    # ``"error"`` fails only on errors. Error-severity parse failures
+    # always exit 2.
+    fail_on: Literal["error", "warning", "info"] = "warning"
+    # Per-rule severity overrides, keyed by rule id. Applied centrally
+    # by the engine after suppression filtering, so every renderer
+    # (terminal / JSON / SARIF / LSP) and the exit-code policy agree.
+    # TOML shape: ``[severity_overrides]`` with ``"JSS-CAP-003" = "info"``.
+    severity_overrides: Mapping[str, Severity] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

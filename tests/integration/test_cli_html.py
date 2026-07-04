@@ -115,7 +115,7 @@ class TestGuideSectionAnchor:
             [
                 "--output",
                 "html",
-                str(FIXTURES / "violations" / "JSS-PARSE-000.tex"),
+                str(FIXTURES / "violations" / "JSS-PARSE-000.bib"),
             ],
         )
         assert result.exit_code == 2

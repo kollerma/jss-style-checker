@@ -19,8 +19,10 @@ The engine is the one module that knows how to:
 
 from __future__ import annotations
 
+import dataclasses as _dc
 import importlib.metadata as _im
 from collections import defaultdict
+from collections.abc import Mapping
 from inspect import isclass
 from pathlib import Path
 
@@ -58,35 +60,65 @@ class UnsupportedSuffixError(ValueError):
         self.path = path
 
 
-def parse_document(paths) -> ParsedDocument:
+def parse_document(
+    paths, *, sources: Mapping[Path, str] | None = None
+) -> ParsedDocument:
     """Dispatch ``paths`` to the appropriate parsers by extension and
     assemble a :class:`ParsedDocument`.
+
+    ``sources`` is an optional overlay of in-memory contents keyed by
+    path: a path present in the overlay is parsed from its string
+    instead of from disk. The LSP server lints (possibly unsaved)
+    editor buffers through this seam — the file on disk is never
+    read or written for an overlaid path.
 
     Raises :class:`UnsupportedSuffixError` on unknown extensions.
     """
     from texlint.core.parser import (
         parse_bib_file,
+        parse_bib_source,
         parse_rmd_file,
         parse_rnw_file,
+        parse_rnw_source,
         parse_tex_file,
+        parse_tex_source,
     )
+    from texlint.core.rmd_parser import parse_rmd_source
 
+    overlay: Mapping[Path, str] = sources or {}
     tex_files: list[ParsedTexFile] = []
     bib_files: list[ParsedBibFile] = []
     rmd_files: list[ParsedRmdFile] = []
     for raw in paths:
         path = Path(raw) if not isinstance(raw, Path) else raw
         suffix = path.suffix.lower()
+        source = overlay.get(path)
         if suffix in (".tex", ".ltx"):
             # `.ltx` is just LaTeX with a different convention; some
             # JSS vignettes (e.g., shrinkTVP) ship under that name.
-            tex_files.append(parse_tex_file(path))
+            tex_files.append(
+                parse_tex_source(source, path)
+                if source is not None
+                else parse_tex_file(path)
+            )
         elif suffix == ".bib":
-            bib_files.append(parse_bib_file(path))
+            bib_files.append(
+                parse_bib_source(source, path)
+                if source is not None
+                else parse_bib_file(path)
+            )
         elif suffix == ".rnw":
-            tex_files.append(parse_rnw_file(path))
+            tex_files.append(
+                parse_rnw_source(source, path)
+                if source is not None
+                else parse_rnw_file(path)
+            )
         elif suffix == ".rmd":
-            rmd_files.append(parse_rmd_file(path))
+            rmd_files.append(
+                parse_rmd_source(source, path)
+                if source is not None
+                else parse_rmd_file(path)
+            )
         else:
             raise UnsupportedSuffixError(path)
     return ParsedDocument(
@@ -251,6 +283,16 @@ def run(
                     v
                     for v in rule_violations
                     if not _suppress.is_suppressed(suppression_index, v)
+                ]
+
+            if config.severity_overrides:
+                # Central remap so every renderer (terminal / JSON /
+                # SARIF / LSP) and the exit-code policy agree.
+                rule_violations = [
+                    _dc.replace(v, severity=config.severity_overrides[v.rule_id])
+                    if v.rule_id in config.severity_overrides
+                    else v
+                    for v in rule_violations
                 ]
 
             applied_by_category[category.id] += 1

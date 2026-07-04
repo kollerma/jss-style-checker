@@ -13,6 +13,15 @@
 
 [models]
 bonsai     = "http://host.docker.internal:8081"
+# Qwen3-30B runs in its DEFAULT (thinking-on) mode — a bare URL sends
+# no chat_template_kwargs. Its chain-of-thought fits the 1024-token
+# budget, and thinking-on is where its strength lives: re-benchmarked
+# 2026-06-13 on the 902-row gold set at 90.8% overall, with the
+# per-rule pins below confirmed (MARKUP-001 90%, MARKUP-003 100%,
+# XREF-004 100%, NAME-002 100%, CITE-002 85%). Thinking-OFF collapses
+# these (MARKUP-001 69%, XREF-004 73%) — do NOT set enable_thinking
+# here. (The newer Qwen3.5-35B is a heavier reasoner that overruns the
+# budget and needs enable_thinking=false; it is not the model in use.)
 qwen3-30b  = "http://host.docker.internal:8080"
 
 [default]
@@ -58,17 +67,17 @@ model = "bonsai"  # 100% on 10
 
 # Qwen3 dominates these — Bonsai is overwhelmingly "uncertain" on them.
 [rules.JSS-MARKUP-001]
-model = "qwen3-30b"  # 92% on 188 (Bonsai: 78%, 161/188 uncertain)
+model = "qwen3-30b"  # think-on 90% on 188 (Bonsai decides 53/188); 2026-06-13 rebench
 [rules.JSS-MARKUP-003]
-model = "qwen3-30b"  # 100% on 105 (Bonsai: 100% uncertain — useless)
+model = "qwen3-30b"  # think-on 100% on 105 (Bonsai decides 2/105); rebench
 [rules.JSS-MARKUP-004]
-model = "qwen3-30b"  # 87% on 17 (Bonsai: only decides 3/17)
+model = "qwen3-30b"  # think-on 87% on 17 (Bonsai 3/17); rebench
 [rules.JSS-CITE-002]
-model = "qwen3-30b"  # 94% on 43 (Bonsai: 100% uncertain)
+model = "qwen3-30b"  # think-on 85% on 43 (Bonsai 0/43 uncertain); rebench
 [rules.JSS-XREF-004]
-model = "qwen3-30b"  # 97% on 45 (Bonsai: only decides 2/45)
+model = "qwen3-30b"  # think-on 100% on 45 (Bonsai 8/45); rebench
 [rules.JSS-NAME-002]
-model = "qwen3-30b"  # 100% on 38 (Bonsai: 63%, flips publishers)
+model = "qwen3-30b"  # think-on 100% on 38 (Bonsai 58%, flips publishers); rebench
 
 # Both perfect — pick Bonsai (cheaper / faster).
 [rules.JSS-CITE-004]

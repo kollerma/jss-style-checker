@@ -227,3 +227,56 @@ class TestLatexFragments:
         # Two blocks of whitespace-only prose → no fragments emitted.
         # (Whitespace prose blocks are skipped in latex_fragments creation.)
         assert r.latex_fragments == ()
+
+
+class TestFenceSpaceBeforeInfoString:
+    """Pandoc / knitr accept whitespace between ``` and the {r} info
+    string; the rstanarm vignettes use exactly this form."""
+
+    def test_space_before_braced_info_opens_fence(self, tmp_path: Path):
+        src = (
+            "prose before\n"
+            "``` {r, gas-loo}\n"
+            "loo_compare(a, b)\n"
+            "```\n"
+            "prose after\n"
+        )
+        parsed = parse_rmd_source(src, tmp_path / "m.Rmd")
+        assert parsed.violations == ()
+        assert len(parsed.code_blocks) == 1
+        block = parsed.code_blocks[0]
+        assert block.lang == "r"
+        assert "loo_compare" in block.body
+        # The chunk body must not leak into prose.
+        assert all(
+            "loo_compare" not in p.text for p in parsed.prose_blocks
+        )
+
+
+class TestMalformedFrontmatterRecovery:
+    """Strict-YAML-invalid frontmatter that knitr tolerates degrades to
+    a warning; prose and code blocks still lint (extremefit vignette)."""
+
+    def test_unindented_vignette_continuation_degrades(self, tmp_path: Path):
+        src = (
+            "---\n"
+            'title: "Extremefit"\n'
+            "vignette: >\n"
+            "%\\VignetteIndexEntry{Estimation}\n"
+            "%\\VignetteEngine{knitr::rmarkdown}\n"
+            "---\n"
+            "\n"
+            "Some prose to lint.\n"
+        )
+        parsed = parse_rmd_source(src, tmp_path / "m.Rmd")
+        assert len(parsed.violations) == 1
+        v = parsed.violations[0]
+        assert v.rule_id == "JSS-PARSE-000"
+        assert v.severity.value == "warning"
+        assert parsed.yaml_frontmatter == {}
+        assert any("prose to lint" in p.text for p in parsed.prose_blocks)
+
+    def test_unterminated_frontmatter_still_error(self, tmp_path: Path):
+        src = "---\ntitle: x\nnever closed\n"
+        parsed = parse_rmd_source(src, tmp_path / "m.Rmd")
+        assert [v.severity.value for v in parsed.violations] == ["error"]

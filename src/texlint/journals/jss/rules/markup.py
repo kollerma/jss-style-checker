@@ -85,54 +85,158 @@ def _is_superscripted(chars: str, offset: int, token_len: int) -> bool:
     return chars[tail_start] == "^"
 
 
-# Emphasis macros used for the acronym-initial typesetting device
-# (``\emph{C}ombination``): the first letter is emphasised and the rest of
-# the word continues, glued, right after the closing brace.
-_EMPHASIS_MACROS: frozenset[str] = frozenset(
-    {"emph", "textit", "textbf", "textsc", "textsl", "textup",
-     "textmd", "textrm", "textnormal"}
-)
-
-
-def _is_emphasised_word_initial(
-    ancestors: list[Any], source: str, token: str
-) -> bool:
-    """True when a single-letter language token (``C`` / ``S`` / ``R``) is
-    the emphasised first letter of a longer word — ``\\emph{C}ombination``,
-    ``\\textbf{S}helter`` — i.e. an acronym device, not a standalone
-    language mention. Detected when the token sits alone inside an emphasis
-    macro whose closing brace is immediately followed by a lowercase letter
-    (the word continues, glued to the macro).
-    """
-    if len(token) != 1:
-        return False
-    for anc in reversed(ancestors):
-        if isinstance(anc, LatexGroupNode):
-            continue  # the ``{C}`` arg group wrapping the single letter
-        if isinstance(anc, LatexMacroNode):
-            if anc.macroname not in _EMPHASIS_MACROS:
-                return False
-            end = (anc.pos or 0) + (anc.len or 0)
-            return (
-                end < len(source)
-                and source[end].isalpha()
-                and source[end].islower()
-            )
-        return False
-    return False
-
-
-def _is_filename_context(chars: str, offset: int) -> bool:
+def _is_filename_context(chars: str, offset: int, token_len: int = 1) -> bool:
     """True when the token at ``offset`` is a file-extension or
-    path-segment suffix, not a bare language / package mention.
+    path-segment, not a bare language / package mention.
 
     A leading ``.`` means the token is the extension of a filename
     (``foo.R``, ``algo.tex``, ``data.table.R``). A leading ``/``
-    means it's a path-segment suffix (``include/R``).
+    means it's a path-segment suffix (``include/R``); a trailing
+    ``/`` means it's a path-segment prefix (``R/models.R``).
     """
-    if offset == 0:
+    if offset > 0 and chars[offset - 1] in {".", "/"}:
+        return True
+    tail = offset + token_len
+    # Trailing slash counts as a path only when an extension-bearing
+    # segment follows (``R/models.R``). Slash-joined language pairs —
+    # ``R/S``, ``C/C++`` — are bare language mentions and must fire.
+    return (
+        tail < len(chars)
+        and chars[tail] == "/"
+        and bool(_PATH_SEGMENT_RE.match(chars, tail + 1))
+    )
+
+
+_PATH_SEGMENT_RE = re.compile(
+    r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.[A-Za-z0-9]+"
+)
+
+
+# Lines that *define* macros mention math-alphabet letters that are
+# not prose: ``\def \calC {\mathcal C}``, ``\DeclareMathOperator
+# {\Real}{\mathbb{R}}``, ``\newcolumntype{C}[1]{...}``. Eight labelled
+# corpus FPs came from shared ``defs.tex`` preambles of this shape.
+# NB: no leading ``^`` — the pattern is applied with ``match(src, pos)``
+# at a computed line start, where ``^`` would not assert.
+_MACRO_DEF_LINE_RE = re.compile(
+    r"[ \t]*\\(?:(?:re)?new(?:command|environment)|providecommand|def"
+    r"|DeclareMathOperator|DeclareRobustCommand|newcolumntype|newtheorem)\b"
+)
+
+
+def _is_macro_definition_line(source: str, abs_pos: int) -> bool:
+    """True when the token at ``abs_pos`` (offset into ``source``) sits
+    on a line whose first content is a macro-definition head."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    return bool(_MACRO_DEF_LINE_RE.match(source, line_start))
+
+
+# NB: no guard for the ``R`` in "Comprehensive R Archive Network" —
+# the AI precision labels disagree with each other on that phrase
+# (5 FP vs 6 TP labels on identical text), and the hand-annotated
+# recall corpus (CARBayesST line 441) plants it as a genuine
+# violation. Ground truth wins: it fires.
+
+
+# Followers that turn a lone capital letter into an eponym / labelled
+# statistic ("Hubert's C index", "C-steps", "C statistic") rather than
+# a language mention.
+_EPONYM_FOLLOWERS_RE = re.compile(
+    r"[\s~]+(?:index|indices|statistic|statistics|criterion|criteria"
+    r"|step|steps)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_eponym_letter(chars: str, offset: int, token: str) -> bool:
+    """True when a single-letter token is possessively attributed
+    (``Hubert's C``) or names a statistic (``Harell C index``)."""
+    if len(token) != 1:
         return False
-    return chars[offset - 1] in {".", "/"}
+    head = chars[:offset].rstrip()
+    # Possessive: the previous word ends with 's (also typographic ').
+    if re.search(r"[A-Za-z](?:'|’)s$", head):
+        return True
+    return bool(_EPONYM_FOLLOWERS_RE.match(chars, offset + 1))
+
+
+# Single capital letters used as enumeration labels: "panel C",
+# "Group C", "Class A'', ``Class B''", "(S, I or R)", "A, B, C and D".
+_LABEL_WORDS: frozenset[str] = frozenset({
+    "panel", "panels", "group", "groups", "class", "classes",
+    "model", "models", "compartment", "compartments", "column",
+    "columns", "plate", "arm", "arms", "factor", "factors",
+    "level", "levels", "label", "labels", "letter", "letters",
+})
+
+# A chain of THREE or more comma/and/or-joined single capitals is an
+# enumeration ("S, I or R", "A, B, C and D") — but only when a label
+# word sits next to the chain ("compartment (S, I or R)", "factors
+# S, C and F", "groups of A, B, C and D"). Without that cue, identical
+# surface forms are language lists ("tools (R, S, and C API's)") and
+# must fire. Pairs — "R and S", "R and Python" — never qualify.
+_ENUM_CHAIN_RE = re.compile(
+    r"\b[A-Z]\b(?:\s*,\s*[A-Z]\b)+\s*(?:,\s*)?(?:or|and)\s+[A-Z]\b"
+)
+
+_LABEL_WORDS_RE = None  # built lazily from _LABEL_WORDS below
+
+
+def _near_label_word(chars: str, start: int, end: int) -> bool:
+    global _LABEL_WORDS_RE
+    if _LABEL_WORDS_RE is None:
+        _LABEL_WORDS_RE = re.compile(
+            r"\b(?:" + "|".join(sorted(_LABEL_WORDS)) + r")\b",
+            re.IGNORECASE,
+        )
+    head = chars[max(0, start - 24) : start]
+    tail = chars[end : end + 24]
+    return bool(_LABEL_WORDS_RE.search(head) or _LABEL_WORDS_RE.search(tail))
+
+
+def _is_label_letter(chars: str, offset: int, token: str) -> bool:
+    """True when a single-letter token is an enumeration label, judged
+    by a label word immediately before it (``panel C`` — whitespace
+    adjacency only, so ``Models: R package`` still fires) or by being
+    part of a label-word-adjacent chain of three or more single-letter
+    labels (``S, I or R compartments``)."""
+    if len(token) != 1:
+        return False
+    prev_word = re.search(r"([A-Za-z]+)\s+$", chars[:offset])
+    if prev_word and prev_word.group(1).lower() in _LABEL_WORDS:
+        return True
+    for m in _ENUM_CHAIN_RE.finditer(
+        chars, max(0, offset - 40), offset + 41
+    ):
+        if m.start() <= offset < m.end():
+            return _near_label_word(chars, m.start(), m.end())
+    return False
+
+
+def _is_tex_amp_adjacent(source: str, abs_pos: int, abs_end: int) -> bool:
+    """True when the token is glued to a literal ``\\&`` on either side
+    (``R\\&D``): an abbreviation, not a language mention. The ``\\&``
+    parses as a sibling macro node, so only the source shows it."""
+    return source[abs_end : abs_end + 2] == "\\&" or (
+        abs_pos >= 2 and source[abs_pos - 2 : abs_pos] == "\\&"
+    )
+
+
+def _is_table_cell_letter(source: str, abs_pos: int, abs_end: int) -> bool:
+    """True when a single-letter token is a lone tabular cell —
+    ``Model & R & S \\\\`` — judged by alignment chars on both sides on
+    the same line. A lone letter column label is not a language
+    mention."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    line_end = source.find("\n", abs_end)
+    if line_end == -1:
+        line_end = len(source)
+    before = source[line_start:abs_pos].rstrip().rstrip("{")
+    after = source[abs_end:line_end].lstrip().lstrip("}")
+    return (
+        before.endswith("&")
+        and (after.startswith("&") or after.startswith("\\\\"))
+    )
 
 
 # Option-list keys that take a language / package identifier as
@@ -220,24 +324,6 @@ def _is_inside_bibliography(ancestors: list[Any]) -> bool:
     return False
 
 
-def _is_inside_citation(ancestors: list[Any]) -> bool:
-    """True when a char node sits inside a ``\\cite*`` / ``\\nocite``
-    argument. The mandatory ``{...}`` arg is a list of bibliography keys
-    (``R:2018``, ``MASS``, ``wickham:2009:ggplot2``) — a language or
-    package name appearing in a key is a reference, not a bare prose
-    mention needing ``\\proglang`` / ``\\pkg``. pylatexenc parses the
-    natbib cite macros, so the macro lands on the ancestor stack of the
-    key content (including for cites with prenote / postnote ``[...]``
-    options)."""
-    for anc in ancestors:
-        if (
-            isinstance(anc, LatexMacroNode)
-            and anc.macroname in _helpers._CITE_MACROS_FOR_SCOPE
-        ):
-            return True
-    return False
-
-
 def _check_bare_terms(
     doc: ParsedDocument,
     *,
@@ -253,19 +339,8 @@ def _check_bare_terms(
                 continue
             if not _helpers._is_in_prose_context(ancestors):
                 continue
-            if _is_inside_citation(ancestors):
-                # Cite-key contents are bibliography references, not
-                # prose — a language / package name in a key (``\citep{
-                # R:2018}``, ``\citep{MASS}``) is not a bare mention.
-                continue
             in_bib = _is_inside_bibliography(ancestors)
             for offset, token in _iter_tokens_in_chars(node.chars):
-                if offset > 0 and node.chars[offset - 1] == "@":
-                    # Pandoc / R Markdown citation key (``[@R-knitr]``,
-                    # ``[@knitr]``) — a bibliography reference, not a bare
-                    # prose mention. The LaTeX ``\cite*`` equivalent is
-                    # handled by _is_inside_citation above.
-                    continue
                 if token not in terms:
                     # Hyphenated prefix: ``R-code`` / ``R-centric`` /
                     # ``Sage-related``. The leading element is a bare
@@ -320,20 +395,28 @@ def _check_bare_terms(
                     node.chars, offset
                 ):
                     continue
-                if skip_initials and _is_emphasised_word_initial(
-                    ancestors, tex.source, token
-                ):
-                    continue
                 if _is_superscripted(node.chars, offset, len(token)):
                     continue
-                if _is_filename_context(node.chars, offset):
+                if _is_filename_context(node.chars, offset, len(token)):
                     continue
                 if _is_option_list_value(node.chars, offset):
                     continue
                 if _disambiguates_to_method(node.chars, offset, token):
                     continue
+                if _is_eponym_letter(node.chars, offset, token):
+                    continue
+                if _is_label_letter(node.chars, offset, token):
+                    continue
                 abs_pos = node.pos + offset
                 abs_end = abs_pos + len(token)
+                if _is_macro_definition_line(tex.source, abs_pos):
+                    continue
+                if _is_tex_amp_adjacent(tex.source, abs_pos, abs_end):
+                    continue
+                if len(token) == 1 and _is_table_cell_letter(
+                    tex.source, abs_pos, abs_end
+                ):
+                    continue
                 # Spec 008 follow-up: MARKUP-001 / MARKUP-002 each emit
                 # a ``safe`` Fix that wraps the bare token in
                 # ``\proglang{...}`` / ``\pkg{...}`` respectively. The
@@ -495,12 +578,66 @@ def _project_title_plain_text(group: Any) -> str:
 
 _FUNCTION_CALL_RE = re.compile(r"\b[a-zA-Z][a-zA-Z0-9_.]*\(\s*\)")
 
-# Function call glued inside ``\pkg{...}``: an identifier character
-# immediately followed by ``(`` (``polr(``, ``predict(``). Requiring the
-# paren to abut the identifier excludes acronym-in-parens product names
-# such as ``\pkg{Engine for likelihood-free inference (ELFI)}`` where a
-# space precedes the paren.
-_PKG_FUNCTION_CALL_RE = re.compile(r"[A-Za-z0-9_.]\(")
+# A code-like markup macro left open (no closing brace yet) on the
+# stretch of source preceding a match — i.e. the match sits *inside*
+# ``\code{...}`` / ``\texttt{...}`` / ``\pkg{...}`` etc. This is a
+# source-level guard that does NOT rely on the parsed node tree: when
+# a document falls back to the tolerant parser (mismatched
+# environment, etc.), the tree degrades and a ``\code{f()}`` argument
+# may lose its macro parent, so the ancestor-based
+# ``_is_in_prose_context`` check stops recognising the wrapper and the
+# function-call detector fires on already-wrapped code. Checking the
+# raw source is robust to that degradation.
+_OPEN_CODE_MACRO_RE = re.compile(
+    r"\\(?:code|texttt|pkg|proglang|verb|fct|command|samp|file)\*?\{[^{}]*\Z"
+)
+
+
+def _already_code_wrapped(source: str, abs_pos: int) -> bool:
+    """True when ``abs_pos`` sits inside an unclosed code-like markup
+    macro on its source line (``\\code{ … <abs_pos> … }``)."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    return bool(_OPEN_CODE_MACRO_RE.search(source, line_start, abs_pos))
+
+
+# A paper-defined *inline-code wrapper* macro: a ``\def`` / ``\newcommand``
+# whose body renders its argument as inline code/verbatim — e.g.
+# ``\def\cmd{\lstinline[...]}`` or ``\newcommand{\cmdtxt}[1]{\texttt{#1}}``
+# (interp's tri/partDeriv/interp vignettes). A USE such as
+# ``\cmd{interp::triangles()}`` is already code-marked, so MARKUP-003's
+# function-call / sentinel detectors must not flag the tokens inside it
+# (premise "bare name in prose" is false; the fix would nest \code in
+# the wrapper). The wrapper's *definition* is unaffected and still
+# flagged where it uses \texttt (handled by the \texttt branch).
+_WRAPPER_DEF_RE = re.compile(
+    r"\\(?:def\s*\\([A-Za-z@]+)"
+    r"|(?:re)?newcommand\*?\s*\{\s*\\([A-Za-z@]+)\s*\})"
+    r"[^\n]*?"
+    r"(?:\\lstinline\b|\\(?:e|E)?[vV]erb\b|\\mintinline\b"
+    r"|\\texttt\s*\{\s*#|\\code\s*\{\s*#)"
+)
+
+
+def _custom_code_wrapper_macros(source: str) -> frozenset[str]:
+    """Names (without backslash) of paper-defined inline-code wrapper
+    macros found in ``source`` — see :data:`_WRAPPER_DEF_RE`."""
+    names: set[str] = set()
+    for m in _WRAPPER_DEF_RE.finditer(source):
+        names.add(m.group(1) or m.group(2))
+    return frozenset(names)
+
+
+def _inside_custom_wrapper(
+    ancestors: Any, wrappers: frozenset[str]
+) -> bool:
+    """True when any ancestor macro is one of the paper's custom
+    inline-code wrappers (so its content is already code-marked)."""
+    if not wrappers:
+        return False
+    return any(
+        isinstance(a, LatexMacroNode) and a.macroname in wrappers
+        for a in ancestors
+    )
 
 # R sentinel values that should be wrapped in ``\code{}`` when they
 # appear as standalone words in prose. Reviewer R5-r3 on jss5342
@@ -527,6 +664,9 @@ def check_jss_markup_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
+        # Paper-defined inline-code wrapper macros (\cmd, \cmdtxt, ...);
+        # content inside their USES is already code-marked.
+        wrappers = _custom_code_wrapper_macros(tex.source)
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
         ):
@@ -537,26 +677,36 @@ def check_jss_markup_003(
                 # envs, and content already inside JSS markup wrappers.
                 if _helpers._is_inside_verbatim(ancestors):
                     continue
-                # Skip a ``\texttt`` that is the content of a sub/superscript
-                # group in math (e.g. ``\hat p^{\texttt{KMW}}``) — an upright
-                # method-abbreviation label, not inline code. A bare
-                # ``\texttt`` sitting directly in math (``$y = \texttt{age}$``)
-                # is a code identifier and still flagged: there the immediate
-                # ancestor is the math node, not a ``{...}`` group.
-                if (
-                    _helpers._is_inside_math(ancestors)
-                    and ancestors
-                    and isinstance(ancestors[-1], LatexGroupNode)
-                ):
-                    continue
                 if _is_inside_bibliography(ancestors):
                     continue
                 if _is_inside_jss_markup(ancestors):
                     continue
+                # \texttt inside \index{} (or other non-rendered macro)
+                # only formats the index entry, not body text — not a
+                # visible-markup issue.
+                if _is_inside_invisible_macro(ancestors):
+                    continue
+                # Pseudocode in an algorithm float, or the plain short
+                # arg of a caption/section — not visible body markup.
+                if _is_inside_algorithm(ancestors):
+                    continue
+                if _in_short_optarg(tex.source, node.pos):
+                    continue
+                # NB: \texttt inside a macro-definition body
+                # (``\newcommand{\Rcmd}[1]{\texttt{#1}}``) is deliberately
+                # NOT skipped. Those helpers (\Rcmd, \Rarg, \fct, \File,
+                # \Rlevel ...) are code-styling wrappers that JSS wants
+                # defined with \code, and fixing the definition fixes
+                # every use — reviewers (humans included) consistently
+                # label these TP. A guard here regressed ~97 such TPs.
                 # Content-aware suggestion and fix. When the argument is a
                 # known language token (R, C, Stan, ...) → \proglang{X};
                 # when it's a known R package → \pkg{X}; otherwise → \code.
                 inner = _helpers._macro_args_text(node, parent, idx).strip()
+                # E-mail / URL / DOI / bare numeric label is not code —
+                # \code/\pkg/\proglang would all be wrong.
+                if _texttt_is_noncode(inner):
+                    continue
                 if inner in LANGUAGES:
                     target_macro = "proglang"
                     suggestion = (
@@ -593,42 +743,22 @@ def check_jss_markup_003(
                     ),
                 )
                 continue
-            if isinstance(node, LatexMacroNode) and node.macroname == "pkg":
-                # \pkg{} is for package names, which are alphanumeric plus
-                # dots. When the author glues an identifier directly to an
-                # opening paren (``\pkg{polr()}``, ``\pkg{predict(model)}``)
-                # they wrapped a function call, which belongs in \code{}.
-                # The "glued" test (identifier immediately before ``(``)
-                # avoids descriptive names whose parens hold an acronym
-                # (``\pkg{Engine for ... inference (ELFI)}`` — space before
-                # the paren), keeping the detector zero-FP.
-                if _helpers._is_inside_verbatim(ancestors):
-                    continue
-                if _is_inside_bibliography(ancestors):
-                    continue
-                inner = _helpers._macro_args_text(node, parent, idx).strip()
-                if not _PKG_FUNCTION_CALL_RE.search(inner):
-                    continue
-                yield _violation(
-                    tex=tex,
-                    pos=node.pos,
-                    rule_id="JSS-MARKUP-003",
-                    suggestion=(
-                        f"\\pkg{{{inner}}} wraps a function call, not a "
-                        f"package name; use \\code{{{inner}}}."
-                    ),
-                    fix=Fix(
-                        start=node.pos,
-                        end=node.pos + len("\\pkg"),
-                        replacement="\\code",
-                        description="replace \\pkg with \\code",
-                        confidence="safe",
-                    ),
-                )
-                continue
             if not isinstance(node, LatexCharsNode):
                 continue
             if not _helpers._is_in_prose_context(ancestors):
+                continue
+            # Already inside a paper-defined inline-code wrapper
+            # (\cmd{...}, \cmdtxt{...}): the content is code-marked, so
+            # neither the function-call nor the sentinel detector should
+            # flag tokens within it.
+            if _inside_custom_wrapper(ancestors, wrappers):
+                continue
+            # Inside \index{}/\nomenclature{} etc.: content is registered,
+            # not rendered as body text — not a visible-markup issue.
+            if _is_inside_invisible_macro(ancestors):
+                continue
+            # Algorithm-float pseudocode is not body prose.
+            if _is_inside_algorithm(ancestors):
                 continue
             # Skip bibliography environments — those go through the
             # references.py rules, not the JSS markup rules. Avoids
@@ -638,6 +768,16 @@ def check_jss_markup_003(
                 continue
             for match in _FUNCTION_CALL_RE.finditer(node.chars):
                 abs_pos = node.pos + match.start()
+                # Source-level belt-and-suspenders: skip matches already
+                # inside \code{}/\texttt{} etc. The ancestor-based prose
+                # check above misses these on tolerant-parsed documents
+                # whose degraded node tree drops the macro parent.
+                if _already_code_wrapped(tex.source, abs_pos):
+                    continue
+                # Plain short arg of a caption/section (\caption[... f()
+                # ...]) — markup omitted by design.
+                if _in_short_optarg(tex.source, abs_pos):
+                    continue
                 yield _violation(
                     tex=tex,
                     pos=abs_pos,
@@ -653,6 +793,21 @@ def check_jss_markup_003(
                     continue
                 start = match.start()
                 end = match.end()
+                # Option-value guard: a sentinel that is the RHS of a
+                # ``key=`` assignment is an option value, not bare R
+                # prose — e.g. ``\includegraphics[clip=TRUE]{...}`` or
+                # ``\includegraphics[..., trim = 5 5, clip = TRUE]``,
+                # and knitr chunk options (``comment=NA``). Look back
+                # over whitespace for an ``=``.
+                if node.chars[:start].rstrip().endswith("="):
+                    continue
+                # Possessive / English plural — ``NA's`` / ``NA’s`` is
+                # prose about NA values, not a bare sentinel mention.
+                if node.chars[end:end + 1] in ("'", "’"):
+                    continue
+                # Plain short caption/section arg (markup omitted).
+                if _in_short_optarg(tex.source, node.pos + start):
+                    continue
                 abs_pos = node.pos + start
                 abs_end = node.pos + end
                 # Wrap is mechanical and self-stabilising: the rewritten
@@ -676,6 +831,87 @@ def check_jss_markup_003(
                     ),
                     fix=fix,
                 )
+
+
+# Macros whose argument is NOT rendered as body text — its content is
+# registered elsewhere (the back-of-book index) or is invisible. A
+# ``\texttt`` / function call / R sentinel inside one of these is not a
+# visible-markup issue, so MARKUP-003 must not flag it: e.g.
+# ``\newcommand{\codefunind}[1]{\codefun{#1}\index{\texttt{#1}}}`` —
+# the visible styling is \codefun; the \texttt only formats the index
+# entry (where \texttt is conventional and \code would be wrong). NB:
+# deliberately NOT the broader _META_MACROS (which includes
+# \newcommand) — a def-body \texttt that styles VISIBLE code is still a
+# TP (\Rcmd / \cmdtxt), so only genuinely non-rendered commands belong
+# here.
+_INVISIBLE_TEXT_MACROS: frozenset[str] = frozenset(
+    {"index", "nomenclature", "glossary", "glsadd"}
+)
+
+
+def _is_inside_invisible_macro(ancestors: Any) -> bool:
+    return any(
+        isinstance(a, LatexMacroNode) and a.macroname in _INVISIBLE_TEXT_MACROS
+        for a in ancestors
+    )
+
+
+# Algorithm/pseudocode environments (algorithmicx, algorithm2e, ...):
+# their body is displayed pseudocode, not body prose, so function
+# calls / sentinels there aren't a markup issue (Anthropometry.Rnw:847
+# `\STATE biclust(..., method = BCCC(), ...)`).
+_ALGORITHM_ENVS: frozenset[str] = frozenset(
+    {"algorithmic", "algorithm", "algorithm2e", "algorithmicx",
+     "algorithmial", "pseudocode", "ALC@g"}
+)
+
+
+def _is_inside_algorithm(ancestors: Any) -> bool:
+    return any(
+        isinstance(a, LatexEnvironmentNode)
+        and a.environmentname in _ALGORITHM_ENVS
+        for a in ancestors
+    )
+
+
+# Short / list-of version optional argument of a sectioning or caption
+# command: ``\caption[plain text]{markup}`` / ``\section[plain]{...}``.
+# The bracketed text is the LoF/LoT/ToC version, which is plain by
+# design (cf. MARKUP-004) — flagging code tokens there is wrong
+# (texreg.Rnw:312 `\caption[... texreg() ...]{...}`). pylatexenc drops
+# the optional arg, so this is checked against the raw source line.
+_OPEN_SHORT_OPTARG_RE = re.compile(
+    r"\\(?:caption|(?:sub)*section|paragraph|subparagraph|chapter|part)"
+    r"\*?\[[^\]]*\Z"
+)
+
+
+def _in_short_optarg(source: str, abs_pos: int) -> bool:
+    """True when ``abs_pos`` sits inside the ``[...]`` short argument of
+    a caption/sectioning command on its source line."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    return bool(_OPEN_SHORT_OPTARG_RE.search(source, line_start, abs_pos))
+
+
+# \texttt content that is NOT code — sentence style / \code does not
+# apply: e-mail addresses, URLs, DOIs, and bare numeric row/line labels
+# (``\texttt{1:}``). A numeric RANGE like ``1:10`` IS R code, so only a
+# lone integer (optionally with a trailing colon) is excused.
+_EMAIL_RE = re.compile(r"^[\w.+-]+@[\w-]+\.[\w.-]+$")
+_URL_RE = re.compile(r"^(?:https?://|www\.|ftp://)")
+_DOI_RE = re.compile(r"^10\.\d{4,}/")
+_NUM_LABEL_RE = re.compile(r"^\d+:?$")
+
+
+def _texttt_is_noncode(inner: str) -> bool:
+    inner = inner.strip()
+    return bool(
+        _EMAIL_RE.match(inner)
+        or _URL_RE.match(inner)
+        or "//" in inner
+        or _DOI_RE.match(inner)
+        or _NUM_LABEL_RE.match(inner)
+    )
 
 
 def _is_inside_jss_markup(ancestors: Any) -> bool:

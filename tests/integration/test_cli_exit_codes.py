@@ -85,10 +85,27 @@ class TestFailOnPolicy:
     def test_parse_error_still_exits_two_under_fail_on_error(
         self, tmp_path: Path, runner: CliRunner
     ):
-        bad = tmp_path / "broken.tex"
-        bad.write_text("\\begin{tabular}{ll}\n", encoding="utf-8")
+        # A truncated BibTeX entry cannot be recovered — error-severity
+        # parse failure, exit 2 regardless of --fail-on.
+        bad = tmp_path / "broken.bib"
+        bad.write_text("@article{x, title = {never closed\n", encoding="utf-8")
         result = runner.invoke(main, ["--fail-on", "error", str(bad)])
         assert result.exit_code == 2
+
+    def test_recovered_tex_parse_is_degraded_not_fatal(
+        self, tmp_path: Path, runner: CliRunner
+    ):
+        # The tolerant-parser retry recovers a mismatched environment:
+        # warning-severity JSS-PARSE-000, normal --fail-on semantics.
+        bad = tmp_path / "broken.tex"
+        bad.write_text(
+            "\\begin{tabular}{ll}\n\\end{itemize}\n", encoding="utf-8"
+        )
+        result = runner.invoke(main, ["--fail-on", "error", str(bad)])
+        assert result.exit_code == 0, result.output
+        assert "JSS-PARSE-000" in result.output
+        result = runner.invoke(main, ["--fail-on", "warning", str(bad)])
+        assert result.exit_code == 1
 
 
 class TestMinConfidence:
@@ -119,3 +136,88 @@ class TestMinConfidence:
         )
         assert result.exit_code == 0
         assert "min_confidence" in result.output
+
+
+class TestDegradedParseSeverity:
+    """Warning-severity JSS-PARSE-000 marks a *recovered* parse and obeys
+    --fail-on; only error-severity parse failures force exit 2
+    (contracts/cli.md §Exit codes)."""
+
+    @staticmethod
+    def _report_with(severity):
+        from texlint.api import Severity, Violation
+        from texlint.cli import _determine_exit_code
+
+        violation = Violation(
+            file=Path("m.tex"),
+            line=1,
+            column=None,
+            rule_id="JSS-PARSE-000",
+            severity=severity,
+            message="parse finding",
+        )
+
+        class _Report:
+            violations = (violation,)
+
+        return _Report(), _determine_exit_code
+
+    def test_error_parse_violation_exits_two(self):
+        from texlint.api import Severity
+
+        report, determine = self._report_with(Severity.ERROR)
+        assert determine(report, fail_on="error") == 2
+
+    def test_warning_parse_violation_obeys_fail_on(self):
+        from texlint.api import Severity
+
+        report, determine = self._report_with(Severity.WARNING)
+        assert determine(report, fail_on="warning") == 1
+        assert determine(report, fail_on="error") == 0
+
+
+class TestDirectoryInputs:
+    """`jss-lint <dir>` expands recursively to lintable files."""
+
+    def test_directory_lints_nested_files(
+        self, tmp_path: Path, runner: CliRunner
+    ):
+        (tmp_path / "sub").mkdir()
+        (tmp_path / "a.tex").write_text(
+            "\\documentclass[nojss]{jss}\n\\begin{document}\nWe use R "
+            "daily \\citep{k}.\n\\end{document}\n",
+            encoding="utf-8",
+        )
+        (tmp_path / "sub" / "refs.bib").write_text(
+            "@article{k, title = {a lowercase title of things},"
+            " author = {A. Author}, year = {2020}}\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(main, [str(tmp_path)])
+        assert result.exit_code == 1, result.output
+        assert "a.tex" in result.output
+        assert "refs.bib" in result.output
+
+    def test_empty_directory_exits_two(self, tmp_path: Path, runner: CliRunner):
+        result = runner.invoke(main, [str(tmp_path)])
+        assert result.exit_code == 2
+        assert "no lintable files" in result.output
+
+    def test_mixed_directory_and_file_args(
+        self, tmp_path: Path, runner: CliRunner
+    ):
+        d = tmp_path / "d"
+        d.mkdir()
+        (d / "x.tex").write_text(
+            "\\documentclass[nojss]{jss}\n\\begin{document}\nok\n"
+            "\\end{document}\n",
+            encoding="utf-8",
+        )
+        f = tmp_path / "y.tex"
+        f.write_text(
+            "\\documentclass[nojss]{jss}\n\\begin{document}\nok\n"
+            "\\end{document}\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(main, [str(d), str(f)])
+        assert result.exit_code in {0, 1}, result.output

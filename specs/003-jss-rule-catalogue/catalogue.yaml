@@ -566,33 +566,11 @@ rules:
     notes: |
       Retrofit of the Step 1 smoke rule bib_001_year.py. natbib in author-year mode (jss.cls:62) emits "(????)" when year is missing.
 
-  - rule_id: JSS-REFS-002
-    category: references
-    severity: warning
-    description: BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase)
-    authority: style_guide
-    authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
-    example_violation: |
-      @article{Knuth1984,
-        author = {Donald Knuth},
-        title  = {literate programming},
-        year   = {1984}
-      }
-    example_fix: |
-      @article{Knuth1984,
-        author = {Donald Knuth},
-        title  = {Literate Programming},
-        year   = {1984}
-      }
-    inspects: [bib_files]
-    auto_fixable: false
-    guide_section: "§3.3 References"
-    guide_url: "https://www.jstatsoft.org/about/submissions#references"
-    explanation: "BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase)."
-    notes: |
-      Tight companion to the loose heuristic in JSS-REFS-006. Split per reviewer feedback 2026-04-23: REFS-002
-      is the high-precision narrow check (every word lowercase), REFS-006 catches subtler violations. Both are
-      heuristics; a principled title-case validator requires a principal-word dictionary (deferred).
+  # JSS-REFS-002 (tight all-lowercase title heuristic) was retired 2026-06-14:
+  # it was fully subsumed by JSS-REFS-006 and its only firing on the real
+  # corpus was a false positive (Wilf's legitimately-lowercase coined title
+  # "generatingfunctionology"). REFS-006 now handles entirely-lowercase
+  # multi-word titles directly and exempts single coined words.
 
   - rule_id: JSS-REFS-003
     category: references
@@ -700,9 +678,10 @@ rules:
     guide_url: "https://www.jstatsoft.org/about/submissions#references"
     explanation: "BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case)."
     notes: |
-      Loose companion to JSS-REFS-002's tight heuristic. Checks: first word must be capitalised; word after a
-      colon or hyphen must be capitalised (style-guide SG-013 cross-reference). Higher false-positive rate than
-      REFS-002 — acceptable per reviewer 2026-04-23; tuned via the precision gate on the real corpus.
+      Title-case heuristic. Checks: first word must be capitalised; word after a colon or hyphen must be
+      capitalised (style-guide SG-013 cross-reference); principal words must be capitalised. Also flags
+      entirely-lowercase multi-word titles (the role formerly split into JSS-REFS-002, retired 2026-06-14),
+      while exempting single coined words. Tuned via the precision gate on the real corpus.
 
   - rule_id: JSS-REFS-007
     category: references
@@ -731,7 +710,7 @@ rules:
     explanation: "Journal titles in BibTeX entries are in title case."
     notes: |
       article.tex:473 mandates "Journal titles should not be abbreviated and in title case." JSS-REFS-005 covers
-      the not-abbreviated half; this rule covers the title-case half. Same principal-word heuristic as REFS-002.
+      the not-abbreviated half; this rule covers the title-case half. Same principal-word heuristic as REFS-006.
 
   # ---------------------------------------------------------------------------
   # bibtex — mechanical entry rules
@@ -995,8 +974,11 @@ rules:
 
   - rule_id: JSS-CAP-003
     category: capitalization
-    severity: warning
-    # 56.5% pinned-corpus precision at iter-78; 5/5 fix attempts exhausted (eval/improvement-log.md).
+    # info severity: 56.5% pinned-corpus precision at iter-78; 5/5 fix
+    # attempts exhausted (eval/improvement-log.md). Demoted from
+    # warning so the default --fail-on=warning policy never fails a
+    # run on this rule's advisories.
+    severity: info
     confidence: low
     description: Figure / table captions are in sentence style
     authority: style_guide
@@ -1016,8 +998,10 @@ rules:
       on captions containing dense technical identifiers (R^2, p-values
       with embedded statistics, dataset / cohort label prefixes); 5
       successive precision-improvement attempts could not lift it above
-      60% on the pinned 240-paper corpus, so it ships at `confidence:
-      low` and is hidden by default with `--min-confidence medium`.
+      60% on the pinned 240-paper corpus, so it ships at info severity
+      and `confidence: low`. It runs (and is shown) by default but
+      never fails a run under the default `--fail-on warning` policy;
+      pass `--min-confidence medium` to hide it entirely.
       When reviewing a CAP-003 finding, sanity-check the caption against
       the example fix below; the rule prefers false-positives over
       missed real defects, so a no-op finding is the expected failure

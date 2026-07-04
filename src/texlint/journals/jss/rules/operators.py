@@ -3,7 +3,10 @@
 Rules:
   - JSS-OPER-001 — symbol-plus-noun constructs like ``p-value`` use a
     typeset form ``$p$~value`` (no hyphen).
-  - JSS-OPER-002 — transpose is typeset with ``\\top``, not ``^T`` or ``^\\prime``.
+  - JSS-OPER-002 — transpose written as literal ``^T`` should be ``\\top``.
+    (Prime notation ``X'`` / ``^\\prime`` is NOT flagged — 31% precision
+    on the labelled corpus; it's usually a derivative or a distinct
+    variable, not a transpose. See check_jss_oper_002.)
   - JSS-OPER-003 — display equations have no blank lines immediately
     before or after; carve-out: equation body ending with a period
     closes a sentence and doesn't need the ``%`` wrapper.
@@ -22,7 +25,6 @@ from pylatexenc.latexwalker import (
     LatexEnvironmentNode,
     LatexGroupNode,
     LatexMacroNode,
-    LatexMathNode,
 )
 
 from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
@@ -191,60 +193,22 @@ def _t_caret_follows_big_operator(
     return False
 
 
-def _prime_follows_bracket(source: str, prime_pos: int) -> bool:
-    """True when the ``\\prime`` macro at ``prime_pos`` immediately follows a
-    closing bracket ``)`` / ``}`` / ``]`` (optionally across a ``^`` caret
-    and whitespace) — i.e. the transpose of a grouped expression
-    (``(6,7)^\\prime``, ``\\mathbf{X}^\\prime``). A ``\\prime`` after a bare
-    symbol or function name (``\\h^\\prime``) is derivative notation."""
-    i = prime_pos - 1
-    while i >= 0 and source[i] in " \t\n":
-        i -= 1
-    if i >= 0 and source[i] == "^":
-        i -= 1
-        while i >= 0 and source[i] in " \t\n":
-            i -= 1
-    return i >= 0 and source[i] in ")}]"
-
-
 def check_jss_oper_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
+    # NB: prime notation (``X'`` / ``X^\prime``) is deliberately NOT
+    # flagged. The full human-labelled corpus showed the prime branch
+    # at 31% precision (73 TP / 163 FP): in statistics prose a prime is
+    # overwhelmingly a *different variable* (``(x, x')``), a derivative
+    # (``f'(t)``, ``\dZ^\prime``), or a paired sample (``\bX - \bX'``),
+    # not a transpose. The literal ``^T`` form is 99% precise (91/1) and
+    # is the only convention the recall corpus tests, so OPER-002 now
+    # flags ``^T`` only. (Authors using ``'`` for transpose are missed —
+    # an accepted scope bound; see eval/improvement-log.md.)
     for tex in doc.all_tex_like():
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
         ):
-            if isinstance(node, LatexMacroNode):
-                if not _helpers._is_inside_math(ancestors):
-                    continue
-                # ``\prime`` is a transpose marker in some papers
-                # (pmclust: ``(6, 7)^\prime``); JSS wants ``\top``. But
-                # ``\prime`` is far more often *derivative* notation
-                # (``\h^\prime``, ``\basisy^\prime``, ``\bern{M}^\prime(\ry)``
-                # — recall-corpus mlt.docreg). Mirror the single-quote
-                # branch: only treat it as transpose when it follows a
-                # closing bracket ``)}]`` (a grouped expression), and never
-                # when it's immediately applied to an argument ``(...)``
-                # (a derivative like ``f^\prime(x)``).
-                if node.macroname == "prime":
-                    end = (node.pos or 0) + (node.len or 0)
-                    followed_by_paren = (
-                        tex.source[end:].lstrip()[:1] == "("
-                    )
-                    if (
-                        _prime_follows_bracket(tex.source, node.pos)
-                        and not followed_by_paren
-                    ):
-                        yield _violation(
-                            tex=tex,
-                            pos=node.pos,
-                            rule_id="JSS-OPER-002",
-                            suggestion=(
-                                "Use '\\top' for transpose instead of "
-                                "'\\prime': e.g., 'X^\\top X'."
-                            ),
-                        )
-                continue
             if not isinstance(node, LatexCharsNode):
                 continue
             if not _helpers._is_inside_math(ancestors):
@@ -261,23 +225,6 @@ def check_jss_oper_002(
                     rule_id="JSS-OPER-002",
                     suggestion="Use '\\top' for transpose: e.g., 'X^\\top X'.",
                 )
-            # Single-quote prime used as transpose for a vector or
-            # matrix: ``(w_0, ..., w_p)'`` / ``\mathbf{X}'`` /
-            # ``[A | B]'``. Only fire when ``'`` immediately follows a
-            # closing bracket — letter / digit followed by ``'`` is
-            # almost always derivative notation (``f'(x)``, ``x'``,
-            # ``y_{k'}``), not transpose.
-            for match in re.finditer(r"[)}\]]['′]", node.chars):
-                abs_pos = node.pos + match.start() + 1
-                yield _violation(
-                    tex=tex,
-                    pos=abs_pos,
-                    rule_id="JSS-OPER-002",
-                    suggestion=(
-                        "Use '\\top' for transpose instead of "
-                        "single-quote prime: e.g., 'X^\\top X'."
-                    ),
-                )
 
 
 # ---------------------------------------------------------------------------
@@ -285,49 +232,15 @@ def check_jss_oper_002(
 # ---------------------------------------------------------------------------
 
 
-# Sectioning commands: a blank line before one of these is required
-# structure, not a suppressible paragraph break.
-_SECTIONING_MACROS: frozenset[str] = frozenset({
-    "part", "chapter", "section", "subsection", "subsubsection",
-    "paragraph", "subparagraph",
-    "part*", "chapter*", "section*", "subsection*", "subsubsection*",
-    "paragraph*", "subparagraph*",
-})
-
-
-def _blank_after_precedes_sectioning(parent: Any, idx: int) -> bool:
-    """True when the node right after the display equation is a
-    whitespace-only chars node followed by a sectioning macro — i.e. the
-    blank line is the required break before a heading, not a paragraph
-    break around the equation."""
-    after = parent[idx + 1] if idx + 1 < len(parent) else None
-    if not (isinstance(after, LatexCharsNode) and after.chars.strip() == ""):
-        return False
-    nxt = parent[idx + 2] if idx + 2 < len(parent) else None
-    return (
-        isinstance(nxt, LatexMacroNode)
-        and nxt.macroname in _SECTIONING_MACROS
-    )
-
-
 def check_jss_oper_003(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     for tex in doc.all_tex_like():
         for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
-            # Display equations come in two node shapes: environments
-            # (\begin{equation} …) and display-math nodes (``\[ … \]`` /
-            # ``$$ … $$``), which pylatexenc parses as a LatexMathNode with
-            # displaytype == "display" rather than an environment.
-            is_env = (
+            if not (
                 isinstance(node, LatexEnvironmentNode)
                 and node.environmentname in _DISPLAY_EQ_ENVS
-            )
-            is_display_math = (
-                isinstance(node, LatexMathNode)
-                and getattr(node, "displaytype", None) == "display"
-            )
-            if not (is_env or is_display_math):
+            ):
                 continue
             before = parent[idx - 1] if idx > 0 else None
             after = parent[idx + 1] if idx + 1 < len(parent) else None
@@ -339,13 +252,6 @@ def check_jss_oper_003(
             ends_period = _equation_body_ends_with_period(node)
             blank_before = _chars_ends_with_blank_line(before)
             blank_after = _chars_starts_with_blank_line(after) and not ends_period
-            # A blank line before a sectioning command is required LaTeX
-            # structure — it can't be %-suppressed like a prose paragraph
-            # break — so a display equation immediately followed by a blank
-            # line and a \section/\subsection is not a defect (recall-corpus
-            # trueskill).
-            if blank_after and _blank_after_precedes_sectioning(parent, idx):
-                blank_after = False
             if blank_before or blank_after:
                 yield _violation(
                     tex=tex,

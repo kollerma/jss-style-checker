@@ -373,3 +373,86 @@ class TestFormatsFilter:
         report = run(ToolConfig(), doc, journal)
         # No files match -> category is SKIPPED
         assert report.categories[0].status == CategoryStatus.SKIPPED
+
+
+class TestParseDocumentSourceOverlay:
+    """`parse_document(..., sources=...)` parses overlay strings instead
+    of disk content and never touches the file (spec: LSP buffers must
+    be lintable without writing them to disk)."""
+
+    def test_tex_overlay_wins_over_disk(self, tmp_path: Path):
+        from texlint.core.engine import parse_document
+
+        path = tmp_path / "m.tex"
+        path.write_text("DISK CONTENT", encoding="utf-8")
+        doc = parse_document([path], sources={path: r"\textbf{OVERLAY}"})
+        assert "OVERLAY" in doc.tex_files[0].source
+        assert path.read_text(encoding="utf-8") == "DISK CONTENT"
+
+    def test_overlay_parses_without_file_on_disk(self, tmp_path: Path):
+        from texlint.core.engine import parse_document
+
+        path = tmp_path / "missing.tex"  # never created
+        doc = parse_document([path], sources={path: "hello"})
+        assert doc.tex_files[0].violations == ()
+        assert not path.exists()
+
+    def test_rnw_overlay_rewrites_chunks(self, tmp_path: Path):
+        from texlint.core.engine import parse_document
+
+        path = tmp_path / "m.Rnw"
+        path.write_text("DISK", encoding="utf-8")
+        overlay = "text\n<<a>>=\nx <- 1\n@\nmore"
+        doc = parse_document([path], sources={path: overlay})
+        assert "Sinput" in doc.tex_files[0].source
+        assert path.read_text(encoding="utf-8") == "DISK"
+
+    def test_bib_overlay_wins_over_disk(self, tmp_path: Path):
+        from texlint.core.engine import parse_document
+
+        path = tmp_path / "refs.bib"
+        path.write_text("@article{disk, title={Disk}}", encoding="utf-8")
+        doc = parse_document(
+            [path], sources={path: "@article{overlay, title={Overlay}}"}
+        )
+        keys = [e.key for e in doc.bib_files[0].library.entries]
+        assert keys == ["overlay"]
+
+    def test_rmd_overlay_wins_over_disk(self, tmp_path: Path):
+        from texlint.core.engine import parse_document
+
+        path = tmp_path / "m.Rmd"
+        path.write_text("disk prose", encoding="utf-8")
+        doc = parse_document([path], sources={path: "overlay prose\n"})
+        assert "overlay" in doc.rmd_files[0].source
+
+    def test_no_overlay_reads_disk(self, tmp_path: Path):
+        from texlint.core.engine import parse_document
+
+        path = tmp_path / "m.tex"
+        path.write_text("DISK", encoding="utf-8")
+        doc = parse_document([path])
+        assert "DISK" in doc.tex_files[0].source
+
+
+class TestSeverityOverrideRemap:
+    """config.severity_overrides remaps violation severity centrally in
+    the engine, so every renderer and the exit policy agree."""
+
+    def test_override_demotes_severity(self, tmp_path: Path):
+        doc = _make_doc(tmp_path, "a.tex")
+        target = str(doc.tex_files[0].path)
+        rule = _rule("JSS-X-001", fires_on=(target,))
+        journal = _Journal("j", (RuleCategory(id="x", title="X", rules=(rule,)),))
+        cfg = ToolConfig(severity_overrides={"JSS-X-001": Severity.INFO})
+        report = run(cfg, doc, journal)
+        assert [v.severity for v in report.violations] == [Severity.INFO]
+
+    def test_unmentioned_rule_unchanged(self, tmp_path: Path):
+        doc = _make_doc(tmp_path, "a.tex")
+        target = str(doc.tex_files[0].path)
+        rule = _rule("JSS-X-001", fires_on=(target,))
+        journal = _Journal("j", (RuleCategory(id="x", title="X", rules=(rule,)),))
+        cfg = ToolConfig(severity_overrides={"JSS-OTHER-999": Severity.INFO})
+        report = run(cfg, doc, journal)
+        assert [v.severity for v in report.violations] == [Severity.ERROR]

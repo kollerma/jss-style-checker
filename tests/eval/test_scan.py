@@ -143,20 +143,23 @@ def test_scan_missing_linter_exits_2(monkeypatch, tmp_db: Path, fake_corpus: Fak
 
 
 def test_discover_papers_skips_dirs_without_source_files(tmp_path: Path) -> None:
-    """A subdir with no lintable source (top level, vignettes/, inst/doc/)
-    is not a paper — e.g. the jss5342-versions recall-study dir whose
-    manuscripts sit in per-version subdirs. It must be skipped so the
-    scanner never shells out to jss-lint with zero file arguments."""
+    """A subdir with no lintable source anywhere `_source_files` looks
+    (top level, vignettes/, inst/doc/, or versioned revision subdirs) is
+    not a paper and must be skipped, so the scanner never shells out to
+    jss-lint with zero file arguments. (Versioned recall-study layouts
+    like jss5342-versions ARE papers — `_source_files` lints their final
+    revision — so the skip only catches genuinely sourceless dirs, e.g.
+    ones whose only content is an underscore tooling dir.)"""
     corpus = tmp_path / "corpus"
     corpus.mkdir()
     # A real paper: source file under vignettes/.
     paper = corpus / "cran_real"
     (paper / "real" / "vignettes").mkdir(parents=True)
     (paper / "real" / "vignettes" / "v.Rnw").write_text("\\documentclass{jss}")
-    # A non-paper: sources only in a non-vignette version subdir.
-    non_paper = corpus / "versions-study"
-    (non_paper / "initial").mkdir(parents=True)
-    (non_paper / "initial" / "article.Rnw").write_text("\\documentclass{jss}")
+    # A non-paper: only an underscore tooling dir, no manuscript sources.
+    non_paper = corpus / "analysis-only"
+    (non_paper / "_analysis").mkdir(parents=True)
+    (non_paper / "_analysis" / "notes.md").write_text("# not a manuscript")
 
     found = [p.name for p in scan._discover_papers(corpus)]
 
@@ -211,5 +214,192 @@ def test_scan_malformed_json_records_parse_failure(
         assert rule_ids == {"JSS-PARSE-000"}
         statuses = {r["status"] for r in cx.execute("SELECT status FROM papers").fetchall()}
         assert "scan_failed" in statuses
+    finally:
+        cx.close()
+
+
+class TestVersionedPaperLayout:
+    """`<paper>/<revision>/*.tex` layouts (jss5342-versions): final/
+    wins, rendered .tex beats same-stem .Rnw, correspondence skipped."""
+
+    def _mk(self, root: Path, rel: str) -> Path:
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("x", encoding="utf-8")
+        return p
+
+    def test_final_revision_wins(self, tmp_path: Path) -> None:
+        from eval.scan import _source_files
+
+        self._mk(tmp_path, "initial/article.tex")
+        self._mk(tmp_path, "final/paper.tex")
+        bib = self._mk(tmp_path, "final/refs.bib")
+        self._mk(tmp_path, "_analysis/notes.tex")
+
+        files = _source_files(tmp_path)
+
+        assert files == [tmp_path / "final/paper.tex", bib]
+
+    def test_tex_beats_same_stem_rnw_and_comments_skipped(
+        self, tmp_path: Path
+    ) -> None:
+        from eval.scan import _source_files
+
+        self._mk(tmp_path, "final/paper.Rnw")
+        tex = self._mk(tmp_path, "final/paper.tex")
+        other_rnw = self._mk(tmp_path, "final/extra.Rnw")
+        self._mk(tmp_path, "final/reviewer-comments.tex")
+
+        files = _source_files(tmp_path)
+
+        assert files == [other_rnw, tex]
+
+    def test_all_revisions_without_final(self, tmp_path: Path) -> None:
+        from eval.scan import _source_files
+
+        a = self._mk(tmp_path, "draft1/p.tex")
+        b = self._mk(tmp_path, "draft2/p.tex")
+        self._mk(tmp_path, ".hidden/x.tex")
+
+        assert _source_files(tmp_path) == [a, b]
+
+    def test_vignette_layout_still_preferred(self, tmp_path: Path) -> None:
+        from eval.scan import _source_files
+
+        v = self._mk(tmp_path, "pkg/vignettes/v.Rnw")
+        self._mk(tmp_path, "final/decoy.tex")
+
+        assert _source_files(tmp_path) == [v]
+
+
+def test_rerun_bumps_last_seen_and_preserves_verdict(
+    monkeypatch, tmp_db: Path, fake_corpus: FakeCorpus
+) -> None:
+    """A violation that re-fires has last_seen bumped to the new run;
+    its verdict survives the upsert."""
+    _install_fake_linter(monkeypatch, fake_corpus)
+    scan.run(db_path=tmp_db, corpus_dir=fake_corpus.root, batch_size=None, force=True)
+
+    cx = db.connect(tmp_db)
+    try:
+        cx.execute(
+            "UPDATE violations SET verdict='true_positive', reviewer='human:x'"
+            " WHERE rule_id != 'JSS-PARSE-000'"
+        )
+    finally:
+        cx.close()
+
+    scan.run(db_path=tmp_db, corpus_dir=fake_corpus.root, batch_size=None, force=True)
+
+    cx = db.connect(tmp_db)
+    try:
+        max_run = cx.execute("SELECT MAX(id) FROM runs").fetchone()[0]
+        rows = cx.execute(
+            "SELECT verdict, last_seen_run_id FROM violations"
+            " WHERE rule_id != 'JSS-PARSE-000'"
+        ).fetchall()
+        assert rows  # sanity
+        for r in rows:
+            assert r["last_seen_run_id"] == max_run  # bumped to latest run
+            assert r["verdict"] == "true_positive"   # preserved through upsert
+    finally:
+        cx.close()
+
+
+def test_stale_violation_excluded_from_precision(
+    monkeypatch, tmp_db: Path
+) -> None:
+    """A labelled FP that the tool stops emitting must NOT count against
+    precision once a later run no longer re-fires it."""
+    from eval import report
+
+    paper = "paper_solo"
+
+    def _invoke(fires: bool):
+        def _fake(paper_dir: Path, jss_lint: str) -> api.LinterResult:
+            vs = (
+                [{"rule_id": "JSS-MARKUP-001", "category": "markup",
+                  "line": 3, "column": 1, "message": "bare R", "file": "m.tex"}]
+                if fires else []
+            )
+            return _fake_result(paper_dir, violations=vs, exit_code=1 if vs else 0)
+        return _fake
+
+    corpus = tmp_db.parent / "corpus"
+    (corpus / paper).mkdir(parents=True)
+    (corpus / paper / "m.tex").write_text("x", encoding="utf-8")
+
+    # Run 1: the violation fires; label it a false positive.
+    monkeypatch.setattr(scan, "_invoke_linter", _invoke(fires=True))
+    scan.run(db_path=tmp_db, corpus_dir=corpus, batch_size=None, force=True)
+    cx = db.connect(tmp_db)
+    try:
+        cx.execute(
+            "UPDATE violations SET verdict='false_positive', reviewer='human:x'"
+            " WHERE rule_id='JSS-MARKUP-001'"
+        )
+    finally:
+        cx.close()
+
+    # Before the fix lands, the FP is the only labelled row → 0% precision.
+    t0 = report.compute_precision(tmp_db)
+    row0 = next(r for r in t0.rows if r.rule_id == "JSS-MARKUP-001")
+    assert (row0.tp, row0.fp) == (0, 1)
+
+    # Run 2: a guard now silences it — the tool no longer emits it.
+    monkeypatch.setattr(scan, "_invoke_linter", _invoke(fires=False))
+    scan.run(db_path=tmp_db, corpus_dir=corpus, batch_size=None, force=True)
+
+    # The stale FP must drop out of the precision table entirely.
+    t1 = report.compute_precision(tmp_db)
+    assert all(r.rule_id != "JSS-MARKUP-001" for r in t1.rows), (
+        "stale FP still counted against precision"
+    )
+
+
+class TestDetectDocClass:
+    def _mk(self, root: Path, rel: str, text: str) -> None:
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8")
+
+    def test_jss_class(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        self._mk(tmp_path, "a.tex", "\\documentclass[nojss]{jss}\n\\begin{document}x")
+        assert _detect_doc_class(tmp_path) == "jss"
+
+    def test_article_class_is_non_jss(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        self._mk(tmp_path, "a.tex", "\\documentclass[11pt]{article}\n")
+        assert _detect_doc_class(tmp_path) == "non-jss"
+
+    def test_commented_jss_ignored_uses_article(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        # The clValid pattern: real jss line commented out, article active.
+        self._mk(tmp_path, "a.tex",
+                 "%\\documentclass[shortnames]{jss}\n\\documentclass{article}\n")
+        assert _detect_doc_class(tmp_path) == "non-jss"
+
+    def test_rmd_only_is_jss(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        self._mk(tmp_path, "v.Rmd", "---\ntitle: x\n---\nprose\n")
+        assert _detect_doc_class(tmp_path) == "jss"
+
+    def test_no_class_no_rmd_is_unknown(self, tmp_path: Path) -> None:
+        from eval.scan import _detect_doc_class
+        self._mk(tmp_path, "refs.bib", "@article{k, title={t}}\n")
+        assert _detect_doc_class(tmp_path) == "unknown"
+
+
+def test_scan_populates_doc_class(monkeypatch, tmp_db: Path, fake_corpus) -> None:
+    _install_fake_linter(monkeypatch, fake_corpus)
+    scan.run(db_path=tmp_db, corpus_dir=fake_corpus.root, batch_size=None, force=True)
+    cx = db.connect(tmp_db)
+    try:
+        # Every scanned paper got a non-NULL doc_class.
+        nulls = cx.execute(
+            "SELECT COUNT(*) FROM papers WHERE doc_class IS NULL"
+        ).fetchone()[0]
+        assert nulls == 0
     finally:
         cx.close()

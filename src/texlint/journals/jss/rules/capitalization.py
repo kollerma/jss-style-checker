@@ -568,6 +568,24 @@ def check_jss_cap_003(
             )
 
 
+def _is_code_identifier(word: str) -> bool:
+    """True for CamelCase or digit-bearing tokens — ``DSClassify``,
+    ``CvM``, ``LHpp``, ``WeightedCluster``, ``GROJ0422``, ``Tucker3``.
+
+    These are code / dataset / statistic identifiers, not title-cased
+    prose words, so sentence style does not penalise them. No
+    legitimate title-case word carries an internal capital or an
+    embedded digit, so excluding them never drops a real offender (the
+    CAP-003 double-check confirmed identifiers as a distinct
+    false-positive class). Bare eponyms with ordinary casing (``Huber``,
+    ``Gaussian``) are NOT caught here — those remain a proper-noun
+    gazetteer gap."""
+    if any(c.isdigit() for c in word):
+        return True
+    letters = re.sub(r"[^A-Za-z]", "", word)
+    return any(c.isupper() for c in letters[1:])
+
+
 def _is_capitalised_offender(
     word: str,
     proper_nouns: frozenset[str] = _PROPER_NOUNS,
@@ -585,6 +603,8 @@ def _is_capitalised_offender(
         return False
     if not bare[0].isupper():
         return False
+    if _is_code_identifier(word):
+        return False
     if bare in proper_nouns:
         return False
     if bare.lower() in _TITLE_STOPWORDS:
@@ -600,6 +620,10 @@ def _is_run_eligible(word: str) -> bool:
     in research prose, not name fragments."""
     bare = re.sub(r"[^A-Za-z]", "", word)
     if not bare or len(bare) < 2:
+        return False
+    if _is_code_identifier(word):
+        # CamelCase / digit-bearing identifiers don't anchor or
+        # participate in proper-noun runs either.
         return False
     return bare[0].isupper()
 

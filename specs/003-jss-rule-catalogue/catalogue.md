@@ -4,7 +4,7 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 62  
+**Rule count**: 61  
 **Category count**: 15
 
 ---
@@ -60,12 +60,11 @@ _citations_ — 3 rule(s)
 
 ## References
 
-_references_ — 7 rule(s)
+_references_ — 6 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-REFS-001` | warning | BibTeX entries carry a year field so natbib author-year citations render correctly | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-REFS-002` | warning | BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-REFS-003` | info | BibTeX entries include a doi field where one is available (advisory) | article_tex | `article.tex:421` | — |
 | `JSS-REFS-004` | warning | BibTeX titles use JSS markup (\proglang, \pkg, \code) for language and package names | style_guide | `#how-to-cite-r-packages` | — |
 | `JSS-REFS-005` | warning | Journal titles in BibTeX entries are not abbreviated | article_tex | `article.tex:473` | — |
@@ -101,7 +100,7 @@ _capitalization_ — 4 rule(s)
 |---|---|---|---|---|---|
 | `JSS-CAP-001` | warning | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-CAP-002` | warning | Section titles are in sentence style (first word capitalised; others lowercase except proper names) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-CAP-003` | warning | Figure / table captions are in sentence style | style_guide | `#how-to-format-figuretable-captions` | — |
+| `JSS-CAP-003` | info | Figure / table captions are in sentence style | style_guide | `#how-to-format-figuretable-captions` | — |
 | `JSS-CAP-004` | warning | \Keywords{} is comma-separated and in sentence case | article_tex | `article.tex:48` | — |
 
 ## Typography
@@ -979,48 +978,6 @@ BibTeX entries carry a year field so natbib author-year citations render correct
 
 ---
 
-### JSS-REFS-002
-
-**Category**: `references` · **Severity**: `warning` · **Auto-fixable**: no
-
-BibTeX titles are in title style — tight heuristic (flags titles that are entirely lowercase)
-
-**Authority**: `style_guide` → `#what-are-the-most-important-style-guidelines-in-jss`
-
-**Inspects**: `bib_files`
-
-<details>
-<summary>Example violation</summary>
-
-```bibtex
-@article{Knuth1984,
-  author = {Donald Knuth},
-  title  = {literate programming},
-  year   = {1984}
-}
-```
-
-</details>
-
-<details>
-<summary>Example fix</summary>
-
-```bibtex
-@article{Knuth1984,
-  author = {Donald Knuth},
-  title  = {Literate Programming},
-  year   = {1984}
-}
-```
-
-</details>
-
-**Notes**: Tight companion to the loose heuristic in JSS-REFS-006. Split per reviewer feedback 2026-04-23: REFS-002
-is the high-precision narrow check (every word lowercase), REFS-006 catches subtler violations. Both are
-heuristics; a principled title-case validator requires a principal-word dictionary (deferred).
-
----
-
 ### JSS-REFS-003
 
 **Category**: `references` · **Severity**: `info` · **Auto-fixable**: no
@@ -1181,9 +1138,10 @@ BibTeX titles are in title style — loose heuristic (flags lowercase first word
 
 </details>
 
-**Notes**: Loose companion to JSS-REFS-002's tight heuristic. Checks: first word must be capitalised; word after a
-colon or hyphen must be capitalised (style-guide SG-013 cross-reference). Higher false-positive rate than
-REFS-002 — acceptable per reviewer 2026-04-23; tuned via the precision gate on the real corpus.
+**Notes**: Title-case heuristic. Checks: first word must be capitalised; word after a colon or hyphen must be
+capitalised (style-guide SG-013 cross-reference); principal words must be capitalised. Also flags
+entirely-lowercase multi-word titles (the role formerly split into JSS-REFS-002, retired 2026-06-14),
+while exempting single coined words. Tuned via the precision gate on the real corpus.
 
 ---
 
@@ -1226,7 +1184,7 @@ Journal titles in BibTeX entries are in title case
 </details>
 
 **Notes**: article.tex:473 mandates "Journal titles should not be abbreviated and in title case." JSS-REFS-005 covers
-the not-abbreviated half; this rule covers the title-case half. Same principal-word heuristic as REFS-002.
+the not-abbreviated half; this rule covers the title-case half. Same principal-word heuristic as REFS-006.
 
 ---
 
@@ -1604,7 +1562,7 @@ terms.LANGUAGES and terms.R_PACKAGES). Tuned via the precision gate.
 
 ### JSS-CAP-003
 
-**Category**: `capitalization` · **Severity**: `warning` · **Auto-fixable**: no
+**Category**: `capitalization` · **Severity**: `info` · **Auto-fixable**: no
 
 Figure / table captions are in sentence style
 
