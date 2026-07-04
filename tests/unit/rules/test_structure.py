@@ -342,6 +342,41 @@ class TestStruct005:
         ends = sorted(f.end for f in fixes)
         assert starts[0] < ends[0] <= starts[1] < ends[1]
 
+    def test_literal_and_single_line_still_flagged(self, run_rule):
+        # No ``\\`` row break at all → the whole author group is the
+        # author-name line and the literal "and" is a separator.
+        src = r"\author{John Fox and Sanford Weisberg}"
+        violations = run_rule(jss_struct_005, src)
+        assert len(violations) == 1
+        assert src[violations[0].fix.start : violations[0].fix.end] == "and"
+
+    def test_literal_and_before_first_rowbreak_flagged(self, run_rule):
+        # "and" on the author-name line (before the first ``\\``) is a
+        # separator even though affiliation lines follow.
+        src = (
+            r"\author{Alice Smith and Bob Jones \\"
+            "\n"
+            r"Department of Bioinformatics and Biostatistics}"
+        )
+        violations = run_rule(jss_struct_005, src)
+        assert len(violations) == 1
+        v = violations[0]
+        # The flagged "and" is the author-line one, before the ``\\``.
+        assert src[v.fix.start : v.fix.end] == "and"
+        assert v.fix.start < src.index(r"\\")
+
+    def test_literal_and_in_affiliation_after_rowbreak_silent(self, run_rule):
+        # "and" living in an affiliation/department line after ``\\`` is
+        # ordinary prose, not an author separator → not flagged.
+        src = (
+            r"\author{Alice Smith \\"
+            "\n"
+            r"Department of Bioinformatics and Biostatistics \\"
+            "\n"
+            r"Qassim University and Durham University}"
+        )
+        assert run_rule(jss_struct_005, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-STRUCT-006 — pagebreak between bibliography and appendix

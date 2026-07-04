@@ -424,8 +424,18 @@ def _iter_text_and_offsets(
     text to be a sibling chars node directly under the author group
     (not nested inside an inner macro), so cosmetic / commented uses
     of "and" in helper macros stay silent.
+
+    Scanning stops at the first ``\\`` (row-break) macro node: only the
+    author-name line precedes it. Everything after a ``\\`` is an
+    affiliation / department line (e.g. "Department of Bioinformatics
+    and Biostatistics"), where "and" is ordinary prose, not a separator.
     """
     for child in group.nodelist or ():
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname == "\\"
+        ):
+            return
         if not isinstance(child, LatexCharsNode):
             continue
         for match in _TEXT_AND_RE.finditer(child.chars):
