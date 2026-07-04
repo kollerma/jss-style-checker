@@ -8,18 +8,26 @@ record. Reviewer tag on the flipped rows: `human:readjudicate`.
 
 ## Reconciled tokens (9 label flips → one consistent verdict per token)
 
-| token | correct verdict | reasoning | flips |
-|---|---|---|---|
-| `R-code` | **TP** | "R code" — R is the language, should be `\proglang{R}` | 1 FP→TP (deSolve:1553, identical to its sibling TPs) |
-| `R-project` | **FP** | the `r-project.org` URL / proper noun — not wrappable | 1 TP→FP (GPareto:1468) |
-| `R-Forge` | **FP** | proper-noun development platform (cf. SourceForge); the `R-` is part of the name, consistent with `R-project` | 5 TP→FP (archetypes, colorspace, datatable, simecol, animation) |
-| `C-component` | **FP** | causal-inference term (c-component factorization), not the C language | 1 TP→FP (causaleffect:733) |
-| `C-coverage` | **FP** | a `cna` package measure (contrapositive coverage), not the C language | 1 TP→FP (cna:530) |
+**Policy (per the annotator, 2026-07-04):** `R` in `R-project` / `R-Forge`
+IS wrapped in `\proglang{R}` when the token appears in **plain text**; it is
+a false positive only inside a **URL** (`www.R-project.org`,
+`R-project.org/...`). `C` in `cna`/causal-inference compounds is never the
+C language.
 
-**Effect:** MARKUP-001 precision 90.11% → **89.52% (FAIL)**. The
-inconsistent labels had been masking the rule just above the 90% gate; the
-honest post-reconciliation figure is ~89.5%. (306 MARKUP-001 rows are also
-pending review after the main-merge re-scan and may shift this further.)
+| token | correct verdict | reasoning |
+|---|---|---|
+| `R-code` | **TP** | "R code" — R is the language, should be `\proglang{R}` |
+| `R-Forge` | **TP** (all) | plain-text platform references ("hosted on R-Forge", "the R-Forge server") — R is the language, wrap it; none appear inside a URL |
+| `R-project` | **TP** in prose, **FP** in a URL | plain-text mention (TraMineR "R-project, CRAN") → TP; the URLs (GPareto `R-project.org/view`, xts `www.R-project.org`) → FP |
+| `C-component` | **FP** | causal-inference term (c-component factorization), not the C language |
+| `C-coverage` | **FP** | a `cna` package measure (contrapositive coverage), not the C language |
+
+**Effect:** after reconciling to this policy, MARKUP-001 precision is
+**90.19% (PASS)** (1076 TP / 117 FP), vs 90.11% before. The re-adjudication
+mainly removes label *noise* (making each token internally consistent)
+rather than moving the headline; the C-* mislabels were the only genuine
+TP→FP corrections. 306 MARKUP-001 rows remain pending after the main-merge
+re-scan and may still shift this.
 
 ## Documented, NOT reconciled — inherent context dependency
 
