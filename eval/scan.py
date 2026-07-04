@@ -57,8 +57,19 @@ def _infer_category(rule_id: str) -> str:
 
 
 def _discover_papers(corpus_dir: Path) -> list[Path]:
-    """Return corpus paper directories sorted by name, stable across runs."""
-    return sorted(p for p in corpus_dir.iterdir() if p.is_dir())
+    """Return corpus paper directories sorted by name, stable across runs.
+
+    A subdirectory with no lintable source file anywhere the scanner looks
+    (top level, then ``vignettes/`` / ``inst/doc/`` — see `_source_files`)
+    is not a paper and is skipped. Otherwise the scanner would shell out to
+    ``jss-lint`` with zero file arguments and record a spurious
+    ``JSS-PARSE-000`` / ``scan_failed`` row — e.g. the ``jss5342-versions``
+    recall-study directory, whose manuscripts live in per-version subdirs
+    (``initial/``, ``resubmission/``, …) rather than under ``vignettes/``.
+    """
+    return sorted(
+        p for p in corpus_dir.iterdir() if p.is_dir() and _source_files(p)
+    )
 
 
 _SOURCE_SUFFIXES = {".tex", ".ltx", ".bib", ".Rnw", ".Rmd"}

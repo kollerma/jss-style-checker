@@ -142,6 +142,27 @@ def test_scan_missing_linter_exits_2(monkeypatch, tmp_db: Path, fake_corpus: Fak
     assert code == 2
 
 
+def test_discover_papers_skips_dirs_without_source_files(tmp_path: Path) -> None:
+    """A subdir with no lintable source (top level, vignettes/, inst/doc/)
+    is not a paper — e.g. the jss5342-versions recall-study dir whose
+    manuscripts sit in per-version subdirs. It must be skipped so the
+    scanner never shells out to jss-lint with zero file arguments."""
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    # A real paper: source file under vignettes/.
+    paper = corpus / "cran_real"
+    (paper / "real" / "vignettes").mkdir(parents=True)
+    (paper / "real" / "vignettes" / "v.Rnw").write_text("\\documentclass{jss}")
+    # A non-paper: sources only in a non-vignette version subdir.
+    non_paper = corpus / "versions-study"
+    (non_paper / "initial").mkdir(parents=True)
+    (non_paper / "initial" / "article.Rnw").write_text("\\documentclass{jss}")
+
+    found = [p.name for p in scan._discover_papers(corpus)]
+
+    assert found == ["cran_real"]
+
+
 def test_scan_missing_corpus_exits_2(monkeypatch, tmp_db: Path, tmp_path: Path) -> None:
     monkeypatch.setattr(scan.shutil, "which", lambda name: "/fake/bin/jss-lint")
     code = scan.run(
