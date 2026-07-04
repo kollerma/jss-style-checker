@@ -42,3 +42,26 @@ single verdict is wrong — these are **not** labelling inconsistencies:
 This is a concrete example of the label-noise / context-ambiguity that
 caps MARKUP-001's achievable precision near the 90% line — a point for the
 paper's labelling-methodology section.
+
+## MARKUP-001 mislabel corrections (FP → TP, 22 rows)
+
+During human review of MARKUP-001, 22 firings labelled FP were found to be
+genuine TPs — the single-letter name IS the language in context, so the
+firing was correct. Corrected (reviewer `human:readjudicate`):
+
+- **"R package / function / code" (12):** DBR, boxcoxmix, clValid, clifford,
+  copula, datatable ×2, knitr, lbfgs, mdsOpt, rpart, interp — `R` modifies a
+  noun and should be `\proglang{R}`.
+- **R version / Base R / "in R" / C-or-Fortran (10):** fic, glmnet, knitr
+  (`R 3.0.x`), np (`C or Fortran`), purrr (`R 4.1`), stream (`R 3.1.2`),
+  stringr / tibble (`Base R`), datatable / stemmatology (`in R`).
+
+Left as genuine FPs: single-letter names that are NOT the language —
+`Penta_C` (marker), `factors S, C and F` (labels), tensor `mode C` /
+`A and C` (rrcov3way).
+
+**Effect:** MARKUP-001 precision 84.67% → **86.33%** (1143 TP / 181 FP).
+Still below the 90% gate: the residual 181 FPs are the inherent
+single-letter / domain-compound ambiguity (panel/factor/disease `C`,
+`C-component`/`C-consistency`/`R-J`/… hyphen compounds) that no clean guard
+resolves without corpus-overfitting.
