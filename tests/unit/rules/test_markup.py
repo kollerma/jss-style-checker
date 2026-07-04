@@ -59,6 +59,39 @@ class TestMarkup001:
         )
         assert run_rule(jss_markup_001, src) == []
 
+    def test_skip_citation_key(self, run_rule):
+        # A BibTeX key like ``R:2019`` inside \citep/\citet is not prose —
+        # the leading ``R`` must not be flagged as an unwrapped language name.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"See \citep{R:2019} and \citet{R:Chambers:1998}." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_flag_prose_R_alongside_citation_key(self, run_rule):
+        # The bare prose ``R`` still fires; the ``R`` in the cite key does not.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use R for this \citep{R:2019}." "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_markup_001, src)) == 1
+
+    def test_flag_prose_in_citation_optional_arg(self, run_rule):
+        # Only the mandatory {key} of a citation is a BibTeX key; the
+        # optional [prefix]/[postfix] arguments are prose, so a language
+        # name there IS still flagged (``\citep[R package by][]{key}``).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"See \citep[R package by][]{smith2020}." "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_markup_001, src)) == 1
+
     def test_skip_inside_code_macro(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

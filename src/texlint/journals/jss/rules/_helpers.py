@@ -534,6 +534,13 @@ def _is_in_prose_context(ancestors: Sequence[Any]) -> bool:
         return False
     if _is_inside_math(ancestors):
         return False
+    # Delimiters of the nearest enclosing group (ancestors are outermost
+    # first, so the last group is the innermost). Used to tell a citation's
+    # mandatory ``{key}`` arg from its optional ``[prefix]`` / ``[postfix]``.
+    nearest_group_delims = None
+    for anc in ancestors:
+        if isinstance(anc, LatexGroupNode):
+            nearest_group_delims = getattr(anc, "delimiters", None)
     for anc in ancestors:
         if isinstance(anc, LatexMacroNode):
             if anc.macroname in _MARKUP_MACROS:
@@ -541,5 +548,15 @@ def _is_in_prose_context(ancestors: Sequence[Any]) -> bool:
             if anc.macroname in _SECTION_MACROS:
                 return False
             if anc.macroname in _META_MACROS:
+                return False
+            # A citation's MANDATORY ``{key}`` argument is a BibTeX key, not
+            # prose — a key like ``R:2019`` / ``R:Chambers:1998`` must not be
+            # linted for \proglang / \pkg / \code (JSS-MARKUP-001/002/003).
+            # The OPTIONAL ``[prefix]`` / ``[postfix]`` arguments ARE prose
+            # (e.g. ``\citep[R package by][]{key}``) and stay linted.
+            if (
+                anc.macroname in _CITE_MACROS_FOR_SCOPE
+                and nearest_group_delims == ("{", "}")
+            ):
                 return False
     return True
