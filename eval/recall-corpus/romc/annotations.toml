@@ -24,12 +24,6 @@ date = "2026-06-28"
 notes = "Seeded from precision review on 2026-06-17: 55 confirmed-TP entries to verify, 0 reviewed FPs recorded below."
 
 [[violations]]
-rule_id = "JSS-REFS-003"
-file = "jss4678.bib"
-line = 13
-comment = 'Lintusaari2017 — DOI 10.1093/sysbio/syw077 found on Crossref (title similarity 1.00); add to the entry as doi="10.1093/sysbio/syw077".'
-
-[[violations]]
 rule_id = "JSS-NAME-002"
 file = "jss4678.bib"
 line = 43
@@ -42,22 +36,10 @@ line = 43
 comment = 'Marin2012 — DOI 10.1007/s11222-011-9288-2 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/s11222-011-9288-2".'
 
 [[violations]]
-rule_id = "JSS-REFS-003"
-file = "jss4678.bib"
-line = 118
-comment = 'Cranmer2020 — DOI 10.1073/pnas.1912789117 found on Crossref (title similarity 1.00); add to the entry as doi="10.1073/pnas.1912789117".'
-
-[[violations]]
 rule_id = "JSS-NAME-002"
 file = "jss4678.bib"
 line = 143
 comment = 'Should be "Springer-Verlag" for publisher'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "jss4678.bib"
-line = 143
-comment = 'Blum2010 — DOI 10.1007/s11222-009-9116-0 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/s11222-009-9116-0".'
 
 [[violations]]
 rule_id = "JSS-REFS-007"

@@ -1455,12 +1455,6 @@ line = 27
 comment = 'pkg:ICE — DOI 10.32614/CRAN.package.ICE registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.ICE".'
 
 [[violations]]
-rule_id = "JSS-REFS-003"
-file = "mlt.bib"
-line = 190
-comment = 'boxcox_1964 — DOI 10.1111/j.2517-6161.1964.tb00553.x found on Crossref (title similarity 1.00); add to the entry as doi="10.1111/j.2517-6161.1964.tb00553.x".'
-
-[[violations]]
 rule_id = "JSS-REFS-006"
 file = "mlt.bib"
 line = 221

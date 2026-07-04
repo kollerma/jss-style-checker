@@ -563,18 +563,6 @@ comment = 'anderson2014 — DOI exists on Crossref but is missing from the entry
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 10
-comment = 'JSSv063i15 (spTimer) — JSS article DOI 10.18637/jss.v063.i15 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 20
-comment = 'JSSv067i01 (lme4) — JSS article DOI 10.18637/jss.v067.i01 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 32
 comment = 'bernardinelli1995 — DOI exists on Crossref but is missing from the entry.'
 
@@ -587,32 +575,8 @@ comment = 'besag1991 — DOI exists on Crossref but is missing from the entry.'
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 50
-comment = 'besag1999 — Wiley DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 60
-comment = 'bivand2013 — DOI exists on Crossref but is missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 68
-comment = 'bivand2015 — JSS article DOI 10.18637/jss.v063.i18 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 79
 comment = 'carbayesdata — R package archive DOI exists on Crossref / Zenodo; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 87
-comment = 'cascsim — R package archive DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-REFS-004"
@@ -625,12 +589,6 @@ rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
 line = 95
 comment = 'celeux2006 — DOI exists on Crossref but is missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 104
-comment = 'charras2012 — Biostatistics article DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -659,32 +617,14 @@ comment = 'dplyr2015 — R package archive DOI exists on Crossref; missing from 
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 151
-comment = 'JSSv027i02 (plm) — JSS article DOI 10.18637/jss.v027.i02 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 162
 comment = 'eddelbuettel2011 — DOI exists on Crossref but is missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 172
-comment = 'JSSv063i13 (spBayes) — JSS article DOI 10.18637/jss.v063.i13 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 182
 comment = 'gelman2013 — Chapman & Hall/CRC book DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 191
-comment = 'gerber2015 — JSS article DOI 10.18637/jss.v063.c01 exists; bib has only the URL.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -737,12 +677,6 @@ comment = 'haining2010 has 7 authors (Haining, Li, Maheswaran, Blangiardo, Law, 
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 237
-comment = 'haining2010 — DOI is recorded but in the wrong field: pages = "123-131, DOI:10.1016/j.sste.2010.03.006" includes the DOI inline. Should be moved to a proper doi= field.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 246
 comment = 'huang2013 — Bayesian Analysis article DOI exists on Crossref; missing from the entry.'
 
@@ -763,12 +697,6 @@ rule_id = "JSS-REFS-004"
 file = "JSS2728.bib"
 line = 264
 comment = '"leaflet" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 273
-comment = 'lee2009 — Biostatistics article DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -815,20 +743,8 @@ comment = 'leroux2000 — DOI exists but in the wrong field: url = "http://dx.do
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 357
-comment = 'li2012 — Biostatistics article DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 367
 comment = 'lunn2009 — Statistics in Medicine article (Wiley DOI) exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 376
-comment = 'maptools2015 — R package archive DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-HOUSE-002"
@@ -851,12 +767,6 @@ comment = 'matrixcalc2012 — R package archive DOI exists on Crossref; missing 
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 403
-comment = 'millo2012 (splm) — JSS article DOI 10.18637/jss.v047.i01 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 415
 comment = 'moran1950 — Biometrika DOI exists on Crossref; missing from the entry.'
 
@@ -875,18 +785,6 @@ comment = 'napier2018 — Biostatistics article (Oxford DOI) exists on Crossref;
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 444
-comment = 'paul2016 — entry is malformed: the title field contains the URL "http://CRAN.R-project.org/package=surveillance"; this is also a missing-DOI case for the surveillance package.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 450
-comment = 'pinheiro2015 (nlme) — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 458
 comment = 'R — DOI exists on Crossref for the R Manual; missing from the entry.'
 
@@ -895,12 +793,6 @@ rule_id = "JSS-NAME-002"
 file = "JSS2728.bib"
 line = 476
 comment = 'robert2010 publisher = "Springer" — JSS canonical form is "Springer-Verlag" (matches the convention applied to bivand2013, leroux2000 etc. in this same bib).'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 476
-comment = 'robert2010 — Springer book DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -923,12 +815,6 @@ comment = 'rue2009 — JRSS B article (Wiley DOI) exists on Crossref; missing fr
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 504
-comment = 'GMRFbook (Rue & Held) — Chapman & Hall book; DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
 line = 515
 comment = 'rushworth2014 — Spatial and Spatio-temporal Epidemiology article (Elsevier DOI) exists on Crossref; missing from the entry.'
 
@@ -943,12 +829,6 @@ rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
 line = 524
 comment = 'rushworth2016 — JRSS C article (Wiley DOI) exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 533
-comment = 'schabenberger2009 — R package archive DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -1009,12 +889,6 @@ rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
 line = 595
 comment = 'truncdist2012 — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 603
-comment = 'ugarte2004 — Biometrical Journal DOI exists on Crossref; missing from the entry.'
 
 # -------------------------------------------------------------------
 # XREF-004 sweep (post-annotation): equations with labels that exist

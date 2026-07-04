@@ -659,12 +659,6 @@ comment = 'rhg — @book entry, no doi field; DOI 10.1016/B978-0-12-088799-6.X50
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "jss816.bib"
-line = 472
-comment = 'asdar — no doi field; doi 10.1007/978-1-4614-7618-4 is available on Crossref.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "jss816.bib"
 line = 481
 comment = 'calenge — no doi field; doi 10.1016/j.ecoinf.2008.10.002 is available on Crossref.'
 
