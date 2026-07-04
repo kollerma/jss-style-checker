@@ -26,8 +26,14 @@ from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
 # Entry types that should carry a DOI per article.tex:421.
+#
+# ``manual`` is included because CRAN R-package ``@Manual`` entries have a
+# guaranteed registered DOI of the form ``10.32614/CRAN.package.*``. Kept
+# to ``manual`` only — techreport/misc/inbook are less certain and carry a
+# higher precision risk. REFS-003 is advisory ("add a doi if available"),
+# so firing on a doi-less @manual is low-risk.
 _DOI_ENTRY_TYPES: frozenset[str] = frozenset(
-    {"article", "inproceedings", "incollection", "book"}
+    {"article", "inproceedings", "incollection", "book", "manual"}
 )
 
 # CrossRef and the DOI system became the de-facto standard around 2000;

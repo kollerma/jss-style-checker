@@ -335,11 +335,15 @@ def _iter_referenced_entries(doc: Any) -> Iterator[tuple[Any, Any]]:
                 yield bib, entry
         return
     cited, include_all = _collect_cited_keys(doc)
+    # BibTeX citation keys are case-insensitive: \cite{Foo} matches
+    # @article{foo,...}. Lowercase both sides of the membership test so
+    # the "is this entry cited?" gate doesn't miss case-mismatched keys.
+    cited_lower = {key.lower() for key in cited}
     for bib in bib_files:
         if bib.library is None:
             continue
         for entry in getattr(bib.library, "entries", ()) or ():
-            if include_all or entry.key in cited:
+            if include_all or (entry.key or "").lower() in cited_lower:
                 yield bib, entry
 
 
