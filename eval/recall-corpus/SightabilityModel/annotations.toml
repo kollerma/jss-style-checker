@@ -1,0 +1,354 @@
+# Hand-annotated ground truth for paper "SightabilityModel".
+#
+# Read the rendered manuscript end-to-end and record EVERY
+# JSS-guide violation. Identity tuple is (rule_id, file, line);
+# column does NOT participate. See ../README.md for the protocol.
+#
+# Goal 2 (rule coverage): rich source of CITE-004 (thin -> measurable).
+# NOTE on that goal: an end-to-end read found ZERO hardcoded author-year
+# citations — the manuscript uses natbib (\citet/\citep) consistently
+# throughout. The V2-README projection of "~14 CITE-004 firings" does not
+# hold for this paper (it predates the tightened CITE-004). This paper's
+# real coverage value is XREF-004 (11 firings) and OPER-003 (5 firings).
+#
+# This file was SEEDED from precision-review verdicts (eval.db,
+# 2026-06-17) and then fully verified by an independent end-to-end read
+# on 2026-07-03: every seeded true positive was re-checked against the
+# source, the false negatives the linter/seed missed were added, and two
+# seeded entries that are actually linter over-fires were demoted to the
+# reviewed-FP section at the bottom.
+#
+# JSS-REFS-003 is populated separately by
+# `python -m eval.crossref_doi_lookup` (records the actual DOI); those
+# entries are preserved verbatim from the seed and NOT hand-edited.
+
+[meta]
+paper_id = "SightabilityModel"
+annotator = "Manuel Koller"
+date = "2026-07-03"
+notes = '''
+Verified all 26 seeded TPs and added the false negatives from an independent read. 
+
+Changes vs. seed: 
+
+(1) added CAP-004:40 and CODE-003 585/602/642/654/753 — real violations the current
+    linter catches but the 2026-06-17 seed (older rules) omitted; 
+(2) added 6 genuine false negatives the linter still misses -
+    OPER-004 434/667/674/676 (literal lowercase `var(`/`cov(` in math; 
+    OPER-004 only detects \\mathrm{}/\\text{} macro  forms), 
+    MARKUP-002:681 (bare `splines` package), CODE-003:533 (`observed~1`; 
+    the CODE-003 operator set excludes `~`);
+(3) demoted CAP-002:133 and REFS-006:389 to the reviewed-FP section (linter over-fires
+    — see bottom); 
+(4) removed the bogus XREF-004:278 FP note — SSvar is a genuine orphan-label TP
+    (its eqnarray DOES number rows 2-3; the earlier qwen3 'eqnarray doesn't number'
+    verdict was wrong). 
+    
+Secondary-vignette review decisions outside this recall surface were omitted from the
+seed and remain out of scope.
+'''
+
+[[violations]]
+rule_id = "JSS-CAP-004"
+file = "a-SightabilityModel.Rnw"
+line = 40
+comment = "\\Keywords{} first entry 'abundance estimation' starts lowercase; JSS keywords are sentence case (capitalise the first word). \\Plainkeywords has the same defect."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 201
+comment = "eq. label 'thetahat' is never \\ref'd -> orphan numbered equation."
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "a-SightabilityModel.Rnw"
+line = 214
+comment = "blank line after the varthetahat/covthetahat eqnarray (line 220)."
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "a-SightabilityModel.Rnw"
+line = 233
+comment = "blank line before the tauhat equation (line 232)."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 233
+comment = "eq. label 'tauhat' is never \\ref'd -> orphan numbered equation."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 278
+comment = "eqnarray rows 2-3 ARE numbered; label 'SSvar' (the V_s row) is never \\ref'd."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 299
+comment = "numbered eqnarray (V_2) carries no \\label and is never referenced."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 311
+comment = "numbered eqnarray (V_1 solution) carries no \\label and is never referenced."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 328
+comment = "numbered eqnarray (v_1, v_2) carries no \\label and is never referenced."
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "a-SightabilityModel.Rnw"
+line = 339
+comment = "blank line after the v_s' eqnarray (line 344)."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 339
+comment = "numbered eqnarray (v_s') carries no \\label and is never referenced."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 362
+comment = "numbered equation (Var tau_LR decomposition) carries no \\label and is never referenced."
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "a-SightabilityModel.Rnw"
+line = 374
+comment = "blank line after the V_m eqnarray (line 381)."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 374
+comment = "numbered eqnarray (V_m) carries no \\label and is never referenced."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 383
+comment = "eq. label 'vm' is never \\ref'd -> orphan numbered equation."
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "a-SightabilityModel.Rnw"
+line = 401
+comment = "blank line after the v_s*/v_d* eqnarray (line 409)."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 401
+comment = "numbered eqnarray (v_s*, v_d*) carries no \\label and is never referenced."
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "a-SightabilityModel.Rnw"
+line = 429
+comment = "numbered eqnarray (LCL, UCL) carries no \\label and is never referenced."
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "a-SightabilityModel.Rnw"
+line = 434
+comment = "literal `var(\\hat{\\tau})` in $cv^2 = ...$ should be \\VAR."
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "a-SightabilityModel.Rnw"
+line = 496
+comment = "CodeInput chunk contains the comment '# first 5 observations'; comments belong in the LaTeX prose."
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 533
+comment = 'inline \code{observed~1} — formula operator `~` needs spaces (`observed ~ 1`); the paper spaces it everywhere else.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 585
+comment = "chunk: `tau.hats<-round(...)` (line 596) — no spaces around `<-`."
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 602
+comment = "chunk: `naive.tau.hats<-round(...)` (line 608) — no spaces around `<-`."
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 642
+comment = "chunk: `vdiff<-vardiff(...)` (line 650) — no spaces around `<-`."
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 654
+comment = "chunk: `naive<-est.2006$est[2] + ...` (line 655) — no spaces around `<-`."
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "a-SightabilityModel.Rnw"
+line = 667
+comment = "literal `var(log(...))` should be \\VAR."
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "a-SightabilityModel.Rnw"
+line = 674
+comment = "literal `var(x+y) = var(x) + var(y) + 2cov(x,y)` should use \\VAR/\\COV."
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "a-SightabilityModel.Rnw"
+line = 676
+comment = "literal `var(x-y) = var(x)+var(y)-2cov(x,y)` should use \\VAR/\\COV."
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "a-SightabilityModel.Rnw"
+line = 681
+comment = "'the splines package' — the R package name should be \\pkg{splines}"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 740
+comment = "chunk: `sampinfo<-data.frame(nh = c(6, 23, 11), Nh = c(6, 27, 65), stratum=c(1,2,3))` (line 741-742) — `<-`, `stratum=`, and comma spacing."
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 750
+comment = 'inline \code{bet=beta.g} — `=` needs spaces (`bet = beta.g`).'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 751
+comment = 'inline \code{varbet=varbeta.g} — `=` needs spaces (`varbet = varbeta.g`).'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 753
+comment = "chunk: `goat.est<-Sight.Est(...)` (line 754) — no spaces around `<-`."
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "a-SightabilityModel.Rnw"
+line = 785
+comment = "chunk: `sdat=subset(exp.m, year == 2005)` (line 793) — `sdat=` needs spaces."
+
+[[violations]]
+rule_id = "JSS-STRUCT-001"
+file = "a-SightabilityModel.Rnw"
+line = 804
+comment = "manuscript closes with '\\section{Future work}' then Acknowledgements; there is no Summary/Conclusions/Discussion section before the bibliography."
+
+[[violations]]
+rule_id = "JSS-STRUCT-002"
+file = "a-SightabilityModel.Rnw"
+line = 821
+comment = 'section title uses British "Acknowledgements"; JSS house style is American "Acknowledgments".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 10
+comment = 'Fiebergjss — DOI 10.18637/jss.v051.i09 found on Crossref (title similarity 0.91); add to the entry as doi="10.18637/jss.v051.i09".'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "vignette.bib"
+line = 10
+comment = "Fiebergjss title brace-protects `{R} {SightabilityModel}` but should use \\proglang{R} \\pkg{SightabilityModel}."
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "vignette.bib"
+line = 34
+comment = "RCDT2010 title 'R: A Language and Environment...' — the bare language name should be \\proglang{R}."
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 44
+comment = 'burnham2002model — DOI 10.2307/3802723 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/3802723".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 71
+comment = 'Bodie1995 — DOI 10.2307/3801964 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/3801964".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 130
+comment = 'CoganDief1998 — DOI 10.2307/3802288 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/3802288".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 162
+comment = 'Lubow2002 — DOI 10.2307/3803141 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/3803141".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 211
+comment = 'RoyleDorazio — DOI 10.1007/s10336-010-0619-4 found on Crossref (title similarity 0.99); add to the entry as doi="10.1007/s10336-010-0619-4".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 235
+comment = 'samuel1992 — DOI 10.2307/3809465 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/3809465".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 278
+comment = 'samuel1987 — DOI 10.2307/3801280 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/3801280".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 296
+comment = 'SS1989 — DOI 10.2307/2531486 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/2531486".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "vignette.bib"
+line = 343
+comment = 'udevitz2006 — DOI 10.2193/0091-7648(2006)34[732:eoasmf]2.0.co;2 found on Crossref (title similarity 1.00); add to the entry as doi="10.2193/0091-7648(2006)34[732:eoasmf]2.0.co;2".'
+
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# ---------------------------------------------------------
+#   JSS-CAP-002  a-SightabilityModel.Rnw:133 — "Modified Horvitz-Thompson
+#     estimator" IS correct sentence case; "Horvitz-Thompson" is a
+#     well-known eponym. CAP-002 penalises it because the compound is not
+#     in its proper-noun set (see capitalization.py:696-705, un-anchored
+#     compound run). Demoted from the 2026-06-17 seed (ai:bonsai).
+#   JSS-REFS-006  vignette.bib:389 — Leban2007 title "Program Aerial
+#     Survey. Version 1, beta 6.1.4". "beta" is a lowercase software
+#     release-stage qualifier, not a title-case defect; the title proper
+#     ("Program Aerial Survey") is correctly capitalised. The loose
+#     heuristic over-fires on the version label. Demoted from the seed
+#     (ai:bonsai; its comment "Title starts with lowercase word 'beta'"
+#     is also factually wrong — the title starts with "Program").
