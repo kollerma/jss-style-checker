@@ -613,6 +613,40 @@ class TestMarkup001ContextGuards:
         src = _wrap("\\def \\calC {\\mathcal C}\nWe implement it in R for speed.")
         assert len(run_rule(jss_markup_001, src)) == 1
 
+    # -- macro-definition BODIES (head not at line start / multi-line) - #
+    # The line-start guard above misses defs that are indented behind
+    # other content or split across lines; the body-scope guard catches
+    # the language letters inside their argument/body regardless.
+
+    def test_def_body_letter_not_at_line_start_silent(self, run_rule):
+        # ``\def`` behind other content on the same line.
+        src = _wrap("Preamble \\def\\R{the R value here}")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_newcommand_body_letter_silent(self, run_rule):
+        src = _wrap("\\@ifundefined{Rx}{\\newcommand{\\Rx}{use R here}}{}")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_newcolumntype_name_letter_silent(self, run_rule):
+        src = _wrap("Text before \\newcolumntype{C}[1]{>{\\centering}p{#1}}")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_declaremathoperator_multiline_body_silent(self, run_rule):
+        # Head on one line, letter-bearing body on the next (with a
+        # ``%`` comment continuation) — still inside the def body.
+        src = _wrap("\\DeclareMathOperator%\n{\\Rop}{R}")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_multiline_newcommand_body_silent(self, run_rule):
+        src = _wrap("\\newcommand{\\Rp}%\n{written in R code}")
+        assert run_rule(jss_markup_001, src) == []
+
+    def test_bare_letter_after_def_body_still_fires(self, run_rule):
+        # Regression guard: a genuine bare ``R`` in ordinary prose that
+        # merely FOLLOWS a definition (outside its braces) must still fire.
+        src = _wrap("Preamble \\def\\Q{q}\nWe rewrote the core in R for speed.")
+        assert len(run_rule(jss_markup_001, src)) == 1
+
     # -- CRAN expansion: NOT guarded ----------------------------------- #
 
     def test_cran_expansion_fires(self, run_rule):
