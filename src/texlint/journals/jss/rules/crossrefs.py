@@ -548,13 +548,6 @@ def check_jss_xref_004(
                 continue
             if node.environmentname not in _NUMBERED_EQ_ENVS:
                 continue
-            # Inner numbered envs of a ``subequations`` block share the
-            # outer block's ``\label{}`` and are referenced via
-            # ``\eqref{...}`` / ``\subref{...}`` against that label —
-            # they don't need their own and the label-orphan check
-            # below shouldn't fire on the outer either.
-            if _inside_subequations(ancestors):
-                continue
             # ``\tag{...}`` / ``\tag*{...}`` replaces the automatic equation
             # number with a custom label (e.g. ``\tag{\texttt{approx()}}``),
             # so the equation isn't a standard auto-numbered cross-ref
@@ -562,19 +555,31 @@ def check_jss_xref_004(
             # \ref'd (recall-corpus trueskill \tag'd equations).
             if _env_has_tag(node):
                 continue
+            # Multi-line envs (align / eqnarray / gather) number each
+            # ``\\``-delimited row independently, so orphan detection is
+            # per row: a row is a separately-numbered equation and each
+            # violation is attributed to the offending row's own source
+            # line (the orphan ``\label`` line, or the env for a numbered
+            # row with no label at all).
+            if node.environmentname in _MULTILINE_EQ_ENVS:
+                yield from _check_multiline_eq_rows(
+                    tex, node, ancestors, referenced
+                )
+                continue
+            # Single-line envs (equation, multline) carry ONE number.
+            # Inner numbered envs of a ``subequations`` block share the
+            # outer block's ``\label{}`` and are referenced via
+            # ``\eqref{...}`` / ``\subref{...}`` against that label — they
+            # don't need their own, so skip them here (the multi-line
+            # branch handles subequations members with their own labels).
+            if _inside_subequations(ancestors):
+                continue
             label_keys = _env_label_keys(node)
             if not label_keys:
-                # ``\nonumber`` / ``\notag`` inside a single-line equation
-                # env (``equation``, ``multline``) suppresses the equation
-                # number, so the equation isn't a cross-ref target and a
-                # missing ``\label{}`` is not a defect. Multi-line envs
-                # (``align``, ``eqnarray``, ``gather``) carry per-line
-                # numbering — a ``\nonumber`` on one line doesn't unnumber
-                # the others, so they still need their own labels.
-                if (
-                    node.environmentname in {"equation", "multline"}
-                    and _env_has_nonumber(node)
-                ):
+                # ``\nonumber`` / ``\notag`` suppresses the equation number,
+                # so the equation isn't a cross-ref target and a missing
+                # ``\label{}`` is not a defect.
+                if _env_has_nonumber(node):
                     continue
                 yield _violation(
                     tex=tex,
@@ -586,37 +591,206 @@ def check_jss_xref_004(
                     ),
                 )
                 continue
-            # Label(s) present. In a multi-line env (align / eqnarray /
-            # gather) every line is independently numbered, so EACH label
-            # marks a separately-numbered equation that should be
-            # referenced — a sibling line being referenced doesn't excuse
-            # an orphan one (recall-corpus romc eq:1D_example). We only
-            # apply the strict per-label check when the env has no
-            # \nonumber/\notag (which would unnumber a line and make its
-            # label a non-target); otherwise fall back to the conservative
-            # per-env check. Single-line envs (equation, multline) carry a
-            # single number, so one referenced label suffices.
-            if (
-                node.environmentname in _MULTILINE_EQ_ENVS
-                and not _env_has_nonumber(node)
-            ):
-                orphans = [k for k in label_keys if k not in referenced]
-            elif not any(k in referenced for k in label_keys):
-                orphans = label_keys
-            else:
-                orphans = []
-            if orphans:
+            # Label(s) present; a single-line env carries one number, so
+            # one referenced label suffices.
+            if not any(k in referenced for k in label_keys):
                 yield _violation(
                     tex=tex,
                     pos=node.pos,
                     rule_id="JSS-XREF-004",
                     suggestion=(
-                        f"Equation label(s) {', '.join(orphans)!r} "
+                        f"Equation label(s) {', '.join(label_keys)!r} "
                         "are never referenced from the text. Either "
                         "cite the equation via \\ref{} / \\eqref{} or "
                         "suppress the number with \\nonumber."
                     ),
                 )
+
+
+_MISSING_ROW_LABEL_SUGGESTION = (
+    "A numbered equation row carries no \\label{} and can never be "
+    "referenced. Add \\label{eq:<name>} to the row or suppress its number "
+    "with \\nonumber."
+)
+
+
+def _orphan_label_suggestion(key: str) -> str:
+    return (
+        f"Equation label '{key}' is never referenced from the text. Either "
+        "cite the equation via \\ref{} / \\eqref{} or suppress the number "
+        "with \\nonumber."
+    )
+
+
+def _check_multiline_eq_rows(
+    tex: Any, env: Any, ancestors: list[Any], referenced: set[str]
+) -> Iterator[Violation]:
+    """Per-row orphan check for a multi-line equation env.
+
+    Each ``\\``-delimited row of an ``align`` / ``eqnarray`` / ``gather`` is
+    independently numbered unless it carries ``\\nonumber`` / ``\\notag``.
+
+    Line attribution follows the hand-annotated recall corpus, which
+    pinpoints an orphan row only when the env mixes referenced and orphan
+    equations (otherwise the whole block is unreferenced and one report at
+    the env is enough):
+
+    - **subequations members** each carry their OWN number, so an orphan
+      label is reported at its label line; a label-less row shares the
+      outer block's label and is skipped (recall-corpus DBR).
+    - **mixed env** (at least one row IS referenced): each orphan label is
+      reported at its own label line, and a numbered row with no label at
+      all is reported at the env begin (recall-corpus rstpm2 / cusp /
+      SightabilityModel).
+    - **wholly-unreferenced env** (no row is referenced): a single report
+      at the env begin, matching the conservative per-env behaviour the
+      corpus accepts for these blocks (recall-corpus CARBayesST /
+      HardyWeinberg / romc).
+    """
+    in_subeq = _inside_subequations(ancestors)
+    # Row labels of every *numbered* row (``[]`` for a label-less row). An
+    # unnumbered (\nonumber / \notag) row does not step the equation
+    # counter, so a \label{} inside it attaches to the NEXT numbered row —
+    # authors routinely put the label at the top of the env or on a
+    # \nonumber lead line. Carry such labels forward rather than dropping
+    # them, else the following numbered row looks label-less (false
+    # positive: mixtools ``mixturetest``, isotone ``eq:convexAx``).
+    numbered: list[list[tuple[str, int]]] = []
+    pending: list[tuple[str, int]] = []
+    for row in _split_env_rows(tex, env):
+        labels = _row_label_positions(row)
+        if _row_has_nonumber(row):
+            pending.extend(labels)
+            continue
+        numbered.append(pending + labels)
+        pending = []
+    if not numbered:
+        return  # no numbered rows -> nothing that needs a reference
+
+    all_keys = [k for labels in numbered for (k, _pos) in labels]
+    has_referenced = any(k in referenced for k in all_keys)
+    seen_lines: set[int] = set()
+
+    if in_subeq:
+        # Members with their own label are checked; label-less rows share
+        # the outer block's label (the classic subequations carve-out).
+        for labels in numbered:
+            for key, pos in labels:
+                if key in referenced:
+                    continue
+                line = _helpers._lineno_col(tex, pos)[0]
+                if line in seen_lines:
+                    continue
+                seen_lines.add(line)
+                yield _violation(
+                    tex=tex, pos=pos, rule_id="JSS-XREF-004",
+                    suggestion=_orphan_label_suggestion(key),
+                )
+        return
+
+    if not has_referenced:
+        # Whole block is unreferenced (or unlabelled): one report at the env.
+        orphan_keys = [k for k in all_keys if k not in referenced]
+        if orphan_keys:
+            suggestion = (
+                f"Equation label(s) {', '.join(orphan_keys)!r} are never "
+                "referenced from the text. Either cite the equation via "
+                "\\ref{} / \\eqref{} or suppress the number with \\nonumber."
+            )
+        else:
+            suggestion = (
+                "Add \\label{eq:<name>} inside the equation so it can be "
+                "referenced from the text."
+            )
+        yield _violation(
+            tex=tex, pos=env.pos, rule_id="JSS-XREF-004", suggestion=suggestion,
+        )
+        return
+
+    # Mixed env: pinpoint each orphan row.
+    missing_label_reported = False
+    for labels in numbered:
+        if not labels:
+            # Numbered row with no label of its own -> report at env begin.
+            if missing_label_reported:
+                continue
+            line = _helpers._lineno_col(tex, env.pos)[0]
+            if line in seen_lines:
+                continue
+            seen_lines.add(line)
+            missing_label_reported = True
+            yield _violation(
+                tex=tex, pos=env.pos, rule_id="JSS-XREF-004",
+                suggestion=_MISSING_ROW_LABEL_SUGGESTION,
+            )
+            continue
+        for key, pos in labels:
+            if key in referenced:
+                continue
+            line = _helpers._lineno_col(tex, pos)[0]
+            if line in seen_lines:
+                continue
+            seen_lines.add(line)
+            yield _violation(
+                tex=tex, pos=pos, rule_id="JSS-XREF-004",
+                suggestion=_orphan_label_suggestion(key),
+            )
+
+
+def _split_env_rows(tex: Any, env: Any) -> list[list[Any]]:
+    """Split a multi-line equation env body into rows on top-level ``\\``.
+
+    Only the env's direct children are inspected, so a ``\\`` inside a
+    nested group / array (e.g. a ``matrix``) does not split a row.
+    """
+    rows: list[list[Any]] = []
+    current: list[Any] = []
+    for child in env.nodelist or ():
+        if child is None:
+            continue
+        if (
+            isinstance(child, LatexMacroNode)
+            and tex.source[child.pos : child.pos + 2] == "\\\\"
+        ):
+            rows.append(current)
+            current = []
+            continue
+        current.append(child)
+    rows.append(current)
+    return rows
+
+
+def _row_has_nonumber(row: list[Any]) -> bool:
+    for child in _helpers._walk(row):
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _NONUMBER_MACROS
+        ):
+            return True
+    return False
+
+
+def _row_label_positions(row: list[Any]) -> list[tuple[str, int]]:
+    """Return ``(label_key, source_pos)`` for every ``\\label{...}`` in a row."""
+    out: list[tuple[str, int]] = []
+    for child in _helpers._walk(row):
+        if not (
+            isinstance(child, LatexMacroNode)
+            and child.macroname == "label"
+        ):
+            continue
+        argd = getattr(child, "nodeargd", None)
+        if argd is None:
+            continue
+        for arg in argd.argnlist or ():
+            if not isinstance(arg, LatexGroupNode):
+                continue
+            for ch in arg.nodelist or ():
+                if isinstance(ch, LatexCharsNode):
+                    k = ch.chars.strip()
+                    if k:
+                        out.append((k, child.pos))
+    return out
 
 
 _NONUMBER_MACROS: frozenset[str] = frozenset({"nonumber", "notag"})
