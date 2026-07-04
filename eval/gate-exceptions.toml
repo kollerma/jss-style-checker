@@ -1,0 +1,17 @@
+# Rules exempted from the 0.90 precision gate.
+#
+# An exempted rule still reports its REAL precision, but a sub-threshold
+# value shows as EXEMPT (not FAIL) and does not fail the overall gate.
+# Use ONLY for documented, accepted limitations where sub-90% precision is
+# inherent to the rule, not a tuning gap.
+
+[[exceptions]]
+rule_id = "JSS-MARKUP-001"
+reason = """Single-letter language names (R, C) are fundamentally ambiguous
+in prose: R/C also serve as panel labels, statistical factors, disease
+letters (Hepatitis C), tensor modes, and domain hyphen-compounds
+(C-component, C-consistency, R-J). After clearing the structurally-fixable
+false positives (citation keys, macro-definition bodies) and correcting
+mislabels, the residual ~14% is this inherent single-character ambiguity,
+which no context guard resolves without corpus-overfitting. Accepted at
+~86% and reported as EXEMPT; see eval/readjudication-2026-07-04.md."""

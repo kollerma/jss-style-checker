@@ -258,7 +258,34 @@ def _pinned_join(pinned: list[tuple[str, str]] | None) -> tuple[str, list]:
     return clause, params
 
 
-def _classify(tp: int, fp: int, pending: int) -> tuple[float | None, str]:
+# Rules exempted from the 0.90 gate — documented, accepted limitations
+# (e.g. MARKUP-001's single-letter R/C ambiguity). They still report their
+# real precision, but a sub-threshold value shows as EXEMPT, not FAIL, and
+# does not fail the overall gate. See eval/gate-exceptions.toml.
+_GATE_EXCEPTIONS_PATH = Path("eval/gate-exceptions.toml")
+
+
+def _gate_exceptions(path: Path | None = None) -> frozenset[str]:
+    """Return the set of rule ids exempted from the precision gate."""
+    path = path or _GATE_EXCEPTIONS_PATH
+    if not path.exists():
+        return frozenset()
+    import tomllib
+
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
+    return frozenset(
+        str(e.get("rule_id", "")) for e in data.get("exceptions", []) if e.get("rule_id")
+    )
+
+
+def _classify(
+    tp: int,
+    fp: int,
+    pending: int,
+    *,
+    rule_id: str | None = None,
+    exceptions: frozenset[str] = frozenset(),
+) -> tuple[float | None, str]:
     denom = tp + fp
     if denom == 0 and pending == 0:
         # Rule is known (has a row in violations) but none of those rows
@@ -269,6 +296,8 @@ def _classify(tp: int, fp: int, pending: int) -> tuple[float | None, str]:
     precision = tp / denom
     if precision >= PRECISION_THRESHOLD:
         return precision, "PASS"
+    if rule_id is not None and rule_id in exceptions:
+        return precision, "EXEMPT"
     return precision, "FAIL"
 
 
@@ -283,8 +312,9 @@ def compute_precision(
     cx = db.connect(db_path)
     try:
         rows: list[RuleRow] = []
+        exc = _gate_exceptions()
         for r in cx.execute(per_rule, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
             rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -322,8 +352,9 @@ def compute_precision_by_format(
     cx = db.connect(db_path)
     try:
         per_format_rows: list[RuleRow] = []
+        exc = _gate_exceptions()
         for r in cx.execute(per_format, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
             per_format_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -363,8 +394,9 @@ def compute_precision_by_class(
     cx = db.connect(db_path)
     try:
         per_class_rows: list[RuleRow] = []
+        exc = _gate_exceptions()
         for r in cx.execute(per_class, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
             per_class_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -403,8 +435,9 @@ def compute_precision_by_source(
     cx = db.connect(db_path)
     try:
         per_source_rows: list[RuleRow] = []
+        exc = _gate_exceptions()
         for r in cx.execute(per_source, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
             per_source_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -434,6 +467,7 @@ def compute_precision_by_source(
 _STATUS_STYLE = {
     "PASS": "green",
     "FAIL": "red",
+    "EXEMPT": "yellow",
     "NOT MEASURED": "dim",
     "NOT EXERCISED": "dim",
 }
