@@ -20,7 +20,6 @@ from typing import Any
 
 from pylatexenc.latexwalker import (
     LatexCharsNode,
-    LatexEnvironmentNode,
     LatexGroupNode,
     LatexMacroNode,
 )
@@ -38,10 +37,6 @@ _TITLE_STOPWORDS: frozenset[str] = frozenset(
 _SECTION_MACROS: frozenset[str] = frozenset(
     {"section", "section*", "subsection", "subsection*",
      "subsubsection", "subsubsection*"}
-)
-
-_FIGURE_TABLE_ENVS: frozenset[str] = frozenset(
-    {"figure", "figure*", "table", "table*"}
 )
 
 # Proper nouns that recur in JSS-adjacent prose: nationality
@@ -78,39 +73,7 @@ _EXTRA_PROPER_NOUNS: frozenset[str] = frozenset(
     }
 )
 
-# Calendar months — CAP-003-only proper nouns. Months appear in
-# time-series captions ("seasonal component over January, March...")
-# where the rule should treat them as proper nouns. They MUST NOT
-# leak into CAP-002 (section titles): cran_np/np_faq has 51
-# changelog headings of the form "Changes from Version X.Y to X.Z
-# [12-Mar-2023]" where Mar would otherwise become the second-offender
-# anchor — adding months to CAP-002's set silences all 51 TPs.
-#
-# Also CAP-003-only: cross-reference nouns. Inside sentence-style
-# captions, "Figure 3", "Section 7", "Example 2" retain caps because
-# they're cross-refs to numbered/labelled elements — JSS doesn't
-# downcase those. Restricting these to the caption set protects
-# CAP-002, where a section title like "Theorem and Definition"
-# legitimately reads as title-case prose.
-_CAPTION_EXTRA_PROPER_NOUNS: frozenset[str] = frozenset({
-    "January", "February", "March", "April", "May", "June", "July",
-    "August", "September", "October", "November", "December",
-    "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep",
-    "Sept", "Oct", "Nov", "Dec",
-    # Cross-reference nouns (singular + plural)
-    "Figure", "Figures", "Table", "Tables", "Section", "Sections",
-    "Example", "Examples", "Scenario", "Scenarios", "Topic", "Topics",
-    "Part", "Parts", "Algorithm", "Algorithms", "Theorem", "Theorems",
-    "Equation", "Equations", "Chapter", "Chapters", "Step", "Steps",
-    "Phase", "Phases", "Stage", "Stages", "Lemma", "Lemmas",
-    "Proposition", "Propositions", "Corollary", "Corollaries",
-    "Definition", "Definitions", "Appendix", "Appendices",
-})
-
 _PROPER_NOUNS: frozenset[str] = LANGUAGES | R_PACKAGES | _EXTRA_PROPER_NOUNS
-_CAPTION_PROPER_NOUNS: frozenset[str] = (
-    _PROPER_NOUNS | _CAPTION_EXTRA_PROPER_NOUNS
-)
 
 
 # Catalogue-backed factories live in _helpers (one definition for all
@@ -471,101 +434,8 @@ def check_jss_cap_002(
             )
 
 
-# ---------------------------------------------------------------------------
-# JSS-CAP-003 — captions in sentence style
-# ---------------------------------------------------------------------------
-
-
-# Textual citation pattern inside captions: "Author and Coauthor"
-# (optionally preceded by "by " and/or followed by ", YYYY"). Two or
-# more capitalised surnames joined by "and"/"&" are the diagnostic;
-# a single capitalised name doesn't match (those overlap too much
-# with proper nouns referenced as method/eponym names like "Huber").
-_TEXTUAL_CITATION = re.compile(
-    r"\b[A-Z][a-zA-Z]+(?:\s+(?:and|&)\s+[A-Z][a-zA-Z]+)+(?:,\s*\d{4})?\b"
-)
-
-
-def _strip_textual_citations(text: str) -> str:
-    """Remove "Author and Coauthor[, YYYY]" runs from caption text.
-
-    Captions sometimes embed the source ("from Soetaert and Herman,
-    2009" / "by Pollet and Nettle"); the surnames trip the
-    title-style detector even though sentence-style permits them.
-    Stripping the matched span before tokenisation avoids the false
-    positives without lowering recall on captions where the citation
-    is one of several title-style markers (the remaining offenders
-    still fire the rule).
-    """
-    return _TEXTUAL_CITATION.sub(" ", text)
-
-
-# Caption-label prefix: a leading "Capitalised Phrase: " that names
-# the dataset / cohort / approach the figure depicts, followed by a
-# sentence-style description. JSS permits this label form — the
-# descriptive part after the colon is what should be evaluated.
-# The prefix tokens may be hyphenated ("One-dimensional"), digit-
-# bearing ("Group 2"), or all-caps acronyms ("GBSG2"); a stopword
-# (lowercase "of", "and", etc.) inside the prefix breaks the pattern
-# so prose like "Effect of treatment: ..." doesn't match.
-_LABEL_PREFIX = re.compile(
-    r"^\s*("
-    r"[A-Z][A-Za-z0-9'\-]*"
-    r"(?:\s+[A-Z0-9][A-Za-z0-9'\-]*){0,6}"
-    r")\s*:\s+"
-)
-
-
-def _strip_label_prefix(text: str) -> str:
-    """Strip a leading "Capitalised Phrase: " label from a caption.
-
-    Captions often open with a dataset / cohort / approach name
-    followed by a colon and the actual sentence-style description
-    ("Boston Housing: scatterplot of...", "German Breast Cancer
-    Study Group 2: conditional survivor curves..."). The label
-    counts as a proper-noun phrase and shouldn't trip the
-    title-style detector. Only the body after the colon is the
-    caption proper.
-    """
-    return _LABEL_PREFIX.sub("", text, count=1)
-
-
-def _preprocess_caption(text: str) -> str:
-    """Caption-text preprocessor: strip leading label prefix, then
-    embedded textual citations. Order matters — the citation
-    pattern can otherwise consume the first word of the body."""
-    return _strip_textual_citations(_strip_label_prefix(text))
-
-
-def check_jss_cap_003(
-    doc: ParsedDocument, _cfg: ToolConfig
-) -> Iterator[Violation]:
-    for tex in doc.all_tex_like():
-        for node, ancestors, parent, idx in _helpers._walk_with_context(
-            tex.nodes
-        ):
-            if not (
-                isinstance(node, LatexMacroNode)
-                and node.macroname == "caption"
-            ):
-                continue
-            if not any(
-                isinstance(a, LatexEnvironmentNode)
-                and a.environmentname in _FIGURE_TABLE_ENVS
-                for a in ancestors
-            ):
-                continue
-            group = _first_group_arg(node, parent, idx)
-            if group is None:
-                continue
-            yield from _check_sentence_style(
-                tex, node.pos, group, "JSS-CAP-003",
-                "Use sentence style in the caption (capitalise only the "
-                "first word; proper names remain capitalised).",
-                collapse_runs=True,
-                proper_nouns=_CAPTION_PROPER_NOUNS,
-                text_preprocessor=_preprocess_caption,
-            )
+# JSS-CAP-003 (captions in sentence style) retired 2026-07-04 — see
+# retired_rule_ids note in specs/003-jss-rule-catalogue/catalogue.yaml.
 
 
 def _is_code_identifier(word: str) -> bool:
@@ -887,8 +757,7 @@ _rule = _helpers.make_rule
 
 jss_cap_001 = _rule("JSS-CAP-001", check_jss_cap_001)
 jss_cap_002 = _rule("JSS-CAP-002", check_jss_cap_002)
-jss_cap_003 = _rule("JSS-CAP-003", check_jss_cap_003)
 jss_cap_004 = _rule("JSS-CAP-004", check_jss_cap_004)
 
 
-rules: tuple[Rule, ...] = (jss_cap_001, jss_cap_002, jss_cap_003, jss_cap_004)
+rules: tuple[Rule, ...] = (jss_cap_001, jss_cap_002, jss_cap_004)

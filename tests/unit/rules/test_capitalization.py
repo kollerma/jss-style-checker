@@ -8,11 +8,9 @@ from texlint.api import ParsedDocument, ParsedTexFile, ToolConfig
 from texlint.journals.jss.rules.capitalization import (
     check_jss_cap_001,
     check_jss_cap_002,
-    check_jss_cap_003,
     check_jss_cap_004,
     jss_cap_001,
     jss_cap_002,
-    jss_cap_003,
     jss_cap_004,
     rules,
 )
@@ -25,12 +23,13 @@ def _tex(name: str) -> str:
     return (FIXTURE_DIR / name).read_text(encoding="utf-8")
 
 
-def test_rules_tuple_has_four_rules():
-    assert len(rules) == 4
+def test_rules_tuple_has_three_rules():
+    assert len(rules) == 3
 
 
 def test_rules_tuple_ids():
-    assert {r.id for r in rules} == {f"JSS-CAP-00{i}" for i in range(1, 5)}
+    # JSS-CAP-003 was retired 2026-07-04 (see catalogue.yaml).
+    assert {r.id for r in rules} == {"JSS-CAP-001", "JSS-CAP-002", "JSS-CAP-004"}
 
 
 # ---------------------------------------------------------------------------
@@ -162,157 +161,6 @@ class TestCap002:
     def test_section_without_group_silent(self, run_rule):
         src = r"\section"
         assert run_rule(jss_cap_002, src) == []
-
-
-# ---------------------------------------------------------------------------
-# JSS-CAP-003 — sentence style on captions
-# ---------------------------------------------------------------------------
-
-
-class TestCap003:
-    def test_positive(self, run_rule):
-        violations = run_rule(jss_cap_003, _tex("JSS-CAP-003-bad.tex"))
-        assert len(violations) == 1
-
-    def test_good_silent(self, run_rule):
-        assert run_rule(jss_cap_003, _tex("JSS-CAP-003-good.tex")) == []
-
-    def test_caption_outside_figure_silent(self, run_rule):
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\caption{Some Title Case Caption Here.}\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_caption_without_group_silent(self, run_rule):
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}" "\n"
-            r"\begin{figure}\caption\end{figure}" "\n"
-            r"\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_hyphen_compound_proper_noun_silent(self, run_rule):
-        # Hardy-Weinberg / Bradley-Terry: hyphenated capitalised compounds
-        # are treated as a single proper-noun phrase, so a single such
-        # compound in an otherwise-sentence-style caption never trips
-        # the ≥2-offender threshold.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{The parabola represents Hardy-Weinberg equilibrium.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_adjacent_capitalised_pair_anchored_silent(self, run_rule):
-        # "Han Chinese" — Chinese is in the proper-noun list, anchoring
-        # the run so Han comes along for free.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{Plot of 225 SNPs from a Han Chinese population.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_plural_abbreviation_silent(self, run_rule):
-        # Plurals like SNPs / EOFs / IDs (caps + lowercase 's') are
-        # recognised as abbreviations, not as offending capitalisation.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{Quality control on SNPs and EOFs across runs.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_long_capital_run_still_fires(self, run_rule):
-        # 4+ consecutive capitalised words is the title-case signal — do
-        # NOT collapse to a "proper-noun phrase".
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{Distribution Of Random Sample Variables Here.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        assert len(run_rule(jss_cap_003, src)) == 1
-
-    def test_calendar_months_silent(self, run_rule):
-        # Months (full names + common abbreviations) are proper nouns;
-        # JSS sentence-style retains their capitalisation. Reproduces
-        # the cluster A FPs from cran_seasonal and similar time-series
-        # vignettes whose captions enumerate calendar months.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{Seasonal component over January, February, March,"
-            r" April, May, June, July, August, September, October, November,"
-            r" and December.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_repeated_proper_noun_counted_once(self, run_rule):
-        # Same compound twice in a caption shouldn't double-count.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{Trajectories from the Rosenzweig-MacArthur model. " "\n"
-            r"Right: Rosenzweig-MacArthur model.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_subfigure_letter_labels_silent(self, run_rule):
-        # Reviewer-confirmed FPs from cran_Langevin and cran_bbl: panel
-        # labels ``(a)`` / ``(b)`` introducing subfigure descriptions
-        # should anchor the post-label word as a sentence-start, the
-        # same way ``(2)`` numbering already does. ``(a) Sketch of a
-        # stochastic process ... (b) its corresponding ...`` is
-        # sentence-style, not title-case.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{(a) Sketch of a stochastic process and (b) its"
-            r" corresponding density.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_subfigure_label_after_period_silent(self, run_rule):
-        # Variant from cran_bbl: caption opens with a sentence, then
-        # ``\n(a) Cross-validation ... (b-d) Comparison ...``. The
-        # period anchors the next sub-sentence and the parens-letter
-        # is transparent as numbering.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{Inference using simulated data. (a) Cross-validation"
-            r" output. (b-d) Comparison of true and inferred parameters.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        assert run_rule(jss_cap_003, src) == []
-
-    def test_boundary_after_inner_punct_still_fires(self, run_rule):
-        # Reviewer-confirmed FP from cran_robustlmm and cran_poweRlaw:
-        # a caption containing ``... (solid: mean, dashed: quartiles).
-        # Plot corresponds to ...`` should treat ``Plot`` as a
-        # sentence-start. Earlier the greedy ``(\S+)`` capture in the
-        # boundary regex consumed the trailing ``).`` and the final
-        # period was no longer available to anchor the next clause.
-        src = (
-            r"\documentclass[article]{jss}" "\n"
-            r"\begin{document}\begin{figure}" "\n"
-            r"\caption{Mean values across designs. The yellow line shows"
-            r" the classical fit (solid: mean, dashed: quartiles). Plot"
-            r" corresponds to the figure.}" "\n"
-            r"\end{figure}\end{document}"
-        )
-        # ``Mean`` is the first word; ``Plot`` is post-period sentence-
-        # start; no other capitalised offenders remain → silent.
-        assert run_rule(jss_cap_003, src) == []
 
 
 # ---------------------------------------------------------------------------
@@ -504,6 +352,6 @@ def test_empty_tex_silent():
     doc = ParsedDocument(tex_files=(tex,))
     for check in (
         check_jss_cap_001, check_jss_cap_002,
-        check_jss_cap_003, check_jss_cap_004,
+        check_jss_cap_004,
     ):
         assert list(check(doc, ToolConfig())) == []

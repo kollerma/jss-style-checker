@@ -122,11 +122,13 @@ def test_recall_directory_layout() -> None:
 
 
 def test_recall_at_least_one_plant_per_target_rule() -> None:
-    """The four iter-71 FAIL rules must each have ≥1 plant — otherwise
+    """The iter-71 FAIL rules must each have ≥1 plant — otherwise
     the recall metric is missing for the rules where it matters most.
+    (JSS-CAP-003 was retired 2026-07-04 — unreliable in both directions —
+    so it is no longer a target rule.)
     """
     target_rules = {
-        "JSS-CAP-003", "JSS-TYPO-004", "JSS-BIBTEX-002", "JSS-NAME-001",
+        "JSS-TYPO-004", "JSS-BIBTEX-002", "JSS-NAME-001",
     }
     plants_per_rule: dict[str, int] = {}
     for rule_id, _plant, _expected in _PLANTS:

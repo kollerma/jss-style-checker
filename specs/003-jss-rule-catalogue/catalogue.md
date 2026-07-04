@@ -4,7 +4,7 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 61  
+**Rule count**: 60  
 **Category count**: 15
 
 ---
@@ -94,13 +94,12 @@ _naming_ — 2 rule(s)
 
 ## Capitalization
 
-_capitalization_ — 4 rule(s)
+_capitalization_ — 3 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
 | `JSS-CAP-001` | warning | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-CAP-002` | warning | Section titles are in sentence style (first word capitalised; others lowercase except proper names) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-CAP-003` | info | Figure / table captions are in sentence style | style_guide | `#how-to-format-figuretable-captions` | — |
 | `JSS-CAP-004` | warning | \Keywords{} is comma-separated and in sentence case | article_tex | `article.tex:48` | — |
 
 ## Typography
@@ -1557,38 +1556,6 @@ word after colon/hyphen; proper names remain uppercase" — the rule enforces th
 capital-after-hyphen rule as part of the sentence-style check. Heuristic — flag section titles where two
 or more words after the first are capitalised without being proper names (cross-checked against
 terms.LANGUAGES and terms.R_PACKAGES). Tuned via the precision gate.
-
----
-
-### JSS-CAP-003
-
-**Category**: `capitalization` · **Severity**: `info` · **Auto-fixable**: no
-
-Figure / table captions are in sentence style
-
-**Authority**: `style_guide` → `#how-to-format-figuretable-captions`
-
-**Inspects**: `tex_files`
-
-<details>
-<summary>Example violation</summary>
-
-```latex
-\caption{\label{fig:quine} Frequency Distribution For Number Of Days Absent.}
-```
-
-</details>
-
-<details>
-<summary>Example fix</summary>
-
-```latex
-\caption{\label{fig:quine} Frequency distribution for number of days absent.}
-```
-
-</details>
-
-**Notes**: Style guide SG-010 and SG-013. Same sentence-style semantics as JSS-CAP-002 applied to captions.
 
 ---
 
