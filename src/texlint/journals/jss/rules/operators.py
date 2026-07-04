@@ -11,7 +11,12 @@ Rules:
     before or after; carve-out: equation body ending with a period
     closes a sentence and doesn't need the ``%`` wrapper.
   - JSS-OPER-004 — expectation / variance / covariance / probability use
-    jss.cls shortcuts ``\\E / \\VAR / \\COV / \\Prob``.
+    jss.cls shortcuts ``\\E / \\VAR / \\COV / \\Prob``. Beyond the macro
+    forms (``\\mathrm{var}``, ``\\Pr``, ...) this also flags, in math
+    mode, bare literal tokens (``var(``, ``Cov(``, uppercase ``P(``) and
+    paper-defined aliases whose ``\\newcommand`` body resolves to a
+    probability / expectation glyph (CUB's ``\\p{}``, mlt.docreg's
+    ``\\Ex`` / ``\\Prob``) — both the definition site and each use.
 """
 
 from __future__ import annotations
@@ -56,6 +61,48 @@ _NONCANON_PROB_MACROS: frozenset[str] = frozenset(
 _NONCANON_PROB_ARGS: frozenset[str] = frozenset(
     {"E", "Var", "VAR", "var", "Cov", "COV", "cov", "P", "Prob"}
 )
+
+# --- OPER-004 literal-token detection (in math mode only) -----------------
+#
+# Beyond the macro forms above, the corpus writes variance / covariance /
+# probability operators as bare literal tokens: ``var(x)``, ``Cov(a, b)``,
+# ``P(X \le x)``. These are flagged only inside math mode.
+#
+# Phase 1a (low risk): a bare ``var`` / ``cov`` / ``Var`` / ``Cov`` token
+# immediately followed by ``(`` or ``[``. The negative lookbehind keeps it
+# a whole token (so ``covariate`` / ``microVar`` don't match).
+_LITERAL_VARCOV_RE: re.Pattern[str] = re.compile(
+    r"(?<![A-Za-z\\])(var|cov|Var|Cov)(?=[(\[])"
+)
+# Phase 1b (moderate risk): a bare uppercase ``P`` immediately followed by
+# ``(`` or ``[``. Guards baked into the pattern: uppercase only (never the
+# lowercase density ``p``); not a subscript label (``A_P(x, y)`` — the
+# ``_`` lookbehind); not part of an identifier / macro (a preceding letter
+# or backslash).
+_LITERAL_PROB_RE: re.Pattern[str] = re.compile(r"(?<![A-Za-z\\_])P(?=[(\[])")
+
+# --- OPER-004 custom-macro resolution (Phase 2) ---------------------------
+#
+# Papers alias probability / expectation operators via ``\newcommand`` &
+# friends: CUB defines ``\p{}`` and mlt.docreg defines ``\Ex`` / ``\Prob``.
+# We pre-scan the definitions, and when a body resolves to a probability
+# (``\mathbb{P}`` / ``\mathsf{P}`` / literal ``Pr(``) or expectation
+# (``\mathbb{E}`` / ``\mathsf{E}``) glyph we record the alias, then flag
+# both the definition site and every use.
+
+# Glyph macros whose single-letter arg marks the operator: ``\mathbb{P}``.
+_PROB_GLYPH_MACROS: frozenset[str] = frozenset({"mathbb", "mathsf"})
+# Macros that introduce / redefine another macro.
+_DEF_MACROS: frozenset[str] = frozenset(
+    {"newcommand", "renewcommand", "providecommand", "def"}
+)
+# jss.cls's own shortcuts. When a paper redefines one of these to a raw
+# glyph we flag the redefinition site but NOT every use (each use already
+# reads as the canonical name; fixing the definition corrects them all).
+# ``Pr`` is intentionally excluded here — it has a dedicated flag_pr path.
+_CANONICAL_PROB_MACROS: frozenset[str] = frozenset({"E", "VAR", "COV", "Prob"})
+# Resolved shortcut → the jss.cls macro named in the violation message.
+_SHORTCUT_MACRO: dict[str, str] = {"Prob": "\\Prob", "E": "\\E"}
 
 
 # Catalogue-backed factories live in _helpers (one definition for all
@@ -384,17 +431,177 @@ def _doc_uses_prob_macro(doc: ParsedDocument) -> bool:
     return False
 
 
+def _macro_first_group_text(macro: Any) -> str:
+    """Text of a macro's first braced-group argument (``\\mathbb{P}`` → 'P')."""
+    argd = getattr(macro, "nodeargd", None)
+    if argd is not None:
+        for arg in argd.argnlist or ():
+            if isinstance(arg, LatexGroupNode):
+                return _helpers._group_text(arg)
+    return ""
+
+
+def _first_macro_name(nodes: Any) -> str | None:
+    """Name of the first macro node in ``nodes`` (the aliased macro)."""
+    for node in nodes or ():
+        if isinstance(node, LatexMacroNode):
+            return node.macroname
+    return None
+
+
+def _resolve_prob_body(body_nodes: Any) -> str | None:
+    """Classify a macro-definition body as a probability / expectation
+    operator glyph.
+
+    Returns ``"Prob"`` for ``\\mathbb{P}`` / ``\\mathsf{P}`` / literal
+    ``Pr(``, ``"E"`` for ``\\mathbb{E}`` / ``\\mathsf{E}``, else ``None``.
+    """
+    for child in _helpers._walk(body_nodes):
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _PROB_GLYPH_MACROS
+        ):
+            arg = _macro_first_group_text(child)
+            if arg == "P":
+                return "Prob"
+            if arg == "E":
+                return "E"
+        elif isinstance(child, LatexCharsNode) and "Pr(" in child.chars:
+            return "Prob"
+    return None
+
+
+def _def_groups(node: Any) -> list[Any]:
+    """Braced-group arguments of a ``\\newcommand``-family definition node."""
+    argd = getattr(node, "nodeargd", None)
+    if argd is None:
+        return []
+    return [a for a in (argd.argnlist or ()) if isinstance(a, LatexGroupNode)]
+
+
+def _parse_prob_def(
+    node: Any, parent: Any, idx: int
+) -> tuple[str | None, str | None]:
+    """Extract ``(alias_name, shortcut)`` from a definition node.
+
+    Handles ``\\newcommand{\\Ex}{\\mathbb{E}}`` (alias / body live in the
+    node's braced-group args) and ``\\def\\Ex{\\mathbb{E}}`` (alias / body
+    are following siblings). Returns ``(None, None)`` when the body is not
+    a probability / expectation glyph.
+    """
+    groups = _def_groups(node)
+    if len(groups) >= 2:
+        alias = _first_macro_name(groups[0].nodelist)
+        return alias, _resolve_prob_body(groups[-1].nodelist)
+    # ``\def`` form: the alias macro and its body group are siblings.
+    alias = None
+    for sib in list(parent)[idx + 1 : idx + 4]:
+        if alias is None and isinstance(sib, LatexMacroNode):
+            alias = sib.macroname
+            continue
+        if isinstance(sib, LatexGroupNode):
+            return alias, _resolve_prob_body(sib.nodelist)
+    return None, None
+
+
+def _collect_prob_aliases(
+    doc: ParsedDocument,
+) -> tuple[dict[str, str], list[tuple[Any, int, str, str]]]:
+    """Pre-scan definitions for probability / expectation aliases.
+
+    Returns ``(aliases, def_sites)`` where ``aliases`` maps a macro name
+    to its resolved shortcut (``"Prob"`` / ``"E"``) and ``def_sites`` lists
+    ``(tex, pos, alias, shortcut)`` for each flaggable definition site.
+    ``\\Pr`` redefinitions are skipped — the dedicated flag_pr path owns
+    them.
+    """
+    aliases: dict[str, str] = {}
+    def_sites: list[tuple[Any, int, str, str]] = []
+    for tex in doc.all_tex_like():
+        for node, _anc, parent, idx in _helpers._walk_with_context(tex.nodes):
+            if not (
+                isinstance(node, LatexMacroNode)
+                and node.macroname in _DEF_MACROS
+            ):
+                continue
+            alias, shortcut = _parse_prob_def(node, parent, idx)
+            if alias is None or shortcut is None or alias == "Pr":
+                continue
+            aliases[alias] = shortcut
+            def_sites.append((tex, node.pos, alias, shortcut))
+    return aliases, def_sites
+
+
 def check_jss_oper_004(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
     flag_pr = _doc_uses_prob_macro(doc)
+    aliases, def_sites = _collect_prob_aliases(doc)
+    # Phase 2 (i): definition / redefinition sites. These live in the
+    # preamble, so they are not math-gated.
+    for tex, pos, alias, shortcut in def_sites:
+        yield _violation(
+            tex=tex,
+            pos=pos,
+            rule_id="JSS-OPER-004",
+            suggestion=(
+                f"'\\{alias}' redefines a probability/expectation operator "
+                f"as a raw glyph; use jss.cls {_SHORTCUT_MACRO[shortcut]}."
+            ),
+        )
     for tex in doc.all_tex_like():
         for node, ancestors, parent, idx in _helpers._walk_with_context(
             tex.nodes
         ):
+            # Phase 1: bare literal operator tokens in math mode.
+            if isinstance(node, LatexCharsNode):
+                if not _helpers._is_inside_math(ancestors):
+                    continue
+                for m in _LITERAL_VARCOV_RE.finditer(node.chars):
+                    token = m.group(1)
+                    shortcut = "\\VAR" if token[0] in "vV" else "\\COV"
+                    yield _violation(
+                        tex=tex,
+                        pos=node.pos + m.start(),
+                        rule_id="JSS-OPER-004",
+                        suggestion=(
+                            f"Use the jss.cls shortcut {shortcut} instead of "
+                            f"a bare '{token}(' operator."
+                        ),
+                    )
+                for m in _LITERAL_PROB_RE.finditer(node.chars):
+                    yield _violation(
+                        tex=tex,
+                        pos=node.pos + m.start(),
+                        rule_id="JSS-OPER-004",
+                        suggestion=(
+                            "Use the jss.cls shortcut \\Prob instead of a "
+                            "bare 'P(' probability operator."
+                        ),
+                    )
+                continue
             if not isinstance(node, LatexMacroNode):
                 continue
             if not _helpers._is_inside_math(ancestors):
+                continue
+            # Phase 2 (ii): uses of a custom probability / expectation
+            # alias. Redefined jss.cls shortcuts (``\Prob`` → ``\mathbb{P}``)
+            # are flagged at the definition site only, not per use.
+            if (
+                node.macroname in aliases
+                and node.macroname not in _CANONICAL_PROB_MACROS
+            ):
+                shortcut = aliases[node.macroname]
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-OPER-004",
+                    suggestion=(
+                        f"'\\{node.macroname}' aliases a probability/"
+                        f"expectation operator; use jss.cls "
+                        f"{_SHORTCUT_MACRO[shortcut]}."
+                    ),
+                )
                 continue
             if node.macroname == "Pr":
                 if flag_pr:
