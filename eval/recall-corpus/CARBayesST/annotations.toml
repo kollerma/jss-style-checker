@@ -888,7 +888,7 @@ comment = 'pinheiro2015 (nlme) — R package archive DOI exists on Crossref; mis
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
 line = 458
-comment = 'R — the R Manual has a DOI on Zenodo (typically 10.5281/zenodo.<id>); missing from the entry.'
+comment = 'R — DOI exists on Crossref for the R Manual; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-NAME-002"
