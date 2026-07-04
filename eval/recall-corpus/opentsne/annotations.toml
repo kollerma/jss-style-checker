@@ -653,4 +653,14 @@ file = "references.bib"
 line = 382
 comment = "Title not in title case"
 
-
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-XREF-004  main.tex:250  — align environment  (ai:qwen3-30b)
+#   JSS-CITE-002  main.tex:371  — PyPI can't be cited just like CRAN can't be either  (human:unknown)
+#   JSS-CITE-002  main.tex:377  — Wrong use of \pkg  (human:unknown)
+#   JSS-MARKUP-001  main.tex:689  — Python is wrapped  (ai:qwen3-30b)
+#   JSS-MARKUP-001  main.tex:699  — no programming language names  (ai:qwen3-30b)

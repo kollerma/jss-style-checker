@@ -1446,4 +1446,13 @@ file = "gaming.bib"
 line = 7007
 comment = "Volume and number fields are repeated"
 
-
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-MARKUP-003  article.tex:137  — \texttt{...} is correct  (ai:qwen3-30b)
+#   JSS-MARKUP-003  article.tex:149  — email in \texttt{}  (ai:qwen3-30b)
+#   JSS-CAP-003  article.tex:911  — ATP is an acronym  (human:unknown)
+#   JSS-MARKUP-003  article.tex:2177  — This is a version number, so does not necessarily have to be wrapped in \code  (human:unknown)

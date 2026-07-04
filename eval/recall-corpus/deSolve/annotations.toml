@@ -891,4 +891,10 @@ file = "integration.bib"
 line = 220
 comment = "Soetaert08 - DOI 10.1007/978-1-4020-8624-3 found on springer.com"
 
-
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-MARKUP-003  deSolve.Rnw:1282  — using \texttt{} instead of \code{}  (ai:qwen3-30b)

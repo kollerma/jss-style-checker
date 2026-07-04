@@ -457,4 +457,11 @@ file = "cusp_papers_jss.bib"
 line = 620
 comment = 'GrasmanEtAl2009 — Article DOI exists on Crossref; missing from the entry.'
 
-
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-XREF-004  Cusp-JSS.Rnw:161  — Line 282 references three equations, referencing (eq:alpharegress) implicitly  (human:unknown)
+#   JSS-XREF-004  Cusp-JSS.Rnw:287  — equations are labeled  (ai:qwen3-30b)

@@ -896,4 +896,10 @@ file = "jss816.bib"
 line = 745
 comment = 'jss816 — title "{spacetime}: Spatio-Temporal Data in {R}" needs \pkg{spacetime} and \proglang{R} markup (currently uses brace-protection only).'
 
-
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-REFS-006  jss816.bib:598  — Title starts with lowercase word 'Maintaining'  (ai:bonsai)

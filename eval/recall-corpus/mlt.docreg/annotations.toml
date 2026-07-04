@@ -1658,4 +1658,12 @@ file = "packages_static.bib"
 line = 85
 comment = 'pkg:VGAM — DOI 10.32614/CRAN.package.VGAM registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.VGAM".'
 
-
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-MARKUP-001  defs.tex:196  — filename foo.R  (ai:/Users/kollerma/Documents/ai/Bonsai-demo/models/Bonsai-8B-mlx)
+#   JSS-MARKUP-001  defs.tex:211  — R is a math symbol, not a programming language name  (ai:/Users/kollerma/Documents/ai/Bonsai-demo/models/Bonsai-8B-mlx)
+#   JSS-MARKUP-003  mlt.Rnw:145  — part of an email address  (human:unknown)

@@ -455,4 +455,10 @@ file = "pmclust.bib"
 line = 177
 comment = '"Rmpi" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
 
-
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-STRUCT-005  pmclust-guide.Rnw:25  — This "and" does not separate two authors but is part of the name of the department  (human:unknown)

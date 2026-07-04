@@ -912,4 +912,11 @@ file = "mdsOpt.ltx"
 line = 1267
 comment = '`(\cite{Leeuw+Mair:2015})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
 
-
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-MARKUP-001  mdsOpt.ltx:543  — A, B, C and D  (ai:qwen3-30b)
+#   JSS-MARKUP-001  mdsOpt.ltx:573  — C as math symbol  (ai:qwen3-30b)
