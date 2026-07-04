@@ -446,18 +446,6 @@ line = 282
 comment = '`\left(\left(\boldsymbol{Q}(t)\circ\boldsymbol{\mathcal{C}}(t)\right)\bm{1}\right)^T` should be `\left(\left(\boldsymbol{Q}(t)\circ\boldsymbol{\mathcal{C}}(t)\right)\bm{1}\right)^\top`'
 
 [[violations]]
-rule_id = "JSS-OPER-004"
-file = "multistate.Rnw"
-line = 304
-comment = '`\text{var}` should use the canonical variance macro `\VAR` (JSS OPER-004).'
-
-[[violations]]
-rule_id = "JSS-OPER-004"
-file = "multistate.Rnw"
-line = 310
-comment = '`\text{var}` should use the canonical variance macro `\VAR` (JSS OPER-004).'
-
-[[violations]]
 rule_id = "JSS-HOUSE-001"
 file = "multistate.Rnw"
 line = 315
