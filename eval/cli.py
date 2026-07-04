@@ -228,6 +228,15 @@ def review_cmd(
     help="Restrict to violations from the manifest's pinned vignette_file per paper.",
 )
 @click.option(
+    "--include-stale",
+    is_flag=True,
+    default=False,
+    help=(
+        "Include violations the tool no longer emits (historical union). "
+        "Default reports only rows re-seen on the latest scan run."
+    ),
+)
+@click.option(
     "--manifest",
     "manifest_path",
     type=click.Path(path_type=Path),
@@ -263,6 +272,7 @@ def report_cmd(
     manifest_path: Path,
     corpus_dir: Path,
     csv_path: str | None,
+    include_stale: bool,
 ) -> None:
     """Print the per-rule precision table."""
     if by_source and by_format:
@@ -285,6 +295,7 @@ def report_cmd(
             history_db=history_db,
             against=against,
             with_recall=with_recall,
+            include_stale=include_stale,
         )
     except (FileNotFoundError, ManifestError) as err:
         click.echo(f"eval-jss: {err}", err=True)

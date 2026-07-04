@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS violations (
     verdict_reason    TEXT,
     reviewer          TEXT,                 -- "ai:<model>" | "human:<user>" | NULL
     first_seen_run_id INTEGER NOT NULL REFERENCES runs(id),
+    last_seen_run_id  INTEGER REFERENCES runs(id),  -- run that most recently re-emitted this violation; NULL = never re-seen since it was added (stale). Lets the precision query report the CURRENT tool on the CURRENT corpus rather than a historical union.
     file_suffix       TEXT,                 -- '.tex' | '.bib' | '.Rnw' | '.Rmd' (spec 005) — NULL for pre-005 rows
     file              TEXT,                 -- source file path relative to the paper dir (e.g. 'dplyr/vignettes/rowwise.Rmd'); NULL for pre-p8 rows
     UNIQUE(paper_id, rule_id, line, message, file)

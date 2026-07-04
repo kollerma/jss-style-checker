@@ -161,7 +161,16 @@ def _persist_violations(
     run_id: int,
     violations: list[dict],
 ) -> int:
-    """Insert-or-ignore all `violations` for one paper. Returns count emitted."""
+    """Upsert all `violations` for one paper. Returns count emitted.
+
+    New violations are inserted with both `first_seen_run_id` and
+    `last_seen_run_id` set to this run. A violation already present (same
+    `UNIQUE(paper_id, rule_id, line, message, file)` identity) has only its
+    `last_seen_run_id` bumped to this run — its verdict/label and
+    first-seen provenance are preserved. Violations that stop firing are
+    simply never touched, so their `last_seen_run_id` freezes at the last
+    run that saw them; the precision report treats those as stale.
+    """
     rows = [
         (
             paper_id,
@@ -172,6 +181,7 @@ def _persist_violations(
             v["message"],
             v.get("severity", "error"),
             run_id,
+            run_id,
             Path(v["file"]).suffix if v.get("file") else None,
             _relative_file(v.get("file"), paper_dir),
         )
@@ -179,11 +189,12 @@ def _persist_violations(
     ]
     if not rows:
         return 0
-    db.executemany_ignore(
-        cx,
-        "INSERT OR IGNORE INTO violations (paper_id, rule_id, category, line, column,"
-        " message, severity, first_seen_run_id, file_suffix, file)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    cx.executemany(
+        "INSERT INTO violations (paper_id, rule_id, category, line, column,"
+        " message, severity, first_seen_run_id, last_seen_run_id, file_suffix, file)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        " ON CONFLICT(paper_id, rule_id, line, message, file)"
+        " DO UPDATE SET last_seen_run_id = excluded.last_seen_run_id",
         rows,
     )
     return len(violations)

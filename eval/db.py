@@ -44,6 +44,7 @@ def init(path: Path) -> None:
         cx.executescript(_SCHEMA_PATH.read_text(encoding="utf-8"))
         _migrate_violations_file_suffix(cx)
         _migrate_violations_file(cx)
+        _migrate_violations_last_seen_run_id(cx)
     finally:
         cx.close()
 
@@ -53,6 +54,20 @@ def _migrate_violations_file_suffix(cx: sqlite3.Connection) -> None:
     cols = {r["name"] for r in cx.execute("PRAGMA table_info(violations)").fetchall()}
     if "file_suffix" not in cols:
         cx.execute("ALTER TABLE violations ADD COLUMN file_suffix TEXT")
+
+
+def _migrate_violations_last_seen_run_id(cx: sqlite3.Connection) -> None:
+    """Add `violations.last_seen_run_id` if the column is missing.
+
+    The column stays NULL on existing rows until the next `scan --force`
+    re-emits each violation and stamps it with the current run id. Rows that
+    never get re-stamped are stale (the tool stopped firing there) and are
+    excluded from the default precision report — see
+    `report._live_filter`.
+    """
+    cols = {r["name"] for r in cx.execute("PRAGMA table_info(violations)").fetchall()}
+    if "last_seen_run_id" not in cols:
+        cx.execute("ALTER TABLE violations ADD COLUMN last_seen_run_id INTEGER")
 
 
 def _migrate_violations_file(cx: sqlite3.Connection) -> None:
