@@ -1,0 +1,22 @@
+# Per-(paper, rule) precision exclusions.
+#
+# Firings matching an entry below are dropped from the precision report's
+# denominator (both TP and FP), so a rule's precision reflects only the
+# cases the linter can actually decide. Use SPARINGLY, and only for
+# documented linter limitations that a real JSS author would silence
+# inline (`% jss-lint: ignore <RULE>`) — this file is the eval-side
+# equivalent for corpus papers we do not edit.
+#
+# `paper`   — matched as a substring of `papers.path` (e.g. the dir name).
+# `rule_id` — the JSS rule id.
+# `reason`  — documentation only; explain why the firings are unresolvable.
+
+[[exclusions]]
+paper = "cran_micEconAids"
+rule_id = "JSS-OPER-002"
+reason = """The micEconAids vignette overloads a superscript T as the label \
+of the Törnqvist index variant (13 firings on scalar coefficients like \
+gamma^T, beta^T, plus P_t^T). This is syntactically identical to a \
+transpose, so OPER-002 cannot distinguish it — it is a genuine linter \
+limitation, not a rule defect. Excluded so the ~13 Törnqvist ^T FPs do not \
+mask OPER-002's true precision on decidable cases."""
