@@ -4,7 +4,7 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 61  
+**Rule count**: 62  
 **Category count**: 15
 
 ---
@@ -154,7 +154,7 @@ _operators_ — 4 rule(s)
 
 ## Cross-references
 
-_crossrefs_ — 6 rule(s)
+_crossrefs_ — 7 rule(s)
 
 | Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
 |---|---|---|---|---|---|
@@ -164,6 +164,7 @@ _crossrefs_ — 6 rule(s)
 | `JSS-XREF-004` | info | Numbered equations carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-XREF-005` | warning | Figures and tables carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
 | `JSS-XREF-006` | warning | Figure and table floats carry a \caption{} | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-XREF-007` | info | Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.) | style_guide | `#miscellaneous` | ✓ |
 
 ## House style
 
@@ -2344,6 +2345,42 @@ rule catches the missing caption itself. Sub-float environments (`subfigure`, `s
 float legitimately relies on the parent's caption. A float that contains a sub-float is therefore not
 flagged for its own caption either, since the sub-float wrapper signals a composite figure whose caption
 may sit on an inner panel.
+
+---
+
+### JSS-XREF-007
+
+**Category**: `crossrefs` · **Severity**: `info` · **Auto-fixable**: yes
+
+Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.)
+
+**Authority**: `style_guide` → `#miscellaneous`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+As shown in Fig.~\ref{fig:overview} and Sec.~\ref{sec:method}.
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+As shown in Figure~\ref{fig:overview} and Section~\ref{sec:method}.
+```
+
+</details>
+
+**Notes**: Fires only on an abbreviation (`Fig.` / `Figs.` / `Sec.` / `Secs.` / `Tab.` / `Tabs.`) immediately
+preceding a `\ref` macro (across an optional `~`), so the `\ref` disambiguates it from unrelated
+uses ("sec." = seconds). `\autoref` / `\cref` generate the noun themselves and are out of scope, as
+is `Eq.` (JSS-XREF-002). Ships at info severity; auto-fixable (rewrites to the spelled-out noun with a
+non-breaking space).
 
 ---
 

@@ -1486,6 +1486,28 @@ rules:
       flagged for its own caption either, since the sub-float wrapper signals a composite figure whose caption
       may sit on an inner panel.
 
+  - rule_id: JSS-XREF-007
+    category: crossrefs
+    severity: info
+    description: Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.)
+    authority: style_guide
+    authority_ref: "#miscellaneous"
+    example_violation: |
+      As shown in Fig.~\ref{fig:overview} and Sec.~\ref{sec:method}.
+    example_fix: |
+      As shown in Figure~\ref{fig:overview} and Section~\ref{sec:method}.
+    inspects: [tex_files]
+    auto_fixable: true
+    guide_section: "§4.5 Cross-references"
+    guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.); the figure/section/table analogue of JSS-XREF-002's Eq. -> Equation rule."
+    notes: |
+      Fires only on an abbreviation (`Fig.` / `Figs.` / `Sec.` / `Secs.` / `Tab.` / `Tabs.`) immediately
+      preceding a `\ref` macro (across an optional `~`), so the `\ref` disambiguates it from unrelated
+      uses ("sec." = seconds). `\autoref` / `\cref` generate the noun themselves and are out of scope, as
+      is `Eq.` (JSS-XREF-002). Ships at info severity; auto-fixable (rewrites to the spelled-out noun with a
+      non-breaking space).
+
   - rule_id: JSS-HOUSE-001
     category: house_style
     severity: warning

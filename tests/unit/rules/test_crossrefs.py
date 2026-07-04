@@ -12,12 +12,14 @@ from texlint.journals.jss.rules.crossrefs import (
     check_jss_xref_004,
     check_jss_xref_005,
     check_jss_xref_006,
+    check_jss_xref_007,
     jss_xref_001,
     jss_xref_002,
     jss_xref_003,
     jss_xref_004,
     jss_xref_005,
     jss_xref_006,
+    jss_xref_007,
     rules,
 )
 
@@ -29,12 +31,12 @@ def _tex(name: str) -> str:
     return (FIXTURE_DIR / name).read_text(encoding="utf-8")
 
 
-def test_rules_tuple_has_six_rules():
-    assert len(rules) == 6
+def test_rules_tuple_has_seven_rules():
+    assert len(rules) == 7
 
 
 def test_rules_tuple_ids():
-    assert {r.id for r in rules} == {f"JSS-XREF-00{i}" for i in range(1, 7)}
+    assert {r.id for r in rules} == {f"JSS-XREF-00{i}" for i in range(1, 8)}
 
 
 # ---------------------------------------------------------------------------
@@ -463,12 +465,53 @@ class TestXref006:
         assert run_rule(jss_xref_006, src) == []
 
 
+class TestXref007:
+    def test_positive(self, run_rule):
+        violations = run_rule(jss_xref_007, _tex("JSS-XREF-007-bad.tex"))
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-XREF-007"
+
+    def test_good_silent(self, run_rule):
+        assert run_rule(jss_xref_007, _tex("JSS-XREF-007-good.tex")) == []
+
+    def test_abbrev_variants_flagged(self, run_rule):
+        for body in (
+            r"See Fig.~\ref{fig:x}.", r"in Sec. \ref{sec:x}",
+            r"Tab.\ref{tab:x}", r"Figs.~\ref{fig:a}", r"lowercase fig.~\ref{x}",
+        ):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}{body}\end{{document}}"
+            )
+            assert len(run_rule(jss_xref_007, src)) == 1, body
+
+    def test_autoref_and_spelled_out_silent(self, run_rule):
+        for body in (
+            r"Figure~\ref{fig:x}", r"Section~\ref{sec:x}",
+            r"\autoref{fig:x}", r"in consec.~\ref{x}",
+        ):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}{body}\end{{document}}"
+            )
+            assert run_rule(jss_xref_007, src) == [], body
+
+    def test_autofix_rewrites_to_spelled_out(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}See Fig.~\ref{fig:x}.\end{document}"
+        )
+        v = run_rule(jss_xref_007, src)[0]
+        assert v.fix is not None
+        assert v.fix.replacement == r"Figure~\ref{fig:x}"
+
+
 def test_all_checks_silent_on_empty_tex():
     tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)
     doc = ParsedDocument(tex_files=(tex,))
     for check in (
         check_jss_xref_001, check_jss_xref_002,
         check_jss_xref_003, check_jss_xref_004, check_jss_xref_005,
-        check_jss_xref_006,
+        check_jss_xref_006, check_jss_xref_007,
     ):
         assert list(check(doc, ToolConfig())) == []

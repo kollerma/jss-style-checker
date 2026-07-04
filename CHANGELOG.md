@@ -10,6 +10,14 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Added
 
+- **`JSS-XREF-007`** (info, auto-fixable) — cross-reference nouns are
+  spelled out (`Figure`/`Section`/`Table`), not abbreviated
+  (`Fig.`/`Sec.`/`Tab.`, plus plurals). The figure/section/table analogue
+  of `JSS-XREF-002`'s `Eq.`→`Equation` rule. Fires only on an abbreviation
+  immediately preceding a `\ref` macro (across an optional `~`), so the
+  `\ref` disambiguates it (`sec.` = seconds stays silent); `\autoref` /
+  `\cref` generate the noun themselves and are out of scope. Auto-fix
+  rewrites to the spelled-out noun with a non-breaking space.
 - **`JSS-XREF-005`** — the figure/table analogue of `JSS-XREF-004`: a
   captioned (numbered) `figure`/`table` (or starred variant) must carry a
   `\label{}` and be referenced from the text; an unlabelled or never-

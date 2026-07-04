@@ -784,6 +784,89 @@ def check_jss_xref_006(
 
 
 # ---------------------------------------------------------------------------
+# JSS-XREF-007 — abbreviated cross-reference nouns (Fig./Sec./Tab.)
+# ---------------------------------------------------------------------------
+
+
+# ``Fig.`` / ``Figs.`` / ``Sec.`` / ``Secs.`` / ``Tab.`` / ``Tabs.`` at the
+# tail of a chars node, optionally trailed by whitespace and a ``~``.
+_FIGSECTAB_ABBREV_TAIL_RE = re.compile(
+    r"\b(Figs?|Secs?|Tabs?)\.\s*~?\s*$", re.IGNORECASE
+)
+_FIGSECTAB_CANONICAL: dict[str, str] = {
+    "fig": "Figure", "figs": "Figures",
+    "sec": "Section", "secs": "Sections",
+    "tab": "Table", "tabs": "Tables",
+}
+
+
+def _chars_ends_with_figsectab_abbrev(node: Any) -> tuple[int, str] | None:
+    """If ``node`` is a chars node ending with ``Fig.`` / ``Sec.`` / ``Tab.``
+    (or a plural), return ``(offset, abbrev)`` where ``abbrev`` is the bare
+    word (``Fig``); otherwise ``None``."""
+    if not isinstance(node, LatexCharsNode):
+        return None
+    m = _FIGSECTAB_ABBREV_TAIL_RE.search(node.chars)
+    if m is None:
+        return None
+    return m.start(), m.group(1)
+
+
+def check_jss_xref_007(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    meta = _catalogue_data.RULES["JSS-XREF-007"]
+    for tex in doc.all_tex_like():
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+            if not (
+                isinstance(node, LatexMacroNode) and node.macroname == "ref"
+            ):
+                continue
+            # ``Fig.~\ref{...}`` — the ``~`` non-breaking space parses as a
+            # LatexSpecialsNode sibling between the chars node carrying
+            # "Fig." and the ``\ref`` macro; step back past it. ``\autoref``
+            # / ``\cref`` generate the noun themselves and so aren't matched
+            # (only bare ``\ref``), and ``Eq.`` is JSS-XREF-002's job.
+            before = parent[idx - 1] if idx > 0 else None
+            if (
+                before is not None
+                and not isinstance(before, LatexCharsNode)
+                and getattr(before, "specials_chars", None) == "~"
+            ):
+                before = parent[idx - 2] if idx > 1 else None
+            hit = _chars_ends_with_figsectab_abbrev(before)
+            if hit is None:
+                continue
+            abbrev_offset, abbrev = hit
+            canonical = _FIGSECTAB_CANONICAL[abbrev.lower()]
+            abbrev_start = before.pos + abbrev_offset
+            line, col = _helpers._lineno_col(tex, node.pos)
+            macro_body = tex.source[node.pos : node.pos + node.len]
+            yield Violation(
+                file=tex.path,
+                line=line,
+                column=col,
+                rule_id="JSS-XREF-007",
+                severity=meta["severity"],
+                message=meta["message_template"],
+                suggestion=(
+                    f"Spell out the cross-reference noun: "
+                    f"'{canonical}~\\ref{{...}}', not "
+                    f"'{abbrev}.~\\ref{{...}}'."
+                ),
+                fix=Fix(
+                    start=abbrev_start,
+                    end=node.pos + node.len,
+                    replacement=f"{canonical}~{macro_body}",
+                    description=(
+                        f"replace '{abbrev}.' with '{canonical}~'"
+                    ),
+                    confidence="safe",
+                ),
+            )
+
+
+# ---------------------------------------------------------------------------
 # Rule objects
 # ---------------------------------------------------------------------------
 
@@ -797,9 +880,10 @@ jss_xref_003 = _rule("JSS-XREF-003", check_jss_xref_003)
 jss_xref_004 = _rule("JSS-XREF-004", check_jss_xref_004)
 jss_xref_005 = _rule("JSS-XREF-005", check_jss_xref_005)
 jss_xref_006 = _rule("JSS-XREF-006", check_jss_xref_006)
+jss_xref_007 = _rule("JSS-XREF-007", check_jss_xref_007)
 
 
 rules: tuple[Rule, ...] = (
     jss_xref_001, jss_xref_002, jss_xref_003, jss_xref_004, jss_xref_005,
-    jss_xref_006,
+    jss_xref_006, jss_xref_007,
 )
