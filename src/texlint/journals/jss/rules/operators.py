@@ -81,6 +81,35 @@ _LITERAL_VARCOV_RE: re.Pattern[str] = re.compile(
 # or backslash).
 _LITERAL_PROB_RE: re.Pattern[str] = re.compile(r"(?<![A-Za-z\\_])P(?=[(\[])")
 
+# Relational / event tokens that mark a bare ``P(...)`` as a genuine
+# probability (``P(X > x)``, ``P(A \mid B)``) rather than a function or a
+# transition-probability matrix (``P(t_0, t)``) or a CDF (``P(x)``).
+_PROB_ARG_RELATION_RE: re.Pattern[str] = re.compile(
+    r"[=<>|]|\\(?:le|leq|ge|geq|in|mid|vert|neq|ne|leqslant|geqslant)(?![A-Za-z])"
+)
+
+
+def _p_literal_arg_has_relation(chars: str, open_idx: int) -> bool:
+    """``chars[open_idx]`` is the ``(`` / ``[`` right after a bare ``P``.
+
+    Return ``True`` when the balanced argument carries a relational / event
+    token, i.e. the ``P`` reads as a probability. An argument that runs past
+    the end of this char node can't be confirmed as a plain function call, so
+    we err toward flagging (return ``True``).
+    """
+    open_ch = chars[open_idx]
+    close_ch = ")" if open_ch == "(" else "]"
+    depth = 0
+    for i in range(open_idx, len(chars)):
+        c = chars[i]
+        if c == open_ch:
+            depth += 1
+        elif c == close_ch:
+            depth -= 1
+            if depth == 0:
+                return bool(_PROB_ARG_RELATION_RE.search(chars[open_idx + 1:i]))
+    return True
+
 # --- OPER-004 custom-macro resolution (Phase 2) ---------------------------
 #
 # Papers alias probability / expectation operators via ``\newcommand`` &
@@ -570,6 +599,15 @@ def check_jss_oper_004(
                         ),
                     )
                 for m in _LITERAL_PROB_RE.finditer(node.chars):
+                    # A bare ``P(...)`` in a document that reserves ``\Prob``
+                    # for real probabilities, whose argument carries no
+                    # relational / event token, is a function or a
+                    # transition-probability matrix (``P(t_0, t)``) or a CDF
+                    # (``P(x)``), not the probability operator — don't flag it.
+                    if flag_pr and not _p_literal_arg_has_relation(
+                        node.chars, m.end()
+                    ):
+                        continue
                     yield _violation(
                         tex=tex,
                         pos=node.pos + m.start(),
