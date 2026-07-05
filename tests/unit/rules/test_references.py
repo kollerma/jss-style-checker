@@ -222,6 +222,20 @@ class TestRefs004:
         assert len(violations) == 1
         assert "\\pkg" in violations[0].suggestion
 
+    def test_r_macro_in_title_not_flagged(self, run_rule):
+        # \R (author macro for \proglang{R}) is already wrapped; the R
+        # inside it must not be treated as an unwrapped language mention.
+        # Corpus: lmSubsets / rootSolve @manual titles/notes.
+        src = "@manual{R, title={\\R: A Language and Environment}, year={2020}}\n"
+        assert run_rule(jss_refs_004, src, kind="bib") == []
+
+    def test_r_macro_in_note_not_flagged(self, run_rule):
+        src = (
+            "@manual{a, title={\\pkg{leaps}: Subset Selection}, "
+            "note={\\R~package version 3.0}, year={2020}}\n"
+        )
+        assert run_rule(jss_refs_004, src, kind="bib") == []
+
     def test_clean_title_silent(self, run_rule):
         src = "@article{a, title={A General Approach}, year={2020}}\n"
         assert run_rule(jss_refs_004, src, kind="bib") == []
@@ -290,6 +304,24 @@ class TestRefs006:
         violations = run_rule(jss_refs_006, src, kind="bib")
         assert len(violations) == 1
         assert violations[0].rule_id == "JSS-REFS-006"
+
+    def test_lowercase_about_in_titlecase_not_flagged(self, run_rule):
+        # 'about' / 'around' are prepositions title case leaves lowercase.
+        # A title that is otherwise title-cased must not fire on them.
+        # Corpus: HAC / laeken / mediation titles ("... Truths about ...").
+        for stop in ("about", "around"):
+            src = (
+                f"@article{{a, title={{Myths and Truths {stop} Mediation "
+                "Analysis}, year={2020}}\n"
+            )
+            assert run_rule(jss_refs_006, src, kind="bib") == [], stop
+
+    def test_lowercase_under_still_fires(self, run_rule):
+        # 'under' is NOT a title-case stop word (mlt.docreg recall plant
+        # caps it) — an otherwise title-cased title with lowercase 'under'
+        # as its only lapse must still fire.
+        src = "@article{a, title={Fitting Models under Constraints}, year={2020}}\n"
+        assert len(run_rule(jss_refs_006, src, kind="bib")) == 1
 
     def test_single_lowercase_word_exempt(self, run_rule):
         # A single coined word (Wilf's "generatingfunctionology") is a
