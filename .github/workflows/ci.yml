@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+# Supersede in-flight runs when a PR branch gets a newer push, instead of
+# letting stale runs finish. main pushes get a stable group so they still
+# run to completion.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
