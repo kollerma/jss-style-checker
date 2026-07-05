@@ -81,18 +81,17 @@ class TestDuplicateFieldKeyRecovery:
         # Last occurrence of the duplicated field wins.
         assert parsed.library.entries[0].fields_dict["url"].value == "b"
 
-    def test_warning_violation_names_field_and_entry(self, tmp_path: Path):
+    def test_duplicate_field_recovers_silently_at_parse(self, tmp_path: Path):
+        # A duplicated field key recovers silently at parse time (no
+        # degraded-parse finding); the dedicated JSS-BIBTEX-005 rule
+        # reports it during rule checking instead — see
+        # tests/unit/rules/test_bibtex.py::TestBibtex005.
         path = tmp_path / "refs.bib"
         path.write_text(self.SRC, encoding="utf-8")
 
         parsed = parse_bib_file(path)
 
-        assert len(parsed.violations) == 1
-        v = parsed.violations[0]
-        assert v.rule_id == "JSS-PARSE-000"
-        assert v.severity.value == "warning"
-        assert "url" in v.message
-        assert "'k'" in v.message
+        assert list(parsed.violations) == []
 
     def test_unrecoverable_block_still_error(self, tmp_path: Path):
         path = tmp_path / "refs.bib"

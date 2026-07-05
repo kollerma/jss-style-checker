@@ -169,6 +169,9 @@ examples/**/.sha256
 # CRAN-sourced vignettes — reproducible from eval/corpus-manifest.csv via
 # `eval-jss corpus fetch`; SHA256-pinned, so we do not check in the payload.
 examples/cran_*/
+# GitHub-sourced manuscripts (non-CRAN JSS papers) — same deal: pinned to a
+# commit + extracted-file SHA256 in the manifest and fetched on demand.
+examples/github_*/
 # Recall corpus — annotations.toml is committed (the novel work); the
 # manuscripts and bibs are CRAN-vendored and reproduced via
 # `python -m eval.recall_corpus_scaffold` (mirrors the precision-corpus

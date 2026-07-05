@@ -335,11 +335,15 @@ def _iter_referenced_entries(doc: Any) -> Iterator[tuple[Any, Any]]:
                 yield bib, entry
         return
     cited, include_all = _collect_cited_keys(doc)
+    # BibTeX citation keys are case-insensitive: \cite{Foo} matches
+    # @article{foo,...}. Lowercase both sides of the membership test so
+    # the "is this entry cited?" gate doesn't miss case-mismatched keys.
+    cited_lower = {key.lower() for key in cited}
     for bib in bib_files:
         if bib.library is None:
             continue
         for entry in getattr(bib.library, "entries", ()) or ():
-            if include_all or entry.key in cited:
+            if include_all or (entry.key or "").lower() in cited_lower:
                 yield bib, entry
 
 
@@ -475,6 +479,10 @@ _MARKUP_MACROS: frozenset[str] = frozenset(
      # it as markup avoids MARKUP-001 firing on ``R`` extensions
      # inside ``\script{convergence.R}`` etc.
      "script",
+     # Paper-defined ``\code`` aliases — TraMineR / WeightedCluster
+     # define ``\newcommand{\Com}[1]{\code{#1}}`` (and ``\Comt``) for
+     # inline code, so their content is code, not prose.
+     "Com", "Comt",
      # ``highlight`` package code-highlighting macros — knitr / Rnw
      # output uses ``\hlstd{}``, ``\hlkwa{}``, ``\hlopt{}``,
      # ``\hlkwd{}``, ``\hlstr{}``, ``\hlcom{}`` to wrap tokens of
@@ -504,7 +512,13 @@ _META_MACROS: frozenset[str] = frozenset(
      # Listings / minted / inputlisting directives — option lists like
      # ``language=R``, not prose. Without this, MARKUP-001 fires on
      # the ``R`` token inside ``\lstinputlisting[language=R, ...]``.
-     "lstinputlisting", "lstset", "inputminted", "VerbatimInput"}
+     "lstinputlisting", "lstset", "inputminted", "VerbatimInput",
+     # Graphics inclusion — the optional arg is a key=value option list
+     # (``clip = TRUE``, ``trim = 5 5 5 5``) and the mandatory arg is a
+     # filename; neither is prose. Without this, MARKUP-003 fires on the
+     # ``TRUE`` / ``FALSE`` graphics booleans inside
+     # ``\includegraphics[clip = TRUE]{...}``.
+     "includegraphics", "includepdf", "graphicspath"}
 )
 # Cite-family macros are NOT in _META_MACROS so that their optional-arg
 # prose (``\citep[e.g.][]{key}`` — the prenote / postnote slots) gets
@@ -520,6 +534,13 @@ def _is_in_prose_context(ancestors: Sequence[Any]) -> bool:
         return False
     if _is_inside_math(ancestors):
         return False
+    # Delimiters of the nearest enclosing group (ancestors are outermost
+    # first, so the last group is the innermost). Used to tell a citation's
+    # mandatory ``{key}`` arg from its optional ``[prefix]`` / ``[postfix]``.
+    nearest_group_delims = None
+    for anc in ancestors:
+        if isinstance(anc, LatexGroupNode):
+            nearest_group_delims = getattr(anc, "delimiters", None)
     for anc in ancestors:
         if isinstance(anc, LatexMacroNode):
             if anc.macroname in _MARKUP_MACROS:
@@ -527,5 +548,15 @@ def _is_in_prose_context(ancestors: Sequence[Any]) -> bool:
             if anc.macroname in _SECTION_MACROS:
                 return False
             if anc.macroname in _META_MACROS:
+                return False
+            # A citation's MANDATORY ``{key}`` argument is a BibTeX key, not
+            # prose — a key like ``R:2019`` / ``R:Chambers:1998`` must not be
+            # linted for \proglang / \pkg / \code (JSS-MARKUP-001/002/003).
+            # The OPTIONAL ``[prefix]`` / ``[postfix]`` arguments ARE prose
+            # (e.g. ``\citep[R package by][]{key}``) and stay linted.
+            if (
+                anc.macroname in _CITE_MACROS_FOR_SCOPE
+                and nearest_group_delims == ("{", "}")
+            ):
                 return False
     return True

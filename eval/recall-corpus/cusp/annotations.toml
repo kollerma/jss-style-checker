@@ -177,12 +177,6 @@ should be
 '''
 
 [[violations]]
-rule_id = "JSS-XREF-002"
-file = "Cusp-JSS.Rnw"
-line = 457
-comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}"'
-
-[[violations]]
 rule_id = "JSS-CODE-003"
 file = "Cusp-JSS.Rnw"
 line = 371
@@ -192,6 +186,12 @@ Missing spaces around operators:
 should be
 `\code{y \tilde\ z1 + z2 - 1}, \code{alpha \tilde\ x1 + x2 + x3 - 1},$\;$\code{beta \tilde\ y1 + y2 + y3 + y4 - 1}. {\em Model II:} \code{y \tilde\ z1 + z2}, \code{alpha, beta \tilde\ x1 + x2 + x3 + y1 + y2 + y3 + y4}`
 '''
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "Cusp-JSS.Rnw"
+line = 457
+comment = '"equation \eqref{eq:cuspeq}" should be "Equation~\ref{eq:cuspeq}"'
 
 [[violations]]
 rule_id = "JSS-XREF-002"
@@ -352,6 +352,12 @@ comment = 'vanderMaas:2003p626 — Article DOI exists on Crossref; missing from 
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "cusp_papers_jss.bib"
+line = 320
+comment = 'Cobb:1980p4118 — DOI 10.1002/bs.3830260107 found on Crossref (title similarity 0.83); add to the entry as doi="10.1002/bs.3830260107".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
 line = 344
 comment = 'Furstenau:2006p4789 — Article DOI exists on Crossref; missing from the entry.'
 
@@ -436,6 +442,12 @@ comment = 'Zhu:1997p4854 — Article DOI exists on Crossref; missing from the en
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "cusp_papers_jss.bib"
+line = 561
+comment = 'mcmc — DOI 10.32614/CRAN.package.mcmc registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.mcmc".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "cusp_papers_jss.bib"
 line = 599
 comment = 'Zeeman1974 — Article DOI exists on Crossref; missing from the entry.'
 
@@ -444,3 +456,12 @@ rule_id = "JSS-REFS-003"
 file = "cusp_papers_jss.bib"
 line = 620
 comment = 'GrasmanEtAl2009 — Article DOI exists on Crossref; missing from the entry.'
+
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-XREF-004  Cusp-JSS.Rnw:161  — Line 282 references three equations, referencing (eq:alpharegress) implicitly  (human:unknown)
+#   JSS-XREF-004  Cusp-JSS.Rnw:287  — equations are labeled  (ai:qwen3-30b)

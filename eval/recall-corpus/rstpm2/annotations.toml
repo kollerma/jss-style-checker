@@ -28,6 +28,18 @@ should be "Flexible Nonhomogeneous Markov Models For Panel Observed Data"
 '''
 
 [[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 3
+comment = 'Crowther_Lambert_2017 — title not in title case; should be "Parametric Multistate Survival Models: Flexible Modelling Allowing Transition-Specific Distributions with Application to Estimating Clinically Useful Measures of Effect Differences".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 5
+comment = 'Datta_Satten_2001 — title not in title case; should be "Validity of the Aalen–Johansen Estimators of Stage Occupation Probabilities and Nelson–Aalen Estimators of Integrated Transition Hazards for Non-Markov Models".'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "lib.bib"
 line = 7
@@ -46,10 +58,58 @@ line = 10
 comment = 'Brinks_Hoyer_2018 — title not in title case; should be "Illness-Death Model: Statistical Perspective and Differential Equations".'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "lib.bib"
+line = 12
+comment = 'Andersen_Borgan_Gill_Keiding_1993 — DOI 10.1007/978-1-4612-4348-9 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/978-1-4612-4348-9".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 14
+comment = 'Ryalen_Stensrud_Roysland_2018 — title not in title case; should be "Transforming Cumulative Hazard Estimates".'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "lib.bib"
 line = 16
 comment = 'deWreede_Fiocco_Putter_2011 — title "mstate: An R Package for the analysis of competing risks and multi-state models" has package name "mstate" not wrapped in \pkg{} and language name "R" not in \proglang{}.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 16
+comment = 'deWreede_Fiocco_Putter_2011 — title not in title case; should be "\pkg{mstate}: An \proglang{R} Package for the Analysis of Competing Risks and Multi-State Models".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 18
+comment = 'Putter_Fiocco_Geskus_2007 — title not in title case; should be "Tutorial in Biostatistics: Competing Risks and Multi-State Models".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "lib.bib"
+line = 20
+comment = 'Andersen_Keiding_2002 — DOI 10.1191/0962280202sm276ra found on Crossref (title similarity 1.00); add to the entry as doi="10.1191/0962280202sm276ra".'
+
+[[violations]]
+rule_id = "JSS-REFS-005"
+file = "lib.bib"
+line = 20
+comment = 'Andersen_Keiding_2002 — journal "Stat Methods Med Res" is abbreviated; JSS wants the full title "Statistical Methods in Medical Research".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 20
+comment = 'Andersen_Keiding_2002 — title not in title case; should be "Multi-State Models for Event History Analysis".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 22
+comment = 'Iacobelli_Carstensen_2013 — title not in title case; should be "Multiple Time Scales in Multi-State Models".'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -64,6 +124,12 @@ line = 24
 comment = 'Blaser_et_al_2015 — title "gems: An R Package for simulating from disease progression models" has package name "gems" not wrapped in \pkg{} and "R" not in \proglang{}.'
 
 [[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 24
+comment = 'Blaser_et_al_2015 — title not in title case; should be "\pkg{gems}: An \proglang{R} Package for Simulating from Disease Progression Models".'
+
+[[violations]]
 rule_id = "JSS-REFS-003"
 file = "lib.bib"
 line = 33
@@ -76,16 +142,52 @@ line = 33
 comment = 'Allignol_Schumacher_Beyersmann_2011 — title not in title case; should be "Empirical Transition Matrix of Multi-State Models: The \pkg{etm} Package".'
 
 [[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 35
+comment = 'Touraine_Helmer_Joly_2016 — title not in title case; should be "Predictions in an Illness-Death Model".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "lib.bib"
+line = 38
+comment = 'Gentleman_Lawless_Lindsey_Yan_1994 — DOI 10.1002/sim.4780130803 found on Crossref (title similarity 0.99); add to the entry as doi="10.1002/sim.4780130803".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 38
+comment = 'Gentleman_Lawless_Lindsey_Yan_1994 — title not in title case; should be "Multi-State Markov Models for Analysing Incomplete Disease History Data with Illustrations for HIV Disease".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 40
+comment = 'Borgan_1984 — title not in title case; should be "Maximum Likelihood Estimation in Parametric Counting Process Models, with Applications to Censored Failure Time Data".'
+
+[[violations]]
 rule_id = "JSS-NAME-002"
 file = "lib.bib"
 line = 42
 comment = 'Andersen_Borgan_Gill_Keiding_1993 — publisher = "Springer-Verlag New York, Inc." should be canonicalised to "Springer-Verlag" (JSS canonical form).'
 
 [[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 44
+comment = 'sauerbrei2007 — title not in title case; should be "A New Proposal for Multivariable Modelling of Time-Varying Effects in Survival Data Based on Fractional Polynomial Time-Transformation".'
+
+[[violations]]
 rule_id = "JSS-REFS-003"
 file = "lib.bib"
 line = 48
 comment = 'foekens2000 — Cancer Research article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "lib.bib"
+line = 48
+comment = 'foekens2000 — title not in title case; should be "The Urokinase System of Plasminogen Activation and Prognosis in 2780 Breast Cancer Patients".'
 
 [[violations]]
 rule_id = "JSS-HOUSE-003"
@@ -118,6 +220,12 @@ line = 69
 comment = "Blaser_Vizcaya_Estill_Zahnd_Kalesan_Egger_Gsponer_Keiser_2015 is cited without using shortcite nor with the shortnames option enabled"
 
 [[violations]]
+rule_id = "JSS-CITE-003"
+file = "multistate.Rnw"
+line = 88
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
+
+[[violations]]
 rule_id = "JSS-OPER-002"
 file = "multistate.Rnw"
 line = 93
@@ -130,10 +238,22 @@ line = 93
 comment = '`\boldsymbol{1}^T` should be `\boldsymbol{1}^\top`, second occurrence on line'
 
 [[violations]]
+rule_id = "JSS-XREF-004"
+file = "multistate.Rnw"
+line = 102
+comment = '\label{eq:Pinit} exists in align env but is never \ref-ed from the text.'
+
+[[violations]]
 rule_id = "JSS-HOUSE-001"
 file = "multistate.Rnw"
 line = 104
 comment = 'Missing comma after "e.g.", twice on line'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "multistate.Rnw"
+line = 110
+comment = '\label{eq:dPudt} exists in align env but is never \ref-ed from the text.'
 
 [[violations]]
 rule_id = "JSS-XREF-002"
@@ -153,6 +273,12 @@ rule_id = "JSS-OPER-002"
 file = "multistate.Rnw"
 line = 127
 comment = '''`\boldsymbol{P}'_m(t_0,t)^T` should be `\boldsymbol{P}'_m(t_0,t)^\top`'''
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "multistate.Rnw"
+line = 127
+comment = '`\text{var}` should use the canonical variance macro `\VAR` (JSS OPER-004).'
 
 [[violations]]
 rule_id = "JSS-OPER-002"
@@ -180,6 +306,12 @@ line = 136
 comment = '"Equations~(\ref{eq:kolmogorov})--(\ref{eq:Puinit})" — second (\ref{eq:Puinit}); part of the same range fix as the previous entry.'
 
 [[violations]]
+rule_id = "JSS-XREF-004"
+file = "multistate.Rnw"
+line = 139
+comment = '\label{eq:dLudt} exists in align env but is never \ref-ed from the text.'
+
+[[violations]]
 rule_id = "JSS-XREF-002"
 file = "multistate.Rnw"
 line = 142
@@ -205,10 +337,34 @@ line = 166
 comment = '`\boldsymbol{1}^T` should be `\boldsymbol{1}^\top`'
 
 [[violations]]
+rule_id = "JSS-OPER-004"
+file = "multistate.Rnw"
+line = 185
+comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "multistate.Rnw"
+line = 187
+comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+
+[[violations]]
 rule_id = "JSS-OPER-002"
 file = "multistate.Rnw"
 line = 189
 comment = '`\boldsymbol{1}^T` should be `\boldsymbol{1}^\top`'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "multistate.Rnw"
+line = 189
+comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+
+[[violations]]
+rule_id = "JSS-XREF-005"
+file = "multistate.Rnw"
+line = 192
+comment = "captioned float carries no label so it cannot be referenced (XREF-005)"
 
 [[violations]]
 rule_id = "JSS-OPER-002"
@@ -227,6 +383,12 @@ rule_id = "JSS-OPER-002"
 file = "multistate.Rnw"
 line = 223
 comment = '`\boldsymbol{\pi}(t_0,t|\boldsymbol{x}_2)^T` should be `\boldsymbol{\pi}(t_0,t|\boldsymbol{x}_2)^\top`'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "multistate.Rnw"
+line = 244
+comment = '\label{eq:dUudt} exists in align env but is never \ref-ed from the text.'
 
 [[violations]]
 rule_id = "JSS-OPER-002"
@@ -306,241 +468,6 @@ rule_id = "JSS-BIBTEX-004"
 file = "multistate.Rnw"
 line = 374
 comment = "foekens2000 is cited without using shortcite nor with the shortnames option enabled"
-
-[[violations]]
-rule_id = "JSS-TYPO-001"
-file = "multistate.Rnw"
-line = 401
-comment = "Caption missing period at the end"
-
-[[violations]]
-rule_id = "JSS-TYPO-001"
-file = "multistate.Rnw"
-line = 408
-comment = "Caption missing period at the end"
-
-[[violations]]
-rule_id = "JSS-HOUSE-001"
-file = "multistate.Rnw"
-line = 422
-comment = 'Missing comma after "e.g."'
-
-[[violations]]
-rule_id = "JSS-STRUCT-006"
-file = "multistate.Rnw"
-line = 428
-comment = 'Appendix starts without \newpage (or \clearpage) separator'
-
-[[violations]]
-rule_id = "JSS-XREF-002"
-file = "multistate.Rnw"
-line = 442
-comment = '"Equation~\eqref{eq:hrgen}" should be "Equation~\ref{eq:hrgen}"'
-
-[[violations]]
-rule_id = "JSS-XREF-002"
-file = "multistate.Rnw"
-line = 456
-comment = '"Equation~\eqref{eq:stratified}" should be "Equation~\ref{eq:stratified}"'
-
-[[violations]]
-rule_id = "JSS-HOUSE-001"
-file = "multistate.Rnw"
-line = 462
-comment = 'Missing comma after "e.g."'
-
-[[violations]]
-rule_id = "JSS-MARKUP-001"
-file = "multistate.Rnw"
-line = 482
-comment = '"R" should be "\proglang{R}"'
-
-[[violations]]
-rule_id = "JSS-TYPO-003"
-file = "multistate.Rnw"
-line = 482
-comment = "No footnotes in tables, this should be part of the caption"
-
-
-[[violations]]
-rule_id = "JSS-TYPO-001"
-file = "multistate.Rnw"
-line = 501
-comment = "Caption missing period at the end"
-
-[[violations]]
-rule_id = "JSS-MARKUP-001"
-file = "multistate.Rnw"
-line = 509
-comment = '"Stata" should be "\proglang{Stata}"'
-
-[[violations]]
-rule_id = "JSS-HOUSE-001"
-file = "multistate.Rnw"
-line = 513
-comment = 'Missing comma after "e.g."'
-
-[[violations]]
-rule_id = "JSS-HOUSE-001"
-file = "multistate.Rnw"
-line = 518
-comment = 'Missing comma after "e.g."'
-
-[[violations]]
-rule_id = "JSS-MARKUP-001"
-file = "multistate.Rnw"
-line = 523
-comment = '"R" should be "\proglang{R}"'
-
-[[violations]]
-rule_id = "JSS-MARKUP-001"
-file = "multistate.Rnw"
-line = 523
-comment = '"Stata" should be "\proglang{Stata}"'
-
-# -------------------------------------------------------------------
-# XREF-004 sweep: equations with \label{} present but never \ref-ed
-# from the text. Distinct sub-defect from missing-label cases; linter
-# does not fire on either (filed as a follow-up).
-# -------------------------------------------------------------------
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "multistate.Rnw"
-line = 102
-comment = '\label{eq:Pinit} exists in align env but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "multistate.Rnw"
-line = 110
-comment = '\label{eq:dPudt} exists in align env but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "multistate.Rnw"
-line = 139
-comment = '\label{eq:dLudt} exists in align env but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "multistate.Rnw"
-line = 244
-comment = '\label{eq:dUudt} exists in align env but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "lib.bib"
-line = 20
-comment = 'Andersen_Keiding_2002 — DOI 10.1191/0962280202sm276ra found on Crossref (title similarity 1.00); add to the entry as doi="10.1191/0962280202sm276ra".'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "lib.bib"
-line = 38
-comment = 'Gentleman_Lawless_Lindsey_Yan_1994 — DOI 10.1002/sim.4780130803 found on Crossref (title similarity 0.99); add to the entry as doi="10.1002/sim.4780130803".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 3
-comment = 'Crowther_Lambert_2017 — title not in title case; should be "Parametric Multistate Survival Models: Flexible Modelling Allowing Transition-Specific Distributions with Application to Estimating Clinically Useful Measures of Effect Differences".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 5
-comment = 'Datta_Satten_2001 — title not in title case; should be "Validity of the Aalen–Johansen Estimators of Stage Occupation Probabilities and Nelson–Aalen Estimators of Integrated Transition Hazards for Non-Markov Models".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 14
-comment = 'Ryalen_Stensrud_Roysland_2018 — title not in title case; should be "Transforming Cumulative Hazard Estimates".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 16
-comment = 'deWreede_Fiocco_Putter_2011 — title not in title case; should be "\pkg{mstate}: An \proglang{R} Package for the Analysis of Competing Risks and Multi-State Models".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 18
-comment = 'Putter_Fiocco_Geskus_2007 — title not in title case; should be "Tutorial in Biostatistics: Competing Risks and Multi-State Models".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 20
-comment = 'Andersen_Keiding_2002 — title not in title case; should be "Multi-State Models for Event History Analysis".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 22
-comment = 'Iacobelli_Carstensen_2013 — title not in title case; should be "Multiple Time Scales in Multi-State Models".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 24
-comment = 'Blaser_et_al_2015 — title not in title case; should be "\pkg{gems}: An \proglang{R} Package for Simulating from Disease Progression Models".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 35
-comment = 'Touraine_Helmer_Joly_2016 — title not in title case; should be "Predictions in an Illness-Death Model".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 38
-comment = 'Gentleman_Lawless_Lindsey_Yan_1994 — title not in title case; should be "Multi-State Markov Models for Analysing Incomplete Disease History Data with Illustrations for HIV Disease".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 40
-comment = 'Borgan_1984 — title not in title case; should be "Maximum Likelihood Estimation in Parametric Counting Process Models, with Applications to Censored Failure Time Data".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 44
-comment = 'sauerbrei2007 — title not in title case; should be "A New Proposal for Multivariable Modelling of Time-Varying Effects in Survival Data Based on Fractional Polynomial Time-Transformation".'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "lib.bib"
-line = 48
-comment = 'foekens2000 — title not in title case; should be "The Urokinase System of Plasminogen Activation and Prognosis in 2780 Breast Cancer Patients".'
-
-[[violations]]
-rule_id = "JSS-REFS-005"
-file = "lib.bib"
-line = 20
-comment = 'Andersen_Keiding_2002 — journal "Stat Methods Med Res" is abbreviated; JSS wants the full title "Statistical Methods in Medical Research".'
-
-[[violations]]
-rule_id = "JSS-OPER-004"
-file = "multistate.Rnw"
-line = 127
-comment = '`\text{var}` should use the canonical variance macro `\VAR` (JSS OPER-004).'
-
-[[violations]]
-rule_id = "JSS-OPER-004"
-file = "multistate.Rnw"
-line = 304
-comment = '`\text{var}` should use the canonical variance macro `\VAR` (JSS OPER-004).'
-
-[[violations]]
-rule_id = "JSS-OPER-004"
-file = "multistate.Rnw"
-line = 310
-comment = '`\text{var}` should use the canonical variance macro `\VAR` (JSS OPER-004).'
 
 [[violations]]
 rule_id = "JSS-MARKUP-003"
@@ -687,6 +614,72 @@ line = 388
 comment = '\texttt{rstpm2} should be wrapped in `\code{}` not `\texttt{}` (JSS MARKUP-003).'
 
 [[violations]]
+rule_id = "JSS-OPER-004"
+file = "multistate.Rnw"
+line = 392
+comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "multistate.Rnw"
+line = 394
+comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "multistate.Rnw"
+line = 401
+comment = "Caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "multistate.Rnw"
+line = 408
+comment = "Caption missing period at the end"
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "multistate.Rnw"
+line = 422
+comment = 'Missing comma after "e.g."'
+
+[[violations]]
+rule_id = "JSS-STRUCT-006"
+file = "multistate.Rnw"
+line = 428
+comment = 'Appendix starts without \newpage (or \clearpage) separator'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "multistate.Rnw"
+line = 442
+comment = '"Equation~\eqref{eq:hrgen}" should be "Equation~\ref{eq:hrgen}"'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "multistate.Rnw"
+line = 456
+comment = '"Equation~\eqref{eq:stratified}" should be "Equation~\ref{eq:stratified}"'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "multistate.Rnw"
+line = 462
+comment = 'Missing comma after "e.g."'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "multistate.Rnw"
+line = 482
+comment = '"R" should be "\proglang{R}"'
+
+[[violations]]
+rule_id = "JSS-TYPO-003"
+file = "multistate.Rnw"
+line = 482
+comment = "No footnotes in tables, this should be part of the caption"
+
+[[violations]]
 rule_id = "JSS-MARKUP-003"
 file = "multistate.Rnw"
 line = 483
@@ -777,10 +770,10 @@ line = 498
 comment = '\texttt{rstpm2::splineFun} should be wrapped in `\code{}` not `\texttt{}` (JSS MARKUP-003).'
 
 [[violations]]
-rule_id = "JSS-MARKUP-003"
+rule_id = "JSS-TYPO-001"
 file = "multistate.Rnw"
-line = 505
-comment = '\texttt{flexsurv::flexsurvspline}, \texttt{flexsurv::flexsurvreg}, \texttt{eha::aftreg}, \texttt{rstpm2::aft}, \texttt{hazFun}, … (6 total) should be wrapped in `\code{}` not `\texttt{}` (JSS MARKUP-003).'
+line = 501
+comment = "Caption missing period at the end"
 
 [[violations]]
 rule_id = "JSS-MARKUP-003"
@@ -811,6 +804,18 @@ rule_id = "JSS-MARKUP-003"
 file = "multistate.Rnw"
 line = 505
 comment = '\texttt{flexsurv::flexsurvspline}, \texttt{flexsurv::flexsurvreg}, \texttt{eha::aftreg}, \texttt{rstpm2::aft}, \texttt{hazFun}, … (6 total) should be wrapped in `\code{}` not `\texttt{}` (JSS MARKUP-003).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "multistate.Rnw"
+line = 505
+comment = '\texttt{flexsurv::flexsurvspline}, \texttt{flexsurv::flexsurvreg}, \texttt{eha::aftreg}, \texttt{rstpm2::aft}, \texttt{hazFun}, … (6 total) should be wrapped in `\code{}` not `\texttt{}` (JSS MARKUP-003).'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "multistate.Rnw"
+line = 509
+comment = '"Stata" should be "\proglang{Stata}"'
 
 [[violations]]
 rule_id = "JSS-MARKUP-003"
@@ -825,31 +830,32 @@ line = 509
 comment = '\texttt{rstpm2::aft}, \texttt{staft} should be wrapped in `\code{}` not `\texttt{}` (JSS MARKUP-003).'
 
 [[violations]]
-rule_id = "JSS-OPER-004"
+rule_id = "JSS-HOUSE-001"
 file = "multistate.Rnw"
-line = 185
-comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+line = 513
+comment = 'Missing comma after "e.g."'
 
 [[violations]]
-rule_id = "JSS-OPER-004"
+rule_id = "JSS-HOUSE-001"
 file = "multistate.Rnw"
-line = 187
-comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+line = 518
+comment = 'Missing comma after "e.g."'
 
 [[violations]]
-rule_id = "JSS-OPER-004"
+rule_id = "JSS-MARKUP-001"
 file = "multistate.Rnw"
-line = 189
-comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+line = 523
+comment = '"R" should be "\proglang{R}"'
 
 [[violations]]
-rule_id = "JSS-OPER-004"
+rule_id = "JSS-MARKUP-001"
 file = "multistate.Rnw"
-line = 392
-comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+line = 523
+comment = '"Stata" should be "\proglang{Stata}"'
 
-[[violations]]
-rule_id = "JSS-OPER-004"
-file = "multistate.Rnw"
-line = 394
-comment = 'Literal `E` in math context (expectation operator) should use the canonical `\E` macro (JSS OPER-004).'
+
+# -------------------------------------------------------------------
+# XREF-004 sweep: equations with \label{} present but never \ref-ed
+# from the text. Distinct sub-defect from missing-label cases; linter
+# does not fire on either (filed as a follow-up).
+# -------------------------------------------------------------------

@@ -42,24 +42,6 @@ the bib does not record.
 # comment = "<optional rationale>"
 
 [[violations]]
-rule_id = "JSS-STRUCT-005"
-file = "pmclust-guide.Rnw"
-line = 15
-comment = 'Used "and" and not "\And" in authors list'
-
-[[violations]]
-rule_id = "JSS-PRE-004"
-file = "pmclust-guide.Rnw"
-line = 1
-comment = '"\Abstract" is commented out'
-
-[[violations]]
-rule_id = "JSS-PRE-005"
-file = "pmclust-guide.Rnw"
-line = 1
-comment = '"\Keywords" is commented out'
-
-[[violations]]
 rule_id = "JSS-STRUCT-002"
 file = "01-acknowledgement.tex"
 line = 2
@@ -174,6 +156,24 @@ line = 126
 comment = "First of multiple # comments in this code block; per CODE-001 convention, the rule fires once per block at the first comment line."
 
 [[violations]]
+rule_id = "JSS-CODE-002"
+file = "02-example.tex"
+line = 127
+comment = 'Quote the argument: e.g., `library("pmclust", quiet = TRUE)`.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "02-example.tex"
+line = 166
+comment = "Move the comment into the surrounding LaTeX text."
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "02-example.tex"
+line = 169
+comment = 'Quote the argument: e.g., `library("Rmpi")`.'
+
+[[violations]]
 rule_id = "JSS-CAP-002"
 file = "02-example.tex"
 line = 179
@@ -210,6 +210,24 @@ line = 236
 comment = 'Inside custom \begin{Command} env (defined in 00-preamble.tex). Linter does not recognise it as a code env, so this rule structurally cannot fire here — see JSS-PRE-009 follow-up.'
 
 [[violations]]
+rule_id = "JSS-PRE-004"
+file = "pmclust-guide.Rnw"
+line = 1
+comment = '"\Abstract" is commented out'
+
+[[violations]]
+rule_id = "JSS-PRE-005"
+file = "pmclust-guide.Rnw"
+line = 1
+comment = '"\Keywords" is commented out'
+
+[[violations]]
+rule_id = "JSS-STRUCT-005"
+file = "pmclust-guide.Rnw"
+line = 15
+comment = 'Used "and" and not "\And" in authors list'
+
+[[violations]]
 rule_id = "JSS-REFS-003"
 file = "pmclust.bib"
 line = 1
@@ -228,16 +246,16 @@ line = 8
 comment = 'Chen2012a — DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
-rule_id = "JSS-REFS-006"
-file = "pmclust.bib"
-line = 20
-comment = 'Title is not title-style: only "Model-based", APECM, AECM start uppercase; principal words like "Clustering", "Regression", "Time", "Series", "Data", "Algorithm", "Beat" should be capitalised. Linter heuristic only checks first word and post-colon word, so currently silent.'
-
-[[violations]]
 rule_id = "JSS-REFS-003"
 file = "pmclust.bib"
 line = 20
 comment = 'Chen2011 — DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "pmclust.bib"
+line = 20
+comment = 'Title is not title-style: only "Model-based", APECM, AECM start uppercase; principal words like "Clustering", "Regression", "Time", "Series", "Data", "Algorithm", "Beat" should be capitalised. Linter heuristic only checks first word and post-colon word, so currently silent.'
 
 [[violations]]
 rule_id = "JSS-NAME-002"
@@ -306,16 +324,16 @@ line = 77
 comment = '"MixSim" is an R package, should be wrapped with "\pkg{}"'
 
 [[violations]]
-rule_id = "JSS-REFS-003"
-file = "pmclust.bib"
-line = 87
-comment = 'Meng1997 — DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
 rule_id = "JSS-NAME-002"
 file = "pmclust.bib"
 line = 87
 comment = 'Should drop "Series" in journal and in long_journal (JSS canonical form: "Journal of the Royal Statistical Society B")'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 87
+comment = 'Meng1997 — DOI exists on Crossref; missing from the entry.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -330,6 +348,12 @@ line = 104
 comment = '"pbdMPI" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 112
+comment = 'Chen2014pbdMPIvignette — DOI 10.32614/CRAN.package.pbdMPI registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdMPI".'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "pmclust.bib"
 line = 112
@@ -342,10 +366,28 @@ line = 112
 comment = '"pbdSLAP" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 120
+comment = 'Chen2012pbdSLAPvignette — DOI 10.32614/CRAN.package.pbdSLAP registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdSLAP".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 127
+comment = 'Schmidt2012pbdBASEvignette — DOI 10.32614/CRAN.package.pbdBASE registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdBASE".'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "pmclust.bib"
 line = 127
 comment = '"pbdBASE" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 134
+comment = 'Schmidt2012pbdDMATvignette — DOI 10.32614/CRAN.package.pbdDMAT registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdDMAT".'
 
 [[violations]]
 rule_id = "JSS-REFS-004"
@@ -364,6 +406,12 @@ rule_id = "JSS-REFS-004"
 file = "pmclust.bib"
 line = 141
 comment = '"pbdDEMO" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "pmclust.bib"
+line = 149
+comment = 'Schmidt2013pbdDEMOvignette — DOI 10.32614/CRAN.package.pbdDEMO registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.pbdDEMO".'
 
 [[violations]]
 rule_id = "JSS-REFS-004"
@@ -407,3 +455,10 @@ file = "pmclust.bib"
 line = 177
 comment = '"Rmpi" is an R package, should be wrapped with "\pkg{}", also "R" is just plain and not wrapped in note'
 
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-STRUCT-005  pmclust-guide.Rnw:25  — This "and" does not separate two authors but is part of the name of the department  (human:unknown)

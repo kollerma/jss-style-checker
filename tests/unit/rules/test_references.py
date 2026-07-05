@@ -7,6 +7,7 @@ from pathlib import Path
 from texlint.api import ParsedDocument, Severity, ToolConfig
 from texlint.journals.jss.rules.references import (
     check_jss_refs_001,
+    check_jss_refs_003,
     jss_refs_001,
     jss_refs_003,
     jss_refs_004,
@@ -119,6 +120,40 @@ class TestRefs003:
         # 'Sept 1995' style year strings — the 4-digit year is still
         # extracted by the year regex.
         src = "@article{a, author={x}, title={T}, journal={J}, year={Sept 1995}}\n"
+        assert run_rule(jss_refs_003, src, kind="bib") == []
+
+    def test_case_mismatched_cite_still_fires(
+        self, parse_tex_source, parse_bib_source
+    ):
+        # \cite{Foo} (upper) cites @article{foo,...} (lower). BibTeX keys
+        # are case-insensitive, so the doi-less entry is in scope and the
+        # advisory must fire.
+        tex_src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\cite{Foo}\end{document}" "\n"
+        )
+        bib_src = "@article{foo, author={x}, title={T}, journal={J}, year={2020}}\n"
+        doc = ParsedDocument(
+            tex_files=(parse_tex_source(tex_src),),
+            bib_files=(parse_bib_source(bib_src),),
+        )
+        violations = list(check_jss_refs_003(doc, ToolConfig()))
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-REFS-003"
+
+    def test_manual_without_doi_fires(self, run_rule):
+        # CRAN @Manual entries have a guaranteed registered DOI; a doi-less
+        # one should draw the advisory.
+        src = "@Manual{a, author={x}, title={T}, year={2020}}\n"
+        violations = run_rule(jss_refs_003, src, kind="bib")
+        assert len(violations) == 1
+        assert violations[0].severity == Severity.INFO
+
+    def test_manual_with_doi_silent(self, run_rule):
+        src = (
+            "@Manual{a, author={x}, title={T}, year={2020}, "
+            "doi={10.32614/CRAN.package.a}}\n"
+        )
         assert run_rule(jss_refs_003, src, kind="bib") == []
 
 

@@ -56,13 +56,29 @@ _KNOWN_DOTTED_ABBREVS: frozenset[str] = frozenset(
     {"U.S.", "U.K.", "U.N.", "E.U.", "No."}
 )
 
-# Author-initial pattern in the OPPOSITE direction: bibliography-style
-# ``Cochran, W.G.`` — surname comes first, then a comma + space, then
-# the initials. Detects the immediate ``Surname, `` prefix so the
-# rule doesn't flag the trailing initials.
-_AUTHOR_SURNAME_PREFIX_RE = re.compile(
+# Author-initial pattern in the OPPOSITE direction: surname first,
+# then the initials. Two bibliography spellings:
+#   ``Cochran, W.G.``  — surname, COMMA, initials (BibTeX-rendered).
+#                        Unambiguous, suppressed on the prefix alone.
+#   ``Greene W.H.``    — surname, SPACE, initials, no comma (hand-rolled
+#                        ``thebibliography`` lists routinely drop it:
+#                        ``Greene W.H., Hensher D.A.``). This shape
+#                        collides with a sentence-leading word before a
+#                        real abbreviation (``The I.R.S. rules``), so it
+#                        is only treated as initials when a bibliographic
+#                        follower (next author's comma, a ``(year)``, or
+#                        end-of-entry) confirms the author context.
+_AUTHOR_SURNAME_COMMA_PREFIX_RE = re.compile(
     r"[A-Z][a-z]+(?:-[A-Z][a-z]+)*,\s+\Z"
 )
+_AUTHOR_SURNAME_SPACE_PREFIX_RE = re.compile(
+    r"[A-Z][a-z]+(?:-[A-Z][a-z]+)*\s+\Z"
+)
+# Bibliographic follower confirming ``Surname W.H.`` is an author entry:
+# the next author (``,``), the publication year (``(2010)``), or the end
+# of the run. Prose like ``The I.R.S. rules`` fails this (lowercase word
+# follows) and stays flagged.
+_BIB_INITIAL_FOLLOWER_RE = re.compile(r"\s*(?:,|\(\s*\d{4}|;|$)")
 
 
 # Catalogue-backed factories live in _helpers (one definition for all
@@ -73,18 +89,26 @@ _violation = _helpers.tex_violation
 def _looks_like_author_initial(
     chars: str, match_start: int, match_end: int, parent: Any, idx: int
 ) -> bool:
-    """Heuristic: a 2-letter dotted abbrev that's part of an
-    author-name pattern, not a generic abbreviation. Three shapes:
+    """Heuristic: a dotted uppercase run that's part of an author-name
+    pattern, not a generic abbreviation. Shapes:
 
     - ``A.B.~Simas`` / ``W.G. Cochran`` — initials BEFORE surname,
       detected by tie/space + ``[A-Z][a-z]+`` follower.
     - Pylatexenc parses ``~`` as a :class:`LatexSpecialsNode` that
       splits chars; check the second-next sibling for the surname.
-    - ``Cochran, W.G.`` — surname BEFORE initials in a bibliography
-      list, detected by ``Surname,\\s+`` prefix.
+    - ``J.Wiley`` — initial glued to a surname with the space dropped;
+      the run is immediately followed by lower-case letters.
+    - ``Cochran, W.G.`` — surname, comma, initials (suppressed on the
+      prefix alone).
+    - ``Greene W.H., Hensher D.A.`` — surname, space, initials, no
+      comma; suppressed only when a bibliographic follower confirms it.
     """
     tail = chars[match_end : match_end + 30]
     if _AUTHOR_INITIAL_FOLLOWER_RE.match(tail):
+        return True
+    # ``J.Wiley`` — the run is the prefix of a longer mixed-case word
+    # (an initial glued to a surname), so the next char is lower-case.
+    if tail[:1].islower():
         return True
     # Same-line chars stops at ``~`` (a specials node). Look at the
     # next sibling: if it's a tilde-or-space specials/chars followed
@@ -99,9 +123,16 @@ def _looks_like_author_initial(
             head = sib_two.chars[:30]
             if re.match(r"[A-Z][a-z]+", head):
                 return True
-    # ``Cochran, W.G.`` — bibliography-style with surname first.
     head = chars[max(0, match_start - 60) : match_start]
-    if _AUTHOR_SURNAME_PREFIX_RE.search(head):
+    # ``Cochran, W.G.`` — surname + comma is unambiguously bibliographic.
+    if _AUTHOR_SURNAME_COMMA_PREFIX_RE.search(head):
+        return True
+    # ``Greene W.H.`` — surname + space needs a bibliographic follower so
+    # ``The I.R.S. rules`` (capitalised leading word + real abbrev) is
+    # not mistaken for an author entry.
+    if _AUTHOR_SURNAME_SPACE_PREFIX_RE.search(head) and (
+        _BIB_INITIAL_FOLLOWER_RE.match(tail)
+    ):
         return True
     return False
 
@@ -119,15 +150,17 @@ def check_jss_abbr_001(
                 continue
             for match in _DOTTED_ABBREV_RE.finditer(node.chars):
                 raw = match.group(0)
-                # Author-initial heuristic only applies to the
-                # 2-letter form (``X.Y.``); 3+-letter abbrevs
-                # (``U.S.A.``, ``Ph.D.``) are real abbreviations.
-                # Known country / org abbreviations (``U.S.``, ``U.K.``)
-                # are never author initials even when followed by a
-                # surname-shaped word.
+                # The author-initial heuristic now covers both the
+                # 2-letter (``W.H.``) and 3+-letter (``R.H.B.``) forms:
+                # both are author initials when they sit next to a
+                # surname, and the heuristic only fires in that context.
+                # Genuine abbreviations (``U.S.A.``, ``P.D.E.``) survive
+                # because they appear after a lower-case word, not a
+                # surname. Known country / org abbreviations (``U.S.``,
+                # ``U.K.``) are never author initials even when followed
+                # by a surname-shaped word, so they stay exempt.
                 if (
-                    match.group(3) is None
-                    and raw not in _KNOWN_DOTTED_ABBREVS
+                    raw not in _KNOWN_DOTTED_ABBREVS
                     and _looks_like_author_initial(
                         node.chars, match.start(), match.end(),
                         parent, idx,

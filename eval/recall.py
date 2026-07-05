@@ -29,6 +29,44 @@ class RecallReport:
     f1: float | None             # None unless precision is provided
 
 
+@dataclass(frozen=True)
+class PooledRecall:
+    """Recall pooled over rules too thinly planted to report individually."""
+    rule_count: int
+    tp: int
+    fn: int
+    recall: float | None         # None when tp + fn == 0
+    rule_ids: tuple[str, ...]
+
+
+def partition_by_plants(
+    per_rule: Iterable[RuleRecall], min_plants: int
+) -> tuple[tuple[RuleRecall, ...], PooledRecall]:
+    """Split per-rule recall into rules with enough plants to report on
+    their own (``tp + fn >= min_plants``) and a single pooled bucket for
+    the thinner rest.
+
+    Per-rule recall on n=1-2 plants is statistically meaningless, so the
+    paper reports individual rules only above ``min_plants`` and folds the
+    long tail into one pooled figure. Ordering of the measured tuple is
+    preserved from the input.
+    """
+    measured: list[RuleRecall] = []
+    thin: list[RuleRecall] = []
+    for r in per_rule:
+        (measured if r.tp + r.fn >= min_plants else thin).append(r)
+    ptp = sum(r.tp for r in thin)
+    pfn = sum(r.fn for r in thin)
+    pooled = PooledRecall(
+        rule_count=len(thin),
+        tp=ptp,
+        fn=pfn,
+        recall=(ptp / (ptp + pfn) if (ptp + pfn) else None),
+        rule_ids=tuple(r.rule_id for r in thin),
+    )
+    return tuple(measured), pooled
+
+
 def _key(item: dict) -> tuple[str, str, int]:
     return (item["rule_id"], item["file"], item["line"])
 

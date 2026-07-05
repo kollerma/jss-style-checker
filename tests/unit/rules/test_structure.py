@@ -254,6 +254,21 @@ class TestStruct005:
         src = r"\author{Alice Smith}"
         assert run_rule(jss_struct_005, src) == []
 
+    def test_literal_and_in_institution_with_macro_sep_silent(self, run_rule):
+        # Authors already separated by \AND -> a literal "and" is part of
+        # an institution name, not a separator (recall-corpus opentsne).
+        src = (
+            r"\author{Alice Smith\\ Dept of Computer and Information Science"
+            r" \AND Bob Jones\\ MIT and Harvard}"
+        )
+        assert run_rule(jss_struct_005, src) == []
+
+    def test_literal_and_separator_without_macro_still_flagged(self, run_rule):
+        # No macro separator and a literal "and" joining names -> still a
+        # violation.
+        src = r"\author{Alice Smith and Bob Jones}"
+        assert len(run_rule(jss_struct_005, src)) == 1
+
     def test_first_group_arg_fallback(self, parse_tex_source):
         # Exercise the sibling-fallback path in _first_group_arg.
         from texlint.journals.jss.rules.structure import _first_group_arg
@@ -326,6 +341,41 @@ class TestStruct005:
         starts = sorted(f.start for f in fixes)
         ends = sorted(f.end for f in fixes)
         assert starts[0] < ends[0] <= starts[1] < ends[1]
+
+    def test_literal_and_single_line_still_flagged(self, run_rule):
+        # No ``\\`` row break at all → the whole author group is the
+        # author-name line and the literal "and" is a separator.
+        src = r"\author{John Fox and Sanford Weisberg}"
+        violations = run_rule(jss_struct_005, src)
+        assert len(violations) == 1
+        assert src[violations[0].fix.start : violations[0].fix.end] == "and"
+
+    def test_literal_and_before_first_rowbreak_flagged(self, run_rule):
+        # "and" on the author-name line (before the first ``\\``) is a
+        # separator even though affiliation lines follow.
+        src = (
+            r"\author{Alice Smith and Bob Jones \\"
+            "\n"
+            r"Department of Bioinformatics and Biostatistics}"
+        )
+        violations = run_rule(jss_struct_005, src)
+        assert len(violations) == 1
+        v = violations[0]
+        # The flagged "and" is the author-line one, before the ``\\``.
+        assert src[v.fix.start : v.fix.end] == "and"
+        assert v.fix.start < src.index(r"\\")
+
+    def test_literal_and_in_affiliation_after_rowbreak_silent(self, run_rule):
+        # "and" living in an affiliation/department line after ``\\`` is
+        # ordinary prose, not an author separator → not flagged.
+        src = (
+            r"\author{Alice Smith \\"
+            "\n"
+            r"Department of Bioinformatics and Biostatistics \\"
+            "\n"
+            r"Qassim University and Durham University}"
+        )
+        assert run_rule(jss_struct_005, src) == []
 
 
 # ---------------------------------------------------------------------------

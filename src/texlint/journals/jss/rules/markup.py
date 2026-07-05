@@ -131,6 +131,66 @@ def _is_macro_definition_line(source: str, abs_pos: int) -> bool:
     return bool(_MACRO_DEF_LINE_RE.match(source, line_start))
 
 
+# The line-based check above only catches definitions whose *head* is the
+# first content on the token's line. Definitions also appear mid-line
+# (``\@ifundefined{R}{\newcommand{\R}{...}}``, ``\makeatletter\def\R{...}``)
+# and split the head from the letter-bearing body across lines
+# (``\DeclareMathOperator`` on one line, ``{\Rop}{\mathbb R}`` on the next).
+# For those the token still sits inside a brace group *governed* by a
+# definition head. This regex matches such a head immediately before an
+# enclosing ``{``, allowing already-closed name / option / arg groups
+# (``{\R}``, ``[1]``, ``\calR``) and whitespace in between.
+_MACRO_DEF_HEAD_BEFORE_BRACE_RE = re.compile(
+    r"\\(?:(?:re)?new(?:command|environment)|providecommand|def"
+    r"|DeclareMathOperator|DeclareRobustCommand|newcolumntype|newtheorem)"
+    r"\*?(?:(?:\s|%[^\n]*\n)*(?:\{[^{}]*\}|\[[^\]]*\]|\\[A-Za-z@]+))*"
+    r"(?:\s|%[^\n]*\n)*\Z"
+)
+
+# Backward-scan bound: definition bodies are short, so a token more than
+# this many chars from its enclosing opener is never inside a def body.
+# Bounding keeps the per-token scan cheap on large documents.
+_DEF_BODY_SCAN_LIMIT = 4000
+
+
+def _is_escaped(source: str, idx: int) -> bool:
+    """True when the char at ``idx`` is preceded by an odd number of
+    backslashes (i.e. it is TeX-escaped: ``\\{`` / ``\\}``)."""
+    n = 0
+    j = idx - 1
+    while j >= 0 and source[j] == "\\":
+        n += 1
+        j -= 1
+    return n % 2 == 1
+
+
+def _is_in_macro_definition_body(source: str, abs_pos: int) -> bool:
+    """True when ``abs_pos`` sits inside a brace group governed by a
+    macro-definition head (``\\def`` / ``\\newcommand`` / ``\\newcolumntype``
+    / ``\\DeclareMathOperator`` / ...), even when that head is not at the
+    start of the token's line or the body spans several lines.
+
+    Walks back to the nearest *enclosing* (unmatched) ``{`` and checks
+    whether the text immediately before it is a definition head."""
+    depth = 0
+    lower = max(0, abs_pos - _DEF_BODY_SCAN_LIMIT)
+    i = abs_pos - 1
+    while i >= lower:
+        c = source[i]
+        if c in "{}" and not _is_escaped(source, i):
+            if c == "}":
+                depth += 1
+            elif depth == 0:  # nearest enclosing opener
+                head = source[max(0, i - 120):i]
+                return bool(
+                    _MACRO_DEF_HEAD_BEFORE_BRACE_RE.search(head)
+                )
+            else:
+                depth -= 1
+        i -= 1
+    return False
+
+
 # NB: no guard for the ``R`` in "Comprehensive R Archive Network" —
 # the AI precision labels disagree with each other on that phrase
 # (5 FP vs 6 TP labels on identical text), and the hand-annotated
@@ -410,6 +470,8 @@ def _check_bare_terms(
                 abs_pos = node.pos + offset
                 abs_end = abs_pos + len(token)
                 if _is_macro_definition_line(tex.source, abs_pos):
+                    continue
+                if _is_in_macro_definition_body(tex.source, abs_pos):
                     continue
                 if _is_tex_amp_adjacent(tex.source, abs_pos, abs_end):
                     continue

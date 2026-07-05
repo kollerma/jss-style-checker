@@ -14,10 +14,12 @@ from texlint.journals.jss.rules.bibtex import (
     check_jss_bibtex_001,
     check_jss_bibtex_002,
     check_jss_bibtex_004,
+    check_jss_bibtex_005,
     jss_bibtex_001,
     jss_bibtex_002,
     jss_bibtex_003,
     jss_bibtex_004,
+    jss_bibtex_005,
     rules,
 )
 
@@ -29,13 +31,13 @@ def _bib_from_fixture(name: str) -> str:
     return (FIXTURE_DIR / name).read_text(encoding="utf-8")
 
 
-def test_rules_tuple_has_four_rules():
-    assert len(rules) == 4
+def test_rules_tuple_has_five_rules():
+    assert len(rules) == 5
 
 
 def test_rules_tuple_ids():
     assert {r.id for r in rules} == {
-        f"JSS-BIBTEX-00{i}" for i in range(1, 5)
+        f"JSS-BIBTEX-00{i}" for i in range(1, 6)
     }
 
 
@@ -388,6 +390,72 @@ class TestBibtex004:
             bib_files=(parse_bib_source(bib_src),),
         )
         assert list(check_jss_bibtex_004(doc, ToolConfig())) == []
+
+
+# ---------------------------------------------------------------------------
+# JSS-BIBTEX-005 — no duplicate field keys within an entry
+# ---------------------------------------------------------------------------
+
+
+class TestBibtex005:
+    def test_positive(self, run_rule):
+        violations = run_rule(
+            jss_bibtex_005,
+            _bib_from_fixture("JSS-BIBTEX-005-bad.bib"),
+            kind="bib",
+        )
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-BIBTEX-005"
+        assert violations[0].severity == Severity.ERROR
+        # The dropped field name surfaces in the suggestion.
+        assert "author" in (violations[0].suggestion or "")
+
+    def test_good_fixture_silent(self, run_rule):
+        assert (
+            run_rule(
+                jss_bibtex_005,
+                _bib_from_fixture("JSS-BIBTEX-005-good.bib"),
+                kind="bib",
+            )
+            == []
+        )
+
+    def test_does_not_raise_parse_error(self, parse_bib_source):
+        # The recovered parse must not surface a fatal JSS-PARSE-000 — that
+        # is the whole point of routing the defect to BIBTEX-005 instead.
+        bib = parse_bib_source(_bib_from_fixture("JSS-BIBTEX-005-bad.bib"))
+        assert [v.rule_id for v in bib.violations] == []
+
+    def test_reports_each_offending_entry(self, run_rule):
+        src = (
+            "@article{a, author={X}, author={Y}, title={T},"
+            " journal={J}, year={2020}}\n"
+            "@article{b, volume={1}, volume={2}, title={T},"
+            " journal={J}, year={2021}}\n"
+        )
+        violations = run_rule(jss_bibtex_005, src, kind="bib")
+        assert len(violations) == 2
+        assert all(v.rule_id == "JSS-BIBTEX-005" for v in violations)
+
+    def test_library_none_silent(self, tmp_path: Path):
+        broken = ParsedBibFile(
+            path=tmp_path / "b.bib", source="", library=None, violations=()
+        )
+        doc = ParsedDocument(bib_files=(broken,))
+        assert list(check_jss_bibtex_005(doc, ToolConfig())) == []
+
+    def test_ignores_non_duplicate_field_failed_blocks(self, tmp_path: Path):
+        # failed_blocks can hold other recoverable types (e.g.
+        # DuplicateBlockKeyBlock); BIBTEX-005 must ignore them.
+        class FakeLib:
+            entries: list = []
+            failed_blocks: list = [object()]
+
+        fake_bib = ParsedBibFile(
+            path=tmp_path / "b.bib", source="", library=FakeLib(), violations=()
+        )
+        doc = ParsedDocument(bib_files=(fake_bib,))
+        assert list(check_jss_bibtex_005(doc, ToolConfig())) == []
 
 
 def test_bibtex002_ignores_non_duplicate_failed_blocks(tmp_path: Path):

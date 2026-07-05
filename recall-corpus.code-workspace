@@ -17,14 +17,21 @@
     { "name": "repo root", "path": "." },
     { "name": "CARBayesST", "path": "eval/recall-corpus/CARBayesST" },
     { "name": "clifford", "path": "eval/recall-corpus/clifford" },
+    { "name": "CUB", "path": "eval/recall-corpus/CUB" },
     { "name": "cusp", "path": "eval/recall-corpus/cusp" },
     { "name": "DBR", "path": "eval/recall-corpus/DBR" },
     { "name": "deSolve", "path": "eval/recall-corpus/deSolve" },
+    { "name": "HardyWeinberg", "path": "eval/recall-corpus/HardyWeinberg" },
     { "name": "mdsOpt", "path": "eval/recall-corpus/mdsOpt" },
+    { "name": "mlt.docreg", "path": "eval/recall-corpus/mlt.docreg" },
+    { "name": "opentsne", "path": "eval/recall-corpus/opentsne" },
     { "name": "pmclust", "path": "eval/recall-corpus/pmclust" },
     { "name": "robustlmm", "path": "eval/recall-corpus/robustlmm" },
+    { "name": "romc", "path": "eval/recall-corpus/romc" },
     { "name": "rstpm2", "path": "eval/recall-corpus/rstpm2" },
-    { "name": "spacetime", "path": "eval/recall-corpus/spacetime" }
+    { "name": "SightabilityModel", "path": "eval/recall-corpus/SightabilityModel" },
+    { "name": "spacetime", "path": "eval/recall-corpus/spacetime" },
+    { "name": "trueskill", "path": "eval/recall-corpus/trueskill" }
   ],
   "settings": {
     // Interpreter pinning is environment-specific — leave unset here

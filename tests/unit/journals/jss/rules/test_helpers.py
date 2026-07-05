@@ -16,6 +16,8 @@ from pylatexenc.latexwalker import (
     LatexWalker,
 )
 
+from texlint.api import ParsedDocument
+
 from texlint.journals.jss.rules import _helpers
 
 
@@ -372,3 +374,46 @@ class TestCharHasBlankLine:
         _, nodes = _parse(r"\emph{x}")
         mac = next(n for n in nodes if isinstance(n, LatexMacroNode))
         assert _helpers._char_has_blank_line(mac) is False
+
+
+class TestIterReferencedEntries:
+    """Regression coverage for the cited/uncited scope gate — the shared
+    helper every bib rule uses to decide whether an entry is in scope.
+    """
+
+    def test_case_insensitive_cite_match(
+        self, parse_tex_source, parse_bib_source
+    ):
+        # \cite{Foo} (upper) must match @article{foo,...} (lower): BibTeX
+        # keys are case-insensitive.
+        tex_src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\cite{Foo}\end{document}" "\n"
+        )
+        bib_src = "@article{foo, author={x}, title={T}, year={2020}}\n"
+        doc = ParsedDocument(
+            tex_files=(parse_tex_source(tex_src),),
+            bib_files=(parse_bib_source(bib_src),),
+        )
+        keys = {e.key for _bib, e in _helpers._iter_referenced_entries(doc)}
+        assert keys == {"foo"}
+
+    def test_uncited_entry_still_excluded(
+        self, parse_tex_source, parse_bib_source
+    ):
+        # The case-insensitive change must not over-widen scope: an entry
+        # that is genuinely uncited (no matching key in any case) stays out.
+        tex_src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\cite{Foo}\end{document}" "\n"
+        )
+        bib_src = (
+            "@article{foo, author={x}, title={T}, year={2020}}\n"
+            "@article{bar, author={y}, title={U}, year={2021}}\n"
+        )
+        doc = ParsedDocument(
+            tex_files=(parse_tex_source(tex_src),),
+            bib_files=(parse_bib_source(bib_src),),
+        )
+        keys = {e.key for _bib, e in _helpers._iter_referenced_entries(doc)}
+        assert keys == {"foo"}

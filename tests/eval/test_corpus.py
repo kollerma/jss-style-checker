@@ -328,6 +328,121 @@ def test_tarslip_is_refused(monkeypatch, tmp_path: Path) -> None:
 
 
 # -----------------------------------------------------------------------------
+# GitHub source — commit-pinned manuscript extracted into vignettes/
+# -----------------------------------------------------------------------------
+
+
+_GH_SHA = "c075a0dbc2a4ecaef8120e10fd53694007d2e10a"
+_GH_MANUSCRIPT = b"\\documentclass[article]{jss}\n"
+_GH_MANUSCRIPT_SHA = hashlib.sha256(_GH_MANUSCRIPT).hexdigest()
+
+
+def _github_tar() -> bytes:
+    """A fake GitHub archive: a `<repo>-<sha>/` prefix with a paper dir."""
+    prefix = f"opentsne-paper-{_GH_SHA}"
+    return _build_fake_tar([
+        (f"{prefix}/paper/main.tex", _GH_MANUSCRIPT),
+        (f"{prefix}/paper/references.bib", b"@article{x, title={t}}\n"),
+        (f"{prefix}/paper/figure.pdf", b"%PDF-1.4 not source\n"),
+        (f"{prefix}/2023-05-revision-1/main.tex", b"\\documentclass{jss}\n"),
+        (f"{prefix}/README.md", b"# repo\n"),
+    ])
+
+
+def test_load_manifest_accepts_github_source(tmp_path: Path) -> None:
+    mp = tmp_path / "m.csv"
+    _write_manifest(
+        mp,
+        [["10.18637/jss.v109.i03", "github", "owner/repo",
+          f"{_GH_SHA}:paper/main.tex", "vignettes/main.tex", "github_x/", ""]],
+    )
+    rows = corpus.load_manifest(mp)
+    assert rows[0].source == "github"
+    assert rows[0].version == f"{_GH_SHA}:paper/main.tex"
+
+
+def test_fetch_github_extracts_manuscript_and_sibling_bib_into_vignettes(
+    monkeypatch, tmp_path: Path
+) -> None:
+    tar_bytes = _github_tar()
+    url = f"https://codeload.github.com/owner/repo/tar.gz/{_GH_SHA}"
+    _patch_urlopen(monkeypatch, {url: tar_bytes})
+
+    mp = tmp_path / "m.csv"
+    # Integrity is pinned on the manuscript blob, not the tarball.
+    _write_manifest(
+        mp,
+        [["10.18637/jss.v109.i03", "github", "owner/repo",
+          f"{_GH_SHA}:paper/main.tex", "vignettes/main.tex", "github_x/",
+          _GH_MANUSCRIPT_SHA]],
+    )
+    gaps = tmp_path / "gaps.csv"
+    code = corpus.run_fetch(
+        manifest_path=mp, target_dir=tmp_path / "ex", gaps_path=gaps
+    )
+
+    assert code == 0
+    vdir = tmp_path / "ex" / "github_x" / "vignettes"
+    # Manuscript + its sibling bib are flattened into vignettes/ …
+    assert (vdir / "main.tex").read_text().startswith("\\documentclass")
+    assert (vdir / "references.bib").exists()
+    # … and nothing else travels: no figures, no README, no other-dir main.tex.
+    assert sorted(p.name for p in vdir.iterdir()) == ["main.tex", "references.bib"]
+
+
+def test_fetch_github_hash_mismatch_logs_gap(monkeypatch, tmp_path: Path) -> None:
+    tar_bytes = _github_tar()
+    url = f"https://codeload.github.com/owner/repo/tar.gz/{_GH_SHA}"
+    _patch_urlopen(monkeypatch, {url: tar_bytes})
+
+    mp = tmp_path / "m.csv"
+    _write_manifest(
+        mp,
+        [["", "github", "owner/repo", f"{_GH_SHA}:paper/main.tex",
+          "vignettes/main.tex", "github_x/", "0" * 64]],
+    )
+    gaps = tmp_path / "gaps.csv"
+    code = corpus.run_fetch(manifest_path=mp, target_dir=tmp_path / "ex", gaps_path=gaps)
+
+    assert code == 1
+    assert "hash mismatch" in gaps.read_text(encoding="utf-8").lower()
+
+
+def test_fetch_github_missing_manuscript_logs_gap(monkeypatch, tmp_path: Path) -> None:
+    tar_bytes = _github_tar()
+    url = f"https://codeload.github.com/owner/repo/tar.gz/{_GH_SHA}"
+    _patch_urlopen(monkeypatch, {url: tar_bytes})
+
+    mp = tmp_path / "m.csv"
+    # Wrong in-repo path: the manuscript is never found, so the fetch gaps
+    # out before any hash check — the sha256 value is irrelevant here.
+    _write_manifest(
+        mp,
+        [["", "github", "owner/repo", f"{_GH_SHA}:paper/nope.tex",
+          "vignettes/nope.tex", "github_x/", _GH_MANUSCRIPT_SHA]],
+    )
+    gaps = tmp_path / "gaps.csv"
+    code = corpus.run_fetch(manifest_path=mp, target_dir=tmp_path / "ex", gaps_path=gaps)
+
+    assert code == 1
+    assert "not found" in gaps.read_text(encoding="utf-8").lower()
+
+
+def test_fetch_github_rejects_malformed_version(monkeypatch, tmp_path: Path) -> None:
+    # No colon ⇒ no in-repo path ⇒ gap, without any network call.
+    mp = tmp_path / "m.csv"
+    _write_manifest(
+        mp,
+        [["", "github", "owner/repo", _GH_SHA, "vignettes/main.tex", "github_x/", ""]],
+    )
+    gaps = tmp_path / "gaps.csv"
+    code = corpus.run_fetch(manifest_path=mp, target_dir=tmp_path / "ex", gaps_path=gaps)
+
+    assert code == 1
+    assert "in-repo-path" in gaps.read_text(encoding="utf-8")
+
+
+# -----------------------------------------------------------------------------
 # JSS-only suggestion filter
 # -----------------------------------------------------------------------------
 

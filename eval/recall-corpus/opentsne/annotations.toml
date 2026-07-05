@@ -1,0 +1,666 @@
+# Hand-annotated ground truth for paper "opentsne".
+#
+# Read the rendered manuscript end-to-end and record EVERY
+# JSS-guide violation. Identity tuple is (rule_id, file, line);
+# column does NOT participate. See ../README.md for the protocol.
+#
+# Goal 1 (non-CRAN language coverage): openTSNE Python manuscript (JSS v109.i03).
+# Helps cover MARKUP-004 (absent), STRUCT-001/005 (thin).
+#
+# The [[violations]] below are SEEDED from precision-review
+# verdicts (eval.db, 2026-06-17): each is a review-confirmed
+# TRUE POSITIVE — VERIFY it, and add the false negatives the
+# linter missed (those are not in eval.db). Reviewed FALSE
+# POSITIVES are listed (commented) at the bottom: do NOT add
+# them as violations, but confirm the FP judgement as you read.
+#
+# JSS-REFS-003 is NOT seeded here — it is populated separately by
+# `python -m eval.crossref_doi_lookup` (records the actual DOI).
+
+[meta]
+paper_id = "opentsne"
+annotator = "Manuel Koller"
+date = "2026-07-03"
+notes = ""
+
+[[violations]]
+rule_id = "JSS-CAP-001"
+file = "main.tex"
+line = 48
+comment = "Title in title style with principal words capitalized"
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "main.tex"
+line = 48
+comment = "Prose package name not wrapped in \\pkg{}"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "main.tex"
+line = 93
+comment = "Bib entry sheth2019spatial: 6+ authors use \\shortcites{} or shortnames"
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 93
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "main.tex"
+line = 98
+comment = "Bib entry macosko2015highly: 6+ authors use \\shortcites{} or shortnames"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "main.tex"
+line = 102
+comment = "Bib entry becht2019dimensionality: 6+ authors use \\shortcites{} or shortnames class"
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "main.tex"
+line = 102
+comment = "Used \\citep{...} inside parentheses, should use \\citealt{...} instead"
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 102
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "main.tex"
+line = 105
+comment = "Bib entry pedregosa2011scikit: 6+ authors use \\shortcites{} or shortnames"
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 105
+comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 122
+comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 123
+comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 124
+comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 126
+comment = 'Section are referenced by Section~\ref{} rather than Sec.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-004"
+file = "main.tex"
+line = 128
+comment = "Markup in section title, should provide plain-text shim"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "main.tex"
+line = 193
+comment = "Bib entry belkina2019automated: 6+ authors use \\shortcites{} or shortnames"
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 361
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "main.tex"
+line = 363
+comment = "Bib tex entry sklearn_api: 6+ authors use \\shortcites{} or shortnames"
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 420
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 439
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 473
+comment = 'Operator missing surrounding spaces, `perplexity=30` should be `perplexity = 30`'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 501
+comment = "Missing spaces surrounding ="
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 519
+comment = "Missing spaces surrounding ="
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 572
+comment = "Missing spaces surrounding ="
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 579
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 583
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 591
+comment = 'Figures referenced by Fig.~\ref{}/Figs.~\ref{} rather than Figure~\ref{}/Figures~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 593
+comment = 'Figures are referenced by Figures~\ref{} rathern than Figs.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 597
+comment = "Missing spaces surrounding ="
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 619
+comment = "Missing spaces surrounding ="
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 626
+comment = "Missing spaces surrounding ="
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 641
+comment = 'Figures are referenced by Figures~\ref{} rathern than Figs.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 643
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 645
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 647
+comment = "Missing spaces surrounding ="
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 653
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "main.tex"
+line = 655
+comment = "Missing spaces surrounding ="
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "main.tex"
+line = 667
+comment = "Bib tex entry harris2018classes: 6+ authors use \\shortcites{} or shortnames"
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 667
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 672
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 689
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 707
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 712
+comment = 'Figures are referenced by Figure~\ref{} rather than Fig.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 722
+comment = 'Figures are referenced by Figures~\ref{} rathern than Figs.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-XREF-007"
+file = "main.tex"
+line = 728
+comment = 'Tables are referenced by Table~\ref{} rathern than Tab.~\ref{}'
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "main.tex"
+line = 777
+comment = "Should cite the van der Maaten, Laurens 2014 article in Journal of Machine Learning Research here [seeded from review: human:unknown]"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 22
+comment = 'tasic2018shared — DOI 10.1038/s41586-018-0654-5 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41586-018-0654-5".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 22
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 33
+comment = 'cao2019single — DOI 10.1038/s41586-019-0969-x found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41586-019-0969-x".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 33
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 44
+comment = 'hochgerner2018conserved — DOI 10.1038/s41593-017-0056-2 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41593-017-0056-2".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 44
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 55
+comment = 'harris2018classes — DOI 10.1371/journal.pbio.2006387 found on Crossref (title similarity 1.00); add to the entry as doi="10.1371/journal.pbio.2006387".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 55
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 66
+comment = 'macosko2015highly — DOI 10.1016/j.cell.2015.05.002 found on Crossref (title similarity 1.00); add to the entry as doi="10.1016/j.cell.2015.05.002".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 66
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 77
+comment = 'shekhar2016comprehensive — DOI 10.1016/j.cell.2016.07.054 found on Crossref (title similarity 1.00); add to the entry as doi="10.1016/j.cell.2016.07.054".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 77
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 99
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 125
+comment = 'krijthe2015rtsne — DOI 10.32614/cran.package.rtsne found on Crossref (title similarity 0.98); add to the entry as doi="10.32614/cran.package.rtsne".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 125
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 133
+comment = 'linderman2019fast — DOI 10.1038/s41592-018-0308-4 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41592-018-0308-4".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 133
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 144
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 154
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 165
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "references.bib"
+line = 174
+comment = "BibTeX titles use JSS markup for language and package names"
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "references.bib"
+line = 174
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 188
+comment = 'kobak2019art — DOI 10.1038/s41467-019-13056-x found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41467-019-13056-x".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 188
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 199
+comment = 'belkina2019automated — DOI 10.1038/s41467-019-13055-y found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41467-019-13055-y".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 199
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 210
+comment = 'kobak2019heavy — DOI 10.1007/978-3-030-46150-8_8 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/978-3-030-46150-8_8".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 210
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 219
+comment = 'kobak2019umap — DOI 10.1038/s41587-020-00809-z found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41587-020-00809-z".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 219
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 230
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "references.bib"
+line = 230
+comment = "Journal title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 237
+comment = 'jacobs1988increased — DOI 10.1016/0893-6080(88)90003-2 found on Crossref (title similarity 1.00); add to the entry as doi="10.1016/0893-6080(88)90003-2".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 237
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 248
+comment = 'jacomy2014forceatlas2 — DOI 10.1371/journal.pone.0098679 found on Crossref (title similarity 1.00); add to the entry as doi="10.1371/journal.pone.0098679".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 248
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 259
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 271
+comment = 'ding2018interpretable — DOI 10.1038/s41467-018-04368-5 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41467-018-04368-5".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 271
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 282
+comment = 'becht2019dimensionality — DOI 10.1038/nbt.4314 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/nbt.4314".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 282
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 301
+comment = 'sheth2019spatial — DOI 10.1038/s41587-019-0183-2 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41587-019-0183-2".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 301
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 312
+comment = 'beaulaurier2018metagenomic — DOI 10.1038/nbt.4037 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/nbt.4037".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 312
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 323
+comment = 'hirata2019genetic — DOI 10.1038/s41588-018-0336-0 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41588-018-0336-0".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 323
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 333
+comment = 'tkachev2019differences — DOI 10.1038/s41598-019-53762-6 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41598-019-53762-6".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 333
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 344
+comment = 'anderson1936species — DOI 10.2307/2394164 found on Crossref (title similarity 1.00); add to the entry as doi="10.2307/2394164".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 344
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 355
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 364
+comment = 'bezanson2017julia — DOI 10.1137/141000671 found on Crossref (title similarity 0.99); add to the entry as doi="10.1137/141000671".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 364
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-007"
+file = "references.bib"
+line = 364
+comment = "Journal title not in title case"
+
+[[violations]]
+rule_id = "JSS-BIBTEX-003"
+file = "references.bib"
+line = 375
+comment = "Missing journal field in article entry"
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 375
+comment = "Title not in title case"
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "references.bib"
+line = 382
+comment = 'kiselev2019challenges — DOI 10.1038/s41576-018-0088-9 found on Crossref (title similarity 1.00); add to the entry as doi="10.1038/s41576-018-0088-9".'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "references.bib"
+line = 382
+comment = "Title not in title case"
+
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-XREF-004  main.tex:250  — align environment  (ai:qwen3-30b)
+#   JSS-CITE-002  main.tex:371  — PyPI can't be cited just like CRAN can't be either  (human:unknown)
+#   JSS-CITE-002  main.tex:377  — Wrong use of \pkg  (human:unknown)
+#   JSS-MARKUP-001  main.tex:689  — Python is wrapped  (ai:qwen3-30b)
+#   JSS-MARKUP-001  main.tex:699  — no programming language names  (ai:qwen3-30b)

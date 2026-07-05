@@ -58,6 +58,16 @@ CODE_DISPLAY_ENVS: frozenset[str] = frozenset(
     }
 )
 
+#: Authored-code (input) subset of :data:`CODE_DISPLAY_ENVS`. The
+#: program-output environments (``CodeOutput`` / ``Soutput``) are
+#: excluded: their content is verbatim tool output, not author-written
+#: code, so code-*style* rules (CODE-001/002/003) must not fire on it —
+#: you cannot restyle what R printed, and CODE-003's auto-fix would
+#: corrupt the recorded output. WIDTH-001 still targets the full
+#: :data:`CODE_DISPLAY_ENVS`, since output lines must also fit the
+#: column limit.
+CODE_INPUT_ENVS: frozenset[str] = CODE_DISPLAY_ENVS - {"CodeOutput", "Soutput"}
+
 #: Other literal-body environments: their content is not prose, but it
 #: is not JSS code-display either (so CODE-* / WIDTH-* do not apply).
 LISTING_ENVS: frozenset[str] = frozenset(

@@ -21,7 +21,7 @@ from pylatexenc.latexwalker import (
 )
 
 from texlint.api import (
-    CODE_DISPLAY_ENVS,
+    CODE_INPUT_ENVS,
     Fix,
     ParsedDocument,
     Rule,
@@ -30,10 +30,13 @@ from texlint.api import (
 )
 from texlint.journals.jss.rules import _helpers
 
-# Envs where code lives — the shared code-display subset of the
-# verbatim contract (LISTING_ENVS like lstlisting are non-prose but
-# not JSS code-display, so CODE-* does not lint them).
-_CODE_ENVS: frozenset[str] = CODE_DISPLAY_ENVS
+# Envs where *authored* code lives — the input subset of the code-display
+# contract. Program-output envs (CodeOutput / Soutput) are excluded: their
+# body is verbatim tool output, not author-written code, so restyling it
+# (CODE-003) or flagging its comments (CODE-001) would be wrong. LISTING_ENVS
+# like lstlisting are non-prose but not JSS code-display, so CODE-* skips
+# them too.
+_CODE_ENVS: frozenset[str] = CODE_INPUT_ENVS
 
 # Match ``#`` (or ``##``, ``###``) followed by at least one space then
 # non-whitespace content — the shape of an explanatory R / shell /
@@ -48,15 +51,25 @@ _LIBRARY_UNQUOTED_RE = re.compile(
     r"([A-Za-z][A-Za-z0-9_.]*)\s*[,)]"
 )
 _MISSING_SPACES_RE = re.compile(
-    r"(?:[A-Za-z0-9_\.\)\]][=+\-*/][A-Za-z0-9_\.\(\[])"
+    # R multi-char operators that also need surrounding spaces: assignment
+    # (``<-``, ``->``, ``<<-``) and comparison (``==``, ``!=``, ``<=``,
+    # ``>=``). Match them as a unit *before* the single-char class —
+    # otherwise the embedded ``-`` / ``=`` sits next to ``<`` / ``=`` (not
+    # identifier chars), the ident-op-ident pattern never matches, and
+    # ``x<-y`` / ``a==b`` slip through entirely.
+    r"(?:[A-Za-z0-9_\.\)\]](?:<<-|<-|->|==|!=|<=|>=)[A-Za-z0-9_\.\(\[])"
+    r"|(?:[A-Za-z0-9_\.\)\]][=+\-*/][A-Za-z0-9_\.\(\[])"
     r"|(?:,[A-Za-z0-9_\.\(\[])"
 )
 
-# Code-env (Sinput / CodeInput / verbatim) line scanner — narrower than
-# the ``\code{...}`` heuristic because R style allows ``f(x=1)`` (no
-# spaces around ``=`` inside function calls) and chunk content has many
-# such legitimate keyword args. Only the comma-without-following-space
-# pattern is unambiguous in any R style guide.
+# Comma-without-following-space inside a code env (Sinput / CodeInput /
+# verbatim). The code-env scan applies this *alongside*
+# ``_MISSING_SPACES_RE`` (operator spacing, including ``=``): JSS requires
+# spaces around ``=`` even in function-argument keyword position —
+# ``f(x = 1)``, not ``f(x=1)`` — overriding the usual R/Python
+# convention (recall-corpus annotation CARBayesST.Rnw:52 et al.,
+# 2026-06-11). So ``group=mvad`` in a chunk is a genuine violation, not a
+# tolerated keyword arg.
 _CODE_ENV_MISSING_COMMA_SPACE_RE = re.compile(r",[A-Za-z0-9_\.\(\[\"']")
 # An R / shell comment from ``#`` to end-of-line — used to mask comments
 # before scanning operator spacing so prose-style commas inside comments
@@ -301,13 +314,17 @@ def _scan_code_env_for_spacing(tex: Any, env: Any) -> Iterator[Violation]:
             or _MISSING_SPACES_RE.search(cleaned)
         ):
             continue
-        # Map the offset back into the original text. The cleaned-string
-        # offset doesn't equal the original offset once we've stripped
-        # comments / strings; for line-level reporting it's enough to
-        # report on the env opening — line numbers stay accurate.
+        # Anchor the violation at the environment opening (the
+        # ``\begin{Sinput}`` / chunk header), not the content start.
+        # This is one violation per env, and reporting at ``env.pos``
+        # keeps it consistent with the ``\code{...}`` pass (which
+        # reports at the macro's ``\``) and lands on column 1 of the
+        # chunk rather than mid-line after the ``\begin`` tag. The
+        # cleaned-string match offset doesn't map back to the original
+        # source anyway once comments / strings are stripped.
         yield _violation(
             tex=tex,
-            pos=child.pos,
+            pos=env.pos,
             rule_id="JSS-CODE-003",
             suggestion=(
                 "Add spaces around operators and after commas in the "

@@ -47,6 +47,57 @@ def _seed(cx, rule_id: str, category: str, tp: int, fp: int, pending: int) -> No
         )
 
 
+def test_precision_exclusion_drops_matching_firings(
+    tmp_db: Path, tmp_path: Path, monkeypatch
+) -> None:
+    cx = db.connect(tmp_db)
+    try:
+        _seed(cx, "JSS-OPER-002", "unknown", tp=5, fp=3, pending=0)
+        _seed(cx, "JSS-CITE-001", "citation", tp=4, fp=1, pending=0)
+    finally:
+        cx.close()
+
+    excl = tmp_path / "excl.toml"
+    excl.write_text(
+        '[[exclusions]]\npaper = "p_JSS-OPER-002"\n'
+        'rule_id = "JSS-OPER-002"\nreason = "test"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(report, "_EXCLUSIONS_PATH", excl)
+
+    rows = {r.rule_id: r for r in report.compute_precision(tmp_db).rows}
+    # OPER-002's firings on the matching paper are dropped (both TP and FP).
+    assert rows.get("JSS-OPER-002", None) is None or (
+        rows["JSS-OPER-002"].tp == 0 and rows["JSS-OPER-002"].fp == 0
+    )
+    # A different rule is unaffected.
+    assert rows["JSS-CITE-001"].tp == 4 and rows["JSS-CITE-001"].fp == 1
+
+
+def test_gate_exception_reports_exempt_not_fail(
+    tmp_db: Path, tmp_path: Path, monkeypatch
+) -> None:
+    cx = db.connect(tmp_db)
+    try:
+        _seed(cx, "JSS-MARKUP-001", "unknown", tp=8, fp=3, pending=0)  # 0.73
+        _seed(cx, "JSS-CITE-001", "citation", tp=1, fp=5, pending=0)   # 0.17
+    finally:
+        cx.close()
+
+    exc = tmp_path / "gate.toml"
+    exc.write_text('[[exceptions]]\nrule_id = "JSS-MARKUP-001"\nreason = "test"\n', encoding="utf-8")
+    monkeypatch.setattr(report, "_GATE_EXCEPTIONS_PATH", exc)
+
+    table = report.compute_precision(tmp_db)
+    rows = {r.rule_id: r for r in table.rows}
+    # Exempted rule: below threshold but EXEMPT, not FAIL.
+    assert rows["JSS-MARKUP-001"].status == "EXEMPT"
+    # Non-exempt sub-threshold rule still FAILs.
+    assert rows["JSS-CITE-001"].status == "FAIL"
+    # The gate still trips (on CITE-001), but MARKUP-001 alone would not.
+    assert table.any_below_threshold is True
+
+
 def test_precision_math(tmp_db: Path) -> None:
     cx = db.connect(tmp_db)
     try:

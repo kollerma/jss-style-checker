@@ -316,6 +316,114 @@ class TestOper004:
         assert run_rule(jss_oper_004, src) == []
 
 
+class TestOper004Literals:
+    """Phase 1: bare literal var/cov/P operator tokens, in math mode."""
+
+    def _n(self, run_rule, body):
+        src = (
+            "\\documentclass[article]{jss}\n"
+            f"\\begin{{document}}{body}\\end{{document}}\n"
+        )
+        return len(run_rule(jss_oper_004, src))
+
+    # Phase 1a — var / cov literal tokens.
+    def test_lower_var_flagged(self, run_rule):
+        assert self._n(run_rule, "$var(x)$") == 1
+
+    def test_lower_cov_flagged(self, run_rule):
+        assert self._n(run_rule, "$cov(a, b)$") == 1
+
+    def test_mixed_case_var_cov_flagged(self, run_rule):
+        assert self._n(run_rule, "$Var(X) + Cov(Y, Z)$") == 2
+
+    def test_var_with_bracket_flagged(self, run_rule):
+        assert self._n(run_rule, "$var[x]$") == 1
+
+    def test_var_not_a_whole_token_silent(self, run_rule):
+        # ``covariate`` / a longer identifier ending in ``...var`` is not a
+        # bare operator token — the ``(`` must follow immediately and the
+        # token must not be glued to a preceding letter.
+        assert self._n(run_rule, "$covariate(x)$") == 0
+        assert self._n(run_rule, "$microvar(x)$") == 0
+
+    def test_var_outside_math_silent(self, run_rule):
+        assert self._n(run_rule, "The var(x) in prose.") == 0
+
+    # Phase 1b — uppercase P( with guards.
+    def test_upper_P_flagged(self, run_rule):
+        assert self._n(run_rule, "$P(X)$") == 1
+
+    def test_upper_P_bracket_flagged(self, run_rule):
+        assert self._n(run_rule, "$P[X = 1]$") == 1
+
+    def test_subscript_label_P_silent(self, run_rule):
+        # ``A_P(x, y)`` — the ``P`` is a subscript label, not an operator.
+        assert self._n(run_rule, "$A_P(x, y)$") == 0
+
+    def test_lowercase_p_density_silent(self, run_rule):
+        # Lowercase ``p(x)`` is a density, never the probability operator.
+        assert self._n(run_rule, "$p(x)$") == 0
+
+    def test_P_glued_to_letter_silent(self, run_rule):
+        # ``XP(t)`` — ``P`` is part of an identifier, not a bare operator.
+        assert self._n(run_rule, "$XP(t)$") == 0
+
+    def test_P_outside_math_silent(self, run_rule):
+        assert self._n(run_rule, "Section P(3) heading.") == 0
+
+
+class TestOper004CustomMacros:
+    """Phase 2: aliases whose \\newcommand body resolves to a prob /
+    expectation glyph — flag both the definition site and each use."""
+
+    def _n(self, run_rule, preamble, body):
+        src = (
+            "\\documentclass[article]{jss}\n"
+            f"{preamble}"
+            f"\\begin{{document}}{body}\\end{{document}}\n"
+        )
+        return len(run_rule(jss_oper_004, src))
+
+    def test_newcommand_ex_definition_and_use_both_flagged(self, run_rule):
+        # \newcommand{\Ex}{\mathbb{E}} + \Ex(X) → def site + use = 2.
+        assert self._n(
+            run_rule, "\\newcommand{\\Ex}{\\mathbb{E}}\n", "$\\Ex(X)$"
+        ) == 2
+
+    def test_newcommand_ex_mathsf_variant(self, run_rule):
+        assert self._n(
+            run_rule, "\\newcommand{\\Ex}{\\mathsf{E}}\n", "$\\Ex(X)$"
+        ) == 2
+
+    def test_def_form_ex(self, run_rule):
+        # \def\Ex{\mathbb{E}} + \Ex(X) → def site + use = 2.
+        assert self._n(
+            run_rule, "\\def\\Ex{\\mathbb{E}}\n", "$\\Ex(X)$"
+        ) == 2
+
+    def test_cub_p_alias(self, run_rule):
+        # CUB's \p{} — \newcommand{\p}{\mathbb{P}} + \p{X} → def + use = 2.
+        assert self._n(
+            run_rule, "\\newcommand{\\p}{\\mathbb{P}}\n", "$\\p{X}$"
+        ) == 2
+
+    def test_renewcommand_prob_definition_flagged_use_not(self, run_rule):
+        # Redefining the canonical \Prob to a raw glyph: flag the
+        # redefinition site only (uses already read as the canonical name).
+        assert self._n(
+            run_rule, "\\renewcommand{\\Prob}{\\mathbb{P}}\n", "$\\Prob(Y)$"
+        ) == 1
+
+    def test_non_prob_newcommand_silent(self, run_rule):
+        # A macro that doesn't resolve to a prob/expectation glyph is not
+        # an alias — neither definition nor use is flagged.
+        assert self._n(
+            run_rule,
+            "\\newcommand{\\Rcmd}[1]{\\texttt{#1}}\n",
+            "$\\Rcmd{x}$",
+        ) == 0
+
+
 def test_all_checks_silent_on_empty_tex():
     tex = ParsedTexFile(path=Path("/tmp/x.tex"), source="", nodes=(), walker=None)
     doc = ParsedDocument(tex_files=(tex,))
@@ -346,6 +454,13 @@ class TestOper002PrimeNotFlagged:
 
     def test_derivative_prime_silent(self, run_rule):
         assert self._n(run_rule, "\\dZ^\\prime(t)") == 0
+
+    def test_derivative_at_point_silent(self, run_rule):
+        # A derivative evaluated at a point — ``(\log\Gamma)'(\xi)`` — is a
+        # closing bracket followed by a single-quote and then ``(``. Prime
+        # notation is not flagged at all (dropped in 4b4b001 for 31%
+        # precision), so this derivative shape is never a false positive.
+        assert self._n(run_rule, "(\\log\\Gamma)'(\\xi)") == 0
 
     def test_literal_caret_T_still_fires(self, run_rule):
         assert self._n(run_rule, "X^T X") == 1

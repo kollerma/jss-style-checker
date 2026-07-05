@@ -1,0 +1,1186 @@
+# Hand-annotated ground truth for paper "CUB".
+#
+# Read the rendered manuscript end-to-end and record EVERY
+# JSS-guide violation. Identity tuple is (rule_id, file, line);
+# column does NOT participate. See ../README.md for the protocol.
+#
+# Goal 2 (rule coverage): closes STRUCT-004 (absent) + de-thins PRE-006.
+# No separate .bib (inline thebibliography), so BIBTEX-* cannot fire.
+#
+# The [[violations]] below are SEEDED from precision-review
+# verdicts (eval.db, 2026-06-17): each is a review-confirmed
+# TRUE POSITIVE — VERIFY it, and add the false negatives the
+# linter missed (those are not in eval.db). Reviewed FALSE
+# POSITIVES are listed (commented) at the bottom: do NOT add
+# them as violations, but confirm the FP judgement as you read.
+#
+# JSS-REFS-003 is NOT seeded here — it is populated separately by
+# `python -m eval.crossref_doi_lookup` (records the actual DOI).
+
+[meta]
+paper_id = "CUB"
+annotator = "Manuel Koller"
+date = "2026-06-19"
+notes = '''
+Seeded from precision review on 2026-06-17: 130 confirmed-TP entries to verify, 4 reviewed FPs recorded below.
+
+There are a few violations of the now retired rule JSS-ABBR-002:
+
+Line 123:
+\emph{C}ombination of a discrete \emph{U}niform and a shifted \emph{B}inomial random variable -\cub\
+
+Line 133:
+\textit{GE}neralized \textit{M}ixture Models with uncertainty (\textsc{gem})
+
+Both should not capitalise the words, as per style guide. There are some more similar lines that I don't list here, e.g. line 208.
+
+'''
+
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 3
+comment = "Preamble loads graphicx, color, float, rotating"
+
+[[violations]]
+rule_id = "JSS-HOUSE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 11
+comment = "Preamble loads hyperref"
+
+[[violations]]
+rule_id = "JSS-CAP-001"
+file = "CUBvignette-knitr.Rnw"
+line = 31
+comment = "Title has principal words capitalized"
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CUBvignette-knitr.Rnw"
+line = 31
+comment = '\textsf{R} should be \proglang{R} in title'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "CUBvignette-knitr.Rnw"
+line = 31
+comment = 'CUB should be \pkg{CUB} in title'
+
+[[violations]]
+rule_id = "JSS-PRE-006"
+file = "CUBvignette-knitr.Rnw"
+line = 35
+comment = '\Plaintitle should not contain any markup, remove \textsf{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CUBvignette-knitr.Rnw"
+line = 36
+comment = '\textsf{R} should be \proglang{R} in shorttitle'
+
+[[violations]]
+rule_id = "JSS-MARKUP-002"
+file = "CUBvignette-knitr.Rnw"
+line = 36
+comment = 'CUB should be \pkg{CUB} in shorttitle'
+
+[[violations]]
+rule_id = "JSS-PRE-006"
+file = "CUBvignette-knitr.Rnw"
+line = 42
+comment = '\Plaineywords contain LaTeX markup'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 113
+comment = 'Bracket-in-bracket citation forms are used, should use \citep[see e.g.,][]{Agr10, Tutz2012} instead'
+
+[[violations]]
+rule_id = "JSS-HOUSE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 113
+comment = "e.g. not followed by comma"
+
+[[violations]]
+rule_id = "JSS-CITE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 116
+comment = '\pkg{Zelig} lacks citation'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CUBvignette-knitr.Rnw"
+line = 116
+comment = 'R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 116
+comment = '\pkg{} abused for function names (polr(), lrm(), ...); functions belong in \code{}'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CUBvignette-knitr.Rnw"
+line = 130
+comment = '"R environment" should be "\proglang{R} environment"'
+
+[[violations]]
+rule_id = "JSS-OPER-002"
+file = "CUBvignette-knitr.Rnw"
+line = 144
+comment = "Should use \\top instead of ' to denote transpose, multiple times on that line"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CUBvignette-knitr.Rnw"
+line = 146
+comment = 'Custom \p{} probability operator; should be \Prob from jss.cls, or redefine \p to be an alias of \Prob'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 161
+comment = 'operator missing surrounding spaces, `\code{maxiter=500}` should be `\code{maxiter = 500}`'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CUBvignette-knitr.Rnw"
+line = 166
+comment = 'Consider replacing \eqref{...} with Equation~\ref{...}'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CUBvignette-knitr.Rnw"
+line = 184
+comment = 'Custom \p{} probability operator; should be \Prob from jss.cls, or redefine \p to be an alias of \Prob'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CUBvignette-knitr.Rnw"
+line = 189
+comment = 'Custom \p{} probability operator; should be \Prob from jss.cls, or redefine \p to be an alias of \Prob'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CUBvignette-knitr.Rnw"
+line = 204
+comment = 'Consider replacing \eqref{...} with Equation~\ref{...}'
+
+[[violations]]
+rule_id = "JSS-OPER-002"
+file = "CUBvignette-knitr.Rnw"
+line = 206
+comment = "Should use \\top instead of ' to denote transpose"
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CUBvignette-knitr.Rnw"
+line = 206
+comment = 'Consider replacing \eqref{...} with Equation~\ref{...}, 3 times on that line'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CUBvignette-knitr.Rnw"
+line = 208
+comment = 'Consider replacing \eqref{...} with Equation~\ref{...}, 3 times on that line'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CUBvignette-knitr.Rnw"
+line = 209
+comment = "numbered equation labelled ['probcush']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CUBvignette-knitr.Rnw"
+line = 210
+comment = 'Custom \p{} probability operator; should be \Prob from jss.cls, or redefine \p to be an alias of \Prob'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CUBvignette-knitr.Rnw"
+line = 216
+comment = 'Custom \p{} probability operator; should be \Prob from jss.cls, or redefine \p to be an alias of \Prob'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CUBvignette-knitr.Rnw"
+line = 217
+comment = "numbered equation labelled ['probbb']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CUBvignette-knitr.Rnw"
+line = 222
+comment = "numbered equation labelled ['probbb']; label never \\ref'd"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CUBvignette-knitr.Rnw"
+line = 223
+comment = 'Custom \p{} probability operator; should be \Prob from jss.cls, or redefine \p to be an alias of \Prob'
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CUBvignette-knitr.Rnw"
+line = 229
+comment = 'Consider replacing \eqref{...} with Equation~\ref{...}'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CUBvignette-knitr.Rnw"
+line = 232
+comment = "equation not referenced (no label defined)"
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CUBvignette-knitr.Rnw"
+line = 238
+comment = 'Custom \p{} probability operator; should be \Prob from jss.cls, or redefine \p to be an alias of \Prob'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 249
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~Y|W|X), family="cub", ...)
+```
+should be
+```
+GEM(Formula(ordinal ~ Y | W | X), family = "cub", ...)
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 252
+comment = '''
+Spaces missing around operators
+```
+\code{Y=0}, \code{W=0}, \code{X=0}
+```
+should be
+```
+\code{Y = 0}, \code{W = 0}, \code{X = 0}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 254
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~0|0|0), family="cub")
+```
+should be
+```
+GEM(Formula(ordinal ~ 0 | 0 | 0), family = "cub")
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 259
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~Y|0|0), family="cub")
+```
+should be
+```
+GEM(Formula(ordinal ~ Y | 0 | 0), family = "cub")
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 265
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~0|W|0), family="cub")
+```
+should be
+```
+GEM(Formula(ordinal ~ 0 | W | 0), family = "cub")
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 269
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~Y|W|0), family="cub")
+```
+should be
+```
+GEM(Formula(ordinal ~ Y | W | 0), family = "cub")
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 275
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~0|0|0), family="cub", shelter=s)
+```
+should be
+```
+GEM(Formula(ordinal ~ 0 | 0 | 0), family = "cub", shelter = s)
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 280
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~Y|W|X), family="cub", shelter=s)
+```
+should be
+```
+GEM(Formula(ordinal ~ Y | W | X), family = "cub", shelter = s)
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 285
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~0), family="cush", shelter = s)
+GEM(Formula(ordinal~X), family="cush", shelter = s)
+```
+should be
+```
+GEM(Formula(ordinal ~ 0), family = "cush", shelter = s)
+GEM(Formula(ordinal ~ X), family = "cush", shelter = s)
+```
+I removed the comments that shouldn't be there.
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 286
+comment = "Code block should not contain comments, move them to the surrounding text."
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 292
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~0|0|0), family="cube")
+GEM(Formula(ordinal~0|W|0), family="cube")
+GEM(Formula(ordinal~Y|W|Z), family="cube")
+```
+should be
+```
+GEM(Formula(ordinal ~ 0 | 0 | 0), family = "cube")
+GEM(Formula(ordinal ~ 0 | W | 0), family = "cube")
+GEM(Formula(ordinal ~ Y | W | Z), family = "cube")
+```
+I removed the comments that shouldn't be there.
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 293
+comment = "Code block should not contain comments, move them to the surrounding text."
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CUBvignette-knitr.Rnw"
+line = 295
+comment = "Code must fit within column limit, but this line overflows"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 298
+comment = '''
+Spaces missing around operators
+```
+\code{maxiter=50}, \code{toler=1e-3}
+```
+should be
+```
+\code{maxiter = 50}, \code{toler = 1e-3}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 301
+comment = '''
+Spaces missing around operators
+```
+GEM(Formula(ordinal~0),family="ihg")
+GEM(Formula(ordinal~U),family="ihg")
+```
+should be
+```
+GEM(Formula(ordinal ~ 0), family = "ihg")
+GEM(Formula(ordinal ~ U), family = "ihg")
+```
+I removed the comments that shouldn't be there.
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 302
+comment = "Code block should not contain comments, move them to the surrounding text."
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 306
+comment = 'Should be \code{"GEM"}'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "CUBvignette-knitr.Rnw"
+line = 318
+comment = 'Custom \p{} probability operator; should be \Prob from jss.cls, or redefine \p to be an alias of \Prob'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 320
+comment = 'Used \cite{...} inside parentheses, use \citealp{...} instead'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 323
+comment = '''
+Spaces missing around operators
+```
+llCUB  <- loglikCUB(ordinal,m,param,Y=Y,W=W,X=X,shelter=s)
+llCUBE <- loglikCUBE(ordinal,m,param,Y=Y,W=W,Z=Z)
+llIHG  <- loglikIHG(ordinal,m,param,U=U)
+llCUSH <- loglikCUSH(ordinal,m,param,X=X,shelter=s)
+```
+should be
+```
+llCUB  <- loglikCUB(ordinal, m, param, Y = Y, W = W, X = X, shelter = s)
+llCUBE <- loglikCUBE(ordinal, m, param, Y = Y, W = W , Z = Z)
+llIHG  <- loglikIHG(ordinal, m, param, U = U)
+llCUSH <- loglikCUSH(ordinal, m, param, X = X, shelter = s)
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 351
+comment = 'Bracket-in-bracket citation, should use \citealt{...} or move the text into the optional arguments of \citep[...][...]{...}.'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 369
+comment = '''
+Spaces missing around operators
+```
+\code{correlation=TRUE}
+```
+should be
+```
+\code{correlation = TRUE}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 378
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~0|0|0),family="cub")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ 0 | 0 | 0 ), family = "cub")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 379
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~0|0|0),family="cub",shelter=shelter)}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ 0 | 0 | 0), family = "cub", shelter = shelter)}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 380
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~Y|0|0),family="cub")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ Y | 0 | 0), family = "cub")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 381
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~0|W|0),family="cub")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ 0 | W | 0), family = "cub")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 382
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~Y|W|0),family="cub")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ Y | W | 0), family = "cub")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 383
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~Y|W|X),family="cub")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ Y | W | X), family = "cub")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 385
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~0|0|0),family="cube")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ 0 | 0 | 0), family = "cube")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 386
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~0|W|0),family="cube")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ 0 | W | 0), family = "cube")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 387
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~Y|W|Z),family="cube")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ Y | W | Z), family = "cube")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 389
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~0),family="cush",shelter=shelter)}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ 0), family = "cush", shelter = shelter)}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 390
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal ~ X), family = "cush", shelter = shelter)}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ 0), family = "ihg")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 392
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~0),family="ihg")}
+```
+should be
+```
+\code{GEM(Formula(ordina ~ 0), family = "ihg")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 393
+comment = '''
+Spaces missing around operators
+```
+\code{GEM(Formula(ordinal~U),family="ihg")}
+```
+should be
+```
+\code{GEM(Formula(ordinal ~ U), family = "ihg")}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-TYPO-001"
+file = "CUBvignette-knitr.Rnw"
+line = 396
+comment = "Caption should end with a period"
+
+[[violations]]
+rule_id = "JSS-OPER-002"
+file = "CUBvignette-knitr.Rnw"
+line = 404
+comment = '''Should use \top instead of \' to denote transpose'''
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 412
+comment = 'Code uses spaces around operators and after commas, e.g., `c(2,4,3,1)+0.1` should be `c(2, 4, 3, 1) + 0.1` and `phij<-model[jmod, 2]` should be `phij <- model[jmod, 2]`'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 414
+comment = "Comments in code should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 483
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 484
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 485
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 486
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 487
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 489
+comment = "Should use \\code{} instead of \\texttt{} for variable names, two times on the same line"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 493
+comment = '''
+Spaces missing around operators
+```
+listord<-univer[,8:12]
+labels<-names(univer)[8:12]
+multicub(listord, labels = labels,
+    	caption ="CUB models on Univer data set", pch = 19,
+    	pos = c(1,rep(3, ncol(listord)-1)),ylim=c(0.75,1),xlim=c(0,0.4))
+```
+should be
+```
+listord <- univer[, 8:12]
+labels <- names(univer)[8:12]
+multicub(listord, labels = labels,
+    	caption = "CUB models on Univer data set", pch = 19,
+    	pos = c(1, rep(3, ncol(listord) - 1)), ylim = c(0.75, 1), xlim = c(0, 0.4))
+```
+I removed the comments that shouldn't be there.
+'''
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 494
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 495
+comment = "Comments should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 517
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 519
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 520
+comment = "Move comments to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 526
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 537
+comment = "Move comments to surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 543
+comment = "Code missing spaces around operators and after comma, twice on that line"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 545
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 546
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 548
+comment = "Comments should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 552
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 555
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 565
+comment = "Comments should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CUBvignette-knitr.Rnw"
+line = 569
+comment = 'Consider using Equation~\ref{...} instead of \eqref{...}.'
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 571
+comment = "Comments should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 585
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 588
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 610
+comment = "Should use \\code{} instead of \\texttt{} for variable names, twice on that line"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 616
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 617
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 618
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 623
+comment = "Should use \\code{} instead of \\texttt{} for variable names, twice on that line"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 624
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 625
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 627
+comment = "Comments should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CUBvignette-knitr.Rnw"
+line = 628
+comment = "Code too wide, overflows"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 633
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 658
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 659
+comment = "data() calls should quote first arguments"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 718
+comment = "Should use \\code{} instead of \\texttt{} for variable names, three times on that line"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 726
+comment = "data() calls should quote first arguments"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 726
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 727
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 735
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 739
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 744
+comment = "Code missing spaces around operators and after comma, twice on that line"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 745
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 752
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 755
+comment = "Comments should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 781
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 786
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-XREF-002"
+file = "CUBvignette-knitr.Rnw"
+line = 790
+comment = 'Consider using Equation~\ref{...} instead of \eqref{...}, twice on that line'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 792
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 798
+comment = '''
+Spaces missing around operators
+```
+\code{pai1<-coef(cub_she)[1]}
+```
+should be
+```
+\code{pai1 <- coef(cub_she)[1]}
+```
+and
+```
+\code{pai2<-coef(cub_she)[2]}
+```
+should be
+```
+\code{pai2 <- coef(cub_she)[2]}
+```
+'''
+
+[[violations]]
+rule_id = "JSS-MARKUP-003"
+file = "CUBvignette-knitr.Rnw"
+line = 801
+comment = "Should use \\code{} instead of \\texttt{} for variable names"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 803
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 846
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 888
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 891
+comment = "Comments should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 930
+comment = 'Uses \cite{...} inside parenthese, use \citealt{...} instead'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CUBvignette-knitr.Rnw"
+line = 930
+comment = 'R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 931
+comment = 'Code missing spaces around `<-` operator'
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 968
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-001"
+file = "CUBvignette-knitr.Rnw"
+line = 983
+comment = "Comments should move to the surrounding text"
+
+[[violations]]
+rule_id = "JSS-WIDTH-001"
+file = "CUBvignette-knitr.Rnw"
+line = 996
+comment = "Code must fit within column limit, but this line overflows"
+
+[[violations]]
+rule_id = "JSS-CODE-003"
+file = "CUBvignette-knitr.Rnw"
+line = 1049
+comment = "Code missing spaces around operators and after comma"
+
+[[violations]]
+rule_id = "JSS-CODE-002"
+file = "CUBvignette-knitr.Rnw"
+line = 1050
+comment = "data() calls should quote first argument"
+
+[[violations]]
+rule_id = "JSS-XREF-006"
+file = "CUBvignette-knitr.Rnw"
+line = 1079
+comment = 'figure float has no \caption{} (and no \label{}, never referenced); the only captionless figure in the paper. The R variable caption<- on L1091 is the plot main= title, not a LaTeX caption.'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CUBvignette-knitr.Rnw"
+line = 1117
+comment = 'R should be \proglang{R}'
+
+[[violations]]
+rule_id = "JSS-STRUCT-004"
+file = "CUBvignette-knitr.Rnw"
+line = 1127
+comment = 'Incorrect use of \bibliography: References are declared via \bibliography{} rather than a hand-written thebibliography environment'
+
+[[violations]]
+rule_id = "JSS-OPER-004"
+file = "defs.tex"
+line = 84
+comment = 'Definition site: \newcommand{\p}{...} defines an alternative to the jss.cls \Prob (= \mathsf{P}); the definition itself is the root defect (all \p body uses are also annotated).'
+
+

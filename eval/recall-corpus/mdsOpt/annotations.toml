@@ -79,6 +79,12 @@ line = 203
 comment = 'Milligan+Cooper:1988 — DOI 10.1007/bf01897163 found on Crossref (title similarity 1.00); add to the entry as doi="10.1007/bf01897163".'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "mdsOpt.bib"
+line = 232
+comment = 'R:2019 — DOI 10.32614/r.manuals registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/r.manuals".'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "mdsOpt.bib"
 line = 232
@@ -174,7 +180,6 @@ file = "mdsOpt.ltx"
 line = 27
 comment = '''\title{mdsOpt -- ...} — "mdsOpt" is a package name and should be wrapped \pkg{mdsOpt}. (Linter incorrectly fires CAP-001 here because the heuristic doesn't recognise unwrapped package names; the title-case "violation" disappears once the \pkg{} wrap goes in.)'''
 
-
 [[violations]]
 rule_id = "JSS-MARKUP-001"
 file = "mdsOpt.ltx"
@@ -186,7 +191,6 @@ rule_id = "JSS-MARKUP-001"
 file = "mdsOpt.ltx"
 line = 45
 comment = 'Plain `R` (programming language) should be wrapped `\proglang{R}` (JSS MARKUP-001).'
-
 
 [[violations]]
 rule_id = "JSS-CAP-004"
@@ -459,10 +463,28 @@ line = 306
 comment = 'Language name "R" should be wrapped \proglang{R}.'
 
 [[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 313
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
+
+[[violations]]
 rule_id = "JSS-HOUSE-001"
 file = "mdsOpt.ltx"
 line = 313
 comment = '"e.g." not followed by a comma.'
+
+[[violations]]
+rule_id = "JSS-XREF-001"
+file = "mdsOpt.ltx"
+line = 313
+comment = '"(see Table 3)" — bare numerical reference; should use "Table~\ref{tab:3}".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 323
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
 
 [[violations]]
 rule_id = "JSS-CITE-003"
@@ -525,10 +547,22 @@ line = 449
 comment = '`(\cite{Mlodak:2014})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
 
 [[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 495
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
+
+[[violations]]
 rule_id = "JSS-TYPO-001"
 file = "mdsOpt.ltx"
 line = 495
 comment = 'Figure / table caption does not end with a period: "\caption{Distance measures for interval-valued data (based on \cite{Billard+Dida".'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 496
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
 
 [[violations]]
 rule_id = "JSS-HOUSE-001"
@@ -553,6 +587,12 @@ rule_id = "JSS-CITE-003"
 file = "mdsOpt.ltx"
 line = 584
 comment = '`(\cite{Walesiak+Dudek:2017})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "mdsOpt.ltx"
+line = 599
+comment = 'Citation inside parens: replace \cite{...} with \citealp{...}'
 
 [[violations]]
 rule_id = "JSS-HOUSE-001"
@@ -872,8 +912,11 @@ file = "mdsOpt.ltx"
 line = 1267
 comment = '`(\cite{Leeuw+Mair:2015})` — bracket-in-bracket; drop the outer parens or use \citealp{}.'
 
-[[violations]]
-rule_id = "JSS-XREF-001"
-file = "mdsOpt.ltx"
-line = 313
-comment = '"(see Table 3)" — bare numerical reference; should use "Table~\ref{tab:3}".'
+# ---------------------------------------------------------
+# Reviewed FALSE POSITIVES (NOT ground truth — do not add).
+# Recorded so the linter's over-fires here are documented.
+# (Sourced from eval.db review verdicts; entries the annotator
+#  judged real are in [[violations]] above, not here.)
+# ---------------------------------------------------------
+#   JSS-MARKUP-001  mdsOpt.ltx:543  — A, B, C and D  (ai:qwen3-30b)
+#   JSS-MARKUP-001  mdsOpt.ltx:573  — C as math symbol  (ai:qwen3-30b)

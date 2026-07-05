@@ -66,6 +66,63 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_language_name_in_pkg_not_flagged(self, run_rule):
+        # `\pkg{Python}` is markup misuse (a language, not a package); a
+        # language is not citeable, so CITE-002 must stay silent and let
+        # the MARKUP rules handle the mis-wrap. Corpus: pymc2 jss-gp.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The model is implemented in \pkg{Python}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_bare_url_in_paragraph_satisfies_citation(self, run_rule):
+        # A bare download URL beside the package (install lists) supplies
+        # the reference — JSS accepts a URL when there is no citeable
+        # paper. Corpus: pymcmc's Windows install itemize.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Install \pkg{mingw} (http://www.mingw.org/) for the compiler." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_url_macro_in_paragraph_satisfies_citation(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Get \pkg{msys} from \url{http://www.mingw.org/wiki/MSYS}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_distant_url_next_sentence_still_flagged(self, run_rule):
+        # A URL that references something else (a Colab notebook in the
+        # next sentence) must NOT satisfy CITE-002 for the package.
+        # Corpus regression: github_romc scikit-learn.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use the \pkg{scikit-learn} package. The reader can find "
+            r"the example \url{https://colab.research.google.com/x} here." "\n"
+            r"\end{document}" "\n"
+        )
+        assert len(run_rule(jss_cite_002, src)) == 1
+
+    def test_pkg_without_url_or_cite_still_flagged(self, run_rule):
+        # Guard: the URL relaxation must not silence a genuine first
+        # mention that has neither a citation nor a URL.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We rely on \pkg{somepkg} throughout." "\n"
+            r"\end{document}" "\n"
+        )
+        assert len(run_rule(jss_cite_002, src)) == 1
+
     def test_citation_in_next_paragraph_still_flagged(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"
@@ -284,6 +341,38 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_pkg_in_href_with_sibling_cite_not_flagged(self, run_rule):
+        # `\href{url}{\pkg{X}} \citep{X}` — the citation sits beside the
+        # \href wrapper, not as a sibling of \pkg. Regression: cna.Rnw:157.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \href{https://cran.r-project.org/package=LogicReg}"
+            r"{\pkg{LogicReg}} \citep{LogicReg} for the analysis." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_in_mbox_with_paragraph_cite_not_flagged(self, run_rule):
+        # `\mbox{\pkg{X}}` with a \citep elsewhere in the paragraph.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The \mbox{\pkg{RcppArmadillo}} interface \citep{rcpparma}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_pkg_in_href_without_cite_still_flagged(self, run_rule):
+        # The wrapper guard must NOT suppress a genuine uncited mention.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use \href{https://example.org}{\pkg{LonelyPkg}} here." "\n"
+            r"\end{document}" "\n"
+        )
+        assert len(run_rule(jss_cite_002, src)) == 1
+
     def test_pkg_inside_citealp_optarg_not_flagged(self, run_rule):
         # Same as above, with \citealp.
         src = (
@@ -413,6 +502,29 @@ class TestCite003:
         good = (FIXTURE_DIR / "JSS-CITE-003-good.tex").read_text(encoding="utf-8")
         assert run_rule(jss_cite_003, good) == []
 
+    def test_lone_citeyear_in_parens_ok(self, run_rule):
+        # ``Author~(\citeyear{X})`` — narrative citation (names in prose,
+        # year in parens), not a bracket-in-bracket (recall-corpus
+        # HardyWeinberg "Puig, Ginebra and Graffelman~(\citeyear{Puig})").
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}"
+            r"as proposed by Puig, Ginebra and Graffelman~(\citeyear{Puig})."
+            r"\end{document}"
+        )
+        assert run_rule(jss_cite_003, src) == []
+
+    def test_handrolled_citep_still_flagged(self, run_rule):
+        # ``(\citeauthor{X} \citeyear{X})`` is a hand-rolled \citep — still
+        # a bracket-in-bracket, caught via the \citeauthor branch.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}"
+            r"the device (\citeauthor{Lindsey} \citeyear{Lindsey})."
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_cite_003, src)) == 1
+
     def test_cite_without_parens_ok(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"
@@ -447,6 +559,73 @@ class TestCite003:
 
     def test_open_paren_but_no_close(self, run_rule):
         src = r"Before (\cite{Key} rest"
+        assert run_rule(jss_cite_003, src) == []
+
+    def test_crlf_blank_line_stops_paragraph_scan(self, run_rule):
+        # Regression (eRm.Rnw:572): on a CRLF file a blank line is
+        # `\r\n\r\n`, so the paragraph-break guard must not require two
+        # *adjacent* `\n`s. A stray `(` in a math paragraph above and a
+        # `)` in a paragraph below must NOT pair with a bare `\citep`.
+        src = (
+            "A display with a paren: $\\frac{exp(x)}{1}$.\r\n"
+            "\r\n"
+            "A graphical test \\citep{Ra:60} is produced.\r\n"
+            "\r\n"
+            "Critical items can be eliminated (features).\r\n"
+        )
+        assert run_rule(jss_cite_003, src) == []
+
+    def test_crlf_real_paren_cite_still_flagged(self, run_rule):
+        # The CRLF fix must not suppress a genuine `(\citep{...})`: the
+        # enclosing parens are right around the macro in the same line.
+        src = (
+            "Some text here for context.\r\n"
+            "\r\n"
+            "Regression models (\\citep{Key}) are common.\r\n"
+        )
+        violations = run_rule(jss_cite_003, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-CITE-003"
+
+    def test_lone_citeauthor_in_parens_not_flagged(self, run_rule):
+        # `(... \citeauthor{X} ...)` renders the bare author name as a
+        # prose noun ("(again using the Lindsey device)") — no year, no
+        # doubled bracket. Regression: MM.Rnw:413 etc. bonsai false +ve.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "We fit a model (again using the \\citeauthor{lindsey1992} "
+            "Poisson device).\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_cite_003, src) == []
+
+    def test_citeauthor_with_citeyear_companion_flagged(self, run_rule):
+        # `(\citeauthor{X} \citeyear{X})` is a hand-rolled `\citep`
+        # ("(Author year)") and SHOULD be flagged — the lone-author skip
+        # must not suppress it. Regression: brms_overview.ltx:63.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "Bayesian inference (cf., \\citeauthor{fox2011} "
+            "\\citeyear{fox2011}) is used.\n"
+            "\\end{document}\n"
+        )
+        violations = run_rule(jss_cite_003, src)
+        assert len(violations) >= 1
+        assert all(v.rule_id == "JSS-CITE-003" for v in violations)
+
+    def test_macro_definition_body_not_flagged(self, run_rule):
+        # A cite inside a `\def`/`\newcommand` body carries a `#`
+        # parameter in its key — a template, not a citation. Regression:
+        # lbfgs/Vignette.Rnw:22-23, stm:66.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\def\\citepos#1{\\citeauthor{#1}'s (\\citeyear{#1})}\n"
+            "\\begin{document}\n"
+            "Text.\n"
+            "\\end{document}\n"
+        )
         assert run_rule(jss_cite_003, src) == []
 
     def test_cite_after_macro_no_chars_siblings(self, run_rule):

@@ -41,6 +41,62 @@ class TestAbbr001:
         )
         assert run_rule(jss_abbr_001, src) == []
 
+    def test_surname_comma_initials_silent(self, run_rule):
+        # "Cochran, W.G." — surname, comma, initials. Author initials,
+        # not a generic abbreviation; the bibliography style owns them.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}Cochran, W.G. (1977).\end{document}"
+        )
+        assert run_rule(jss_abbr_001, src) == []
+
+    def test_surname_space_initials_silent(self, run_rule):
+        # "Greene W.H., Hensher D.A." — hand-rolled thebibliography drops
+        # the comma after the surname; still author initials, not abbrevs.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}Greene W.H., Hensher D.A. (2010).\end{document}"
+        )
+        assert run_rule(jss_abbr_001, src) == []
+
+    def test_surname_space_initials_with_suffix_silent(self, run_rule):
+        # "Harrell F.E. Jr" — the generational suffix must not defeat the
+        # author-initial suppression. (The surname-space prefix carries
+        # the suppression here, independent of the "Jr" follower.)
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}Harrell F.E. Jr (2009).\end{document}"
+        )
+        assert run_rule(jss_abbr_001, src) == []
+
+    def test_three_letter_initials_after_surname_silent(self, run_rule):
+        # "Christensen R.H.B. (2015)" — three-letter author initials are
+        # still initials, not an abbreviation to normalise.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}Christensen R.H.B. (2015). Package.\end{document}"
+        )
+        assert run_rule(jss_abbr_001, src) == []
+
+    def test_glued_initial_surname_silent(self, run_rule):
+        # "J.Wiley" — an initial glued to a surname (missing space), not
+        # an "JW" initialism.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}Published by J.Wiley and Sons.\end{document}"
+        )
+        assert run_rule(jss_abbr_001, src) == []
+
+    def test_leading_word_before_real_abbrev_flagged(self, run_rule):
+        # "The I.R.S. rules" — a sentence-leading capitalised word before
+        # a genuine abbreviation must NOT be mistaken for a surname; the
+        # prose follower keeps it flagged.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}The I.R.S. rules apply here.\end{document}"
+        )
+        assert len(run_rule(jss_abbr_001, src)) == 1
+
     def test_skip_inside_code(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

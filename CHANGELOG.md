@@ -32,6 +32,30 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Added
 
+- **`JSS-XREF-007`** (info, auto-fixable) — cross-reference nouns are
+  spelled out (`Figure`/`Section`/`Table`), not abbreviated
+  (`Fig.`/`Sec.`/`Tab.`, plus plurals). The figure/section/table analogue
+  of `JSS-XREF-002`'s `Eq.`→`Equation` rule. Fires only on an abbreviation
+  immediately preceding a `\ref` macro (across an optional `~`), so the
+  `\ref` disambiguates it (`sec.` = seconds stays silent); `\autoref` /
+  `\cref` generate the noun themselves and are out of scope. Auto-fix
+  rewrites to the spelled-out noun with a non-breaking space.
+- **`JSS-XREF-005`** — the figure/table analogue of `JSS-XREF-004`: a
+  captioned (numbered) `figure`/`table` (or starred variant) must carry a
+  `\label{}` and be referenced from the text; an unlabelled or never-
+  referenced (orphan) float is flagged at warning severity. Captionless
+  (unnumbered) floats are out of scope. `JSS-XREF-001`'s catalogue
+  wording was corrected to describe only what it enforces — the
+  cross-reference *form* (use `\ref{}`, not a hardcoded "Figure 2") — now
+  that the label/orphan concern lives in `JSS-XREF-005`.
+- **`JSS-BIBTEX-005`** — flags a field key repeated within a single
+  BibTeX entry (e.g. two `author =` lines, or duplicate
+  `volume`/`pages`). BibTeX keeps only the first occurrence and silently
+  drops the rest, so the rendered citation loses data. Previously such an
+  entry tripped a catastrophic `JSS-PARSE-000` that failed the whole
+  document; the parser now treats `bibtexparser`'s recoverable
+  `DuplicateFieldKeyBlock` like its `DuplicateBlockKeyBlock` sibling and
+  reports the dropped field(s) via this rule instead.
 - **Directory arguments.** `jss-lint .` (or any directory path)
   recursively lints every supported file beneath it, in deterministic
   sorted order; an empty expansion exits 2 with a clear message.
@@ -104,6 +128,82 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Fixed
 
+- `JSS-STRUCT-005` no longer flags the literal word "and" inside
+  `\author{}` when the block already separates authors with a
+  `\and`/`\And`/`\AND` macro — in that case a literal "and" is part of an
+  institution or name ("Computer and Information Science", "MIT and
+  Harvard"), not a separator (recall-corpus opentsne false positives). A
+  block with no macro separator still flags a literal "and" joining names.
+- `JSS-OPER-002` no longer flags `\prime` used as **derivative** notation
+  (`\h^\prime`, `\basisy^\prime`, `\bern{M}^\prime(\ry)`) as if it were a
+  transpose. The `\prime`-macro branch fired unconditionally while the
+  single-quote branch already exempted derivatives; it now matches that
+  design — a `\prime` is treated as transpose only when it follows a
+  closing bracket `)}]` (a grouped expression, e.g. `(6,7)^\prime`,
+  `\mathbf{X}^\prime`) and is not immediately applied to an argument
+  `(...)`. Real transposes still fire (recall-corpus mlt.docreg).
+- `JSS-HOUSE-003` now handles a jss-loaded package loaded **with options**
+  (`\usepackage[usenames,dvipsnames]{xcolor}`) differently from a bare
+  redundant load. jss.cls loads these packages without options, so
+  re-loading with options is an option clash, not a valid way to get them
+  — the rule now advises moving them to `\PassOptionsToPackage{...}{pkg}`
+  before `\documentclass` and **withholds the delete-the-line autofix**
+  (deleting would silently drop the options and can break compilation).
+  A bare `\usepackage{pkg}` (or empty `[]`) keeps the safe auto-delete
+  (recall-corpus romc).
+- `JSS-XREF-001` no longer flags a "Figure/Table N" that sits inside a
+  citation locator (`\citet[Table 2.5]{X}` / `\cite[Figure 3]{X}`): the
+  optional argument points at a float in the *cited* work, not this
+  manuscript (recall-corpus HardyWeinberg false positives). Matches with a
+  cite-macro ancestor are skipped.
+- `JSS-CITE-003` no longer flags a lone `Author~(\citeyear{X})`: that's the
+  legitimate narrative-citation idiom (author names in prose, year in
+  parens), not a bracket-in-bracket. `\citeyear` was dropped from the
+  trigger set; the hand-rolled `(\citeauthor{X} \citeyear{X})`
+  reconstruction of `\citep` is still caught via the `\citeauthor` branch
+  (recall-corpus HardyWeinberg false positives).
+- `JSS-CAP-004` now also flags a `\Keywords{}` list whose **first** keyword
+  starts with a lowercase letter — JSS keywords are sentence case, so the
+  list's first word is capitalised (`ternary plot, …` → `Ternary plot, …`;
+  recall-corpus HardyWeinberg). Previously the rule only caught the
+  opposite direction (a non-first word in title case). A first keyword
+  wrapped in markup (`\pkg{}`, `\proglang{}`, `\code{}`) or a known
+  package/language name keeps its own lowercase case and is exempt.
+  `\Plainkeywords{}` is deliberately *not* checked — it is PDF metadata the
+  reader never sees.
+- `JSS-XREF-004` exempts equations carrying `\tag{}` / `\tag*{}`: a `\tag`
+  replaces the automatic number with a custom label (e.g.
+  `\tag{\texttt{approx()}}`), so the equation isn't a standard
+  auto-numbered cross-ref target — the same reasoning as the existing
+  `\nonumber` exemption (recall-corpus trueskill false positives).
+- `JSS-OPER-003` no longer flags the blank line between a display equation
+  and a following sectioning command (`\section` / `\subsection` / …): a
+  blank line before a heading is required structure and can't be
+  `%`-suppressed like a prose paragraph break (recall-corpus trueskill).
+- `JSS-OPER-003` now also checks `\[ … \]` / `$$ … $$` display math for
+  blank lines before/after. These parse as a display-math node (not an
+  environment), so the rule skipped them entirely (recall-corpus deSolve
+  false negatives).
+- `JSS-XREF-004` now checks each label in a multi-line equation
+  environment (`align` / `eqnarray` / `gather`) independently: those envs
+  number every line, so an orphan numbered line is a defect even when a
+  sibling line *is* referenced. The old per-environment "any label
+  referenced" test missed these (recall-corpus romc `eq:1D_example`).
+  Envs containing `\nonumber`/`\notag` fall back to the conservative
+  per-env check to avoid flagging a label on an unnumbered line.
+- `JSS-MARKUP-001` no longer flags the emphasised first letter of a word
+  as a language name: `\emph{C}ombination`, `\textbf{S}helter` (the
+  acronym typesetting device, e.g. CUB/CUSH) read the `\emph{C}` as the C
+  language. It's skipped when a single-letter language token sits alone in
+  an emphasis macro whose closing brace is glued to a lowercase letter; a
+  standalone `\emph{C}` (space/punctuation after) still fires
+  (recall-corpus CUB false positives).
+- `JSS-CODE-003` now flags missing spaces around R's multi-character
+  assignment operators `<-`, `->`, and `<<-` (e.g. `x<-coef(y)` →
+  `x <- coef(y)`). The missing-space matcher only recognised single-char
+  operators, so the `<` broke the ident-operator-ident pattern and glued
+  assignments slipped through entirely (recall-corpus CUB false
+  negatives). Comparison operators (`==`, `<=`, …) remain a follow-up.
 - Markup / prose rules no longer fire inside `lstlisting`, `alltt`,
   `tabbing`, and `verbatim*` bodies. The parser's neutraliser and the
   rules' non-prose check had drifted into two different environment

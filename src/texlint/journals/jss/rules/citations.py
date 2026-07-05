@@ -29,6 +29,7 @@ from pylatexenc.latexwalker import (
 from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
+from texlint.journals.jss.terms import LANGUAGES
 
 _CITE_MACROS: frozenset[str] = frozenset(
     {"cite", "citet", "citep", "citealp", "citealt", "citeauthor", "citeyear"}
@@ -157,6 +158,71 @@ def _has_cite_in_span(parent: Any, start: int, end: int) -> bool:
     return False
 
 
+# ``\url`` / ``\href`` targets that supply a software reference. JSS
+# accepts a URL (or footnote URL) in place of a formal citation when a
+# package has no citeable paper — canonical in install / "obtain it
+# from" sections, where each ``\pkg{tool}`` sits beside its download
+# ``\url{...}``. Treat such a URL in the same paragraph span as
+# satisfying CITE-002.
+_URL_MACROS: frozenset[str] = frozenset({"url", "href"})
+
+# A bare URL written as plain text — ``\pkg{mingw} (http://www.mingw.org/)``
+# — is the common install-list form and supplies the reference just as a
+# ``\url{}`` macro would. Require a scheme or ``www.`` host so ordinary
+# prose (file paths, ``a.b`` abbreviations) doesn't count.
+_BARE_URL_RE = re.compile(r"(?:https?://|www\.)\S", re.IGNORECASE)
+
+# Placeholder standing in for a ``\url``/``\href`` sibling when we
+# linearise the text following a ``\pkg`` — carries no ``.`` so it never
+# looks like a sentence boundary.
+_URL_SENTINEL = "\x00url\x00"
+_SENTENCE_BREAK_RE = re.compile(r"\.\s")
+# How far past the package name the URL may sit and still count as *its*
+# reference. The install-list forms (``\pkg{X} (http://…)``, ``\pkg{X}:
+# \url{…}``) put it within a handful of characters; a URL further away,
+# or in the next sentence, references something else.
+_URL_ADJACENCY_CHARS = 60
+
+
+def _url_references_pkg(parent: Any, idx: int, end: int) -> bool:
+    """Return ``True`` if a URL sits *directly after* the ``\\pkg`` at
+    ``parent[idx]`` — same sentence, within a few tens of characters.
+
+    JSS accepts a URL in place of a formal citation when a package has no
+    citeable paper (``\\pkg{mingw} (http://www.mingw.org/)``, ``\\pkg{GPy}:
+    \\url{…}``). But a URL merely *somewhere* in the paragraph usually
+    references something else (a Colab notebook, a dataset), so require
+    adjacency: the URL must appear before the first sentence break after
+    the package and within :data:`_URL_ADJACENCY_CHARS`.
+    """
+    following = ""
+    for sib in parent[idx + 1:end]:
+        if isinstance(sib, LatexMacroNode) and sib.macroname in _URL_MACROS:
+            following += f" {_URL_SENTINEL} "
+        elif isinstance(sib, LatexCharsNode):
+            following += sib.chars
+        else:
+            following += " "  # opaque node — costs against the budget
+        if len(following) > 2 * _URL_ADJACENCY_CHARS:
+            break
+    brk = _SENTENCE_BREAK_RE.search(following)
+    scope = following[: brk.start()] if brk else following
+    scope = scope[:_URL_ADJACENCY_CHARS]
+    return _URL_SENTINEL in scope or bool(_BARE_URL_RE.search(scope))
+
+
+# Inline wrappers a ``\pkg{X}`` is commonly nested inside — links,
+# boxes, and text-style formatting. When ``\pkg`` sits alone inside one
+# (``\href{url}{\pkg{X}}``, ``\mbox{\pkg{X}}``), a ``\citep`` beside the
+# WRAPPER is not a sibling of ``\pkg`` and the pkg-level paragraph-span
+# check can't see it. ``_cited_in_wrapper_paragraph`` re-checks the span
+# at each wrapper ancestor's own position.
+_INLINE_WRAPPERS: frozenset[str] = frozenset({
+    "href", "url", "mbox", "fbox", "emph", "textbf", "textit", "texttt",
+    "textsf", "textsc", "textnormal", "textrm", "text", "uline", "underline",
+})
+
+
 # ---------------------------------------------------------------------------
 # JSS-CITE-002 — \pkg{X} needs a citation in the same paragraph.
 # ---------------------------------------------------------------------------
@@ -257,6 +323,50 @@ def _has_textual_citation_in_span(
     return False
 
 
+def _cited_in_wrapper_paragraph(
+    ancestors: Any, pos_map: dict[int, tuple[Any, int]], in_tab: bool
+) -> bool:
+    """True when a ``\\pkg{X}`` nested inside an inline wrapper has a
+    citation in the paragraph that surrounds the wrapper.
+
+    The pkg-level span check only sees the wrapper's argument group; a
+    ``\\citep`` sitting beside the wrapper (``\\href{u}{\\pkg{X}} \\citep{k}``)
+    lives one level up. Re-check the paragraph span at each enclosing
+    group / wrapper ancestor's own position in its parent. Groups are
+    included because pylatexenc parses an unknown ``\\href`` as a macro
+    followed by sibling ``{...}`` groups, so the ``\\pkg``'s container is
+    a bare group rather than an arg attached to ``\\href``.
+
+    Skipped inside tabulars: dense table cells pack several ``\\pkg``s and
+    a stray cite for one (``\\cite{R:2019}`` beside ``\\pkg{base}``) must
+    not be credited to another (``\\pkg{clusterSim}``) via the row-level
+    span. The pkg's own immediate-span check still applies there.
+    """
+    if in_tab:
+        return False
+    for anc in ancestors:
+        if not (
+            isinstance(anc, LatexGroupNode)
+            or (
+                isinstance(anc, LatexMacroNode)
+                and anc.macroname in _INLINE_WRAPPERS
+            )
+        ):
+            continue
+        loc = pos_map.get(id(anc))
+        if loc is None:
+            continue
+        wp, wi = loc
+        ws, we = _paragraph_span_in_parent(wp, wi, in_tabular=in_tab)
+        if (
+            _has_cite_in_span(wp, ws, we)
+            or _has_rmd_citation_in_span(wp, ws, we)
+            or _has_textual_citation_in_span(wp, ws, we)
+        ):
+            return True
+    return False
+
+
 def check_jss_cite_002(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -268,6 +378,13 @@ def check_jss_cite_002(
     # earlier in the document.
     seen: set[str] = set()
     for tex in doc.all_tex_like():
+        # Position map (node -> its parent list + index) so a \pkg nested
+        # inside an inline wrapper can locate that wrapper's own paragraph
+        # span and see a citation sitting beside the wrapper.
+        pos_map = {
+            id(n): (p, i)
+            for n, _a, p, i in _helpers._walk_with_context(tex.nodes)
+        }
         for node, ancestors, parent, idx in _helpers._walk_with_context(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode) and node.macroname == "pkg"
@@ -275,6 +392,14 @@ def check_jss_cite_002(
                 continue
             name = _helpers._macro_args_text(node, parent, idx)
             if not name:
+                continue
+            if name in LANGUAGES:
+                # ``\pkg{Python}`` / ``\pkg{R}`` is markup misuse: a
+                # programming language wrapped in the package macro. A
+                # language is not a citeable package, so CITE-002 must
+                # not demand a citation — MARKUP rules handle the
+                # mis-wrap. Don't mark seen; every such mention is
+                # exempt on its own.
                 continue
             if name in _BASE_R_PACKAGES:
                 # Packages shipped with R itself (parallel, methods,
@@ -333,6 +458,13 @@ def check_jss_cite_002(
             )
             if _has_cite_in_span(parent, start, end):
                 continue
+            if _url_references_pkg(parent, idx, end):
+                # A ``\url``/``\href`` or bare URL directly after the
+                # package (install lists, "available from …" sentences)
+                # supplies the reference: JSS accepts a URL when a
+                # package has no citeable paper. Adjacency-checked so a
+                # distant URL for something else doesn't count.
+                continue
             if _has_rmd_citation_in_span(parent, start, end):
                 # Pandoc/Rmd `[@key]` or `@key` citation in the same
                 # paragraph satisfies CITE-002. The Rmd parser doesn't
@@ -346,6 +478,13 @@ def check_jss_cite_002(
                 # in quote envs and footnote glosses where the
                 # citation is spelled out rather than wrapped in
                 # ``\citep{}``.
+                continue
+            if _cited_in_wrapper_paragraph(ancestors, pos_map, in_tab):
+                # ``\pkg{X}`` nested in an inline wrapper
+                # (``\href{url}{\pkg{X}}``, ``\mbox{\pkg{X}}``): a cite
+                # beside the wrapper isn't a sibling of ``\pkg``, so the
+                # checks above miss it. Re-check the paragraph span at
+                # each wrapper ancestor's own position.
                 continue
             line, col = _helpers._lineno_col(tex, node.pos)
             yield Violation(
@@ -389,9 +528,14 @@ def check_jss_cite_003(
     # Cite-family macros whose presence inside a (...) group constitutes
     # bracket-in-bracket. ``\citealp`` / ``\citealt`` are the JSS-
     # recommended forms for cites that go inside an outer paren —
-    # excluded from the trigger set.
+    # excluded from the trigger set. ``\citeyear`` is excluded too: a lone
+    # ``Author~(\citeyear{X})`` is the legitimate narrative-citation idiom
+    # (names in prose, year in parens), not a doubled bracket. The
+    # hand-rolled ``(\citeauthor{X} \citeyear{X})`` reconstruction of
+    # ``\citep`` is still caught via the ``\citeauthor`` branch below,
+    # which fires when a ``\citeyear`` shares its parens.
     triggering = frozenset(
-        {"cite", "citep", "citet", "citeauthor", "citeyear"}
+        {"cite", "citep", "citet", "citeauthor"}
     )
     for tex in doc.all_tex_like():
         emitted: set[int] = set()
@@ -414,6 +558,28 @@ def check_jss_cite_003(
             )
             if close_paren is None:
                 continue
+            # Skip cites inside a macro-definition body: a ``#``
+            # parameter reference in the key (e.g.
+            # ``\def\citepos#1{(\citeyear{#1})}``) means this is a
+            # template, not a real citation — any bracket-in-bracket
+            # only materialises at each expansion site, which the
+            # parser sees separately.
+            key_match = re.match(
+                r"\\[a-zA-Z]+\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}",
+                tex.source[node.pos :],
+            )
+            if key_match and "#" in key_match.group(1):
+                continue
+            # A lone ``\citeauthor`` renders just the author name (no
+            # year, no parens of its own), so ``(... \citeauthor{X} ...)``
+            # is ordinary prose ("(again using the Lindsey device)"),
+            # not a doubled bracket. Only treat it as bracket-in-bracket
+            # when a ``\citeyear`` shares the parens — i.e. the
+            # hand-rolled ``(\citeauthor{X} \citeyear{X})`` == ``\citep``
+            # reconstruction.
+            if node.macroname == "citeauthor":
+                if "\\citeyear" not in tex.source[open_paren : close_paren + 1]:
+                    continue
             line, col = _helpers._lineno_col(tex, node.pos)
             emitted.add(node.pos)
             # Auto-fix only for the immediate ``(\cite{...})`` shape so
@@ -473,8 +639,17 @@ def _find_enclosing_open_paren(source: str, pos: int) -> int | None:
                 return i
             depth -= 1
         elif c == "\n":
-            # Paragraph break? Look at the next line.
-            if i > 0 and source[i - 1] == "\n":
+            # Paragraph break = a blank line (the docstring's
+            # ``\n\s*\n``). Tolerate CRLF endings and trailing
+            # whitespace between the two newlines: scan back over
+            # ``\r`` / spaces / tabs and check for a second newline.
+            # A literal ``source[i - 1] == "\n"`` test never fires on
+            # CRLF files (blank line is ``\r\n\r\n``), which let the
+            # scan run across the whole document.
+            j = i - 1
+            while j >= 0 and source[j] in " \t\r":
+                j -= 1
+            if j >= 0 and source[j] == "\n":
                 return None
     return None
 
@@ -494,7 +669,10 @@ def _find_matching_close_paren(source: str, pos: int) -> int | None:
                 return i
             depth -= 1
         elif c == "\n":
-            if i + 1 < len(source) and source[i + 1] == "\n":
+            j = i + 1
+            while j < len(source) and source[j] in " \t\r":
+                j += 1
+            if j < len(source) and source[j] == "\n":
                 return None
     return None
 

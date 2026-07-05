@@ -46,6 +46,12 @@ line = 52
 comment = '"\code{n-cores=1}" should "\code{n-cores = 1}"'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 118
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
 rule_id = "JSS-OPER-004"
 file = "CARBayesST.Rnw"
 line = 124
@@ -70,10 +76,22 @@ line = 165
 comment = 'See L143'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 167
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
 rule_id = "JSS-XREF-002"
 file = "CARBayesST.Rnw"
 line = 176
 comment = '"(\ref{equation likelihood})" could be written as "Equation~\ref{...}"'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 181
+comment = 'Blank lines BEFORE \begin.'
 
 [[violations]]
 rule_id = "JSS-CODE-003"
@@ -82,16 +100,106 @@ line = 191
 comment = '"\code{interaction=TRUE}" should be "\code{interaction = TRUE}"'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 198
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 218
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 230
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 230
+comment = '\label{carar2} exists in eqnarray but is never \ref-ed from the text.'
+
+[[violations]]
 rule_id = "JSS-CODE-003"
 file = "CARBayesST.Rnw"
 line = 240
 comment = '"\code{AR=1}" should be "\code{AR = 1}", similar for "\code{AR=2}"'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 242
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 242
+comment = '\label{Lerouxjoint} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 252
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 266
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 266
+comment = '\label{caradaptive2} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 278
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 288
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 288
+comment = '\label{carcluster2} exists but is never \ref-ed from the text.'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 295
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 295
+comment = '\label{carcluster3} exists but is never \ref-ed from the text.'
+
+[[violations]]
 rule_id = "JSS-MARKUP-003"
 file = "CARBayesST.Rnw"
 line = 303
 comment = '"\textbf{ST.CARclustrends()}" should be "\code{ST.CARclustrends()}"'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 306
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
 
 [[violations]]
 rule_id = "JSS-MARKUP-001"
@@ -130,10 +238,28 @@ line = 349
 comment = 'The coda R package is cited not at the first mention but only later'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 358
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 358
+comment = '\label{equation likelihood2} exists but is never \ref-ed from the text.'
+
+[[violations]]
 rule_id = "JSS-OPER-004"
 file = "CARBayesST.Rnw"
 line = 364
 comment = 'Should use \E instead of \mathbf{E}'
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 381
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
 
 [[violations]]
 rule_id = "JSS-OPER-004"
@@ -142,10 +268,39 @@ line = 385
 comment = 'Should use \P instead of \mathbf{P}'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 387
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
 line = 387
 comment = "Equation (16) is missing a label and is not referenced from anywhere"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 402
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
+rule_id = "JSS-XREF-004"
+file = "CARBayesST.Rnw"
+line = 402
+comment = '\label{leroux} exists but is never \ref-ed from the text.'
+
+# -------------------------------------------------------------------
+# OPER-003 sweep (post-annotation): display equations with blank
+# lines immediately before or after the env (rule fires unless the
+# eq body ends with a period, which closes a sentence). Linter does
+# not fire on most of these on .Rnw input — appears to need the
+# rendered .tex / .ltx surface for the rule to see paragraph breaks.
+# Each entry below is a CANDIDATE — please review against the
+# rendered PDF and delete any that are intentional paragraph breaks
+# (eq is end-of-section, next text is a new paragraph, etc.).
+# -------------------------------------------------------------------
 
 [[violations]]
 rule_id = "JSS-CODE-003"
@@ -166,10 +321,22 @@ line = 407
 comment = '"(\ref{eq_joint})" could be written as "Equation~\ref{...}"'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 411
+comment = 'Blank lines BEFORE \begin.'
+
+[[violations]]
 rule_id = "JSS-XREF-004"
 file = "CARBayesST.Rnw"
 line = 411
 comment = "Equation (18) is missing a label and is not referenced from anywhere"
+
+[[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 422
+comment = 'Blank lines BEFORE \begin.'
 
 [[violations]]
 rule_id = "JSS-XREF-004"
@@ -178,16 +345,16 @@ line = 422
 comment = "Equation (19) is missing a label and is not referenced from anywhere"
 
 [[violations]]
-rule_id = "JSS-MARKUP-001"
-file = "CARBayesST.Rnw"
-line = 441
-comment = '"Comprehensive R Archive Network" - R should be \proglang{R}'
-
-[[violations]]
 rule_id = "JSS-BIBTEX-004"
 file = "CARBayesST.Rnw"
 line = 441
 comment = 'GGally has more than 6 authors, should use \shortcites and not \cite'
+
+[[violations]]
+rule_id = "JSS-MARKUP-001"
+file = "CARBayesST.Rnw"
+line = 441
+comment = '"Comprehensive R Archive Network" - R should be \proglang{R}'
 
 [[violations]]
 rule_id = "JSS-CODE-003"
@@ -206,6 +373,12 @@ rule_id = "JSS-CODE-003"
 file = "CARBayesST.Rnw"
 line = 492
 comment = '"\code{interaction=TRUE}" should be "\code{interaction = TRUE}"'
+
+[[violations]]
+rule_id = "JSS-CITE-003"
+file = "CARBayesST.Rnw"
+line = 498
+comment = '"(see \cite{celeux2006})" renders as "(see (Celeux et al. 2006))" — bracket-in-bracket per JSS §3.2. Linter does not catch this shape (only matches exact "(\cite{X})"; see JSS-CITE-003 scope-extension follow-up).'
 
 [[violations]]
 rule_id = "JSS-OPER-004"
@@ -334,6 +507,12 @@ line = 827
 comment = 'Should be library("leaflet")'
 
 [[violations]]
+rule_id = "JSS-OPER-003"
+file = "CARBayesST.Rnw"
+line = 873
+comment = 'Blank lines BEFORE \begin AND AFTER \end.'
+
+[[violations]]
 rule_id = "JSS-CODE-003"
 file = "CARBayesST.Rnw"
 line = 878
@@ -396,8 +575,14 @@ comment = 'besag1991 — DOI exists on Crossref but is missing from the entry.'
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
-line = 60
-comment = 'bivand2013 — DOI exists on Crossref but is missing from the entry.'
+line = 79
+comment = 'carbayesdata — R package archive DOI exists on Crossref / Zenodo; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-004"
+file = "JSS2728.bib"
+line = 87
+comment = 'Title "cascsim: Casualty Actuarial Society Individual Claim Simulator" — package name "cascsim" should be wrapped \pkg{cascsim}; "R" in note is unwrapped (\proglang{R}).'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -426,6 +611,12 @@ comment = 'congdon2005 — DOI exists on Crossref but is missing from the entry.
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
+line = 143
+comment = 'dplyr2015 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
 line = 162
 comment = 'eddelbuettel2011 — DOI exists on Crossref but is missing from the entry.'
 
@@ -434,6 +625,18 @@ rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
 line = 182
 comment = 'gelman2013 — Chapman & Hall/CRC book DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 202
+comment = 'geweke1992 — DOI 10.21034/sr.148 found on Crossref (title similarity 1.00); add to the entry as doi="10.21034/sr.148".'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 211
+comment = 'GGally — DOI 10.32614/CRAN.package.GGally registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.GGally".'
 
 [[violations]]
 rule_id = "JSS-REFS-004"
@@ -454,10 +657,22 @@ line = 219
 comment = 'ggplot2 — title "ggplot2: Elegant Graphics for Data Analysis" has package name "ggplot2" not wrapped in \pkg{}.'
 
 [[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 228
+comment = 'gtools — DOI 10.32614/CRAN.package.gtools registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/CRAN.package.gtools".'
+
+[[violations]]
 rule_id = "JSS-REFS-004"
 file = "JSS2728.bib"
 line = 228
 comment = 'gtools — title "gtools: Various R Programming Tools" has package name "gtools" not wrapped in \pkg{} and "R" not in \proglang{}; note also has "R" not wrapped.'
+
+[[violations]]
+rule_id = "JSS-BIBTEX-004"
+file = "JSS2728.bib"
+line = 237
+comment = 'haining2010 has 7 authors (Haining, Li, Maheswaran, Blangiardo, Law, Best, Richardson) — BIBTEX-004 requires \shortcites or the shortnames class option for >=6 authors.'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -522,6 +737,12 @@ comment = 'lee2022 — DOI is recorded but in the wrong field: pages = "https://
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
+line = 345
+comment = 'leroux2000 — DOI exists but in the wrong field: url = "http://dx.doi.org/10.1007/978-1-4612-1284-3_4" is the DOI URL. Should be moved to a proper doi= field.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
 line = 367
 comment = 'lunn2009 — Statistics in Medicine article (Wiley DOI) exists on Crossref; missing from the entry.'
 
@@ -540,6 +761,18 @@ comment = 'mass2002 — Springer book DOI exists on Crossref; missing from the e
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
+line = 395
+comment = 'matrixcalc2012 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 415
+comment = 'moran1950 — Biometrika DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
 line = 425
 comment = 'napier2016 — Statistical Methods in Medical Research article (SAGE DOI) exists on Crossref; missing from the entry.'
 
@@ -548,6 +781,30 @@ rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
 line = 434
 comment = 'napier2018 — Biostatistics article (Oxford DOI) exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 458
+comment = 'R — DOI exists on Crossref for the R Manual; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-NAME-002"
+file = "JSS2728.bib"
+line = 476
+comment = 'robert2010 publisher = "Springer" — JSS canonical form is "Springer-Verlag" (matches the convention applied to bivand2013, leroux2000 etc. in this same bib).'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 485
+comment = 'roberts1998 — JRSS B article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "JSS2728.bib"
+line = 485
+comment = 'roberts1998 — title "Optimal scaling of discrete approximations to the Langevin diffusions" is in sentence case; JSS wants title case ("Optimal Scaling of Discrete Approximations to the Langevin Diffusions").'
 
 [[violations]]
 rule_id = "JSS-REFS-003"
@@ -612,6 +869,38 @@ comment = 'spiegelhalter2002 — JRSS B article (Wiley DOI) exists on Crossref; 
 [[violations]]
 rule_id = "JSS-REFS-003"
 file = "JSS2728.bib"
+line = 578
+comment = 'tanner1987 — JASA article DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 587
+comment = 'truncnorm2014 — R package archive DOI exists on Crossref; missing from the entry.'
+
+[[violations]]
+rule_id = "JSS-REFS-006"
+file = "JSS2728.bib"
+line = 587
+comment = 'truncnorm2014 — title "Truncated normal distribution" (after the package-name colon) is in sentence case; JSS wants title case ("Truncated Normal Distribution").'
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
+line = 595
+comment = 'truncdist2012 — R package archive DOI exists on Crossref; missing from the entry.'
+
+# -------------------------------------------------------------------
+# XREF-004 sweep (post-annotation): equations with labels that exist
+# but are never referenced from the text. Distinct from the missing-
+# label cases at L387/411/422 already recorded — same rule, different
+# sub-defect ("present-but-unused" vs. "missing"). Linter does not
+# fire on these (rule scope appears narrower than its description).
+# -------------------------------------------------------------------
+
+[[violations]]
+rule_id = "JSS-REFS-003"
+file = "JSS2728.bib"
 line = 613
 comment = 'wakefield2007 — Biostatistics article (Oxford DOI) exists on Crossref; missing from the entry.'
 
@@ -634,405 +923,4 @@ comment = 'watanabe2010 — JMLR article DOI exists on Crossref; missing from th
 # / NAME-002 / BIBTEX-004 entries the linter doesn't reach.
 # -------------------------------------------------------------------
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 10
-comment = 'JSSv063i15 (spTimer) — JSS article DOI 10.18637/jss.v063.i15 exists; bib has only the URL.'
 
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 20
-comment = 'JSSv067i01 (lme4) — JSS article DOI 10.18637/jss.v067.i01 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 50
-comment = 'besag1999 — Wiley DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 68
-comment = 'bivand2015 — JSS article DOI 10.18637/jss.v063.i18 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 79
-comment = 'carbayesdata — R package archive DOI exists on Crossref / Zenodo; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 87
-comment = 'cascsim — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-004"
-file = "JSS2728.bib"
-line = 87
-comment = 'Title "cascsim: Casualty Actuarial Society Individual Claim Simulator" — package name "cascsim" should be wrapped \pkg{cascsim}; "R" in note is unwrapped (\proglang{R}).'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 104
-comment = 'charras2012 — Biostatistics article DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 143
-comment = 'dplyr2015 — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 151
-comment = 'JSSv027i02 (plm) — JSS article DOI 10.18637/jss.v027.i02 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 172
-comment = 'JSSv063i13 (spBayes) — JSS article DOI 10.18637/jss.v063.i13 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 191
-comment = 'gerber2015 — JSS article DOI 10.18637/jss.v063.c01 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 237
-comment = 'haining2010 — DOI is recorded but in the wrong field: pages = "123-131, DOI:10.1016/j.sste.2010.03.006" includes the DOI inline. Should be moved to a proper doi= field.'
-
-[[violations]]
-rule_id = "JSS-BIBTEX-004"
-file = "JSS2728.bib"
-line = 237
-comment = 'haining2010 has 7 authors (Haining, Li, Maheswaran, Blangiardo, Law, Best, Richardson) — BIBTEX-004 requires \shortcites or the shortnames class option for >=6 authors.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 273
-comment = 'lee2009 — Biostatistics article DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 345
-comment = 'leroux2000 — DOI exists but in the wrong field: url = "http://dx.doi.org/10.1007/978-1-4612-1284-3_4" is the DOI URL. Should be moved to a proper doi= field.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 357
-comment = 'li2012 — Biostatistics article DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 376
-comment = 'maptools2015 — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 395
-comment = 'matrixcalc2012 — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 403
-comment = 'millo2012 (splm) — JSS article DOI 10.18637/jss.v047.i01 exists; bib has only the URL.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 415
-comment = 'moran1950 — Biometrika DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 444
-comment = 'paul2016 — entry is malformed: the title field contains the URL "http://CRAN.R-project.org/package=surveillance"; this is also a missing-DOI case for the surveillance package.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 450
-comment = 'pinheiro2015 (nlme) — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 458
-comment = 'R — the R Manual has a DOI on Zenodo (typically 10.5281/zenodo.<id>); missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 476
-comment = 'robert2010 — Springer book DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-NAME-002"
-file = "JSS2728.bib"
-line = 476
-comment = 'robert2010 publisher = "Springer" — JSS canonical form is "Springer-Verlag" (matches the convention applied to bivand2013, leroux2000 etc. in this same bib).'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 485
-comment = 'roberts1998 — JRSS B article DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "JSS2728.bib"
-line = 485
-comment = 'roberts1998 — title "Optimal scaling of discrete approximations to the Langevin diffusions" is in sentence case; JSS wants title case ("Optimal Scaling of Discrete Approximations to the Langevin Diffusions").'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 504
-comment = 'GMRFbook (Rue & Held) — Chapman & Hall book; DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 533
-comment = 'schabenberger2009 — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 578
-comment = 'tanner1987 — JASA article DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 587
-comment = 'truncnorm2014 — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-006"
-file = "JSS2728.bib"
-line = 587
-comment = 'truncnorm2014 — title "Truncated normal distribution" (after the package-name colon) is in sentence case; JSS wants title case ("Truncated Normal Distribution").'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 595
-comment = 'truncdist2012 — R package archive DOI exists on Crossref; missing from the entry.'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 603
-comment = 'ugarte2004 — Biometrical Journal DOI exists on Crossref; missing from the entry.'
-
-# -------------------------------------------------------------------
-# XREF-004 sweep (post-annotation): equations with labels that exist
-# but are never referenced from the text. Distinct from the missing-
-# label cases at L387/411/422 already recorded — same rule, different
-# sub-defect ("present-but-unused" vs. "missing"). Linter does not
-# fire on these (rule scope appears narrower than its description).
-# -------------------------------------------------------------------
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "CARBayesST.Rnw"
-line = 232
-comment = '\label{carar2} exists in eqnarray but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "CARBayesST.Rnw"
-line = 244
-comment = '\label{Lerouxjoint} exists but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "CARBayesST.Rnw"
-line = 268
-comment = '\label{caradaptive2} exists but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "CARBayesST.Rnw"
-line = 290
-comment = '\label{carcluster2} exists but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "CARBayesST.Rnw"
-line = 297
-comment = '\label{carcluster3} exists but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "CARBayesST.Rnw"
-line = 360
-comment = '\label{equation likelihood2} exists but is never \ref-ed from the text.'
-
-[[violations]]
-rule_id = "JSS-XREF-004"
-file = "CARBayesST.Rnw"
-line = 404
-comment = '\label{leroux} exists but is never \ref-ed from the text.'
-
-# -------------------------------------------------------------------
-# OPER-003 sweep (post-annotation): display equations with blank
-# lines immediately before or after the env (rule fires unless the
-# eq body ends with a period, which closes a sentence). Linter does
-# not fire on most of these on .Rnw input — appears to need the
-# rendered .tex / .ltx surface for the rule to see paragraph breaks.
-# Each entry below is a CANDIDATE — please review against the
-# rendered PDF and delete any that are intentional paragraph breaks
-# (eq is end-of-section, next text is a new paragraph, etc.).
-# -------------------------------------------------------------------
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 118
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 167
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 181
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 198
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 218
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 230
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 242
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 252
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 266
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 278
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 288
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 295
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 306
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 358
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 381
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 387
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 402
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 411
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 422
-comment = 'Blank lines BEFORE \begin.'
-
-[[violations]]
-rule_id = "JSS-OPER-003"
-file = "CARBayesST.Rnw"
-line = 873
-comment = 'Blank lines BEFORE \begin AND AFTER \end.'
-
-[[violations]]
-rule_id = "JSS-CITE-003"
-file = "CARBayesST.Rnw"
-line = 498
-comment = '"(see \cite{celeux2006})" renders as "(see (Celeux et al. 2006))" — bracket-in-bracket per JSS §3.2. Linter does not catch this shape (only matches exact "(\cite{X})"; see JSS-CITE-003 scope-extension follow-up).'
-
-[[violations]]
-rule_id = "JSS-REFS-003"
-file = "JSS2728.bib"
-line = 202
-comment = 'geweke1992 — DOI 10.21034/sr.148 found on Crossref (title similarity 1.00); add to the entry as doi="10.21034/sr.148".'

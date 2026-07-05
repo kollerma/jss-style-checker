@@ -7,7 +7,9 @@ Rules:
     the same parenthesised form the reviewer discourages).
   - JSS-XREF-003 — subsection references say "Section x.y", not
     "Subsection x.y".
-  - JSS-XREF-004 — numbered equation environments carry \\label{}.
+  - JSS-XREF-004 — numbered equations carry \\label{} and are referenced.
+  - JSS-XREF-005 — captioned figures / tables carry \\label{} and are
+    referenced from the text (the float analogue of JSS-XREF-004).
 """
 
 from __future__ import annotations
@@ -73,6 +75,12 @@ _NUMBERED_EQ_ENVS: frozenset[str] = frozenset(
     {"equation", "align", "eqnarray", "gather", "multline"}
 )
 
+# Subset that numbers each line independently — every \label{} marks its
+# own numbered equation, so each must be referenced (not just one per env).
+_MULTILINE_EQ_ENVS: frozenset[str] = frozenset(
+    {"align", "eqnarray", "gather"}
+)
+
 
 # Catalogue-backed factories live in _helpers (one definition for all
 # rule modules); the module-local names are kept for call-site brevity.
@@ -127,6 +135,22 @@ def _is_cross_paper_reference(
     # cited paper.
     if _is_in_cited_footnote(ancestors):
         return True
+    # Citation-locator shape: ``\citet[Table 2.5]{X}`` / ``\cite[Figure 3]{X}``
+    # — the optional argument is a locator into the *cited* work, parsed as
+    # a chars node inside the cite macro. A cite-macro ancestor means the
+    # "Table N" is the cited paper's float, not a manuscript cross-ref.
+    if _is_inside_cite_macro(ancestors):
+        return True
+    return False
+
+
+def _is_inside_cite_macro(ancestors: list[Any]) -> bool:
+    for anc in ancestors:
+        if (
+            isinstance(anc, LatexMacroNode)
+            and anc.macroname in _helpers._CITE_MACROS_FOR_SCOPE
+        ):
+            return True
     return False
 
 
@@ -464,32 +488,43 @@ _REF_MACROS: frozenset[str] = frozenset(
 )
 
 
+def _norm_label_key(raw: str) -> str:
+    """Canonicalise a ``\\label`` / ``\\ref`` key for matching.
+
+    TeX reads a label key with catcode-10 folding: a source newline (and
+    any run of surrounding spaces) collapses to a single space, so
+    ``\\label{eq:foo\\n    bar}`` and ``\\ref{eq:foo bar}`` denote the same
+    label and must compare equal. Stripping the ends is not enough — the
+    internal whitespace run has to be normalised on both sides.
+    """
+    return re.sub(r"\s+", " ", raw).strip()
+
+
 def _collect_referenced_labels(doc: ParsedDocument) -> set[str]:
     """Gather every label key referenced from ``\\ref{...}``-family macros
     across every tex_like file in the document.
 
     Labels can be referenced in multi-key form (``\\ref{a,b,c}``) and the
-    comma-separated keys are split. Whitespace around keys is stripped.
+    comma-separated keys are split. Internal whitespace is normalised (see
+    :func:`_norm_label_key`) so newline-wrapped keys still match.
     """
     refs: set[str] = set()
     for tex in doc.all_tex_like():
-        for node in _helpers._walk(tex.nodes):
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
             if not isinstance(node, LatexMacroNode):
                 continue
             if node.macroname not in _REF_MACROS:
                 continue
-            argd = getattr(node, "nodeargd", None)
-            if argd is None:
-                continue
-            for arg in argd.argnlist or ():
-                if not isinstance(arg, LatexGroupNode):
-                    continue
-                for child in arg.nodelist or ():
-                    if isinstance(child, LatexCharsNode):
-                        for key in child.chars.split(","):
-                            key = key.strip()
-                            if key:
-                                refs.add(key)
+            # Use the shared arg extractor: it reads pylatexenc's parsed
+            # argument for known macros (\ref, \pageref) and falls back to
+            # the next sibling group for macros pylatexenc has no spec for
+            # (\vref, \cref, \autoref, …) — otherwise their {label} parses
+            # as a standalone group and the reference is missed.
+            text = _helpers._macro_args_text(node, parent, idx)
+            for key in text.split(","):
+                key = _norm_label_key(key)
+                if key:
+                    refs.add(key)
     return refs
 
 
@@ -510,7 +545,7 @@ def _env_label_keys(env: Any) -> list[str]:
                 continue
             for ch in arg.nodelist or ():
                 if isinstance(ch, LatexCharsNode):
-                    k = ch.chars.strip()
+                    k = _norm_label_key(ch.chars)
                     if k:
                         keys.append(k)
     return keys
@@ -526,26 +561,38 @@ def check_jss_xref_004(
                 continue
             if node.environmentname not in _NUMBERED_EQ_ENVS:
                 continue
+            # ``\tag{...}`` / ``\tag*{...}`` replaces the automatic equation
+            # number with a custom label (e.g. ``\tag{\texttt{approx()}}``),
+            # so the equation isn't a standard auto-numbered cross-ref
+            # target — analogous to ``\nonumber``. Don't require it to be
+            # \ref'd (recall-corpus trueskill \tag'd equations).
+            if _env_has_tag(node):
+                continue
+            # Multi-line envs (align / eqnarray / gather) number each
+            # ``\\``-delimited row independently, so orphan detection is
+            # per row: a row is a separately-numbered equation and each
+            # violation is attributed to the offending row's own source
+            # line (the orphan ``\label`` line, or the env for a numbered
+            # row with no label at all).
+            if node.environmentname in _MULTILINE_EQ_ENVS:
+                yield from _check_multiline_eq_rows(
+                    tex, node, ancestors, referenced
+                )
+                continue
+            # Single-line envs (equation, multline) carry ONE number.
             # Inner numbered envs of a ``subequations`` block share the
             # outer block's ``\label{}`` and are referenced via
-            # ``\eqref{...}`` / ``\subref{...}`` against that label —
-            # they don't need their own and the label-orphan check
-            # below shouldn't fire on the outer either.
+            # ``\eqref{...}`` / ``\subref{...}`` against that label — they
+            # don't need their own, so skip them here (the multi-line
+            # branch handles subequations members with their own labels).
             if _inside_subequations(ancestors):
                 continue
             label_keys = _env_label_keys(node)
             if not label_keys:
-                # ``\nonumber`` / ``\notag`` inside a single-line equation
-                # env (``equation``, ``multline``) suppresses the equation
-                # number, so the equation isn't a cross-ref target and a
-                # missing ``\label{}`` is not a defect. Multi-line envs
-                # (``align``, ``eqnarray``, ``gather``) carry per-line
-                # numbering — a ``\nonumber`` on one line doesn't unnumber
-                # the others, so they still need their own labels.
-                if (
-                    node.environmentname in {"equation", "multline"}
-                    and _env_has_nonumber(node)
-                ):
+                # ``\nonumber`` / ``\notag`` suppresses the equation number,
+                # so the equation isn't a cross-ref target and a missing
+                # ``\label{}`` is not a defect.
+                if _env_has_nonumber(node):
                     continue
                 yield _violation(
                     tex=tex,
@@ -557,11 +604,8 @@ def check_jss_xref_004(
                     ),
                 )
                 continue
-            # Label(s) present — check that at least one is referenced
-            # somewhere in the document. JSS wants every numbered
-            # equation to be cited from the prose; an orphan label is
-            # a defect (the equation has a number but the text never
-            # mentions it).
+            # Label(s) present; a single-line env carries one number, so
+            # one referenced label suffices.
             if not any(k in referenced for k in label_keys):
                 yield _violation(
                     tex=tex,
@@ -576,7 +620,194 @@ def check_jss_xref_004(
                 )
 
 
+_MISSING_ROW_LABEL_SUGGESTION = (
+    "A numbered equation row carries no \\label{} and can never be "
+    "referenced. Add \\label{eq:<name>} to the row or suppress its number "
+    "with \\nonumber."
+)
+
+
+def _orphan_label_suggestion(key: str) -> str:
+    return (
+        f"Equation label '{key}' is never referenced from the text. Either "
+        "cite the equation via \\ref{} / \\eqref{} or suppress the number "
+        "with \\nonumber."
+    )
+
+
+def _check_multiline_eq_rows(
+    tex: Any, env: Any, ancestors: list[Any], referenced: set[str]
+) -> Iterator[Violation]:
+    """Per-row orphan check for a multi-line equation env.
+
+    Each ``\\``-delimited row of an ``align`` / ``eqnarray`` / ``gather`` is
+    independently numbered unless it carries ``\\nonumber`` / ``\\notag``.
+
+    Line attribution follows the hand-annotated recall corpus, which
+    pinpoints an orphan row only when the env mixes referenced and orphan
+    equations (otherwise the whole block is unreferenced and one report at
+    the env is enough):
+
+    - **subequations members** each carry their OWN number, so an orphan
+      label is reported at its label line; a label-less row shares the
+      outer block's label and is skipped (recall-corpus DBR).
+    - **mixed env** (at least one row IS referenced): each orphan label is
+      reported at its own label line, and a numbered row with no label at
+      all is reported at the env begin (recall-corpus rstpm2 / cusp /
+      SightabilityModel).
+    - **wholly-unreferenced env** (no row is referenced): a single report
+      at the env begin, matching the conservative per-env behaviour the
+      corpus accepts for these blocks (recall-corpus CARBayesST /
+      HardyWeinberg / romc).
+    """
+    in_subeq = _inside_subequations(ancestors)
+    # Row labels of every *numbered* row (``[]`` for a label-less row). An
+    # unnumbered (\nonumber / \notag) row does not step the equation
+    # counter, so a \label{} inside it attaches to the NEXT numbered row —
+    # authors routinely put the label at the top of the env or on a
+    # \nonumber lead line. Carry such labels forward rather than dropping
+    # them, else the following numbered row looks label-less (false
+    # positive: mixtools ``mixturetest``, isotone ``eq:convexAx``).
+    numbered: list[list[tuple[str, int]]] = []
+    pending: list[tuple[str, int]] = []
+    for row in _split_env_rows(tex, env):
+        labels = _row_label_positions(row)
+        if _row_has_nonumber(row):
+            pending.extend(labels)
+            continue
+        numbered.append(pending + labels)
+        pending = []
+    if not numbered:
+        return  # no numbered rows -> nothing that needs a reference
+
+    all_keys = [k for labels in numbered for (k, _pos) in labels]
+    has_referenced = any(k in referenced for k in all_keys)
+    seen_lines: set[int] = set()
+
+    if in_subeq:
+        # Members with their own label are checked; label-less rows share
+        # the outer block's label (the classic subequations carve-out).
+        for labels in numbered:
+            for key, pos in labels:
+                if key in referenced:
+                    continue
+                line = _helpers._lineno_col(tex, pos)[0]
+                if line in seen_lines:
+                    continue
+                seen_lines.add(line)
+                yield _violation(
+                    tex=tex, pos=pos, rule_id="JSS-XREF-004",
+                    suggestion=_orphan_label_suggestion(key),
+                )
+        return
+
+    if not has_referenced:
+        # Whole block is unreferenced (or unlabelled): one report at the env.
+        orphan_keys = [k for k in all_keys if k not in referenced]
+        if orphan_keys:
+            suggestion = (
+                f"Equation label(s) {', '.join(orphan_keys)!r} are never "
+                "referenced from the text. Either cite the equation via "
+                "\\ref{} / \\eqref{} or suppress the number with \\nonumber."
+            )
+        else:
+            suggestion = (
+                "Add \\label{eq:<name>} inside the equation so it can be "
+                "referenced from the text."
+            )
+        yield _violation(
+            tex=tex, pos=env.pos, rule_id="JSS-XREF-004", suggestion=suggestion,
+        )
+        return
+
+    # Mixed env: pinpoint each orphan row.
+    missing_label_reported = False
+    for labels in numbered:
+        if not labels:
+            # Numbered row with no label of its own -> report at env begin.
+            if missing_label_reported:
+                continue
+            line = _helpers._lineno_col(tex, env.pos)[0]
+            if line in seen_lines:
+                continue
+            seen_lines.add(line)
+            missing_label_reported = True
+            yield _violation(
+                tex=tex, pos=env.pos, rule_id="JSS-XREF-004",
+                suggestion=_MISSING_ROW_LABEL_SUGGESTION,
+            )
+            continue
+        for key, pos in labels:
+            if key in referenced:
+                continue
+            line = _helpers._lineno_col(tex, pos)[0]
+            if line in seen_lines:
+                continue
+            seen_lines.add(line)
+            yield _violation(
+                tex=tex, pos=pos, rule_id="JSS-XREF-004",
+                suggestion=_orphan_label_suggestion(key),
+            )
+
+
+def _split_env_rows(tex: Any, env: Any) -> list[list[Any]]:
+    """Split a multi-line equation env body into rows on top-level ``\\``.
+
+    Only the env's direct children are inspected, so a ``\\`` inside a
+    nested group / array (e.g. a ``matrix``) does not split a row.
+    """
+    rows: list[list[Any]] = []
+    current: list[Any] = []
+    for child in env.nodelist or ():
+        if child is None:
+            continue
+        if (
+            isinstance(child, LatexMacroNode)
+            and tex.source[child.pos : child.pos + 2] == "\\\\"
+        ):
+            rows.append(current)
+            current = []
+            continue
+        current.append(child)
+    rows.append(current)
+    return rows
+
+
+def _row_has_nonumber(row: list[Any]) -> bool:
+    for child in _helpers._walk(row):
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _NONUMBER_MACROS
+        ):
+            return True
+    return False
+
+
+def _row_label_positions(row: list[Any]) -> list[tuple[str, int]]:
+    """Return ``(label_key, source_pos)`` for every ``\\label{...}`` in a row."""
+    out: list[tuple[str, int]] = []
+    for child in _helpers._walk(row):
+        if not (
+            isinstance(child, LatexMacroNode)
+            and child.macroname == "label"
+        ):
+            continue
+        argd = getattr(child, "nodeargd", None)
+        if argd is None:
+            continue
+        for arg in argd.argnlist or ():
+            if not isinstance(arg, LatexGroupNode):
+                continue
+            for ch in arg.nodelist or ():
+                if isinstance(ch, LatexCharsNode):
+                    k = _norm_label_key(ch.chars)
+                    if k:
+                        out.append((k, child.pos))
+    return out
+
+
 _NONUMBER_MACROS: frozenset[str] = frozenset({"nonumber", "notag"})
+_TAG_MACROS: frozenset[str] = frozenset({"tag", "tag*"})
 
 
 def _env_has_nonumber(env: Any) -> bool:
@@ -584,6 +815,16 @@ def _env_has_nonumber(env: Any) -> bool:
         if (
             isinstance(child, LatexMacroNode)
             and child.macroname in _NONUMBER_MACROS
+        ):
+            return True
+    return False
+
+
+def _env_has_tag(env: Any) -> bool:
+    for child in _helpers._walk(env.nodelist or ()):
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _TAG_MACROS
         ):
             return True
     return False
@@ -610,6 +851,209 @@ def _env_has_label(env: Any) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# JSS-XREF-005 — figures / tables carry \label{} and are referenced
+# ---------------------------------------------------------------------------
+
+# Float environments that get a number (via \caption). Starred variants
+# (figure*, table*) span both columns but are still numbered floats.
+_FLOAT_ENVS: frozenset[str] = frozenset(
+    {"figure", "figure*", "table", "table*"}
+)
+
+_CAPTION_MACROS: frozenset[str] = frozenset({"caption", "captionof"})
+
+# Sub-float environments: a panel nested inside a parent float relies on
+# the parent's caption (or carries its own panel caption). A float that
+# contains one of these is a composite figure and is not flagged by
+# JSS-XREF-006 for lacking its own top-level caption.
+_SUBFLOAT_ENVS: frozenset[str] = frozenset(
+    {"subfigure", "subtable", "subfloat", "minipage", "wrapfigure",
+     "wraptable", "sidewaysfigure", "sidewaystable"}
+)
+
+
+def _env_has_caption(env: Any) -> bool:
+    for child in _helpers._walk(env.nodelist or ()):
+        if (
+            isinstance(child, LatexMacroNode)
+            and child.macroname in _CAPTION_MACROS
+        ):
+            return True
+    return False
+
+
+def _env_contains_subfloat(env: Any) -> bool:
+    for child in _helpers._walk(env.nodelist or ()):
+        if (
+            isinstance(child, LatexEnvironmentNode)
+            and child.environmentname in _SUBFLOAT_ENVS
+        ):
+            return True
+    return False
+
+
+def check_jss_xref_005(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    """Float analogue of JSS-XREF-004: a captioned (numbered) figure / table
+    should carry a ``\\label{}`` and be referenced from the prose."""
+    referenced = _collect_referenced_labels(doc)
+    for tex in doc.all_tex_like():
+        for node in _helpers._walk(tex.nodes):
+            if not isinstance(node, LatexEnvironmentNode):
+                continue
+            if node.environmentname not in _FLOAT_ENVS:
+                continue
+            # Captionless floats aren't numbered, so they're not cross-ref
+            # targets and a missing \label{} is not a defect (parallels the
+            # \nonumber carve-out in JSS-XREF-004).
+            if not _env_has_caption(node):
+                continue
+            label_keys = _env_label_keys(node)
+            if not label_keys:
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-XREF-005",
+                    suggestion=(
+                        "Add \\label{fig:<name>} / \\label{tab:<name>} to the "
+                        "float so it can be referenced from the text."
+                    ),
+                )
+                continue
+            if not any(k in referenced for k in label_keys):
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-XREF-005",
+                    suggestion=(
+                        f"Float label(s) {', '.join(label_keys)!r} are never "
+                        "referenced from the text. Add a Figure~\\ref{} / "
+                        "Table~\\ref{} callout in the prose."
+                    ),
+                )
+
+
+# ---------------------------------------------------------------------------
+# JSS-XREF-006 — figure / table floats carry a \caption{}
+# ---------------------------------------------------------------------------
+
+
+def check_jss_xref_006(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    """A ``figure`` / ``table`` float must carry a ``\\caption{}`` so it is
+    numbered and can be cross-referenced. This is the precondition JSS-XREF-005
+    assumes: a captionless float is unnumbered and silently skipped there."""
+    for tex in doc.all_tex_like():
+        for node in _helpers._walk(tex.nodes):
+            if not isinstance(node, LatexEnvironmentNode):
+                continue
+            if node.environmentname not in _FLOAT_ENVS:
+                continue
+            if _env_has_caption(node):
+                continue
+            # Composite figure: a panel nested inside relies on the parent's
+            # caption (or carries its own), so a missing top-level caption is
+            # not a defect here.
+            if _env_contains_subfloat(node):
+                continue
+            kind = "table" if node.environmentname.startswith("table") else "figure"
+            yield _violation(
+                tex=tex,
+                pos=node.pos,
+                rule_id="JSS-XREF-006",
+                suggestion=(
+                    f"Add a \\caption{{...}} to the {kind} so it is numbered "
+                    "and can be referenced from the text."
+                ),
+            )
+
+
+# ---------------------------------------------------------------------------
+# JSS-XREF-007 — abbreviated cross-reference nouns (Fig./Sec./Tab.)
+# ---------------------------------------------------------------------------
+
+
+# ``Fig.`` / ``Figs.`` / ``Sec.`` / ``Secs.`` / ``Tab.`` / ``Tabs.`` at the
+# tail of a chars node, optionally trailed by whitespace and a ``~``.
+_FIGSECTAB_ABBREV_TAIL_RE = re.compile(
+    r"\b(Figs?|Secs?|Tabs?)\.\s*~?\s*$", re.IGNORECASE
+)
+_FIGSECTAB_CANONICAL: dict[str, str] = {
+    "fig": "Figure", "figs": "Figures",
+    "sec": "Section", "secs": "Sections",
+    "tab": "Table", "tabs": "Tables",
+}
+
+
+def _chars_ends_with_figsectab_abbrev(node: Any) -> tuple[int, str] | None:
+    """If ``node`` is a chars node ending with ``Fig.`` / ``Sec.`` / ``Tab.``
+    (or a plural), return ``(offset, abbrev)`` where ``abbrev`` is the bare
+    word (``Fig``); otherwise ``None``."""
+    if not isinstance(node, LatexCharsNode):
+        return None
+    m = _FIGSECTAB_ABBREV_TAIL_RE.search(node.chars)
+    if m is None:
+        return None
+    return m.start(), m.group(1)
+
+
+def check_jss_xref_007(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    meta = _catalogue_data.RULES["JSS-XREF-007"]
+    for tex in doc.all_tex_like():
+        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+            if not (
+                isinstance(node, LatexMacroNode) and node.macroname == "ref"
+            ):
+                continue
+            # ``Fig.~\ref{...}`` — the ``~`` non-breaking space parses as a
+            # LatexSpecialsNode sibling between the chars node carrying
+            # "Fig." and the ``\ref`` macro; step back past it. ``\autoref``
+            # / ``\cref`` generate the noun themselves and so aren't matched
+            # (only bare ``\ref``), and ``Eq.`` is JSS-XREF-002's job.
+            before = parent[idx - 1] if idx > 0 else None
+            if (
+                before is not None
+                and not isinstance(before, LatexCharsNode)
+                and getattr(before, "specials_chars", None) == "~"
+            ):
+                before = parent[idx - 2] if idx > 1 else None
+            hit = _chars_ends_with_figsectab_abbrev(before)
+            if hit is None:
+                continue
+            abbrev_offset, abbrev = hit
+            canonical = _FIGSECTAB_CANONICAL[abbrev.lower()]
+            abbrev_start = before.pos + abbrev_offset
+            line, col = _helpers._lineno_col(tex, node.pos)
+            macro_body = tex.source[node.pos : node.pos + node.len]
+            yield Violation(
+                file=tex.path,
+                line=line,
+                column=col,
+                rule_id="JSS-XREF-007",
+                severity=meta["severity"],
+                message=meta["message_template"],
+                suggestion=(
+                    f"Spell out the cross-reference noun: "
+                    f"'{canonical}~\\ref{{...}}', not "
+                    f"'{abbrev}.~\\ref{{...}}'."
+                ),
+                fix=Fix(
+                    start=abbrev_start,
+                    end=node.pos + node.len,
+                    replacement=f"{canonical}~{macro_body}",
+                    description=(
+                        f"replace '{abbrev}.' with '{canonical}~'"
+                    ),
+                    confidence="safe",
+                ),
+            )
+
+
+# ---------------------------------------------------------------------------
 # Rule objects
 # ---------------------------------------------------------------------------
 
@@ -621,6 +1065,12 @@ jss_xref_001 = _rule("JSS-XREF-001", check_jss_xref_001)
 jss_xref_002 = _rule("JSS-XREF-002", check_jss_xref_002)
 jss_xref_003 = _rule("JSS-XREF-003", check_jss_xref_003)
 jss_xref_004 = _rule("JSS-XREF-004", check_jss_xref_004)
+jss_xref_005 = _rule("JSS-XREF-005", check_jss_xref_005)
+jss_xref_006 = _rule("JSS-XREF-006", check_jss_xref_006)
+jss_xref_007 = _rule("JSS-XREF-007", check_jss_xref_007)
 
 
-rules: tuple[Rule, ...] = (jss_xref_001, jss_xref_002, jss_xref_003, jss_xref_004)
+rules: tuple[Rule, ...] = (
+    jss_xref_001, jss_xref_002, jss_xref_003, jss_xref_004, jss_xref_005,
+    jss_xref_006, jss_xref_007,
+)

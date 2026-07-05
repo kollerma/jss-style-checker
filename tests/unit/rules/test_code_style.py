@@ -198,6 +198,46 @@ class TestCode003:
         )
         assert run_rule(jss_code_003, src) == []
 
+    def test_assignment_arrow_no_spaces_flagged(self, run_rule):
+        # R assignment ``<-`` needs surrounding spaces; ``x<-y`` was missed
+        # because ``<`` is not a single-char operator (recall-corpus
+        # CUB.Rnw:798/931).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{pai1<-coef(x)}\end{document}"
+        )
+        assert len(run_rule(jss_code_003, src)) == 1
+
+    def test_assignment_arrow_well_spaced_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{x <- coef(y)}\end{document}"
+        )
+        assert run_rule(jss_code_003, src) == []
+
+    def test_right_and_super_assign_flagged(self, run_rule):
+        for op in ("->", "<<-"):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}\code{{a{op}b}}\end{{document}}"
+            )
+            assert len(run_rule(jss_code_003, src)) == 1, op
+
+    def test_comparison_operators_no_spaces_flagged(self, run_rule):
+        for op in ("==", "!=", "<=", ">="):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}\code{{n{op}10}}\end{{document}}"
+            )
+            assert len(run_rule(jss_code_003, src)) == 1, op
+
+    def test_comparison_operators_well_spaced_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{n <= 10}\end{document}"
+        )
+        assert run_rule(jss_code_003, src) == []
+
     def test_dash_inside_string_literal_silent(self, run_rule):
         # \code{vignette("plot3logit-overview")} — the dash in the
         # string literal is a vignette filename, not a subtraction
@@ -205,6 +245,54 @@ class TestCode003:
         src = (
             r"\documentclass[article]{jss}" "\n"
             r'\begin{document}\code{vignette("plot3logit-overview")}\end{document}'
+        )
+        assert run_rule(jss_code_003, src) == []
+
+    def test_code_env_violation_anchored_at_env_opening(self, run_rule):
+        # A code-env (Sinput / CodeInput / chunk) violation reports at the
+        # env opening (``\begin{...}`` column), consistent with the
+        # ``\code{}`` pass reporting at the macro ``\`` — not mid-line at
+        # the content offset after the ``\begin`` tag.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{CodeInput}\n"
+            "f(x=1)\n"
+            "\\end{CodeInput}\n"
+            "\\end{document}\n"
+        )
+        violations = run_rule(jss_code_003, src)
+        assert len(violations) == 1
+        # `\begin{CodeInput}` is on line 3, column 1.
+        assert violations[0].line == 3
+        assert violations[0].column == 1
+
+    def test_code_output_env_not_flagged(self, run_rule):
+        # Program output (CodeOutput / Soutput) is verbatim tool output,
+        # not author-written code, so CODE-003 must not fire on it — you
+        # cannot restyle what R printed. Real corpus regressions: a
+        # "p-value" / "R-squared" hyphen and a "k=4" summary line inside a
+        # CodeOutput block were being misread as unspaced operators.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{CodeOutput}\n"
+            "z =  2.2666  p-value =  0.0117\n"
+            "Mean R-squared: 0.7523  k=4\n"
+            "\\end{CodeOutput}\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_code_003, src) == []
+
+    def test_soutput_env_not_flagged(self, run_rule):
+        # Same contract for the Sweave-style output env.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{Soutput}\n"
+            "delta:  10  type: under,rounds=250\n"
+            "\\end{Soutput}\n"
+            "\\end{document}\n"
         )
         assert run_rule(jss_code_003, src) == []
 

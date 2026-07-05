@@ -355,6 +355,18 @@ def report_cmd(
     default=False,
     help="Compute recall but do not persist to the history DB.",
 )
+@click.option(
+    "--min-plants",
+    type=int,
+    default=10,
+    show_default=True,
+    help=(
+        "Report per-rule recall only for rules with at least this many "
+        "ground-truth plants (tp + fn); rules below are pooled into one "
+        "below-threshold figure. Recording to the history DB is unaffected "
+        "(all rules are always persisted)."
+    ),
+)
 @click.pass_context
 def recall_cmd(
     ctx: click.Context,
@@ -364,6 +376,7 @@ def recall_cmd(
     fmt: str,
     history_db: Path,
     no_record: bool,
+    min_plants: int,
 ) -> None:
     """Spec 017 — measure recall against a hand-annotated corpus.
 
@@ -528,11 +541,16 @@ def recall_cmd(
             per_rule=per_rule,
         )
 
-    # Render.
+    # Render. Per-rule figures are shown only for rules with >= min_plants
+    # ground-truth plants; the thin tail is pooled into one figure.
+    measured, pooled = recall_mod.partition_by_plants(
+        recall_report.per_rule, min_plants
+    )
     if fmt == "json":
         payload = {
             "aggregate_recall": recall_report.aggregate_recall,
             "f1": recall_report.f1,
+            "min_plants": min_plants,
             "per_rule": [
                 {
                     "rule_id": r.rule_id,
@@ -540,8 +558,15 @@ def recall_cmd(
                     "fn": r.fn,
                     "recall": r.recall,
                 }
-                for r in recall_report.per_rule
+                for r in measured
             ],
+            "below_threshold": {
+                "rule_count": pooled.rule_count,
+                "tp": pooled.tp,
+                "fn": pooled.fn,
+                "recall": pooled.recall,
+                "rule_ids": list(pooled.rule_ids),
+            },
         }
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
     else:
@@ -552,12 +577,22 @@ def recall_cmd(
         click.echo(
             "Aggregate: "
             + (f"{agg:.3f}" if agg is not None else "n/a")
-            + f"  (per-rule rows: {len(recall_report.per_rule)})"
+            + f"  (per-rule reported at plants >= {min_plants}: "
+            + f"{len(measured)} rules; {pooled.rule_count} pooled)"
         )
-        for r in recall_report.per_rule:
+        for r in measured:
             recall_text = f"{r.recall:.3f}" if r.recall is not None else "n/a"
             click.echo(
                 f"  {r.rule_id}: TP={r.tp} FN={r.fn} recall={recall_text}"
+            )
+        if pooled.rule_count:
+            pooled_text = (
+                f"{pooled.recall:.3f}" if pooled.recall is not None else "n/a"
+            )
+            click.echo(
+                f"  below threshold ({pooled.rule_count} rules, plants < "
+                f"{min_plants}): TP={pooled.tp} FN={pooled.fn} "
+                f"recall={pooled_text}"
             )
 
     # Gate logic.

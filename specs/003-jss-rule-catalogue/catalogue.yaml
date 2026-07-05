@@ -18,6 +18,12 @@
 #     first-use cross-document state tracking is implementation-brittle
 #     and the abbreviation-expansion rule is better handled by the
 #     authors' own proofreading pass than by the linter.
+#   - JSS-CAP-003 (retired 2026-07-04): figure/table captions in
+#     sentence style. Unreliable in both directions (precision ~32%,
+#     recall ~12%); the precision and recall gold sets encode
+#     contradictory labeling policies and the core proper-noun-vs-
+#     overcapitalised discrimination needs semantics a word-list can't
+#     provide.
 
 version: 1
 source_vendored_at: "2021-05-23"
@@ -29,6 +35,7 @@ source_vendored_at: "2021-05-23"
 retired_rule_ids:
   - JSS-CITE-001
   - JSS-ABBR-002
+  - JSS-CAP-003
 
 categories:
   - preamble
@@ -842,6 +849,41 @@ rules:
       "Smith et al. (2020)" on first mention. Alternative: \shortcites{key} in the preamble for per-entry
       control. The rule fires when an entry has ≥6 authors AND the preamble lacks both mitigations.
 
+  - rule_id: JSS-BIBTEX-005
+    category: bibtex
+    severity: error
+    description: No BibTeX field key is repeated within a single entry
+    authority: style_guide
+    authority_ref: "#how-to-cite-r-packages"
+    example_violation: |
+      @article{Knuth1984,
+        author = {Donald Knuth},
+        author = {Leslie Lamport},
+        title  = {Literate Programming},
+        journal = {Journal of Examples},
+        year   = {1984}
+      }
+    example_fix: |
+      @article{Knuth1984,
+        author = {Donald Knuth and Leslie Lamport},
+        title  = {Literate Programming},
+        journal = {Journal of Examples},
+        year   = {1984}
+      }
+    inspects: [bib_files]
+    auto_fixable: false
+    guide_section: "§5.1 Bibliography"
+    guide_url: "https://www.jstatsoft.org/about/submissions#bibliography"
+    explanation: "No BibTeX field key is repeated within a single entry."
+    notes: |
+      Style-guide SG-017 requires valid BibTeX. A field repeated within one
+      entry (e.g., two `author =` lines) is malformed: BibTeX keeps only the
+      first occurrence and silently drops the rest, so the rendered citation
+      loses data. bibtexparser routes such an entry into `failed_blocks` as a
+      DuplicateFieldKeyBlock; the parser treats it as recoverable (the kept
+      first value still parses) rather than a fatal JSS-PARSE-000, and this
+      rule reports the dropped duplicate field(s).
+
   # ---------------------------------------------------------------------------
   # naming — SG-044..SG-052
   # ---------------------------------------------------------------------------
@@ -937,42 +979,9 @@ rules:
       or more words after the first are capitalised without being proper names (cross-checked against
       terms.LANGUAGES and terms.R_PACKAGES). Tuned via the precision gate.
 
-  - rule_id: JSS-CAP-003
-    category: capitalization
-    # info severity: 56.5% pinned-corpus precision at iter-78; 5/5 fix
-    # attempts exhausted (eval/improvement-log.md). Demoted from
-    # warning so the default --fail-on=warning policy never fails a
-    # run on this rule's advisories.
-    severity: info
-    confidence: low
-    description: Figure / table captions are in sentence style
-    authority: style_guide
-    authority_ref: "#how-to-format-figuretable-captions"
-    example_violation: |
-      \caption{\label{fig:quine} Frequency Distribution For Number Of Days Absent.}
-    example_fix: |
-      \caption{\label{fig:quine} Frequency distribution for number of days absent.}
-    inspects: [tex_files]
-    auto_fixable: false
-    guide_section: "§6.2 Capitalisation"
-    guide_url: "https://www.jstatsoft.org/about/submissions#capitalisation"
-    explanation: |
-      Figure and table captions in JSS submissions use sentence style:
-      only the first word is capitalised, with proper nouns retaining
-      their capitalisation. The rule is heuristic and known to over-fire
-      on captions containing dense technical identifiers (R^2, p-values
-      with embedded statistics, dataset / cohort label prefixes); 5
-      successive precision-improvement attempts could not lift it above
-      60% on the pinned 240-paper corpus, so it ships at info severity
-      and `confidence: low`. It runs (and is shown) by default but
-      never fails a run under the default `--fail-on warning` policy;
-      pass `--min-confidence medium` to hide it entirely.
-      When reviewing a CAP-003 finding, sanity-check the caption against
-      the example fix below; the rule prefers false-positives over
-      missed real defects, so a no-op finding is the expected failure
-      mode.
-    notes: |
-      Style guide SG-010 and SG-013. Same sentence-style semantics as JSS-CAP-002 applied to captions.
+  # JSS-CAP-003 retired 2026-07-04 (unreliable in both directions —
+  # precision ~32%, recall ~12%); see retired_rule_ids comment at top
+  # of file.
 
   - rule_id: JSS-CAP-004
     category: capitalization
@@ -1295,7 +1304,7 @@ rules:
   - rule_id: JSS-XREF-001
     category: crossrefs
     severity: warning
-    description: Figures and tables carry \label{} and are referenced by \ref{} rather than manual numbering
+    description: Figures and tables are referenced via \ref{} rather than by manual numbering
     authority: style_guide
     authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
     example_violation: |
@@ -1306,11 +1315,12 @@ rules:
     auto_fixable: false
     guide_section: "§4.5 Cross-references"
     guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
-    explanation: "Figures and tables carry \\label{} and are referenced by \\ref{} rather than manual numbering."
+    explanation: "Figures and tables are referenced via \\ref{} rather than by manual numbering (e.g. \"Figure 2\")."
     notes: |
-      Scope narrowed 2026-04-23 (reviewer split): figures and tables carry the warning severity; numbered
-      equations are covered separately by JSS-XREF-004 at info severity. An unreferenced figure/table suggests
-      a missing callout from the prose; an unreferenced numbered equation is a milder style nit.
+      This rule covers only the cross-reference *form*: a prose mention of a float by hardcoded number
+      ("Figure 2", "Table 3") should instead use Figure~\ref{...} / Table~\ref{...}. The complementary
+      orphan check — that every captioned figure/table actually carries a \label{} and is referenced from
+      the text — lives in JSS-XREF-005 (the float analogue of JSS-XREF-004 for equations).
 
   - rule_id: JSS-XREF-002
     category: crossrefs
@@ -1372,9 +1382,89 @@ rules:
       equations are a style nit, not a missing-callout signal (the reader still sees the equation in place).
       `{equation*}` / unnumbered displays are out of scope — they have no counter to label.
 
-  # ---------------------------------------------------------------------------
-  # house_style
-  # ---------------------------------------------------------------------------
+  - rule_id: JSS-XREF-005
+    category: crossrefs
+    severity: warning
+    description: Figures and tables carry \label{} and are referenced from the text
+    authority: style_guide
+    authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
+    example_violation: |
+      \begin{figure}
+      \includegraphics{quine}
+      \caption{Frequency distribution.}
+      \end{figure}
+    example_fix: |
+      \begin{figure}
+      \includegraphics{quine}
+      \caption{Frequency distribution.}
+      \label{fig:quine}
+      \end{figure}
+      Figure~\ref{fig:quine} shows the frequency distribution.
+    inspects: [tex_files]
+    auto_fixable: false
+    guide_section: "§4.5 Cross-references"
+    guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Figures and tables carry \\label{} and are referenced from the text."
+    notes: |
+      The float analogue of JSS-XREF-004 (which covers numbered equations). Walks `figure` / `table`
+      environments (and their starred variants) that carry a `\caption` — i.e. numbered floats — and fires
+      when the float has no `\label{}`, or has label(s) none of which is referenced anywhere via a
+      `\ref`-family macro (an orphan float, signalling a missing prose callout). Warning severity matches
+      JSS-XREF-001's reasoning: an unreferenced figure/table is a missing-callout signal, stronger than the
+      info-severity equation nit. Captionless (unnumbered) floats are out of scope — they have no counter to
+      label. JSS-XREF-001 separately covers the reference *form* (use `\ref{}`, not a hardcoded number).
+
+  - rule_id: JSS-XREF-006
+    category: crossrefs
+    severity: warning
+    description: Figure and table floats carry a \caption{}
+    authority: style_guide
+    authority_ref: "#what-are-the-most-important-style-guidelines-in-jss"
+    example_violation: |
+      \begin{figure}
+      \includegraphics{quine}
+      \end{figure}
+    example_fix: |
+      \begin{figure}
+      \includegraphics{quine}
+      \caption{Frequency distribution.}
+      \label{fig:quine}
+      \end{figure}
+    inspects: [tex_files]
+    auto_fixable: false
+    guide_section: "§4.5 Cross-references"
+    guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Figure and table floats carry a \\caption{} so they are numbered and can be referenced from the text."
+    notes: |
+      The precondition for JSS-XREF-005: a `figure` / `table` float (and starred variants) with no `\caption`
+      (or `\captionof`) is unnumbered and cannot be cross-referenced, so XREF-005 deliberately skips it. This
+      rule catches the missing caption itself. Sub-float environments (`subfigure`, `subtable`, `subfloat`,
+      `minipage`, `wrapfigure` / `wraptable`, sideways variants) are carved out: a panel nested inside a parent
+      float legitimately relies on the parent's caption. A float that contains a sub-float is therefore not
+      flagged for its own caption either, since the sub-float wrapper signals a composite figure whose caption
+      may sit on an inner panel.
+
+  - rule_id: JSS-XREF-007
+    category: crossrefs
+    severity: info
+    description: Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.)
+    authority: style_guide
+    authority_ref: "#miscellaneous"
+    example_violation: |
+      As shown in Fig.~\ref{fig:overview} and Sec.~\ref{sec:method}.
+    example_fix: |
+      As shown in Figure~\ref{fig:overview} and Section~\ref{sec:method}.
+    inspects: [tex_files]
+    auto_fixable: true
+    guide_section: "§4.5 Cross-references"
+    guide_url: "https://www.jstatsoft.org/about/submissions#cross-references"
+    explanation: "Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.); the figure/section/table analogue of JSS-XREF-002's Eq. -> Equation rule."
+    notes: |
+      Fires only on an abbreviation (`Fig.` / `Figs.` / `Sec.` / `Secs.` / `Tab.` / `Tabs.`) immediately
+      preceding a `\ref` macro (across an optional `~`), so the `\ref` disambiguates it from unrelated
+      uses ("sec." = seconds). `\autoref` / `\cref` generate the noun themselves and are out of scope, as
+      is `Eq.` (JSS-XREF-002). Ships at info severity; auto-fixable (rewrites to the spelled-out noun with a
+      non-breaking space).
 
   - rule_id: JSS-HOUSE-001
     category: house_style

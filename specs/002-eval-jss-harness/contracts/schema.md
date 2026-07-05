@@ -50,7 +50,10 @@ CREATE TABLE IF NOT EXISTS violations (
     verdict_reason    TEXT,
     reviewer          TEXT,               -- "ai:<model>" | "human:<user>" | NULL
     first_seen_run_id INTEGER NOT NULL REFERENCES runs(id),
-    UNIQUE(paper_id, rule_id, line, message)
+    last_seen_run_id  INTEGER REFERENCES runs(id),  -- run that most recently re-emitted this row; NULL = not re-seen since added (stale)
+    file_suffix       TEXT,               -- '.tex' | '.bib' | '.Rnw' | '.Rmd' (spec 005) — NULL pre-005
+    file              TEXT,               -- paper-relative source path (spec P8) — NULL pre-p8
+    UNIQUE(paper_id, rule_id, line, message, file)
 );
 
 CREATE INDEX IF NOT EXISTS idx_viol_rule    ON violations(rule_id);
@@ -68,7 +71,17 @@ Notes:
 
 ## Dedup contract (spec FR-010 / SC-002)
 
-The `UNIQUE(paper_id, rule_id, line, message)` constraint, combined with `INSERT OR IGNORE INTO violations (...) VALUES (...)`, is the dedup mechanism. Re-running `scan` on an unchanged corpus produces zero new rows; existing `verdict`, `verdict_reason`, and `reviewer` columns are preserved untouched.
+The `UNIQUE(paper_id, rule_id, line, message, file)` constraint is the dedup mechanism. `scan` upserts each violation:
+
+```sql
+INSERT INTO violations (..., first_seen_run_id, last_seen_run_id, ...) VALUES (..., :run, :run, ...)
+ON CONFLICT(paper_id, rule_id, line, message, file)
+DO UPDATE SET last_seen_run_id = excluded.last_seen_run_id;
+```
+
+Re-running `scan` on an unchanged corpus produces zero new rows; existing `verdict`, `verdict_reason`, `reviewer`, and `first_seen_run_id` are preserved untouched, while `last_seen_run_id` is bumped to the current run so the row is known to still fire.
+
+**Stale rows.** A violation the tool *stops* emitting (e.g. an FP silenced by a rule guard) is never re-stamped, so its `last_seen_run_id` freezes at the last run that saw it. `eval-jss report` filters to `last_seen_run_id = (SELECT MAX(id) FROM runs)` by default, so stale rows keep their label for the audit trail but drop out of the precision denominator — the table describes the current tool on the current corpus, not the historical union. `--include-stale` restores the union. The filter degrades to a no-op on a freshly migrated DB where no row has been stamped yet (until the next `scan --force`).
 
 The harness never runs a `DELETE` on `violations` as part of normal operation. (The `ON DELETE CASCADE` from `papers` only fires if an operator manually deletes a paper, which is out of spec for the MVP.)
 

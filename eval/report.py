@@ -90,6 +90,7 @@ _PER_RULE_SQL = """
        -- leaks a stale row in practice.
        AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
             OR v.last_seen_run_id IS NULL)
+       {exclusion}
      GROUP BY v.rule_id
      ORDER BY MIN(v.category), v.rule_id
 """
@@ -111,6 +112,7 @@ _PER_RULE_BY_SOURCE_SQL = """
        -- leaks a stale row in practice.
        AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
             OR v.last_seen_run_id IS NULL)
+       {exclusion}
      GROUP BY v.rule_id, p.source
      ORDER BY MIN(v.category), v.rule_id, p.source
 """
@@ -132,6 +134,7 @@ _PER_RULE_BY_FORMAT_SQL = """
        -- leaks a stale row in practice.
        AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
             OR v.last_seen_run_id IS NULL)
+       {exclusion}
      GROUP BY v.rule_id, format
      ORDER BY MIN(v.category), v.rule_id, format
 """
@@ -148,6 +151,7 @@ _PER_RULE_BY_CLASS_SQL = """
      WHERE v.rule_id != 'JSS-PARSE-000'
        AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)
             OR v.last_seen_run_id IS NULL)
+       {exclusion}
      GROUP BY v.rule_id, doc_class
      ORDER BY MIN(v.category), v.rule_id, doc_class
 """
@@ -158,6 +162,37 @@ _PARSE_FAILURE_COUNT_SQL = (
     " AND (v.last_seen_run_id = (SELECT MAX(id) FROM runs)"
     "      OR v.last_seen_run_id IS NULL)"
 )
+
+# Repo-controlled allowlist of documented (paper, rule) precision
+# exclusions — known linter limitations a real JSS author would suppress
+# inline (``% jss-lint: ignore``) but which we don't edit into the corpus
+# (e.g. micEconAids's ``^T`` Törnqvist-index label, syntactically identical
+# to a transpose). Firings matching an entry are dropped from BOTH the TP
+# and FP counts, so the rule's precision reflects the cases the linter can
+# actually decide. Each row: ``paper`` (papers.path substring) + ``rule_id``.
+_EXCLUSIONS_PATH = Path("eval/precision-exclusions.toml")
+
+
+def _exclusion_clause(path: Path | None = None) -> str:
+    """Return a SQL ``AND NOT (...)`` fragment for the precision exclusions,
+    or ``''`` when the file is absent/empty. Values are repo-controlled
+    identifiers (paper dir names, rule ids); apostrophes are stripped
+    defensively before inlining."""
+    path = path or _EXCLUSIONS_PATH
+    if not path.exists():
+        return ""
+    import tomllib
+
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
+    clauses: list[str] = []
+    for entry in data.get("exclusions", []):
+        paper = str(entry.get("paper", "")).replace("'", "")
+        rule = str(entry.get("rule_id", "")).replace("'", "")
+        if paper and rule:
+            clauses.append(
+                f"NOT (p.path LIKE '%{paper}%' AND v.rule_id = '{rule}')"
+            )
+    return ("AND " + " AND ".join(clauses)) if clauses else ""
 
 
 def _pinned_pairs(
@@ -223,7 +258,34 @@ def _pinned_join(pinned: list[tuple[str, str]] | None) -> tuple[str, list]:
     return clause, params
 
 
-def _classify(tp: int, fp: int, pending: int) -> tuple[float | None, str]:
+# Rules exempted from the 0.90 gate — documented, accepted limitations
+# (e.g. MARKUP-001's single-letter R/C ambiguity). They still report their
+# real precision, but a sub-threshold value shows as EXEMPT, not FAIL, and
+# does not fail the overall gate. See eval/gate-exceptions.toml.
+_GATE_EXCEPTIONS_PATH = Path("eval/gate-exceptions.toml")
+
+
+def _gate_exceptions(path: Path | None = None) -> frozenset[str]:
+    """Return the set of rule ids exempted from the precision gate."""
+    path = path or _GATE_EXCEPTIONS_PATH
+    if not path.exists():
+        return frozenset()
+    import tomllib
+
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
+    return frozenset(
+        str(e.get("rule_id", "")) for e in data.get("exceptions", []) if e.get("rule_id")
+    )
+
+
+def _classify(
+    tp: int,
+    fp: int,
+    pending: int,
+    *,
+    rule_id: str | None = None,
+    exceptions: frozenset[str] = frozenset(),
+) -> tuple[float | None, str]:
     denom = tp + fp
     if denom == 0 and pending == 0:
         # Rule is known (has a row in violations) but none of those rows
@@ -234,6 +296,8 @@ def _classify(tp: int, fp: int, pending: int) -> tuple[float | None, str]:
     precision = tp / denom
     if precision >= PRECISION_THRESHOLD:
         return precision, "PASS"
+    if rule_id is not None and rule_id in exceptions:
+        return precision, "EXEMPT"
     return precision, "FAIL"
 
 
@@ -243,13 +307,14 @@ def compute_precision(
     pinned: list[tuple[str, str]] | None = None,
 ) -> PrecisionTable:
     join_sql, join_params = _pinned_join(pinned)
-    per_rule = _PER_RULE_SQL.format(pinned_join=join_sql)
+    per_rule = _PER_RULE_SQL.format(pinned_join=join_sql, exclusion=_exclusion_clause())
     parse_count_sql = _PARSE_FAILURE_COUNT_SQL.format(pinned_join=join_sql)
     cx = db.connect(db_path)
     try:
         rows: list[RuleRow] = []
+        exc = _gate_exceptions()
         for r in cx.execute(per_rule, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
             rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -283,12 +348,13 @@ def compute_precision_by_format(
     """
     overall = compute_precision(db_path, pinned=pinned)
     join_sql, join_params = _pinned_join(pinned)
-    per_format = _PER_RULE_BY_FORMAT_SQL.format(pinned_join=join_sql)
+    per_format = _PER_RULE_BY_FORMAT_SQL.format(pinned_join=join_sql, exclusion=_exclusion_clause())
     cx = db.connect(db_path)
     try:
         per_format_rows: list[RuleRow] = []
+        exc = _gate_exceptions()
         for r in cx.execute(per_format, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
             per_format_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -324,12 +390,13 @@ def compute_precision_by_class(
     """
     overall = compute_precision(db_path, pinned=pinned)
     join_sql, join_params = _pinned_join(pinned)
-    per_class = _PER_RULE_BY_CLASS_SQL.format(pinned_join=join_sql)
+    per_class = _PER_RULE_BY_CLASS_SQL.format(pinned_join=join_sql, exclusion=_exclusion_clause())
     cx = db.connect(db_path)
     try:
         per_class_rows: list[RuleRow] = []
+        exc = _gate_exceptions()
         for r in cx.execute(per_class, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
             per_class_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -364,12 +431,13 @@ def compute_precision_by_source(
     """
     overall = compute_precision(db_path, pinned=pinned)
     join_sql, join_params = _pinned_join(pinned)
-    per_source = _PER_RULE_BY_SOURCE_SQL.format(pinned_join=join_sql)
+    per_source = _PER_RULE_BY_SOURCE_SQL.format(pinned_join=join_sql, exclusion=_exclusion_clause())
     cx = db.connect(db_path)
     try:
         per_source_rows: list[RuleRow] = []
+        exc = _gate_exceptions()
         for r in cx.execute(per_source, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"])
+            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
             per_source_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -399,6 +467,7 @@ def compute_precision_by_source(
 _STATUS_STYLE = {
     "PASS": "green",
     "FAIL": "red",
+    "EXEMPT": "yellow",
     "NOT MEASURED": "dim",
     "NOT EXERCISED": "dim",
 }

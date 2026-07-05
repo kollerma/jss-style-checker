@@ -728,19 +728,9 @@ def parse_bib_source(source: str, path: Path) -> ParsedBibFile:
 
                 entry = RemoveEnclosingMiddleware().transform_entry(entry, None)
                 library.add(entry)
-                keys = sorted(getattr(failed, "duplicate_keys", ()) or ())
-                violations.append(
-                    _parse_error(
-                        path,
-                        line=line,
-                        severity=Severity.WARNING,
-                        message=(
-                            f"Duplicate field key(s) {', '.join(keys)} in "
-                            f"entry '{entry.key}'; the last occurrence of "
-                            "each field was used."
-                        ),
-                    )
-                )
+                # Recovered silently: the dedicated JSS-BIBTEX-005 rule
+                # reports the duplicated field key during rule checking, so
+                # this is not surfaced as a degraded-parse finding here.
                 continue
         raw_error = getattr(failed, "error", None)
         message = str(raw_error).strip() if raw_error is not None else ""

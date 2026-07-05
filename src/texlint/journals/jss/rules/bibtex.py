@@ -6,6 +6,7 @@ Rules in this module:
   - JSS-BIBTEX-003 — required fields present per entry type.
   - JSS-BIBTEX-004 — 6+ authors need ``\\shortcites`` or the
     ``shortnames`` class option.
+  - JSS-BIBTEX-005 — no field key is repeated within a single entry.
 """
 
 from __future__ import annotations
@@ -297,6 +298,41 @@ def check_jss_bibtex_004(
 
 
 # ---------------------------------------------------------------------------
+# JSS-BIBTEX-005 — no duplicate field keys within an entry
+# ---------------------------------------------------------------------------
+
+
+def check_jss_bibtex_005(
+    doc: ParsedDocument, _cfg: ToolConfig
+) -> Iterator[Violation]:
+    # bibtexparser keeps the first value of a repeated field and routes the
+    # offending entry into `failed_blocks` as a DuplicateFieldKeyBlock (the
+    # parser treats this as recoverable, not a JSS-PARSE-000 — see
+    # texlint.core.parser._RECOVERABLE_BIB_BLOCKS). Surface it here so the
+    # silently-dropped field is still reported.
+    for bib in doc.bib_files:
+        if bib.library is None:
+            continue
+        for block in getattr(bib.library, "failed_blocks", ()) or ():
+            if type(block).__name__ != "DuplicateFieldKeyBlock":
+                continue
+            dup_fields = ", ".join(sorted(getattr(block, "duplicate_keys", ()) or ()))
+            inner = getattr(block, "ignore_error_block", None)
+            key = getattr(inner, "key", None)
+            where = f"entry {key!r}" if key else "this entry"
+            fields_msg = f" field(s) {dup_fields}" if dup_fields else " a field"
+            yield _violation(
+                bib=bib,
+                entry=block,
+                rule_id="JSS-BIBTEX-005",
+                suggestion=(
+                    f"Remove the duplicate{fields_msg} in {where}; BibTeX keeps "
+                    "only the first occurrence and silently drops the rest."
+                ),
+            )
+
+
+# ---------------------------------------------------------------------------
 # Rule objects
 # ---------------------------------------------------------------------------
 
@@ -308,6 +344,7 @@ jss_bibtex_001 = _rule("JSS-BIBTEX-001", check_jss_bibtex_001)
 jss_bibtex_002 = _rule("JSS-BIBTEX-002", check_jss_bibtex_002)
 jss_bibtex_003 = _rule("JSS-BIBTEX-003", check_jss_bibtex_003)
 jss_bibtex_004 = _rule("JSS-BIBTEX-004", check_jss_bibtex_004)
+jss_bibtex_005 = _rule("JSS-BIBTEX-005", check_jss_bibtex_005)
 
 
 rules: tuple[Rule, ...] = (
@@ -315,4 +352,5 @@ rules: tuple[Rule, ...] = (
     jss_bibtex_002,
     jss_bibtex_003,
     jss_bibtex_004,
+    jss_bibtex_005,
 )
