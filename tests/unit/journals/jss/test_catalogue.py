@@ -60,7 +60,7 @@ def test_validate_returns_no_errors(catalogue_doc: dict) -> None:
 
 def test_top_level_keys_are_required_plus_optional(catalogue_doc: dict) -> None:
     required = {"version", "source_vendored_at", "categories", "rules"}
-    optional = {"retired_rule_ids"}
+    optional = {"retired_rule_ids", "deterministic_rule_ids"}
     assert required <= set(catalogue_doc), (
         f"missing required keys: {sorted(required - set(catalogue_doc))}"
     )
@@ -91,6 +91,35 @@ def test_retired_rule_ids_are_valid_and_disjoint(catalogue_doc: dict) -> None:
     overlap = set(retired) & active_ids
     assert not overlap, (
         f"retired_rule_ids overlap with active rule ids: {sorted(overlap)}"
+    )
+
+
+def test_deterministic_rule_ids_are_valid_active_and_not_retired(
+    catalogue_doc: dict,
+) -> None:
+    """deterministic_rule_ids marks mechanically-decidable rules; each must
+    be an active, non-retired rule id (see catalogue.yaml)."""
+    import re
+
+    deterministic = catalogue_doc.get("deterministic_rule_ids", [])
+    assert isinstance(deterministic, list)
+    pattern = re.compile(r"^JSS-[A-Z]+-\d{3}$")
+    for entry in deterministic:
+        assert isinstance(entry, str)
+        assert pattern.match(entry), (
+            f"deterministic_rule_ids entry {entry!r} does not match JSS-<CAT>-NNN"
+        )
+    assert len(deterministic) == len(set(deterministic)), (
+        "deterministic_rule_ids contains duplicates"
+    )
+    active_ids = {r["rule_id"] for r in catalogue_doc["rules"]}
+    unknown = set(deterministic) - active_ids
+    assert not unknown, (
+        f"deterministic_rule_ids reference non-active rules: {sorted(unknown)}"
+    )
+    retired = set(catalogue_doc.get("retired_rule_ids", []))
+    assert not (set(deterministic) & retired), (
+        "a rule cannot be both deterministic and retired"
     )
 
 

@@ -742,6 +742,43 @@ RETIRED_RULE_IDS: frozenset[str] = frozenset({
     'JSS-REFS-002',
 })
 
+# Mechanically-decidable rules: the linter is authoritative, so the
+# eval pipeline auto-accepts their firings (see catalogue.yaml).
+DETERMINISTIC_RULE_IDS: frozenset[str] = frozenset({
+    'JSS-BIBTEX-001',
+    'JSS-BIBTEX-002',
+    'JSS-BIBTEX-003',
+    'JSS-BIBTEX-004',
+    'JSS-BIBTEX-005',
+    'JSS-CITE-003',
+    'JSS-CODE-001',
+    'JSS-CODE-002',
+    'JSS-HOUSE-002',
+    'JSS-HOUSE-003',
+    'JSS-OPER-003',
+    'JSS-PRE-001',
+    'JSS-PRE-002',
+    'JSS-PRE-003',
+    'JSS-PRE-004',
+    'JSS-PRE-005',
+    'JSS-PRE-006',
+    'JSS-PRE-007',
+    'JSS-PRE-008',
+    'JSS-REFS-001',
+    'JSS-REFS-007',
+    'JSS-STRUCT-002',
+    'JSS-STRUCT-003',
+    'JSS-STRUCT-004',
+    'JSS-STRUCT-006',
+    'JSS-TYPO-001',
+    'JSS-TYPO-002',
+    'JSS-TYPO-003',
+    'JSS-TYPO-004',
+    'JSS-WIDTH-001',
+    'JSS-XREF-002',
+    'JSS-XREF-004',
+})
+
 # Rollout order (from catalogue.yaml top-level categories field).
 ROLLOUT_ORDER: tuple[str, ...] = (
     'preamble',

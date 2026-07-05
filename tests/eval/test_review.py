@@ -501,3 +501,78 @@ def test_select_unlabelled_excludes_stale_rows(tmp_db: Path) -> None:
         assert "stale" not in msgs
     finally:
         cx.close()
+
+
+def test_deterministic_rules_auto_labelled_without_client(tmp_db: Path) -> None:
+    # A mechanically-decidable rule (injected set) is auto-labelled TP with
+    # the human:auto-deterministic reviewer tag and never reaches the LLM.
+    cx = db.connect(tmp_db)
+    try:
+        _seed_violations(cx, ["JSS-WIDTH-001", "JSS-CITE-002"])
+    finally:
+        cx.close()
+
+    client = FakeClient(
+        {"JSS-CITE-002": api.ClassifyResult(api.Verdict.TRUE_POSITIVE, 0.95, "ok")}
+    )
+    review.run(
+        db_path=tmp_db,
+        limit=None,
+        confidence_threshold=0.8,
+        model="fake-model",
+        client=client,
+        skip_list_path=None,
+        deterministic_rule_ids={"JSS-WIDTH-001"},
+    )
+
+    cx = db.connect(tmp_db)
+    try:
+        rows = {
+            r["rule_id"]: dict(r)
+            for r in cx.execute(
+                "SELECT rule_id, verdict, reviewer FROM violations"
+            ).fetchall()
+        }
+    finally:
+        cx.close()
+
+    assert rows["JSS-WIDTH-001"]["verdict"] == "true_positive"
+    assert rows["JSS-WIDTH-001"]["reviewer"] == "human:auto-deterministic"
+    # The deterministic rule was NOT sent to the model.
+    assert all(
+        c["violation"]["rule_id"] != "JSS-WIDTH-001" for c in client.call_log
+    )
+    # The non-deterministic rule still went through the model.
+    assert rows["JSS-CITE-002"]["verdict"] == "true_positive"
+    assert rows["JSS-CITE-002"]["reviewer"] == "ai:fake-model"
+
+
+def test_deterministic_default_loads_from_catalogue(tmp_db: Path) -> None:
+    # With no explicit set, deterministic ids come from the catalogue;
+    # JSS-WIDTH-001 is flagged there, so it is auto-labelled.
+    cx = db.connect(tmp_db)
+    try:
+        _seed_violations(cx, ["JSS-WIDTH-001"])
+    finally:
+        cx.close()
+
+    client = FakeClient({})
+    review.run(
+        db_path=tmp_db,
+        limit=None,
+        confidence_threshold=0.8,
+        model="fake-model",
+        client=client,
+        skip_list_path=None,
+    )
+
+    cx = db.connect(tmp_db)
+    try:
+        row = cx.execute(
+            "SELECT verdict, reviewer FROM violations WHERE rule_id='JSS-WIDTH-001'"
+        ).fetchone()
+    finally:
+        cx.close()
+    assert row["verdict"] == "true_positive"
+    assert row["reviewer"] == "human:auto-deterministic"
+    assert client.call_log == []

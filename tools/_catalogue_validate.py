@@ -54,7 +54,9 @@ REQUIRED_TOP_KEYS: frozenset[str] = frozenset(
     {"version", "source_vendored_at", "categories", "rules"}
 )
 
-OPTIONAL_TOP_KEYS: frozenset[str] = frozenset({"retired_rule_ids"})
+OPTIONAL_TOP_KEYS: frozenset[str] = frozenset(
+    {"retired_rule_ids", "deterministic_rule_ids"}
+)
 
 ALL_TOP_KEYS: frozenset[str] = REQUIRED_TOP_KEYS | OPTIONAL_TOP_KEYS
 
@@ -216,6 +218,15 @@ def validate(
     # retired_rule_ids validation (optional top-level field, spec 004 Session 2026-04-23)
     errors.extend(_validate_retired_rule_ids(doc.get("retired_rule_ids"), seen_ids))
 
+    # deterministic_rule_ids validation (optional top-level field)
+    errors.extend(
+        _validate_deterministic_rule_ids(
+            doc.get("deterministic_rule_ids"),
+            seen_ids,
+            set(doc.get("retired_rule_ids") or ()),
+        )
+    )
+
     return errors
 
 
@@ -260,6 +271,57 @@ def _validate_retired_rule_ids(
         yield CatalogueError(
             "top-level",
             f"retired_rule_ids overlap with active rule ids: {sorted(overlap)}",
+        )
+
+
+def _validate_deterministic_rule_ids(
+    deterministic: Any,
+    active_ids: set[str],
+    retired_ids: set[str],
+) -> Iterable[CatalogueError]:
+    """Validate the optional ``deterministic_rule_ids`` top-level field.
+
+      * Field is optional; ``None`` / missing is valid.
+      * When present, must be a list of unique JSS-<CAT>-NNN strings.
+      * Every entry MUST be an active rule (unlike retired ids) — a
+        deterministic id that isn't in the active set is a typo.
+      * No entry may also be retired (a rule can't be both).
+    """
+    if deterministic is None:
+        return
+    if not isinstance(deterministic, list):
+        yield CatalogueError("top-level", "deterministic_rule_ids must be a list")
+        return
+    if not all(isinstance(x, str) for x in deterministic):
+        yield CatalogueError(
+            "top-level", "deterministic_rule_ids entries must all be strings"
+        )
+        return
+    seen_here: set[str] = set()
+    for entry in deterministic:
+        if not _RULE_ID_RE.match(entry):
+            yield CatalogueError(
+                "top-level",
+                f"deterministic_rule_ids entry {entry!r} does not match "
+                "JSS-<CAT>-NNN",
+            )
+        if entry in seen_here:
+            yield CatalogueError(
+                "top-level",
+                f"deterministic_rule_ids entry {entry!r} is duplicated",
+            )
+        seen_here.add(entry)
+    unknown = set(deterministic) - active_ids
+    if unknown:
+        yield CatalogueError(
+            "top-level",
+            f"deterministic_rule_ids reference non-active rules: {sorted(unknown)}",
+        )
+    both = set(deterministic) & retired_ids
+    if both:
+        yield CatalogueError(
+            "top-level",
+            f"deterministic_rule_ids are also retired: {sorted(both)}",
         )
 
 
