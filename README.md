@@ -43,7 +43,24 @@ jss-lint --output html --mode reviewer paper.tex > r.html
 jss-lint --ignore-rules JSS-SRC-001 paper.tex   # suppress a rule
 jss-lint --fail-on error paper.tex       # warnings/advisories don't flip CI red
 jss-lint --min-confidence medium paper.tex  # skip low-precision heuristic rules
+jss-lint --crossref refs.bib             # online: verify missing DOIs
+jss-lint --crossref --fix refs.bib       # online: populate missing DOIs
 ```
+
+### Online DOI lookup (`--crossref`)
+
+By default the linter is fully offline, so `JSS-REFS-003` can only
+*advise* that a citeable entry declares a `doi` field — it can't know
+whether one exists. Pass `--crossref` to verify online: each doi-less
+`@article` / `@book` / `@inproceedings` is looked up on
+[Crossref](https://www.crossref.org/) (matched by title + first-author
+surname + year), and each CRAN-package `@manual` gets its registered
+`10.32614/CRAN.package.*` DOI. `JSS-REFS-003` then reports the exact DOI
+to add and *suppresses* the advisory when no DOI exists. Combine with
+`--fix` to write the DOIs straight into the `.bib`. Add
+`--crossref-mailto you@example.org` to use Crossref's faster polite
+pool. Needs network access; wrong-match-safe (a mismatched year or
+author is never written).
 
 Every rule carries a measured-precision **confidence tier** (`high` /
 `medium` / `low`), sourced from the [eval corpus](eval/README.md)

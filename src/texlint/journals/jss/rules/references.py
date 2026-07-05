@@ -21,7 +21,7 @@ import re
 from collections.abc import Iterator
 from typing import Any
 
-from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
+from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss.rules import _helpers
 from texlint.journals.jss.terms import LANGUAGES, R_PACKAGES
 
@@ -163,9 +163,39 @@ def _strip_markup_content(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _field_str(field: Any) -> str:
+    """A bib field's plain-text value (bibtexparser Field or raw)."""
+    return getattr(field, "value", field) if field is not None else ""
+
+
+def _doi_insertion_fix(bib: Any, entry: Any, doi: str) -> Fix | None:
+    """A ``--fix`` payload inserting ``doi = {<doi>},`` right after the
+    entry key, so ``jss-lint --crossref --fix`` populates the field.
+
+    Returns ``None`` when the entry can't be located in the source (then
+    the violation is reported without an auto-fix)."""
+    raw = getattr(entry, "raw", "") or ""
+    start = bib.source.find(raw) if raw else -1
+    if start < 0:
+        return None
+    # Offset just past the ``@type{key,`` key terminator.
+    head = re.match(r"@\w+\s*\{\s*[^,\s]+\s*,", raw)
+    if head is None:
+        return None
+    at = start + head.end()
+    return Fix(
+        start=at,
+        end=at,
+        replacement=f"\n  doi = {{{doi}}},",
+        description=f"insert doi = {{{doi}}}",
+        confidence="safe",
+    )
+
+
 def check_jss_refs_003(
-    doc: ParsedDocument, _cfg: ToolConfig
+    doc: ParsedDocument, cfg: ToolConfig
 ) -> Iterator[Violation]:
+    resolver = getattr(cfg, "doi_resolver", None)
     for bib, entry in _iter_entries(doc):
         if entry.entry_type.lower() not in _DOI_ENTRY_TYPES:
             continue
@@ -179,6 +209,26 @@ def check_jss_refs_003(
             if year_match and int(year_match.group(0)) < _DOI_ERA_CUTOFF_YEAR:
                 continue
         key = entry.key or "<unknown>"
+        if resolver is not None:
+            # Online mode (jss-lint --crossref): verify the DOI actually
+            # exists. Report the concrete DOI (with a --fix to populate it)
+            # when found; suppress the advisory when Crossref / CRAN has
+            # none — there is nothing to add.
+            values = {name: _field_str(f) for name, f in fields.items()}
+            doi = resolver(values, entry.entry_type.lower())
+            if not doi:
+                continue
+            yield _violation(
+                bib=bib,
+                entry=entry,
+                rule_id="JSS-REFS-003",
+                suggestion=(
+                    f"DOI {doi!r} is registered for entry {key!r}; "
+                    f"add doi = {{{doi}}} (use --fix to insert it)."
+                ),
+                fix=_doi_insertion_fix(bib, entry, doi),
+            )
+            continue
         yield _violation(
             bib=bib,
             entry=entry,
