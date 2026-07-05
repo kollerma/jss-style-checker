@@ -519,6 +519,87 @@ class TestXref005:
         )
         assert run_rule(jss_xref_005, src) == []
 
+    # --- lstlisting code-listing floats (caption/label are options, not
+    # macros). A captioned listing is a numbered "Listing N" float and must
+    # be referenced. Corpus: trueskill (all its code listings). ---
+
+    def test_lstlisting_captioned_labeled_unreferenced_flagged(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{lstlisting}[caption={A demo.},label=lst:demo]" "\n"
+            r"print(x)" "\n"
+            r"\end{lstlisting}" "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_xref_005, src)) == 1
+
+    def test_lstlisting_captioned_labeled_referenced_silent(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{lstlisting}[caption={A demo.},label=lst:demo]" "\n"
+            r"print(x)" "\n"
+            r"\end{lstlisting}" "\n"
+            r"Listing~\ref{lst:demo} shows it." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_005, src) == []
+
+    def test_lstlisting_uncaptioned_silent(self, run_rule):
+        # No caption -> an inline snippet, not a numbered float; even a
+        # stray label doesn't make it a cross-ref target.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{lstlisting}[label=lst:demo]" "\n"
+            r"print(x)" "\n"
+            r"\end{lstlisting}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_005, src) == []
+
+    def test_lstlisting_captioned_no_label_flagged(self, run_rule):
+        # Captioned but no label -> unreferenceable (rstpm2 / trueskill
+        # missing-label case).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{lstlisting}[caption={A demo.}]" "\n"
+            r"print(x)" "\n"
+            r"\end{lstlisting}" "\n"
+            r"\end{document}"
+        )
+        assert len(run_rule(jss_xref_005, src)) == 1
+
+    def test_lstlisting_caption_with_comma_and_bracket_parsed(self, run_rule):
+        # Brace-aware option split: a comma and a ``]`` inside caption={...}
+        # must not truncate the option list or hide the label.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{lstlisting}[caption={A, b [c] demo.},label=lst:demo]" "\n"
+            r"print(x)" "\n"
+            r"\end{lstlisting}" "\n"
+            r"Listing~\ref{lst:demo}." "\n"
+            r"\end{document}"
+        )
+        # caption + label both parsed, and it IS referenced -> silent.
+        assert run_rule(jss_xref_005, src) == []
+
+    def test_lstlisting_body_caption_text_not_scanned(self, run_rule):
+        # A listing with no option block whose *body* contains ``caption=``
+        # text must not be treated as captioned.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{lstlisting}" "\n"
+            r"caption=5, label=oops" "\n"
+            r"\end{lstlisting}" "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_005, src) == []
+
 
 class TestXref006:
     def test_figure_missing_caption_flagged(self, run_rule):

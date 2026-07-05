@@ -860,6 +860,15 @@ _FLOAT_ENVS: frozenset[str] = frozenset(
     {"figure", "figure*", "table", "table*"}
 )
 
+# Code-listing floats whose caption / label live in the environment's
+# ``[key=value]`` option list (``\begin{lstlisting}[label=…,caption={…}]``)
+# rather than as ``\caption{}`` / ``\label{}`` macros. A *captioned*
+# lstlisting is a numbered "Listing N" float and, like a figure or table,
+# must be referenced from the prose.
+_LISTING_FLOAT_ENVS: frozenset[str] = frozenset({"lstlisting"})
+
+_LST_BEGIN_RE = re.compile(r"\\begin\{lstlisting\}[ \t]*\[")
+
 _CAPTION_MACROS: frozenset[str] = frozenset({"caption", "captionof"})
 
 # Sub-float environments: a panel nested inside a parent float relies on
@@ -892,33 +901,126 @@ def _env_contains_subfloat(env: Any) -> bool:
     return False
 
 
+def _lstlisting_option_block(env: Any) -> str | None:
+    """Return the raw ``[...]`` option string of a ``lstlisting`` env, or
+    ``None`` when it carries no option block.
+
+    Brace-aware: a ``]`` inside ``caption={... ]}`` does not close the list
+    early, and the scan stops at the matching top-level ``]`` so the code
+    body (which may itself contain ``label=`` / ``caption=`` text) is never
+    reached.
+    """
+    raw = env.latex_verbatim()
+    m = _LST_BEGIN_RE.match(raw)
+    if not m:
+        return None
+    depth = 0
+    for i in range(m.end(), len(raw)):
+        ch = raw[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth = max(0, depth - 1)
+        elif ch == "]" and depth == 0:
+            return raw[m.end():i]
+    return None
+
+
+def _lstlisting_caption_and_labels(env: Any) -> tuple[bool, list[str]]:
+    """Parse a ``lstlisting`` option block into ``(has_caption, labels)``.
+
+    The option list is split on top-level commas (respecting ``{}`` so a
+    ``caption={a, b}`` stays intact); the ``caption`` and ``label`` keys are
+    read out. Label keys are normalised like ``\\label{}`` keys so they match
+    the referenced-label set.
+    """
+    opts = _lstlisting_option_block(env)
+    if opts is None:
+        return False, []
+    parts: list[str] = []
+    depth = 0
+    cur = ""
+    for ch in opts:
+        if ch == "{":
+            depth += 1
+            cur += ch
+        elif ch == "}":
+            depth = max(0, depth - 1)
+            cur += ch
+        elif ch == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    if cur.strip():
+        parts.append(cur)
+    has_caption = False
+    labels: list[str] = []
+    for part in parts:
+        key, sep, val = part.partition("=")
+        if not sep:
+            continue
+        key = key.strip().lower()
+        if key == "caption":
+            has_caption = True
+        elif key == "label":
+            norm = _norm_label_key(val.strip().strip("{}"))
+            if norm:
+                labels.append(norm)
+    return has_caption, labels
+
+
 def check_jss_xref_005(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
-    """Float analogue of JSS-XREF-004: a captioned (numbered) figure / table
-    should carry a ``\\label{}`` and be referenced from the prose."""
+    """Float analogue of JSS-XREF-004: a captioned (numbered) figure, table
+    or code listing should carry a ``\\label{}`` and be referenced from the
+    prose."""
     referenced = _collect_referenced_labels(doc)
     for tex in doc.all_tex_like():
         for node in _helpers._walk(tex.nodes):
             if not isinstance(node, LatexEnvironmentNode):
                 continue
-            if node.environmentname not in _FLOAT_ENVS:
+            envname = node.environmentname
+            if envname in _FLOAT_ENVS:
+                # Captionless floats aren't numbered, so they're not
+                # cross-ref targets and a missing \label{} is not a defect
+                # (parallels the \nonumber carve-out in JSS-XREF-004).
+                if not _env_has_caption(node):
+                    continue
+                label_keys = _env_label_keys(node)
+                add_hint = (
+                    "Add \\label{fig:<name>} / \\label{tab:<name>} to the "
+                    "float so it can be referenced from the text."
+                )
+                ref_hint = (
+                    "are never referenced from the text. Add a "
+                    "Figure~\\ref{} / Table~\\ref{} callout in the prose."
+                )
+            elif envname in _LISTING_FLOAT_ENVS:
+                # A code listing becomes a numbered float only once it
+                # carries `caption=`; bare inline snippets are skipped. Its
+                # caption and label live in the `[key=value]` option list,
+                # not as \caption{} / \label{} macros.
+                has_caption, label_keys = _lstlisting_caption_and_labels(node)
+                if not has_caption:
+                    continue
+                add_hint = (
+                    "Add label=lst:<name> to the lstlisting options so it "
+                    "can be referenced from the text."
+                )
+                ref_hint = (
+                    "are never referenced from the text. Add a "
+                    "Listing~\\ref{} callout in the prose."
+                )
+            else:
                 continue
-            # Captionless floats aren't numbered, so they're not cross-ref
-            # targets and a missing \label{} is not a defect (parallels the
-            # \nonumber carve-out in JSS-XREF-004).
-            if not _env_has_caption(node):
-                continue
-            label_keys = _env_label_keys(node)
             if not label_keys:
                 yield _violation(
                     tex=tex,
                     pos=node.pos,
                     rule_id="JSS-XREF-005",
-                    suggestion=(
-                        "Add \\label{fig:<name>} / \\label{tab:<name>} to the "
-                        "float so it can be referenced from the text."
-                    ),
+                    suggestion=add_hint,
                 )
                 continue
             if not any(k in referenced for k in label_keys):
@@ -927,9 +1029,7 @@ def check_jss_xref_005(
                     pos=node.pos,
                     rule_id="JSS-XREF-005",
                     suggestion=(
-                        f"Float label(s) {', '.join(label_keys)!r} are never "
-                        "referenced from the text. Add a Figure~\\ref{} / "
-                        "Table~\\ref{} callout in the prose."
+                        f"Float label(s) {', '.join(label_keys)!r} {ref_hint}"
                     ),
                 )
 
