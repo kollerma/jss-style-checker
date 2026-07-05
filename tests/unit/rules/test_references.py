@@ -122,6 +122,45 @@ class TestRefs003:
         src = "@article{a, author={x}, title={T}, journal={J}, year={Sept 1995}}\n"
         assert run_rule(jss_refs_003, src, kind="bib") == []
 
+    # --- online mode (jss-lint --crossref): an injected doi_resolver ------
+
+    def test_online_doi_found_reports_and_fixes(self, run_rule):
+        from dataclasses import replace
+
+        src = "@article{smith, author={Smith}, title={A Study}, journal={J}, year={2020}}\n"
+        cfg = replace(ToolConfig(), doi_resolver=lambda fields, et: "10.1/xyz")
+        out = run_rule(jss_refs_003, src, kind="bib", config=cfg)
+        assert len(out) == 1
+        assert "10.1/xyz" in out[0].suggestion
+        # carries a --fix that inserts the doi field after the key
+        assert out[0].fix is not None
+        assert "doi = {10.1/xyz}" in out[0].fix.replacement
+        patched = src[: out[0].fix.start] + out[0].fix.replacement + src[out[0].fix.start :]
+        assert "doi = {10.1/xyz}" in patched
+        assert patched.index("doi") < patched.index("title")
+
+    def test_online_no_doi_suppressed(self, run_rule):
+        from dataclasses import replace
+
+        src = "@article{smith, author={Smith}, title={A Study}, journal={J}, year={2020}}\n"
+        cfg = replace(ToolConfig(), doi_resolver=lambda fields, et: None)
+        assert run_rule(jss_refs_003, src, kind="bib", config=cfg) == []
+
+    def test_online_resolver_receives_fields_and_type(self, run_rule):
+        from dataclasses import replace
+
+        seen = {}
+
+        def resolver(fields, entry_type):
+            seen["title"] = fields.get("title")
+            seen["type"] = entry_type
+            return None
+
+        src = "@article{smith, author={Smith}, title={A Study}, journal={J}, year={2020}}\n"
+        run_rule(jss_refs_003, src, kind="bib", config=replace(ToolConfig(), doi_resolver=resolver))
+        assert seen["title"] == "A Study"
+        assert seen["type"] == "article"
+
     def test_case_mismatched_cite_still_fires(
         self, parse_tex_source, parse_bib_source
     ):

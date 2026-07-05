@@ -279,6 +279,13 @@ class ToolConfig:
     # (terminal / JSON / SARIF / LSP) and the exit-code policy agree.
     # TOML shape: ``[severity_overrides]`` with ``"JSS-CAP-003" = "info"``.
     severity_overrides: Mapping[str, Severity] = field(default_factory=dict)
+    # Optional online DOI resolver, injected by ``jss-lint --crossref``
+    # (never from TOML, so the linter stays offline by default). ``None``
+    # keeps every rule offline. Called per BibTeX entry as
+    # ``(lowercase_field_map, entry_type) -> doi string | None``;
+    # JSS-REFS-003 uses it to online-verify and (with ``--fix``) populate
+    # missing DOIs.
+    doi_resolver: Callable[[Mapping[str, str], str], str | None] | None = None
 
 
 @dataclass(frozen=True)

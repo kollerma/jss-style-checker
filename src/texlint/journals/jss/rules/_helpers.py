@@ -132,6 +132,7 @@ def entry_violation(
     entry: Any,
     rule_id: str,
     suggestion: str | None,
+    fix: Fix | None = None,
 ) -> Violation:
     """Violation anchored to a BibTeX entry's first line."""
     return make_violation(
@@ -140,6 +141,7 @@ def entry_violation(
         column=None,
         rule_id=rule_id,
         suggestion=suggestion,
+        fix=fix,
     )
 
 _VERBATIM_MACROS: frozenset[str] = frozenset({"verb", "code"})

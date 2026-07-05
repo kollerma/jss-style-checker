@@ -289,6 +289,28 @@ def _lint_paths_with_doc(
         "auto-resolve ships)."
     ),
 )
+@click.option(
+    "--crossref",
+    "crossref",
+    is_flag=True,
+    default=False,
+    help=(
+        "Online mode: verify missing DOIs against Crossref (articles, "
+        "books, proceedings) and CRAN (package @Manual entries). "
+        "JSS-REFS-003 then reports the exact DOI to add and suppresses "
+        "the advisory when no DOI exists. Combine with --fix to write the "
+        "DOIs into the .bib. Needs network access; off by default."
+    ),
+)
+@click.option(
+    "--crossref-mailto",
+    "crossref_mailto",
+    default=None,
+    help=(
+        "Contact e-mail for the Crossref polite pool "
+        "(recommended when using --crossref)."
+    ),
+)
 @click.argument("paths", nargs=-1, type=click.Path(path_type=str))
 @click.pass_context
 def main(
@@ -306,6 +328,8 @@ def main(
     apply_interactive: bool,
     fix_rules: tuple[str, ...],
     no_resolve: bool,
+    crossref: bool,
+    crossref_mailto: str | None,
     paths: tuple[str, ...],
 ) -> None:
     """Lint LaTeX/BibTeX manuscripts against journal style guides.
@@ -369,6 +393,15 @@ def main(
     except Exception as exc:  # pragma: no cover - defensive; tomllib errors look like this
         _eprint(f"jss-lint: failed to load .jss-lint.toml: {exc}")
         sys.exit(2)
+
+    if crossref:
+        # Online DOI verification is opt-in and injected here (never via
+        # TOML), so the linter stays offline by default.
+        from dataclasses import replace
+
+        from texlint.crossref import make_resolver
+
+        cfg = replace(cfg, doi_resolver=make_resolver(mailto=crossref_mailto))
 
     document, code = _parse_inputs(paths)
     if document is None:
