@@ -253,6 +253,12 @@ def _title_mentions_unwrapped(text: str, names: frozenset[str]) -> str | None:
     # package mentions. Without this, ``Monte {C}arlo`` and ``{L}ycosidae``
     # match the bare ``C`` / ``L`` token.
     unwrapped = re.sub(r"\{([^{}\\]*)\}", r"\1", unwrapped)
+    # Strip remaining brace-less control words (``\R``, ``\proglang`` used
+    # as an author shortcut). These are macro invocations that already wrap
+    # their content by convention, so a bare ``\R`` must not false-match the
+    # language/package token ``R``. Order matters: the braced strip above
+    # runs first, else ``\pkg{MASS}`` would collapse to ``MASS``.
+    unwrapped = re.sub(r"\\[A-Za-z]+", " ", unwrapped)
     for name in names:
         # Match the name as a standalone token.
         if re.search(rf"\b{re.escape(name)}\b", unwrapped):
@@ -540,6 +546,11 @@ _TITLE_STOP_WORDS: frozenset[str] = frozenset({
     "and", "or", "but", "nor", "for", "yet", "so", "if",
     "as", "at", "by", "in", "of", "on", "to", "up", "via", "vs",
     "with", "from", "into", "onto", "than", "per", "off",
+    # Prepositions Chicago/JSS title case leaves lowercase (confirmed by
+    # the DBR recall plants that keep "about"/"around" lowercase in their
+    # corrected title-case forms). NB: "under" is deliberately NOT here —
+    # the mlt.docreg recall plant caps it ("under" -> "Under").
+    "about", "around",
     # Latin connectives that appear in titles ("et al.", etc.)
     "et", "al",
     # Common short conjunctions / particles

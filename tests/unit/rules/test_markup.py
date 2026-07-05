@@ -269,6 +269,39 @@ class TestMarkup002:
         )
         assert len(run_rule(jss_markup_002, src)) == 1
 
+    def test_of_the_sandwich_metaphor_not_flagged(self, run_rule):
+        # "meat / blocks of the sandwich" is the estimator picture, not
+        # the package. Corpus: cran_sandwich sandwich-OOP.Rnw.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The meat of the sandwich is estimated separately." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_002, src) == []
+
+    def test_emphasised_sandwich_follower_not_flagged(self, run_rule):
+        # Markdown emphasis around the token must not hide the follower.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The _sandwich_ product is symmetric." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_002, src) == []
+
+    def test_sandwich_follower_across_newline_not_flagged(self, run_rule):
+        # A follower on the next line still disambiguates (regression:
+        # a whitespace-set bug once made these fire).
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"the computation of sandwich" "\n"
+            r"estimators is cheap." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_markup_002, src) == []
+
     def test_sandwich_method_followers_not_flagged(self, run_rule):
         # Reviewer-confirmed FPs from cran_effects, cran_sandwich,
         # cran_clifford: "sandwich coefficient", "sandwich product",

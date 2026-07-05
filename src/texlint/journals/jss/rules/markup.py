@@ -368,6 +368,8 @@ _PACKAGE_TERM_DISAMBIGUATORS: dict[str, frozenset[str]] = {
         "coefficient", "coefficients", "variance", "variances",
         "formula", "formulae", "formulas", "product", "products",
         "meat", "bread",
+        # Verb usage ("sandwich any data between ...") — not the package.
+        "any",
     }),
 }
 
@@ -380,7 +382,14 @@ def _disambiguates_to_method(chars: str, offset: int, token: str) -> bool:
     followers = _PACKAGE_TERM_DISAMBIGUATORS.get(token)
     if not followers:
         return False
-    tail = chars[offset + len(token) :].lstrip()
+    # Preceding metaphor context: "the meat / blocks of the sandwich" is
+    # the estimator picture, not the `sandwich` package.
+    if token == "sandwich" and re.search(r"of the\s*$", chars[:offset], re.IGNORECASE):
+        return True
+    # Drop leading whitespace (incl. newlines, so a follower on the next
+    # line still matches) and markdown emphasis markers (``_``/``*``) so
+    # ``_sandwich_ product`` and ``sandwich\n estimators`` both match.
+    tail = chars[offset + len(token) :].lstrip(" \t\r\n\f\v_*")
     if not tail:
         return False
     next_word_match = re.match(r"[A-Za-z]+", tail)
