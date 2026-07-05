@@ -6,12 +6,37 @@ is hand-curated under ``eval/recall-corpus/`` (see its README).
 
 Identity tuple: ``(rule_id, file, line)``. Column does NOT
 participate (matches spec-016 semantics).
+
+Retired rules
+-------------
+When a rule is retired (removed from the catalogue's active set — see
+``retired_rule_ids`` in ``specs/003-jss-rule-catalogue/catalogue.yaml``),
+the linter no longer emits it, so every historical plant for that rule
+becomes an unwinnable false negative (e.g. JSS-CAP-003: 0/16) that drags
+the aggregates for a rule that no longer exists.
+
+Policy: the plant annotations are **kept in the ``.toml`` files as a
+historical record** (they document what the retired rule once measured
+and would be needed if the rule were ever revived), but they are
+**inert** — :func:`compute_recall` excludes any plant whose ``rule_id``
+is in the retired set before scoring, so retired rules appear in neither
+the per-rule nor the aggregate figures. The retired set is loaded from
+the catalogue (:func:`_load_retired_rule_ids`), never hard-coded here.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+
+
+def _load_retired_rule_ids() -> frozenset[str]:
+    """Retired rule IDs, loaded from the JSS catalogue (generated from
+    ``catalogue.yaml``). Imported lazily so the pure-math helpers in this
+    module stay importable without the linter package."""
+    from texlint.journals.jss._catalogue_data import RETIRED_RULE_IDS
+
+    return frozenset(RETIRED_RULE_IDS)
 
 
 @dataclass(frozen=True)
@@ -76,15 +101,31 @@ def compute_recall(
     annotations: Iterable[dict],
     *,
     precision: float | None = None,
+    retired_rule_ids: Iterable[str] | None = None,
 ) -> RecallReport:
     """Compute per-rule + aggregate recall.
 
     Both inputs are iterables of dicts with at least
     ``rule_id``, ``file``, and ``line`` keys (the spec-001
     violation shape suffices).
+
+    ``retired_rule_ids``: plants (and any stray linter results) for these
+    rules are excluded from scoring — a retired rule no longer fires, so
+    its historical plants would otherwise be scored as false negatives on
+    a rule that does not exist. ``None`` (the default) loads the set from
+    the catalogue; pass an explicit set (e.g. ``set()``) to override.
     """
-    linter_set = {_key(v) for v in linter_results}
-    annot_set = {_key(v) for v in annotations}
+    retired = (
+        _load_retired_rule_ids()
+        if retired_rule_ids is None
+        else frozenset(retired_rule_ids)
+    )
+    linter_set = {
+        _key(v) for v in linter_results if v["rule_id"] not in retired
+    }
+    annot_set = {
+        _key(v) for v in annotations if v["rule_id"] not in retired
+    }
 
     by_rule_tp: dict[str, int] = {}
     by_rule_fn: dict[str, int] = {}
