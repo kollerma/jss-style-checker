@@ -881,6 +881,27 @@ class TestMarkup003InvisibleMacros:
         src = _wrap("\\newcommand{\\cmdtxt}[1]{\\texttt{#1}}")
         assert len(run_rule(jss_markup_003, src)) == 1
 
+    def test_code_macro_redefinition_silent(self, run_rule):
+        # Redefining \code itself via \texttt (a jss.cls fallback) — the
+        # \texttt IS \code's body, so rewriting it to \code is circular.
+        # Corpus: effects/laeken/robustbase \newcommand{\code}[1]{\texttt{#1}}.
+        src = _wrap("\\newcommand{\\code}[1]{\\texttt{#1}}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_pkg_macro_redefinition_silent(self, run_rule):
+        src = _wrap("\\newcommand*{\\pkg}[1]{\\texttt{#1}}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_renewcommand_code_redefinition_silent(self, run_rule):
+        src = _wrap("\\renewcommand{\\code}[1]{\\texttt{#1}}")
+        assert run_rule(jss_markup_003, src) == []
+
+    def test_new_wrapper_not_confused_with_code_redef(self, run_rule):
+        # A NEW wrapper (not \code/\pkg/\proglang) must still fire — the
+        # narrow guard applies only to the JSS markup macros themselves.
+        src = _wrap("\\newcommand{\\Rcmd}[1]{\\texttt{#1}}")
+        assert len(run_rule(jss_markup_003, src)) == 1
+
 
 class TestMarkup003NonCodeAndContexts:
     """Audit-driven FP guards: \\texttt of email/URL/DOI/numeric-label,
