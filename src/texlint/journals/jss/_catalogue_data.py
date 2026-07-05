@@ -739,6 +739,7 @@ RETIRED_RULE_IDS: frozenset[str] = frozenset({
     'JSS-ABBR-002',
     'JSS-CAP-003',
     'JSS-CITE-001',
+    'JSS-REFS-002',
 })
 
 # Rollout order (from catalogue.yaml top-level categories field).
