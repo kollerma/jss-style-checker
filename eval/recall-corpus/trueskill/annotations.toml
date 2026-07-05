@@ -741,7 +741,7 @@ comment = '\texttt{...} should be replaced by \code{...}'
 [[violations]]
 rule_id = "JSS-XREF-005"
 file = "article.tex"
-line = 1685
+line = 1686
 comment = "float lst:posterior_s1_approx is captioned (numbered) but never referenced from the text"
 
 [[violations]]
