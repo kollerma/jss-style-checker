@@ -284,6 +284,52 @@ class TestOper004:
         )
         assert len(run_rule(jss_oper_004, src)) == 1
 
+    def test_bare_p_transition_matrix_silent(self, run_rule):
+        # A bare P(...) with no relational token, in a doc that reserves
+        # \Prob for real probabilities, is a function / transition-
+        # probability matrix, not the probability operator. Corpus:
+        # flexsurv P(t_0,t) = \Prob(X(t)=s | X(t_0)=r).
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "$P(t_0, t) = \\Prob(X(t) = s)$.\n"
+            "\\end{document}\n"
+        )
+        # \Prob is canonical (not flagged); the bare P(t_0,t) is suppressed.
+        assert run_rule(jss_oper_004, src) == []
+
+    def test_bare_p_cdf_silent(self, run_rule):
+        # P(x) as a CDF alongside a \Prob glyph -> function, not probability.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "The CDF $P(x)$; separately $\\Prob(A)$.\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_oper_004, src) == []
+
+    def test_bare_p_with_relation_still_flagged(self, run_rule):
+        # A relational / event token in the argument marks a genuine
+        # probability even when \Prob is used elsewhere -> still flag.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "$P(X > x)$ and $\\Prob(A)$.\n"
+            "\\end{document}\n"
+        )
+        assert len(run_rule(jss_oper_004, src)) == 1
+
+    def test_bare_p_without_prob_glyph_still_flagged(self, run_rule):
+        # No competing \Prob glyph: the paper hasn't reserved the glyph, so
+        # a bare P(x) is treated as the probability operator and flagged.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "$P(x)$ for the event.\n"
+            "\\end{document}\n"
+        )
+        assert len(run_rule(jss_oper_004, src)) == 1
+
     def test_outside_math_silent(self, run_rule):
         # \mathbb{E} outside math mode is unusual but the rule skips it.
         src = (
