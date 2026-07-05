@@ -17,6 +17,11 @@ on:
       - main
   workflow_dispatch: {}
 
+# Newer pushes to the same PR branch supersede in-flight smoke runs.
+concurrency:
+  group: test-action-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: write
