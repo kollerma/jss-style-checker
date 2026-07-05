@@ -131,6 +131,29 @@ def _is_macro_definition_line(source: str, abs_pos: int) -> bool:
     return bool(_MACRO_DEF_LINE_RE.match(source, line_start))
 
 
+# A definition that (re)defines ``\code`` / ``\pkg`` / ``\proglang`` itself
+# via ``\texttt`` — e.g. ``\newcommand{\code}[1]{\normalfont\texttt{#1}}``
+# (a fallback for when jss.cls is absent). The ``\texttt`` there *is* the
+# body of ``\code``; rewriting it to ``\code`` is circular, so MARKUP-003
+# must not flag it. This is deliberately NARROW: defining a NEW wrapper
+# (``\newcommand{\Rcmd}[1]{\texttt{#1}}``) still fires — JSS wants those
+# defined with ``\code`` and the reviewers label them TP.
+_CODE_MACRO_REDEF_RE = re.compile(
+    r"\\(?:(?:re)?newcommand|providecommand|def|DeclareRobustCommand)\b"
+    r"\*?\s*\{?\s*\\(?:code|pkg|proglang)\b"
+)
+
+
+def _is_code_macro_redefinition(source: str, abs_pos: int) -> bool:
+    """True when the token at ``abs_pos`` sits on a line that (re)defines
+    ``\\code`` / ``\\pkg`` / ``\\proglang``."""
+    line_start = source.rfind("\n", 0, abs_pos) + 1
+    line_end = source.find("\n", abs_pos)
+    if line_end == -1:
+        line_end = len(source)
+    return bool(_CODE_MACRO_REDEF_RE.search(source, line_start, line_end))
+
+
 # The line-based check above only catches definitions whose *head* is the
 # first content on the token's line. Definitions also appear mid-line
 # (``\@ifundefined{R}{\newcommand{\R}{...}}``, ``\makeatletter\def\R{...}``)
@@ -753,6 +776,13 @@ def check_jss_markup_003(
                 if _is_inside_algorithm(ancestors):
                     continue
                 if _in_short_optarg(tex.source, node.pos):
+                    continue
+                # A \texttt that is the body of a \code / \pkg / \proglang
+                # (re)definition cannot be rewritten to \code — it IS that
+                # macro's definition. Narrow exception to the def-body NB
+                # below: only the JSS markup macros themselves, never a new
+                # wrapper like \Rcmd.
+                if _is_code_macro_redefinition(tex.source, node.pos):
                     continue
                 # NB: \texttt inside a macro-definition body
                 # (``\newcommand{\Rcmd}[1]{\texttt{#1}}``) is deliberately
