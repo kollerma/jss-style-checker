@@ -216,6 +216,24 @@ class TestXref004:
         )
         assert run_rule(jss_xref_004, src) == []
 
+    def test_label_with_embedded_newline_matches_ref(self, run_rule):
+        # A \label{} key wrapped across a source newline (TeX folds the
+        # newline + indentation to a single space) must still match its
+        # \ref{}. Real corpus regression: pymcmc's `eq:observation ar`
+        # was written `\label{eq:observation\n    ar}` and \ref'd on one
+        # line, so the equation is referenced and must stay silent.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{equation}" "\n"
+            r"x = 1,\label{eq:observation" "\n"
+            r"    ar}" "\n"
+            r"\end{equation}" "\n"
+            r"See Equation~\ref{eq:observation ar}." "\n"
+            r"\end{document}"
+        )
+        assert run_rule(jss_xref_004, src) == []
+
     def test_multiline_per_label_orphan_flagged(self, run_rule):
         # gather numbers each line; one label referenced, the other an
         # orphan — the orphan must still fire (recall-corpus romc

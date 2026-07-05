@@ -29,6 +29,7 @@ from pylatexenc.latexwalker import (
 from texlint.api import Fix, ParsedDocument, Rule, ToolConfig, Violation
 from texlint.journals.jss import _catalogue_data
 from texlint.journals.jss.rules import _helpers
+from texlint.journals.jss.terms import LANGUAGES
 
 _CITE_MACROS: frozenset[str] = frozenset(
     {"cite", "citet", "citep", "citealp", "citealt", "citeauthor", "citeyear"}
@@ -155,6 +156,59 @@ def _has_cite_in_span(parent: Any, start: int, end: int) -> bool:
         ):
             return True
     return False
+
+
+# ``\url`` / ``\href`` targets that supply a software reference. JSS
+# accepts a URL (or footnote URL) in place of a formal citation when a
+# package has no citeable paper — canonical in install / "obtain it
+# from" sections, where each ``\pkg{tool}`` sits beside its download
+# ``\url{...}``. Treat such a URL in the same paragraph span as
+# satisfying CITE-002.
+_URL_MACROS: frozenset[str] = frozenset({"url", "href"})
+
+# A bare URL written as plain text — ``\pkg{mingw} (http://www.mingw.org/)``
+# — is the common install-list form and supplies the reference just as a
+# ``\url{}`` macro would. Require a scheme or ``www.`` host so ordinary
+# prose (file paths, ``a.b`` abbreviations) doesn't count.
+_BARE_URL_RE = re.compile(r"(?:https?://|www\.)\S", re.IGNORECASE)
+
+# Placeholder standing in for a ``\url``/``\href`` sibling when we
+# linearise the text following a ``\pkg`` — carries no ``.`` so it never
+# looks like a sentence boundary.
+_URL_SENTINEL = "\x00url\x00"
+_SENTENCE_BREAK_RE = re.compile(r"\.\s")
+# How far past the package name the URL may sit and still count as *its*
+# reference. The install-list forms (``\pkg{X} (http://…)``, ``\pkg{X}:
+# \url{…}``) put it within a handful of characters; a URL further away,
+# or in the next sentence, references something else.
+_URL_ADJACENCY_CHARS = 60
+
+
+def _url_references_pkg(parent: Any, idx: int, end: int) -> bool:
+    """Return ``True`` if a URL sits *directly after* the ``\\pkg`` at
+    ``parent[idx]`` — same sentence, within a few tens of characters.
+
+    JSS accepts a URL in place of a formal citation when a package has no
+    citeable paper (``\\pkg{mingw} (http://www.mingw.org/)``, ``\\pkg{GPy}:
+    \\url{…}``). But a URL merely *somewhere* in the paragraph usually
+    references something else (a Colab notebook, a dataset), so require
+    adjacency: the URL must appear before the first sentence break after
+    the package and within :data:`_URL_ADJACENCY_CHARS`.
+    """
+    following = ""
+    for sib in parent[idx + 1:end]:
+        if isinstance(sib, LatexMacroNode) and sib.macroname in _URL_MACROS:
+            following += f" {_URL_SENTINEL} "
+        elif isinstance(sib, LatexCharsNode):
+            following += sib.chars
+        else:
+            following += " "  # opaque node — costs against the budget
+        if len(following) > 2 * _URL_ADJACENCY_CHARS:
+            break
+    brk = _SENTENCE_BREAK_RE.search(following)
+    scope = following[: brk.start()] if brk else following
+    scope = scope[:_URL_ADJACENCY_CHARS]
+    return _URL_SENTINEL in scope or bool(_BARE_URL_RE.search(scope))
 
 
 # Inline wrappers a ``\pkg{X}`` is commonly nested inside — links,
@@ -339,6 +393,14 @@ def check_jss_cite_002(
             name = _helpers._macro_args_text(node, parent, idx)
             if not name:
                 continue
+            if name in LANGUAGES:
+                # ``\pkg{Python}`` / ``\pkg{R}`` is markup misuse: a
+                # programming language wrapped in the package macro. A
+                # language is not a citeable package, so CITE-002 must
+                # not demand a citation — MARKUP rules handle the
+                # mis-wrap. Don't mark seen; every such mention is
+                # exempt on its own.
+                continue
             if name in _BASE_R_PACKAGES:
                 # Packages shipped with R itself (parallel, methods,
                 # stats, ...) don't need a separate citation — citing
@@ -395,6 +457,13 @@ def check_jss_cite_002(
                 parent, idx, in_tabular=in_tab,
             )
             if _has_cite_in_span(parent, start, end):
+                continue
+            if _url_references_pkg(parent, idx, end):
+                # A ``\url``/``\href`` or bare URL directly after the
+                # package (install lists, "available from …" sentences)
+                # supplies the reference: JSS accepts a URL when a
+                # package has no citeable paper. Adjacency-checked so a
+                # distant URL for something else doesn't count.
                 continue
             if _has_rmd_citation_in_span(parent, start, end):
                 # Pandoc/Rmd `[@key]` or `@key` citation in the same

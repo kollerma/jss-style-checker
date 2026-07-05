@@ -488,12 +488,25 @@ _REF_MACROS: frozenset[str] = frozenset(
 )
 
 
+def _norm_label_key(raw: str) -> str:
+    """Canonicalise a ``\\label`` / ``\\ref`` key for matching.
+
+    TeX reads a label key with catcode-10 folding: a source newline (and
+    any run of surrounding spaces) collapses to a single space, so
+    ``\\label{eq:foo\\n    bar}`` and ``\\ref{eq:foo bar}`` denote the same
+    label and must compare equal. Stripping the ends is not enough — the
+    internal whitespace run has to be normalised on both sides.
+    """
+    return re.sub(r"\s+", " ", raw).strip()
+
+
 def _collect_referenced_labels(doc: ParsedDocument) -> set[str]:
     """Gather every label key referenced from ``\\ref{...}``-family macros
     across every tex_like file in the document.
 
     Labels can be referenced in multi-key form (``\\ref{a,b,c}``) and the
-    comma-separated keys are split. Whitespace around keys is stripped.
+    comma-separated keys are split. Internal whitespace is normalised (see
+    :func:`_norm_label_key`) so newline-wrapped keys still match.
     """
     refs: set[str] = set()
     for tex in doc.all_tex_like():
@@ -509,7 +522,7 @@ def _collect_referenced_labels(doc: ParsedDocument) -> set[str]:
             # as a standalone group and the reference is missed.
             text = _helpers._macro_args_text(node, parent, idx)
             for key in text.split(","):
-                key = key.strip()
+                key = _norm_label_key(key)
                 if key:
                     refs.add(key)
     return refs
@@ -532,7 +545,7 @@ def _env_label_keys(env: Any) -> list[str]:
                 continue
             for ch in arg.nodelist or ():
                 if isinstance(ch, LatexCharsNode):
-                    k = ch.chars.strip()
+                    k = _norm_label_key(ch.chars)
                     if k:
                         keys.append(k)
     return keys
@@ -787,7 +800,7 @@ def _row_label_positions(row: list[Any]) -> list[tuple[str, int]]:
                 continue
             for ch in arg.nodelist or ():
                 if isinstance(ch, LatexCharsNode):
-                    k = ch.chars.strip()
+                    k = _norm_label_key(ch.chars)
                     if k:
                         out.append((k, child.pos))
     return out

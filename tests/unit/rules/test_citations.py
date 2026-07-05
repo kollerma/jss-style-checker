@@ -66,6 +66,63 @@ class TestCite002:
         )
         assert run_rule(jss_cite_002, src) == []
 
+    def test_language_name_in_pkg_not_flagged(self, run_rule):
+        # `\pkg{Python}` is markup misuse (a language, not a package); a
+        # language is not citeable, so CITE-002 must stay silent and let
+        # the MARKUP rules handle the mis-wrap. Corpus: pymc2 jss-gp.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"The model is implemented in \pkg{Python}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_bare_url_in_paragraph_satisfies_citation(self, run_rule):
+        # A bare download URL beside the package (install lists) supplies
+        # the reference — JSS accepts a URL when there is no citeable
+        # paper. Corpus: pymcmc's Windows install itemize.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Install \pkg{mingw} (http://www.mingw.org/) for the compiler." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_url_macro_in_paragraph_satisfies_citation(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Get \pkg{msys} from \url{http://www.mingw.org/wiki/MSYS}." "\n"
+            r"\end{document}" "\n"
+        )
+        assert run_rule(jss_cite_002, src) == []
+
+    def test_distant_url_next_sentence_still_flagged(self, run_rule):
+        # A URL that references something else (a Colab notebook in the
+        # next sentence) must NOT satisfy CITE-002 for the package.
+        # Corpus regression: github_romc scikit-learn.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We use the \pkg{scikit-learn} package. The reader can find "
+            r"the example \url{https://colab.research.google.com/x} here." "\n"
+            r"\end{document}" "\n"
+        )
+        assert len(run_rule(jss_cite_002, src)) == 1
+
+    def test_pkg_without_url_or_cite_still_flagged(self, run_rule):
+        # Guard: the URL relaxation must not silence a genuine first
+        # mention that has neither a citation nor a URL.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"We rely on \pkg{somepkg} throughout." "\n"
+            r"\end{document}" "\n"
+        )
+        assert len(run_rule(jss_cite_002, src)) == 1
+
     def test_citation_in_next_paragraph_still_flagged(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"
