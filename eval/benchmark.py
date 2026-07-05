@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -53,17 +54,36 @@ class ModelSpec:
         )
 
 
-def _load_gold(db_path: Path) -> list[dict]:
+def _load_deterministic_rule_ids() -> frozenset[str]:
+    from texlint.journals.jss._catalogue_data import DETERMINISTIC_RULE_IDS
+
+    return frozenset(DETERMINISTIC_RULE_IDS)
+
+
+def _load_gold(
+    db_path: Path,
+    deterministic_rule_ids: Iterable[str] | None = None,
+) -> list[dict]:
     # The gold set is rows labelled by a real human reviewer (TUI or
     # bulk import). Proxy labels assigned by an LLM-acting-as-human
-    # ('human:claude-proxy', 'human:auto-fix-iter5') are excluded —
-    # benchmarking an AI labeller against another AI labeller's
-    # judgment doesn't bound the ground-truth error rate.
+    # ('human:claude-proxy', 'human:auto-fix-iter5', 'human:auto-
+    # deterministic') are excluded — benchmarking an AI labeller against
+    # another AI labeller's judgment doesn't bound the ground-truth error
+    # rate.
+    #
+    # Deterministic rules are excluded too: they are now auto-labelled by
+    # the linter (reviewer human:auto-deterministic) and never routed to a
+    # model, so they are out of scope for a *model* benchmark.
+    det = (
+        _load_deterministic_rule_ids()
+        if deterministic_rule_ids is None
+        else frozenset(deterministic_rule_ids)
+    )
     cx = db.connect(db_path)
     try:
         rows = cx.execute(
             "SELECT v.id, v.rule_id, v.category, v.line, v.column, v.message,"
-            " v.severity, v.file, v.verdict, p.path AS paper_path"
+            " v.severity, v.file, v.verdict, v.reviewer, p.path AS paper_path"
             " FROM violations v JOIN papers p ON p.id = v.paper_id"
             " WHERE v.reviewer LIKE 'human:%'"
             " AND v.reviewer NOT LIKE 'human:claude-proxy%'"
@@ -73,7 +93,7 @@ def _load_gold(db_path: Path) -> list[dict]:
         ).fetchall()
     finally:
         cx.close()
-    return [dict(r) for r in rows]
+    return [dict(r) for r in rows if r["rule_id"] not in det]
 
 
 def _classify_one(client: LlamaServerClient, row: dict) -> api.ClassifyResult:
