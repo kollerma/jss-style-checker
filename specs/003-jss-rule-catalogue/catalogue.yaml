@@ -18,6 +18,12 @@
 #     first-use cross-document state tracking is implementation-brittle
 #     and the abbreviation-expansion rule is better handled by the
 #     authors' own proofreading pass than by the linter.
+#   - JSS-REFS-002 (retired 2026-06-14): bibliography title case for
+#     multi-word titles. Subsumed by JSS-REFS-006, which now handles
+#     entirely-lowercase multi-word titles (exempting single coined
+#     words); REFS-002's only corpus firing was a false positive
+#     (generatingfunctionology) and its 3 recall plants were re-homed
+#     to REFS-006.
 #   - JSS-CAP-003 (retired 2026-07-04): figure/table captions in
 #     sentence style. Unreliable in both directions (precision ~32%,
 #     recall ~12%); the precision and recall gold sets encode
@@ -35,6 +41,7 @@ source_vendored_at: "2021-05-23"
 retired_rule_ids:
   - JSS-CITE-001
   - JSS-ABBR-002
+  - JSS-REFS-002
   - JSS-CAP-003
 
 categories:
