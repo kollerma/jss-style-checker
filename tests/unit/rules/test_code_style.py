@@ -267,6 +267,35 @@ class TestCode003:
         assert violations[0].line == 3
         assert violations[0].column == 1
 
+    def test_code_output_env_not_flagged(self, run_rule):
+        # Program output (CodeOutput / Soutput) is verbatim tool output,
+        # not author-written code, so CODE-003 must not fire on it — you
+        # cannot restyle what R printed. Real corpus regressions: a
+        # "p-value" / "R-squared" hyphen and a "k=4" summary line inside a
+        # CodeOutput block were being misread as unspaced operators.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{CodeOutput}\n"
+            "z =  2.2666  p-value =  0.0117\n"
+            "Mean R-squared: 0.7523  k=4\n"
+            "\\end{CodeOutput}\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_code_003, src) == []
+
+    def test_soutput_env_not_flagged(self, run_rule):
+        # Same contract for the Sweave-style output env.
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{Soutput}\n"
+            "delta:  10  type: under,rounds=250\n"
+            "\\end{Soutput}\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_code_003, src) == []
+
     def test_keyword_arg_flagged(self, run_rule):
         # JSS style requires spaces around ``=`` even in function-
         # argument keyword position. Updated 2026-06-11 to align with

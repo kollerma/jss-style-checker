@@ -21,7 +21,7 @@ from pylatexenc.latexwalker import (
 )
 
 from texlint.api import (
-    CODE_DISPLAY_ENVS,
+    CODE_INPUT_ENVS,
     Fix,
     ParsedDocument,
     Rule,
@@ -30,10 +30,13 @@ from texlint.api import (
 )
 from texlint.journals.jss.rules import _helpers
 
-# Envs where code lives — the shared code-display subset of the
-# verbatim contract (LISTING_ENVS like lstlisting are non-prose but
-# not JSS code-display, so CODE-* does not lint them).
-_CODE_ENVS: frozenset[str] = CODE_DISPLAY_ENVS
+# Envs where *authored* code lives — the input subset of the code-display
+# contract. Program-output envs (CodeOutput / Soutput) are excluded: their
+# body is verbatim tool output, not author-written code, so restyling it
+# (CODE-003) or flagging its comments (CODE-001) would be wrong. LISTING_ENVS
+# like lstlisting are non-prose but not JSS code-display, so CODE-* skips
+# them too.
+_CODE_ENVS: frozenset[str] = CODE_INPUT_ENVS
 
 # Match ``#`` (or ``##``, ``###``) followed by at least one space then
 # non-whitespace content — the shape of an explanatory R / shell /
