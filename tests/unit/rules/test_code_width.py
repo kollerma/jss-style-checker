@@ -67,6 +67,52 @@ class TestWidth001:
         )
         assert len(violations) == 1
 
+    def test_trailing_whitespace_not_counted(self, run_rule):
+        # 80 visible columns + trailing spaces: invisible in the rendered
+        # listing, so it fits and must not fire. Corpus regression: DAKS /
+        # CARBayes CodeInput lines of exactly 80 chars plus a stray space.
+        line = "x" * 80 + "   "
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{CodeInput}\n"
+            f"{line}\n"
+            "\\end{CodeInput}\n"
+            "\\end{document}\n"
+        )
+        assert run_rule(jss_width_001, src) == []
+
+    def test_visible_width_over_limit_flagged(self, run_rule):
+        # 81 visible columns (even with no trailing space) still overflows.
+        line = "x" * 81
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{CodeInput}\n"
+            f"{line}\n"
+            "\\end{CodeInput}\n"
+            "\\end{document}\n"
+        )
+        violations = run_rule(jss_width_001, src)
+        assert len(violations) == 1
+        # Reported width is the visible width, not the raw length.
+        assert violations[0].column == 81
+
+    def test_reported_length_excludes_trailing_ws(self, run_rule):
+        # 85 visible + trailing spaces -> flagged, but width reported is 85.
+        line = "x" * 85 + "     "
+        src = (
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "\\begin{CodeInput}\n"
+            f"{line}\n"
+            "\\end{CodeInput}\n"
+            "\\end{document}\n"
+        )
+        violations = run_rule(jss_width_001, src)
+        assert len(violations) == 1
+        assert violations[0].column == 85
+
     def test_empty_env_silent(self, run_rule):
         src = (
             r"\documentclass[article]{jss}" "\n"

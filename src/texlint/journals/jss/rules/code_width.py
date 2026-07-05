@@ -78,12 +78,17 @@ def _scan_env(
     # 1-based line offset of `start_pos` within `source`.
     start_line, _ = _helpers._lineno_col(tex, start_pos)
     for offset, line_text in enumerate(content.splitlines()):
-        if len(line_text) <= limit:
+        # Trailing whitespace is invisible in the rendered listing, so it
+        # does not push the line past the text column. Measure the visible
+        # width (rstrip): a line of exactly `limit` visible columns plus a
+        # stray trailing space must not be flagged.
+        width = len(line_text.rstrip())
+        if width <= limit:
             continue
         yield _violation(
             tex=tex,
             line=start_line + offset,
-            length=len(line_text),
+            length=width,
             limit=limit,
             rule_id="JSS-WIDTH-001",
         )
