@@ -71,6 +71,14 @@ def _load_gold(
     # another AI labeller's judgment doesn't bound the ground-truth error
     # rate.
     #
+    # CONVENTION: any automated/AI-generated adjudication MUST use the
+    # 'human:auto-*' namespace (or 'human:claude-proxy'), never a bare
+    # 'human:<x>' tag — the two NOT LIKE clauses below are the only thing
+    # keeping machine labels out of the gold set. (Historical AI
+    # adjudications mis-tagged as 'human:readjudicate' / 'human:opus-nonr'
+    # / 'human:xref005-listing' were re-namespaced to 'human:auto-*' on
+    # 2026-07-06 for exactly this reason.)
+    #
     # Deterministic rules are excluded too: they are now auto-labelled by
     # the linter (reviewer human:auto-deterministic) and never routed to a
     # model, so they are out of scope for a *model* benchmark.
