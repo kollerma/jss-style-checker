@@ -93,3 +93,53 @@ class TestRecall:
         assert rep.per_rule[0].tp == 1
         assert rep.per_rule[0].fn == 0
         assert rep.aggregate_recall == 1.0
+
+
+class TestRetiredRuleExclusion:
+    """Retired rule IDs (e.g. JSS-CAP-003) no longer exist in the linter,
+    so their historical plants must be inert — excluded from per-rule and
+    aggregate recall rather than scored as 0/N false negatives."""
+
+    def test_retired_plants_excluded_explicit(self) -> None:
+        # CAP-003 has 16 plants, all FN (the rule is gone). It must not
+        # appear in per_rule nor drag the aggregate down.
+        annot = [
+            _v("JSS-CAP-003", line=1),
+            _v("JSS-CAP-003", line=2),
+            _v("LIVE", line=1),
+        ]
+        linter = [_v("LIVE", line=1)]
+        rep = compute_recall(linter, annot, retired_rule_ids={"JSS-CAP-003"})
+        assert "JSS-CAP-003" not in {r.rule_id for r in rep.per_rule}
+        assert rep.aggregate_recall == 1.0  # only LIVE: 1 TP / 0 FN
+
+    def test_retired_default_loads_from_catalogue(self) -> None:
+        # With no explicit set, the retired IDs come from the JSS
+        # catalogue; JSS-CAP-003 is retired there, so its plant is inert.
+        annot = [_v("JSS-CAP-003", line=1), _v("LIVE", line=1)]
+        rep = compute_recall([_v("LIVE", line=1)], annot)
+        assert "JSS-CAP-003" not in {r.rule_id for r in rep.per_rule}
+
+    def test_retired_filtered_from_linter_side_too(self) -> None:
+        # Defensive: even a stray retired-rule linter result is ignored.
+        annot = [_v("LIVE", line=1)]
+        linter = [_v("LIVE", line=1), _v("JSS-REFS-002", line=5)]
+        rep = compute_recall(linter, annot, retired_rule_ids={"JSS-REFS-002"})
+        assert "JSS-REFS-002" not in {r.rule_id for r in rep.per_rule}
+
+    def test_retired_excluded_through_partition(self) -> None:
+        # End-to-end: a retired rule reaches neither measured nor pooled.
+        annot = [_v("JSS-CAP-003", line=i) for i in range(1, 4)] + [
+            _v("LIVE", line=1)
+        ]
+        rep = compute_recall([_v("LIVE", line=1)], annot, retired_rule_ids={"JSS-CAP-003"})
+        measured, pooled = partition_by_plants(rep.per_rule, min_plants=10)
+        allids = {r.rule_id for r in measured} | set(pooled.rule_ids)
+        assert "JSS-CAP-003" not in allids
+
+    def test_empty_retired_set_scores_everything(self) -> None:
+        # Passing an explicit empty set disables the catalogue default.
+        annot = [_v("JSS-CAP-003", line=1)]
+        rep = compute_recall([], annot, retired_rule_ids=set())
+        assert rep.per_rule[0].rule_id == "JSS-CAP-003"
+        assert rep.aggregate_recall == 0.0

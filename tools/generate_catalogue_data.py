@@ -73,6 +73,7 @@ def render(doc: Mapping[str, Any]) -> str:
         key=lambda r: _sort_key(r, categories),
     )
     retired: list[str] = list(doc.get("retired_rule_ids") or ())
+    deterministic: list[str] = list(doc.get("deterministic_rule_ids") or ())
 
     out: list[str] = [_HEADER]
 
@@ -121,6 +122,15 @@ def render(doc: Mapping[str, Any]) -> str:
 
     out.append("RETIRED_RULE_IDS: frozenset[str] = frozenset({\n")
     for rid in sorted(retired):
+        out.append(f"    {_py_str(rid)},\n")
+    out.append("})\n\n")
+
+    out.append(
+        "# Mechanically-decidable rules: the linter is authoritative, so the\n"
+        "# eval pipeline auto-accepts their firings (see catalogue.yaml).\n"
+    )
+    out.append("DETERMINISTIC_RULE_IDS: frozenset[str] = frozenset({\n")
+    for rid in sorted(deterministic):
         out.append(f"    {_py_str(rid)},\n")
     out.append("})\n\n")
 

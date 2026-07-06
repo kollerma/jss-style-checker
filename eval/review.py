@@ -20,6 +20,7 @@ import json
 import sys
 import urllib.error
 import urllib.request
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -485,6 +486,14 @@ def _load_routing(
     return clients, rule_to_model, default
 
 
+def _load_deterministic_rule_ids() -> frozenset[str]:
+    """Mechanically-decidable rule ids from the JSS catalogue. These are
+    auto-labelled instead of sent to the LLM (see catalogue.yaml)."""
+    from texlint.journals.jss._catalogue_data import DETERMINISTIC_RULE_IDS
+
+    return frozenset(DETERMINISTIC_RULE_IDS)
+
+
 def run(
     *,
     db_path: Path,
@@ -495,6 +504,7 @@ def run(
     base_url: str = "http://localhost:8080",
     skip_list_path: Path | None = None,
     routing_path: Path | None = None,
+    deterministic_rule_ids: Iterable[str] | None = None,
 ) -> int:
     """Drive the AI-review loop. Returns the CLI exit code.
 
@@ -516,6 +526,11 @@ def run(
         client = LlamaServerClient(model=model, base_url=base_url)
 
     skip_rules = load_skip_list(skip_list_path)
+    deterministic = (
+        _load_deterministic_rule_ids()
+        if deterministic_rule_ids is None
+        else frozenset(deterministic_rule_ids)
+    )
 
     cx = db.connect(db_path)
     try:
@@ -525,12 +540,30 @@ def run(
             return 0
 
         labelled = skipped_low_conf = network_degraded = skipped_uncertain = 0
+        auto_labelled = 0
+        # Fail-fast tracks the first *client* call, not the first row —
+        # deterministic rows are auto-labelled before any network I/O.
+        first_client_call = True
 
         # Import lazily so `eval.review` stays importable without pulling
         # `rich` (used by `human_review` for terminal rendering).
         from eval.human_review import source_snippet
 
-        for i, row in enumerate(rows):
+        for row in rows:
+            # Mechanically-decidable rules: the linter is authoritative, so
+            # accept the firing as a true positive without an LLM round-trip.
+            # Tagged human:auto-deterministic (excluded from the model gold
+            # set by the reviewer NOT LIKE 'human:auto-%' filter).
+            if row["rule_id"] in deterministic:
+                _write_verdict(
+                    cx,
+                    violation_id=row["id"],
+                    verdict=api.Verdict.TRUE_POSITIVE,
+                    reason="mechanically decidable; linter authoritative",
+                    reviewer="human:auto-deterministic",
+                )
+                auto_labelled += 1
+                continue
             violation_dict = {
                 "rule_id": row["rule_id"],
                 "category": row["category"],
@@ -564,14 +597,16 @@ def run(
                 row_client = client
                 row_model_label = model
             result = row_client.classify(violation_dict, paper_context=paper_context)
+            was_first_client_call = first_client_call
+            first_client_call = False
 
             is_network_failure = (
                 result.verdict == api.Verdict.UNCERTAIN
                 and result.reason.startswith("network:")
             )
 
-            # Fail-fast: first row can't network to the server → exit 2.
-            if i == 0 and is_network_failure:
+            # Fail-fast: first client call can't reach the server → exit 2.
+            if was_first_client_call and is_network_failure:
                 print(
                     f"eval-jss: AI review client unreachable on first call: "
                     f"{result.reason}. Check --base-url (currently {base_url}) "
@@ -602,6 +637,7 @@ def run(
 
         print(
             f"eval-jss review: {labelled} labelled, "
+            f"{auto_labelled} auto (deterministic), "
             f"{skipped_uncertain} uncertain, "
             f"{skipped_low_conf} below threshold "
             f"(<{confidence_threshold}), "

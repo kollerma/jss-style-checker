@@ -18,31 +18,25 @@ not already present; never edits or removes existing annotations.
 from __future__ import annotations
 
 import sys
-import tomllib
 from pathlib import Path
 
+import tomllib
+
 from texlint.config import load as load_config
-from texlint.core.engine import load_journal, parse_document, run as run_engine
+from texlint.core.engine import load_journal, parse_document
+from texlint.core.engine import run as run_engine
+from texlint.journals.jss._catalogue_data import DETERMINISTIC_RULE_IDS
 
 REPO = Path(__file__).resolve().parent.parent
 RECALL = REPO / "eval" / "recall-corpus"
 LINT_SUFFIXES = {".tex", ".ltx", ".rnw", ".rmd", ".bib"}
 
-# Structural rules at 100% precision (iteration 79) — the linter is
-# authoritative, so its firings are ground truth. REFS-003 (Crossref) and
-# XREF-004/005 (independent ref-existence checks) are handled by their own
-# tools but included here so the idempotent pass tops up any gaps.
-GREEN_LIST = frozenset({
-    "JSS-BIBTEX-001", "JSS-BIBTEX-002", "JSS-BIBTEX-003", "JSS-BIBTEX-004",
-    "JSS-BIBTEX-005", "JSS-REFS-001", "JSS-REFS-007",
-    "JSS-PRE-001", "JSS-PRE-002", "JSS-PRE-003", "JSS-PRE-004", "JSS-PRE-005",
-    "JSS-PRE-006", "JSS-PRE-007", "JSS-PRE-008",
-    "JSS-HOUSE-002", "JSS-HOUSE-003",
-    "JSS-STRUCT-002", "JSS-STRUCT-003", "JSS-STRUCT-004", "JSS-STRUCT-006",
-    "JSS-TYPO-001", "JSS-TYPO-002", "JSS-TYPO-003", "JSS-TYPO-004",
-    "JSS-XREF-002", "JSS-XREF-004", "JSS-XREF-005",
-    "JSS-CITE-003", "JSS-CODE-001", "JSS-CODE-002", "JSS-OPER-003",
-})
+# The mechanically-decidable ("deterministic") rules — the linter is
+# authoritative, so its firings are trustworthy ground truth to pre-fill.
+# Single source of truth: ``deterministic_rule_ids`` in the catalogue
+# (also drives eval/review.py's auto-labelling). Formerly a hard-coded
+# GREEN_LIST here; unified to avoid two divergent lists.
+GREEN_LIST = DETERMINISTIC_RULE_IDS
 
 
 def _toml_str(s: str) -> str:

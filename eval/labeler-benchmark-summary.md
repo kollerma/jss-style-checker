@@ -1,99 +1,77 @@
-# Labeler benchmark — full 934-row gold set
+# Labeler benchmark — model-scope gold set
 
-**Snapshot:** 2026-05-01, after iter-71-baseline. Gold set = 934 rows
+**Snapshot:** 2026-07-06 (pre-freeze refresh). Gold set = **1576 rows**
 labelled by real humans (`reviewer LIKE 'human:%'`, excluding
-`human:claude-proxy` and `human:auto-*`). Per-row outcomes persisted
-to `eval/labeler-benchmark.json`.
+`human:claude-proxy` and `human:auto-*`) **after excluding the 32
+mechanically-decidable `deterministic_rule_ids`** — those are now
+auto-labelled by the linter (reviewer `human:auto-deterministic`) and
+never routed to a model, so they are out of scope for a *model*
+benchmark (spec: catalogue `deterministic_rule_ids`; `eval/review.py`).
+Raw per-row outcomes: `eval/benchmark-runs/20260706-bonsai-gold1576.jsonl`.
 
 ## Overall
 
 | Model | N | TP-agree | FP-agree | →FP (rejected real) | →TP (accepted bogus) | Uncertain | Agreement |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Bonsai-8B-mlx | 934 | 435 | 1 | 17 | 56 | 425 | **85.7%** |
-| Qwen3-30B-A3B | 934 | 538 | 29 | 53 | 15 | 299 | **89.3%** |
+| Bonsai-8B-mlx | 1576 | 693 | 9 | 97 | 115 | 662 | **76.8%** |
 
-Both clear the policy floor of `min_overall_agreement = 0.85`. Qwen3
-wins by 3.6pp overall, but the per-rule picture is **strongly
-complementary** — pick the right model per rule rather than one
-universal labeller.
+Down from the 2026-05-01 snapshot (85.7% on 934 rows). The drop is a
+mix-shift, not a regression: (a) the gold set nearly doubled and now skews
+toward the hard **semantic** rules (MARKUP-001/003, CITE-002, OPER-004,
+NAME-002, REFS-006) since the easy deterministic rules — where Bonsai
+scored ~100% — were removed as out-of-scope; (b) Bonsai remains a
+*decisive-minority* labeller, punting (uncertain) on 662/1576.
 
-## Per-rule agreement (rules with ≥5 gold rows)
+## Per-rule agreement (rules with ≥2 gold rows)
 
-| Rule | N | Bonsai | Qwen3-30B | Notes |
-|---|---:|---:|---:|---|
-| JSS-CAP-002 | 192 | **94%** | 88% | Both strong; prefer Bonsai |
-| JSS-MARKUP-001 | 188 | 78% | **92%** | Bonsai uncertain on 161/188; Qwen3 decisive |
-| JSS-MARKUP-003 | 105 | — | **100%** | Bonsai 100% uncertain — useless here |
-| JSS-CAP-003 | 47 | 40% | 63% | Both poor; rule on AI skip-list |
-| JSS-XREF-004 | 45 | (100%) | **97%** | Bonsai decides only 2/45; Qwen3 decisive |
-| JSS-CITE-002 | 43 | — | **94%** | Bonsai 100% uncertain |
-| JSS-NAME-002 | 38 | 63% | **100%** | Bonsai flips 13 publisher TPs; on skip-list |
-| JSS-REFS-003 | 38 | **84%** | 50% | Bonsai much better; only decides 6/38 for Qwen |
-| JSS-BIBTEX-004 | 30 | (100%) | (0%) | Both ≥97% uncertain — needs human |
-| JSS-OPER-002 | 25 | **96%** | 48% | Bonsai dominant; on skip-list |
-| JSS-CITE-004 | 18 | **100%** | **100%** | Trivial for both |
-| JSS-MARKUP-004 | 17 | (100%) | **87%** | Qwen3 decisive on more |
-| JSS-CAP-001 | 15 | **100%** | (0%) | — |
-| JSS-HOUSE-001 | 15 | **93%** | 70% | Bonsai better |
-| JSS-OPER-004 | 15 | (100%) | **100%** | Qwen3 decides 13/15 |
-| JSS-CODE-003 | 11 | **100%** | 67% | Bonsai dominant |
-| JSS-OPER-001 | 11 | **100%** | **100%** | Both perfect |
-| JSS-CITE-003 | 10 | **100%** | **100%** | Both perfect |
-| JSS-XREF-002 | 10 | **100%** | **100%** | Both perfect |
-| JSS-PARSE-000 | 8 | 62% | 67% | Both poor; deterministic check anyway |
-| JSS-CAP-004 | 7 | **100%** | **100%** | — |
-| JSS-TYPO-001 | 7 | **100%** | **100%** | — |
-| JSS-PRE-001 | 6 | **100%** | **100%** | — |
-| JSS-STRUCT-001 | 5 | 80% | 50% | Bonsai better |
+`(X%)` on a small decided subset; `—` = model punted on every row.
 
-Parens `(X%)` indicate the model decided very few rows — the agreement
-percentage applies to the small decided subset; the rest were "uncertain".
+| Rule | Bonsai (decided/total) |
+|---|---:|
+| JSS-CAP-002    | 149/159 (94%) |
+| JSS-OPER-002   |  98/115 (86%) |
+| JSS-MARKUP-003 | 137/254 (86%) |
+| JSS-MARKUP-001 |  83/289 (57%) |
+| JSS-NAME-002   |  78/110 (71%) |
+| JSS-CODE-003   |   16/54 (84%) |
+| JSS-XREF-005   |   13/54 (87%) |
+| JSS-REFS-003   |   30/40 (75%) |
+| JSS-CAP-003    |   11/29 (38%) |
+| JSS-REFS-006   |    3/26 (14%) |
+| JSS-MARKUP-004 |   4/19 (100%) |
+| JSS-CITE-004   |  18/18 (100%) |
+| JSS-HOUSE-001  |   14/17 (82%) |
+| JSS-STRUCT-005 |      0/16 (—) |
+| JSS-XREF-006   |      0/16 (—) |
+| JSS-OPER-001   |    9/12 (90%) |
+| JSS-MARKUP-002 |    3/12 (30%) |
+| JSS-STRUCT-001 |     5/7 (71%) |
+| JSS-CAP-004    |    7/7 (100%) |
+| JSS-XREF-001   |     6/8 (75%) |
+| JSS-REFS-004   |    4/8 (100%) |
+| JSS-CAP-001    |    3/4 (100%) |
+| JSS-ABBR-001   |     2/4 (67%) |
+| JSS-REFS-005   |     2/4 (50%) |
+| JSS-NAME-001   |    2/2 (100%) |
+| JSS-CITE-002   |      0/72 (—) |
+| JSS-OPER-004   |  5/219 (100%) |
 
-## Strategic implications
+## Scope + caveats
 
-**Routing per rule** (better than one-model-fits-all):
-
-- **Bonsai-only routes** (Bonsai ≥ 90%, Qwen3 lower): JSS-CAP-002,
-  JSS-REFS-003, JSS-OPER-002, JSS-HOUSE-001, JSS-CODE-003.
-- **Qwen3-only routes** (Qwen3 ≥ 90%, Bonsai uncertain or wrong):
-  JSS-MARKUP-001, JSS-MARKUP-003, JSS-CITE-002, JSS-XREF-004,
-  JSS-NAME-002.
-- **Either** (both ≥ 90%): JSS-CITE-003, JSS-CITE-004, JSS-XREF-002,
-  JSS-OPER-001, JSS-CAP-004, JSS-TYPO-001, JSS-PRE-001, JSS-CAP-001
-  (Bonsai), JSS-CAP-003 already on skip-list.
-- **Human review only** (no model reliable): JSS-BIBTEX-004 (both
-  ~100% uncertain), JSS-CAP-003 (both 40-63%), JSS-PARSE-000 (62-67%).
-
-The current `eval/review-skip-list.toml` covers JSS-CAP-001/002/003/004,
-JSS-CITE-004, JSS-OPER-002, JSS-REFS-002, JSS-NAME-002. With these
-benchmark numbers the skip-list should be revised:
-
-- **REMOVE** from skip-list (model handles them): JSS-CAP-001
-  (Bonsai 100%), JSS-CAP-002 (Bonsai 94%, large sample), JSS-CAP-004
-  (both 100%), JSS-OPER-002 (Bonsai 96%), JSS-NAME-002 (Qwen3 100%).
-- **KEEP** in skip-list: JSS-CAP-003 (both ≤63%), JSS-CITE-004
-  (perfect agreement makes review redundant — controversial).
-
-## Bonsai vs Qwen3: model-temperament summary
-
-- Bonsai is a **decisive minority labeller**: when it commits to an
-  answer it's usually right (435 TP-agree, 1 FP-agree, only 17 →FP
-  vs human truth), but it punts (uncertain) on 425 of 934 rows.
-- Qwen3 is a **commit-prone majority labeller**: decides 635 of 934
-  but with more wrong calls (29 FP-agree + 53 →FP + 15 →TP =
-  97 outright disagreements, vs Bonsai's 74).
-- Net: Qwen3's higher agreement comes from confidently labelling
-  rows Bonsai punted on. Both are useful; an ensemble that prefers
-  the model with higher per-rule agreement (and falls back to
-  human-review when both disagree) would beat either alone.
-
-## Followups
-
-- Rebenchmark cadence: re-run after every 5 iterations per
-  `iteration-policy.toml::labeler_health.rebenchmark_every_n_iterations`.
-- Wire per-rule routing into `eval-jss review` (today it always uses
-  one model).
-- Raise/lower `min_rule_agreement = 0.75` based on this evidence
-  (current threshold catches CAP-003, NAME-002, PARSE-000, MARKUP-001
-  for Bonsai; CAP-003, REFS-003, OPER-002, STRUCT-001, BIBTEX-004,
-  CAP-001, BIBTEX-002 for Qwen3).
+- **Deterministic rules are out of scope.** The 32 `deterministic_rule_ids`
+  (BIBTEX-\*, PRE-\*, TYPO-\*, XREF-002/004, CITE-003, CODE-001/002,
+  OPER-003, HOUSE-002/003, STRUCT presence, REFS-001/007, WIDTH-001) are
+  auto-labelled by the linter and no longer benchmarked — the model never
+  sees them. XREF-005 is deliberately kept in model scope (a parser edge
+  gives it one genuine FP).
+- **Qwen3-30B not refreshed this run.** At ~16 s/row (thinking-on, as
+  routed) a full 1576-row Qwen3 pass is ≈7 h — impractical in this
+  session. The 2026-05-01 Qwen3 numbers are on a *different* gold set
+  (934 rows, deterministic rules included) and are **not** comparable to
+  the table above; a fresh Qwen3 pass should be run before final routing
+  decisions.
+- **Gold-set composition.** 1410/1576 rows are original human labels
+  (`human:unknown`); **166 (10.5%) are recent AI-assisted adjudications**
+  (`human:readjudicate`/`opus`/`xref005`/`correction`/`strict`). These
+  survive the `human:%` filter but are not independent human ground
+  truth — see the freeze note in `improvement-log.md`.
