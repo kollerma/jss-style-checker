@@ -1,0 +1,20 @@
+[package]
+name = "jsslint-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Core rule engine for the JSS style checker (spec 018 Rust port)."
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[build-dependencies]
+serde = { workspace = true }
+serde_yaml = "0.9"
+serde_json = { workspace = true }
+
+[dev-dependencies]
+# Used by tests/parity.rs to shell out to `jss-lint` and compare output.
