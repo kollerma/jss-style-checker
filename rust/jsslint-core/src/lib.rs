@@ -10,6 +10,7 @@ pub mod catalogue;
 pub mod json_output;
 pub mod report;
 pub mod terms;
+pub mod tex;
 
 pub use catalogue::{lookup as lookup_rule, RuleMeta};
 pub use report::{

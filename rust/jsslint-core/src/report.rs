@@ -26,8 +26,21 @@ impl Severity {
     }
 }
 
-/// A single text-edit auto-fix payload (spec 008). Byte offsets are
-/// 0-based, half-open, matching `Fix` in api.py exactly.
+/// A single text-edit auto-fix payload (spec 008).
+///
+/// `start`/`end` are 0-based, half-open **Unicode codepoint offsets**,
+/// NOT byte offsets, despite `Fix`'s docstring in api.py claiming
+/// "byte offsets" — verified against actual behavior:
+/// `core/fixer.py` applies a fix via plain Python string slicing
+/// (`new[:fix.start] + fix.replacement + new[fix.end:]`), and Python
+/// `str` slicing is codepoint-indexed. `pylatexenc`'s own `pos`/`len`
+/// (which most `Fix` construction sites derive `start`/`end` from) are
+/// likewise Python-string-index-based, i.e. codepoints. The two are
+/// identical for ASCII-only spans (which is why this went unnoticed:
+/// author names and prose text are the only realistic source of
+/// non-ASCII content, and most auto-fixable rules don't touch them),
+/// but diverge on any span containing non-ASCII text. This crate's
+/// tokenizer positions codepoint-index throughout to match.
 #[derive(Debug, Clone)]
 pub struct Fix {
     pub start: usize,
