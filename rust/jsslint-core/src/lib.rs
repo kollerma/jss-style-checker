@@ -6,9 +6,11 @@
 //! `/home/node/.claude/plans/having-the-style-checker-compressed-crown.md`
 //! for the full architecture.
 
+pub mod bib;
 pub mod catalogue;
 pub mod json_output;
 pub mod report;
+pub mod rules;
 pub mod terms;
 pub mod tex;
 

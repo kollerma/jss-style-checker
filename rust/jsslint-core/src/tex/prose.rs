@@ -260,7 +260,7 @@ pub fn is_in_prose_context(ancestors: &[&Node]) -> bool {
 /// `nodelist`s) never contain a `None` slot.
 pub type Slot<'a> = Option<&'a Node>;
 
-fn children_slots<'a>(node: &'a Node) -> Vec<Slot<'a>> {
+pub(crate) fn children_slots<'a>(node: &'a Node) -> Vec<Slot<'a>> {
     match node {
         Node::Macro(m) => m.args.iter().map(|a| a.as_ref()).collect(),
         Node::Group(g) => g.nodelist.iter().map(Some).collect(),

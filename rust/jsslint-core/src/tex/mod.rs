@@ -9,6 +9,7 @@
 //! against a Python oracle dump (`tools/dump_tex_nodes.py`).
 
 pub mod debug;
+pub mod extract;
 pub mod neutralize;
 pub mod node;
 pub mod parser;
