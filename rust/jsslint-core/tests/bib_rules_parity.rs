@@ -9,7 +9,7 @@
 
 use jsslint_core::bib;
 use jsslint_core::report::Violation;
-use jsslint_core::rules::{bibtex, house_style, naming};
+use jsslint_core::rules::{bibtex, house_style, naming, references};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -21,6 +21,12 @@ const RULE_IDS: &[&str] = &[
     "JSS-BIBTEX-005",
     "JSS-NAME-002",
     "JSS-HOUSE-002",
+    "JSS-REFS-001",
+    "JSS-REFS-003",
+    "JSS-REFS-004",
+    "JSS-REFS-005",
+    "JSS-REFS-006",
+    "JSS-REFS-007",
 ];
 
 fn repo_root() -> PathBuf {
@@ -96,6 +102,12 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-BIBTEX-005" => bibtex::check_bibtex_005(&file, &library),
         "JSS-NAME-002" => naming::check_name_002(&file, &chars, &library, empty),
         "JSS-HOUSE-002" => house_style::check_house_002(&file, &chars, &library, empty),
+        "JSS-REFS-001" => references::check_refs_001(&file, &library, empty),
+        "JSS-REFS-003" => references::check_refs_003(&file, &library, empty),
+        "JSS-REFS-004" => references::check_refs_004(&file, &library, empty),
+        "JSS-REFS-005" => references::check_refs_005(&file, &library, empty),
+        "JSS-REFS-006" => references::check_refs_006(&file, &library, empty),
+        "JSS-REFS-007" => references::check_refs_007(&file, &library, empty),
         other => panic!("no Rust rule wired up for {other}"),
     }
 }

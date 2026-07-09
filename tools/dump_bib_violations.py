@@ -19,7 +19,12 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from texlint.api import ParsedDocument, ToolConfig  # noqa: E402
 from texlint.core.parser import parse_bib_file  # noqa: E402
-from texlint.journals.jss.rules import bibtex, house_style, naming  # noqa: E402
+from texlint.journals.jss.rules import (  # noqa: E402
+    bibtex,
+    house_style,
+    naming,
+    references,
+)
 
 _CHECKS = {
     "JSS-BIBTEX-001": bibtex.check_jss_bibtex_001,
@@ -28,6 +33,12 @@ _CHECKS = {
     "JSS-BIBTEX-004": bibtex.check_jss_bibtex_004,
     "JSS-BIBTEX-005": bibtex.check_jss_bibtex_005,
     "JSS-NAME-002": naming.check_jss_name_002,
+    "JSS-REFS-001": references.check_jss_refs_001,
+    "JSS-REFS-003": references.check_jss_refs_003,
+    "JSS-REFS-004": references.check_jss_refs_004,
+    "JSS-REFS-005": references.check_jss_refs_005,
+    "JSS-REFS-006": references.check_jss_refs_006,
+    "JSS-REFS-007": references.check_jss_refs_007,
     "JSS-HOUSE-002": house_style.check_jss_house_002,
 }
 
