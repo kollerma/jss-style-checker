@@ -35,6 +35,7 @@
 
 mod init;
 mod localdate;
+mod lsp_server;
 
 use clap::Parser;
 use jsslint_core::catalogue;
@@ -100,7 +101,7 @@ struct Cli {
 /// Subcommand names this port currently registers. Mirrors `cli.py`'s
 /// `if paths and paths[0] in main.commands:` forwarding check, scoped
 /// to only the subcommands actually wired so far.
-const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff", "init", "report"];
+const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff", "init", "report", "lsp"];
 
 #[derive(Parser)]
 #[command(
@@ -533,6 +534,7 @@ fn main() -> ExitCode {
                 "diff" => run_diff(&args[2..]),
                 "init" => run_init(&args[2..]),
                 "report" => run_report(&args[2..]),
+                "lsp" => lsp_server::main(),
                 _ => unreachable!("REGISTERED_SUBCOMMANDS out of sync"),
             };
         }

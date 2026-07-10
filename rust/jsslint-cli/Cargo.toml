@@ -16,6 +16,14 @@ jsslint-core = { workspace = true }
 clap = { workspace = true }
 serde_json = { workspace = true }
 rusqlite = { version = "0.40", default-features = false, features = ["bundled"] }
+lsp-server = "0.8"
+lsp-types = "0.97"
+crossbeam-channel = "0.5"
+url = "2"
+toml = { workspace = true }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+
+[dev-dependencies]
+serde = { workspace = true }
