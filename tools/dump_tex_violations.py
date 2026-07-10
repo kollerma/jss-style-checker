@@ -23,6 +23,7 @@ from texlint.journals.jss.rules import (  # noqa: E402
     citations,
     code_style,
     code_width,
+    crossrefs,
     house_style,
     markup,
     naming,
@@ -73,6 +74,13 @@ _CHECKS = {
     "JSS-MARKUP-002": markup.check_jss_markup_002,
     "JSS-MARKUP-003": markup.check_jss_markup_003,
     "JSS-MARKUP-004": markup.check_jss_markup_004,
+    "JSS-XREF-001": crossrefs.check_jss_xref_001,
+    "JSS-XREF-002": crossrefs.check_jss_xref_002,
+    "JSS-XREF-003": crossrefs.check_jss_xref_003,
+    "JSS-XREF-004": crossrefs.check_jss_xref_004,
+    "JSS-XREF-005": crossrefs.check_jss_xref_005,
+    "JSS-XREF-006": crossrefs.check_jss_xref_006,
+    "JSS-XREF-007": crossrefs.check_jss_xref_007,
 }
 
 

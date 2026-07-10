@@ -8,8 +8,8 @@
 
 use jsslint_core::report::Violation;
 use jsslint_core::rules::{
-    abbreviations, capitalization, citations, code_style, code_width, house_style, markup, naming,
-    operators, preamble, structure, typography,
+    abbreviations, capitalization, citations, code_style, code_width, crossrefs, house_style,
+    markup, naming, operators, preamble, structure, typography,
 };
 use jsslint_core::tex;
 use std::path::{Path, PathBuf};
@@ -56,6 +56,13 @@ const RULE_IDS: &[&str] = &[
     "JSS-MARKUP-002",
     "JSS-MARKUP-003",
     "JSS-MARKUP-004",
+    "JSS-XREF-001",
+    "JSS-XREF-002",
+    "JSS-XREF-003",
+    "JSS-XREF-004",
+    "JSS-XREF-005",
+    "JSS-XREF-006",
+    "JSS-XREF-007",
 ];
 
 fn repo_root() -> PathBuf {
@@ -162,6 +169,13 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-MARKUP-002" => markup::check_markup_002(&file, &parsed),
         "JSS-MARKUP-003" => markup::check_markup_003(&file, &parsed),
         "JSS-MARKUP-004" => markup::check_markup_004(&file, &parsed),
+        "JSS-XREF-001" => crossrefs::check_xref_001(&file, &parsed),
+        "JSS-XREF-002" => crossrefs::check_xref_002(&file, &parsed),
+        "JSS-XREF-003" => crossrefs::check_xref_003(&file, &parsed),
+        "JSS-XREF-004" => crossrefs::check_xref_004(&file, &parsed),
+        "JSS-XREF-005" => crossrefs::check_xref_005(&file, &parsed),
+        "JSS-XREF-006" => crossrefs::check_xref_006(&file, &parsed),
+        "JSS-XREF-007" => crossrefs::check_xref_007(&file, &parsed),
         other => panic!("no Rust rule wired up for {other}"),
     }
 }
