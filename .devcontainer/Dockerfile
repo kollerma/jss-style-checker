@@ -35,6 +35,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   locales \
   curl \
   ca-certificates \
+  r-base \
+  r-base-dev \
   && sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen \
   && locale-gen \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
