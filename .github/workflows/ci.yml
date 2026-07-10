@@ -39,3 +39,66 @@ jobs:
 
       - name: Pytest
         run: pytest
+
+  # Spec 018 — Rust core (jsslint-core/jsslint-cli/jsslint-wasm/
+  # jsslint-py). Every jsslint-core/jsslint-cli test that differentially
+  # checks output against the real jss-lint CLI looks specifically for
+  # `.venv/bin/jss-lint` at the repo root (skipping gracefully, not
+  # failing, if it's absent) — so this job builds that exact venv
+  # itself, matching what every developer's local checkout has, rather
+  # than relying on the `test` job's ambient (non-venv) Python install.
+  # The jsslintr R package isn't part of the Cargo workspace and needs
+  # a much heavier, non-standard toolchain (see the commit history for
+  # 018-rust-core's jsslint-r chunk) — deliberately out of scope here.
+  rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build the Python venv the Rust tests look for
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -e .[dev] -e tests/fixtures/stub_journal
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Set up Node (for the WASM binding's differential test)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install wasm-bindgen-cli (version-matched to the wasm-bindgen crate)
+        run: |
+          version=$(grep -A1 '^name = "wasm-bindgen"' rust/Cargo.lock | grep version | head -1 | cut -d '"' -f2)
+          cargo install wasm-bindgen-cli --version "$version"
+
+      - name: cargo fmt --check
+        working-directory: rust
+        run: cargo fmt --all --check
+
+      - name: cargo clippy
+        working-directory: rust
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: cargo build
+        working-directory: rust
+        run: cargo build --workspace
+
+      - name: cargo test
+        working-directory: rust
+        run: cargo test --workspace
