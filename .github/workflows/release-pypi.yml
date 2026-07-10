@@ -1,0 +1,110 @@
+name: release-pypi
+
+# Spec 018 Phase 6 — builds and publishes the jsslint PyO3 binding
+# (rust/jsslint-py/) to PyPI. Triggered by a `v*-py` tag (mirrors
+# vscode-publish.yml's `v*-vscode` convention).
+#
+# pyo3's abi3-py310 feature (see rust/jsslint-py/Cargo.toml) means one
+# wheel per platform covers all supported Python versions (3.10+) —
+# no per-Python-version matrix needed, just per-platform.
+#
+# One-time manual setup required before this can run:
+#   - Register a PyPI "pending publisher" for the project name
+#     `jsslint`, pointing at this repo, this workflow file
+#     (release-pypi.yml), and the `pypi` environment below — see
+#     https://docs.pypi.org/trusted-publishers/. No PyPI token/secret
+#     is needed once that's configured (OIDC trusted publishing).
+
+on:
+  push:
+    tags:
+      - 'v*-py'
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --manifest-path rust/jsslint-py/Cargo.toml
+          manylinux: auto
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: dist
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: x64
+          args: --release --out dist --manifest-path rust/jsslint-py/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows
+          path: dist
+
+  macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --manifest-path rust/jsslint-py/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist --manifest-path rust/jsslint-py/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: dist
+
+  publish:
+    needs: [linux, windows, macos, sdist]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
