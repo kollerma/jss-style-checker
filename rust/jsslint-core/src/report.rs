@@ -9,7 +9,7 @@
 //! `output::json` still renders it under the `"file"` key exactly as
 //! `output/json_output.py` does via `Path.as_posix()`.
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Severity {
     Error,
     Warning,
