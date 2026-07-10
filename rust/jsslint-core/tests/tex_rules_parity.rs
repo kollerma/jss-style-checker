@@ -7,7 +7,9 @@
 //! Skips entirely (doesn't fail) if the Python venv isn't set up.
 
 use jsslint_core::report::Violation;
-use jsslint_core::rules::{abbreviations, capitalization, code_style, code_width, typography};
+use jsslint_core::rules::{
+    abbreviations, capitalization, code_style, code_width, structure, typography,
+};
 use jsslint_core::tex;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -25,6 +27,12 @@ const RULE_IDS: &[&str] = &[
     "JSS-CAP-001",
     "JSS-CAP-002",
     "JSS-CAP-004",
+    "JSS-STRUCT-001",
+    "JSS-STRUCT-002",
+    "JSS-STRUCT-003",
+    "JSS-STRUCT-004",
+    "JSS-STRUCT-005",
+    "JSS-STRUCT-006",
 ];
 
 fn repo_root() -> PathBuf {
@@ -103,6 +111,12 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-CAP-001" => capitalization::check_cap_001(&file, &parsed),
         "JSS-CAP-002" => capitalization::check_cap_002(&file, &parsed),
         "JSS-CAP-004" => capitalization::check_cap_004(&file, &parsed),
+        "JSS-STRUCT-001" => structure::check_struct_001(&file, &parsed),
+        "JSS-STRUCT-002" => structure::check_struct_002(&file, &parsed),
+        "JSS-STRUCT-003" => structure::check_struct_003(&file, &parsed),
+        "JSS-STRUCT-004" => structure::check_struct_004(&file, &parsed),
+        "JSS-STRUCT-005" => structure::check_struct_005(&file, &parsed),
+        "JSS-STRUCT-006" => structure::check_struct_006(&file, &parsed),
         other => panic!("no Rust rule wired up for {other}"),
     }
 }

@@ -22,6 +22,7 @@ from texlint.journals.jss.rules import (  # noqa: E402
     capitalization,
     code_style,
     code_width,
+    structure,
     typography,
 )
 
@@ -38,6 +39,12 @@ _CHECKS = {
     "JSS-CAP-002": capitalization.check_jss_cap_002,
     "JSS-CAP-004": capitalization.check_jss_cap_004,
     "JSS-ABBR-001": abbreviations.check_jss_abbr_001,
+    "JSS-STRUCT-001": structure.check_jss_struct_001,
+    "JSS-STRUCT-002": structure.check_jss_struct_002,
+    "JSS-STRUCT-003": structure.check_jss_struct_003,
+    "JSS-STRUCT-004": structure.check_jss_struct_004,
+    "JSS-STRUCT-005": structure.check_jss_struct_005,
+    "JSS-STRUCT-006": structure.check_jss_struct_006,
 }
 
 
