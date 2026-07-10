@@ -15,6 +15,7 @@ pub mod engine;
 pub mod explain;
 pub mod fixer;
 pub mod json_output;
+pub mod lsp;
 pub mod report;
 pub mod rules;
 pub mod sarif;
