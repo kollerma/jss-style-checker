@@ -433,6 +433,13 @@ mod rules_registry {
     ];
 }
 
+/// Mirrors Python `repr(sorted(some_str_set))` for a list of plain
+/// (quote-free) format tags — `str.__repr__` single-quotes.
+fn python_list_repr(items: &[&str]) -> String {
+    let quoted: Vec<String> = items.iter().map(|s| format!("'{s}'")).collect();
+    format!("[{}]", quoted.join(", "))
+}
+
 /// Mirrors `journals/jss/__init__.py::_TITLE_MAP` — display titles for
 /// `catalogue::categories()`'s ids, hand-maintained on the Python side
 /// too (not generated from catalogue.yaml).
@@ -585,6 +592,31 @@ pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
                     has_any_file
                 };
                 if !should_run {
+                    // Mirrors `core/engine.py::run`'s `check_skipped_for_format`
+                    // branch: every currently format-restricted rule
+                    // (PRE-001..008, OPER-003) declares
+                    // `formats=frozenset({"tex", "rnw"})`, so the
+                    // "rule formats=" half of the message is a fixed
+                    // literal; `inputs=` is `sorted(_file_format(f) for f
+                    // in doc.all_files())` — this port has no `.rnw`/
+                    // `.rmd` input support yet, so inputs is a subset of
+                    // {"bib", "tex"}.
+                    let mut input_formats: Vec<&str> = Vec::new();
+                    if !document.tex_files.is_empty() {
+                        input_formats.push("tex");
+                    }
+                    if !document.bib_files.is_empty() {
+                        input_formats.push("bib");
+                    }
+                    input_formats.sort_unstable();
+                    skipped.push(SkippedRule {
+                        rule_id: rule_id.to_string(),
+                        reason: format!(
+                            "format mismatch (rule formats={}; inputs={})",
+                            python_list_repr(&["rnw", "tex"]),
+                            python_list_repr(&input_formats),
+                        ),
+                    });
                     continue;
                 }
                 let mut rule_violations = Vec::new();

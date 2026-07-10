@@ -6,24 +6,26 @@
 //!
 //! Not yet ported (see the plan's Phase 4 scope and this crate's
 //! follow-up commits): the `explain`/`init`/`report`/`diff`/`lsp`
-//! subcommands, `--fix`/`--dry-run`/`--apply`/`--fix-rule`
-//! (`jsslint_core::fixer` exists but isn't wired to disk I/O here
-//! yet), `--crossref` (an online, opt-in feature out of scope per the
-//! plan), `.jss-lint.toml` config-file loading (CLI flags + defaults
-//! only for now), and `.rnw`/`.rmd` inputs (no parser ported yet —
-//! see `jsslint_core::engine`'s doc comment). `--output html` is
+//! subcommands, `--crossref` (an online, opt-in feature out of scope
+//! per the plan), `.jss-lint.toml` config-file loading (CLI flags +
+//! defaults only for now), and `.rnw`/`.rmd` inputs (no parser ported
+//! yet — see `jsslint_core::engine`'s doc comment). `--output html` is
 //! unimplemented (the plan defers HTML/PDF rendering). `--output
 //! json`/`sarif` are fully wired (`jsslint_core::json_output`/
 //! `jsslint_core::sarif`); `--output terminal` (the default) is wired
 //! to `jsslint_core::terminal`, which targets the non-tty
 //! (piped/redirected) rendering path only — see that module's doc
-//! comment.
+//! comment. `--fix`/`--dry-run`/`--apply`/`--fix-rule` are wired to
+//! `jsslint_core::fixer::apply_fixes`.
 
 use clap::Parser;
+use jsslint_core::catalogue;
 use jsslint_core::config::{ConfidenceTier, Mode, OutputFormat, ToolConfig};
 use jsslint_core::engine::{self, EngineError, ParsedDocument};
+use jsslint_core::fixer::{self, ApplyMode};
 use jsslint_core::report::{ComplianceReport, Severity};
 use jsslint_core::{json_output, sarif, terminal};
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -59,6 +61,22 @@ struct Cli {
 
     #[arg(short = 'v', long)]
     verbose: bool,
+
+    /// Apply auto-fixes (spec 008). Atomic write per file.
+    #[arg(long)]
+    fix: bool,
+
+    /// With --fix: print proposed fixes as a unified diff; do not write.
+    #[arg(long = "dry-run")]
+    dry_run: bool,
+
+    /// With --fix: prompt [y/n/a/q] per fix.
+    #[arg(long)]
+    apply: bool,
+
+    /// Repeatable; limits --fix to the named rule ids.
+    #[arg(long = "fix-rule")]
+    fix_rules: Vec<String>,
 }
 
 fn eprint_line(msg: &str) {
@@ -133,6 +151,62 @@ fn main() -> ExitCode {
     config.verbose = cli.verbose;
 
     let report = engine::run(&config, &document);
+
+    if cli.dry_run && !cli.fix {
+        eprint_line("jss-lint: --dry-run requires --fix");
+        return ExitCode::from(2);
+    }
+    if cli.apply && !cli.fix {
+        eprint_line("jss-lint: --apply requires --fix");
+        return ExitCode::from(2);
+    }
+    if cli.dry_run && cli.apply {
+        eprint_line("jss-lint: --dry-run and --apply are mutually exclusive");
+        return ExitCode::from(2);
+    }
+    if cli.fix {
+        let scope: Option<HashSet<String>> = if cli.fix_rules.is_empty() {
+            None
+        } else {
+            let mut known_ids: HashSet<String> = report
+                .violations
+                .iter()
+                .map(|v| v.rule_id.clone())
+                .collect();
+            for rule in catalogue::all_rules() {
+                known_ids.insert(rule.rule_id.to_string());
+            }
+            for rid in &cli.fix_rules {
+                if !known_ids.contains(rid) {
+                    eprint_line(&format!("jss-lint: unknown --fix-rule '{rid}'"));
+                    return ExitCode::from(2);
+                }
+            }
+            Some(cli.fix_rules.iter().cloned().collect())
+        };
+        let mode = if cli.dry_run {
+            ApplyMode::DryRun
+        } else if cli.apply {
+            ApplyMode::Interactive
+        } else {
+            ApplyMode::Write
+        };
+        let stdin = std::io::stdin();
+        let mut stdin_lock = stdin.lock();
+        let mut stdout = std::io::stdout();
+        let mut stderr = std::io::stderr();
+        let fix_report = fixer::apply_fixes(
+            &report,
+            mode,
+            scope.as_ref(),
+            &mut stdin_lock,
+            &mut stdout,
+            &mut stderr,
+        );
+        if !fix_report.rejected.is_empty() {
+            return ExitCode::from(2);
+        }
+    }
 
     match config.output {
         OutputFormat::Json => print!("{}", json_output::render(&report)),

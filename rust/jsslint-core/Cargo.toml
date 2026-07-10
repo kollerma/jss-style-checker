@@ -11,6 +11,7 @@ description = "Core rule engine for the JSS style checker (spec 018 Rust port)."
 serde = { workspace = true }
 serde_json = { workspace = true }
 regex = "1"
+difflib = { workspace = true }
 
 [build-dependencies]
 serde = { workspace = true }

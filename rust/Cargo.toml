@@ -20,3 +20,4 @@ jsslint-core = { path = "jsslint-core" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 clap = { version = "4", features = ["derive"] }
+difflib = "0.4"
