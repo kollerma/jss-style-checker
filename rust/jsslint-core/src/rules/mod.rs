@@ -7,6 +7,7 @@
 //! byte span for a `Fix` (bibtexparser exposes no field-level offsets,
 //! only `entry.start_line`).
 
+pub mod abbreviations;
 pub mod bibtex;
 pub mod code_style;
 pub mod code_width;

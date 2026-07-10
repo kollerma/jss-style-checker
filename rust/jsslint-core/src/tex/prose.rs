@@ -278,14 +278,21 @@ pub(crate) fn children_slots<'a>(node: &'a Node) -> Vec<Slot<'a>> {
 /// followed by `{ggplot2}`, since `\pkg` is unknown to the tokenizer
 /// and so takes no arguments of its own), that macro is pushed onto
 /// the ancestor stack before recursing into the group.
+///
+/// `visit` receives `(node, ancestors, parent_seq, idx)` — the full
+/// 4-tuple `_helpers.py::_walk_with_context` yields, needed by rules
+/// that also look at siblings (e.g. `_next_group_arg`/`_macro_args_text`
+/// callers). Callers that only need `(node, ancestors)` should use
+/// [`walk`], which wraps this with the trailing two args ignored.
+#[allow(clippy::type_complexity)] // needs an elided higher-ranked bound on the slice params; a named type alias breaks it (see git history)
 pub fn walk_with_context<'a>(
     seq: &[Slot<'a>],
     ancestors: &mut Vec<&'a Node>,
-    visit: &mut dyn FnMut(&'a Node, &[&'a Node]),
+    visit: &mut dyn FnMut(&'a Node, &[&'a Node], &[Slot<'a>], usize),
 ) {
     for (i, &slot) in seq.iter().enumerate() {
         let Some(node) = slot else { continue };
-        visit(node, ancestors);
+        visit(node, ancestors, seq, i);
 
         let children = children_slots(node);
         let extra: Slot<'a> = if matches!(node, Node::Group(_)) && i > 0 {
@@ -313,9 +320,12 @@ pub fn walk_with_context<'a>(
 }
 
 /// Convenience entry point over a top-level node list (no absent
-/// slots — every entry is `Some`).
+/// slots — every entry is `Some`) for callers that only need
+/// `(node, ancestors)`.
 pub fn walk<'a>(nodes: &'a [Node], visit: &mut dyn FnMut(&'a Node, &[&'a Node])) {
     let top: Vec<Slot<'a>> = nodes.iter().map(Some).collect();
     let mut ancestors: Vec<&'a Node> = Vec::new();
-    walk_with_context(&top, &mut ancestors, visit);
+    walk_with_context(&top, &mut ancestors, &mut |node, anc, _seq, _idx| {
+        visit(node, anc)
+    });
 }

@@ -17,13 +17,18 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from texlint.api import ParsedDocument, ToolConfig  # noqa: E402
 from texlint.core.parser import parse_tex_file  # noqa: E402
-from texlint.journals.jss.rules import code_style, code_width  # noqa: E402
+from texlint.journals.jss.rules import (  # noqa: E402
+    abbreviations,
+    code_style,
+    code_width,
+)
 
 _CHECKS = {
     "JSS-WIDTH-001": code_width.check_jss_width_001,
     "JSS-CODE-001": code_style.check_jss_code_001,
     "JSS-CODE-002": code_style.check_jss_code_002,
     "JSS-CODE-003": code_style.check_jss_code_003,
+    "JSS-ABBR-001": abbreviations.check_jss_abbr_001,
 }
 
 
