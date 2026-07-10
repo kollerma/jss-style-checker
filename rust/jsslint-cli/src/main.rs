@@ -14,20 +14,23 @@
 //! comment. `--output html` is unimplemented (the plan defers
 //! HTML/PDF rendering).
 //!
-//! The `explain` and `diff` subcommands are wired
-//! (`jsslint_core::explain`/`jsslint_core::diff`), via a hand-rolled
-//! dispatch in `main()` mirroring `cli.py`'s Click-group hack
-//! (`invoke_without_command=True` plus manually forwarding when
-//! `paths[0]` matches a registered subcommand name) — clap's derive
-//! subcommand DSL doesn't cleanly coexist with a catch-all `paths:
-//! Vec<String>` positional on the same struct. `init`/`report`/`lsp`
-//! aren't wired yet, so files literally named e.g. `init` (no
-//! extension) still lint normally in this port, unlike real
-//! `jss-lint` (same footgun Python's own hack has for any subcommand
-//! name, faithfully preserved). `--crossref` (an online, opt-in
-//! feature) is out of scope per the plan's network-dependency callout,
-//! and `.rnw`/`.rmd` inputs have no parser yet — see
-//! `jsslint_core::engine`'s doc comment.
+//! The `explain`, `diff`, and `init` subcommands are wired
+//! (`jsslint_core::explain`/`jsslint_core::diff`; `init`'s logic lives
+//! in this crate's own `init` module, not `jsslint-core` — see that
+//! module's doc comment), via a hand-rolled dispatch in `main()`
+//! mirroring `cli.py`'s Click-group hack (`invoke_without_command=True`
+//! plus manually forwarding when `paths[0]` matches a registered
+//! subcommand name) — clap's derive subcommand DSL doesn't cleanly
+//! coexist with a catch-all `paths: Vec<String>` positional on the
+//! same struct. `report`/`lsp` aren't wired yet, so a file literally
+//! named e.g. `report` (no extension) still lints normally in this
+//! port, unlike real `jss-lint` (same footgun Python's own hack has
+//! for any subcommand name, faithfully preserved). `--crossref` (an
+//! online, opt-in feature) is out of scope per the plan's
+//! network-dependency callout, and `.rnw`/`.rmd` inputs have no parser
+//! yet — see `jsslint_core::engine`'s doc comment.
+
+mod init;
 
 use clap::Parser;
 use jsslint_core::catalogue;
@@ -93,7 +96,7 @@ struct Cli {
 /// Subcommand names this port currently registers. Mirrors `cli.py`'s
 /// `if paths and paths[0] in main.commands:` forwarding check, scoped
 /// to only the subcommands actually wired so far.
-const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff"];
+const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff", "init"];
 
 #[derive(Parser)]
 #[command(
@@ -224,6 +227,156 @@ fn run_diff(args: &[String]) -> ExitCode {
     }
 }
 
+#[derive(Parser)]
+#[command(
+    name = "jss-lint init",
+    about = "Initialise .jss-lint.toml for a manuscript directory"
+)]
+struct InitArgs {
+    /// File or directory to lint before writing the config.
+    path: Option<String>,
+
+    #[arg(long)]
+    force: bool,
+
+    #[arg(long = "dry-run")]
+    dry_run: bool,
+
+    #[arg(long, default_value_t = 0.90)]
+    threshold: f64,
+}
+
+/// `Path.__truediv__`/construction in Python's `pathlib` drops bare
+/// `.` components (`Path(".") / "x"` == `PosixPath("x")`, not
+/// `"./x"`) — `std::path::PathBuf::join` doesn't do this, so a literal
+/// `"./x"` or a `.`-joined path would otherwise print with a `./`
+/// prefix real `jss-lint init` never shows (its `config_path`/error
+/// messages come from `Path` objects throughout). Doesn't collapse a
+/// bare `"."` to empty, matching `str(Path("."))` == `"."`.
+pub(crate) fn pathlib_normalize(p: &Path) -> PathBuf {
+    let filtered: PathBuf = p
+        .components()
+        .filter(|c| !matches!(c, std::path::Component::CurDir))
+        .collect();
+    if filtered.as_os_str().is_empty() {
+        PathBuf::from(".")
+    } else {
+        filtered
+    }
+}
+
+/// `path`'s existence isn't pre-validated the way Click's
+/// `click.Path(exists=True, ...)` gates real `jss-lint init` — same
+/// documented scope decision as `diff`'s `OLD`/`NEW` arguments (see
+/// `load_diff_input`'s doc comment): only the exit code, not Click's
+/// own usage-error text, is guaranteed to match for a missing path.
+fn run_init(args: &[String]) -> ExitCode {
+    let parsed = InitArgs::try_parse_from(
+        std::iter::once("jss-lint-init".to_string()).chain(args.iter().cloned()),
+    )
+    .unwrap_or_else(|e| e.exit());
+    let path_str = parsed.path.clone().unwrap_or_else(|| ".".to_string());
+    let target = pathlib_normalize(&PathBuf::from(&path_str));
+    if !target.exists() {
+        eprint_line(&format!("jss-lint: path does not exist: {path_str}"));
+        return ExitCode::from(2);
+    }
+
+    let (target_dir, candidates): (PathBuf, Vec<PathBuf>) = if target.is_dir() {
+        let mut found: Vec<PathBuf> = std::fs::read_dir(&target)
+            .map(|entries| {
+                entries
+                    .flatten()
+                    .map(|e| e.path())
+                    .filter(|p| p.is_file() && is_supported_suffix(p))
+                    .map(|p| pathlib_normalize(&p))
+                    .collect()
+            })
+            .unwrap_or_default();
+        found.sort();
+        (target.clone(), found)
+    } else {
+        (
+            target
+                .parent()
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|| PathBuf::from(".")),
+            vec![target.clone()],
+        )
+    };
+
+    if candidates.is_empty() {
+        eprint_line(&format!(
+            "jss-lint: no lintable files under {}",
+            target.display()
+        ));
+        return ExitCode::from(2);
+    }
+
+    let sources: Result<Vec<(String, String)>, std::io::Error> = candidates
+        .iter()
+        .map(|p| std::fs::read_to_string(p).map(|c| (p.to_string_lossy().into_owned(), c)))
+        .collect();
+    let sources = match sources {
+        Ok(s) => s,
+        Err(exc) => {
+            eprint_line(&format!("jss-lint: {exc}"));
+            return ExitCode::from(2);
+        }
+    };
+    let document = match ParsedDocument::from_sources(&sources) {
+        Ok(d) => d,
+        Err(EngineError::UnsupportedSuffix(msg)) => {
+            eprint_line(&format!("jss-lint: {msg}"));
+            return ExitCode::from(2);
+        }
+    };
+
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let cfg = config::load(&cwd, &RawOverrides::default());
+    if cfg.journal != "jss" {
+        eprint_line(&format!(
+            "jss-lint: No journal registered under '{}'. Known: ['jss']",
+            cfg.journal
+        ));
+        return ExitCode::from(2);
+    }
+    let report = engine::run(&cfg, &document);
+
+    match init::run(
+        &target_dir,
+        &report,
+        parsed.force,
+        parsed.dry_run,
+        parsed.threshold,
+        &cfg.journal,
+        None,
+    ) {
+        Ok(result) => {
+            if parsed.dry_run {
+                println!("Proposed .jss-lint.toml (dry-run; nothing written):");
+                println!("{}", result.contents);
+            } else {
+                println!("Wrote {}", result.config_path.display());
+                let plural = if result.suppressed_count == 1 {
+                    ""
+                } else {
+                    "s"
+                };
+                println!(
+                    "({} distinct rules in {} violations; {} rule{plural} auto-suppressed by precision DB)",
+                    result.must_fix_count, result.total_violations, result.suppressed_count
+                );
+            }
+            ExitCode::from(0)
+        }
+        Err(init::InitError::Refused(msg)) | Err(init::InitError::InvalidThreshold(msg)) => {
+            eprint_line(&format!("jss-lint: {msg}"));
+            ExitCode::from(2)
+        }
+    }
+}
+
 fn eprint_line(msg: &str) {
     eprintln!("{msg}");
 }
@@ -235,6 +388,7 @@ fn main() -> ExitCode {
             return match first.as_str() {
                 "explain" => run_explain(&args[2..]),
                 "diff" => run_diff(&args[2..]),
+                "init" => run_init(&args[2..]),
                 _ => unreachable!("REGISTERED_SUBCOMMANDS out of sync"),
             };
         }

@@ -15,3 +15,7 @@ path = "src/main.rs"
 jsslint-core = { workspace = true }
 clap = { workspace = true }
 serde_json = { workspace = true }
+rusqlite = { version = "0.40", default-features = false, features = ["bundled"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
