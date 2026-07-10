@@ -98,7 +98,7 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-BIBTEX-001" => bibtex::check_bibtex_001(&file, &library, empty),
         "JSS-BIBTEX-002" => bibtex::check_bibtex_002(&file, &library),
         "JSS-BIBTEX-003" => bibtex::check_bibtex_003(&file, &library, empty),
-        "JSS-BIBTEX-004" => bibtex::check_bibtex_004(&file, &file, &library, empty, |_| (0, 0)),
+        "JSS-BIBTEX-004" => bibtex::check_bibtex_004(&file, &[], &library, empty),
         "JSS-BIBTEX-005" => bibtex::check_bibtex_005(&file, &library),
         "JSS-NAME-002" => naming::check_name_002(&file, &chars, &library, empty),
         "JSS-HOUSE-002" => house_style::check_house_002(&file, &chars, &library, empty),

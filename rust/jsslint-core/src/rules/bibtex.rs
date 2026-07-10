@@ -191,9 +191,13 @@ fn entries_by_key(library: &Library) -> HashMap<String, &Entry> {
 /// site. Mirrors `bibtex.py::_iter_cite_sites` (position only — the
 /// Python version also threads `tex`/`node`/`parent`/`idx` through for
 /// line/column lookup, which the caller does here via `macro_pos`).
-fn cite_sites(tex_like: &[&[TexNode]]) -> Vec<(usize, String)> {
+/// Returns `(tex_like_index, pos, key)` — the index into `tex_like`
+/// identifies which tex file a cite site came from, so a caller with
+/// more than one tex file can resolve `pos` against the right file's
+/// own `LineIndex`.
+fn cite_sites(tex_like: &[&[TexNode]]) -> Vec<(usize, usize, String)> {
     let mut out = Vec::new();
-    for &nodes in tex_like {
+    for (i, &nodes) in tex_like.iter().enumerate() {
         extract::iter_with_parent_visit(nodes, &mut |parent: &[Slot], idx, node| {
             let TexNode::Macro(m) = node else { return };
             if !CITE_MACROS_FOR_SCOPE.contains(&m.macroname.as_str()) {
@@ -203,7 +207,7 @@ fn cite_sites(tex_like: &[&[TexNode]]) -> Vec<(usize, String)> {
             for raw in text.split(',') {
                 let key = raw.trim();
                 if !key.is_empty() && key != "*" {
-                    out.push((m.span.pos, key.to_string()));
+                    out.push((i, m.span.pos, key.to_string()));
                 }
             }
         });
@@ -214,16 +218,17 @@ fn cite_sites(tex_like: &[&[TexNode]]) -> Vec<(usize, String)> {
 /// JSS-BIBTEX-004 — 6+ authors need `\shortcites{}` or the
 /// `shortnames` class option.
 ///
-/// `tex_pos_to_line`: resolves a tex-file char position to a 1-based
-/// line, for the tex-anchored violations this rule emits when cite
-/// sites exist (mirrors `_helpers._lineno_col`, column always 1 here
-/// per the Python source's `col` from that helper — see call site).
+/// `tex_files`: one `(file_name, LineIndex)` pair per slice in
+/// `tex_like`, same order — resolves a cite site's char position to
+/// its OWN file's 1-based line/col (mirrors `_helpers._lineno_col`
+/// called with that cite's own `tex` file object in
+/// `bibtex.py::check_jss_bibtex_004`; a single global resolver would
+/// misattribute positions when a document has more than one tex file).
 pub fn check_bibtex_004(
     bib_file: &str,
-    tex_file: &str,
+    tex_files: &[(&str, &crate::tex::position::LineIndex)],
     library: &Library,
     tex_like: &[&[TexNode]],
-    tex_pos_to_line_col: impl Fn(usize) -> (u32, u32),
 ) -> Vec<Violation> {
     if has_shortnames_option(tex_like) {
         return Vec::new();
@@ -253,7 +258,7 @@ pub fn check_bibtex_004(
 
     let mut seen = HashSet::new();
     let mut out = Vec::new();
-    for (pos, key) in cite_sites(tex_like) {
+    for (tex_idx, pos, key) in cite_sites(tex_like) {
         if seen.contains(&key) || shortcited.contains(&key) {
             continue;
         }
@@ -264,7 +269,8 @@ pub fn check_bibtex_004(
             continue;
         }
         seen.insert(key.clone());
-        let (line, column) = tex_pos_to_line_col(pos);
+        let (tex_file, line_index) = tex_files[tex_idx];
+        let (line, column) = super::tex_common::lineno_col(line_index, pos);
         out.push(Violation {
             file: tex_file.to_string(),
             line,
