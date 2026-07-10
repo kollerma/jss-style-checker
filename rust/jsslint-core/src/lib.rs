@@ -9,6 +9,7 @@
 pub mod bib;
 pub mod catalogue;
 pub mod config;
+pub mod diff;
 pub mod engine;
 pub mod explain;
 pub mod fixer;

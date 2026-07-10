@@ -14,13 +14,14 @@
 //! comment. `--output html` is unimplemented (the plan defers
 //! HTML/PDF rendering).
 //!
-//! The `explain` subcommand is wired (`jsslint_core::explain`), via a
-//! hand-rolled dispatch in `main()` mirroring `cli.py`'s Click-group
-//! hack (`invoke_without_command=True` plus manually forwarding when
+//! The `explain` and `diff` subcommands are wired
+//! (`jsslint_core::explain`/`jsslint_core::diff`), via a hand-rolled
+//! dispatch in `main()` mirroring `cli.py`'s Click-group hack
+//! (`invoke_without_command=True` plus manually forwarding when
 //! `paths[0]` matches a registered subcommand name) — clap's derive
 //! subcommand DSL doesn't cleanly coexist with a catch-all `paths:
-//! Vec<String>` positional on the same struct. `init`/`report`/`diff`/
-//! `lsp` aren't wired yet, so files literally named e.g. `init` (no
+//! Vec<String>` positional on the same struct. `init`/`report`/`lsp`
+//! aren't wired yet, so files literally named e.g. `init` (no
 //! extension) still lint normally in this port, unlike real
 //! `jss-lint` (same footgun Python's own hack has for any subcommand
 //! name, faithfully preserved). `--crossref` (an online, opt-in
@@ -92,7 +93,7 @@ struct Cli {
 /// Subcommand names this port currently registers. Mirrors `cli.py`'s
 /// `if paths and paths[0] in main.commands:` forwarding check, scoped
 /// to only the subcommands actually wired so far.
-const REGISTERED_SUBCOMMANDS: &[&str] = &["explain"];
+const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff"];
 
 #[derive(Parser)]
 #[command(
@@ -134,6 +135,95 @@ fn run_explain(args: &[String]) -> ExitCode {
     }
 }
 
+#[derive(Parser)]
+#[command(name = "jss-lint diff", about = "Diff two --output json reports")]
+struct DiffArgs {
+    old: PathBuf,
+    new: PathBuf,
+
+    #[arg(long = "ignore-line-drift")]
+    ignore_line_drift: bool,
+
+    #[arg(long = "format", value_parser = ["terminal", "markdown", "json"], default_value = "terminal")]
+    format: String,
+}
+
+/// Reads and schema-validates one `diff` input file. On failure,
+/// prints an error and returns the exit code to propagate.
+///
+/// Two of Python's error paths aren't byte-matched here: real
+/// `jss-lint diff` uses `click.Path(exists=True, ...)` on the `OLD`/
+/// `NEW` arguments, so a missing file is actually rejected by Click's
+/// own multi-line usage-error formatter *before* `diff_cmd` ever runs
+/// (the custom `_eprint(f"jss-lint: failed to read {p}: {exc}")` path
+/// in `cli.py::_load` is effectively dead for "file not found", only
+/// reachable for rarer `OSError`s like a permission failure). And a
+/// malformed-JSON-content message comes from the two languages'
+/// completely different JSON parsers, so `str(json.JSONDecodeError)`
+/// and `serde_json::Error`'s `Display` were never going to match
+/// character-for-character. Both are edge cases with no real-corpus
+/// fixture; only the exit code (2) is guaranteed to match, and the
+/// `SchemaMismatch` path (this crate's own message text, mirrored
+/// exactly) still gets byte parity.
+fn load_diff_input(path: &Path) -> Result<Vec<serde_json::Value>, ExitCode> {
+    let contents = match std::fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(exc) => {
+            eprint_line(&format!(
+                "jss-lint: failed to read {}: {exc}",
+                path.display()
+            ));
+            return Err(ExitCode::from(2));
+        }
+    };
+    let payload: serde_json::Value = match serde_json::from_str(&contents) {
+        Ok(v) => v,
+        Err(exc) => {
+            eprint_line(&format!(
+                "jss-lint: failed to read {}: {exc}",
+                path.display()
+            ));
+            return Err(ExitCode::from(2));
+        }
+    };
+    match jsslint_core::diff::validate_payload(&payload, &path.display().to_string()) {
+        Ok(v) => Ok(v),
+        Err(mismatch) => {
+            eprint_line(&format!("jss-lint: {mismatch}"));
+            Err(ExitCode::from(2))
+        }
+    }
+}
+
+fn run_diff(args: &[String]) -> ExitCode {
+    let parsed = DiffArgs::try_parse_from(
+        std::iter::once("jss-lint-diff".to_string()).chain(args.iter().cloned()),
+    )
+    .unwrap_or_else(|e| e.exit());
+
+    let old = match load_diff_input(&parsed.old) {
+        Ok(v) => v,
+        Err(code) => return code,
+    };
+    let new = match load_diff_input(&parsed.new) {
+        Ok(v) => v,
+        Err(code) => return code,
+    };
+
+    let diff = jsslint_core::diff::compare(&old, &new, parsed.ignore_line_drift, None);
+    let rendered = match parsed.format.as_str() {
+        "markdown" => jsslint_core::diff::render_markdown(&diff),
+        "json" => jsslint_core::diff::render_json(&diff),
+        _ => jsslint_core::diff::render_terminal(&diff),
+    };
+    print!("{rendered}");
+    if diff.introduced.is_empty() {
+        ExitCode::from(0)
+    } else {
+        ExitCode::from(1)
+    }
+}
+
 fn eprint_line(msg: &str) {
     eprintln!("{msg}");
 }
@@ -144,6 +234,7 @@ fn main() -> ExitCode {
         if REGISTERED_SUBCOMMANDS.contains(&first.as_str()) {
             return match first.as_str() {
                 "explain" => run_explain(&args[2..]),
+                "diff" => run_diff(&args[2..]),
                 _ => unreachable!("REGISTERED_SUBCOMMANDS out of sync"),
             };
         }

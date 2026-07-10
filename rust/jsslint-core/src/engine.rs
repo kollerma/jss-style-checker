@@ -434,8 +434,10 @@ mod rules_registry {
 }
 
 /// Mirrors Python `repr(sorted(some_str_set))` for a list of plain
-/// (quote-free) format tags — `str.__repr__` single-quotes.
-fn python_list_repr(items: &[&str]) -> String {
+/// (quote-free) format tags — `str.__repr__` single-quotes. `pub(crate)`
+/// so `diff.rs`'s schema-mismatch messages (also built from
+/// `repr(sorted(some_set))`) can reuse it instead of duplicating.
+pub(crate) fn python_list_repr(items: &[&str]) -> String {
     let quoted: Vec<String> = items.iter().map(|s| format!("'{s}'")).collect();
     format!("[{}]", quoted.join(", "))
 }
