@@ -8,6 +8,8 @@
 
 pub mod bib;
 pub mod catalogue;
+pub mod config;
+pub mod engine;
 pub mod fixer;
 pub mod json_output;
 pub mod report;

@@ -24,6 +24,28 @@ impl Severity {
             Severity::Info => "info",
         }
     }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "error" => Some(Severity::Error),
+            "warning" => Some(Severity::Warning),
+            "info" => Some(Severity::Info),
+            _ => None,
+        }
+    }
+
+    /// Mirrors `cli.py::_SEVERITY_RANK = {"info": 0, "warning": 1,
+    /// "error": 2}` — used for the `--fail-on` exit-code threshold.
+    /// Deliberately not `derive(Ord)`: this enum's declaration order
+    /// (Error, Warning, Info) doesn't match severity rank order, so a
+    /// derived `Ord` would silently invert every threshold comparison.
+    pub fn rank(&self) -> u8 {
+        match self {
+            Severity::Info => 0,
+            Severity::Warning => 1,
+            Severity::Error => 2,
+        }
+    }
 }
 
 /// A single text-edit auto-fix payload (spec 008).

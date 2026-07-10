@@ -40,3 +40,9 @@ static RULES_BY_ID: LazyLock<HashMap<&'static str, &'static RuleMeta>> =
 pub fn lookup(rule_id: &str) -> Option<&'static RuleMeta> {
     RULES_BY_ID.get(rule_id).copied()
 }
+
+/// Journal rollout order — mirrors `_catalogue_data.ROLLOUT_ORDER`
+/// (`journals/jss/__init__.py::JSSJournal.categories()` iterates this).
+pub fn categories() -> &'static [&'static str] {
+    CATEGORIES
+}

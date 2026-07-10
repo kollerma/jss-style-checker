@@ -15,6 +15,7 @@ use std::path::PathBuf;
 
 #[derive(serde::Deserialize)]
 struct CatalogueDoc {
+    categories: Vec<String>,
     rules: Vec<RawRule>,
 }
 
@@ -62,6 +63,7 @@ fn main() {
         .unwrap_or_else(|e| panic!("failed to read {}: {e}", catalogue_path.display()));
     let doc: CatalogueDoc = serde_yaml::from_str(&yaml_src)
         .unwrap_or_else(|e| panic!("failed to parse {}: {e}", catalogue_path.display()));
+    let categories = doc.categories;
 
     // Deterministic (alphabetical by rule_id) so codegen output is stable
     // across runs regardless of catalogue.yaml's on-disk rule order.
@@ -114,6 +116,13 @@ fn main() {
             }
         ));
         out.push_str("    },\n");
+    }
+    out.push_str("];\n\n");
+
+    out.push_str("// Rollout order, from catalogue.yaml's top-level `categories` field.\n");
+    out.push_str("pub static CATEGORIES: &[&str] = &[\n");
+    for cat in &categories {
+        out.push_str(&format!("    {cat:?},\n"));
     }
     out.push_str("];\n");
 
