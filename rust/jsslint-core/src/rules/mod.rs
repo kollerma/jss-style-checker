@@ -14,6 +14,7 @@ pub mod citations;
 pub mod code_style;
 pub mod code_width;
 pub mod house_style;
+pub mod markup;
 pub mod naming;
 pub mod operators;
 pub mod preamble;

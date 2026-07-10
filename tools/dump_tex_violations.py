@@ -24,6 +24,7 @@ from texlint.journals.jss.rules import (  # noqa: E402
     code_style,
     code_width,
     house_style,
+    markup,
     naming,
     operators,
     preamble,
@@ -68,6 +69,10 @@ _CHECKS = {
     "JSS-CITE-002": citations.check_jss_cite_002,
     "JSS-CITE-003": citations.check_jss_cite_003,
     "JSS-CITE-004": citations.check_jss_cite_004,
+    "JSS-MARKUP-001": markup.check_jss_markup_001,
+    "JSS-MARKUP-002": markup.check_jss_markup_002,
+    "JSS-MARKUP-003": markup.check_jss_markup_003,
+    "JSS-MARKUP-004": markup.check_jss_markup_004,
 }
 
 
