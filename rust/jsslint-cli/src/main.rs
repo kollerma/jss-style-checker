@@ -14,15 +14,15 @@
 //! see `jsslint_core::engine`'s doc comment). `--output html` is
 //! unimplemented (the plan defers HTML/PDF rendering); `--output
 //! sarif` is unimplemented pending `jsslint_core::sarif`. `--output
-//! terminal` (the default) is a plain, NOT byte-matched placeholder —
-//! replicating `rich`'s exact table/box-drawing output byte-for-byte
-//! is its own follow-up chunk.
+//! terminal` (the default) is wired to `jsslint_core::terminal`,
+//! which targets the non-tty (piped/redirected) rendering path only —
+//! see that module's doc comment.
 
 use clap::Parser;
 use jsslint_core::config::{ConfidenceTier, Mode, OutputFormat, ToolConfig};
 use jsslint_core::engine::{self, EngineError, ParsedDocument};
-use jsslint_core::json_output;
 use jsslint_core::report::{ComplianceReport, Severity};
+use jsslint_core::{json_output, terminal};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -135,7 +135,7 @@ fn main() -> ExitCode {
 
     match config.output {
         OutputFormat::Json => print!("{}", json_output::render(&report)),
-        OutputFormat::Terminal => render_terminal_placeholder(&report),
+        OutputFormat::Terminal => print!("{}", terminal::render(&report, &config)),
         OutputFormat::Sarif => {
             eprint_line("jss-lint: --output sarif is not yet implemented in this binary");
             return ExitCode::from(2);
@@ -251,39 +251,4 @@ fn determine_exit_code(report: &ComplianceReport, fail_on: Severity) -> u8 {
         return 1;
     }
     0
-}
-
-/// Placeholder terminal renderer — NOT byte-matched to
-/// `output/terminal.py`'s `rich`-table output (see this module's doc
-/// comment). Groups violations by file for basic usability until the
-/// real port lands.
-fn render_terminal_placeholder(report: &ComplianceReport) {
-    let mut by_file: Vec<&str> = report.violations.iter().map(|v| v.file.as_str()).collect();
-    by_file.sort();
-    by_file.dedup();
-
-    for file in by_file {
-        println!("{file}");
-        for v in report.violations.iter().filter(|v| v.file == file) {
-            let locator = match v.column {
-                Some(c) => format!("{}:{c}", v.line),
-                None => v.line.to_string(),
-            };
-            println!(
-                "  {locator}\t{}\t{}\t{}",
-                v.severity.as_str(),
-                v.rule_id,
-                v.message
-            );
-            if let Some(suggestion) = &v.suggestion {
-                println!("    -> {suggestion}");
-            }
-        }
-    }
-
-    if let Some(pct) = report.compliance_percentage {
-        println!("\nOverall: {pct}%");
-    } else {
-        println!("\nOverall: n/a");
-    }
 }

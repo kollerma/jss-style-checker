@@ -14,6 +14,7 @@ pub mod fixer;
 pub mod json_output;
 pub mod report;
 pub mod rules;
+pub mod terminal;
 pub mod terms;
 pub mod tex;
 
