@@ -10,6 +10,7 @@
 pub mod abbreviations;
 pub mod bibtex;
 pub mod capitalization;
+pub mod citations;
 pub mod code_style;
 pub mod code_width;
 pub mod house_style;

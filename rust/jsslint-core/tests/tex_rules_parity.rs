@@ -8,8 +8,8 @@
 
 use jsslint_core::report::Violation;
 use jsslint_core::rules::{
-    abbreviations, capitalization, code_style, code_width, house_style, naming, operators,
-    preamble, structure, typography,
+    abbreviations, capitalization, citations, code_style, code_width, house_style, naming,
+    operators, preamble, structure, typography,
 };
 use jsslint_core::tex;
 use std::path::{Path, PathBuf};
@@ -49,6 +49,9 @@ const RULE_IDS: &[&str] = &[
     "JSS-PRE-006",
     "JSS-PRE-007",
     "JSS-PRE-008",
+    "JSS-CITE-002",
+    "JSS-CITE-003",
+    "JSS-CITE-004",
 ];
 
 fn repo_root() -> PathBuf {
@@ -148,6 +151,9 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-PRE-006" => preamble::check_pre_006(&file, &parsed),
         "JSS-PRE-007" => preamble::check_pre_007(&file, &parsed),
         "JSS-PRE-008" => preamble::check_pre_008(&file, &parsed),
+        "JSS-CITE-002" => citations::check_cite_002(&file, &parsed),
+        "JSS-CITE-003" => citations::check_cite_003(&file, &parsed),
+        "JSS-CITE-004" => citations::check_cite_004(&file, &parsed),
         other => panic!("no Rust rule wired up for {other}"),
     }
 }

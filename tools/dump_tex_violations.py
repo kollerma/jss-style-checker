@@ -20,6 +20,7 @@ from texlint.core.parser import parse_tex_file  # noqa: E402
 from texlint.journals.jss.rules import (  # noqa: E402
     abbreviations,
     capitalization,
+    citations,
     code_style,
     code_width,
     house_style,
@@ -64,6 +65,9 @@ _CHECKS = {
     "JSS-PRE-006": preamble.check_jss_pre_006,
     "JSS-PRE-007": preamble.check_jss_pre_007,
     "JSS-PRE-008": preamble.check_jss_pre_008,
+    "JSS-CITE-002": citations.check_jss_cite_002,
+    "JSS-CITE-003": citations.check_jss_cite_003,
+    "JSS-CITE-004": citations.check_jss_cite_004,
 }
 
 
