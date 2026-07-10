@@ -23,6 +23,10 @@ The package ships:
   [`eval/README.md`](eval/README.md) and
   [`specs/002-eval-jss-harness/quickstart.md`](specs/002-eval-jss-harness/quickstart.md)).
 
+The same engine is also being ported to Rust and compiled to a standalone
+binary, a browser/npm WASM package, a native Python extension, and an R
+package — see [`rust/README.md`](rust/README.md) for how to use each.
+
 ## Install (development)
 
 ```sh
