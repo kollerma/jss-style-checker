@@ -8,7 +8,9 @@ repository.workspace = true
 description = "Python wheel binding + in-process parity oracle (Phase 5 stub — spec 018). pyo3 wiring lands once jsslint-core has a real engine."
 
 [lib]
-crate-type = ["rlib"]
+name = "jsslint_py"
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 jsslint-core = { workspace = true }
+pyo3 = { version = "0.29", features = ["extension-module"] }
