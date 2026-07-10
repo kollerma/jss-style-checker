@@ -15,6 +15,7 @@ pub mod code_width;
 pub mod house_style;
 pub mod naming;
 pub mod operators;
+pub mod preamble;
 pub mod references;
 pub mod structure;
 pub mod tex_common;

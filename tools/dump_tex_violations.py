@@ -25,6 +25,7 @@ from texlint.journals.jss.rules import (  # noqa: E402
     house_style,
     naming,
     operators,
+    preamble,
     structure,
     typography,
 )
@@ -55,6 +56,14 @@ _CHECKS = {
     "JSS-HOUSE-001": house_style.check_jss_house_001,
     "JSS-HOUSE-003": house_style.check_jss_house_003,
     "JSS-NAME-001": naming.check_jss_name_001,
+    "JSS-PRE-001": preamble.check_jss_pre_001,
+    "JSS-PRE-002": preamble.check_jss_pre_002,
+    "JSS-PRE-003": preamble.check_jss_pre_003,
+    "JSS-PRE-004": preamble.check_jss_pre_004,
+    "JSS-PRE-005": preamble.check_jss_pre_005,
+    "JSS-PRE-006": preamble.check_jss_pre_006,
+    "JSS-PRE-007": preamble.check_jss_pre_007,
+    "JSS-PRE-008": preamble.check_jss_pre_008,
 }
 
 

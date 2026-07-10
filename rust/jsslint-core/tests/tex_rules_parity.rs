@@ -9,7 +9,7 @@
 use jsslint_core::report::Violation;
 use jsslint_core::rules::{
     abbreviations, capitalization, code_style, code_width, house_style, naming, operators,
-    structure, typography,
+    preamble, structure, typography,
 };
 use jsslint_core::tex;
 use std::path::{Path, PathBuf};
@@ -41,6 +41,14 @@ const RULE_IDS: &[&str] = &[
     "JSS-HOUSE-001",
     "JSS-HOUSE-003",
     "JSS-NAME-001",
+    "JSS-PRE-001",
+    "JSS-PRE-002",
+    "JSS-PRE-003",
+    "JSS-PRE-004",
+    "JSS-PRE-005",
+    "JSS-PRE-006",
+    "JSS-PRE-007",
+    "JSS-PRE-008",
 ];
 
 fn repo_root() -> PathBuf {
@@ -132,6 +140,14 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-HOUSE-001" => house_style::check_house_001(&file, &parsed),
         "JSS-HOUSE-003" => house_style::check_house_003(&file, &parsed),
         "JSS-NAME-001" => naming::check_name_001(&file, &parsed),
+        "JSS-PRE-001" => preamble::check_pre_001(&file, &parsed),
+        "JSS-PRE-002" => preamble::check_pre_002(&file, &parsed),
+        "JSS-PRE-003" => preamble::check_pre_003(&file, &parsed),
+        "JSS-PRE-004" => preamble::check_pre_004(&file, &parsed),
+        "JSS-PRE-005" => preamble::check_pre_005(&file, &parsed),
+        "JSS-PRE-006" => preamble::check_pre_006(&file, &parsed),
+        "JSS-PRE-007" => preamble::check_pre_007(&file, &parsed),
+        "JSS-PRE-008" => preamble::check_pre_008(&file, &parsed),
         other => panic!("no Rust rule wired up for {other}"),
     }
 }

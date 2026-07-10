@@ -7,9 +7,9 @@ use crate::bib::{Entry, Library};
 use crate::report::{Fix, FixConfidence, Violation};
 use crate::tex::extract;
 use crate::tex::node::Node as TexNode;
-use crate::tex::node::{GroupDelims, GroupNode, MacroNode, Node};
+use crate::tex::node::{GroupDelims, MacroNode, Node};
 use crate::tex::position::LineIndex;
-use crate::tex::prose::{is_in_prose_context, walk, walk_with_context, Slot};
+use crate::tex::prose::{is_in_prose_context, walk_with_context, Slot};
 use crate::tex::ParsedTex;
 use regex::Regex;
 use std::sync::LazyLock;
@@ -158,72 +158,6 @@ pub fn check_house_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
     out
 }
 
-/// `\documentclass`'s `(class_name, options)`, mirroring
-/// `preamble.py::_class_and_options` — recursive pre-order search for
-/// the first `\documentclass`, distinguishing its `[options]` and
-/// `{class}` groups by actual delimiter (not by first-Group order).
-fn class_and_options(parsed: &ParsedTex) -> Option<(Option<String>, Vec<String>)> {
-    let macro_node = first_macro(&parsed.nodes, "documentclass")?;
-    let mut class_name = None;
-    let mut options = Vec::new();
-    for arg in &macro_node.args {
-        if let Some(Node::Group(g)) = arg {
-            let text = group_plain_text(g);
-            match g.delims {
-                GroupDelims::Bracket => {
-                    options = text
-                        .split(',')
-                        .map(|s| s.trim().to_string())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                }
-                GroupDelims::Brace => {
-                    class_name = Some(text);
-                }
-            }
-        }
-    }
-    Some((class_name, options))
-}
-
-/// True when the document uses `\documentclass{jss}` (any options).
-/// Mirrors `preamble.py::_has_jss_class`.
-fn has_jss_class(parsed: &ParsedTex) -> bool {
-    class_and_options(parsed).is_some_and(|(name, _)| name.as_deref() == Some("jss"))
-}
-
-/// First macro named `name` anywhere in the tree, pre-order. Mirrors
-/// `preamble.py::_first_macro` (built on `_helpers._iter_with_parent`).
-fn first_macro<'a>(nodes: &'a [Node], name: &str) -> Option<&'a MacroNode> {
-    let mut found: Option<&'a MacroNode> = None;
-    extract::iter_with_parent_visit(nodes, &mut |_parent, _idx, node| {
-        if found.is_some() {
-            return;
-        }
-        if let Node::Macro(m) = node {
-            if m.macroname == name {
-                found = Some(m);
-            }
-        }
-    });
-    found
-}
-
-/// Concatenated plain char content of `group`, recursing into
-/// descendants (macro expansion NOT performed) and trimmed. Mirrors
-/// `preamble.py::_group_plain_text` — distinct from (and not to be
-/// confused with) the direct-children-only `_group_plain_text`
-/// variants in other rule modules (see `typography.rs`).
-fn group_plain_text(group: &GroupNode) -> String {
-    let mut out = String::new();
-    walk(&group.nodelist, &mut |node, _ancestors| {
-        if let Node::Chars(c) = node {
-            out.push_str(&c.chars);
-        }
-    });
-    out.trim().to_string()
-}
-
 /// The first mandatory-arg package name of `\usepackage`. Mirrors
 /// `house_style.py::_usepackage_name`.
 fn usepackage_name<'a>(macro_node: &'a MacroNode, parent: &[Slot<'a>], idx: usize) -> String {
@@ -290,7 +224,7 @@ fn whole_line_range(
 /// jss.cls already loads (graphicx, xcolor, ae, fancyvrb, hyperref).
 pub fn check_house_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
     let mut out = Vec::new();
-    if !has_jss_class(parsed) {
+    if !super::preamble::has_jss_class(parsed) {
         return out;
     }
     let line_index = LineIndex::new(&parsed.chars);
