@@ -1,0 +1,32 @@
+[package]
+name = "jsslintr"
+publish = false
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.65"
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+name = "jsslintr"
+
+[[bin]]
+name = "document"
+path = "document.rs"
+
+[dependencies]
+extendr-api = "0.9"
+# The same rule engine every other spec-018 binding wraps (jsslint-cli,
+# jsslint-wasm, jsslint-py) — this crate is pure marshalling, no rule
+# logic of its own.
+jsslint-core = { path = "../../../../rust/jsslint-core" }
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+# Standalone from the main rust/ Cargo workspace (an empty [workspace]
+# table here stops cargo from trying to fold this crate into that
+# workspace's members list) — R CMD INSTALL builds this crate via its
+# own `cargo build --manifest-path`, independent of the CLI/WASM/Python
+# bindings' build.
+[workspace]

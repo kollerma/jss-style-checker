@@ -1,0 +1,3 @@
+^src/rust/target$
+^src/\.cargo$
+^\.Rproj\.user$

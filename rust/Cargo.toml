@@ -4,7 +4,6 @@ members = [
     "jsslint-core",
     "jsslint-cli",
     "jsslint-wasm",
-    "jsslint-r",
     "jsslint-py",
 ]
 

@@ -425,13 +425,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jsslint-r"
-version = "0.1.0"
-dependencies = [
- "jsslint-core",
-]
-
-[[package]]
 name = "jsslint-wasm"
 version = "0.1.0"
 dependencies = [
