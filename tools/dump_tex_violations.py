@@ -1,0 +1,61 @@
+"""Python oracle for the spec-018 Rust tex-rule fixture-diff harness.
+
+Calls the REAL rule check functions directly (not through the CLI/JSON
+renderer) so `Fix` payloads are visible — same rationale as
+`tools/dump_bib_violations.py`.
+
+Usage: python -m tools.dump_tex_violations <rule_id> <path/to/file.tex>
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from texlint.api import ParsedDocument, ToolConfig  # noqa: E402
+from texlint.core.parser import parse_tex_file  # noqa: E402
+from texlint.journals.jss.rules import code_style, code_width  # noqa: E402
+
+_CHECKS = {
+    "JSS-WIDTH-001": code_width.check_jss_width_001,
+    "JSS-CODE-001": code_style.check_jss_code_001,
+    "JSS-CODE-002": code_style.check_jss_code_002,
+    "JSS-CODE-003": code_style.check_jss_code_003,
+}
+
+
+def dump(rule_id: str, tex_path: Path) -> str:
+    check = _CHECKS[rule_id]
+    parsed = parse_tex_file(tex_path)
+    doc = ParsedDocument(tex_files=(parsed,))
+    cfg = ToolConfig()
+    violations = sorted(check(doc, cfg), key=lambda v: v.sort_key())
+
+    lines = []
+    for v in violations:
+        fix = v.fix
+        fix_str = "-" if fix is None else f"{fix.start}:{fix.end}:{fix.replacement}"
+        lines.append(
+            f"{v.rule_id}\t{v.line}\t{v.column}\t{v.message}\t{v.suggestion}\t{fix_str}"
+        )
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if len(argv) != 2:
+        print("usage: python -m tools.dump_tex_violations <rule_id> <path/to/file.tex>", file=sys.stderr)
+        return 2
+    rule_id, path = argv
+    if rule_id not in _CHECKS:
+        print(f"unknown rule_id {rule_id!r}; known: {sorted(_CHECKS)}", file=sys.stderr)
+        return 2
+    sys.stdout.write(dump(rule_id, Path(path)))
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    raise SystemExit(main())

@@ -1,0 +1,157 @@
+//! Phase 3 rule acceptance harness: for every `.tex` fixture and each
+//! implemented tex rule, the Rust rule function's violations must
+//! match the Python oracle's (`tools/dump_tex_violations.py`, calling
+//! the real rule function directly — same rationale as
+//! `tests/bib_rules_parity.rs`).
+//!
+//! Skips entirely (doesn't fail) if the Python venv isn't set up.
+
+use jsslint_core::report::Violation;
+use jsslint_core::rules::{code_style, code_width};
+use jsslint_core::tex;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+
+const RULE_IDS: &[&str] = &[
+    "JSS-WIDTH-001",
+    "JSS-CODE-001",
+    "JSS-CODE-002",
+    "JSS-CODE-003",
+];
+
+fn repo_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .to_path_buf()
+}
+
+fn find_tex_fixtures(dir: &Path, out: &mut Vec<PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            find_tex_fixtures(&path, out);
+        } else if path
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("tex"))
+        {
+            out.push(path);
+        }
+    }
+}
+
+fn python_oracle_dump(python: &Path, rule_id: &str, fixture: &Path) -> String {
+    let output = Command::new(python)
+        .arg("-m")
+        .arg("tools.dump_tex_violations")
+        .arg(rule_id)
+        .arg(fixture)
+        .current_dir(repo_root())
+        .output()
+        .expect("failed to run tools.dump_tex_violations");
+    assert!(
+        output.status.success(),
+        "dump_tex_violations failed on {rule_id} {}: {}",
+        fixture.display(),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    String::from_utf8(output.stdout).expect("oracle output must be valid UTF-8")
+}
+
+fn format_violation(v: &Violation) -> String {
+    let column = v
+        .column
+        .map(|c| c.to_string())
+        .unwrap_or_else(|| "None".to_string());
+    let suggestion = v.suggestion.clone().unwrap_or_else(|| "None".to_string());
+    let fix = match &v.fix {
+        Some(f) => format!("{}:{}:{}", f.start, f.end, f.replacement),
+        None => "-".to_string(),
+    };
+    format!(
+        "{}\t{}\t{column}\t{}\t{suggestion}\t{fix}",
+        v.rule_id, v.line, v.message
+    )
+}
+
+fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation> {
+    let file = fixture.to_string_lossy().to_string();
+    let parsed = tex::parse_tex_source(source);
+    match rule_id {
+        "JSS-WIDTH-001" => code_width::check_width_001(&file, &parsed, 80),
+        "JSS-CODE-001" => code_style::check_code_001(&file, &parsed),
+        "JSS-CODE-002" => code_style::check_code_002(&file, &parsed),
+        "JSS-CODE-003" => code_style::check_code_003(&file, &parsed),
+        other => panic!("no Rust rule wired up for {other}"),
+    }
+}
+
+#[test]
+fn all_tex_rules_match_python_oracle() {
+    let root = repo_root();
+    let python = root.join(".venv/bin/python");
+    if !python.exists() {
+        eprintln!(
+            "SKIP: {} not found (Python venv not set up)",
+            python.display()
+        );
+        return;
+    }
+
+    let mut fixtures = Vec::new();
+    find_tex_fixtures(&root.join("tests/fixtures"), &mut fixtures);
+    fixtures.sort();
+    assert!(
+        !fixtures.is_empty(),
+        "expected to find .tex fixtures under tests/fixtures/"
+    );
+
+    let mut mismatches = Vec::new();
+    for fixture in &fixtures {
+        let relative = fixture
+            .strip_prefix(&root)
+            .unwrap()
+            .to_string_lossy()
+            .replace('\\', "/");
+        let source = std::fs::read_to_string(fixture)
+            .unwrap_or_else(|e| panic!("failed to read {}: {e}", fixture.display()));
+        for &rule_id in RULE_IDS {
+            let expected = python_oracle_dump(&python, rule_id, fixture);
+            let mut actual_violations = rust_violations(rule_id, fixture, &source);
+            actual_violations.sort_by(|a, b| {
+                (a.line, a.column.unwrap_or(0), a.rule_id.as_str()).cmp(&(
+                    b.line,
+                    b.column.unwrap_or(0),
+                    b.rule_id.as_str(),
+                ))
+            });
+            let actual = actual_violations
+                .iter()
+                .map(format_violation)
+                .collect::<Vec<_>>()
+                .join("\n")
+                + if actual_violations.is_empty() {
+                    ""
+                } else {
+                    "\n"
+                };
+            if actual != expected {
+                mismatches.push(format!(
+                    "{relative} [{rule_id}]\n  expected:\n{expected}\n  actual:\n{actual}"
+                ));
+            }
+        }
+    }
+
+    assert!(
+        mismatches.is_empty(),
+        "{} (fixture, rule) mismatches:\n{}",
+        mismatches.len(),
+        mismatches.join("\n---\n")
+    );
+}

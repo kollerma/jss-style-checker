@@ -8,9 +8,12 @@
 //! only `entry.start_line`).
 
 pub mod bibtex;
+pub mod code_style;
+pub mod code_width;
 pub mod house_style;
 pub mod naming;
 pub mod references;
+pub mod tex_common;
 
 use crate::bib::{Entry, Library};
 use crate::catalogue;
