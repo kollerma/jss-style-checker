@@ -8,7 +8,8 @@
 
 use jsslint_core::report::Violation;
 use jsslint_core::rules::{
-    abbreviations, capitalization, code_style, code_width, structure, typography,
+    abbreviations, capitalization, code_style, code_width, house_style, naming, operators,
+    structure, typography,
 };
 use jsslint_core::tex;
 use std::path::{Path, PathBuf};
@@ -33,6 +34,13 @@ const RULE_IDS: &[&str] = &[
     "JSS-STRUCT-004",
     "JSS-STRUCT-005",
     "JSS-STRUCT-006",
+    "JSS-OPER-001",
+    "JSS-OPER-002",
+    "JSS-OPER-003",
+    "JSS-OPER-004",
+    "JSS-HOUSE-001",
+    "JSS-HOUSE-003",
+    "JSS-NAME-001",
 ];
 
 fn repo_root() -> PathBuf {
@@ -117,6 +125,13 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-STRUCT-004" => structure::check_struct_004(&file, &parsed),
         "JSS-STRUCT-005" => structure::check_struct_005(&file, &parsed),
         "JSS-STRUCT-006" => structure::check_struct_006(&file, &parsed),
+        "JSS-OPER-001" => operators::check_oper_001(&file, &parsed),
+        "JSS-OPER-002" => operators::check_oper_002(&file, &parsed),
+        "JSS-OPER-003" => operators::check_oper_003(&file, &parsed),
+        "JSS-OPER-004" => operators::check_oper_004(&file, &parsed),
+        "JSS-HOUSE-001" => house_style::check_house_001(&file, &parsed),
+        "JSS-HOUSE-003" => house_style::check_house_003(&file, &parsed),
+        "JSS-NAME-001" => naming::check_name_001(&file, &parsed),
         other => panic!("no Rust rule wired up for {other}"),
     }
 }

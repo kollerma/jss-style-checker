@@ -1,13 +1,22 @@
-//! House-style rules — mirrors `journals/jss/rules/house_style.py`'s
-//! bib-facing rule (JSS-HOUSE-002 only; JSS-HOUSE-001/003 are
-//! tex_files rules, Phase 3 scope).
+//! House-style rules — mirrors `journals/jss/rules/house_style.py`:
+//! JSS-HOUSE-001/003 (tex_files) and JSS-HOUSE-002 (bib_files).
 
+use super::tex_common::{tex_violation, tex_violation_with_fix};
 use super::{entry_violation_with_fix, field_value_span, py_repr, referenced_entries};
 use crate::bib::{Entry, Library};
 use crate::report::{Fix, FixConfidence, Violation};
+use crate::tex::extract;
 use crate::tex::node::Node as TexNode;
+use crate::tex::node::{GroupDelims, GroupNode, MacroNode, Node};
+use crate::tex::position::LineIndex;
+use crate::tex::prose::{is_in_prose_context, walk, walk_with_context, Slot};
+use crate::tex::ParsedTex;
 use regex::Regex;
 use std::sync::LazyLock;
+
+const JSS_LOADED_PACKAGES: &[&str] = &["graphicx", "xcolor", "ae", "fancyvrb", "hyperref"];
+
+static EG_IE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b(e\.g\.|i\.e\.)").unwrap());
 
 static WORDY_EDITION_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
@@ -102,5 +111,232 @@ pub fn check_house_002(
             build_fix(bib_source_chars, entry, &value, canonical),
         ));
     }
+    out
+}
+
+/// JSS-HOUSE-001 — "e.g." / "i.e." are followed by a comma.
+pub fn check_house_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
+    let line_index = LineIndex::new(&parsed.chars);
+    let mut out = Vec::new();
+    let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
+    let mut ancestors: Vec<&Node> = Vec::new();
+    walk_with_context(
+        &top,
+        &mut ancestors,
+        &mut |node, ancestors, _parent, _idx| {
+            let Node::Chars(c) = node else { return };
+            if !is_in_prose_context(ancestors) {
+                return;
+            }
+            for m in EG_IE_RE.find_iter(&c.chars) {
+                if c.chars[m.end()..].starts_with(',') {
+                    continue;
+                }
+                let matched = m.as_str();
+                let abs_pos = c.span.pos + c.chars[..m.start()].chars().count();
+                let dot_pos = c.span.pos + c.chars[..m.end()].chars().count() - 1;
+                out.push(tex_violation_with_fix(
+                    file,
+                    &line_index,
+                    abs_pos,
+                    "JSS-HOUSE-001",
+                    Some(format!(
+                        "Add a comma after {}: '{matched},'.",
+                        py_repr(matched)
+                    )),
+                    Some(Fix {
+                        start: dot_pos,
+                        end: dot_pos + 1,
+                        replacement: ".,".to_string(),
+                        description: "insert comma after e.g. / i.e.".to_string(),
+                        confidence: FixConfidence::Safe,
+                    }),
+                ));
+            }
+        },
+    );
+    out
+}
+
+/// `\documentclass`'s `(class_name, options)`, mirroring
+/// `preamble.py::_class_and_options` — recursive pre-order search for
+/// the first `\documentclass`, distinguishing its `[options]` and
+/// `{class}` groups by actual delimiter (not by first-Group order).
+fn class_and_options(parsed: &ParsedTex) -> Option<(Option<String>, Vec<String>)> {
+    let macro_node = first_macro(&parsed.nodes, "documentclass")?;
+    let mut class_name = None;
+    let mut options = Vec::new();
+    for arg in &macro_node.args {
+        if let Some(Node::Group(g)) = arg {
+            let text = group_plain_text(g);
+            match g.delims {
+                GroupDelims::Bracket => {
+                    options = text
+                        .split(',')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                }
+                GroupDelims::Brace => {
+                    class_name = Some(text);
+                }
+            }
+        }
+    }
+    Some((class_name, options))
+}
+
+/// True when the document uses `\documentclass{jss}` (any options).
+/// Mirrors `preamble.py::_has_jss_class`.
+fn has_jss_class(parsed: &ParsedTex) -> bool {
+    class_and_options(parsed).is_some_and(|(name, _)| name.as_deref() == Some("jss"))
+}
+
+/// First macro named `name` anywhere in the tree, pre-order. Mirrors
+/// `preamble.py::_first_macro` (built on `_helpers._iter_with_parent`).
+fn first_macro<'a>(nodes: &'a [Node], name: &str) -> Option<&'a MacroNode> {
+    let mut found: Option<&'a MacroNode> = None;
+    extract::iter_with_parent_visit(nodes, &mut |_parent, _idx, node| {
+        if found.is_some() {
+            return;
+        }
+        if let Node::Macro(m) = node {
+            if m.macroname == name {
+                found = Some(m);
+            }
+        }
+    });
+    found
+}
+
+/// Concatenated plain char content of `group`, recursing into
+/// descendants (macro expansion NOT performed) and trimmed. Mirrors
+/// `preamble.py::_group_plain_text` — distinct from (and not to be
+/// confused with) the direct-children-only `_group_plain_text`
+/// variants in other rule modules (see `typography.rs`).
+fn group_plain_text(group: &GroupNode) -> String {
+    let mut out = String::new();
+    walk(&group.nodelist, &mut |node, _ancestors| {
+        if let Node::Chars(c) = node {
+            out.push_str(&c.chars);
+        }
+    });
+    out.trim().to_string()
+}
+
+/// The first mandatory-arg package name of `\usepackage`. Mirrors
+/// `house_style.py::_usepackage_name`.
+fn usepackage_name<'a>(macro_node: &'a MacroNode, parent: &[Slot<'a>], idx: usize) -> String {
+    for arg in &macro_node.args {
+        if let Some(Node::Group(g)) = arg {
+            if g.delims == GroupDelims::Bracket {
+                continue;
+            }
+            return extract::group_text(g);
+        }
+    }
+    if let Some(sibling) = extract::next_group_arg(parent, idx) {
+        return extract::group_text(sibling);
+    }
+    String::new()
+}
+
+/// The `[options]` text of `\usepackage[...]{pkg}`, or `""`. Mirrors
+/// `house_style.py::_usepackage_options`.
+fn usepackage_options(macro_node: &MacroNode) -> String {
+    for arg in &macro_node.args {
+        if let Some(Node::Group(g)) = arg {
+            if g.delims == GroupDelims::Bracket {
+                return extract::group_text(g);
+            }
+        }
+    }
+    String::new()
+}
+
+/// `(line_start, line_end_after_newline)` if the line containing
+/// `\usepackage{...}` (spanning `[macro_start, macro_end)`) consists
+/// only of that macro and optional surrounding whitespace; `None`
+/// otherwise. Offsets are codepoint indices into `source_chars` (a
+/// `Fix`-ready deletion range including the trailing newline). Mirrors
+/// `house_style.py::_whole_line_range`.
+fn whole_line_range(
+    source_chars: &[char],
+    macro_start: usize,
+    macro_end: usize,
+) -> Option<(usize, usize)> {
+    let prev_nl = source_chars[..macro_start].iter().rposition(|&c| c == '\n');
+    let line_start = prev_nl.map_or(0, |p| p + 1);
+    let next_nl = source_chars[macro_end..]
+        .iter()
+        .position(|&c| c == '\n')
+        .map(|p| p + macro_end);
+    let line_end = next_nl.map_or(source_chars.len(), |p| p + 1);
+
+    let before_empty = source_chars[line_start..macro_start]
+        .iter()
+        .all(|c| c.is_whitespace());
+    let after_end = next_nl.unwrap_or(source_chars.len());
+    let after_empty = source_chars[macro_end..after_end]
+        .iter()
+        .all(|c| c.is_whitespace());
+    if !before_empty || !after_empty {
+        return None;
+    }
+    Some((line_start, line_end))
+}
+
+/// JSS-HOUSE-003 (info) — preamble avoids `\usepackage` for packages
+/// jss.cls already loads (graphicx, xcolor, ae, fancyvrb, hyperref).
+pub fn check_house_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
+    let mut out = Vec::new();
+    if !has_jss_class(parsed) {
+        return out;
+    }
+    let line_index = LineIndex::new(&parsed.chars);
+    extract::iter_with_parent_visit(&parsed.nodes, &mut |parent, idx, node| {
+        let Node::Macro(m) = node else { return };
+        if m.macroname != "usepackage" {
+            return;
+        }
+        let name = usepackage_name(m, parent, idx);
+        if name.is_empty() {
+            return;
+        }
+        if !JSS_LOADED_PACKAGES.contains(&name.as_str()) {
+            return;
+        }
+        let options = usepackage_options(m);
+        if !options.is_empty() {
+            out.push(tex_violation(
+                file,
+                &line_index,
+                m.span.pos,
+                "JSS-HOUSE-003",
+                Some(format!(
+                    "Move the options to \\PassOptionsToPackage{{{options}}}{{{name}}} before \\documentclass — jss.cls already loads {name} (re-loading it with options is an option clash)."
+                )),
+            ));
+            return;
+        }
+        let macro_end = m.span.pos + m.span.len;
+        let fix = whole_line_range(&parsed.chars, m.span.pos, macro_end).map(|(start, end)| Fix {
+            start,
+            end,
+            replacement: String::new(),
+            description: format!("delete redundant \\usepackage{{{name}}}"),
+            confidence: FixConfidence::Safe,
+        });
+        out.push(tex_violation_with_fix(
+            file,
+            &line_index,
+            m.span.pos,
+            "JSS-HOUSE-003",
+            Some(format!(
+                "Remove \\usepackage{{{name}}} — jss.cls already loads it."
+            )),
+            fix,
+        ));
+    });
     out
 }
