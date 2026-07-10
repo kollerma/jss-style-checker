@@ -26,6 +26,8 @@ struct RawRule {
     severity: String,
     description: String,
     authority: String,
+    authority_ref: String,
+    explanation: String,
     inspects: Vec<String>,
     auto_fixable: bool,
     #[serde(default)]
@@ -91,6 +93,11 @@ fn main() {
             rule.description
         ));
         out.push_str(&format!("        authority: {:?},\n", rule.authority));
+        out.push_str(&format!(
+            "        authority_ref: {:?},\n",
+            rule.authority_ref
+        ));
+        out.push_str(&format!("        explanation: {:?},\n", rule.explanation));
         out.push_str(&format!(
             "        inspects: &[{}],\n",
             rule.inspects

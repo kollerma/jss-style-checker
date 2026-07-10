@@ -16,6 +16,8 @@ pub struct RuleMeta {
     pub severity: Severity,
     pub message_template: &'static str,
     pub authority: &'static str,
+    pub authority_ref: &'static str,
+    pub explanation: &'static str,
     pub inspects: &'static [&'static str],
     pub auto_fixable: bool,
     /// Measured-precision confidence tier: "high" / "medium" / "low".

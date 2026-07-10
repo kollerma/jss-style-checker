@@ -4,19 +4,29 @@
 //! --source-root/--ignore-rules/--min-confidence/--fail-on/
 //! --verbose`, directory expansion, exit-code policy).
 //!
-//! Not yet ported (see the plan's Phase 4 scope and this crate's
-//! follow-up commits): the `explain`/`init`/`report`/`diff`/`lsp`
-//! subcommands, `--crossref` (an online, opt-in feature out of scope
-//! per the plan), `.jss-lint.toml` config-file loading (CLI flags +
-//! defaults only for now), and `.rnw`/`.rmd` inputs (no parser ported
-//! yet — see `jsslint_core::engine`'s doc comment). `--output html` is
-//! unimplemented (the plan defers HTML/PDF rendering). `--output
-//! json`/`sarif` are fully wired (`jsslint_core::json_output`/
-//! `jsslint_core::sarif`); `--output terminal` (the default) is wired
-//! to `jsslint_core::terminal`, which targets the non-tty
+//! `.jss-lint.toml` is loaded (`jsslint_core::config::load`);
+//! `--fix`/`--dry-run`/`--apply`/`--fix-rule` are wired to
+//! `jsslint_core::fixer::apply_fixes`. `--output json`/`sarif` are
+//! fully wired (`jsslint_core::json_output`/`jsslint_core::sarif`);
+//! `--output terminal` (the default) is wired to
+//! `jsslint_core::terminal`, which targets the non-tty
 //! (piped/redirected) rendering path only — see that module's doc
-//! comment. `--fix`/`--dry-run`/`--apply`/`--fix-rule` are wired to
-//! `jsslint_core::fixer::apply_fixes`.
+//! comment. `--output html` is unimplemented (the plan defers
+//! HTML/PDF rendering).
+//!
+//! The `explain` subcommand is wired (`jsslint_core::explain`), via a
+//! hand-rolled dispatch in `main()` mirroring `cli.py`'s Click-group
+//! hack (`invoke_without_command=True` plus manually forwarding when
+//! `paths[0]` matches a registered subcommand name) — clap's derive
+//! subcommand DSL doesn't cleanly coexist with a catch-all `paths:
+//! Vec<String>` positional on the same struct. `init`/`report`/`diff`/
+//! `lsp` aren't wired yet, so files literally named e.g. `init` (no
+//! extension) still lint normally in this port, unlike real
+//! `jss-lint` (same footgun Python's own hack has for any subcommand
+//! name, faithfully preserved). `--crossref` (an online, opt-in
+//! feature) is out of scope per the plan's network-dependency callout,
+//! and `.rnw`/`.rmd` inputs have no parser yet — see
+//! `jsslint_core::engine`'s doc comment.
 
 use clap::Parser;
 use jsslint_core::catalogue;
@@ -79,11 +89,69 @@ struct Cli {
     fix_rules: Vec<String>,
 }
 
+/// Subcommand names this port currently registers. Mirrors `cli.py`'s
+/// `if paths and paths[0] in main.commands:` forwarding check, scoped
+/// to only the subcommands actually wired so far.
+const REGISTERED_SUBCOMMANDS: &[&str] = &["explain"];
+
+#[derive(Parser)]
+#[command(
+    name = "jss-lint explain",
+    about = "Explain a rule, or list the catalogue"
+)]
+struct ExplainArgs {
+    /// Rule id to explain; omit to list every rule by category.
+    rule_id: Option<String>,
+
+    #[arg(long = "format", value_parser = ["terminal", "markdown"], default_value = "terminal")]
+    format: String,
+
+    /// Reserved for fixture pull-through; currently a no-op.
+    #[arg(long)]
+    #[allow(dead_code)]
+    example: bool,
+}
+
+fn run_explain(args: &[String]) -> ExitCode {
+    let parsed = ExplainArgs::try_parse_from(
+        std::iter::once("jss-lint-explain".to_string()).chain(args.iter().cloned()),
+    )
+    .unwrap_or_else(|e| e.exit());
+
+    match jsslint_core::explain::render(parsed.rule_id.as_deref(), &parsed.format) {
+        Ok(out) => {
+            print!("{out}");
+            ExitCode::from(0)
+        }
+        Err(unknown) => {
+            eprint_line(&format!("error: unknown rule id {unknown}"));
+            let suggestions = jsslint_core::explain::did_you_mean(&unknown);
+            if !suggestions.is_empty() {
+                eprint_line(&format!("did you mean: {}", suggestions.join(", ")));
+            }
+            ExitCode::from(2)
+        }
+    }
+}
+
 fn eprint_line(msg: &str) {
     eprintln!("{msg}");
 }
 
 fn main() -> ExitCode {
+    let args: Vec<String> = std::env::args().collect();
+    if let Some(first) = args.get(1) {
+        if REGISTERED_SUBCOMMANDS.contains(&first.as_str()) {
+            return match first.as_str() {
+                "explain" => run_explain(&args[2..]),
+                _ => unreachable!("REGISTERED_SUBCOMMANDS out of sync"),
+            };
+        }
+    }
+    run_lint()
+}
+
+fn run_lint() -> ExitCode {
     let cli = Cli::parse();
 
     if cli.paths.is_empty() {
