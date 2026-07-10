@@ -1,11 +1,12 @@
 //! Tool configuration — mirrors `texlint.api.ToolConfig` (the fields
 //! Phase 4 needs; `doi_resolver`/`--crossref` is an online, opt-in
 //! feature explicitly out of scope for this port, see the plan's
-//! network-dependency callout).
+//! network-dependency callout) plus `texlint.config`'s
+//! defaults-then-`.jss-lint.toml`-then-CLI merge (`load`).
 
 use crate::report::Severity;
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -80,4 +81,202 @@ impl Default for ToolConfig {
             severity_overrides: HashMap::new(),
         }
     }
+}
+
+/// `.jss-lint.toml`'s filename, relative to the current working
+/// directory. Mirrors `config.py::_CONFIG_FILENAME`.
+pub const CONFIG_FILENAME: &str = ".jss-lint.toml";
+
+const KNOWN_FIELDS: &[&str] = &[
+    "journal",
+    "mode",
+    "output",
+    "ignore_rules",
+    "verbose",
+    "code_width",
+    "source_root",
+    "min_confidence",
+    "fail_on",
+    "severity_overrides",
+];
+
+/// Values a caller (CLI flags today; any other binding tomorrow) wants
+/// to layer on top of `.jss-lint.toml`. `None` means "the caller
+/// didn't set this" and leaves a file-provided value (or the default)
+/// untouched — mirrors `config.py::load`'s `if value is None: continue`
+/// rule for `cli_overrides`.
+#[derive(Debug, Clone, Default)]
+pub struct RawOverrides {
+    pub journal: Option<String>,
+    pub mode: Option<String>,
+    pub output: Option<String>,
+    pub ignore_rules: Option<Vec<String>>,
+    pub verbose: Option<bool>,
+    pub code_width: Option<u32>,
+    pub source_root: Option<PathBuf>,
+    pub min_confidence: Option<String>,
+    pub fail_on: Option<String>,
+    pub severity_overrides: Option<HashMap<String, String>>,
+}
+
+fn toml_value_to_string_list(value: &toml::Value) -> Vec<String> {
+    match value {
+        toml::Value::String(s) => s
+            .split(',')
+            .map(|p| p.trim().to_string())
+            .filter(|p| !p.is_empty())
+            .collect(),
+        toml::Value::Array(items) => items
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+/// Reads and parses `<cwd>/.jss-lint.toml` (absent or unparsable ⇒
+/// empty, silently — mirrors `config.py::_read_toml`'s "file doesn't
+/// exist ⇒ `{}`"; a malformed file has no real-corpus fixture to match
+/// against, so it's treated the same way rather than surfacing a
+/// separate error path). Returns the known-field overrides plus any
+/// top-level keys the loader doesn't recognise (sorted, for the
+/// unrecognised-keys warning).
+fn read_toml_overrides(cwd: &Path) -> (RawOverrides, Vec<String>) {
+    let path = cwd.join(CONFIG_FILENAME);
+    let Ok(contents) = std::fs::read_to_string(&path) else {
+        return (RawOverrides::default(), Vec::new());
+    };
+    let Ok(table) = contents.parse::<toml::Table>() else {
+        return (RawOverrides::default(), Vec::new());
+    };
+
+    let mut unknown_keys: Vec<String> = table
+        .keys()
+        .filter(|k| !KNOWN_FIELDS.contains(&k.as_str()))
+        .cloned()
+        .collect();
+    unknown_keys.sort();
+
+    let mut out = RawOverrides::default();
+    if let Some(v) = table.get("journal").and_then(|v| v.as_str()) {
+        out.journal = Some(v.to_string());
+    }
+    if let Some(v) = table.get("mode").and_then(|v| v.as_str()) {
+        out.mode = Some(v.to_string());
+    }
+    if let Some(v) = table.get("output").and_then(|v| v.as_str()) {
+        out.output = Some(v.to_string());
+    }
+    if let Some(v) = table.get("ignore_rules") {
+        out.ignore_rules = Some(toml_value_to_string_list(v));
+    }
+    if let Some(v) = table.get("verbose").and_then(|v| v.as_bool()) {
+        out.verbose = Some(v);
+    }
+    if let Some(v) = table.get("code_width").and_then(|v| v.as_integer()) {
+        out.code_width = Some(v.max(0) as u32);
+    }
+    if let Some(v) = table.get("source_root").and_then(|v| v.as_str()) {
+        out.source_root = Some(PathBuf::from(v));
+    }
+    if let Some(v) = table.get("min_confidence").and_then(|v| v.as_str()) {
+        out.min_confidence = Some(v.to_string());
+    }
+    if let Some(v) = table.get("fail_on").and_then(|v| v.as_str()) {
+        out.fail_on = Some(v.to_string());
+    }
+    if let Some(toml::Value::Table(t)) = table.get("severity_overrides") {
+        let map = t
+            .iter()
+            .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+            .collect();
+        out.severity_overrides = Some(map);
+    }
+
+    (out, unknown_keys)
+}
+
+/// Mirrors `config.py::_normalise_severity_overrides` + `load`'s
+/// merge: unknown/invalid severity strings drop the entry (the rule
+/// keeps its catalogue severity) rather than failing the whole config.
+/// `mode`/`output`/`min_confidence`/`fail_on` fall back to their
+/// current value on an unrecognised string — Python's dataclass fields
+/// are untyped `Literal`s at runtime and would just store the bad
+/// string (later comparisons silently treat it as "not that variant");
+/// falling back to the current value is this port's typed-enum
+/// equivalent of that same "malformed config degrades gracefully,
+/// doesn't crash" intent, not a byte-parity target (no fixture
+/// exercises an invalid `.jss-lint.toml`).
+fn apply_overrides(cfg: &mut ToolConfig, overrides: &RawOverrides) {
+    if let Some(v) = &overrides.journal {
+        cfg.journal = v.clone();
+    }
+    if let Some(v) = &overrides.mode {
+        cfg.mode = if v == "reviewer" {
+            Mode::Reviewer
+        } else {
+            Mode::Author
+        };
+    }
+    if let Some(v) = &overrides.output {
+        cfg.output = match v.as_str() {
+            "json" => OutputFormat::Json,
+            "html" => OutputFormat::Html,
+            "sarif" => OutputFormat::Sarif,
+            _ => OutputFormat::Terminal,
+        };
+    }
+    if let Some(v) = &overrides.ignore_rules {
+        cfg.ignore_rules = v.iter().cloned().collect();
+    }
+    if let Some(v) = overrides.verbose {
+        cfg.verbose = v;
+    }
+    if let Some(v) = overrides.code_width {
+        cfg.code_width = v;
+    }
+    if let Some(v) = &overrides.source_root {
+        cfg.source_root = v.clone();
+    }
+    if let Some(v) = &overrides.min_confidence {
+        if let Some(tier) = ConfidenceTier::parse(v) {
+            cfg.min_confidence = tier;
+        }
+    }
+    if let Some(v) = &overrides.fail_on {
+        if let Some(sev) = Severity::parse(v) {
+            cfg.fail_on = sev;
+        }
+    }
+    if let Some(v) = &overrides.severity_overrides {
+        cfg.severity_overrides = v
+            .iter()
+            .filter_map(|(rule_id, sev)| {
+                Severity::parse(&sev.trim().to_lowercase())
+                    .map(|sev| (rule_id.trim().to_uppercase(), sev))
+            })
+            .collect();
+    }
+}
+
+/// Builds a `ToolConfig` by merging, lowest to highest precedence:
+/// `ToolConfig::default()`, then `<cwd>/.jss-lint.toml`, then
+/// `cli_overrides`. Mirrors `config.py::load`, including the
+/// unrecognised-TOML-keys warning (printed only when the *final*
+/// merged config is verbose, matching Python's post-merge check).
+pub fn load(cwd: &Path, cli_overrides: &RawOverrides) -> ToolConfig {
+    let mut cfg = ToolConfig::default();
+    let (file_overrides, unknown_keys) = read_toml_overrides(cwd);
+    apply_overrides(&mut cfg, &file_overrides);
+    apply_overrides(&mut cfg, cli_overrides);
+
+    if !unknown_keys.is_empty() && cfg.verbose {
+        eprintln!(
+            "warning: {CONFIG_FILENAME} has unrecognised keys: {}",
+            unknown_keys.join(", ")
+        );
+    }
+    cfg
 }

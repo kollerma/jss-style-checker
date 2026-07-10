@@ -12,6 +12,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 regex = "1"
 difflib = { workspace = true }
+toml = { workspace = true }
 
 [build-dependencies]
 serde = { workspace = true }

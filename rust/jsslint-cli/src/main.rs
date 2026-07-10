@@ -20,7 +20,7 @@
 
 use clap::Parser;
 use jsslint_core::catalogue;
-use jsslint_core::config::{ConfidenceTier, Mode, OutputFormat, ToolConfig};
+use jsslint_core::config::{self, OutputFormat, RawOverrides};
 use jsslint_core::engine::{self, EngineError, ParsedDocument};
 use jsslint_core::fixer::{self, ApplyMode};
 use jsslint_core::report::{ComplianceReport, Severity};
@@ -91,13 +91,25 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     }
 
-    let journal = cli.journal.clone().unwrap_or_else(|| "jss".to_string());
-    if journal != "jss" {
-        eprint_line(&format!(
-            "jss-lint: No journal registered under '{journal}'. Known: ['jss']"
-        ));
-        return ExitCode::from(2);
-    }
+    let cli_overrides = RawOverrides {
+        journal: cli.journal.clone(),
+        mode: cli.mode.clone(),
+        output: cli.output.clone(),
+        ignore_rules: cli.ignore_rules.as_deref().map(|s| {
+            s.split(',')
+                .map(|p| p.trim().to_string())
+                .filter(|p| !p.is_empty())
+                .collect()
+        }),
+        verbose: if cli.verbose { Some(true) } else { None },
+        code_width: None,
+        source_root: cli.source_root.clone(),
+        min_confidence: cli.min_confidence.clone(),
+        fail_on: cli.fail_on.clone(),
+        severity_overrides: None,
+    };
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let config = config::load(&cwd, &cli_overrides);
 
     let (sources, exit_code) = match parse_inputs(&cli.paths) {
         Ok(s) => s,
@@ -113,42 +125,18 @@ fn main() -> ExitCode {
         }
     };
 
-    let mut config = ToolConfig {
-        journal,
-        ..ToolConfig::default()
-    };
-    if let Some(mode) = &cli.mode {
-        config.mode = if mode == "reviewer" {
-            Mode::Reviewer
-        } else {
-            Mode::Author
-        };
+    // Mirrors `cli.py`'s `load_journal(cfg.journal)` call (which runs
+    // after `_parse_inputs`): only the "jss" journal is registered in
+    // this port (no journal registry exists), so any other value —
+    // from `.jss-lint.toml` or `--journal` — is a
+    // `JournalNotFoundError` equivalent.
+    if config.journal != "jss" {
+        eprint_line(&format!(
+            "jss-lint: No journal registered under '{}'. Known: ['jss']",
+            config.journal
+        ));
+        return ExitCode::from(2);
     }
-    if let Some(output) = &cli.output {
-        config.output = match output.as_str() {
-            "json" => OutputFormat::Json,
-            "html" => OutputFormat::Html,
-            "sarif" => OutputFormat::Sarif,
-            _ => OutputFormat::Terminal,
-        };
-    }
-    if let Some(root) = &cli.source_root {
-        config.source_root = root.clone();
-    }
-    if let Some(ignore) = &cli.ignore_rules {
-        config.ignore_rules = ignore
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
-    }
-    if let Some(tier) = &cli.min_confidence {
-        config.min_confidence = ConfidenceTier::parse(tier).unwrap_or(ConfidenceTier::Low);
-    }
-    if let Some(fail_on) = &cli.fail_on {
-        config.fail_on = Severity::parse(fail_on).unwrap_or(Severity::Warning);
-    }
-    config.verbose = cli.verbose;
 
     let report = engine::run(&config, &document);
 
