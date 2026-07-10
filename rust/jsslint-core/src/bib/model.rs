@@ -24,8 +24,13 @@ pub struct Field {
 #[derive(Debug, Clone)]
 pub struct Entry {
     pub key: String,
-    /// Lowercase not applied here — callers do `.to_lowercase()`
-    /// themselves, matching `entry.entry_type.lower()` call sites.
+    /// Already lowercased at parse time — mirrors `bibtexparser`,
+    /// which normalizes `entry.entry_type` regardless of source
+    /// casing (`@TECHREPORT{...}` still reports `entry_type ==
+    /// "techreport"`; verified empirically, not documented anywhere
+    /// obvious). A few call sites still call `.to_lowercase()` on
+    /// this defensively — harmless no-ops now, kept rather than
+    /// touched, not evidence this field is ever non-lowercase.
     pub entry_type: String,
     /// 0-based line index of the entry's `@type{` opening.
     pub start_line: u32,

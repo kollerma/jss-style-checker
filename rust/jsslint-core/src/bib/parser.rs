@@ -87,8 +87,21 @@ impl<'a> Parser<'a> {
                 "string" => self.parse_string_directive(block_start, block_end, &mut strings),
                 "comment" | "preamble" => {} // body intentionally ignored
                 _ => {
-                    let entry =
-                        self.parse_entry_body(directive_type, at, block_start, block_end, &strings);
+                    // bibtexparser normalizes `entry.entry_type` to
+                    // lowercase at parse time regardless of source
+                    // casing (`@TECHREPORT{...}` still reports
+                    // `entry_type == "techreport"`) — verified
+                    // empirically, since pylatexenc's own docs don't
+                    // call this out. `type_lower` (already computed
+                    // above for the string/comment/preamble dispatch)
+                    // is exactly that normalized form.
+                    let entry = self.parse_entry_body(
+                        type_lower.clone(),
+                        at,
+                        block_start,
+                        block_end,
+                        &strings,
+                    );
                     self.commit_entry(entry, &mut library, &mut seen_keys);
                 }
             }
