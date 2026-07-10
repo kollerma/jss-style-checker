@@ -41,6 +41,13 @@ pub fn lookup(rule_id: &str) -> Option<&'static RuleMeta> {
     RULES_BY_ID.get(rule_id).copied()
 }
 
+/// Every catalogue rule's metadata, in the generated (alphabetical by
+/// id) order. Used by the SARIF renderer's `tool.driver.rules` array,
+/// which must list every rule regardless of whether it fired.
+pub fn all_rules() -> &'static [RuleMeta] {
+    RULES
+}
+
 /// Journal rollout order — mirrors `_catalogue_data.ROLLOUT_ORDER`
 /// (`journals/jss/__init__.py::JSSJournal.categories()` iterates this).
 pub fn categories() -> &'static [&'static str] {

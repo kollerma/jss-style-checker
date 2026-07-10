@@ -85,7 +85,11 @@ pub fn render(report: &ComplianceReport) -> String {
     out
 }
 
-fn write_value(value: &Value, indent: usize, out: &mut String) {
+/// Exposed crate-wide so `sarif.rs` can reuse the same
+/// Python-`json.dumps(indent=2, sort_keys=True)`-compatible writer
+/// (including its `ensure_ascii=True` string escaping) rather than
+/// duplicating it.
+pub(crate) fn write_value(value: &Value, indent: usize, out: &mut String) {
     match value {
         Value::Null => out.push_str("null"),
         Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),

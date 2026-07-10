@@ -12,17 +12,18 @@
 //! plan), `.jss-lint.toml` config-file loading (CLI flags + defaults
 //! only for now), and `.rnw`/`.rmd` inputs (no parser ported yet —
 //! see `jsslint_core::engine`'s doc comment). `--output html` is
-//! unimplemented (the plan defers HTML/PDF rendering); `--output
-//! sarif` is unimplemented pending `jsslint_core::sarif`. `--output
-//! terminal` (the default) is wired to `jsslint_core::terminal`,
-//! which targets the non-tty (piped/redirected) rendering path only —
-//! see that module's doc comment.
+//! unimplemented (the plan defers HTML/PDF rendering). `--output
+//! json`/`sarif` are fully wired (`jsslint_core::json_output`/
+//! `jsslint_core::sarif`); `--output terminal` (the default) is wired
+//! to `jsslint_core::terminal`, which targets the non-tty
+//! (piped/redirected) rendering path only — see that module's doc
+//! comment.
 
 use clap::Parser;
 use jsslint_core::config::{ConfidenceTier, Mode, OutputFormat, ToolConfig};
 use jsslint_core::engine::{self, EngineError, ParsedDocument};
 use jsslint_core::report::{ComplianceReport, Severity};
-use jsslint_core::{json_output, terminal};
+use jsslint_core::{json_output, sarif, terminal};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -136,10 +137,7 @@ fn main() -> ExitCode {
     match config.output {
         OutputFormat::Json => print!("{}", json_output::render(&report)),
         OutputFormat::Terminal => print!("{}", terminal::render(&report, &config)),
-        OutputFormat::Sarif => {
-            eprint_line("jss-lint: --output sarif is not yet implemented in this binary");
-            return ExitCode::from(2);
-        }
+        OutputFormat::Sarif => print!("{}", sarif::render(&report, &config)),
         OutputFormat::Html => {
             eprint_line("jss-lint: --output html is not yet implemented in this binary");
             return ExitCode::from(2);

@@ -36,14 +36,16 @@ const PAPERS: &[(&str, &[&str], &[&str])] = &[
     ),
 ];
 
+const OUTPUT_FORMATS: &[&str] = &["json", "sarif"];
+
 struct Outcome {
     stdout: String,
     exit_code: Option<i32>,
 }
 
-fn run(bin: &str, dir: &PathBuf, files: &[&str], ignore_rules: &[&str]) -> Outcome {
+fn run(bin: &str, dir: &PathBuf, files: &[&str], ignore_rules: &[&str], output: &str) -> Outcome {
     let mut cmd = Command::new(bin);
-    cmd.arg("--output").arg("json");
+    cmd.arg("--output").arg(output);
     if !ignore_rules.is_empty() {
         cmd.arg("--ignore-rules").arg(ignore_rules.join(","));
     }
@@ -75,20 +77,22 @@ fn cli_matches_python_cli_end_to_end() {
     let mut mismatches = Vec::new();
     for &(paper_dir, files, ignore_rules) in PAPERS {
         let dir = root.join(paper_dir);
-        let expected = run(&jss_lint, &dir, files, ignore_rules);
-        let actual = run(jsslint_bin, &dir, files, ignore_rules);
+        for &output in OUTPUT_FORMATS {
+            let expected = run(&jss_lint, &dir, files, ignore_rules, output);
+            let actual = run(jsslint_bin, &dir, files, ignore_rules, output);
 
-        if actual.stdout != expected.stdout {
-            mismatches.push(format!(
-                "{paper_dir} STDOUT differs\n  expected:\n{}\n  actual:\n{}",
-                expected.stdout, actual.stdout
-            ));
-        }
-        if actual.exit_code != expected.exit_code {
-            mismatches.push(format!(
-                "{paper_dir} EXIT CODE differs: expected {:?}, actual {:?}",
-                expected.exit_code, actual.exit_code
-            ));
+            if actual.stdout != expected.stdout {
+                mismatches.push(format!(
+                    "{paper_dir} [--output {output}] STDOUT differs\n  expected:\n{}\n  actual:\n{}",
+                    expected.stdout, actual.stdout
+                ));
+            }
+            if actual.exit_code != expected.exit_code {
+                mismatches.push(format!(
+                    "{paper_dir} [--output {output}] EXIT CODE differs: expected {:?}, actual {:?}",
+                    expected.exit_code, actual.exit_code
+                ));
+            }
         }
     }
 
