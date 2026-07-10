@@ -1,0 +1,25 @@
+[build-system]
+requires = ["maturin>=1,<2"]
+build-backend = "maturin"
+
+[project]
+name = "jsslint"
+description = "Native Python binding for the JSS LaTeX/BibTeX style checker's Rust core (jsslint-core)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Manuel Koller" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dynamic = ["version"]
+
+[project.urls]
+Repository = "https://github.com/kollerma/jss-style-checker-dev"
+
+[tool.maturin]
+module-name = "jsslint"
+manifest-path = "Cargo.toml"
+features = ["pyo3/extension-module"]

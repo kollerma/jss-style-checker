@@ -37,9 +37,9 @@ dev = [
     "pytest-cov",
     "ruff",
     "jsonschema",
-    # Spec 018 Phase 5 — builds the jsslint_py PyO3 extension
+    # Spec 018 Phase 5 — builds the jsslint PyO3 extension
     # (`maturin develop` in rust/jsslint-py/) for the in-process Rust
-    # parity oracle (tests/unit/test_jsslint_py_parity.py). Not
+    # parity oracle (tests/unit/test_jsslint_parity.py). Not
     # needed to run the rest of the Python test suite.
     "maturin",
 ]

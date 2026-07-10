@@ -1,6 +1,6 @@
 //! R binding (spec 018 Phase 5), built with `extendr`. Exposes
 //! `jss_lint(files, ...)` — the same rule engine `jsslint-cli`,
-//! `jsslint-wasm`, and `jsslint_py` all wrap, adapted to R's data
+//! `jsslint-wasm`, and `jsslint` (the PyO3 binding) all wrap, adapted to R's data
 //! model: `files` is a named character vector (names = paths, values
 //! = file contents) rather than a list of pairs, since that's the
 //! idiomatic R shape (`c(path1 = contents1, path2 = contents2)`).
@@ -15,7 +15,7 @@ use jsslint_core::engine::{self, ParsedDocument};
 use jsslint_core::{html_output, json_output, sarif, terminal};
 
 /// Lints `files` and renders the report in `output` format. Mirrors
-/// `jsslint_py::render` / the WASM binding's `render()`.
+/// `jsslint::render` (the PyO3 binding) / the WASM binding's `render()`.
 /// @param files A named character vector: names are file paths
 ///   (`.tex`/`.ltx`/`.bib`), values are the file contents.
 /// @param journal Journal identifier (default: `"jss"`).

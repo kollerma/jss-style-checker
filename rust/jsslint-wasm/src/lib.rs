@@ -21,7 +21,7 @@ use jsslint_core::{engine, html_output, json_output, sarif, terminal};
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
-/// Mirrors `jsslint_py::render`'s parameter shape, as a single
+/// Mirrors `jsslint::render`'s parameter shape (the PyO3 binding), as a single
 /// structured object (idiomatic for a JS caller) rather than many
 /// positional optional arguments.
 #[derive(Deserialize)]
@@ -39,7 +39,7 @@ struct LintRequest {
 }
 
 /// Lints `request.files` and renders the report in `request.output`
-/// format. Mirrors `jsslint_py::render` / `jsslint-cli`'s bare-lint
+/// format. Mirrors `jsslint::render` / `jsslint-cli`'s bare-lint
 /// invocation. `request` is a JS object shaped like `LintRequest`
 /// (camelCase keys: `files`, `journal`, `mode`, `output`,
 /// `ignoreRules`, `minConfidence`, `failOn`, `sourceRoot`, `verbose`).

@@ -1,13 +1,14 @@
-"""Spec 018 Phase 5 — in-process differential test for the `jsslint_py`
-PyO3 binding: calls both the real `texlint` Python engine and
-`jsslint_py.render` on the same in-memory file contents (no subprocess,
-no disk round-trip) and diffs the JSON output. This is the "in-process
-parity oracle" the porting plan calls out as the payoff of the Python
-binding — every other Rust-vs-Python differential test in this port
+"""Spec 018 Phase 5 — in-process differential test for the `jsslint`
+PyO3 binding (PyPI package `jsslint`, built from `rust/jsslint-py/`):
+calls both the real `texlint` Python engine and `jsslint.render` on the
+same in-memory file contents (no subprocess, no disk round-trip) and
+diffs the JSON output. This is the "in-process parity oracle" the
+porting plan calls out as the payoff of the Python binding — every
+other Rust-vs-Python differential test in this port
 (`rust/*/tests/*_parity.rs`) shells out to the compiled CLI binary
 instead.
 
-Skips entirely if `jsslint_py` isn't installed (built locally via
+Skips entirely if `jsslint` isn't installed (built locally via
 `maturin develop` in `rust/jsslint-py/`; not part of the default
 Python environment).
 """
@@ -19,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-jsslint_py = pytest.importorskip("jsslint_py")
+jsslint = pytest.importorskip("jsslint")
 
 from texlint.config import load as load_config  # noqa: E402
 from texlint.core.engine import load_journal, parse_document, run  # noqa: E402
@@ -53,7 +54,7 @@ def _python_oracle_json(paper_dir: Path, files: list[str], ignore_rules: list[st
 
 
 @pytest.mark.parametrize("paper_dir,files,ignore_rules", PAPERS)
-def test_jsslint_py_matches_python_engine(
+def test_jsslint_matches_python_engine(
     paper_dir: str, files: list[str], ignore_rules: list[str]
 ) -> None:
     full_paper_dir = REPO_ROOT / paper_dir
@@ -63,7 +64,7 @@ def test_jsslint_py_matches_python_engine(
     ]
 
     expected = _python_oracle_json(full_paper_dir, files, ignore_rules)
-    actual = jsslint_py.render(
+    actual = jsslint.render(
         rust_files,
         output="json",
         ignore_rules=",".join(ignore_rules) if ignore_rules else None,
