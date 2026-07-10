@@ -14,6 +14,7 @@ pub mod diff;
 pub mod engine;
 pub mod explain;
 pub mod fixer;
+pub mod html_output;
 pub mod json_output;
 pub mod lsp;
 pub mod report;

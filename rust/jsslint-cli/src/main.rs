@@ -6,31 +6,31 @@
 //!
 //! `.jss-lint.toml` is loaded (`jsslint_core::config::load`);
 //! `--fix`/`--dry-run`/`--apply`/`--fix-rule` are wired to
-//! `jsslint_core::fixer::apply_fixes`. `--output json`/`sarif` are
-//! fully wired (`jsslint_core::json_output`/`jsslint_core::sarif`);
-//! `--output terminal` (the default) is wired to
+//! `jsslint_core::fixer::apply_fixes`. All four `--output` formats are
+//! fully wired: `json`/`sarif` (`jsslint_core::json_output`/
+//! `jsslint_core::sarif`), `terminal` (the default, via
 //! `jsslint_core::terminal`, which targets the non-tty
-//! (piped/redirected) rendering path only — see that module's doc
-//! comment. `--output html` is unimplemented (the plan defers
-//! HTML/PDF rendering).
+//! piped/redirected rendering path only — see that module's doc
+//! comment), and `html` (`jsslint_core::html_output`, author/reviewer
+//! mode).
 //!
-//! The `explain`, `diff`, `init`, and `report` subcommands are wired
-//! (`jsslint_core::explain`/`jsslint_core::diff`/`jsslint_core::conformance`;
-//! `init`'s logic lives in this crate's own `init` module, not
-//! `jsslint-core` — see that module's doc comment), via a hand-rolled
-//! dispatch in `main()` mirroring `cli.py`'s Click-group hack
+//! The `explain`, `diff`, `init`, `report`, and `lsp` subcommands are
+//! all wired (`jsslint_core::explain`/`jsslint_core::diff`/
+//! `jsslint_core::conformance`; `init`'s logic lives in this crate's
+//! own `init` module and `lsp`'s in `lsp_server`, not `jsslint-core`
+//! — see each module's doc comment), via a hand-rolled dispatch in
+//! `main()` mirroring `cli.py`'s Click-group hack
 //! (`invoke_without_command=True` plus manually forwarding when
 //! `paths[0]` matches a registered subcommand name) — clap's derive
 //! subcommand DSL doesn't cleanly coexist with a catch-all `paths:
 //! Vec<String>` positional on the same struct. `report --format
 //! html`/`pdf` aren't wired (markdown only, matching the porting
 //! plan's "HTML/PDF report optional — can stay Python-only initially"
-//! scope note) and `lsp` isn't wired at all yet, so a file literally
-//! named e.g. `lsp` (no extension) still lints normally in this port,
-//! unlike real `jss-lint` (same footgun Python's own hack has for any
-//! subcommand name, faithfully preserved). `--crossref` (an online,
-//! opt-in feature) is out of scope per the plan's network-dependency
-//! callout, and `.rnw`/`.rmd` inputs have no parser yet — see
+//! scope note — `report`'s `conformance.html.j2` is a separate
+//! template from `--output html`'s `author.html.j2`/
+//! `reviewer.html.j2`). `--crossref` (an online, opt-in feature) is
+//! out of scope per the plan's network-dependency callout, and
+//! `.rnw`/`.rmd` inputs have no parser yet — see
 //! `jsslint_core::engine`'s doc comment.
 
 mod init;
@@ -659,10 +659,10 @@ fn run_lint() -> ExitCode {
         OutputFormat::Json => print!("{}", json_output::render(&report)),
         OutputFormat::Terminal => print!("{}", terminal::render(&report, &config)),
         OutputFormat::Sarif => print!("{}", sarif::render(&report, &config)),
-        OutputFormat::Html => {
-            eprint_line("jss-lint: --output html is not yet implemented in this binary");
-            return ExitCode::from(2);
-        }
+        OutputFormat::Html => print!(
+            "{}",
+            jsslint_core::html_output::render(&report, config.mode)
+        ),
     }
 
     ExitCode::from(determine_exit_code(&report, config.fail_on))
