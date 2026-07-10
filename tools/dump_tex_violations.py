@@ -19,6 +19,7 @@ from texlint.api import ParsedDocument, ToolConfig  # noqa: E402
 from texlint.core.parser import parse_tex_file  # noqa: E402
 from texlint.journals.jss.rules import (  # noqa: E402
     abbreviations,
+    capitalization,
     code_style,
     code_width,
     typography,
@@ -33,6 +34,9 @@ _CHECKS = {
     "JSS-TYPO-002": typography.check_jss_typo_002,
     "JSS-TYPO-003": typography.check_jss_typo_003,
     "JSS-TYPO-004": typography.check_jss_typo_004,
+    "JSS-CAP-001": capitalization.check_jss_cap_001,
+    "JSS-CAP-002": capitalization.check_jss_cap_002,
+    "JSS-CAP-004": capitalization.check_jss_cap_004,
     "JSS-ABBR-001": abbreviations.check_jss_abbr_001,
 }
 
