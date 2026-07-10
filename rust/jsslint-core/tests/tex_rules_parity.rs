@@ -7,7 +7,7 @@
 //! Skips entirely (doesn't fail) if the Python venv isn't set up.
 
 use jsslint_core::report::Violation;
-use jsslint_core::rules::{abbreviations, code_style, code_width};
+use jsslint_core::rules::{abbreviations, code_style, code_width, typography};
 use jsslint_core::tex;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -18,6 +18,10 @@ const RULE_IDS: &[&str] = &[
     "JSS-CODE-002",
     "JSS-CODE-003",
     "JSS-ABBR-001",
+    "JSS-TYPO-001",
+    "JSS-TYPO-002",
+    "JSS-TYPO-003",
+    "JSS-TYPO-004",
 ];
 
 fn repo_root() -> PathBuf {
@@ -89,6 +93,10 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-CODE-002" => code_style::check_code_002(&file, &parsed),
         "JSS-CODE-003" => code_style::check_code_003(&file, &parsed),
         "JSS-ABBR-001" => abbreviations::check_abbr_001(&file, &parsed),
+        "JSS-TYPO-001" => typography::check_typo_001(&file, &parsed),
+        "JSS-TYPO-002" => typography::check_typo_002(&file, &parsed),
+        "JSS-TYPO-003" => typography::check_typo_003(&file, &parsed),
+        "JSS-TYPO-004" => typography::check_typo_004(&file, &parsed),
         other => panic!("no Rust rule wired up for {other}"),
     }
 }

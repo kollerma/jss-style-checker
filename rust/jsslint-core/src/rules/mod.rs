@@ -15,6 +15,7 @@ pub mod house_style;
 pub mod naming;
 pub mod references;
 pub mod tex_common;
+pub mod typography;
 
 use crate::bib::{Entry, Library};
 use crate::catalogue;

@@ -21,6 +21,7 @@ from texlint.journals.jss.rules import (  # noqa: E402
     abbreviations,
     code_style,
     code_width,
+    typography,
 )
 
 _CHECKS = {
@@ -28,6 +29,10 @@ _CHECKS = {
     "JSS-CODE-001": code_style.check_jss_code_001,
     "JSS-CODE-002": code_style.check_jss_code_002,
     "JSS-CODE-003": code_style.check_jss_code_003,
+    "JSS-TYPO-001": typography.check_jss_typo_001,
+    "JSS-TYPO-002": typography.check_jss_typo_002,
+    "JSS-TYPO-003": typography.check_jss_typo_003,
+    "JSS-TYPO-004": typography.check_jss_typo_004,
     "JSS-ABBR-001": abbreviations.check_jss_abbr_001,
 }
 
