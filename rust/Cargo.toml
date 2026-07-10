@@ -19,3 +19,4 @@ repository = "https://github.com/kollerma/jss-style-checker"
 jsslint-core = { path = "jsslint-core" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
+clap = { version = "4", features = ["derive"] }
