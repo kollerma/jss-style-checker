@@ -5,6 +5,14 @@ name: publish-badges
 # `gh-pages` branch where shields.io's endpoint pattern can read
 # them.
 #
+# Since the 1.0.0 release (spec 018), the aggregates are PINNED —
+# eval.badge.PINNED_ITERATION_LABEL / PINNED_RECALL_TIMESTAMP — not
+# "whatever's latest in precision-history.db". Without pinning, the
+# badges would silently drift with every push to this dev repo
+# (jss-style-checker-dev) even though the public jss-style-checker
+# repo only ships squashed per-release commits. Re-pin (bump those two
+# constants) when cutting the next release.
+#
 # Trigger: every push to `main`. Idempotent — re-running with the
 # same DB state produces byte-identical badge JSON, so the
 # gh-pages commit is a no-op when nothing changed.
@@ -49,39 +57,28 @@ jobs:
         id: agg
         run: |
           set -euo pipefail
-          # Both aggregates query eval/precision-history.db. The
-          # `recall_history` table is created lazily when `eval-jss
-          # recall` runs; on fresh checkouts it may be absent. Apply
-          # the schema (idempotent) before querying so we don't crash
-          # — recall just falls back to 0.0 when no snapshot exists.
+          # Both aggregates are PINNED (spec 018, the 1.0.0 release) to
+          # eval.badge.PINNED_ITERATION_LABEL / PINNED_RECALL_TIMESTAMP
+          # rather than "whatever's latest in precision-history.db" —
+          # see that module's docstring. The `recall_history` table is
+          # created lazily when `eval-jss recall` runs; on fresh
+          # checkouts it may be absent, so apply the schema (idempotent)
+          # before querying — recall just falls back to 0.0 when the
+          # pinned snapshot doesn't exist.
           read -r precision recall f1 < <(python - <<'PY'
           import sqlite3
           from pathlib import Path
 
+          from eval import badge
           from eval.history import _SCHEMA  # noqa: PLC2701 (intentional internal use)
 
           db = Path("eval/precision-history.db")
           cx = sqlite3.connect(db)
           cx.executescript(_SCHEMA)
+          cx.close()
 
-          row = cx.execute(
-              "SELECT SUM(tp) AS tp, SUM(fp) AS fp "
-              "FROM iteration_rule_stats "
-              "WHERE iteration_id = (SELECT MAX(id) FROM iterations) "
-              "  AND scope = 'full'"
-          ).fetchone()
-          tp = row[0] or 0
-          fp = row[1] or 0
-          precision = 0.0 if tp + fp == 0 else tp / (tp + fp)
-
-          row = cx.execute(
-              "SELECT SUM(tp) AS tp, SUM(fn) AS fn FROM recall_history "
-              "WHERE run_timestamp = (SELECT MAX(run_timestamp) FROM recall_history)"
-          ).fetchone()
-          tp = (row[0] or 0) if row else 0
-          fn = (row[1] or 0) if row else 0
-          recall = 0.0 if tp + fn == 0 else tp / (tp + fn)
-
+          precision = badge.pinned_precision_aggregate(db)
+          recall = badge.pinned_recall_aggregate(db)
           f1 = 0.0 if precision + recall == 0 else 2 * precision * recall / (precision + recall)
 
           print(precision, recall, f1)
