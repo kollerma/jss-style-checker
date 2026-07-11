@@ -104,7 +104,10 @@ def dump(rule_id: str, tex_path: Path) -> str:
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if len(argv) != 2:
-        print("usage: python -m tools.dump_tex_violations <rule_id> <path/to/file.tex>", file=sys.stderr)
+        print(
+            "usage: python -m tools.dump_tex_violations <rule_id> <path/to/file.tex>",
+            file=sys.stderr,
+        )
         return 2
     rule_id, path = argv
     if rule_id not in _CHECKS:
