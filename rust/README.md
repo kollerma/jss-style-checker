@@ -112,6 +112,29 @@ There's also a minimal ready-to-use browser app built on this binding —
 tooling beyond `wasm-pack`) and `.github/workflows/publish-web.yml` for how
 it's deployed.
 
+#### Running the web app locally
+
+The hosted app rebuilds automatically on every push to `main`
+(`.github/workflows/publish-web.yml`), but to build and serve it yourself —
+e.g. to try a local change before it ships:
+
+```sh
+rustup target add wasm32-unknown-unknown   # once
+cargo install wasm-pack                    # once
+
+cd rust/jsslint-wasm
+wasm-pack build --release --target web --out-dir ../../web/pkg
+
+cd ../../web
+python3 -m http.server 8000                # any static file server works
+```
+
+Then open <http://localhost:8000>. Serving over `file://` won't work — the
+app is an ES module that `fetch()`es the `.wasm` file, which browsers block
+for `file://` origins, so it needs a real (even if local) HTTP server.
+`web/pkg/` is build output (git-ignored); re-run the `wasm-pack build` step
+after any change under `rust/jsslint-core/` or `rust/jsslint-wasm/`.
+
 ### Build
 
 ```sh

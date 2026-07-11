@@ -30,30 +30,8 @@ The package ships:
 The same engine is also being ported to Rust and compiled to a standalone
 binary, a browser/npm WASM package (the [in-browser checker](https://kollerma.github.io/jss-style-checker/)
 above — source at [`web/`](web/)), a native Python extension, and an R
-package — see [`rust/README.md`](rust/README.md) for how to use each.
-
-### Running the web app locally
-
-The hosted app rebuilds automatically on every push to `main`
-(`.github/workflows/publish-web.yml`), but to build and serve it yourself —
-e.g. to try a local change before it ships:
-
-```sh
-rustup target add wasm32-unknown-unknown   # once
-cargo install wasm-pack                    # once
-
-cd rust/jsslint-wasm
-wasm-pack build --release --target web --out-dir ../../web/pkg
-
-cd ../../web
-python3 -m http.server 8000                # any static file server works
-```
-
-Then open <http://localhost:8000>. Serving over `file://` won't work — the
-app is an ES module that `fetch()`es the `.wasm` file, which browsers block
-for `file://` origins, so it needs a real (even if local) HTTP server.
-`web/pkg/` is build output (git-ignored); re-run the `wasm-pack build` step
-after any change under `rust/jsslint-core/` or `rust/jsslint-wasm/`.
+package — see [`rust/README.md`](rust/README.md) for how to use each (including
+how to build and run the web app locally).
 
 ## Install (development)
 
