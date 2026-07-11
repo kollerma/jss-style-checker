@@ -28,16 +28,13 @@ from texlint.output.json_output import to_payload  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# (paper directory, file names, ignore_rules). JSS-REFS-004 is ignored
-# for trueskill: a genuine, confirmed Python-side frozenset-iteration-
-# order nondeterminism, not a Rust-port bug — see
-# rust/jsslint-core/tests/engine_parity.rs for the full story.
+# (paper directory, file names, ignore_rules).
 PAPERS = [
     ("eval/recall-corpus/opentsne", ["main.tex", "references.bib"], []),
     (
         "eval/recall-corpus/trueskill",
         ["article.tex", "gaming.bib", "journalsAbbr.bib"],
-        ["JSS-REFS-004"],
+        [],
     ),
 ]
 

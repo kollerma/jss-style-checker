@@ -19,10 +19,6 @@ fn repo_root() -> PathBuf {
         .to_path_buf()
 }
 
-/// See `jsslint-core/tests/engine_parity.rs` for why trueskill needs
-/// JSS-REFS-004 ignored on both sides (a genuine, confirmed
-/// nondeterminism in the Python original's frozenset-iteration-order
-/// "first match" logic, not a Rust-port bug).
 const PAPERS: &[(&str, &[&str], &[&str])] = &[
     (
         "eval/recall-corpus/opentsne",
@@ -32,7 +28,7 @@ const PAPERS: &[(&str, &[&str], &[&str])] = &[
     (
         "eval/recall-corpus/trueskill",
         &["article.tex", "gaming.bib", "journalsAbbr.bib"],
-        &["JSS-REFS-004"],
+        &[],
     ),
 ];
 

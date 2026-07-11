@@ -29,17 +29,12 @@ fn repo_root() -> PathBuf {
 ///
 /// trueskill's `gaming.bib` has a title mentioning both "Julia" and
 /// "Python" unwrapped (`Landfried-repo:ttt`) — `references.py`'s
-/// `_title_mentions_unwrapped` picks the first hit by iterating a
-/// `frozenset[str]`, whose iteration order depends on Python's
-/// per-process string-hash seed (`PYTHONHASHSEED` is randomized by
-/// default since Python 3.3). Confirmed by invoking the oracle
-/// standalone several times in a row: the reported language flips
-/// between "R", "Python", and "Julia" across runs of the *same*
-/// unmodified Python code — this is a real latent nondeterminism in
-/// the reference implementation, not a Rust-port bug, and there is no
-/// single "correct" answer to match. JSS-REFS-004 is ignored on both
-/// sides for this paper so the rest of the ~450 other violations
-/// still get exact byte-for-byte coverage.
+/// `_title_mentions_unwrapped` used to pick the first hit by iterating
+/// a `frozenset[str]`, whose order depends on Python's per-process
+/// string-hash seed, so the reported language flipped between runs of
+/// the same unmodified code. Fixed (both sides now pick the leftmost
+/// match in the text, deterministically) — no ignore-list entry needed
+/// here anymore.
 const PAPERS: &[(&str, &[&str], &[&str])] = &[
     (
         "eval/recall-corpus/opentsne",
@@ -49,7 +44,7 @@ const PAPERS: &[(&str, &[&str], &[&str])] = &[
     (
         "eval/recall-corpus/trueskill",
         &["article.tex", "gaming.bib", "journalsAbbr.bib"],
-        &["JSS-REFS-004"],
+        &[],
     ),
 ];
 

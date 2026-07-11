@@ -24,8 +24,7 @@ fn repo_root() -> PathBuf {
         .to_path_buf()
 }
 
-/// `(paper directory, file names, ignore_rules, extra CLI args)`. See
-/// `engine_parity.rs` for why trueskill needs JSS-REFS-004 ignored.
+/// `(paper directory, file names, ignore_rules, extra CLI args)`.
 type PaperCase = (
     &'static str,
     &'static [&'static str],
@@ -54,13 +53,13 @@ const PAPERS: &[PaperCase] = &[
     (
         "eval/recall-corpus/trueskill",
         &["article.tex", "gaming.bib", "journalsAbbr.bib"],
-        &["JSS-REFS-004"],
+        &[],
         &[],
     ),
     (
         "eval/recall-corpus/trueskill",
         &["article.tex", "gaming.bib", "journalsAbbr.bib"],
-        &["JSS-REFS-004"],
+        &[],
         &["--mode", "reviewer"],
     ),
 ];

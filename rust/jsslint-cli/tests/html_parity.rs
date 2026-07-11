@@ -71,8 +71,6 @@ fn html_output_matches_python_cli() {
             &[
                 "--output",
                 "html",
-                "--ignore-rules",
-                "JSS-REFS-004",
                 "eval/recall-corpus/trueskill/article.tex",
                 "eval/recall-corpus/trueskill/gaming.bib",
                 "eval/recall-corpus/trueskill/journalsAbbr.bib",
@@ -85,8 +83,6 @@ fn html_output_matches_python_cli() {
                 "html",
                 "--mode",
                 "reviewer",
-                "--ignore-rules",
-                "JSS-REFS-004",
                 "eval/recall-corpus/trueskill/article.tex",
                 "eval/recall-corpus/trueskill/gaming.bib",
                 "eval/recall-corpus/trueskill/journalsAbbr.bib",

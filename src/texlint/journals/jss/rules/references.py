@@ -243,8 +243,21 @@ def check_jss_refs_003(
 
 
 def _title_mentions_unwrapped(text: str, names: frozenset[str]) -> str | None:
-    """Return the first name from ``names`` that appears in ``text`` without
-    being wrapped in a ``\\macro{...}``. ``None`` if none match."""
+    """Return the name from ``names`` that appears earliest in ``text``
+    without being wrapped in a ``\\macro{...}``. ``None`` if none match.
+
+    Picks the leftmost match rather than "the first name a frozenset
+    iteration happens to visit" — ``frozenset`` iteration order is not
+    insertion order and varies per interpreter process (Python's string
+    hash randomization, PYTHONHASHSEED), so when a title mentions more
+    than one candidate name, the old "first hit while walking the set"
+    approach returned a different name on different runs of the same
+    unmodified code. Leftmost-in-text is both deterministic and the
+    more intuitive choice for a suggestion message. Ties (two distinct
+    names starting at the same text offset) can't happen for literal
+    non-overlapping token matches, but names is compared as a tiebreak
+    for full determinism regardless.
+    """
     # Strip segments that are inside braces immediately after a backslash macro
     # (treat ``\pkg{MASS}`` as already wrapped).
     unwrapped = re.sub(r"\\[A-Za-z]+\s*\{[^{}]*\}", "", text)
@@ -259,11 +272,16 @@ def _title_mentions_unwrapped(text: str, names: frozenset[str]) -> str | None:
     # language/package token ``R``. Order matters: the braced strip above
     # runs first, else ``\pkg{MASS}`` would collapse to ``MASS``.
     unwrapped = re.sub(r"\\[A-Za-z]+", " ", unwrapped)
+    best: tuple[int, str] | None = None
     for name in names:
         # Match the name as a standalone token.
-        if re.search(rf"\b{re.escape(name)}\b", unwrapped):
-            return name
-    return None
+        match = re.search(rf"\b{re.escape(name)}\b", unwrapped)
+        if match is None:
+            continue
+        candidate = (match.start(), name)
+        if best is None or candidate < best:
+            best = candidate
+    return best[1] if best is not None else None
 
 
 _TITLE_PACKAGE_PREFIX_RE = re.compile(

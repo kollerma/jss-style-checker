@@ -180,7 +180,13 @@ static TITLE_STOP_WORDS: &[&str] = &[
     "about", "around", "et", "al", "is", "be", "do",
 ];
 
-/// Mirrors `references.py::_title_mentions_unwrapped`.
+/// Mirrors `references.py::_title_mentions_unwrapped`. Picks the
+/// leftmost match in `text` rather than "the first name `names`
+/// happens to yield" — `names` is typically a `HashSet::iter()`,
+/// whose order is randomized per process (default `RandomState`
+/// hasher), same nondeterminism as Python's `frozenset` iteration
+/// under hash randomization. Leftmost-in-text is deterministic and
+/// the more intuitive choice for a suggestion message.
 fn title_mentions_unwrapped<'a>(
     text: &str,
     names: impl Iterator<Item = &'a str>,
@@ -188,13 +194,18 @@ fn title_mentions_unwrapped<'a>(
     let unwrapped = UNWRAP_MACRO_ARG_RE.replace_all(text, "");
     let unwrapped = UNWRAP_BRACE_RE.replace_all(&unwrapped, "$1");
     let unwrapped = UNWRAP_BARE_MACRO_RE.replace_all(&unwrapped, " ");
+    let mut best: Option<(usize, &str)> = None;
     for name in names {
         let pattern = format!(r"\b{}\b", regex::escape(name));
-        if Regex::new(&pattern).unwrap().is_match(&unwrapped) {
-            return Some(name.to_string());
+        if let Some(m) = Regex::new(&pattern).unwrap().find(&unwrapped) {
+            let candidate = (m.start(), name);
+            best = Some(match best {
+                Some(b) if b <= candidate => b,
+                _ => candidate,
+            });
         }
     }
-    None
+    best.map(|(_, name)| name.to_string())
 }
 
 fn starts_with_markup(title: &str) -> bool {

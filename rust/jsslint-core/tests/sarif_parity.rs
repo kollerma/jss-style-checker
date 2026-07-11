@@ -21,8 +21,7 @@ fn repo_root() -> PathBuf {
         .to_path_buf()
 }
 
-/// `(paper directory, file names, ignore_rules, source_root)`. See
-/// `engine_parity.rs` for why trueskill needs JSS-REFS-004 ignored.
+/// `(paper directory, file names, ignore_rules, source_root)`.
 /// `source_root` is `None` for "use the CLI default (cwd)"; `Some`
 /// values cover: a source root the file is genuinely nested under, a
 /// relative `..`, and a root entirely outside the file's directory
@@ -43,25 +42,25 @@ const CASES: &[SarifCase] = &[
     (
         "eval/recall-corpus/trueskill",
         &["article.tex", "gaming.bib", "journalsAbbr.bib"],
-        &["JSS-REFS-004"],
+        &[],
         None,
     ),
     (
         "eval/recall-corpus/trueskill",
         &["article.tex", "gaming.bib"],
-        &["JSS-REFS-004"],
+        &[],
         Some("/workspace"),
     ),
     (
         "eval/recall-corpus/trueskill",
         &["article.tex", "gaming.bib"],
-        &["JSS-REFS-004"],
+        &[],
         Some(".."),
     ),
     (
         "eval/recall-corpus/trueskill",
         &["article.tex", "gaming.bib"],
-        &["JSS-REFS-004"],
+        &[],
         Some("/tmp"),
     ),
 ];
