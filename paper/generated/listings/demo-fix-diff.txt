@@ -1,0 +1,17 @@
+--- demo.tex
++++ demo.tex
+@@ -1,11 +1,11 @@
+ \documentclass[article]{jss}
+-\author{Ann Author\and Ben Butcher}
++\author{Ann Author\And Ben Butcher}
+ \title{A Package for Robust Estimation in R}
+ \Abstract{We present a package for robust estimation.}
+ \Keywords{Robust Statistics, R}
+ \begin{document}
+ \section{Our New Method}
+-The package is implemented in R and builds on lme4
+-(\cite{bates2015}). The estimator attains a smaller p-value
++The package is implemented in \proglang{R} and builds on lme4
++\citep{bates2015}. The estimator attains a smaller $p$~value
+ than the classical approach; see the table below.
+ \end{document}

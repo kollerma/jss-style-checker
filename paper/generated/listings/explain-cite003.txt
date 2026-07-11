@@ -1,0 +1,7 @@
+JSS-CITE-003 (WARNING)
+  Category: citations
+  Authority: style_guide (#what-are-the-different-cite-citet-citep-commands-about)
+  JSS guide: §3.2 Citations
+  See: https://www.jstatsoft.org/about/submissions#citations
+
+Avoid bracket-in-bracket citation forms like (\cite{...}); use \citep{...} instead.

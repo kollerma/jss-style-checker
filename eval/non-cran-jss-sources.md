@@ -99,3 +99,31 @@ panelView/panelview, ARCHModels.jl, DataFrames.jl, jumpdiff, Pathogen.jl,
 Bambi, HighFrequencyCovariance, scikit-mobility, GaussianProcesses.jl,
 JuliaConnectoR, DEAMATLAB, marginaleffects, plus the Stata/SAS papers
 (ldvqreg, spxtivdfreg, SURVEYHLM).
+
+## Corpus language classification
+
+Machine-read by `tools/generate_paper_stats.py` (column match on Repo /
+manifest `source_id`). `Non-R = yes` follows the project convention from
+the iteration-99/101 corpus expansions: the manuscript's software is not
+an R-only CRAN-vignette-style package (dual R+other counts as non-R).
+Languages per the iteration notes in `eval/improvement-log.md`
+(iterations 99 and 101) and Tier-1 verification above.
+
+| Repo | Languages | Non-R |
+|---|---|---|
+| givasile/ROMC-SW | Python | yes |
+| glandfried/TrueSkillThroughTime | Julia/Python/R | yes |
+| pavlin-policar/opentsne-paper | Python | yes |
+| eggplantbren/DNest4 | C++/Python | yes |
+| MIDASverse/citest | Python/R | yes |
+| pymc-devs/pymc2 | Python | yes |
+| rdenham/pymcmc | Python | yes |
+| ArturSepp/factorlasso | Python | yes |
+| mpmatthe/evomap-JSS | Python | yes |
+| microprediction/skaters | Python | yes |
+| WilZ2200/adlogit | R/Python | yes |
+| nealcaren/topica | Python | yes |
+| 255ribeiro/paper_zebendelib | Python/Zig | yes |
+| stochbb/stochbb | C++ | yes |
+| yihui/animation | R | no |
+| jinghuazhao/tests | R | no |

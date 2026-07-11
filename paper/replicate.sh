@@ -1,146 +1,94 @@
 #!/usr/bin/env bash
-# ==========================================================
-# replicate.sh — Replication script for:
+# Replication script for "jss-lint" (JSS submission).
 #
-#   "jss-lint: Automated Style Checking for
-#    Journal of Statistical Software Manuscripts"
+# Regenerates every statistic, table body, and terminal listing shown in
+# the manuscript from the repository's pinned evaluation artifacts, then
+# proves the manuscript itself complies with the style rules it describes
+# (self-referential check) and rebuilds the PDF.
 #
-# This script reproduces all terminal listings shown in the
-# paper and validates that the paper itself passes jss-lint
-# with zero violations.
+# Usage:  bash replicate.sh [--no-pdf]
 #
-# Requirements:
-#   - Python 3.10+ with pip
-#   - jss-style-checker (installed below if absent)
-#   - The paper source files (paper.tex, paper.bib)
-#     must be in the same directory as this script.
-#
-# Usage:
-#   cd paper/
-#   bash replicate.sh
-# ==========================================================
-
+# Requirements: Python >= 3.10 (the package is installed editable if not
+# importable), pdflatex + bibtex (unless --no-pdf), git.
 set -euo pipefail
+cd "$(dirname "$0")"
+REPO_ROOT=$(cd .. && pwd)
+NO_PDF=${1:-}
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+step() { printf '\n== %s\n' "$*"; }
 
-# ----------------------------------------------------------
-# Step 0: ensure jss-style-checker is available
-# ----------------------------------------------------------
-echo "=== Step 0: checking jss-style-checker installation ==="
-if ! command -v jss-lint &>/dev/null; then
-    echo "jss-lint not found; installing jss-style-checker..."
-    pip install jss-style-checker
+# -- 0. toolchain -----------------------------------------------------------
+PY=${JSS_PAPER_PYTHON:-}
+if [ -z "$PY" ]; then
+    for cand in "$REPO_ROOT/.venv-host/bin/python" python3; do
+        if "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 10))' \
+            2>/dev/null; then PY=$cand; break; fi
+    done
 fi
-echo "jss-lint version: $(jss-lint --version)"
-echo
-
-# ----------------------------------------------------------
-# Step 1: validate the paper (dogfooding)
-#   This reproduces the claim in Section 8 that the paper
-#   itself passes jss-lint with zero violations.
-# ----------------------------------------------------------
-echo "=== Step 1: validate paper.tex and paper.bib ==="
-echo "Command: jss-lint paper.tex paper.bib"
-echo
-if jss-lint paper.tex paper.bib; then
-    echo "Result: 0 violations (exit code 0)"
-else
-    EXIT_CODE=$?
-    echo "WARNING: jss-lint exited with code $EXIT_CODE"
-    echo "The paper has unresolved violations."
-    echo "Please fix them before submission."
+[ -n "$PY" ] || { echo "error: need Python >= 3.10" >&2; exit 1; }
+if ! "$PY" -c 'import texlint' 2>/dev/null; then
+    step "installing texlint (editable) into $PY"
+    "$PY" -m pip install --quiet -e "$REPO_ROOT[dev]"
 fi
-echo
+JSS_LINT() { "$PY" -m texlint.cli "$@"; }
 
-# ----------------------------------------------------------
-# Step 2: reviewer mode
-#   Reproduces the compliance table shown in Section 5.4
-# ----------------------------------------------------------
-echo "=== Step 2: reviewer mode (Section 5.4) ==="
-echo "Command: jss-lint --mode reviewer paper.tex paper.bib"
-echo
-jss-lint --mode reviewer paper.tex paper.bib || true
-echo
+# -- 1. version coherence ---------------------------------------------------
+step "version coherence"
+CLI_VERSION=$(JSS_LINT --version | sed 's/.*version //')
+STAT_VERSION=$(sed -n 's/.*StatToolVersion}{\([^}]*\)}.*/\1/p' generated/stats.tex)
+[ "$CLI_VERSION" = "$STAT_VERSION" ] || {
+    echo "error: jss-lint $CLI_VERSION != stats.tex $STAT_VERSION" >&2; exit 1; }
+echo "jss-lint $CLI_VERSION == generated/stats.tex"
 
-# ----------------------------------------------------------
-# Step 3: JSON output
-#   Reproduces the JSON schema discussion in Section 5.5
-# ----------------------------------------------------------
-echo "=== Step 3: JSON output (Section 5.5) ==="
-echo "Command: jss-lint --output json paper.tex paper.bib"
-echo
-jss-lint --output json paper.tex paper.bib \
-    | python3 -m json.tool
-echo
+# -- 2. statistics drift gate ----------------------------------------------
+step "generated statistics match the pinned evaluation state"
+(cd "$REPO_ROOT" && "$PY" -m tools.generate_paper_stats --check)
 
-# ----------------------------------------------------------
-# Step 4: HTML output
-#   Generates the HTML report mentioned in Section 5.5
-# ----------------------------------------------------------
-echo "=== Step 4: HTML output (Section 5.5) ==="
-echo "Command: jss-lint --output html paper.tex > report.html"
-echo
-jss-lint --output html paper.tex paper.bib > report.html
-echo "HTML report written to: report.html"
-echo
+# -- 3. regenerate terminal listings ----------------------------------------
+step "regenerating listings"
+mkdir -p generated/listings
+# 3a. reviewer-mode compliance table on the intentionally non-compliant demo
+JSS_LINT --mode reviewer examples/demo.tex \
+    > generated/listings/demo-reviewer.txt || true
+# 3b. auto-fix preview: unified-diff portion of --fix --dry-run
+TMPDIR_FIX=$(mktemp -d)
+cp examples/demo.tex "$TMPDIR_FIX/demo.tex"
+(cd "$TMPDIR_FIX" && JSS_LINT --fix --dry-run demo.tex || true) \
+    | awk '/^─/{exit} {print}' > generated/listings/demo-fix-diff.txt
+rm -rf "$TMPDIR_FIX"
+# 3c. rule documentation
+JSS_LINT explain JSS-CITE-003 > generated/listings/explain-cite003.txt
+# 3d. self-referential run on this manuscript (captured before the gate so
+#     the listing exists even while the manuscript is still non-compliant)
+JSS_LINT paper.tex paper.bib > generated/listings/paper-clean.txt || true
 
-# ----------------------------------------------------------
-# Step 5: rule suppression example (Section 5.6)
-# ----------------------------------------------------------
-echo "=== Step 5: rule suppression example (Section 5.6) ==="
-echo "Command: jss-lint --ignore-rule JSS-CITE-001 paper.tex"
-echo
-jss-lint --ignore-rule JSS-CITE-001 paper.tex paper.bib \
-    || true
-echo
+# -- 4. committed artifacts == live tool output ------------------------------
+step "committed generated/ matches live output"
+git -C "$REPO_ROOT" diff --exit-code -- paper/generated || {
+    echo "error: paper/generated/ differs from live regeneration" >&2; exit 1; }
 
-# ----------------------------------------------------------
-# Step 6: programmatic API example (Section 5.7)
-# ----------------------------------------------------------
-echo "=== Step 6: programmatic API (Section 5.7) ==="
-cat <<'PYEOF'
-Command: python3 api_example.py
-PYEOF
+# -- 5. the paper passes its own linter (hard gate) --------------------------
+step "self-referential compliance check"
+JSS_LINT paper.tex paper.bib
+echo "paper.tex + paper.bib: no violations"
 
-cat > /tmp/jss_api_example.py <<'PYEOF'
-from texlint.core.parser import (
-    parse_tex_file, parse_bib_file
-)
-from texlint.api import ParsedDocument, ToolConfig
-from texlint.core.engine import run
+# -- 6. build the PDF ---------------------------------------------------------
+if [ "$NO_PDF" != "--no-pdf" ]; then
+    step "building paper.pdf"
+    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null
+    bibtex paper > /dev/null
+    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null
+    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null
+    if grep -E "Warning.*undefined" paper.log | grep -Ev "^$" ; then
+        echo "error: undefined citations/references" >&2; exit 1
+    fi
+    PAGES=$(pdfinfo paper.pdf | awk '/^Pages:/{print $2}')
+    echo "paper.pdf: $PAGES pages"
+    [ "$PAGES" -le 34 ] || { echo "error: page budget exceeded" >&2; exit 1; }
+fi
 
-tex = parse_tex_file("paper.tex")
-bib = parse_bib_file("paper.bib")
-doc = ParsedDocument(
-    tex_files=[tex], bib_files=[bib]
-)
-config = ToolConfig(
-    journal="jss",
-    mode="author",
-    output_format="terminal",
-    ignore_rules=frozenset(),
-)
-report = run(doc, config)
-print(
-    f"{report.compliance_percentage:.0f}% compliant"
-)
-for v in report.violations:
-    print(
-        f"  {v.line}:{v.column}  {v.rule_id}"
-        f"  {v.message}"
-    )
-PYEOF
-
-python3 /tmp/jss_api_example.py
-echo
-
-# ----------------------------------------------------------
-# Done
-# ----------------------------------------------------------
-echo "=== Replication complete ==="
-echo
-echo "All listings from the paper have been reproduced."
-echo "If Step 1 reported 0 violations, the manuscript is"
-echo "ready for JSS submission with respect to style."
+# -- 7. provenance ------------------------------------------------------------
+step "provenance"
+sed -n 's/\\newcommand{\\StatPinned\([A-Za-z]*\)}{\(.*\)}/  Pinned\1: \2/p' \
+    generated/stats.tex
+echo "replication complete."

@@ -1,0 +1,209 @@
+────────────────────────────────────────────────────── paper.bib ───────────────────────────────────────────────────────
+┏━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Line:Col ┃ Severity ┃ Rule         ┃ Message                                ┃ Suggestion                             ┃
+┡━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 47       │ info     │ JSS-REFS-003 │ BibTeX entries include a doi field     │ Add a doi field to entry 'rcore2024'   │
+│          │          │              │ where one is available (advisory) (see │ if one is available.                   │
+│          │          │              │ §3.3 References)                       │                                        │
+│ 96       │ warning  │ JSS-REFS-004 │ BibTeX titles use JSS markup           │ The leading identifier 'Rich' looks    │
+│          │          │              │ (\proglang, \pkg, \code) for language  │ like a package name; wrap it in        │
+│          │          │              │ and package names (see §3.3            │ \pkg{Rich} in the title.               │
+│          │          │              │ References)                            │                                        │
+│ 104      │ warning  │ JSS-REFS-004 │ BibTeX titles use JSS markup           │ The leading identifier 'Jinja2' looks  │
+│          │          │              │ (\proglang, \pkg, \code) for language  │ like a package name; wrap it in        │
+│          │          │              │ and package names (see §3.3            │ \pkg{Jinja2} in the title.             │
+│          │          │              │ References)                            │                                        │
+│ 112      │ warning  │ JSS-REFS-004 │ BibTeX titles use JSS markup           │ The leading identifier 'ChkTeX' looks  │
+│          │          │              │ (\proglang, \pkg, \code) for language  │ like a package name; wrap it in        │
+│          │          │              │ and package names (see §3.3            │ \pkg{ChkTeX} in the title.             │
+│          │          │              │ References)                            │                                        │
+│ 119      │ warning  │ JSS-REFS-004 │ BibTeX titles use JSS markup           │ The leading identifier 'lacheck' looks │
+│          │          │              │ (\proglang, \pkg, \code) for language  │ like a package name; wrap it in        │
+│          │          │              │ and package names (see §3.3            │ \pkg{lacheck} in the title.            │
+│          │          │              │ References)                            │                                        │
+│ 126      │ warning  │ JSS-REFS-004 │ BibTeX titles use JSS markup           │ The leading identifier 'textlint'      │
+│          │          │              │ (\proglang, \pkg, \code) for language  │ looks like a package name; wrap it in  │
+│          │          │              │ and package names (see §3.3            │ \pkg{textlint} in the title.           │
+│          │          │              │ References)                            │                                        │
+│ 177      │ warning  │ JSS-REFS-006 │ BibTeX titles are in title style —     │ Capitalize the first word of the       │
+│          │          │              │ loose heuristic (flags lowercase first │ title.                                 │
+│          │          │              │ word or unusual mixed case) (see §3.3  │                                        │
+│          │          │              │ References)                            │                                        │
+│ 271      │ warning  │ JSS-REFS-004 │ BibTeX titles use JSS markup           │ The leading identifier 'SciSpace'      │
+│          │          │              │ (\proglang, \pkg, \code) for language  │ looks like a package name; wrap it in  │
+│          │          │              │ and package names (see §3.3            │ \pkg{SciSpace} in the title.           │
+│          │          │              │ References)                            │                                        │
+│ 279      │ warning  │ JSS-REFS-004 │ BibTeX titles use JSS markup           │ The leading identifier 'Writefull'     │
+│          │          │              │ (\proglang, \pkg, \code) for language  │ looks like a package name; wrap it in  │
+│          │          │              │ and package names (see §3.3            │ \pkg{Writefull} in the title.          │
+│          │          │              │ References)                            │                                        │
+│ 293      │ warning  │ JSS-REFS-004 │ BibTeX titles use JSS markup           │ The leading identifier 'SQLite' looks  │
+│          │          │              │ (\proglang, \pkg, \code) for language  │ like a package name; wrap it in        │
+│          │          │              │ and package names (see §3.3            │ \pkg{SQLite} in the title.             │
+│          │          │              │ References)                            │                                        │
+└──────────┴──────────┴──────────────┴────────────────────────────────────────┴────────────────────────────────────────┘
+────────────────────────────────────────────────────── paper.tex ───────────────────────────────────────────────────────
+┏━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Line:Col ┃ Severity ┃ Rule           ┃ Message                               ┃ Suggestion                            ┃
+┡━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 36:32    │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 53:1     │ warning  │ JSS-CAP-004    │ \Keywords{} is comma-separated and in │ Use sentence case for keywords        │
+│          │          │                │ sentence case (see §6.2               │ (capitalise only the first word of    │
+│          │          │                │ Capitalisation)                       │ each entry unless a proper name).     │
+│ 94:41    │ warning  │ JSS-CITE-003   │ Avoid bracket-in-bracket citation     │ Citation inside parens: replace       │
+│          │          │                │ forms like (\cite{...}); use          │ (\cite{...}) with \citep{...}, or use │
+│          │          │                │ \citep{...} instead (see §3.2         │ \citealp{...} when additional text    │
+│          │          │                │ Citations)                            │ shares the parens.                    │
+│ 95:15    │ warning  │ JSS-CITE-003   │ Avoid bracket-in-bracket citation     │ Citation inside parens: replace       │
+│          │          │                │ forms like (\cite{...}); use          │ (\cite{...}) with \citep{...}, or use │
+│          │          │                │ \citep{...} instead (see §3.2         │ \citealp{...} when additional text    │
+│          │          │                │ Citations)                            │ shares the parens.                    │
+│ 95:47    │ warning  │ JSS-CITE-003   │ Avoid bracket-in-bracket citation     │ Citation inside parens: replace       │
+│          │          │                │ forms like (\cite{...}); use          │ (\cite{...}) with \citep{...}, or use │
+│          │          │                │ \citep{...} instead (see §3.2         │ \citealp{...} when additional text    │
+│          │          │                │ Citations)                            │ shares the parens.                    │
+│ 98:12    │ warning  │ JSS-CITE-002   │ First occurrence of a software        │ Add a citation for                    │
+│          │          │ (medium conf.) │ package has a citation within the     │ \pkg{jss-style-checker} (e.g.,        │
+│          │          │                │ same paragraph (see §3.2 Citations)   │ \citep{…}) within this paragraph.     │
+│ 158:14   │ warning  │ JSS-CITE-002   │ First occurrence of a software        │ Add a citation for \pkg{ggplot2}      │
+│          │          │ (medium conf.) │ package has a citation within the     │ (e.g., \citep{…}) within this         │
+│          │          │                │ same paragraph (see §3.2 Citations)   │ paragraph.                            │
+│ 158:29   │ warning  │ JSS-CITE-002   │ First occurrence of a software        │ Add a citation for \pkg{numpy} (e.g., │
+│          │          │ (medium conf.) │ package has a citation within the     │ \citep{…}) within this paragraph.     │
+│          │          │                │ same paragraph (see §3.2 Citations)   │                                       │
+│ 158:42   │ warning  │ JSS-CITE-002   │ First occurrence of a software        │ Add a citation for \pkg{lme4} (e.g.,  │
+│          │          │ (medium conf.) │ package has a citation within the     │ \citep{…}) within this paragraph.     │
+│          │          │                │ same paragraph (see §3.2 Citations)   │                                       │
+│ 232:14   │ warning  │ JSS-CITE-002   │ First occurrence of a software        │ Add a citation for \pkg{statsmodels}  │
+│          │          │ (medium conf.) │ package has a citation within the     │ (e.g., \citep{…}) within this         │
+│          │          │                │ same paragraph (see §3.2 Citations)   │ paragraph.                            │
+│ 297:1    │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 314:1    │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 316:20   │ warning  │ JSS-CODE-001   │ Verbatim / CodeInput blocks do not    │ Move the comment into the surrounding │
+│          │          │                │ contain comments; comments belong in  │ LaTeX text.                           │
+│          │          │                │ the surrounding LaTeX text (see §4.2  │                                       │
+│          │          │                │ Code style)                           │                                       │
+│ 392:21   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 396:1    │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 397:23   │ warning  │ JSS-CODE-001   │ Verbatim / CodeInput blocks do not    │ Move the comment into the surrounding │
+│          │          │                │ contain comments; comments belong in  │ LaTeX text.                           │
+│          │          │                │ the surrounding LaTeX text (see §4.2  │                                       │
+│          │          │                │ Code style)                           │                                       │
+│ 519:47   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 631:5    │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 634:15   │ warning  │ JSS-MARKUP-001 │ Programming-language names in prose   │ Wrap 'R' in \proglang{R}.             │
+│          │          │ (medium conf.) │ are wrapped in \proglang{} (see §4.1  │                                       │
+│          │          │                │ Markup)                               │                                       │
+│ 653:1    │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 655:1    │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 966:46   │ warning  │ JSS-CITE-002   │ First occurrence of a software        │ Add a citation for \pkg{dplyr} (e.g., │
+│          │          │ (medium conf.) │ package has a citation within the     │ \citep{…}) within this paragraph.     │
+│          │          │                │ same paragraph (see §3.2 Citations)   │                                       │
+│ 967:1    │ warning  │ JSS-CITE-002   │ First occurrence of a software        │ Add a citation for \pkg{pandas}       │
+│          │          │ (medium conf.) │ package has a citation within the     │ (e.g., \citep{…}) within this         │
+│          │          │                │ same paragraph (see §3.2 Citations)   │ paragraph.                            │
+│ 997:27   │ warning  │ JSS-MARKUP-003 │ Inline function, argument, command    │ Replace \texttt{...} with the         │
+│          │          │                │ names, and R sentinel values are      │ appropriate JSS markup: \code{...}    │
+│          │          │                │ wrapped in \code{} (see §4.1 Markup)  │ for inline code, \pkg{...} for        │
+│          │          │                │                                       │ package names, \proglang{...} for     │
+│          │          │                │                                       │ language names.                       │
+│ 1135:9   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1136:9   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1139:9   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1141:9   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1143:9   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1186:5   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1187:39  │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1195:9   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1195:44  │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1197:43  │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1280:1   │ warning  │ JSS-CITE-002   │ First occurrence of a software        │ Add a citation for \pkg{bibtexparser} │
+│          │          │ (medium conf.) │ package has a citation within the     │ (e.g., \citep{…}) within this         │
+│          │          │                │ same paragraph (see §3.2 Citations)   │ paragraph.                            │
+│ 1364:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 1370:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 1384:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 1385:36  │ warning  │ JSS-CODE-001   │ Verbatim / CodeInput blocks do not    │ Move the comment into the surrounding │
+│          │          │                │ contain comments; comments belong in  │ LaTeX text.                           │
+│          │          │                │ the surrounding LaTeX text (see §4.2  │                                       │
+│          │          │                │ Code style)                           │                                       │
+│ 1459:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1461:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 1478:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 1485:38  │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+│ 1487:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 1502:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 1587:1   │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'f(x │
+│          │          │                │ Code style)                           │ = 1, y = 2)' rather than              │
+│          │          │                │                                       │ 'f(x=1,y=2)').                        │
+│ 1661:47  │ warning  │ JSS-CODE-003   │ Code samples use spaces around        │ Add spaces around operators and after │
+│          │          │                │ operators and after commas (see §4.2  │ commas in the code sample (e.g., 'y = │
+│          │          │                │ Code style)                           │ a + b * x').                          │
+└──────────┴──────────┴────────────────┴───────────────────────────────────────┴───────────────────────────────────────┘
