@@ -6,7 +6,7 @@
 NULL
 
 #' Lints `files` and renders the report in `output` format. Mirrors
-#' `jsslint_py::render` / the WASM binding's `render()`.
+#' `jsslint::render` (the PyO3 binding) / the WASM binding's `render()`.
 #' @param files A named character vector: names are file paths
 #'   (`.tex`/`.ltx`/`.bib`), values are the file contents.
 #' @param journal Journal identifier (default: `"jss"`).
