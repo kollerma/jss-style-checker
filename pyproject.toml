@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jss-style-checker"
-version = "0.1.0"
+version = "1.0.0"
 description = "Style checker for manuscripts submitted to the Journal of Statistical Software (JSS)."
 readme = "README.md"
 license = { file = "LICENSE" }
