@@ -1,0 +1,54 @@
+name: release-npm-wasm
+
+# Spec 018 Phase 6 — publishes the jsslint-wasm browser/npm binding.
+# Triggered by a `v*-wasm` tag (mirrors vscode-publish.yml's
+# `v*-vscode` convention).
+#
+# `wasm-pack build --target bundler` derives the npm package name from
+# the crate's [package] name — already `jsslint-wasm`, matching the
+# chosen npm name, so no rename step is needed here.
+#
+# One-time manual setup required before this can run:
+#   - An npm access token with publish rights for the `jsslint-wasm`
+#     package, stored as the NPM_TOKEN repository secret.
+#     (npm also supports OIDC "Trusted Publishing" as a token-free
+#     alternative once configured on npmjs.org — not used here to
+#     keep this workflow on the well-established token flow.)
+
+on:
+  push:
+    tags:
+      - 'v*-wasm'
+
+permissions:
+  contents: read
+  id-token: write  # for npm provenance attestation
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: latest
+
+      - name: Build
+        working-directory: rust/jsslint-wasm
+        run: wasm-pack build --release --target bundler
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm
+        working-directory: rust/jsslint-wasm/pkg
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

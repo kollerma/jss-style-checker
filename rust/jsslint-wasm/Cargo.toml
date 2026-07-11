@@ -1,0 +1,17 @@
+[package]
+name = "jsslint-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Browser/WASM binding (Phase 5 stub — spec 018). No network access must ever be reachable from this crate; see the plan's crossref callout."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+jsslint-core = { workspace = true }
+wasm-bindgen = "0.2"
+serde = { workspace = true }
+serde-wasm-bindgen = "0.6"

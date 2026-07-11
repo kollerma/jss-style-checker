@@ -1,0 +1,23 @@
+[workspace]
+resolver = "2"
+members = [
+    "jsslint-core",
+    "jsslint-cli",
+    "jsslint-wasm",
+    "jsslint-py",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Manuel Koller"]
+repository = "https://github.com/kollerma/jss-style-checker"
+
+[workspace.dependencies]
+jsslint-core = { path = "jsslint-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+clap = { version = "4", features = ["derive"] }
+difflib = "0.4"
+toml = "1"

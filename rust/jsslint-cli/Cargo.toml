@@ -1,0 +1,29 @@
+[package]
+name = "jsslint-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Standalone jsslint binary (Phase 4 stub — spec 018)."
+
+[[bin]]
+name = "jsslint"
+path = "src/main.rs"
+
+[dependencies]
+jsslint-core = { workspace = true }
+clap = { workspace = true }
+serde_json = { workspace = true }
+rusqlite = { version = "0.40", default-features = false, features = ["bundled"] }
+lsp-server = "0.8"
+lsp-types = "0.97"
+crossbeam-channel = "0.5"
+url = "2"
+toml = { workspace = true }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+serde = { workspace = true }

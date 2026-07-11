@@ -1,0 +1,60 @@
+{
+  "languages": [
+    "C",
+    "C++",
+    "Fortran",
+    "Java",
+    "Julia",
+    "MATLAB",
+    "Matlab",
+    "Python",
+    "R",
+    "S-PLUS",
+    "S-Plus",
+    "SAS",
+    "Stan",
+    "Stata"
+  ],
+  "r_packages": [
+    "MASS",
+    "ggplot2",
+    "knitr",
+    "mgcv",
+    "pscl",
+    "quantreg",
+    "sandwich",
+    "xts",
+    "zoo"
+  ],
+  "canonical": {
+    "FORTRAN": "Fortran",
+    "JAVA": "Java",
+    "SPLUS": "S-Plus",
+    "Splus": "S-Plus",
+    "fortran": "Fortran",
+    "java": "Java",
+    "matlab": "MATLAB",
+    "splus": "S-Plus"
+  },
+  "publisher_canonical": {
+    "Chapman and Hall": "Chapman & Hall/CRC",
+    "Chapman and Hall/CRC": "Chapman & Hall/CRC",
+    "John Wiley": "John Wiley & Sons",
+    "Springer": "Springer-Verlag",
+    "Springer Science+Business Media": "Springer-Verlag",
+    "Wiley": "John Wiley & Sons"
+  },
+  "journal_canonical": {
+    "Annals of Statistics": "The Annals of Statistics",
+    "Annals of statistics": "The Annals of Statistics",
+    "JASA": "Journal of the American Statistical Association",
+    "Journal of the Royal Statistical Society Series B": "Journal of the Royal Statistical Society B",
+    "Journal of the Royal Statistical Society, Series B": "Journal of the Royal Statistical Society B"
+  },
+  "publisher_prefix_canonical": [
+    [
+      "Springer",
+      "Springer-Verlag"
+    ]
+  ]
+}

@@ -81,6 +81,11 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 # (eval/crossref_doi_lookup.py): it queries https://api.crossref.org/works
 # to find DOIs for cited bib entries that lack a doi field, used to seed
 # JSS-REFS-003 ground-truth annotations.
+#
+# crates.io / index.crates.io / static.crates.io feed `cargo build`
+# (spec 018 — Rust core): the toolchain itself is baked into the image
+# at build time (see Dockerfile), but resolving and downloading crate
+# dependencies happens at container runtime via cargo's sparse index.
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
@@ -98,7 +103,10 @@ for domain in \
     "archive.softwareheritage.org" \
     "crandb.r-pkg.org" \
     "api.crossref.org" \
-    "www.jstatsoft.org"; do
+    "www.jstatsoft.org" \
+    "crates.io" \
+    "index.crates.io" \
+    "static.crates.io"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then

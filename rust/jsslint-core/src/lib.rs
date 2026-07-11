@@ -1,0 +1,31 @@
+//! Core rule engine for the JSS style checker — spec 018 Rust port.
+//!
+//! This crate contains zero binding-specific code. `jsslint-cli`,
+//! `jsslint-wasm`, `jsslint-r`, and `jsslint-py` are thin marshalling
+//! layers over the types and functions exported here; see
+//! `/home/node/.claude/plans/having-the-style-checker-compressed-crown.md`
+//! for the full architecture.
+
+pub mod bib;
+pub mod catalogue;
+pub mod config;
+pub mod conformance;
+pub mod diff;
+pub mod engine;
+pub mod explain;
+pub mod fixer;
+pub mod html_output;
+pub mod json_output;
+pub mod lsp;
+pub mod report;
+pub mod rules;
+pub mod sarif;
+pub mod terminal;
+pub mod terms;
+pub mod tex;
+
+pub use catalogue::{lookup as lookup_rule, RuleMeta};
+pub use report::{
+    CategoryStatus, CategorySummary, ComplianceReport, Fix, FixConfidence, Severity, SkippedRule,
+    Violation,
+};
