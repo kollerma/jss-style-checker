@@ -697,6 +697,23 @@ past it, improvement requires domain knowledge, and the design
 response is confidence tiers and human review rather than more
 guards.
 
+\emph{The loop does not end.} Writing this manuscript extended the
+corpus in kind and promptly surfaced a new false-positive class: the
+code-spacing rule (\rulelink{JSS-CODE-003}), which reads hyphens in
+inline code as unspaced subtraction, flagged every command-line
+option this paper documents --- \proglang{R}~vignettes, the corpus's
+dominant genre, simply never typeset strings like \code{--fix} or
+\code{cargo install jsslint-cli}. The fix (skipping token sequences
+shaped like flags, names, and paths) went through the standard cycle:
+implemented against failing tests in both engines, re-scanned, and
+source-audited --- it silenced six corpus violations previously
+labeled true positives, of which five turned out to be label debt of
+exactly this class and one a genuine single-letter subtraction, the
+same inherent token ambiguity the rule has always accepted. The
+episode is the methodology in miniature: heuristics over tokens have
+a measurable boundary, new manuscript genres move it, and the loop
+prices every guard in both currencies before it ships.
+
 \subsection{Reproducibility}
 \label{sec:reproducibility}
 

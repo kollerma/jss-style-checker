@@ -51,7 +51,7 @@ mkdir -p generated/listings
 #     demo, rendered as LaTeX table rows from the machine-readable JSON
 #     output (the interactive terminal renderer draws the same data as a
 #     Unicode table, which pdfLaTeX cannot embed verbatim).
-JSS_LINT --mode reviewer --output json examples/demo.tex \
+(JSS_LINT --mode reviewer --output json examples/demo.tex || true) \
     | "$PY" -c '
 import json, sys
 doc = json.load(sys.stdin)
