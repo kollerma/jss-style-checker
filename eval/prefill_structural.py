@@ -84,7 +84,8 @@ def main(argv):
         by_rule = {}
         for rule, *_ in new:
             by_rule[rule] = by_rule.get(rule, 0) + 1
-        print(f"{d.name}: +{len(new)}  " + ", ".join(f"{r.split('-',1)[1]}={n}" for r, n in sorted(by_rule.items())))
+        summary = ", ".join(f"{r.split('-', 1)[1]}={n}" for r, n in sorted(by_rule.items()))
+        print(f"{d.name}: +{len(new)}  " + summary)
         if write:
             blocks = []
             for rule, fname, line, sugg in new:

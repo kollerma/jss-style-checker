@@ -314,7 +314,9 @@ def compute_precision(
         rows: list[RuleRow] = []
         exc = _gate_exceptions()
         for r in cx.execute(per_rule, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
+            precision, status = _classify(
+                r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc
+            )
             rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -354,7 +356,9 @@ def compute_precision_by_format(
         per_format_rows: list[RuleRow] = []
         exc = _gate_exceptions()
         for r in cx.execute(per_format, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
+            precision, status = _classify(
+                r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc
+            )
             per_format_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -396,7 +400,9 @@ def compute_precision_by_class(
         per_class_rows: list[RuleRow] = []
         exc = _gate_exceptions()
         for r in cx.execute(per_class, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
+            precision, status = _classify(
+                r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc
+            )
             per_class_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],
@@ -437,7 +443,9 @@ def compute_precision_by_source(
         per_source_rows: list[RuleRow] = []
         exc = _gate_exceptions()
         for r in cx.execute(per_source, join_params).fetchall():
-            precision, status = _classify(r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc)
+            precision, status = _classify(
+                r["tp"], r["fp"], r["pending"], rule_id=r["rule_id"], exceptions=exc
+            )
             per_source_rows.append(
                 RuleRow(
                     rule_id=r["rule_id"],

@@ -14,10 +14,9 @@ from __future__ import annotations
 
 import dataclasses
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
-
-from collections.abc import Mapping
 
 from texlint.api import Severity, ToolConfig
 

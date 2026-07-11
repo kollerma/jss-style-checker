@@ -413,7 +413,6 @@ def test_human_review_reviewer_defaults_to_env(monkeypatch, tmp_db: Path) -> Non
 def test_select_violations_excludes_stale_rows(tmp_db) -> None:
     """human-review queue likewise drops violations the tool no longer
     emits (stale last_seen_run_id)."""
-    from pathlib import Path
     from eval import db, human_review
     cx = db.connect(tmp_db)
     try:

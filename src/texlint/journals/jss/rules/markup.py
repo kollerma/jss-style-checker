@@ -600,7 +600,7 @@ def _check_title_package_idiom(
     somewhere — that's here.
     """
     for tex in doc.all_tex_like():
-        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+        for _parent, _idx, node in _helpers._iter_with_parent(tex.nodes):
             if not (
                 isinstance(node, LatexMacroNode)
                 and node.macroname == "title"

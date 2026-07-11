@@ -400,6 +400,7 @@ def test_client_sends_enable_thinking_when_set(monkeypatch) -> None:
     """enable_thinking=False adds chat_template_kwargs to the request;
     None omits it (back-compat)."""
     import json as _json
+
     from eval import review
 
     captured: dict = {}

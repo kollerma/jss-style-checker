@@ -539,7 +539,7 @@ def check_jss_cite_003(
     )
     for tex in doc.all_tex_like():
         emitted: set[int] = set()
-        for parent, idx, node in _helpers._iter_with_parent(tex.nodes):
+        for _parent, _idx, node in _helpers._iter_with_parent(tex.nodes):
             if not isinstance(node, LatexMacroNode):
                 continue
             if node.macroname not in triggering:

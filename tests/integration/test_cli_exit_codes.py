@@ -145,7 +145,7 @@ class TestDegradedParseSeverity:
 
     @staticmethod
     def _report_with(severity):
-        from texlint.api import Severity, Violation
+        from texlint.api import Violation
         from texlint.cli import _determine_exit_code
 
         violation = Violation(

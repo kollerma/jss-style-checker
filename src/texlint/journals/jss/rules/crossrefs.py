@@ -318,13 +318,11 @@ def check_jss_xref_002(
                 # sibling between the chars node carrying "Eq." and
                 # the ``\ref`` macro — walk back past one such
                 # specials sibling when present.
-                tilde_idx: int | None = None
                 if (
                     before is not None
                     and not isinstance(before, LatexCharsNode)
                     and getattr(before, "specials_chars", None) == "~"
                 ):
-                    tilde_idx = idx - 1
                     before = parent[idx - 2] if idx > 1 else None
                 eq_abbrev = _chars_ends_with_eq_abbrev(before)
                 if eq_abbrev is not None and not _label_has_non_equation_prefix(node):

@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import re
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 RECALL = Path(__file__).resolve().parent.parent / "eval" / "recall-corpus"
 _RULE = re.compile(r'rule_id\s*=\s*"([^"]+)"')

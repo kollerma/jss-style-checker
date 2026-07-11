@@ -17,7 +17,6 @@ from pylatexenc.latexwalker import (
 )
 
 from texlint.api import ParsedDocument
-
 from texlint.journals.jss.rules import _helpers
 
 

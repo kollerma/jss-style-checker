@@ -28,14 +28,6 @@ from pathlib import Path
 import bibtexparser
 from pylatexenc.latexwalker import LatexWalker, LatexWalkerError
 
-# bibtexparser's middleware chain logs a noisy "Unknown block type
-# <class '...DuplicateFieldKeyBlock'>" warning to stderr for every
-# failed block it routes past (bibtexparser/middlewares/middleware.py).
-# Those blocks are exactly what parse_bib_source handles below, so the
-# log line is pure noise to the CLI user — same suppression pattern as
-# the pygls json-rpc logger in lsp/server.py.
-logging.getLogger("bibtexparser").setLevel(logging.ERROR)
-
 from texlint.api import (
     VERBATIM_ENVS,
     ParsedBibFile,
@@ -44,6 +36,14 @@ from texlint.api import (
     Severity,
     Violation,
 )
+
+# bibtexparser's middleware chain logs a noisy "Unknown block type
+# <class '...DuplicateFieldKeyBlock'>" warning to stderr for every
+# failed block it routes past (bibtexparser/middlewares/middleware.py).
+# Those blocks are exactly what parse_bib_source handles below, so the
+# log line is pure noise to the CLI user — same suppression pattern as
+# the pygls json-rpc logger in lsp/server.py.
+logging.getLogger("bibtexparser").setLevel(logging.ERROR)
 
 _PARSE_RULE_ID = "JSS-PARSE-000"
 _UTF8_BOM = "﻿"

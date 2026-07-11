@@ -85,7 +85,9 @@ def test_gate_exception_reports_exempt_not_fail(
         cx.close()
 
     exc = tmp_path / "gate.toml"
-    exc.write_text('[[exceptions]]\nrule_id = "JSS-MARKUP-001"\nreason = "test"\n', encoding="utf-8")
+    exc.write_text(
+        '[[exceptions]]\nrule_id = "JSS-MARKUP-001"\nreason = "test"\n', encoding="utf-8"
+    )
     monkeypatch.setattr(report, "_GATE_EXCEPTIONS_PATH", exc)
 
     table = report.compute_precision(tmp_db)

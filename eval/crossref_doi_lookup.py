@@ -46,11 +46,12 @@ import json
 import re
 import sys
 import time
-import tomllib
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+
+import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CORPUS_ROOT = REPO_ROOT / "eval" / "recall-corpus"

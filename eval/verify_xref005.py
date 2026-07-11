@@ -90,14 +90,20 @@ def main() -> int:
                 continue  # firing no longer reproduces; leave as-is
             is_missing, keys = info
             if is_missing:
-                verdict, reason = "true_positive", "captioned float has no \\label{} (deterministic)"
+                verdict = "true_positive"
+                reason = "captioned float has no \\label{} (deterministic)"
             elif any(k in referenced for k in keys):
                 hit = next(k for k in keys if k in referenced)
-                verdict, reason = "false_positive", f"label {hit!r} IS referenced in the sources (deterministic)"
+                verdict = "false_positive"
+                reason = f"label {hit!r} IS referenced in the sources (deterministic)"
             else:
-                verdict, reason = "true_positive", f"label(s) {', '.join(keys)} never referenced in any source (deterministic)"
+                verdict = "true_positive"
+                reason = (
+                    f"label(s) {', '.join(keys)} never referenced in any source (deterministic)"
+                )
             cx.execute(
-                "UPDATE violations SET verdict=?, verdict_reason=?, reviewer='algo:xref005' WHERE id=?",
+                "UPDATE violations SET verdict=?, verdict_reason=?,"
+                " reviewer='algo:xref005' WHERE id=?",
                 (verdict, reason, r["id"]),
             )
             tp += verdict == "true_positive"

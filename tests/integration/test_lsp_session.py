@@ -259,7 +259,6 @@ class TestApplyAllFixes:
         assert summary == {"files": 1, "edits": len(edits)}
 
     def test_stale_cache_relinted_before_edit(self, tmp_path: Path) -> None:
-        from texlint.lsp.cache import CachedDocument
 
         server = create_server()
         server.text_document_publish_diagnostics = lambda p: None  # type: ignore[assignment]
