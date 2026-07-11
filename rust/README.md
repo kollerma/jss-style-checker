@@ -106,6 +106,12 @@ Source: `rust/jsslint-wasm/`. Compiles the same engine to WebAssembly. No
 network access is linked in at all (not even behind a flag) — manuscripts
 never leave the machine, by construction.
 
+There's also a minimal ready-to-use browser app built on this binding —
+[try it live](https://kollerma.github.io/jss-style-checker/), or see
+[`web/`](../web/) for its source (`index.html` + one `app.js`, no build
+tooling beyond `wasm-pack`) and `.github/workflows/publish-web.yml` for how
+it's deployed.
+
 ### Build
 
 ```sh

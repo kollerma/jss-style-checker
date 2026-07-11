@@ -1,0 +1,75 @@
+name: publish-web
+
+# Spec 018 follow-up: build the jsslint-wasm binding for the browser
+# and publish the minimal checker app (web/) to the gh-pages branch
+# root, so https://kollerma.github.io/jss-style-checker/ opens it
+# directly. Runs 100% client-side once loaded — no server, no
+# network request after the initial page/wasm fetch.
+#
+# Trigger: every push to main. Idempotent in the sense that pushing
+# the same build output twice is a no-op commit (git diff --cached
+# --quiet short-circuits below), same as publish-badges.yml.
+#
+# Permissions: `contents: write` so the action can push to gh-pages.
+# The default GITHUB_TOKEN is sufficient.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  # Shared with publish-badges.yml — see that workflow's comment.
+  group: gh-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: latest
+
+      - name: Build the WASM package for the browser
+        working-directory: rust/jsslint-wasm
+        run: wasm-pack build --release --target web --out-dir ../../web/pkg
+
+      - name: Publish to gh-pages
+        # Force-overwrite the site root (index.html, app.js, pkg/) on
+        # gh-pages, leaving badges/ (publish-badges.yml's own
+        # subdirectory) untouched. Same worktree-style approach as
+        # publish-badges.yml.
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          tmpdir=$(mktemp -d)
+          cp -r web/index.html web/app.js web/pkg "$tmpdir/"
+          if git fetch origin gh-pages; then
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf .
+          fi
+          rm -rf index.html app.js pkg
+          cp -r "$tmpdir"/* .
+          git add index.html app.js pkg
+          if git diff --cached --quiet; then
+            echo "no web app changes; skipping commit"
+            exit 0
+          fi
+          git commit -m "web: refresh checker app from main@${GITHUB_SHA::8}"
+          git push origin gh-pages

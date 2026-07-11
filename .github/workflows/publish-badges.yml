@@ -22,7 +22,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: publish-badges
+  # Shared with publish-web.yml: both push to the same gh-pages branch
+  # on every push to main, and each only touches its own subdirectory
+  # (badges/ here, the site root there) — but two workflows racing to
+  # fetch/commit/push gh-pages independently would non-fast-forward
+  # reject whichever pushes second. Sharing the group serializes them.
+  group: gh-pages
   cancel-in-progress: true
 
 jobs:

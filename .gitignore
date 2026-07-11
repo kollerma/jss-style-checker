@@ -205,3 +205,8 @@ examples/jss5342-versions/
 # `package-lock.json` IS tracked (reproducible installs).
 vscode-extension/node_modules/
 vscode-extension/out/
+
+# web/ (spec 018 browser WASM app) — `wasm-pack build --target web
+# --out-dir web/pkg` output. Built by .github/workflows/publish-web.yml
+# on every push to main; not committed.
+web/pkg/

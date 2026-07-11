@@ -7,6 +7,10 @@
 Style checker for manuscripts submitted to the
 [Journal of Statistical Software](https://www.jstatsoft.org/) (JSS).
 
+**[Try it in your browser](https://kollerma.github.io/jss-style-checker/)** —
+no install, nothing uploaded. Pick a folder and it checks the `.tex`/`.bib`
+files on the spot, entirely client-side via WebAssembly.
+
 > The badges above read shields.io endpoint JSON files refreshed by
 > CI from the spec-002 precision-history DB and the spec-017 recall
 > corpus. They go live when the gh-pages publish workflow ships and
@@ -24,7 +28,8 @@ The package ships:
   [`specs/002-eval-jss-harness/quickstart.md`](specs/002-eval-jss-harness/quickstart.md)).
 
 The same engine is also being ported to Rust and compiled to a standalone
-binary, a browser/npm WASM package, a native Python extension, and an R
+binary, a browser/npm WASM package (the [in-browser checker](https://kollerma.github.io/jss-style-checker/)
+above — source at [`web/`](web/)), a native Python extension, and an R
 package — see [`rust/README.md`](rust/README.md) for how to use each.
 
 ## Install (development)
