@@ -238,6 +238,41 @@ class TestCode003:
         )
         assert run_rule(jss_code_003, src) == []
 
+    def test_cli_flag_silent(self, run_rule):
+        # `--fix` is option syntax, not a missing-space subtraction
+        # (surfaced by linting this project's own manuscript, which
+        # documents its command-line interface).
+        for content in ("--fix", "--min-confidence", "-v"):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}\code{{{content}}}\end{{document}}"
+            )
+            assert run_rule(jss_code_003, src) == [], content
+
+    def test_command_words_silent(self, run_rule):
+        # Space-separated command words / flags / dotfiles / paths are
+        # names, not operator expressions.
+        for content in (
+            "--fix --dry-run",
+            "cargo install jsslint-cli",
+            ".jss-lint.toml",
+            "jss-lint examples/demo.tex",
+        ):
+            src = (
+                r"\documentclass[article]{jss}" "\n"
+                rf"\begin{{document}}\code{{{content}}}\end{{document}}"
+            )
+            assert run_rule(jss_code_003, src) == [], content
+
+    def test_command_words_with_expression_still_flagged(self, run_rule):
+        # A name-like prefix must not shadow a real spacing defect in a
+        # later token.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}\code{Rscript -e x<-coef(y)}\end{document}"
+        )
+        assert len(run_rule(jss_code_003, src)) == 1
+
     def test_dash_inside_string_literal_silent(self, run_rule):
         # \code{vignette("plot3logit-overview")} — the dash in the
         # string literal is a vignette filename, not a subtraction

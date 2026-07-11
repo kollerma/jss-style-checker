@@ -1,11 +1,24 @@
 %% jss-lint: Automated Style Checking for JSS Manuscripts
 %% Manuscript for submission to the Journal of Statistical Software
 %%
-%% NOTE: Compilation requires jss.cls, downloadable from
-%%       https://www.jstatsoft.org/style
+%% Every statistic in this manuscript is generated from the repository's
+%% pinned evaluation artifacts; see generated/stats.tex and replicate.sh.
+%% Compilation requires jss.cls (https://www.jstatsoft.org/style).
 
 \documentclass[article]{jss}
+\usepackage{booktabs}
 \usepackage{longtable}
+
+\input{generated/stats.tex}
+%% Rule mentions link to their definition in Appendix A.
+\newcommand{\rulelink}[1]{\hyperlink{rule:#1}{\code{#1}}}
+\providecommand{\BibTeX}{Bib\TeX{}}
+%% Generated table bodies are read with the primitive \@@input:
+%% LaTeX's \input wrapper breaks \multicolumn / booktabs rules at the
+%% start of a row inside tabular and longtable.
+\makeatletter
+\newcommand{\rawinput}[1]{\@@input #1 }
+\makeatother
 
 %% -- Article metainformation -----------------------------------------
 
@@ -18,46 +31,42 @@
   Journal of Statistical Software Manuscripts}
 
 \Abstract{%
-  Authors submitting manuscripts to the \emph{Journal of Statistical
-  Software} (JSS) must satisfy a comprehensive style guide covering
-  preamble macros, semantic markup, citation conventions,
-  capitalisation, code formatting, bibliography completeness, and
-  typography. Style violations that slip through to peer review create
-  unnecessary friction and additional revision rounds. We present
-  \pkg{jss-style-checker}, an open-source \proglang{Python}~3.10+
-  command-line tool and library providing deterministic, rule-based
-  validation of \LaTeX{} manuscripts against the JSS style guide. The
-  tool parses manuscripts using an abstract syntax tree (AST) approach
-  via \pkg{pylatexenc}, enabling semantic analysis that avoids false
-  positives from comment-only or verbatim occurrences. Fifty-three
-  rules across 16 categories are implemented, covering \code{.tex},
-  \code{.Rnw} (Sweave/Knitr), and \code{.Rmd} (\proglang{R}~Markdown)
-  source formats. A \code{--fix} flag applies deterministic
-  auto-corrections in place; a \code{--dry-run} flag previews them.
-  A journal plugin system based on \proglang{Python} entry points
-  enables other journals to build on the core infrastructure without
-  modifying the package.
-
-  The tool was validated against a corpus of 493 real JSS-format
-  manuscripts drawn from CRAN package vignettes. After sixteen
-  iterations of a precision evaluation-improvement loop, all thirty
-  rules with at least ten reviewed violations achieve at least 90\%
-  precision (overall: 98.2\% across 6{,}739 reviewed instances). The
-  development methodology and retrospective lessons are described in
-  detail and offer a replicable template for similar tools. The
-  package is available from the \proglang{Python} Package Index as
-  \pkg{jss-style-checker}; the present manuscript was validated with
-  the tool before submission.%
+  Manuscripts submitted to the \emph{Journal of Statistical Software}
+  (JSS) must satisfy a comprehensive style guide covering preamble
+  macros, semantic markup, citation conventions, capitalization, code
+  formatting, bibliography completeness, and typography. Style
+  violations that reach peer review cost editors, reviewers, and
+  authors additional revision rounds for problems a machine can find.
+  We present \pkg{jss-lint}, an open-source, deterministic style
+  checker for JSS manuscripts. A single \proglang{Rust} core
+  implements \StatRuleCount{} rules in \StatCategoryCount{} categories
+  for \code{.tex}, \code{.Rnw}, and \code{.Rmd} sources and ships
+  through four channels: a command-line tool, a \proglang{Python}
+  package, an \proglang{R} package, and a browser version compiled to
+  WebAssembly that processes manuscripts entirely locally. The rules
+  were developed with extensive AI assistance under human review and
+  hardened by an evaluation-improvement loop against a pinned corpus
+  of \StatCorpusSize{} real manuscripts: after \StatIterationCount{}
+  recorded iterations, measured precision is \StatPrecisionOverall{}
+  over \StatPrecisionReviewed{} human- and AI-adjudicated violation
+  instances, and measured recall against a hand-annotated ground-truth
+  corpus is \StatRecallMicro{} (per instance) and \StatRecallMacro{}
+  (averaged per rule). The methodology --- specification-driven
+  development, adversarially checked AI labeling, and per-rule
+  precision gates with documented exemptions and rule retirement ---
+  is described in detail and offers a replicable template for similar
+  tools. This manuscript was checked by \pkg{jss-lint} before
+  submission; the replication script reproduces every number, table,
+  and listing shown.%
 }
 
 \Keywords{%
-  \LaTeX{}, style checking, academic writing, linting,
-  \proglang{Python}, \emph{Journal of Statistical Software},
+  Style checking, \LaTeX{}, linting, reproducibility,
+  \proglang{Rust}, \proglang{Python}, \proglang{R},
   large language models%
 }
 \Plainkeywords{%
-  LaTeX, style checking, academic writing, linting, Python,
-  Journal of Statistical Software, AI-assisted development,
+  Style checking, LaTeX, linting, reproducibility, Rust, Python, R,
   large language models%
 }
 
@@ -73,1656 +82,871 @@
 %%--------------------------------------------------------------------
 \section{Introduction}
 \label{sec:intro}
+
+The \emph{Journal of Statistical Software} reviews both a software
+artifact and the manuscript describing it. Its style
+guide~\citep{jss_styleguide} specifies requirements well beyond what
+general \LaTeX{} experience suggests: dedicated preamble macros such
+as \code{\textbackslash{}Plainauthor} and
+\code{\textbackslash{}Address}, semantic markup macros
+(\code{\textbackslash{}proglang}, \code{\textbackslash{}pkg},
+\code{\textbackslash{}code}), \pkg{natbib} citation conventions
+\citep{natbib}, capitalization rules that differ between titles,
+section headings, and captions, code-formatting and line-width
+conventions, and completeness requirements on the \BibTeX{} database.
+Each requirement is individually reasonable; collectively they are
+hard to hold in mind, and manuscripts that violate them generate
+editorial back-and-forth that neither improves the science nor teaches
+the author much beyond the specific correction.
+
+Our position is simple: the peer review process should not be burdened
+with problems that can be detected --- and often repaired ---
+mechanically. Statistical computing already follows this principle for
+code and results. The line of tooling from \pkg{Sweave}
+\citep{leisch2002} through \pkg{knitr} \citep{xie2014} and
+\pkg{SASweave} \citep{sasweave} exists to guarantee mechanically that
+a manuscript's code and output agree, precisely so that humans need
+not verify concordance by eye. \pkg{jss-lint} extends the same
+reasoning from a manuscript's computational content to its editorial
+form.
+
+This paper describes \pkg{jss-lint} version \StatToolVersion{}, a
+deterministic style checker for JSS manuscripts. Its contributions are
+threefold. First, the tool itself: \StatRuleCount{} rules across
+\StatCategoryCount{} categories, each traceable to a clause of the
+style guide, applied by a single \proglang{Rust} engine that ships as
+a command-line tool, a \proglang{Python} package, an \proglang{R}
+package, and a fully client-side browser application --- with an
+auto-fix mode that repairs the mechanical subset of violations.
+Second, a measured account of its accuracy: precision evaluated over
+\StatCorpusSize{} real manuscripts and \StatPrecisionReviewed{}
+adjudicated violation instances, and recall evaluated against a
+hand-annotated ground-truth corpus --- numbers of a kind that linters
+rarely report. Third, a development methodology: the tool was built
+in an intensive human--AI collaboration, and we document where
+specification-driven development helped, where it did not, and how an
+evaluation-improvement loop with per-rule precision gates turned a
+plausible-looking rule set into a trustworthy one.
+
+Everything reported here is reproducible: a single replication script
+regenerates every statistic, table body, and terminal listing in this
+manuscript from the repository's pinned evaluation artifacts, and ---
+self-referentially --- verifies that the manuscript itself passes
+\pkg{jss-lint} with zero violations.
+
+Section~\ref{sec:styleguide} reviews the style requirements and gives
+a motivating example. Section~\ref{sec:design} describes the
+architecture. Section~\ref{sec:rules} summarizes the rule catalogue.
+Section~\ref{sec:method} presents the development methodology,
+including the role of AI assistance. Section~\ref{sec:validation}
+reports the empirical validation. Section~\ref{sec:usage} demonstrates
+the tool, Section~\ref{sec:comparison} compares it with existing
+tools, and Section~\ref{sec:summary} concludes.
+
 %%--------------------------------------------------------------------
-
-The \emph{Journal of Statistical Software} (JSS) publishes software
-packages and statistical methods alongside reproducible examples, and
-maintains a detailed style guide governing manuscript preparation
-\citep{jss_styleguide}. The guide addresses a wide range of
-requirements covering \LaTeX{} preamble macros, semantic markup
-conventions for programming language and package names, citation style
-(natbib), capitalisation in section headings and bibliographic entries,
-line-width limits in code listings, label requirements for floating
-environments, and typography details such as punctuation after Latin
-abbreviations.
-
-While each individual requirement is straightforward, satisfying all
-of them simultaneously across a long manuscript is challenging,
-especially for authors who are unfamiliar with JSS conventions or
-whose workflow evolved from another journal. Checking compliance
-manually during revision is time-consuming. Automated tools exist for
-general \LaTeX{} checking (\pkg{chktex}~\citep{chktex},
-\pkg{lacheck}~\citep{lacheck}, \pkg{textlint}~\citep{texlint_js}),
-but none implement JSS-specific rules.
-
-We present \pkg{jss-style-checker} (command-line entry point
-\code{jss-lint}), which to our knowledge is the first dedicated
-automated style checker for JSS manuscripts. The tool takes one or
-more \code{.tex}, \code{.Rnw}, \code{.Rmd}, and \code{.bib} files as
-input and produces a structured violation report. Its design emphasises
-three properties:
-
-\begin{enumerate}
-  \item \emph{Determinism}: identical input always produces identical
-    output; there are no probabilistic or machine-learning components.
-  \item \emph{Semantic analysis}: the tool parses \LaTeX{} into an
-    AST rather than applying regular expressions to raw text, avoiding
-    false positives inside comments or verbatim blocks.
-  \item \emph{Extensibility}: a journal plugin system based on
-    \proglang{Python} entry points allows other journals to define
-    custom rule sets without modifying the core package.
-\end{enumerate}
-
-Empirical validation on 493 real JSS-format manuscripts confirms that
-the approach is effective: all thirty rules with sufficient reviewed
-data achieve at least 90\% precision, and the overall precision across
-6{,}739 reviewed violation instances is 98.2\%. This paper also
-documents the development process in detail, including the iterative
-evaluation-improvement methodology that drove rule precision from
-initial implementations to the published release.
-
-This paper is organised as follows. Section~\ref{sec:styleguide}
-surveys the JSS style requirements. Section~\ref{sec:design} describes
-the design and architecture. Section~\ref{sec:aidev} documents the
-AI-assisted development methodology, including the iterative
-evaluation-improvement loop. Section~\ref{sec:lessons} reflects
-candidly on what worked, what proved difficult, and what we would do
-differently. Section~\ref{sec:rules} documents each implemented rule
-category. Section~\ref{sec:eval} presents empirical precision results
-on 493 real manuscripts. Section~\ref{sec:usage} covers installation
-and usage. Section~\ref{sec:extensibility} explains how to create
-journal plugins. Section~\ref{sec:comparison} compares
-\pkg{jss-style-checker} with related tools, and
-Section~\ref{sec:conclusions} concludes.
-
-%%--------------------------------------------------------------------
-\section{JSS style guide}
+\section{The style requirements and a motivating example}
 \label{sec:styleguide}
-%%--------------------------------------------------------------------
 
-The JSS style guide \citep{jss_styleguide} is the authoritative
-reference for manuscript preparation. Authors are expected to study
-the guide and the companion template before submitting. This section
-surveys the requirements that \pkg{jss-style-checker} enforces and
-explains why manual compliance is difficult.
+\subsection{What the style guide asks for}
+\label{sec:requirements}
 
-\subsection{Overview of requirements}
+The JSS style guide and the accompanying author
+instructions~\citep{jss_styleguide, jss_instructions} constrain a
+manuscript at several levels. At the document level, the manuscript
+uses the \code{jss} document class, provides an abstract, keywords,
+and at least one author address, and declares its bibliography as a
+\BibTeX{} database. Plain-text companions
+(\code{\textbackslash{}Plaintitle},
+\code{\textbackslash{}Plainauthor},
+\code{\textbackslash{}Plainkeywords}) are required whenever the
+corresponding rich field contains markup, because they feed the PDF
+metadata. At the markup level, programming languages, software
+packages, and code fragments are wrapped in
+\code{\textbackslash{}proglang}, \code{\textbackslash{}pkg}, and
+\code{\textbackslash{}code} respectively; \code{\textbackslash{}code}
+is preferred for inline code, though \code{\textbackslash{}verb} is
+also allowed. Citations use \pkg{natbib} commands, and
+brackets-within-brackets citation constructs --- a
+\code{\textbackslash{}cite} command already wrapped in parentheses
+--- are not permitted; the guide asks for
+\code{\textbackslash{}citep} or, when parentheses are shared with
+other text, \code{\textbackslash{}citealp}. Titles are set in
+title style, section headings and captions in sentence style, and
+keywords in sentence case. Code shown in the manuscript must fit the
+text width, use spaces around operators and after commas, and keep
+commentary in the prose rather than inside verbatim blocks. House
+style adds smaller conventions: \code{e.g.,} and \code{i.e.,} carry a
+trailing comma, $p$~value and $t$~statistic are typeset with an
+italicized symbol and a tie, expectation and probability operators use
+the class-provided macros, and cross-references spell out
+``Section'', ``Figure'', and ``Equation''.
 
-The JSS \LaTeX{} document class (\code{jss.cls}) defines seven
-semantic markup commands that authors must use consistently:
+Some submission requirements are out of the linter's scope by design:
+\pkg{jss-lint} checks editorial form, not that the manuscript
+compiles under pdf\LaTeX{} or that its results reproduce. Book and
+software reviews, which have their own class options and provisions,
+are likewise supported only through the document-class rule.
 
-\begin{itemize}
-  \item \code{\textbackslash proglang\{name\}}: programming languages
-    (e.g.,{} \proglang{R}, \proglang{Python}, \proglang{Julia}).
-  \item \code{\textbackslash pkg\{name\}}: software packages
-    (e.g.,{} \pkg{ggplot2}, \pkg{numpy}, \pkg{lme4}).
-  \item \code{\textbackslash code\{snippet\}}: inline code,
-    filenames, function names, and command-line options.
-  \item \code{\textbackslash email\{address\}}: e-mail addresses.
-  \item \code{\textbackslash file\{path\}}: file paths.
-  \item \code{\textbackslash fct\{name\}}: function names (optional
-    alternative to \code{\textbackslash code}).
-  \item \code{\textbackslash url\{uri\}}: hyperlinks (with
-    \code{\textbackslash href} for labeled links).
-\end{itemize}
+\subsection{A motivating example}
+\label{sec:example}
 
-Beyond markup commands, the guide specifies six required preamble
-macros (\code{\textbackslash Plainauthor},
-\code{\textbackslash Plaintitle},
-\code{\textbackslash Abstract},
-\code{\textbackslash Keywords},
-\code{\textbackslash Plainkeywords},
-\code{\textbackslash Address}) that provide plain-text metadata for
-the journal management system. All six must appear before
-\code{\textbackslash begin\{document\}}.
+The fragment below is a complete, intentionally non-compliant
+manuscript; it is shipped with the replication materials as
+\code{examples/demo.tex} and drives every demonstration in this
+paper.
 
-Citation style follows natbib \citep{natbib}: parenthetical references
-use \code{\textbackslash citep\{key\}}, and textual references use
-\code{\textbackslash citet\{key\}}. The style guide specifically
-prohibits brackets-within-brackets constructs such as
-\code{(\textbackslash cite\{key\})}, which produce
-doubly-parenthesised output; natbib commands should be used
-throughout.
+\VerbatimInput[frame=single, fontsize=\small]{examples/demo.tex}
 
-Section headings use sentence case (only the first word and proper
-nouns capitalised), which differs from the title case common in other
-publication venues. BibTeX title fields, conversely, must be in title
-case and must protect capitalisation with curly braces
-(e.g.,{} \code{title = \{An Overview of \{R\}\}}) to prevent BibTeX
-styles from down-casing proper nouns.
-
-Code examples inside verbatim environments
-(\code{verbatim}, \code{Code}, \code{CodeInput}, \code{CodeOutput},
-\code{Sinput}, \code{Soutput}, \code{lstlisting}) must fit within
-the column width of the typeset page. All floating environments
-(figures, tables, equations) must carry a
-\code{\textbackslash label\{\}} for cross-referencing. Typography
-rules require trailing commas: the forms ``e.g.,'' and ``i.e.,'' are
-mandated (not the bare forms), and the \LaTeX{} macro
-\code{\textbackslash top} is required for the matrix transpose symbol
-rather than the common but ambiguous \verb|^T|.
-
-\subsection{The case for automated checking}
-
-We argue that style compliance checking and scientific peer review are
-better kept separate. Peer review is intended to assess the scientific
-contribution, evaluate methodology, and identify gaps in the
-literature; style conformance is a separate, mechanical concern with
-deterministic remedies. Violations that can be detected and fixed
-before submission need not consume any reviewer attention. Automated
-pre-submission checking addresses this class of issues completely, for
-the rules it covers, before a manuscript enters the review pipeline.
-
-\subsection{Motivating example}
-\label{sec:motivating-example}
-
-Consider the following non-compliant \LaTeX{} fragment:
-
-\begin{verbatim}
-% Non-compliant example (do not copy)
-\section{R Statistical Computing}
-
-We fit a linear model in Python using the
-statsmodels package (\cite{rcore2024}).
-\end{verbatim}
-
-This fragment violates three JSS rules simultaneously: the section
-heading uses title case instead of sentence case
-(\code{JSS-CAP-002}); the language name \proglang{Python} and the
-package name \pkg{statsmodels} appear without semantic markup
-(\code{JSS-MARKUP-001}/\code{JSS-MARKUP-002}); and a bare
-\code{\textbackslash cite\{\}} inside parentheses creates a
-brackets-within-brackets construct (\code{JSS-CITE-001}). Running
-\code{jss-lint} on a file containing this fragment produces:
-
-\begin{verbatim}
-example.tex
-  2:1  warning  [JSS-CAP-002]  Title Case in section heading
-     -> Use sentence case: "R statistical computing"
-  5:29  warning  [JSS-MARKUP-001]  Bare language name "Python"
-     -> Replace with \proglang{Python}
-  5:45  warning  [JSS-MARKUP-002]  Bare package "statsmodels"
-     -> Replace with \pkg{statsmodels}
-  6:28  error    [JSS-CITE-001]  Bare \cite{} inside parentheses
-     -> Use \citep{rcore2024} or \citet{rcore2024}
-
-4 violations (1 error, 3 warnings)
-\end{verbatim}
-
-The corrected fragment is:
-
-\begin{Code}
-\section{R statistical computing}
-
-We fit a linear model in \proglang{Python} using the
-\pkg{statsmodels} package \citep{rcore2024}.
-\end{Code}
+Running \code{jss-lint examples/demo.tex} reports seven violations.
+Four are mechanical: the authors are separated by
+\code{\textbackslash{}and} instead of \code{\textbackslash{}And}
+(\rulelink{JSS-STRUCT-005}), the citation wraps
+\code{\textbackslash{}cite} in parentheses
+(\rulelink{JSS-CITE-003}), the language name in prose lacks
+\code{\textbackslash{}proglang} (\rulelink{JSS-MARKUP-001}), and the
+hyphenated $p$~value spelling should use an italicized symbol and a
+tie (\rulelink{JSS-OPER-001}). The remaining three require
+judgment: the missing \code{\textbackslash{}Address}
+(\rulelink{JSS-PRE-002}), the title-style section heading ``Our New
+Method'' (\rulelink{JSS-CAP-002}), and the capitalized keyword list
+(\rulelink{JSS-CAP-004}). Each report carries the source position,
+the style-guide clause it enforces, and a concrete suggestion; the
+mechanical four are repaired automatically by the auto-fix mode shown
+in Section~\ref{sec:usage}.
 
 %%--------------------------------------------------------------------
 \section{Design and architecture}
 \label{sec:design}
-%%--------------------------------------------------------------------
 
-\subsection{Design philosophy}
-\label{sec:philosophy}
+\subsection{Design principles}
+\label{sec:principles}
 
-\pkg{jss-style-checker} is built around three principles.
+Four principles, fixed early and maintained throughout, shape the
+implementation.
 
-\textbf{AST-based analysis.} The tool parses \LaTeX{} source files
-into an abstract syntax tree using \pkg{pylatexenc}
-\citep{pylatexenc} rather than applying regular expressions to raw
-text. AST-based analysis correctly identifies the semantic role of
-each token: a bare word \verb|Python| inside a \code{verbatim}
-environment is not a markup violation because verbatim text is
-rendered as-is; a bare \verb|Python| in a paragraph body is a
-violation. Making this distinction with regular expressions requires
-tracking nested environments and comment state explicitly,
-substantially increasing implementation complexity and the risk of
-false positives.
+\emph{Parse, do not pattern-match.} Rules operate on an abstract
+syntax tree (AST) of the manuscript, not on raw lines. The original
+\proglang{Python} implementation parses \LaTeX{} with \pkg{pylatexenc}
+\citep{pylatexenc} and \BibTeX{} with \pkg{bibtexparser}
+\citep{bibtexparser}; the \proglang{Rust} engine re-implements the
+same two-pass document model. AST-level analysis is what lets a rule
+distinguish a bare language name in prose from one inside a comment,
+a verbatim block, a citation key, or a macro definition --- the
+distinctions that separate a useful checker from a noisy one.
+\code{.Rnw} (Sweave/knitr) and \code{.Rmd} (\proglang{R}~Markdown)
+sources are supported by extracting their \LaTeX{} and code
+components with source positions preserved, and multi-file
+manuscripts are handled by recursively resolving
+\code{\textbackslash{}input} and \code{\textbackslash{}include}
+directives.
 
-\textbf{Non-fatal parse errors.} Unusual or non-standard \LaTeX{}
-that \pkg{pylatexenc} cannot fully parse does not crash the tool.
-Parse warnings are stored alongside any violations found so that
-partial checking is always possible, even on unconventional
-manuscripts.
+\emph{Deterministic rules only.} The same input always produces the
+same violations, byte for byte. AI plays a large role in the
+\emph{development} of the rules (Section~\ref{sec:method}) but no
+role at all in their execution --- an intentional contrast to
+AI-based writing assistants, and the property that makes the tool
+usable as a CI gate and its precision measurable.
 
-\textbf{Single-file scope.} \pkg{jss-style-checker} analyses each
-input file independently. \code{\textbackslash input\{\}} and
-\code{\textbackslash include\{\}} directives are \emph{not} followed;
-referenced sub-files are ignored unless they are passed explicitly on
-the command line. Authors with multi-file manuscripts should pass all
-component files (and the shared \code{.bib} file) as arguments in a
-single invocation:
+\emph{Fail soft.} A parse error in one file degrades that file's
+analysis and is itself reported as a violation; it never aborts the
+run. Real manuscripts contain unbalanced braces in verbatim
+environments and other legacy constructs, and a checker that dies on
+them never gets to report anything useful.
 
-\begin{CodeInput}
-jss-lint main.tex appendix.tex refs.bib
-\end{CodeInput}
+\emph{Two audiences.} Author mode reports each violation with its
+position and a fix suggestion. Reviewer mode aggregates the same
+findings into a per-category compliance summary
+(Section~\ref{sec:usage}) so that editors and reviewers can see at a
+glance whether a submission is ready for content review.
 
-\textbf{Deterministic output.} Given the same input file, the tool
-always produces the same set of violations in the same order (sorted
-by file, line, and column). This property is essential for integrating
-the tool into continuous integration (CI) pipelines or pre-commit
-hooks.
+\subsection{One engine, four channels}
+\label{sec:channels}
 
-\subsection{Package architecture}
-\label{sec:architecture}
-
-\pkg{jss-style-checker} follows a \code{src/} layout with a clear
-separation between the public API, the rule engine, journal
-implementations, and output formatters. The top-level structure is:
-
-\begin{Code}
-src/texlint/
-    api.py         # Public types
-    cli.py         # Click CLI entry point
-    config.py      # Configuration loader
-    core/
-        parser.py  # source-file parsers (tex, bib, rnw, rmd)
-        engine.py  # load_journal, run
-    journals/
-        jss/       # JSS rule module
-    output/        # terminal, json, html formatters
-\end{Code}
-
-The core pipeline is:
-
-\begin{enumerate}
-  \item \textbf{Parse}: \code{parse\_tex\_file(path)},
-    \code{parse\_rnw\_file(path)}, and
-    \code{parse\_rmd\_file(path)} produce \code{ParsedTexFile} and
-    \code{ParsedRmdFile} objects respectively;
-    \code{parse\_bib\_file(path)} produces a \code{ParsedBibFile}.
-    Each carries parsed content and any parse-time violations.
-  \item \textbf{Assemble}: the parsed files are collected into a
-    \code{ParsedDocument} container.
-  \item \textbf{Run}: \code{run(doc, config)} loads the journal
-    module, executes all rules against the document, filters
-    suppressed rule IDs, and returns a \code{ComplianceReport}.
-  \item \textbf{Format}: the report is rendered by the appropriate
-    formatter (terminal, JSON, or HTML) and written to standard
-    output.
-\end{enumerate}
-
-The principal public types are summarised in
-Table~\ref{tab:types}.
-
-\begin{table}[ht]
-  \centering
-  \begin{tabular}{lp{9cm}}
-    \hline
-    Type & Description \\
-    \hline
-    \code{Violation} &
-      Frozen dataclass: file, line, column, rule ID, severity
-      (\code{"error"} or \code{"warning"}), message,
-      optional human-readable suggestion, and an optional
-      \code{fix} (\code{FixSuggestion}) carrying a character-offset
-      patch for auto-correction. \\
-    \code{Rule} &
-      Frozen dataclass: rule ID, description, optional
-      \code{formats} set, and a check function
-      \code{(ParsedDocument) -> Iterator[Violation]}. \\
-    \code{RuleCategory} &
-      Named grouping of one or more \code{Rule} objects. \\
-    \code{ComplianceReport} &
-      Top-level result: journal, mode, version, list of
-      violations, per-category summaries, compliance percentage. \\
-    \code{ToolConfig} &
-      Immutable merged configuration: journal ID, mode,
-      output format, frozen set of ignored rule IDs. \\
-    \code{ParsedDocument} &
-      Container for all \code{ParsedTexFile},
-      \code{ParsedBibFile}, and \code{ParsedRmdFile} objects. \\
-    \code{ParsedRmdFile} &
-      Parsed \code{.Rmd} file: YAML frontmatter dict, list of
-      \code{RmdHeading}, \code{RmdProseBlock}, and
-      \code{RmdCodeBlock} objects, inline
-      \code{ParsedTexFile} fragments. \\
-    \hline
-  \end{tabular}
-  \caption{Principal public types in the \pkg{jss-style-checker}
-    API (\code{src/texlint/api.py}).}
-  \label{tab:types}
-\end{table}
-
-\subsection{Configuration system}
-\label{sec:config}
-
-Configuration follows a three-tier precedence model: built-in defaults
-are overridden by a \code{.jss-lint.toml} file in the working
-directory, which is in turn overridden by CLI flags. The TOML
-configuration file recognises four keys:
-
-\begin{Code}
-journal = "jss"       # rule-set to apply
-mode = "author"       # author | reviewer
-output = "terminal"   # terminal | json | html
-ignore-rules = [      # suppress specific rule IDs
-    "JSS-CITE-001"
-]
-\end{Code}
-
-\subsection{Output modes}
-\label{sec:output-modes}
-
-Two audience modes are provided.
-
-\textbf{Author mode} produces a flat, annotated list of violations
-sorted by location. Each violation displays its line and column,
-severity, rule ID, a human-readable message, and a concrete suggestion
-for how to fix it. This mode is intended for use during manuscript
-preparation.
-
-\textbf{Reviewer mode} produces a compliance summary table showing
-pass/fail status and violation count for each rule category, together
-with an overall compliance percentage. This mode is intended for
-editorial workflows.
-
-Three output formats are supported:
+\pkg{jss-lint} began as a pure \proglang{Python} package. Version
+\StatToolVersion{} moves the engine --- parsing, all
+\StatRuleCount{} rules, auto-fixes, and every output renderer --- into
+a single \proglang{Rust} \citep{rustlang} crate, \pkg{jsslint-core},
+compiled into four distribution channels:
 
 \begin{itemize}
-  \item Terminal: coloured output using \pkg{rich}~\citep{rich},
-    suitable for interactive use.
-  \item JSON: machine-readable output with a versioned schema,
-    suitable for CI/CD integration or programmatic post-processing.
-  \item HTML: self-contained report generated with
-    \pkg{jinja2}~\citep{jinja2} templates, suitable for sharing with
-    collaborators.
+  \item \pkg{jsslint-cli}, a standalone native binary exposing the
+    full command-line interface;
+  \item \pkg{jsslint} on the \proglang{Python} Package Index, a
+    \pkg{PyO3}-based extension module \citep{pyo3} that preserves the
+    original \proglang{Python} API;
+  \item \pkg{jsslintr}, an \proglang{R} package built with
+    \pkg{extendr} \citep{extendr}, so that the community JSS serves
+    most directly can run the checker from the language it already
+    uses;
+  \item \pkg{jsslint-wasm}, a WebAssembly build via
+    \pkg{wasm-bindgen} \citep{wasmbindgen} powering an in-browser
+    checker. The WebAssembly module links no networking code at all,
+    so an unpublished manuscript checked in the browser provably
+    never leaves the author's machine --- a property commercial
+    checking services cannot offer.
 \end{itemize}
 
-The \code{--verbose} flag (\code{-v}) adds a list of rules that were
-skipped because they do not apply to the input format (e.g.,{} \LaTeX{}
-preamble rules when only \code{.Rmd} files are provided). In JSON
-output the skipped rules are included as a \code{skipped\_rules} array.
+The port is validated by differential testing rather than by trust:
+every rule and every renderer is required to produce byte-identical
+output to the \proglang{Python} engine, enforced by per-rule parity
+tests and a differential sweep over the full evaluation corpus. This
+byte-parity contract is also what allows the empirical results of
+Section~\ref{sec:validation}, produced with the \proglang{Python}
+engine, to stand for the \proglang{Rust} engine verbatim. The
+\proglang{Python} implementation remains in the repository as the
+executable specification and parity oracle.
 
-\subsection{R source file support}
-\label{sec:r-source}
+Beyond the core linter, the ecosystem summarized in
+Table~\ref{tab:ecosystem} integrates the checker into editing and
+review workflows.
 
-Many JSS authors write their manuscripts in \proglang{R} source formats
-that mix prose and code before compilation to \LaTeX{}.
-\pkg{jss-style-checker} accepts these formats directly.
-
-\textbf{Sweave/Knitr (\code{.Rnw}).} The parser strips \proglang{R}
-code chunks (delimited by \verb|<<...>>=| \ldots{} \verb|@|) by
-replacing each chunk line with a blank line, preserving the original
-line numbering so that violation line numbers in the \code{.Rnw} file
-remain accurate. Inline \verb|\Sexpr{...}| expressions are replaced
-with an inert placeholder. The remaining \LaTeX{} text is then parsed
-and checked by all rules applicable to \code{.tex} files.
-
-\textbf{\proglang{R}~Markdown (\code{.Rmd}).} The parser separates the
-document into three element types: the YAML frontmatter block, fenced
-code blocks (\verb|```{r}| \ldots{} \verb|```|), and prose blocks.
-Inline \LaTeX{} macros in prose blocks (e.g.,{} \verb|\pkg{ggplot2}|,
-\verb|\code{lm()}|) are extracted and parsed with \pkg{pylatexenc}.
-Three \code{.Rmd}-specific rules are provided
-(\code{JSS-RMD-PREAMBLE-001}, \code{JSS-RMD-CAP-002},
-\code{JSS-RMD-CITE-002}), and several existing rules
-(\code{JSS-WIDTH-001}, \code{JSS-CODE-002}, \code{JSS-CODE-003},
-\code{JSS-ABBR-001}, \code{JSS-STYLE-001}, \code{JSS-RCODE-001})
-are extended to operate on \code{.Rmd} code and prose blocks.
-
-Rules are tagged with a \code{formats} field
-(\code{"tex"}/\code{"rnw"} or \code{"rmd"}). When the engine
-encounters a rule whose \code{formats} set has no intersection with
-the active input formats, that rule is recorded as skipped (reported
-with \code{--verbose}).
-
-
-%%--------------------------------------------------------------------
-\section{AI-assisted development methodology}
-\label{sec:aidev}
-%%--------------------------------------------------------------------
-
-This section documents the development methodology in detail, both for
-transparency about how the tool was built and as a template for others
-constructing similar rule-based validation tools. The development
-combined three distinct practices: a specification-driven workflow,
-test-driven rule implementation with coverage requirements, and an
-iterative precision-improvement loop grounded in real-world data.
-Readers interested primarily in using the tool may skip to
-Section~\ref{sec:lessons} or Section~\ref{sec:comparison}.
-
-\subsection{Overview}
-\label{sec:aidev-overview}
-
-The tool was developed over approximately two weeks with Claude
-Sonnet 4.6 \citep{claude2024} as the primary coding collaborator.
-Development produced 37 commits across five feature increments, a
-test suite of 611 tests, and sixteen iterations of the precision
-evaluation loop. Two broad phases structured the work:
-
-\begin{enumerate}
-  \item \emph{Construction phase}: implement rules, tests, and
-    infrastructure against synthetic examples, guided by the JSS
-    style guide.
-  \item \emph{Validation phase}: test against real manuscripts,
-    diagnose false positives, and refine rules through targeted fixes.
-\end{enumerate}
-
-The construction phase was faster; the validation phase was more
-valuable.
-
-\subsection{Specification-driven workflow}
-\label{sec:specdriven}
-
-Each feature increment was preceded by a written specification
-(\code{spec.md}), an implementation plan (\code{plan.md}), and a
-task checklist (\code{tasks.md}), managed with the \pkg{spec-kit}
-workflow tool \citep{speckit}. The five increments were:
-
-\begin{enumerate}
-  \item Core \LaTeX{} parsing, rule engine, and CLI scaffolding.
-  \item Expanded JSS rule set (53 rules across 16 categories).
-  \item \proglang{R} source format support (\code{.Rnw} and
-    \code{.Rmd}).
-  \item Auto-fix infrastructure (\code{--fix}/\code{--dry-run}).
-  \item Real-world evaluation loop (\code{eval-jss} CLI and corpus
-    tooling).
-\end{enumerate}
-
-Writing specifications served two functions that were underappreciated
-at the outset. First, they forced early resolution of design decisions
---- such as whether rule severity was per-rule or per-violation ---
-before inconsistent implementations could accumulate. Second, they
-provided a stable anchor for the AI assistant, reducing the frequency
-of responses that drifted from the agreed design. When the AI was
-given a clear specification, the quality of generated code was
-substantially higher than when it was asked to ``implement the rule''
-without additional context.
-
-\subsection{Test-driven rule implementation}
-\label{sec:tdd}
-
-Each rule was implemented under a strict test-driven discipline: the
-test was written first, confirmed failing, and then the implementation
-was written to make it pass. A policy of 100\% branch coverage on all
-rule modules was enforced using \pkg{pytest-cov}~\citep{pytest-cov}.
-Coverage was measured after each task, and any uncovered branch was
-treated as a bug requiring a new test.
-
-This discipline caught several subtle rule interactions that synthetic
-positive and negative examples alone would not have revealed. For
-example, the branch covering ``content inside a
-\code{\textbackslash proglang\{\}} argument'' in
-\code{JSS-MARKUP-001} was initially uncovered because no test
-included a sentence of the form
-\verb|\proglang{Python} has excellent \proglang{R} integration|,
-which without the branch would have generated two false positives. The
-coverage requirement surfaced this gap immediately.
-
-The final test suite comprises 611 tests: one file per rule category
-for unit tests, integration tests for all CLI invocation paths,
-\code{.Rnw} and \code{.Rmd} integration tests, and plugin extension
-tests using a stub third-party journal module.
-
-\subsection{The precision evaluation-improvement loop}
-\label{sec:evalloop}
-
-The most important methodological contribution of this development is
-the iterative precision-improvement loop. The loop operates as
-follows:
-
-\begin{enumerate}
-  \item \textbf{Scan}: run \code{jss-lint} against the full 493-manuscript
-    corpus. New violations are inserted into \code{eval.db}; existing
-    violations from a previous scan of the same file are superseded.
-  \item \textbf{Classify}: route violations to the AI classifier for
-    initial TP/FP labelling, then to human review for uncertain or
-    high-stakes cases.
-  \item \textbf{Report}: compute per-rule precision. Rules below the
-    90\% threshold are flagged for investigation.
-  \item \textbf{Diagnose}: inspect false-positive violations for each
-    flagged rule. Group FPs by root cause --- distinct patterns that
-    trigger the rule incorrectly.
-  \item \textbf{Fix}: implement a targeted correction for the most
-    common root cause. Corrections are deliberately narrow (a single
-    additional exclusion condition) to avoid suppressing genuine
-    violations.
-  \item Repeat from step 1.
-\end{enumerate}
-
-Each complete cycle constituted one iteration. The tool reached
-publishable precision in sixteen iterations; the first four iterations
-established the corpus and infrastructure while scanning incrementally,
-and iterations 5--16 focused on diagnosing and fixing rules that fell
-below the threshold.
-
-\textbf{Case study: JSS-CODE-003.} The rule \code{JSS-CODE-003},
-which flags missing spaces around binary operators or after commas
-in code blocks, provides the most instructive example of this loop.
-Table~\ref{tab:code003} traces its precision history through
-the key iterations.
-
-\begin{table}[ht]
-  \centering
-  \begin{tabular}{llrrrl}
-    \hline
-    Iteration & Batch & TP & FP & Precision & Action \\
-    \hline
-    10 & batch-025 &  72 &  6 & 92.3\% & initial corpus \\
-    13 & batch-033 & 775 & 429 & 64.4\% & FP explosion detected \\
-    14a & batch-034 & 412 & 223 & 64.9\% & 3 targeted fixes \\
-    14b & batch-035 & 485 & 198 & 71.0\% & +2 more fixes \\
-    14c & batch-036 & 514 & 191 & 72.9\% & human review queued \\
-    15 & batch-037 & 809 &   7 & 99.1\% & 191 AI labels corrected \\
-    \hline
-  \end{tabular}
-  \caption{JSS-CODE-003 precision history across key evaluation
-    iterations. The large FP count in iteration~13 arose from scanning
-    300 additional manuscripts that exposed patterns not present in
-    the initial 200-paper corpus.}
-  \label{tab:code003}
+\begin{table}[t!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Surface & Description \\
+\midrule
+\code{jss-lint} & Lint files; author or reviewer mode \\
+\code{--fix}, \code{--dry-run} & Apply or preview deterministic repairs \\
+\code{explain} & Per-rule documentation with examples \\
+\code{init} & Interactive project bootstrap \\
+\code{report} & One-page editor conformance report \\
+\code{diff} & Compare violations between two runs \\
+\code{lsp} & Language Server Protocol server \\
+VS Code extension & Diagnostics and quick fixes while editing \\
+GitHub Action & Reusable CI gate with SARIF upload \\
+\code{--output} & Terminal, JSON, HTML, or SARIF \\
+\code{--crossref} & Opt-in online DOI verification \\
+\bottomrule
+\end{tabular}
+\caption{The \pkg{jss-lint} tool surface. All checking is local;
+  only the explicitly opt-in \code{--crossref} mode performs network
+  requests.}
+\label{tab:ecosystem}
 \end{table}
 
-At iteration 13, JSS-CODE-003 had 429 false positives on the full
-corpus. Root-cause analysis identified six distinct FP patterns:
+\subsection{Performance}
+\label{sec:performance}
 
-\begin{enumerate}
-  \item \emph{Hyphenated compound names}: identifiers like
-    \verb|L-BFGS-B| and \verb|p-value| inside
-    \code{\textbackslash code\{\}} triggered the binary-operator
-    check. These hyphens are part of the name, not operators.
-  \item \emph{Argument-name-only patterns}: documentation snippets
-    like \code{\textbackslash code\{basis=\}} (a function argument
-    name with no value, used in documentation) triggered the
-    assignment-operator check.
-  \item \emph{Array indexing commas}: expressions like
-    \code{\textbackslash code\{a[2:5,2:5]\}} triggered the comma
-    check. Array-indexing commas do not require surrounding spaces in
-    \proglang{R} style.
-  \item \emph{R comment lines in verbatim}: lines beginning with
-    \verb|##| inside Sinput blocks were scanned for operators. A
-    comment like \verb|## Pre-processing| contains a hyphen that is
-    not a binary operator.
-  \item \emph{Trailing-comma display notation}: closing lines of
-    multi-line function calls, such as \code{\textbackslash
-    code\{f(a, b),\}}, triggered the comma check on the trailing
-    punctuation comma.
-  \item \emph{Line-number drift}: the function that stripped Soutput
-    blocks to preserve only Sinput lines was not preserving line
-    count, causing violations to be reported at incorrect positions
-    and thereby misattributed during classification.
-\end{enumerate}
+Table~\ref{tab:performance} reports single-threaded timings of the
+\proglang{Python} reference engine over the full evaluation corpus;
+checking a typical manuscript takes a fraction of a second, so the
+tool is comfortably interactive both at the command line and behind
+the language server.
 
-Each root cause received a targeted fix during iterations 14--15.
-After all six fixes, JSS-CODE-003 reached 99.1\% precision.
-
-\textbf{AI classification bias.} An important complication arose
-during iteration 14. The AI classifier consistently labelled
-\code{\textbackslash code\{param=value\}} inline patterns as false
-positives, reasoning that documentation snippets like ``use
-\code{kernel=TRUE} to enable \ldots{}'' are harmless prose references
-that need not follow operator-spacing style. Human review of 191
-such AI-labelled FPs found that 179 (94\%) were in fact genuine JSS
-violations: JSS requires spaces around \code{=} in all function
-arguments, including in inline documentation references.
-
-This batch reclassification --- 179 TPs restored from FPs --- raised
-JSS-CODE-003's measured precision from 72.9\% to 99.1\% in a single
-iteration, demonstrating that AI classification can introduce a
-systematic error when the classifier applies a plausible but incorrect
-interpretation of the rule being evaluated. AI classification is a
-useful first pass for volume but cannot substitute for human ground
-truth when the rule's intent is subtle.
-
-\subsection{AI-assisted code generation}
-\label{sec:aigen}
-
-Beyond classification, Claude Sonnet 4.6 contributed directly to
-implementation throughout the project: rule logic, test code,
-documentation, and the present manuscript. In practice, the most
-effective workflow for each new rule was:
-
-\begin{enumerate}
-  \item Describe the rule in natural language, providing three to five
-    representative examples of both genuine violations and similar-looking
-    patterns that should \emph{not} fire.
-  \item Ask the AI to propose an implementation strategy, discuss
-    edge cases, and write the rule function.
-  \item Review and extend the AI-generated tests to cover all branches,
-    then run coverage to confirm 100\%.
-  \item After the unit test suite passes: run the eval loop on the corpus
-    to catch any patterns not covered by the synthetic tests.
-\end{enumerate}
-
-The AI was consistently effective at implementing rule logic once the
-scope was clearly defined by examples. Its main limitation was
-overconfidence in early implementations: initial rule functions
-handled the motivating examples correctly but contained latent
-false-positive patterns that only appeared on the full corpus.
-Framing the task as ``propose an implementation \emph{and} describe
-at least three ways it might fire incorrectly'' substantially improved
-the quality of first drafts.
+\begin{table}[t!]
+\centering
+\begin{tabular}{lr}
+\toprule
+Measure & Value \\
+\midrule
+\rawinput{generated/tab-benchmark.tex}
+\end{tabular}
+\caption{Linting performance on the evaluation corpus
+  (\proglang{Python} reference engine, single thread; parse and rule
+  execution, excluding interpreter startup).}
+\label{tab:performance}
+\end{table}
 
 %%--------------------------------------------------------------------
-\section{Challenges and retrospective lessons}
-\label{sec:lessons}
-%%--------------------------------------------------------------------
-
-We reflect here on the development process, identifying what worked
-well, where difficulties arose, and what we would do differently if
-starting again. This section is intended as practical guidance for
-others building similar tools.
-
-\subsection{What worked well}
-\label{sec:worked}
-
-\textbf{AST-based analysis.} The decision to parse \LaTeX{} into an
-AST rather than applying regular expressions to raw text eliminated an
-entire class of false positives. Rules do not fire inside verbatim
-environments, comment text, or macro arguments where the matched
-pattern has a different semantic role. Retrofitting AST analysis into
-a regex-based tool later in development is substantially harder than
-designing for it from the start.
-
-\textbf{100\% branch coverage as a policy.} Enforcing 100\% branch
-coverage on all rule modules forced the writing of tests for uncommon
-but important branches. Several bugs were caught because coverage
-analysis revealed an untested branch, not because a test had been
-written to exercise it. The policy also served as an objective
-completion criterion for each task, reducing ambiguity about when
-implementation was ``done''.
-
-\textbf{The evaluation-improvement loop.} The iterative
-scan-classify-report-fix loop was indispensable. Without it,
-JSS-CODE-003 would have shipped at less than 65\% precision despite
-passing all unit tests. No amount of synthetic test-case coverage
-would have anticipated all six FP patterns discovered on real
-manuscripts. The same pattern applies to any rule-based tool checking
-structured text: synthetic tests establish correctness on known cases;
-real-data evaluation discovers the cases that were not anticipated.
-
-\textbf{Human review as ground truth.} Maintaining a
-human-classified ground truth was critical for detecting AI classifier
-bias. The database records the source of each classification decision,
-making it possible to audit and revise earlier AI decisions when a
-systematic error is discovered --- as happened with CODE-003.
-
-\subsection{What proved more difficult}
-\label{sec:harder}
-
-\textbf{Synthetic tests are insufficient as the sole validation
-method.} Unit tests written against a handful of synthetic \LaTeX{}
-snippets do not reflect the diversity of real manuscripts.
-JSS-CODE-003 passed all its unit tests but had less than 65\%
-precision on real papers. Had we introduced even a small sample of
-real manuscript snippets into the initial test suite --- say, twenty
-genuine code blocks from existing JSS papers --- several of the six
-FP patterns would have been caught during initial development rather
-than during the evaluation loop.
-
-\textbf{AI classification bias requires vigilance.} The AI classifier
-introduced a systematic error for JSS-CODE-003 by applying a
-plausible but incorrect interpretation of the rule. When AI-classified
-precision looks unexpectedly low or high for a rule, it is worth
-manually reviewing a random sample of 10--20 cases before accepting
-the reported figure. A disagreement rate of even 5\% between AI and
-human classifiers can distort precision estimates enough to mask or
-manufacture a problem.
-
-\textbf{Initial rule scope was too broad.} Several rules ---
-JSS-CODE-003 most prominently --- were initially written to match
-the motivating pattern broadly, on the assumption that edge cases
-would be rare. In practice, real manuscripts exhibit far more
-diversity than synthetic examples suggest, and broad rules require
-multiple tightening iterations. Writing rules more narrowly from the
-start, informed by analysis of real examples, reduces the number of
-subsequent fix passes. A useful heuristic: if you cannot describe
-in one sentence exactly what the rule does \emph{not} fire on, it is
-probably too broad.
-
-\textbf{Preprocessing bugs and line-number drift.} Preprocessing steps
-such as stripping Soutput blocks from Sweave files introduce
-line-number drift when stripped lines are not replaced with blank
-lines of matching count. This class of bug is difficult to detect
-from unit tests because synthetic tests rarely mix
-content-stripping with violation line-number reporting. The root
-cause took two iterations to diagnose: the first fix corrected the
-stripping logic, but did not restore the correct line count;
-the second fix preserved blank-line count explicitly.
-
-\textbf{\pkg{pylatexenc} idiosyncrasies.} The library's AST node
-positions use 0-based column numbers (unlike the 1-based columns
-expected by most editors), and some macros with non-standard argument
-specifications require special handling. These quirks caused
-off-by-one bugs in early versions that were caught during integration
-testing but required careful reading of the library documentation.
-
-\textbf{Specification overhead for small changes.} The
-specification-driven workflow was valuable for the five major feature
-increments but felt heavy for the many small targeted fixes that arose
-during the evaluation loop. Maintaining up-to-date spec/plan/tasks
-documents for a five-line rule fix added overhead with little
-benefit. A lighter-weight process for incremental fixes --- such as a
-short comment in the commit message referencing the root cause ---
-would have been more proportionate.
-
-\subsection{Recommendations for similar projects}
-\label{sec:recommendations}
-
-\begin{enumerate}
-  \item \emph{Build the evaluation loop before the first rule.} The
-    scan-classify-report infrastructure is cheap to build relative to
-    the rules themselves, and having it from the start means every
-    rule is validated against real data immediately.
-  \item \emph{Collect real examples before writing rules.} For each
-    planned rule, find 10--20 real-manuscript examples of genuine
-    violations and similar-looking non-violations before writing any
-    code. These examples bound the rule's scope and seed the test
-    suite with realistic cases.
-  \item \emph{Treat AI classification as a first pass, not ground
-    truth.} AI classifiers are useful for handling volume but should
-    be spot-checked on every rule where the rule's intent is
-    semantically subtle.
-  \item \emph{Use AST analysis if the input format has a parser.}
-    Regex matching on raw text is fast to implement but produces
-    fragile rules. If a mature parser exists for the input format,
-    invest the upfront cost of learning its API.
-  \item \emph{Write narrow rules, then widen.} Starting narrow gives
-    low false-positive rates from the start. Expanding a rule as the
-    corpus reveals underspecified cases is safer than starting broad
-    and tightening.
-  \item \emph{Pin corpus content for reproducibility.} A corpus that
-    changes between evaluation runs makes it impossible to distinguish
-    genuine precision improvements from corpus drift. Record exact
-    package versions and file hashes from the start.
-\end{enumerate}
-
-%%--------------------------------------------------------------------
-\section{Implemented rules}
+\section{The rule catalogue}
 \label{sec:rules}
+
+Version \StatToolVersion{} ships \StatRuleCount{} active rules in
+\StatCategoryCount{} categories. Every rule is defined in a single
+machine-readable catalogue that records its identifier, category,
+severity, the style-guide clause it enforces (with a citation anchor
+into the guide), whether it is auto-fixable, and its measured-precision
+confidence tier. The catalogue is the single source of truth: the
+engine's rule table, the \code{explain} documentation, and
+Appendix~\ref{app:catalogue} of this paper are all generated from it,
+so the paper cannot claim a rule that the tool does not ship.
+Table~\ref{tab:rulesummary} summarizes the categories together with
+their measured precision from the evaluation of
+Section~\ref{sec:validation}.
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Category & Rules & Reviewed & Precision \\
+\midrule
+\rawinput{generated/tab-rule-summary.tex}
+\end{tabular}
+\caption{Rule categories with the number of adjudicated violation
+  instances and measured precision at the pinned evaluation
+  iteration. Per-rule figures appear in Appendix~\ref{app:perrule}.}
+\label{tab:rulesummary}
+\end{table}
+
+Three catalogue mechanisms deserve mention. First, rules whose firing
+is a purely syntactic fact --- line length, presence of a required
+macro, a label with no matching reference --- are marked
+\emph{deterministic} (\StatDeterministicCount{} of \StatRuleCount{});
+Section~\ref{sec:labeling} explains why this flag matters for
+evaluation. Second, rules carry a confidence tier reflecting their
+measured precision, and users can set a floor with
+\code{--min-confidence}. Third, rules can be \emph{retired}: the
+catalogue records \StatRetiredCount{} rules that were implemented,
+evaluated, and deliberately removed --- for example a caption-case
+rule whose residual false positives required domain knowledge no
+syntactic gate could supply (Section~\ref{sec:casestudies}). Retired
+identifiers are never reused, and retirement is documented rather
+than silent, because a rule that quietly disappears would erode trust
+in the ones that remain.
+
+Conditional requirements are encoded as such. For example, the
+\code{\textbackslash{}Plain...} companions are required only when the
+corresponding rich field actually contains markup
+(\rulelink{JSS-PRE-003}, \rulelink{JSS-PRE-007},
+\rulelink{JSS-PRE-008}); a plain \code{\textbackslash{}title} needs
+no \code{\textbackslash{}Plaintitle}.
+
 %%--------------------------------------------------------------------
+\section{Development methodology: specifications, AI, and an evaluation loop}
+\label{sec:method}
 
-\pkg{jss-style-checker} implements 53 rules in 16 categories, of
-which three rules (\code{JSS-RMD-PREAMBLE-001},
-\code{JSS-RMD-CAP-002}, \code{JSS-RMD-CITE-002}) apply exclusively
-to \code{.Rmd} files. Table~\ref{tab:rules} gives a complete summary.
+\pkg{jss-lint} was developed in an intensive collaboration between
+one human author and large language models of the Claude family
+\citep{claude}. Approximately \StatAICommitsApprox{} of the
+repository's more than \StatCommitsApprox{} commits carry an AI
+co-author trailer; the human author reviewed every change, made all
+design decisions, and --- as Section~\ref{sec:labeling} details ---
+retained final authority over every disputed evaluation label. We
+document the methodology in some depth because we believe the
+combination of specification-driven development, test discipline, and
+a measurement loop is what made AI assistance productive rather than
+merely fast, and because several of its lessons contradicted our
+expectations.
 
-\begingroup\small
-\begin{longtable}{llcp{6.8cm}}
-  \caption{Complete list of rules implemented in
-    \pkg{jss-style-checker}~0.3.0.
-    Severity: E~=~error, W~=~warning.
-    Rules prefixed \code{JSS-RMD-} apply exclusively to
-    \code{.Rmd} files; rules without that prefix apply to
-    \code{.tex}/\code{.Rnw} files (or to all formats for BibTeX
-    rules). Rule numbers in some categories start above~001 because
-    lower numbers were reserved for deprecated or planned rules.}
-  \label{tab:rules} \\
-  \hline
-  Rule ID & Category & Sev. & Description \\
-  \hline
-  \endfirsthead
-  \multicolumn{4}{l}{\small\textit{(Table~\ref{tab:rules} continued)}} \\
-  \hline
-  Rule ID & Category & Sev. & Description \\
-  \hline
-  \endhead
-  \hline
-  \endfoot
-  \hline
-  \endlastfoot
-  \multicolumn{4}{l}{\textit{Preamble macros}} \\
-  JSS-PREAMBLE-001 & Preamble & E & Missing \code{\textbackslash Plainauthor\{\}} \\
-  JSS-PREAMBLE-002 & Preamble & E & Missing \code{\textbackslash Plaintitle\{\}} \\
-  JSS-PREAMBLE-003 & Preamble & E & Missing \code{\textbackslash Abstract\{\}} \\
-  JSS-PREAMBLE-004 & Preamble & E & Missing \code{\textbackslash Keywords\{\}} \\
-  JSS-PREAMBLE-005 & Preamble & E & Missing \code{\textbackslash Plainkeywords\{\}} \\
-  JSS-PREAMBLE-006 & Preamble & E & Missing \code{\textbackslash Address\{\}} \\
-  JSS-RMD-PREAMBLE-001 & Preamble & E & \code{.Rmd} YAML frontmatter missing required field \\
-  \multicolumn{4}{l}{\textit{Preamble format}} \\
-  JSS-PRE-007 & Preamble Fmt & W & \code{\textbackslash Plain*} macro contains \LaTeX{} markup \\
-  JSS-PRE-008 & Preamble Fmt & W & Keyword capitalized (non-first keyword) \\
-  JSS-PRE-009 & Preamble Fmt & W & \code{\textbackslash Keywords\{\}} is empty \\
-  JSS-PRE-011 & Preamble Fmt & W & \code{\textbackslash author\{\}} uses \code{\textbackslash and} instead of \code{\textbackslash And} \\
-  JSS-PRE-012 & Preamble Fmt & W & \proglang{R}/Sweave manuscripts missing Sweave preamble comment \\
-  \multicolumn{4}{l}{\textit{Semantic markup and math operators}} \\
-  JSS-MARKUP-001 & Markup & W & Bare programming language name \\
-  JSS-MARKUP-002 & Markup & W & Bare software package name \\
-  JSS-MARKUP-010 & Markup & W & Bare statistical operator in math mode \\
-  \multicolumn{4}{l}{\textit{Capitalisation}} \\
-  JSS-CAP-002 & Capitalisation & W & Title case in section heading \\
-  JSS-CAP-003 & Capitalisation & W & BibTeX title field not in title case \\
-  JSS-RMD-CAP-002 & Capitalisation & W & Title case in \code{.Rmd} Markdown heading \\
-  \multicolumn{4}{l}{\textit{Citations}} \\
-  JSS-CITE-001 & Citations & E & Bare \code{\textbackslash cite\{\}} in parenthetical context \\
-  JSS-CITE-002 & Citations & W & Bare author-year pattern in prose \\
-  JSS-CITE-003 & Citations & W & \code{\textbackslash pkg\{\}} has no matching bib entry \\
-  JSS-RMD-CITE-002 & Citations & W & Bare author-year pattern in \code{.Rmd} prose \\
-  \multicolumn{4}{l}{\textit{Document structure}} \\
-  JSS-STRUCT-001 & Structure & W & Float \code{\textbackslash label\{\}} never referenced \\
-  JSS-STRUCT-002 & Structure & W & \code{\textbackslash caption\{\}} appears before float content \\
-  JSS-STRUCT-003 & Structure & W & Formatting command inside \code{\textbackslash caption\{\}} \\
-  JSS-STRUCT-004 & Structure & W & \code{\textbackslash footnote\{\}} inside tabular \\
-  \multicolumn{4}{l}{\textit{Cross-references}} \\
-  JSS-XREF-001 & Cross-refs & W & Figure missing \code{\textbackslash label\{\}} \\
-  JSS-XREF-002 & Cross-refs & W & Table missing \code{\textbackslash label\{\}} \\
-  JSS-XREF-003 & Cross-refs & W & Equation missing \code{\textbackslash label\{\}} \\
-  \multicolumn{4}{l}{\textit{Code line width}} \\
-  JSS-WIDTH-001 & Code width & W & Code line exceeds column-width threshold (default 70) \\
-  \multicolumn{4}{l}{\textit{Code style}} \\
-  JSS-CODE-001 & Code style & W & Non-standard indentation in verbatim block \\
-  JSS-CODE-002 & Code style & W & Comment-only line in verbatim block \\
-  JSS-CODE-003 & Code style & W & Missing spaces around operators in code \\
-  \multicolumn{4}{l}{\textit{BibTeX completeness}} \\
-  JSS-BIB-001 & BibTeX & E & \code{@article} missing required fields \\
-  JSS-BIB-002 & BibTeX & E & \code{@book} missing required fields \\
-  JSS-BIB-003 & BibTeX & E & \code{@inproceedings}/\code{@incollection} missing fields \\
-  \multicolumn{4}{l}{\textit{Bibliography references}} \\
-  JSS-REF-001 & References & W & First word after colon in title not capitalized \\
-  JSS-REF-002 & References & W & Journal or proceedings name abbreviated \\
-  JSS-REF-003 & References & W & Bare language/package name in BibTeX text field \\
-  JSS-REF-004 & References & W & Entry with 6+ authors lacks \code{\textbackslash shortcites} \\
-  JSS-REF-005 & References & W & \proglang{R} package entry missing CRAN URL \\
-  JSS-REF-006 & References & W & Edition field not in ordinal format (2nd, 3rd, \ldots) \\
-  \multicolumn{4}{l}{\textit{Naming conventions}} \\
-  JSS-NAME-001 & Naming & W & Incorrect software name casing in text \\
-  JSS-NAME-002 & Naming & W & Incorrect journal name in bib \\
-  JSS-NAME-003 & Naming & W & Incorrect publisher name in bib \\
-  \multicolumn{4}{l}{\textit{Typography}} \\
-  JSS-TYPO-001 & Typography & W & \verb|e.g.| missing trailing comma \\
-  JSS-TYPO-002 & Typography & W & \verb|i.e.| missing trailing comma \\
-  JSS-TYPO-003 & Typography & W & Matrix transpose \verb|^T| instead of \code{\textbackslash top} \\
-  \multicolumn{4}{l}{\textit{Abbreviations}} \\
-  JSS-ABBR-001 & Abbrev. & W & Abbreviation used without prior expansion \\
-  JSS-ABBR-002 & Abbrev. & W & Abbreviation with formatting or period-separated \\
-  \multicolumn{4}{l}{\textit{House style}} \\
-  JSS-STYLE-001 & House style & W & Hyphenated statistical term (\verb|p-value|, \verb|t-test|) \\
-  JSS-STYLE-002 & House style & W & ``Subsection'' used as cross-reference prefix \\
-  JSS-STYLE-003 & House style & W & Plain equation number without \code{\textbackslash ref} \\
-  JSS-RCODE-001 & House style & W & Unquoted \code{library()}/\code{data()} argument \\
-\end{longtable}
-\endgroup
+\subsection{Specification-driven development for cross-cutting features}
+\label{sec:speckit}
 
-\subsection{Preamble macros}
-\label{sec:rule-preamble}
+Each of the \StatSpecCount{} major features --- the core engine, the
+rule catalogue, \code{.Rnw}/\code{.Rmd} support, SARIF output,
+auto-fix, the language server, multi-file resolution, the evaluation
+harnesses, and so on --- went through an explicit
+specify--clarify--plan--tasks--implement workflow on a dedicated
+branch: a written specification with acceptance criteria, recorded
+clarification questions, an implementation plan, and a task breakdown,
+all committed alongside the code. For work of this shape the overhead
+paid for itself. Specifications forced interface decisions to happen
+in prose review, where they are cheap, rather than in code review;
+the recorded clarifications repeatedly prevented re-litigating settled
+questions; and an AI collaborator given a written spec stays on task
+over a multi-day feature in a way one given a chat instruction does
+not.
 
-Rules \code{JSS-PREAMBLE-001} through \code{JSS-PREAMBLE-006} check
-that the JSS document class's six required metadata macros appear in
-the preamble (before \code{\textbackslash begin\{document\}}):
-\code{\textbackslash Plainauthor\{...\}},
-\code{\textbackslash Plaintitle\{...\}},
-\code{\textbackslash Abstract\{...\}},
-\code{\textbackslash Keywords\{...\}},
-\code{\textbackslash Plainkeywords\{...\}}, and
-\code{\textbackslash Address\{...\}}.
-The checker walks the AST nodes that precede the
-\code{\textbackslash begin\{document\}} marker and records which of
-the six macro names have been encountered. A separate
-\code{error}-severity violation is emitted for each missing macro,
-with a suggestion giving the correct macro name and a placeholder
-argument.
+Two forms of test discipline complemented the specifications.
+Rule logic is developed test-first and held to complete branch
+coverage, which for rules is not bureaucracy: a rule's value lies
+almost entirely in its edge-case behavior, and the test suite ---
+\StatTestCount{} tests at the pinned release --- is where that
+behavior is pinned down. The \proglang{Rust} port added the second
+form, differential testing against the \proglang{Python} engine as
+described in Section~\ref{sec:channels}.
 
-\subsection{Semantic markup}
-\label{sec:rule-markup}
+\subsection{Where specification-driven development did not work}
+\label{sec:specfail}
 
-Rules \code{JSS-MARKUP-001} and \code{JSS-MARKUP-002} require that
-programming language names be wrapped in
-\code{\textbackslash proglang\{\}} and software package names in
-\code{\textbackslash pkg\{\}}. \pkg{jss-style-checker} maintains
-curated lists of 30 programming language names (e.g.,{} \proglang{R},
-\proglang{Python}, \proglang{Julia}, \proglang{MATLAB}, \proglang{Java})
-and 51 package names (e.g.,{} \pkg{ggplot2}, \pkg{dplyr}, \pkg{numpy},
-\pkg{pandas}, \pkg{lme4}).
+Our project constitution now states the boundary explicitly:
+specifications are reserved for cross-cutting work, and mechanical
+changes bypass the workflow. We arrived at this rule empirically. The
+bulk of the project's commits are small, evidence-driven rule
+adjustments produced by the evaluation loop of
+Section~\ref{sec:evalloop} --- add a guard for citation keys, stop
+scanning program output for operator spacing, normalize whitespace in
+label matching. Early attempts to route such fixes through the
+specification workflow produced documents that restated a one-line
+diff at ten times the length and went stale immediately. A candid
+methodological note: an earlier draft of this paper listed
+``specification overhead for small changes'' as a lesson we had
+merely observed; in fact we initially misdescribed those fixes as
+spec-driven when they were not, and the correction --- direct commits
+inside the measurement loop, specifications for everything
+cross-cutting --- is itself the lesson.
 
-The checker traverses the AST while tracking context state: text
-nodes inside a \code{\textbackslash proglang\{\}} or
-\code{\textbackslash pkg\{\}} macro are not re-checked (to avoid
-flagging the argument of the correct markup), and text inside verbatim
-environments is skipped entirely. Each bare occurrence generates a
-\code{warning}-severity violation with a concrete replacement
-suggestion.
+The second boundary is knowledge, not size. Some rules bottomed out
+in judgments no specification could settle in advance --- whether a
+capitalized word in a caption is a proper noun, whether
+\code{\textbackslash{}texttt} wraps code or emphasis. For those, the
+productive cycle was not specify-then-implement but
+measure-then-decide, with the human supplying domain rulings the AI
+could not (Section~\ref{sec:casestudies}).
 
-\subsection{Capitalisation}
-\label{sec:rule-cap}
+\subsection{AI assistance in implementation}
+\label{sec:ai}
 
-\textbf{JSS-CAP-002} checks that \LaTeX{} section headings use
-sentence case rather than title case. The checker extracts the heading
-text from the macro argument and tests whether more than one word
-(excluding common articles and conjunctions) begins with a capital
-letter.
+The AI collaborators wrote the bulk of the rule implementations,
+tests, and evaluation tooling, working from the specifications and
+from labeled false-positive evidence. Two patterns proved
+particularly effective. First, \emph{investigation before code}: when
+a rule's precision stalled, a subagent was dispatched to read every
+labeled false positive and return a written taxonomy of failure
+clusters before any fix was attempted; fixes then targeted named
+clusters, and their effect was measured per cluster. Second,
+\emph{adversarial defaults}: AI-proposed fixes were required to state
+which true positives they might sacrifice, because our early
+experience matched the general finding that model-proposed guards are
+overconfident --- several proposed false-positive guards would have
+silenced more true violations than false ones, a trade only visible
+because the loop measures both directions
+(Section~\ref{sec:recall}).
 
-\textbf{JSS-CAP-003} checks BibTeX entry titles. JSS requires title
-case in bibliographic entries so that styles that down-case titles
-produce correct output when braces protect capitals. The checker strips
-curly braces from the \code{title} field and verifies that at least
-one content word is capitalised.
+AI assistance extended to this manuscript itself, drafted and revised
+in the same reviewed-commit workflow as the code. The authorship
+policy, however, is the journal's: the listed author is the human who
+takes responsibility for the work; the AI systems are credited in the
+acknowledgments.
 
-\subsection{Citations}
-\label{sec:rule-cite}
+\subsection{The evaluation-improvement loop}
+\label{sec:evalloop}
 
-\textbf{JSS-CITE-001} enforces natbib-style citation commands and
-flags every \code{\textbackslash cite\{\}} macro, which produces the
-doubly-parenthesised form \texttt{((Smith 2020))} when used inside
-parentheses. Each occurrence generates an \code{error}-severity
-violation with a suggestion to use \code{\textbackslash citep\{\}} or
-\code{\textbackslash citet\{\}}.
+The central methodological claim of this paper is that a linter's
+rule set is an empirical object: whether a rule is \emph{correct} is
+decided by running it against real manuscripts and adjudicating what
+it finds. The loop that operationalizes this has six steps:
+(1)~extend or re-fetch the pinned corpus; (2)~scan the corpus and
+persist every violation; (3)~route new violations to labelers
+(Section~\ref{sec:labeling}); (4)~record a snapshot of per-rule
+true/false-positive counts into an append-only history database;
+(5)~when a rule underperforms, investigate its false-positive
+clusters and implement a targeted fix; (6)~re-scan and record the
+next iteration. The corpus grew in batches --- from an initial 50
+manuscripts to the final \StatCorpusSize{} --- so that early rule
+fixes were re-tested against every later corpus expansion. At the
+pinned release the history database records \StatIterationCount{}
+iterations.
 
-\textbf{JSS-CITE-002} detects bare author-year patterns in prose
-(e.g.,{} ``Smith (2020)'') where the surname matches a bib entry.
+The loop is governed by a per-rule precision gate: every rule must
+reach \StatGatePct{} measured precision on the full corpus.
+Aggregate precision alone is not an acceptable target, because a
+high-volume accurate rule can mask an inaccurate one. The gate has
+exactly one documented exemption mechanism: a rule whose sub-gate
+precision reflects an inherent ambiguity (not a tuning gap) may be
+declared exempt, with the rationale recorded in a reviewed
+configuration file; \StatGateExemptCount{} rule is currently exempt
+(Section~\ref{sec:casestudies}). Rules that can neither pass nor
+justify exemption are retired.
 
-\textbf{JSS-CITE-003} checks that every \code{\textbackslash pkg\{\}}
-macro has a corresponding bibliography entry in the provided
-\code{.bib} file.
+\subsection{Label provenance}
+\label{sec:labeling}
 
-\subsection{Cross-references}
-\label{sec:rule-xref}
+Every precision figure in this paper is a ratio of labeled
+violations, so the labels' provenance matters as much as the rules'.
+Labels come from three sources, in decreasing volume: local language
+models, deterministic auto-labeling, and the human author.
+AI labeling uses two local models with a per-rule routing table,
+benchmarked against a gold set of \StatGoldSetSize{} independently
+human-labeled violations; per-rule routing exists because the two
+models' agreement profiles are strongly complementary. A skip list
+excludes rules on which AI labeling proved unreliable --- those go
+directly to interactive human review --- and uncertain or disputed
+labels are adjudicated by the human at the manuscript source.
 
-\code{JSS-XREF-001} through \code{JSS-XREF-003} check that figure,
-table, and equation environments carry a
-\code{\textbackslash label\{\}}, and \code{JSS-STRUCT-001} checks
-that defined labels are actually referenced somewhere in the document.
+Two audit findings shaped this design, and we report them because
+they generalize. First, at one recorded iteration the AI labelers
+were found to contradict their own earlier verdicts on re-presented
+violations, which prompted the gold-set benchmark and periodic
+re-adjudication sweeps; treating AI labels as fallible measurements
+to be audited --- rather than as ground truth --- is, in our view, a
+requirement for using them at all. Second, for the
+\StatDeterministicCount{} mechanically decidable rules (line length,
+macro presence), routing firings to an AI labeler only
+\emph{manufactured} disagreement: two such rules sat visibly below
+their true precision for weeks because a language model
+second-guessed objective facts. Such rules are now auto-labeled by
+construction, tagged distinctly, and kept out of the model gold set.
+The general lesson: use an AI judge only where judgment is actually
+required.
 
-\subsection{Code line width}
-\label{sec:rule-width}
+\subsection{What transfers}
+\label{sec:lessons}
 
-\code{JSS-WIDTH-001} checks that lines inside verbatim-like
-environments (\code{verbatim}, \code{Verbatim}, \code{Code},
-\code{CodeInput}, \code{CodeOutput}, \code{Sinput}, \code{Soutput},
-\code{lstlisting}) fit within the column width of the typeset page.
-The default threshold is 70 characters, which is conservative for the
-\code{jss.cls} document class at its default font size.
-
-\subsection{BibTeX completeness}
-\label{sec:rule-bib}
-
-\code{JSS-BIB-001} through \code{JSS-BIB-003} check that
-\code{@article}, \code{@book}, \code{@inproceedings}, and
-\code{@incollection} entries carry all fields required for readers to
-locate the cited work. Missing fields produce \code{error}-severity
-violations pointing to the start line of the offending entry.
-
-\subsection{Code style}
-\label{sec:rule-codestyle}
-
-\textbf{JSS-CODE-002} flags comment-only lines inside verbatim
-environments. JSS style requires that code examples be self-contained
-executable fragments; explanatory commentary should appear in
-surrounding prose rather than inline code comments.
-
-\textbf{JSS-CODE-003} flags missing spaces around binary arithmetic
-operators or after commas in code blocks. The implementation handles
-several edge cases that emerge frequently in real manuscripts
-(Section~\ref{sec:evalloop}).
-
-\subsection{Bibliography references}
-\label{sec:rule-ref}
-
-Six rules enforce JSS standards for BibTeX field content:
-\code{JSS-REF-001} (capitalisation after a colon in titles),
-\code{JSS-REF-002} (abbreviated journal or proceedings names),
-\code{JSS-REF-003} (bare language/package names in bib text fields),
-\code{JSS-REF-004} (entries with six or more authors lacking
-\code{\textbackslash shortcites\{\}}),
-\code{JSS-REF-005} (\proglang{R} package entries missing a CRAN URL),
-and \code{JSS-REF-006} (edition field not in ordinal format).
-
-\subsection{Naming, typography, abbreviations, and house style}
-\label{sec:rule-misc}
-
-\textbf{JSS-NAME-001} through \textbf{JSS-NAME-003} detect incorrect
-casing for well-known software names, incorrect journal names, and
-incorrect publisher names in bib fields.
-
-\textbf{JSS-TYPO-001} and \textbf{JSS-TYPO-002} require trailing
-commas after abbreviations such as ``e.g.,'' and ``i.e.,'';
-\textbf{JSS-TYPO-003} requires \code{\textbackslash top} for the
-matrix transpose symbol.
-
-\textbf{JSS-ABBR-001} flags three-or-more letter uppercase
-abbreviations that appear before their full expansion;
-\textbf{JSS-ABBR-002} flags period-separated abbreviations and those
-wrapped in font-change commands.
-
-\textbf{JSS-MARKUP-010} enforces use of the predefined JSS math
-operator macros \verb|\E|, \verb|\VAR|, \verb|\COV|, and \verb|\P| in
-math mode.
-
-\textbf{JSS-STYLE-001} flags hyphenated statistical terms (\verb|p-value|,
-\verb|t-test|); \textbf{JSS-STYLE-002} and \textbf{JSS-STYLE-003}
-flag ``Subsection'' as a cross-reference prefix and plain equation
-numbers; \textbf{JSS-RCODE-001} flags unquoted \code{library()} and
-\code{data()} arguments in \proglang{R} code.
-
-\subsection[Rules for .Rmd source files]{Rules for \code{.Rmd} source files}
-\label{sec:rule-rmd}
-
-\textbf{JSS-RMD-PREAMBLE-001} checks that the YAML frontmatter block
-contains the four fields required by the
-\code{rticles::jss\_article} output format.
-\textbf{JSS-RMD-CAP-002} and \textbf{JSS-RMD-CITE-002} are the
-\proglang{R}~Markdown counterparts of \code{JSS-CAP-002} and
-\code{JSS-CITE-002}, applied to Markdown headings and prose blocks
-respectively.
+For readers building a comparable tool, the retrospective compresses
+to five points. (1)~Build the measurement loop before writing many
+rules; every later decision was cheaper because it could be measured.
+(2)~Write rules narrow and widen them under measurement. This policy
+optimizes precision first, and its cost is exactly the false
+negatives a recall corpus makes visible --- which is why we built one
+(Section~\ref{sec:recall}) rather than reporting precision alone.
+(3)~Encode requirements as data, not prose: the machine-readable
+catalogue is what keeps the tool, its documentation, and this paper
+consistent. (4)~Give AI collaborators specifications and measured
+evidence, not instructions and trust; audit AI labels against human
+gold data. (5)~Retire rules publicly. A checker earns trust by what
+it refuses to claim as much as by what it catches.
 
 %%--------------------------------------------------------------------
 \section{Empirical validation}
-\label{sec:eval}
-%%--------------------------------------------------------------------
-
-Rule-based linters face a fundamental precision challenge: rules
-written to detect a pattern will inevitably fire on contexts where
-the pattern has an innocent explanation. A unit test suite written
-against synthetic examples validates only the cases the developer
-anticipated. Testing against real manuscripts is essential to discover
-the full range of edge cases. This section reports the results of
-systematic empirical validation on 493 real JSS-format manuscripts.
+\label{sec:validation}
 
 \subsection{Corpus construction}
 \label{sec:corpus}
 
-Many \proglang{R} packages on CRAN include their JSS article as a
-vignette in the package distribution, making them accessible
-programmatically via the CRAN API \citep{cran}. We constructed a
-corpus by collecting these vignettes, covering 493 \code{.tex} files
-spanning a wide range of topics, writing styles, and \LaTeX{} practices
-across packages published between approximately 2005 and 2026. A
-pinned manifest records the exact package name, version, and
-\proglang{SHA}-256 hash for each vignette, so that precision figures
-reported here are reproducible against a fixed set of files. A
-companion script (\code{fetch\_corpus.py}) downloads the corpus from
-CRAN using the pinned manifest.
+The precision corpus contains \StatCorpusSize{} real JSS-format
+manuscripts: \StatCorpusCran{} vignettes of published JSS papers
+shipped in CRAN package archives, \StatCorpusGithub{} standalone
+manuscripts collected from public repositories, and
+\StatCorpusManual{} synthetic fixtures retained from early
+development. By source format, \StatCorpusRnw{} are \code{.Rnw},
+\StatCorpusRmd{} are \code{.Rmd}, and \StatCorpusTex{} are plain
+\LaTeX{}. The corpus is pinned by a manifest recording an immutable
+source URL and SHA-256 hash per manuscript, so every evaluation run
+sees byte-identical inputs; it contains no duplicate manuscripts and
+no same-paper format doubles (an earlier, larger corpus used during
+development contained near-duplicates and was replaced by the pinned,
+deduplicated manifest).
 
-\subsection{Evaluation methodology}
-\label{sec:eval-method}
+Because CRAN vignettes describe \proglang{R} software exclusively,
+the repository-sourced portion was hand-curated to include
+\StatCorpusNonR{} manuscripts describing software in other languages
+(\StatCorpusNonRLangs{}). These manuscripts exercise the rules on
+prose and code conventions from outside the \proglang{R} ecosystem
+--- and immediately earned their place: their installation-guide
+sections exposed two over-firing patterns that \proglang{R}
+vignettes never trigger, both fixed and re-measured within the loop.
+The corpus remains \proglang{R}-weighted, and per-rule precision on
+non-\proglang{R} manuscripts is measured with correspondingly less
+data; we scope our claims accordingly.
 
-A companion command-line tool, \code{eval-jss}, automates the
-scan-classify-report cycle using an \proglang{SQLite} database
-\citep{sqlite}. It provides five sub-commands:
-
-\begin{itemize}
-  \item \code{eval-jss init}: creates and initialises \code{eval/eval.db}.
-  \item \code{eval-jss scan}: runs \code{jss-lint} against the corpus
-    and stores each violation in the database, superseding earlier
-    scans of the same file.
-  \item \code{eval-jss review}: uses an AI language model to classify
-    stored violations as true positives (TP) or false positives (FP).
-  \item \code{eval-jss human-review}: presents uncertain or
-    high-stakes violations for manual human classification.
-  \item \code{eval-jss report}: computes per-rule precision, displays
-    a summary table, and appends a timestamped row to a CSV history
-    file.
-\end{itemize}
-
-\textbf{Precision metric.} Precision is defined as
-$\mathrm{TP} / (\mathrm{TP} + \mathrm{FP})$, where TP counts
-violations confirmed as genuine by review and FP counts violations
-confirmed as incorrect. Only the \emph{latest scan per file} is
-counted, so that stale violations from before a rule fix do not inflate
-FP counts. Rules with fewer than ten reviewed violations are excluded
-from threshold evaluation since small samples produce unreliable
-estimates.
-
-\textbf{Threshold.} We require at least 90\% precision for each rule
-before considering it publication-ready. This threshold reflects the
-judgment that a rule firing with more than one false positive in ten
-will frustrate authors rather than help them.
-
-\textbf{Classification procedure.} Violations were first submitted to
-a locally-hosted AI classifier (a 30B-parameter language model). Cases
-the AI marked as uncertain, and rules where AI reliability was known
-to be lower, were routed to human review. All classification decisions
-are stored with their source (AI or human) to support auditing and
-revision.
-
-\subsection{Reproducing the validation results}
-\label{sec:reproducibility}
-
-The precision figures in Table~\ref{tab:precision} are fully
-reproducible from the supplementary material. The following steps
-regenerate Table~\ref{tab:precision} from scratch:
-
-\begin{enumerate}
-  \item \textbf{Download the corpus.} Run
-    \code{python fetch\_corpus.py} with the pinned manifest
-    (\code{corpus\_manifest.csv}, included in the supplementary
-    material). The script downloads each vignette from CRAN and
-    verifies its \proglang{SHA}-256 hash against the manifest,
-    aborting if any file does not match. The result is a local
-    directory of 493 \code{.tex} files identical to those used in
-    our evaluation.
-  \item \textbf{Initialise the database.} Run
-    \code{eval-jss init} to create a fresh \code{eval/eval.db}.
-  \item \textbf{Scan the corpus.} Run \code{eval-jss scan} to invoke
-    \code{jss-lint} on every file and populate the database with
-    violations.
-  \item \textbf{Load pre-classified decisions.} The supplementary
-    material includes the final \code{eval.db} with all 6{,}739
-    human- and AI-reviewed classification decisions. Importing this
-    database skips the classification step and provides the same
-    ground truth used for Table~\ref{tab:precision}. Alternatively,
-    run \code{eval-jss review} followed by \code{eval-jss
-    human-review} to re-classify violations independently.
-  \item \textbf{Generate the report.} Run \code{eval-jss report} to
-    reproduce Table~\ref{tab:precision}. The command also appends a
-    timestamped row to \code{eval/report.csv}, providing an audit
-    trail.
-\end{enumerate}
-
-Steps 1--3 and 5 are fully automated and deterministic. Step~4
-(classification) requires either the supplied \code{eval.db} or
-independent human review; AI-only reclassification may produce
-slightly different figures due to the bias described in
-Section~\ref{sec:evalloop}.
-
-\subsection{Precision results}
+\subsection{Precision}
 \label{sec:precision}
 
-After sixteen iterations of the scan-classify-report-fix cycle
-(Section~\ref{sec:evalloop}), all thirty rules with at least ten
-reviewed violations achieve at least 90\% precision.
-Table~\ref{tab:precision} gives the complete results, sorted by
-precision.
+At the pinned iteration (\code{\StatPinnedIteration}, recorded
+\StatPinnedIterationDate{}), the corpus yields
+\StatPrecisionReviewed{} adjudicated violation instances:
+\StatPrecisionTP{} true positives and \StatPrecisionFP{} false
+positives, an overall precision of \StatPrecisionOverall{} with no
+unlabeled instances outstanding. Of the \StatRulesMeasured{} rules
+that fired at least once, \StatRulesPassing{} meet the \StatGatePct{}
+gate and \StatRulesPerfect{} have no recorded false positive at all;
+per-rule figures are listed in Appendix~\ref{app:perrule}.
+Reported precision is computed over \emph{live} labels --- violations
+the current tool version actually produces on the current corpus ---
+not over the union of everything any historical version ever
+reported; an earlier accounting bug of exactly that kind made two
+already-fixed rules look permanently imprecise, and the fix
+(tracking each violation's last-seen run) is part of the harness.
 
-\begin{table}[ht]
-  \centering
-  \small
-  \begin{tabular}{lrrr}
-    \hline
-    Rule & TP & FP & Precision \\
-    \hline
-    JSS-BIB-002      &    9 &  1 & 90.0\% \\
-    JSS-REF-006      &   28 &  3 & 90.3\% \\
-    JSS-RMD-CAP-002  &   11 &  1 & 91.7\% \\
-    JSS-TYPO-003     &  138 & 11 & 92.6\% \\
-    JSS-XREF-002     &   14 &  1 & 93.3\% \\
-    JSS-MARKUP-010   &  137 &  9 & 93.8\% \\
-    JSS-CITE-003     &  316 & 18 & 94.6\% \\
-    JSS-RCODE-001    &   18 &  1 & 94.7\% \\
-    JSS-CAP-002      &  324 & 16 & 95.3\% \\
-    JSS-CITE-001     &  370 & 15 & 96.1\% \\
-    JSS-NAME-003     &  223 &  9 & 96.1\% \\
-    JSS-STRUCT-002   &   27 &  1 & 96.4\% \\
-    JSS-STYLE-001    &   79 &  2 & 97.5\% \\
-    JSS-REF-003      &  134 &  3 & 97.8\% \\
-    JSS-BIB-001      &   62 &  1 & 98.4\% \\
-    JSS-TYPO-001     &  273 &  4 & 98.6\% \\
-    JSS-TYPO-002     &  393 &  5 & 98.7\% \\
-    JSS-XREF-003     &  956 & 10 & 99.0\% \\
-    JSS-CODE-003     &  809 &  7 & 99.1\% \\
-    JSS-REF-001      &  180 &  1 & 99.4\% \\
-    JSS-WIDTH-001    & 1369 &  4 & 99.7\% \\
-    JSS-STRUCT-001   &  385 &  1 & 99.7\% \\
-    JSS-BIB-003      &   65 &  0 & 100.0\% \\
-    JSS-CODE-001     &   12 &  0 & 100.0\% \\
-    JSS-NAME-001     &   14 &  0 & 100.0\% \\
-    JSS-REF-002      &   38 &  0 & 100.0\% \\
-    JSS-REF-004      &   97 &  0 & 100.0\% \\
-    JSS-REF-005      &   25 &  0 & 100.0\% \\
-    JSS-STRUCT-004   &   35 &  0 & 100.0\% \\
-    JSS-XREF-001     &   74 &  0 & 100.0\% \\
-    \hline
-    \textbf{Total}   & 6615 & 124 & \textbf{98.2\%} \\
-    \hline
-  \end{tabular}
-  \caption{Per-rule precision on the 493-manuscript corpus
-    (batch-037, 2026-04-21). Only rules with at least ten reviewed
-    violations are included. Sorted by precision ascending.}
-  \label{tab:precision}
+\subsection{Recall}
+\label{sec:recall}
+
+Precision alone cannot distinguish a useful checker from a timid one:
+a tool that never fires has perfect precision. Recall is measured
+against a separate ground-truth corpus of
+\StatRecallCorpusPapers{} manuscripts in which violations were
+hand-annotated (``planted'') at the source level, partly by seeding
+known violations and partly by exhaustive manual annotation of the
+manuscripts' existing violations, cross-checked against --- but never
+auto-accepted from --- linter output. Deterministic rules'
+annotations are pre-filled mechanically; judgment rules were
+annotated and repeatedly re-audited by the human author, and
+annotation errors discovered during audits (including stale plants
+left by corpus-fetch changes and mislabeled edge cases) were
+corrected at source with the correction history retained.
+
+At the pinned recall run, the tool recovers \StatRecallTP{} of the
+\StatRecallPlants{} planted violations across
+\StatRecallRules{} rules: a per-instance (micro) recall of
+\StatRecallMicro{} and a per-rule average (macro) recall of
+\StatRecallMacro{}. We report per-rule recall only for the
+\StatRecallThickRules{} rules with at least \StatRecallMinPlants{}
+plants --- \StatRecallPerfect{} of which recover every plant --- and
+pool the thinner rules into a single row in
+Appendix~\ref{app:perrule}, because a recall estimate on two plants
+is noise. The two figures differ because high-volume rules are
+harder: the largest gaps concentrate in exactly the rules whose
+false-positive analysis also revealed inherent ambiguity, as
+discussed next.
+
+\subsection{Two case studies and the accuracy ceiling}
+\label{sec:casestudies}
+
+\emph{Retirement: the caption-case rule.} A rule requiring captions
+in sentence style reached only moderate precision after five
+successive fix rounds. The residual false positives were capitalized
+words that are proper nouns only to a domain reader --- method names,
+\proglang{R} class names, place names. Every syntactic gate the loop
+tested either left the false positives or sacrificed true positives
+at a poor ratio; the honest options were a curated whitelist
+(unbounded maintenance) or retirement, and we retired the rule. The
+catalogue records it, and this paper reports it, because a silent
+removal would misrepresent the tool's history.
+
+\emph{Exemption: single-letter language names.} The rule wrapping
+programming-language names in \code{\textbackslash{}proglang} is
+accurate for multi-character names but faces irreducible ambiguity on
+the single-letter names of \proglang{R} and \proglang{C}, which also
+serve as panel labels, statistical factors, and parts of disease
+names and other compounds. After the
+structurally fixable clusters were eliminated, the residue is
+inherent; the rule is exempt from the gate at its measured precision,
+with the rationale recorded in the reviewed exemption file, rather
+than silently tolerated or retired outright --- it remains far too
+useful on the unambiguous cases.
+
+The same boundary appears on the recall side: the rule with the most
+planted violations, inline-code markup
+(\rulelink{JSS-MARKUP-003}), misses plants that no syntactic signal
+can separate from their false-positive twins ---
+\code{\textbackslash{}texttt} wrapping an ordinary word versus a
+function name, path-shaped strings that are prose in one manuscript
+and code in another. We consider this the tool's accuracy ceiling:
+past it, improvement requires domain knowledge, and the design
+response is confidence tiers and human review rather than more
+guards.
+
+\subsection{Reproducibility}
+\label{sec:reproducibility}
+
+Every number, table body, and listing in this paper is generated ---
+none is typed by hand. A generator script queries the pinned
+evaluation state (precision iteration \code{\StatPinnedIteration},
+recall run \StatPinnedRecallRun{}, ground-truth corpus hash
+\code{\StatPinnedRecallHash}) together with the rule catalogue,
+corpus manifest, and benchmark records, and emits the macros and
+table bodies this manuscript inputs; a drift check fails the build if
+the committed values differ from regeneration. The replication script
+\code{replicate.sh} performs the full sequence --- regenerate,
+compare, lint this manuscript with \pkg{jss-lint} itself (any
+violation fails the build), and recompile the PDF. The history
+database is append-only, so the pinned queries return byte-identical
+results indefinitely.
+
+%%--------------------------------------------------------------------
+\section[Using jss-lint]{Using \pkg{jss-lint}}
+\label{sec:usage}
+
+The tool installs from the standard channel of each ecosystem: the
+\proglang{Python} package \pkg{\StatPyPIName} via \code{pip}, the
+native binary via \code{cargo install jsslint-cli}, the \proglang{R}
+package \pkg{jsslintr}, and the browser version, which requires no
+installation. Development happens at \StatRepoUrl{}.
+
+\subsection{Author workflow}
+\label{sec:authormode}
+
+Running \code{jss-lint} on the manuscript of
+Section~\ref{sec:example} prints the seven violations as a table with
+positions, messages, and suggestions. The mechanical subset can be
+repaired directly; \code{--fix --dry-run} previews the repairs as a
+unified diff without touching the file:
+
+\VerbatimInput[frame=single, fontsize=\small]{generated/listings/demo-fix-diff.txt}
+
+Applying \code{--fix} rewrites the file atomically and re-verifies
+the result. Fixes are only generated where they are provably safe;
+judgment calls (the section heading's case, the keyword list) are
+deliberately left to the author. Each rule documents itself,
+including the style-guide clause it enforces:
+
+\VerbatimInput[frame=single, fontsize=\small]{generated/listings/explain-cite003.txt}
+
+A per-project configuration file (\code{.jss-lint.toml}) or the
+\code{--ignore-rules} and \code{--min-confidence} options control
+rule selection; suppressions are explicit and reportable, never
+silent.
+
+\subsection{Reviewer workflow and continuous integration}
+\label{sec:reviewermode}
+
+Reviewer mode aggregates findings into a pass/fail summary per
+category with an overall compliance percentage.
+Table~\ref{tab:reviewer} shows the summary for the demonstration
+manuscript, exactly as produced by the JSON output of
+\code{--mode reviewer} (the terminal renderer displays the same data
+as a formatted table).
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Category & Status & Applied & Passed \\
+\midrule
+\rawinput{generated/tab-demo-reviewer.tex}
+\end{tabular}
+\caption{Reviewer-mode compliance summary for
+  \code{examples/demo.tex}, regenerated by the replication script
+  from the tool's JSON output.}
+\label{tab:reviewer}
 \end{table}
 
-The corpus contains 6{,}615 true-positive violations and 124 false
-positives, for an overall precision of 98.2\%. Eight rules achieve
-100\% precision (zero false positives); the median precision across
-all thirty rules is 99.0\%.
-
-\subsection{Discussion of residual false positives}
-\label{sec:eval-discussion}
-
-The three rules with the lowest precision (all above 90\%) share a
-common structure: they detect patterns that are \emph{mostly} JSS
-violations but also arise legitimately in specialised document types
-or non-English field content.
-
-\textbf{JSS-BIB-002} (90.0\%, 1 FP) flags \code{@book} entries
-missing required fields. The single false positive is a known
-\pkg{bibtexparser} parser limitation: a malformed entry-type
-declaration in one corpus file causes the parser to misclassify
-a non-\code{@book} entry as \code{@book}, after which the rule
-fires incorrectly. The rule logic itself is correct; the FP
-reflects a parser edge case rather than a rule error.
-
-\textbf{JSS-REF-006} (90.3\%, 3 FP) flags \code{edition} fields not
-in ordinal format. The three false positives are foreign-language
-editions (e.g.,{} German ordinals such as ``3.\ Auflage'') that are
-correct in their original language but do not match the expected
-English pattern.
-
-\textbf{JSS-RMD-CAP-002} (91.7\%, 1 FP) flags \code{.Rmd} headings
-not in sentence case. The false positive is a heading containing a
-multi-word proper noun that resembles title case but is correctly
-capitalised.
-
-These residual false positives reflect fundamental limits of
-pattern-based analysis: the correct decision in such edge cases
-requires context that cannot be recovered from the document source
-alone.
-
-\subsection{Rules below the classification threshold}
-\label{sec:eval-lowsample}
-
-Twenty-three of the 53 rules have fewer than ten reviewed violations
-in the corpus and therefore receive no precision estimate in
-Table~\ref{tab:precision}. This reflects corpus composition rather
-than rule failure: because all 493 papers are \proglang{R} package
-vignettes, rules that target uncommon structural patterns or
-non-\proglang{R} contexts fire infrequently. For example,
-\code{JSS-STRUCT-003} (formatting commands inside captions) and
-\code{JSS-PRE-009} (empty \code{\textbackslash Keywords}) fired on
-fewer than ten papers each; \code{JSS-STYLE-003} (plain equation
-numbers) and \code{JSS-CITE-002} (bare author-year in prose)
-occurred but had too few classified instances for a reliable
-estimate. As the corpus grows to cover more paper types these rules
-will accumulate enough reviewed violations to enter the threshold
-evaluation.
-
-\subsection{Scope of the evaluation}
-\label{sec:eval-scope}
-
-\textbf{Corpus composition.} All 493 papers were drawn from CRAN
-package vignettes and therefore describe \proglang{R} software. The
-precision estimates in Table~\ref{tab:precision} transfer directly to
-language-agnostic rules (e.g.,{} \code{JSS-CAP-002},
-\code{JSS-CITE-001}, \code{JSS-TYPO-001}, \code{JSS-WIDTH-001}).
-For rules that are \proglang{R}-specific by design ---
-\code{JSS-CODE-003} (operator spacing in \proglang{R} code),
-\code{JSS-RCODE-001} (unquoted \code{library()} arguments),
-\code{JSS-PRE-012} (Sweave preamble comment) --- the estimates
-characterise exactly the population of manuscripts to which the rule
-applies. Authors submitting manuscripts about \proglang{Python},
-\proglang{Julia}, or other non-\proglang{R} tools should expect
-similar precision on the language-agnostic rules; the
-\proglang{R}-specific rules will not fire at all.
-
-\textbf{Precision vs.\ recall.} The evaluation measures
-\emph{precision} (what fraction of reported violations are genuine)
-but not \emph{recall} (what fraction of all genuine violations are
-reported). Obtaining ground-truth recall would require a human expert
-to read all 493 papers and exhaustively annotate every true
-violation --- a prohibitively expensive process. Precision is the
-appropriate primary metric for a tool whose main cost is false alarms
-that waste authors' time. A rule with low recall is merely
-incomplete; a rule with low precision actively misleads. The tool's
-design goal is therefore high precision at the cost of potentially
-missing some violations, not comprehensive detection at the cost of
-noise. Users should be aware that a clean \code{jss-lint} run does
-not certify full style compliance; it certifies that the patterns the
-tool checks are not present.
-
-%%--------------------------------------------------------------------
-\section{Usage}
-\label{sec:usage}
-%%--------------------------------------------------------------------
-
-\subsection{Installation}
-\label{sec:install}
-
-\pkg{jss-style-checker} requires \proglang{Python}~3.10 or later
-and is installable from PyPI:
-
-\begin{CodeInput}
-pip install jss-style-checker
-\end{CodeInput}
-
-For development from source:
-
-\begin{CodeInput}
-git clone https://github.com/author/jss-style-checker
-cd jss-style-checker
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-\end{CodeInput}
-
-\subsection{Basic usage}
-\label{sec:basic-usage}
-
-The primary entry point is the \code{jss-lint} command, which accepts
-\code{.tex}, \code{.Rnw}, \code{.Rmd}, and \code{.bib} files:
-
-\begin{CodeInput}
-jss-lint paper.tex refs.bib        # LaTeX manuscript
-jss-lint paper.Rnw refs.bib        # Sweave/Knitr manuscript
-jss-lint paper.Rmd refs.bib        # R Markdown manuscript
-\end{CodeInput}
-
-If no violations are found the tool exits with code~0 and produces no
-output. When violations are found the tool exits with code~1 and
-prints a structured report. Exit code~2 indicates an invocation error
-or a fatal parse failure.
-
-\subsection{Author mode output}
-\label{sec:author-output}
-
-In the default author mode (terminal format), \code{jss-lint}
-produces an annotated violation list:
-
-\begin{verbatim}
-paper.tex
-  12:1  error    [JSS-PREAMBLE-001]
-        Missing \Plainauthor{} macro
-     -> Add \Plainauthor{name} before \begin{document}
-  45:1  warning  [JSS-MARKUP-001]
-        Bare language name "Python"
-     -> Replace with \proglang{Python}
-  78:5  error    [JSS-CITE-001]  Bare \cite{} command
-     -> Use \citep{key} or \citet{key}
-
-3 violations (2 errors, 1 warning)
-\end{verbatim}
-
-\subsection{Reviewer mode output}
-\label{sec:reviewer-output}
-
-Reviewer mode produces a per-category compliance table:
-
-\begin{CodeOutput}
-Compliance: Journal of Statistical Software
-paper.tex / refs.bib
-
-Category              Status    Violations
--------------------   ------    ----------
-Preamble macros       FAIL           1
-Preamble format       PASS           0
-Semantic markup       FAIL           1
-Math operators        PASS           0
-Capitalisation        PASS           0
-Citations             FAIL           1
-Document structure    PASS           0
-Cross-references      PASS           0
-Code line width       PASS           0
-Code style            PASS           0
-BibTeX completeness   PASS           0
-References            PASS           0
-Naming conventions    PASS           0
-Typography            PASS           0
-Abbreviations         PASS           0
-House style           PASS           0
-
-Overall: 81.3% compliant (13 / 16 categories)
-\end{CodeOutput}
-
-\subsection{JSON output}
-\label{sec:json-output}
-
-Machine-readable output is produced with \code{--output json}.
-The JSON schema (version 1.0) contains a \code{violations} array,
-a \code{categories} summary, and a \code{compliance\_percentage} field.
-This output is suitable for consumption by CI/CD systems, custom
-dashboards, or programmatic post-processing in any language.
-
-\subsection{Configuration file}
-\label{sec:config-file}
-
-Projects that consistently use the same options can place a
-\code{.jss-lint.toml} file in the working directory:
-
-\begin{Code}
-journal = "jss"
-mode = "reviewer"
-output = "html"
-ignore-rules = []
-\end{Code}
-
-CLI flags override the configuration file, which in turn overrides
-built-in defaults.
-
-\subsection{Auto-fix mode}
-\label{sec:fix}
-
-Many violations have a single canonical correction that can be applied
-mechanically. The \code{--fix} flag instructs \code{jss-lint} to
-apply these corrections directly to the source file:
-
-\begin{CodeInput}
-jss-lint --fix paper.tex refs.bib
-\end{CodeInput}
-
-Files are rewritten atomically (via \code{tempfile} and
-\code{os.replace}) so that a crash during writing cannot leave a
-partial file on disk. To preview what would change without touching
-any files, combine \code{--fix} with \code{--dry-run}:
-
-\begin{CodeInput}
-jss-lint --fix --dry-run paper.tex refs.bib
-\end{CodeInput}
-
-Rules that currently support auto-fix are \code{JSS-MARKUP-001} (bare
-programming language names $\to$ \code{\textbackslash proglang\{...\}})
-and \code{JSS-NAME-001} (incorrect software name casing). Further
-fixable rules are planned for future releases.
-
-\subsection{API reference}
-\label{sec:api}
-
-\pkg{jss-style-checker} exposes a stable public API for integration
-into \proglang{Python} CI workflows or editorial tools:
-
-\begin{Code}
-from texlint.core.parser import (
-    parse_tex_file, parse_bib_file,
-    parse_rnw_file, parse_rmd_file,
-)
-from texlint.api import ParsedDocument, ToolConfig
-from texlint.core.engine import run
-
-tex = parse_tex_file("paper.tex")
-bib = parse_bib_file("refs.bib")
-doc = ParsedDocument(tex_files=[tex], bib_files=[bib])
-config = ToolConfig(
-    journal="jss",
-    mode="author",
-    output_format="terminal",
-    ignore_rules=frozenset(),
-)
-report = run(doc, config)
-print(f"{report.compliance_percentage:.0f}% compliant")
-for v in report.violations:
-    print(f"  {v.line}:{v.column}  {v.rule_id}")
-\end{Code}
-
-%%--------------------------------------------------------------------
-\section{Extensibility: adding journal plugins}
-\label{sec:extensibility}
-%%--------------------------------------------------------------------
-
-\pkg{jss-style-checker} discovers journal rule modules at runtime via
-\proglang{Python} entry points \citep{importlib_metadata}, using the
-group name \code{texlint.journals}. Adding a new journal requires no
-changes to the core package.
-
-\subsection{Creating a plugin}
-\label{sec:plugin-create}
-
-A minimal journal plugin consists of a \proglang{Python} package that
-subclasses \code{JournalRuleModule} and declares an entry point:
-
-\begin{verbatim}
-from texlint.api import (
-    JournalRuleModule, Rule, RuleCategory, Violation
-)
-
-def _check_abstract_length(doc):
-    for tex in doc.tex_files:
-        pass  # implementation here
-
-class MyJournalModule(JournalRuleModule):
-    journal_id = "myjournal"
-    display_name = "My Statistics Journal"
-    version = "0.1.0"
-
-    def rules(self):
-        return [
-            Rule(
-                id="MJ-ABSTRACT-001",
-                description="Abstract exceeds 150 words",
-                check=_check_abstract_length,
-            )
-        ]
-
-    def categories(self):
-        return [
-            RuleCategory(
-                id="abstract",
-                display_name="Abstract",
-                rules=self.rules(),
-            )
-        ]
-\end{verbatim}
-
-\subsection{Registering the plugin}
-\label{sec:plugin-register}
-
-The plugin is registered in \code{pyproject.toml} under the
-\code{texlint.journals} entry-point group:
-
-\begin{verbatim}
-[project.entry-points."texlint.journals"]
-myjournal = "texlint_myjournal:MyJournalModule"
-\end{verbatim}
-
-After \code{pip install -e .}, the plugin is immediately available:
-
-\begin{CodeInput}
-jss-lint --journal myjournal paper.tex
-\end{CodeInput}
-
-The plugin system is tested in the \pkg{jss-style-checker} test suite
-using a stub journal module that exercises the full discovery and
-execution path.
+The same interface serves automation. In continuous integration, the
+provided GitHub Action lints the manuscript on every push and
+uploads SARIF so violations annotate the diff; the exit status is the
+gate. While editing, the language server surfaces the diagnostics
+and safe fixes inside any LSP-capable editor, with a packaged
+extension for VS~Code. For bibliography hygiene, the opt-in
+\code{--crossref} mode queries the Crossref REST API
+\citep{crossrefapi} to verify and fill in missing DOIs; it is the
+only network-touching feature and is excluded from the deterministic
+replication path.
 
 %%--------------------------------------------------------------------
 \section{Comparison with existing tools}
 \label{sec:comparison}
-%%--------------------------------------------------------------------
 
-Table~\ref{tab:comparison} compares \pkg{jss-style-checker} with
-the closest related tools, including both dedicated \LaTeX{} checkers
-and online academic writing assistants.
+General-purpose \LaTeX{} linters --- \pkg{chktex} \citep{chktex},
+\pkg{lacheck} \citep{lacheck}, and the \pkg{textlint} ecosystem
+\citep{texlint_js} --- check language-level hygiene: mismatched
+delimiters, spacing around punctuation, deprecated constructs. They
+know nothing of any journal's requirements; running \pkg{chktex} on
+the compliant demonstration manuscript of
+Section~\ref{sec:example} produces advice about \LaTeX{} idioms and
+none about JSS style. At the other end, commercial AI writing
+assistants such as \pkg{Writefull} \citep{writefull} give
+probabilistic language feedback: valuable for prose, but
+non-deterministic, unspecific to journal rules, and requiring
+manuscript upload to a third party. Table~\ref{tab:comparison}
+summarizes the comparison.
 
-\begin{table}[ht]
-  \centering
-  \begin{tabular}{lllll}
-    \hline
-    Tool & Type & JSS & AST & Offline \\
-    \hline
-    \pkg{chktex} \citep{chktex} & CLI & No & No & Yes \\
-    \pkg{lacheck} \citep{lacheck} & CLI & No & Partial & Yes \\
-    \pkg{textlint} \citep{texlint_js} & CLI & No & Yes & Yes \\
-    \pkg{SciSpace} \citep{scispace} & Online & No & No & No \\
-    \pkg{Writefull} \citep{writefull} & Online & No & No & No \\
-    \pkg{jss-style-checker} & CLI & Yes & Yes & Yes \\
-    \hline
-  \end{tabular}
-  \caption{Comparison of style-checking tools relevant to JSS authors.
-    JSS~=~implements JSS-specific rules; AST~=~AST-based analysis;
-    Offline~=~runs without internet access.}
-  \label{tab:comparison}
+\begin{table}[t!]
+\centering
+\begin{tabular}{lccccc}
+\toprule
+ & \pkg{chktex} & \pkg{lacheck} & \pkg{textlint} & \pkg{Writefull}
+ & \pkg{jss-lint} \\
+\midrule
+Journal-specific rules & -- & -- & -- & -- & yes \\
+Deterministic          & yes & yes & yes & -- & yes \\
+\code{.Rnw}/\code{.Rmd} aware & -- & -- & -- & -- & yes \\
+\BibTeX{} rules        & -- & -- & -- & -- & yes \\
+Auto-fix               & -- & -- & partial & -- & yes \\
+Measured precision/recall & -- & -- & -- & -- & yes \\
+Fully local            & yes & yes & yes & -- & yes \\
+\bottomrule
+\end{tabular}
+\caption{Feature comparison with general \LaTeX{} linters and
+  AI-based writing assistance. ``Measured precision/recall'' means
+  the project publishes accuracy figures against a real-manuscript
+  corpus.}
+\label{tab:comparison}
 \end{table}
 
-\pkg{chktex}~\citep{chktex} and \pkg{lacheck}~\citep{lacheck} check
-general \LaTeX{} style but know nothing about JSS conventions. Neither
-can check that programming language names use
-\code{\textbackslash proglang\{\}}, that preamble macros are present,
-or that natbib citation commands are used correctly.
-
-\pkg{textlint}~\citep{texlint_js} is a mature, plugin-based linting
-framework for text and markup in the \proglang{JavaScript} ecosystem.
-It uses an AST-based approach and supports a rich plugin system.
-However, it requires \proglang{Node.js} and, to our knowledge, no
-JSS-specific plugin has been published.
-
-Online tools such as \pkg{SciSpace}~\citep{scispace} and
-\pkg{Writefull}~\citep{writefull} provide AI-powered writing
-assistance including grammar checking and general formatting guidance.
-These tools are valuable for prose quality but do not implement
-journal-specific \LaTeX{} validation rules. They also require
-uploading manuscript content to third-party servers, which may be
-unsuitable for unpublished work, and their output is not structured
-as a machine-readable list of line-numbered violations.
-
-To our knowledge, \pkg{jss-style-checker} is the only tool that
-combines JSS-specific rules with AST-based analysis, a plugin
-architecture, empirically validated precision, and fully offline
-operation, in a \proglang{Python} package that fits naturally into
-the workflow of authors already using \proglang{Python}-based tooling.
+The comparison is not adversarial: the tools operate at different
+layers, and a JSS author can productively run \pkg{chktex} for
+\LaTeX{} hygiene alongside \pkg{jss-lint} for journal compliance. To
+our knowledge, however, \pkg{jss-lint} is the first checker that
+encodes a statistical journal's style guide as an executable,
+measured rule set.
 
 %%--------------------------------------------------------------------
-\section{Conclusions and future work}
-\label{sec:conclusions}
+\section{Summary and outlook}
+\label{sec:summary}
+
+\pkg{jss-lint} makes the editorial form of a JSS submission checkable
+in the same sense that its computational results are reproducible: by
+a deterministic tool, before a human referee spends time on it. The
+rule set is not merely plausible --- it is measured, with
+\StatPrecisionOverall{} precision over \StatPrecisionReviewed{}
+adjudicated instances, \StatRecallMicro{} micro recall against
+hand-annotated ground truth, a documented exemption, and
+\StatRetiredCount{} public retirements. The development methodology
+--- specifications for cross-cutting work, AI assistance under
+adversarial measurement, deterministic auto-labeling where judgment
+is not required, and per-rule gates --- is, we believe, as much of a
+contribution as the tool, and the self-referential replication
+materials demonstrate both together: this manuscript passes the
+checker it describes, and one script regenerates everything shown
+here.
+
+The style guide is not exhausted. Known checks we have not yet
+implemented include the Sweave header declaration for
+\code{.Rnw}-based manuscripts, sentence-style table headers, and
+capitalization after colons in reference titles; the catalogue's
+future-work list tracks these. Beyond JSS, the rule engine is
+journal-agnostic --- rules are data, and a catalogue for another
+journal's guide is the intended extension path, now cheaper to
+distribute through the four-channel core. Our broader hope is that
+measured, deterministic style checking becomes a normal part of the
+submission pipeline, so that editors, reviewers, and authors can
+spend their attention where it is actually needed.
+
 %%--------------------------------------------------------------------
-
-We have presented \pkg{jss-style-checker}, a deterministic, AST-based
-style checker for JSS manuscripts. The tool implements 53 rules across
-16 categories, supports three output formats and two audience modes,
-and accepts \code{.tex}, \code{.Rnw} (Sweave/Knitr), and \code{.Rmd}
-(\proglang{R}~Markdown) source files. A \code{--fix} flag applies
-deterministic auto-corrections in place (with \code{--dry-run} for
-preview), and a journal plugin architecture enables other journals to
-reuse the core infrastructure. Empirical evaluation on 493 real JSS
-manuscripts confirms that all thirty rules with sufficient reviewed
-data achieve at least 90\% precision, with an overall precision of
-98.2\% across 6{,}739 reviewed violation instances.
-
-The development followed an iterative methodology combining
-specification-driven AI-assisted development with a real-world
-precision evaluation loop. We have documented this methodology in
-detail (Section~\ref{sec:aidev}) and reflected candidly on its
-strengths and limitations (Section~\ref{sec:lessons}). The key
-finding for practitioners is that synthetic unit tests, however
-thorough, are insufficient to validate a rule-based linter: testing
-against a corpus of real documents is essential and should be
-established before the first rule is written.
-
-The self-referential nature of this submission is intentional: the
-manuscript was validated with \code{jss-lint} before submission,
-confirming zero violations.
-
-Section~\ref{sec:reproducibility} gives the five-step procedure for
-reproducing Table~\ref{tab:precision} from scratch. The pinned corpus
-manifest, the pre-classified \code{eval.db}, and a convenience script
-\code{replicate.sh} are included as supplementary material.
-
-Several directions for future work are planned:
-
-\begin{itemize}
-  \item \textbf{Additional journals.} The plugin architecture makes it
-    straightforward to add rule sets for other statistical journals,
-    e.g.,{} \emph{The \proglang{R} Journal}, \emph{Biometrics}, or
-    \emph{Statistics and Computing}.
-  \item \textbf{Additional JSS rules.} Future versions could check
-    figure caption length, label naming conventions, and
-    \code{\textbackslash bibliography} placement.
-  \item \textbf{Editor integrations.} Language Server Protocol (LSP)
-    integration would enable real-time feedback in editors such as
-    VS Code or Emacs.
-  \item \textbf{Pre-commit hook.} A ready-made pre-commit hook
-    configuration would allow authors to block commits that introduce
-    new violations.
-  \item \textbf{Expanded auto-fix coverage.} The current
-    \code{--fix} implementation corrects bare language names
-    (\code{JSS-MARKUP-001}) and software name casing
-    (\code{JSS-NAME-001}). Extending auto-fix to further rules
-    (e.g.,{} \code{\textbackslash cite} $\to$
-    \code{\textbackslash citep}, typography fixes) would increase the
-    proportion of violations requiring no manual editing.
-  \item \textbf{Continuous corpus expansion.} The evaluation corpus
-    currently covers 493 papers. Regularly rerunning the
-    evaluation-improvement loop as new JSS manuscripts become
-    available will continue to surface edge cases and maintain
-    precision.
-\end{itemize}
-
 \section*{Acknowledgments}
 
-The author thanks Claude Sonnet 4.6 \citep{claude2024}, a large language
-model developed by Anthropic, for substantial assistance throughout the
-development of \pkg{jss-style-checker}: rule logic implementation, test
-authorship, documentation, and drafting of this manuscript. All technical
-decisions, empirical results, and claims in this paper are the responsibility
-of the human author.
+Large language models of the Claude family (Anthropic) contributed
+substantially to this work: drafting rule implementations, tests, and
+evaluation tooling, labeling violations under the audited scheme of
+Section~\ref{sec:labeling}, and drafting this manuscript. All
+contributions were made in a reviewed-commit workflow; the human
+author reviewed every change and takes sole responsibility for the
+software, the empirical results, and the text.
 
+%%--------------------------------------------------------------------
 \bibliography{paper}
+
+%%--------------------------------------------------------------------
+\newpage
+\begin{appendix}
+
+\section{The rule catalogue}
+\label{app:catalogue}
+
+Table~\ref{tab:catalogue} lists every active rule with its measured
+precision at the pinned evaluation iteration (``---'' marks rules
+with no adjudicated firing on the corpus). The table is generated
+from the machine-readable catalogue; rule identifiers referenced in
+the text link here.
+
+\begin{longtable}{p{0.21\textwidth}p{0.62\textwidth}r}
+\caption{Active rules in version \StatToolVersion{} with measured
+  precision.\label{tab:catalogue}}\\
+\toprule
+Rule & Requirement & Precision \\
+\midrule
+\endfirsthead
+\toprule
+Rule & Requirement & Precision \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\rawinput{generated/tab-catalogue.tex}
+\end{longtable}
+
+\section{Per-rule precision and recall}
+\label{app:perrule}
+
+Table~\ref{tab:perrule-precision} reports per-rule precision for
+every rule with at least one adjudicated firing;
+Table~\ref{tab:perrule-recall} reports per-rule recall for rules
+with at least \StatRecallMinPlants{} planted ground-truth violations,
+pooling thinner rules.
+
+\begin{longtable}{lrrrl}
+\caption{Per-rule precision at the pinned iteration
+  (\code{\StatPinnedIteration}).\label{tab:perrule-precision}}\\
+\toprule
+Rule & TP & FP & Precision & Gate \\
+\midrule
+\endfirsthead
+\toprule
+Rule & TP & FP & Precision & Gate \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\rawinput{generated/tab-precision.tex}
+\end{longtable}
+
+\begin{longtable}{lrrr}
+\caption{Per-rule recall at the pinned run against the hand-annotated
+  ground-truth corpus.\label{tab:perrule-recall}}\\
+\toprule
+Rule & Plants & Recovered & Recall \\
+\midrule
+\endfirsthead
+\toprule
+Rule & Plants & Recovered & Recall \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\rawinput{generated/tab-recall.tex}
+\end{longtable}
+
+\end{appendix}
 
 \end{document}
