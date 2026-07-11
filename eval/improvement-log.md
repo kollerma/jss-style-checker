@@ -17277,3 +17277,169 @@ _(fill in)_
 ### Results (post-implementation)
 
 _(fill in after the next `eval-jss iterate record` run)_
+
+## Iteration 111 — 2026-07-11T21:21:40Z — post-code003-cli-flags
+
+- **Corpus size:** 255 papers
+- **Tool version:** `1.0.0`
+- **Parse failures:** full=20, pinned=16
+
+**Note:** CODE-003: skip command-line flag / name / path token sequences in \code{} (FP class surfaced by linting this project's own manuscript, which documents its CLI). Fix mirrored in jsslint-core; parity suite covers it.
+
+### Stats — full corpus
+
+| category | rule | tp | fp | pending | precision | status |
+|---|---|---:|---:|---:|---:|---|
+| citation | JSS-CITE-002 | 288 | 29 | 0 | 90.85% | PASS |
+| citation | JSS-CITE-003 | 268 | 0 | 0 | 100.00% | PASS |
+| citation | JSS-CITE-004 | 20 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-ABBR-001 | 20 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-002 | 11 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-003 | 62 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-004 | 135 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-005 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CAP-001 | 115 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CAP-002 | 578 | 10 | 0 | 98.30% | PASS |
+| unknown | JSS-CAP-004 | 203 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-001 | 450 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-002 | 264 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-003 | 2409 | 18 | 0 | 99.26% | PASS |
+| unknown | JSS-HOUSE-001 | 632 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-002 | 36 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-003 | 65 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-MARKUP-001 | 1152 | 185 | 0 | 86.16% | EXEMPT |
+| unknown | JSS-MARKUP-002 | 241 | 1 | 0 | 99.59% | PASS |
+| unknown | JSS-MARKUP-003 | 1770 | 120 | 0 | 93.65% | PASS |
+| unknown | JSS-MARKUP-004 | 152 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-001 | 10 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-002 | 193 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-001 | 93 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-002 | 85 | 1 | 0 | 98.84% | PASS |
+| unknown | JSS-OPER-003 | 440 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-004 | 564 | 20 | 0 | 96.58% | PASS |
+| unknown | JSS-PRE-001 | 71 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-002 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-004 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-005 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-006 | 24 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-007 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-001 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-003 | 3556 | 137 | 0 | 96.29% | PASS |
+| unknown | JSS-REFS-004 | 651 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-005 | 52 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-006 | 1189 | 14 | 0 | 98.84% | PASS |
+| unknown | JSS-REFS-007 | 181 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-001 | 99 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-002 | 33 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-003 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-004 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-005 | 20 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-006 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-001 | 266 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-002 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-003 | 10 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-004 | 72 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-WIDTH-001 | 519 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-001 | 38 | 2 | 0 | 95.00% | PASS |
+| unknown | JSS-XREF-002 | 907 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-004 | 1013 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-005 | 236 | 1 | 0 | 99.58% | PASS |
+| unknown | JSS-XREF-006 | 16 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-007 | 77 | 0 | 0 | 100.00% | PASS |
+
+### Stats — pinned only
+
+| category | rule | tp | fp | pending | precision | status |
+|---|---|---:|---:|---:|---:|---|
+| citation | JSS-CITE-002 | 174 | 24 | 0 | 87.88% | FAIL |
+| citation | JSS-CITE-003 | 202 | 0 | 0 | 100.00% | PASS |
+| citation | JSS-CITE-004 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-ABBR-001 | 15 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-002 | 11 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-003 | 62 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-004 | 115 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-BIBTEX-005 | 9 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CAP-001 | 59 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CAP-002 | 361 | 7 | 0 | 98.10% | PASS |
+| unknown | JSS-CAP-004 | 154 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-001 | 288 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-002 | 183 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-CODE-003 | 1613 | 15 | 0 | 99.08% | PASS |
+| unknown | JSS-HOUSE-001 | 324 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-002 | 36 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-HOUSE-003 | 56 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-MARKUP-001 | 507 | 142 | 0 | 78.12% | EXEMPT |
+| unknown | JSS-MARKUP-002 | 118 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-MARKUP-003 | 721 | 63 | 0 | 91.96% | PASS |
+| unknown | JSS-MARKUP-004 | 47 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-001 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-NAME-002 | 193 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-001 | 40 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-002 | 64 | 1 | 0 | 98.46% | PASS |
+| unknown | JSS-OPER-003 | 325 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-OPER-004 | 372 | 13 | 0 | 96.62% | PASS |
+| unknown | JSS-PRE-001 | 20 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-002 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-003 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-004 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-005 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-006 | 16 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-PRE-007 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-001 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-003 | 3551 | 137 | 0 | 96.29% | PASS |
+| unknown | JSS-REFS-004 | 650 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-005 | 52 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-REFS-006 | 1188 | 14 | 0 | 98.84% | PASS |
+| unknown | JSS-REFS-007 | 181 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-001 | 57 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-002 | 24 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-003 | 2 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-004 | 8 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-005 | 10 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-STRUCT-006 | 5 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-001 | 160 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-002 | 1 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-003 | 3 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-TYPO-004 | 54 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-WIDTH-001 | 372 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-001 | 25 | 2 | 0 | 92.59% | PASS |
+| unknown | JSS-XREF-002 | 713 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-004 | 789 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-005 | 175 | 1 | 0 | 99.43% | PASS |
+| unknown | JSS-XREF-006 | 6 | 0 | 0 | 100.00% | PASS |
+| unknown | JSS-XREF-007 | 73 | 0 | 0 | 100.00% | PASS |
+
+### Delta vs. previous iteration
+
+**Full corpus**
+
+- `JSS-CODE-003`: tp +2415→2409 (-6), fp +18→18 (+0), pending 0→0 (+0)
+
+**Pinned only**
+
+- `JSS-CODE-003`: tp +1619→1613 (-6), fp +15→15 (+0), pending 0→0 (+0)
+
+### Findings / suggestions
+
+CODE-003 \code{} guard: skip content whose whitespace-separated tokens
+are all flag / name / path shaped (`--fix`, `.jss-lint.toml`,
+`cargo install jsslint-cli`). FP class surfaced by the project's own
+manuscript (documents its CLI): 7 firings there, all FP. Corpus effect:
+-6 TP / -0 FP (2415/18 -> 2409/18, 99.3%, PASS). The six stopped-firing
+rows were source-audited: five are label debt of the same class the
+guard removes (SimInf apt-get/yum install lines, fic quoted warning
+message, ordinalgmifs category label, factorlasso pip command); one is
+a genuine loss (rootSolve `\code{A x-B}`, a real subtraction) — the
+same single-token ambiguity (`a-b`) the rule has always accepted,
+now consistently extended to token sequences. Recall re-run: unchanged
+(micro 0.807 / macro 0.884, gate green). Rust mirror in jsslint-core
+committed alongside; tex_rules_parity covers CODE-003.
+
+### Plan
+
+_(fill in)_
+
+### Results (post-implementation)
+
+Recorded as iteration 111 itself (post-implementation snapshot).

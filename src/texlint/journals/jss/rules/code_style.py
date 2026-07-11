@@ -117,6 +117,17 @@ _KEYWORD_ARG_RE = re.compile(
 # separator, not a division operator.
 _PATH_LIKE_RE = re.compile(r"^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]*)+/?$")
 
+# `\code{--fix}`, `\code{--fix --dry-run}`, `\code{.jss-lint.toml}`,
+# `\code{cargo install jsslint-cli}` — command-line flags, dotfile
+# names, and space-separated command words. A leading dash is option
+# syntax and internal hyphens are part of the name, not subtraction;
+# applied per whitespace-separated token so a real expression anywhere
+# in the sample still trips the operator check.
+_NAME_LIKE_TOKEN_RE = re.compile(
+    r"^(?:--?|\.)?[A-Za-z][A-Za-z0-9_.\-]*$"
+    r"|^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]*)+/?$"
+)
+
 
 # Scientific number formats like 2.22e-16, 1.0E+9 — the exponent sign is
 # notation, not a subtraction operator, so mask it before the missing-
@@ -269,6 +280,12 @@ def check_jss_code_003(
                 continue
             # Filesystem path — slashes are separators, not division.
             if _PATH_LIKE_RE.match(stripped):
+                continue
+            # Command line made of flag / name / path tokens only.
+            tokens = stripped.split()
+            if tokens and all(
+                _NAME_LIKE_TOKEN_RE.match(t) for t in tokens
+            ):
                 continue
             # Mask scientific notation and bare string literals before
             # the operator check so the exponent sign in 2.22e-16

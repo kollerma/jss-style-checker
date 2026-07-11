@@ -49,6 +49,18 @@ static VERSION_OR_LABEL_RE: LazyLock<Regex> = LazyLock::new(|| {
 // code in the source being ported, not an oversight here. Omitted.
 static PATH_LIKE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]*)+/?$").unwrap());
+// `\code{--fix}`, `\code{--fix --dry-run}`, `\code{.jss-lint.toml}`,
+// `\code{cargo install jsslint-cli}` — command-line flags, dotfile
+// names, and space-separated command words. A leading dash is option
+// syntax and internal hyphens are part of the name, not subtraction;
+// applied per whitespace-separated token so a real expression anywhere
+// in the sample still trips the operator check.
+static NAME_LIKE_TOKEN_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"^(?:--?|\.)?[A-Za-z][A-Za-z0-9_.\-]*$|^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]*)+/?$",
+    )
+    .unwrap()
+});
 static SCIENTIFIC_NOTATION_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\b\d+(?:\.\d+)?[eE][-+]?\d+\b").unwrap());
 static STRING_LITERAL_RE: LazyLock<Regex> =
@@ -166,6 +178,14 @@ pub fn check_code_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
         if IDENTIFIER_ONLY_RE.is_match(stripped)
             || VERSION_OR_LABEL_RE.is_match(stripped)
             || PATH_LIKE_RE.is_match(stripped)
+        {
+            return;
+        }
+        // Command line made of flag / name / path tokens only.
+        if !stripped.is_empty()
+            && stripped
+                .split_whitespace()
+                .all(|t| NAME_LIKE_TOKEN_RE.is_match(t))
         {
             return;
         }
