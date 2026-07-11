@@ -40,12 +40,10 @@ from eval import history
 # The iterations.label recorded for this release — see
 # `eval iterate record v1.0.0-release`.
 PINNED_ITERATION_LABEL = "v1.0.0-release"
-# The recall_history.run_timestamp of the latest recall snapshot as of
-# this release. recall_history has no label column (spec 017 predates
-# the pinning concept), so this freezes to whatever the most recent
-# snapshot happened to be rather than any release-specific run — there
-# was no fresh `eval-jss recall` pass as part of this release.
-PINNED_RECALL_TIMESTAMP = "2026-07-06T15:05:08Z"
+# The recall_history.run_timestamp of the `eval-jss recall` pass run
+# for this release (recall_history has no label column — spec 017
+# predates the pinning concept — so this pins by timestamp instead).
+PINNED_RECALL_TIMESTAMP = "2026-07-11T20:33:47Z"
 
 
 def _color_for(value: float) -> str:
