@@ -192,11 +192,12 @@ file = "mdsOpt.ltx"
 line = 45
 comment = 'Plain `R` (programming language) should be wrapped `\proglang{R}` (JSS MARKUP-001).'
 
-[[violations]]
-rule_id = "JSS-CAP-004"
-file = "mdsOpt.ltx"
-line = 65
-comment = '"multidimensional scaling" should be "Multidimensional scaling"'
+# Removed 2026-07-12 (review F5): the CAP-004 plant at mdsOpt.ltx:65
+# (\Keywords{ multidimensional scaling, ...}) asserted "multidimensional
+# scaling should be Multidimensional scaling" — the REJECTED semantics. A
+# fully-lowercase keyword list is the journal's published convention; the
+# narrowed rule keeps only Title-Case-across-entries, so this is not a
+# violation.
 
 [[violations]]
 rule_id = "JSS-MARKUP-001"

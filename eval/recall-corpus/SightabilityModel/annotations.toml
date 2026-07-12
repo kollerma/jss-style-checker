@@ -48,11 +48,13 @@ Secondary-vignette review decisions outside this recall surface were omitted fro
 seed and remain out of scope.
 '''
 
-[[violations]]
-rule_id = "JSS-CAP-004"
-file = "a-SightabilityModel.Rnw"
-line = 40
-comment = "\\Keywords{} first entry 'abundance estimation' starts lowercase; JSS keywords are sentence case (capitalise the first word). \\Plainkeywords has the same defect."
+# Removed 2026-07-12 (review F5): the CAP-004 plant at
+# a-SightabilityModel.Rnw:40 (\Keywords{abundance estimation,
+# Horvitz-Thompson, ...}) flagged a lowercase first entry — the REJECTED
+# semantics. A fully-lowercase keyword list is the journal's published
+# convention (Horvitz-Thompson is a single proper-noun entry, not Title
+# Case across entries); the narrowed rule keeps only
+# Title-Case-across-entries, so this is not a violation.
 
 [[violations]]
 rule_id = "JSS-XREF-004"
