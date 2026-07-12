@@ -54,8 +54,8 @@ PAPER_TEX = REPO_ROOT / "paper" / "paper.tex"
 # The precision-history DB is append-only, so pinning an iteration label and
 # a recall run timestamp makes regeneration byte-identical forever.
 # --------------------------------------------------------------------------
-PIN_ITERATION_LABEL = "post-cap004-keywords"
-PIN_RECALL_TS = "2026-07-12T12:15:22Z"
+PIN_ITERATION_LABEL = "post-colon-caps"
+PIN_RECALL_TS = "2026-07-12T13:31:00Z"
 PIN_RECALL_HASH = "70951d5371df0734"
 PIN_SCOPE = "full"
 MIN_PLANTS = 10  # per-rule recall reported only at >= this many plants
