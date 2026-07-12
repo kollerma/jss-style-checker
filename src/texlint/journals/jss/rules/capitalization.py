@@ -649,67 +649,23 @@ def check_jss_cap_004(
                 continue
             text = _group_plain_text(group)
             entries = [e.strip() for e in text.split(",") if e.strip()]
-            # Two sentence-case defects: a non-first word capitalised
-            # (title case), or the very first keyword starting lowercase
-            # (the list reads as a sentence, so its first word is
-            # capitalised). The leading-capital check is skipped when the
-            # first keyword is wrapped in markup (\pkg{}, \proglang{}, …),
-            # whose contents keep their own lowercase case convention.
-            missing_lead = (
-                not _first_keyword_is_markup(group)
-                and _keyword_missing_leading_cap(entries)
-            )
-            if _keyword_case_violation(entries) or missing_lead:
+            # Sentence-case defect: a non-first word capitalised within an
+            # entry (Title Case across entries), e.g. ``Style Guide``. The
+            # journal's published practice accepts a fully-lowercase list
+            # (``\Keywords{robust statistics, R}``) — article.tex only asks
+            # for sentence case, not a leading capital — so we do NOT flag
+            # a lowercase first keyword (F5 narrowing, 2026-07-12).
+            if _keyword_case_violation(entries):
                 yield _violation(
                     tex=tex,
                     pos=node.pos,
                     rule_id="JSS-CAP-004",
                     suggestion=(
-                        "Use sentence case for keywords (capitalise only "
-                        "the first word of each entry unless a proper name)."
+                        "Use sentence case for keywords: do not capitalise "
+                        "words after the first in an entry (proper names and "
+                        "abbreviations excepted)."
                     ),
                 )
-
-
-def _first_keyword_is_markup(group: Any) -> bool:
-    """True when the first keyword is wrapped in a markup macro
-    (``\\pkg{}``, ``\\proglang{}``, ``\\code{}``, …). Such a keyword keeps
-    its own lowercase case convention and must not be forced to a leading
-    capital. ``_group_plain_text`` strips the wrapped content entirely, so
-    the check has to inspect the group nodes directly."""
-    for child in group.nodelist or ():
-        if isinstance(child, LatexCharsNode):
-            if child.chars.strip() == "":
-                continue
-            return False  # first real content is plain prose
-        if isinstance(child, LatexMacroNode):
-            if child.macroname == "label":
-                continue
-            return child.macroname in _helpers._MARKUP_MACROS
-        if isinstance(child, LatexGroupNode):
-            return False
-    return False
-
-
-def _keyword_missing_leading_cap(entries: list[str]) -> bool:
-    """True when the first keyword's first word starts with a lowercase
-    letter (and isn't a known proper noun / package name written bare).
-    JSS keywords are sentence case, so the list's first word is
-    capitalised."""
-    if not entries:
-        return False
-    words = [w for w in re.split(r"\s+", entries[0].strip()) if w]
-    if not words:
-        return False
-    first_word = words[0]
-    bare = re.sub(r"[^A-Za-z]", "", first_word)
-    if not bare or not bare[0].islower():
-        return False
-    # A lowercase token that is a known package / language name (e.g. a
-    # bare ``ggplot2``) keeps its own case — don't demand a capital.
-    if first_word in _PROPER_NOUNS or bare in _PROPER_NOUNS:
-        return False
-    return True
 
 
 def _keyword_case_violation(entries: list[str]) -> bool:

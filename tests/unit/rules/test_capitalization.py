@@ -188,10 +188,25 @@ class TestCap004:
         src = r"\Keywords{JSS, MASS, R}"
         assert run_rule(jss_cap_004, src) == []
 
-    def test_lowercase_first_keyword_flagged(self, run_rule):
-        # Keywords are sentence case: the first word of the list is
-        # capitalised (recall-corpus HardyWeinberg:30).
+    def test_lowercase_first_keyword_ok(self, run_rule):
+        # A fully-lowercase keyword list is the journal's published
+        # convention (article.tex only asks for sentence case, i.e. no
+        # Title Case across entries). \Keywords{robust statistics, R}
+        # must NOT be flagged — CAP-004 no longer demands a leading
+        # capital (F5, narrowing).
+        src = r"\Keywords{robust statistics, R}"
+        assert run_rule(jss_cap_004, src) == []
+
+    def test_lowercase_first_keyword_multiword_ok(self, run_rule):
+        # Lowercase first word with lowercase remaining entries: sentence
+        # case is satisfied even without a leading capital.
         src = r"\Keywords{ternary plot, Q-Q plot, chi-square test}"
+        assert run_rule(jss_cap_004, src) == []
+
+    def test_title_case_across_entries_still_flagged(self, run_rule):
+        # The retained defect: a non-first word capitalised within an
+        # entry (Title Case) is still a sentence-case violation.
+        src = r"\Keywords{robust statistics, Random Forests}"
         assert len(run_rule(jss_cap_004, src)) == 1
 
     def test_capitalised_first_keyword_silent(self, run_rule):
@@ -199,8 +214,8 @@ class TestCap004:
         assert run_rule(jss_cap_004, src) == []
 
     def test_markup_wrapped_first_keyword_silent(self, run_rule):
-        # A \pkg{}-wrapped first keyword keeps its lowercase package-name
-        # case — don't demand a leading capital.
+        # A \pkg{}-wrapped first keyword whose remaining entries are
+        # lowercase keeps its lowercase package-name case.
         src = r"\Keywords{\pkg{ggplot2}, visualization, R}"
         assert run_rule(jss_cap_004, src) == []
 
