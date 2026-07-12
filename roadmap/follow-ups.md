@@ -97,6 +97,63 @@ ship v1.
 - L584 XREF-004 orphan-label check
 - L967 CITE-003 widened to all cite-family + paren-balance scan
 
+## Adversarial review round (2026-07-12) — manuscript follow-ups
+
+Deferred items surfaced by the JSS adversarial review (see
+`paper/review-2026-07-12.md`). Each is disclosed in the manuscript
+and tracked here rather than papered over.
+
+- [ ] **New rule — flags collapsed to a single dash / en-dash**
+      (markup or typography category). A JSS author who types
+      `\code{-fix}` (one hyphen) or lets a tt en-dash ligature stand
+      where a two-hyphen long option (`--fix`) is meant produces a
+      command that does not exist. Detect single-dash tokens inside
+      `\code{}`/`\verb` that match a known long-option shape
+      (`-[a-z]{2,}` where the tool's own option table has `--<same>`),
+      and an en-dash (`–`) or em-dash inside inline code where a
+      double hyphen is expected. **Provenance**: review F13 — the
+      manuscript's own `\code{--fix}` rendered as an en-dash until the
+      preamble disabled the tt `--` ligature (`\DisableLigatures`);
+      a rule would catch the class in submissions.
+      **Severity**: warning.
+
+- [ ] **JSS-TYPO-004 is blind to `longtable` captions**
+      (`src/texlint/journals/jss/rules/typography.py`). The
+      captions-below-floats rule inspects `figure`/`table` floats but
+      not `longtable`, so a top-caption on a `longtable` passes
+      silently. **Carrier**: this manuscript's own appendix tables
+      (Appendix A/B) had top captions the tool did not flag; corrected
+      by hand for the 2026-07-12 revision. **Provenance**: review F14
+      (the checklist L153 claim that TYPO-004 enforced this was
+      falsified). **Fix**: extend the float scan to `longtable` and
+      recognize the caption's position relative to the tabular body
+      (a `\caption` before the first data row, or before the
+      `\endfirsthead`/`\endhead` region, is a top caption).
+      **Severity**: warning.
+
+- [ ] **MARKUP-002/-001 recognized-name sets miss common packages**
+      (`src/texlint/journals/jss/rules/markup.py`). The bare package
+      name `lme4` in `examples/demo.tex` goes unflagged because
+      `lme4` is not in the recognized-package set; the same gap
+      applies to any package/language name outside the curated lists.
+      **Provenance**: review F15 — the demo is not exhaustively
+      caught, an in-paper instance of the MARKUP recall boundary
+      (§6.3). **Fix**: grow the recognized sets from a maintained
+      list (e.g. CRAN package index snapshot) rather than a
+      hand-curated handful; pair with the confidence-tier design so
+      the wider net does not cost precision. Needs labeling
+      infrastructure for the new firings (deferred on this host).
+      **Severity**: existing rule severity (warning).
+
+- [ ] **Human spot-check of the six re-adjudicated CODE-003 rows**
+      (`eval/`). The 2026-07-11 CODE-003 CLI-flag fix silenced six
+      corpus violations previously labeled true positives; the
+      re-adjudication (five label debt, one genuine subtraction) was
+      performed by the same automated workflow that authored the fix,
+      so it is not an independent check. **Provenance**: review F11.
+      **Action**: a human should re-rule those six specific rows at
+      source before the precision figure is frozen.
+
 ## Cross-cutting (touches multiple features)
 
 - [x] **Click sub-group migration** (`src/texlint/cli.py`) — convert

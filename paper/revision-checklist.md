@@ -23,6 +23,15 @@ below plus: self-lint zero violations, `make spelling` green,
 pages). Only the section-C release-hygiene gate remains before
 submission.
 
+**Superseded 2026-07-12 by the adversarial review round** (ledger:
+`paper/review-2026-07-12.md`; branch `020-review-fixes`). That round
+re-pinned the evidence to iteration 112 (`post-cap004-keywords`;
+precision 97.3% label-set / 94.1% human-only / 85.4–91.3%
+error-propagated; recall micro 80.6% / macro 88.4%) and reframed the
+manuscript for honesty (F8–F19). The L153 row below is corrected
+(TYPO-004 longtable claim falsified). Page count is now 24 (≤ 30
+budget).
+
 ## A. editorial-review.md leftovers
 
 | ID | Item | Disposition |
@@ -96,7 +105,7 @@ submission.
 | 147 | CODE-003 parse R instead of regex? | fix-text: discuss trade-off honestly (limitations); note Rust core keeps identical semantics by parity |
 | 149 | "Spec overhead for small changes" was false claim | fix-text: constitution Principle XI — spec-kit for cross-cutting only; eval-loop fixes are direct commits |
 | 151 | Narrow rules → false negatives? | fix-text: answered by measured recall (micro 0.807 / macro 0.884) + limitations |
-| 153 | Table 3 caption above table; split? | fix-layout: all captions below (TYPO-004 enforces via self-lint); split comparison table if needed |
+| 153 | Table 3 caption above table; split? | fix-layout: float captions are below. **Correction (2026-07-12, review F14)**: the earlier claim that TYPO-004 *enforces* captions-below via self-lint was FALSE — TYPO-004 is blind to `longtable`, so the three appendix longtables had top captions the tool never flagged. Captions moved below manually (`\endlastfoot`); the TYPO-004 longtable blindness is now disclosed in §6.4 and tracked in `roadmap/follow-ups.md`. |
 | 155 | \Plain* only required when markup present | confirmed: PRE-003/007/008 are conditional ("When … contains LaTeX markup"); fix-text |
 
 ## C. Pre-submission gate (not blocking writing)
