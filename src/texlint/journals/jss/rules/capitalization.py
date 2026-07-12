@@ -22,6 +22,7 @@ from pylatexenc.latexwalker import (
     LatexCharsNode,
     LatexGroupNode,
     LatexMacroNode,
+    LatexMathNode,
 )
 
 from texlint.api import ParsedDocument, Rule, ToolConfig, Violation
@@ -305,6 +306,101 @@ def _doc_pkg_names_lower(doc: ParsedDocument) -> set[str]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Shared "capitalise the first word after a colon" check (CAP-001 title
+# style + CAP-002 sentence style).
+#
+# Both JSS capitalisation styles agree on the colon: sentence style
+# capitalises "the first word after a colon or a hyphen", title style
+# says "Do capitalize the first word after a colon". We enforce the
+# COLON only. Capital-after-hyphen is deliberately NOT enforced: read
+# literally it would demand "Model-Based clustering", contradicting the
+# universal compound-modifier convention (see catalogue notes for
+# CAP-002). This mirrors JSS-REFS-006's bib-title after-colon check
+# (references.py::_after_colon_starts_with_markup) — same exemptions,
+# same terms cross-check.
+# ---------------------------------------------------------------------------
+
+# Package / language names whose canonical form is lowercase (``zoo``,
+# ``ggplot2``, ``mgcv``). A colon-leading token matching one of these is
+# a known code identifier, not a forgotten capital — exempt it.
+_LOWERCASE_CANONICAL_TERMS: frozenset[str] = frozenset(
+    _pkg_token(t) for t in (LANGUAGES | R_PACKAGES) if t[:1].islower()
+)
+
+# Macros whose argument is an author-dictated code identifier / class /
+# package name after a colon. Beyond the standard JSS semantic-markup
+# set (pkg/proglang/code/fct/verb) this also recognises ``\class`` (S4
+# class names, e.g. surveillance's vignettes) and the typewriter-font
+# wrappers (``\texttt``/``{\tt ...}``/``\ttfamily``) authors use for code
+# tokens — flagging their casing after a colon is a false positive (the
+# identifier's case is fixed by convention, not forgotten capitalisation).
+_COLON_MARKUP_RE = re.compile(
+    r"\\(?:pkg|proglang|code|fct|verb|class|texttt|ttfamily|tt)\b"
+)
+
+
+def _markup_source(group: Any) -> str:
+    """Reconstruct a light LaTeX source of ``group`` that preserves
+    markup macros and math delimiters (which ``_group_plain_text``
+    strips). Sufficient to see whether markup/math immediately follows
+    a colon — the after-colon markup exemption."""
+    parts: list[str] = []
+    for child in group.nodelist or ():
+        if isinstance(child, LatexCharsNode):
+            parts.append(child.chars)
+        elif isinstance(child, LatexMathNode):
+            parts.append("$")
+        elif isinstance(child, LatexMacroNode):
+            if child.macroname == "label":
+                continue
+            # Trailing space guarantees a word boundary even when the
+            # parser consumed the macro's post-space (``{\tt as.xts}`` →
+            # the space after ``\tt`` is absorbed, so ``\ttas.xts`` would
+            # defeat the ``\tt\b`` markup probe).
+            parts.append("\\" + child.macroname + " ")
+        elif isinstance(child, LatexGroupNode):
+            parts.append("{" + _markup_source(child) + "}")
+    return "".join(parts)
+
+
+def _after_colon_is_markup(raw: str) -> bool:
+    """True if the first non-space token after a colon is a markup macro
+    (``\\pkg`` / ``\\code`` / ...) or inline math ``$...$``. Tolerates
+    optional case-protection braces before the token."""
+    m = re.search(r":\s*(.+)", raw, flags=re.DOTALL)
+    if not m:
+        return False
+    rest = m.group(1).lstrip()
+    while rest.startswith("{"):
+        rest = rest[1:].lstrip()
+    if rest.startswith("$"):
+        return True
+    return bool(_COLON_MARKUP_RE.match(rest))
+
+
+def _lowercase_after_colon_offender(group: Any) -> bool:
+    """True if the first token after the first colon starts with a
+    lowercase letter and none of the exemptions apply:
+
+    (a) markup/math immediately after the colon (author-dictated case);
+    (b) the token starts with a non-letter (digits, symbols);
+    (c) the token is a known lowercase-canonical package/language name.
+    """
+    plain = _group_plain_text(group)
+    m = re.search(r":\s*(\S+)", plain)
+    if not m:
+        return False
+    after = m.group(1)
+    if not after[:1].isalpha():
+        return False  # (b)
+    if _pkg_token(after) in _LOWERCASE_CANONICAL_TERMS:
+        return False  # (c)
+    if _after_colon_is_markup(_markup_source(group)):
+        return False  # (a)
+    return not _is_capitalised_word(after)
+
+
 def check_jss_cap_001(
     doc: ParsedDocument, _cfg: ToolConfig
 ) -> Iterator[Violation]:
@@ -372,6 +468,19 @@ def check_jss_cap_001(
                     ),
                 )
                 continue
+            # Title style: "Do capitalize the first word after a colon."
+            if _lowercase_after_colon_offender(group):
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-CAP-001",
+                    suggestion=(
+                        "Use title style: capitalise the first word after "
+                        "':' (or wrap it in \\code{}/\\pkg{} if it is a "
+                        "code identifier or package name)."
+                    ),
+                )
+                continue
             # Title-case principal-word check: any non-first word that
             # is all lowercase, ≥ 4 letters, and not a stopword is a
             # title-case violation. Catches clifford ("Clifford algebra
@@ -432,6 +541,21 @@ def check_jss_cap_002(
                 # runs (those words are in the proper-noun set).
                 min_offenders=1,
             )
+            # Sentence style also capitalises "the first word after a
+            # colon". Independent of the over-capitalisation check above;
+            # a heading can fail both directions. (Hyphen not enforced —
+            # see catalogue notes.)
+            if _lowercase_after_colon_offender(group):
+                yield _violation(
+                    tex=tex,
+                    pos=node.pos,
+                    rule_id="JSS-CAP-002",
+                    suggestion=(
+                        "Use sentence style: capitalise the first word "
+                        "after ':' (or wrap it in \\code{}/\\pkg{} if it "
+                        "is a code identifier or package name)."
+                    ),
+                )
 
 
 # JSS-CAP-003 (captions in sentence style) retired 2026-07-04 — see

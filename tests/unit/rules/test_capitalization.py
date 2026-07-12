@@ -126,6 +126,44 @@ class TestCap001:
         )
         assert len(run_rule(jss_cap_001, src)) == 1
 
+    # --- T2: capital-after-colon in title style -------------------------
+
+    def test_title_lowercase_stopword_after_colon_flagged(self, run_rule):
+        # Title style: "Do capitalize the first word after a colon."
+        # ``a`` is a stopword the principal-word check skips, so without
+        # the dedicated after-colon check this title escapes.
+        src = r"\title{Test: a Colon Study}"
+        assert len(run_rule(jss_cap_001, src)) == 1
+
+    def test_title_lowercase_short_word_after_colon_flagged(self, run_rule):
+        # ``the`` is a stopword and ``abc`` is < 4 letters, so both slip
+        # past the principal-word check — the after-colon check catches
+        # the lowercase ``the``.
+        src = r"\title{Fast Estimation: the abc Package}"
+        assert len(run_rule(jss_cap_001, src)) == 1
+
+    def test_title_capital_after_colon_clean(self, run_rule):
+        src = r"\title{Test: A Colon Study}"
+        assert run_rule(jss_cap_001, src) == []
+
+    def test_title_markup_after_colon_clean(self, run_rule):
+        # Markup immediately after the colon dictates its own casing, so
+        # the after-colon check must not fire on the stripped token that
+        # follows it. (Remaining words are title-cased so only the
+        # after-colon check is under test.)
+        src = r"\title{Comparison: \pkg{caret} Models}"
+        assert run_rule(jss_cap_001, src) == []
+
+    def test_title_digit_after_colon_clean(self, run_rule):
+        src = r"\title{Chapter: 2 Topics}"
+        assert run_rule(jss_cap_001, src) == []
+
+    def test_title_known_lowercase_term_after_colon_clean(self, run_rule):
+        # ``mgcv`` is a known R package with lowercase canonical casing —
+        # capitalising it would be wrong, so it is exempt.
+        src = r"\title{Study: mgcv Models}"
+        assert run_rule(jss_cap_001, src) == []
+
 
 # ---------------------------------------------------------------------------
 # JSS-CAP-002 — sentence style on sections
@@ -161,6 +199,67 @@ class TestCap002:
     def test_section_without_group_silent(self, run_rule):
         src = r"\section"
         assert run_rule(jss_cap_002, src) == []
+
+    # --- T1: capital-after-colon in sentence style ----------------------
+
+    def test_lowercase_after_colon_flagged(self, run_rule):
+        # Sentence style: "the first word after a colon" is capitalised.
+        src = r"\section{Model comparison: a review}"
+        violations = run_rule(jss_cap_002, src)
+        assert len(violations) == 1
+        assert violations[0].rule_id == "JSS-CAP-002"
+
+    def test_capital_after_colon_clean(self, run_rule):
+        src = r"\section{Model comparison: a review of methods}"
+        # capitalise first word after colon -> clean
+        src = r"\section{Model comparison: A review}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_markup_after_colon_clean(self, run_rule):
+        # ``\pkg{caret}`` immediately after the colon keeps its own case.
+        src = r"\section{Analysis: \pkg{caret} models}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_math_after_colon_clean(self, run_rule):
+        src = r"\section{Analysis: $x$ variants}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_digit_after_colon_clean(self, run_rule):
+        src = r"\section{Chapter: 2 topics}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_known_lowercase_term_after_colon_clean(self, run_rule):
+        # ``zoo`` is a known R package with lowercase canonical casing.
+        src = r"\section{Extensions: zoo objects}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_over_capitalisation_after_colon_direction_still_works(
+        self, run_rule
+    ):
+        # The existing over-capitalisation direction is untouched.
+        src = r"\section{Models And Statistics}"
+        assert len(run_rule(jss_cap_002, src)) == 1
+
+    def test_class_macro_after_colon_clean(self, run_rule):
+        # \class{} wraps an S4 class name (surveillance vignettes) —
+        # author-dictated casing, exempt like \code/\pkg.
+        src = r"\section{Data structure: \class{epidata}}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_texttt_after_colon_clean(self, run_rule):
+        src = r"\subsection{Empirical processes: \texttt{efp}}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_tt_font_group_after_colon_clean(self, run_rule):
+        # {\tt as.xts} — typewriter-font code token (xts vignette).
+        src = r"\subsection{Creating data objects: {\tt as.xts} and xts}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_bare_lowercase_dataset_after_colon_flagged(self, run_rule):
+        # A BARE lowercase identifier (no markup) after a colon is a TP —
+        # it should be capitalised or wrapped in \code{}/\pkg{}.
+        src = r"\section{Example: hbk data}"
+        assert len(run_rule(jss_cap_002, src)) == 1
 
 
 # ---------------------------------------------------------------------------

@@ -281,6 +281,107 @@ fn doc_pkg_names_lower(nodes: &[Node]) -> HashSet<String> {
     out
 }
 
+// --- shared "capitalise the first word after a colon" check --------------
+//
+// Both JSS styles agree on the colon: sentence style capitalises "the
+// first word after a colon or a hyphen", title style says "Do capitalize
+// the first word after a colon". We enforce the COLON only (capital-
+// after-hyphen deliberately not enforced — see catalogue notes for
+// CAP-002). Mirrors `capitalization.py::_lowercase_after_colon_offender`.
+
+/// Package / language names whose canonical form is lowercase (`zoo`,
+/// `ggplot2`, `mgcv`). A colon-leading token matching one is a known
+/// code identifier, not a forgotten capital — exempt it.
+static LOWERCASE_CANONICAL_TERMS: LazyLock<HashSet<String>> = LazyLock::new(|| {
+    TERMS
+        .languages
+        .iter()
+        .chain(TERMS.r_packages.iter())
+        .filter(|t| t.chars().next().map(|c| c.is_lowercase()).unwrap_or(false))
+        .map(|t| pkg_token(t))
+        .filter(|t| !t.is_empty())
+        .collect()
+});
+
+// Beyond the standard JSS semantic-markup set, also recognise `\class`
+// (S4 class names) and typewriter-font wrappers (`\texttt`/`{\tt ...}`/
+// `\ttfamily`) authors use for code tokens after a colon.
+static COLON_MARKUP_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^\\(?:pkg|proglang|code|fct|verb|class|texttt|ttfamily|tt)\b").unwrap()
+});
+static AFTER_COLON_REST_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?s):\s*(.+)").unwrap());
+static AFTER_COLON_TOKEN_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r":\s*(\S+)").unwrap());
+
+/// Reconstruct a light LaTeX source of `group` preserving markup macros
+/// and math delimiters (which `group_plain_text` strips). Mirrors
+/// `capitalization.py::_markup_source`.
+fn markup_source(group: &GroupNode) -> String {
+    let mut parts = String::new();
+    for child in &group.nodelist {
+        match child {
+            Node::Chars(c) => parts.push_str(&c.chars),
+            Node::Math(_) => parts.push('$'),
+            Node::Macro(m) => {
+                if m.macroname == "label" {
+                    continue;
+                }
+                // Trailing space guarantees a word boundary even when the
+                // parser consumed the macro's post-space (`{\tt as.xts}`).
+                parts.push('\\');
+                parts.push_str(&m.macroname);
+                parts.push(' ');
+            }
+            Node::Group(g) => {
+                parts.push('{');
+                parts.push_str(&markup_source(g));
+                parts.push('}');
+            }
+            _ => {}
+        }
+    }
+    parts
+}
+
+/// True if the first non-space token after a colon is a markup macro or
+/// inline math. Mirrors `capitalization.py::_after_colon_is_markup`.
+fn after_colon_is_markup(raw: &str) -> bool {
+    let Some(caps) = AFTER_COLON_REST_RE.captures(raw) else {
+        return false;
+    };
+    let mut rest = caps.get(1).unwrap().as_str().trim_start();
+    while let Some(stripped) = rest.strip_prefix('{') {
+        rest = stripped.trim_start();
+    }
+    if rest.starts_with('$') {
+        return true;
+    }
+    COLON_MARKUP_RE.is_match(rest)
+}
+
+/// True if the first token after the first colon starts with a lowercase
+/// letter and no exemption applies. Mirrors
+/// `capitalization.py::_lowercase_after_colon_offender`.
+fn lowercase_after_colon_offender(group: &GroupNode) -> bool {
+    let plain = group_plain_text(group);
+    let Some(caps) = AFTER_COLON_TOKEN_RE.captures(&plain) else {
+        return false;
+    };
+    let after = caps.get(1).unwrap().as_str();
+    match after.chars().next() {
+        Some(c) if c.is_alphabetic() => {}
+        _ => return false, // (b) non-letter first char
+    }
+    if LOWERCASE_CANONICAL_TERMS.contains(&pkg_token(after)) {
+        return false; // (c) known lowercase-canonical term
+    }
+    if after_colon_is_markup(&markup_source(group)) {
+        return false; // (a) markup/math immediately after colon
+    }
+    !is_capitalised_word(after)
+}
+
 /// JSS-CAP-001 — `\title{}` is in title style.
 pub fn check_cap_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
     let line_index = LineIndex::new(&parsed.chars);
@@ -326,6 +427,18 @@ pub fn check_cap_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                 m.span.pos,
                 "JSS-CAP-001",
                 Some("Use title style: capitalise principal words in the title.".to_string()),
+                None,
+            ));
+            return;
+        }
+        // Title style: "Do capitalize the first word after a colon."
+        if lowercase_after_colon_offender(group) {
+            out.push(tex_violation_with_fix(
+                file,
+                &line_index,
+                m.span.pos,
+                "JSS-CAP-001",
+                Some("Use title style: capitalise the first word after ':' (or wrap it in \\code{}/\\pkg{} if it is a code identifier or package name).".to_string()),
                 None,
             ));
             return;
@@ -599,6 +712,18 @@ pub fn check_cap_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             1,
             &mut out,
         );
+        // Sentence style also capitalises "the first word after a
+        // colon"; independent of the over-capitalisation check above.
+        if lowercase_after_colon_offender(group) {
+            out.push(tex_violation_with_fix(
+                file,
+                &line_index,
+                m.span.pos,
+                "JSS-CAP-002",
+                Some("Use sentence style: capitalise the first word after ':' (or wrap it in \\code{}/\\pkg{} if it is a code identifier or package name).".to_string()),
+                None,
+            ));
+        }
     });
     out
 }

@@ -430,7 +430,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "auto_fixable": False,
         "guide_section": '§6.2 Capitalisation',
         "guide_url": 'https://www.jstatsoft.org/about/submissions#capitalisation',
-        "explanation": '\\title{} is in title style (principal words capitalised).',
+        "explanation": '\\title{} is in title style (principal words capitalised; first word after a colon capitalised).',
     }),
     'JSS-CAP-002': MappingProxyType({
         "category": 'capitalization',
@@ -443,7 +443,7 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "confidence": 'medium',
         "guide_section": '§6.2 Capitalisation',
         "guide_url": 'https://www.jstatsoft.org/about/submissions#capitalisation',
-        "explanation": 'Section titles are in sentence style (first word capitalised; others lowercase except proper names).',
+        "explanation": 'Section titles are in sentence style (first word capitalised; first word after a colon capitalised; others lowercase except proper names).',
     }),
     'JSS-CAP-004': MappingProxyType({
         "category": 'capitalization',

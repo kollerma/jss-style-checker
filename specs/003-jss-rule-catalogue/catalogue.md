@@ -1518,8 +1518,12 @@ Publisher and journal names follow JSS conventions (e.g., "Springer-Verlag", "Th
 
 **Notes**: Style guide SG-007 and SG-014. Pragmatic heuristic: flag titles whose first word is lowercase OR whose
 every word is lowercase. Common function words (of, and, the, in, for, a, an, to, with) may stay
-lowercase; principal words should be capitalised. Full dictionary-based title-case validation is
-deferred; the narrow heuristic ships first and is tuned via the precision gate on the real corpus.
+lowercase; principal words should be capitalised. Title style also requires capitalising the first word
+after a colon ("Do capitalize the first word after a colon") — flagged even when that word is a stop word
+the principal-word check would otherwise skip, with the same exemptions as CAP-002's colon check
+(markup/math-wrapped token, non-letter start, known lowercase-canonical package/language name). Full
+dictionary-based title-case validation is deferred; the narrow heuristic ships first and is tuned via the
+precision gate on the real corpus.
 
 ---
 
@@ -1552,10 +1556,15 @@ Section titles are in sentence style (first word capitalised; others lowercase e
 </details>
 
 **Notes**: Style guide SG-009. Also covers SG-013 "In sentence style, capitalise only the first word and the first
-word after colon/hyphen; proper names remain uppercase" — the rule enforces the capital-after-colon /
-capital-after-hyphen rule as part of the sentence-style check. Heuristic — flag section titles where two
-or more words after the first are capitalised without being proper names (cross-checked against
-terms.LANGUAGES and terms.R_PACKAGES). Tuned via the precision gate.
+word after a colon or a hyphen; proper names remain uppercase". The rule enforces TWO directions:
+(1) over-capitalisation — flag section titles with a capitalised non-first non-proper word (cross-checked
+against terms.LANGUAGES and terms.R_PACKAGES); (2) capital-after-colon — flag when the first token after a
+colon starts lowercase, exempting a markup/math-wrapped token (\pkg{}/\code{}/\proglang{}/$...$), a token
+starting with a non-letter, and known lowercase-canonical package/language names (mirrors JSS-REFS-006's
+bib-title after-colon check). The capital-after-HYPHEN half of SG-013 is DELIBERATELY NOT enforced: read
+literally it would demand "Model-Based clustering", contradicting the universal compound-modifier
+convention, so the colon is enforced and the hyphen is documented as an intentional narrowing. Tuned via
+the precision gate.
 
 ---
 

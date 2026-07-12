@@ -424,7 +424,7 @@ corresponding rich field actually contains markup
 no \code{\textbackslash{}Plaintitle}.
 
 %%--------------------------------------------------------------------
-\section{Development methodology: specifications, AI, and an evaluation loop}
+\section{Development methodology: Specifications, AI, and an evaluation loop}
 \label{sec:method}
 
 \pkg{jss-lint} was developed in an intensive collaboration between
@@ -783,7 +783,12 @@ structurally fixable clusters were eliminated, the residue is
 inherent; the rule is exempt from the gate at its measured precision,
 with the rationale recorded in the reviewed exemption file, rather
 than silently tolerated or retired outright --- it remains far too
-useful on the unambiguous cases.
+useful on the unambiguous cases. A parallel scope narrowing governs the
+capitalization rules, whose sentence style asks for a capital after both
+a colon and a hyphen: the tool enforces only the colon, since a literal
+capital-after-hyphen would demand compound modifiers like
+\code{Model-Based}, so that half is documented as a deliberate exception
+rather than enforced.
 
 The same boundary appears on the recall side: the rule with the most
 planted violations, inline-code markup
@@ -1057,9 +1062,9 @@ here.
 
 The style guide is not exhausted. Known checks we have not yet
 implemented include the Sweave header declaration for
-\code{.Rnw}-based manuscripts, sentence-style table headers, and
-capitalization after colons in reference titles; the catalogue's
-future-work list tracks these. Beyond JSS, the rule engine is
+\code{.Rnw}-based manuscripts and sentence-style capitalization of
+table row and column headers; the catalogue's future-work list tracks
+these. Beyond JSS, the rule engine is
 journal-agnostic --- rules are data, and a catalogue for another
 journal's guide is the intended extension path, now cheaper to
 distribute through the four-channel core. Our broader hope is that
