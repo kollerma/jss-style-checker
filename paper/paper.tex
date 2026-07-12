@@ -48,8 +48,9 @@
   through four channels: a command-line tool, a \proglang{Python}
   package, an \proglang{R} package, and a browser version compiled to
   WebAssembly that processes manuscripts entirely locally. The rules
-  were developed with extensive AI assistance under human review and
-  hardened by an evaluation-improvement loop against a pinned corpus
+  were written entirely by large language models under human
+  direction and hardened by an evaluation-improvement loop against a
+  pinned corpus
   of \StatCorpusSize{} JSS-format manuscripts. After
   \StatIterationCount{} recorded iterations, precision estimated over
   \StatPrecisionReviewed{} adjudicated violation instances is
@@ -429,16 +430,31 @@ no \code{\textbackslash{}Plaintitle}.
 
 \pkg{jss-lint} was developed in an intensive collaboration between
 one human author and large language models of the Claude family
-\citep{claude}. Approximately \StatAICommitsApprox{} of the
+\citep{claude}. The division of labor was stark, and we state it
+exactly because the accountability question deserves a precise
+answer: the models wrote every line of code and every sentence of
+this manuscript. Approximately \StatAICommitsApprox{} of the
 repository's more than \StatCommitsApprox{} commits carry an AI
-co-author trailer; the human author reviewed every change, made all
-design decisions, and --- as Section~\ref{sec:labeling} details ---
-retained final authority over every disputed evaluation label. We
-document the methodology in some depth because we believe the
-combination of specification-driven development, test discipline, and
-a measurement loop is what made AI assistance productive rather than
-merely fast, and because several of its lessons contradicted our
-expectations.
+co-author trailer, and the author's own direct commits are a handful
+of conveniences. The human contribution was directional and
+evaluative: setting requirements; issuing corrective instructions
+whenever the tool or the process drifted from the style guide or
+from intent (Section~\ref{sec:ai}); hand-annotating the recall
+ground truth of Section~\ref{sec:recall}; and working the
+interactive label-review queue of Section~\ref{sec:labeling},
+retaining final authority over every disputed evaluation label.
+Notably, the human author never reviewed the code --- only its
+measured behavior. The verification apparatus this paper describes
+--- determinism, \StatTestCount{} tests, byte-parity between two
+independent engines, per-rule precision gates, measured recall, and
+a replication script --- is not incidental to that choice; it is
+what makes the choice defensible, and we believe this substitution
+of measurement for line review is the load-bearing lesson of the
+project. We document the methodology in some depth because the
+combination of specification-driven development, test discipline,
+and a measurement loop is what made AI authorship trustworthy rather
+than merely fast, and because several of its lessons contradicted
+our expectations.
 
 \subsection{Specification-driven development for cross-cutting features}
 \label{sec:speckit}
@@ -498,10 +514,10 @@ could not (Section~\ref{sec:casestudies}).
 \subsection{AI assistance in implementation}
 \label{sec:ai}
 
-The AI collaborators wrote the bulk of the rule implementations,
-tests, and evaluation tooling, working from the specifications and
-from labeled false-positive evidence. Two patterns proved
-particularly effective. First, \emph{investigation before code}: when
+The AI collaborators wrote all of the rule implementations, tests,
+and evaluation tooling, working from the specifications and from
+labeled false-positive evidence. Three patterns proved particularly
+effective. First, \emph{investigation before code}: when
 a rule's precision stalled, a subagent was dispatched to read every
 labeled false positive and return a written taxonomy of failure
 clusters before any fix was attempted; fixes then targeted named
@@ -512,12 +528,24 @@ experience matched the general finding that model-proposed guards are
 overconfident --- several proposed false-positive guards would have
 silenced more true violations than false ones, a trade only visible
 because the loop measures both directions
-(Section~\ref{sec:recall}).
+(Section~\ref{sec:recall}). Third, \emph{human course-correction at
+the requirements level}: the author intervened not in the code but
+in what the rules should mean, whenever measured behavior diverged
+from the style guide or from the journal's published practice. Two
+adjacent examples: the keyword-case rule initially demanded a
+leading capital that published JSS keyword lists do not carry, and
+was relaxed on instruction; the guide's capital-after-colon
+requirement was then found to be enforced for reference titles but
+not for section titles, and was tightened for consistency --- both
+corrections entered as instructions and flowed through the standard
+loop, tests first.
 
-AI assistance extended to this manuscript itself, drafted and revised
-in the same reviewed-commit workflow as the code. The authorship
-policy, however, is the journal's: the listed author is the human who
-takes responsibility for the work; the AI systems are credited in the
+This manuscript itself was drafted and revised by the AI
+collaborators under the same direct-and-verify workflow as the code;
+the human author wrote none of its text and reviewed its claims and
+rendered output rather than its source. The authorship policy,
+however, is the journal's: the listed author is the human who takes
+responsibility for the work; the AI systems are credited in the
 acknowledgments.
 
 \subsection{The evaluation-improvement loop}
@@ -1075,13 +1103,14 @@ spend their attention where it is actually needed.
 %%--------------------------------------------------------------------
 \section*{Acknowledgments}
 
-Large language models of the Claude family (Anthropic) contributed
-substantially to this work: drafting rule implementations, tests, and
-evaluation tooling, labeling violations under the audited scheme of
-Section~\ref{sec:labeling}, and drafting this manuscript. All
-contributions were made in a reviewed-commit workflow; the human
-author reviewed every change and takes sole responsibility for the
-software, the empirical results, and the text.
+Large language models of the Claude family (Anthropic) wrote the
+software, the tests, the evaluation tooling, and this manuscript,
+and labeled the majority of violations under the audited scheme of
+Section~\ref{sec:labeling}. The human author directed the work and
+corrected its course when it strayed, annotated the recall ground
+truth, reviewed the interactive label queue, and verified behavior
+rather than code --- and takes sole responsibility for the software,
+the empirical results, and the text.
 
 %%--------------------------------------------------------------------
 \bibliography{paper}
