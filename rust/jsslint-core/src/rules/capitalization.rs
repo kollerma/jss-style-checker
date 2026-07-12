@@ -605,49 +605,6 @@ pub fn check_cap_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
 
 // --- JSS-CAP-004 ----------------------------------------------------------
 
-fn first_keyword_is_markup(group: &GroupNode) -> bool {
-    for child in &group.nodelist {
-        match child {
-            Node::Chars(c) => {
-                if c.chars.trim().is_empty() {
-                    continue;
-                }
-                return false;
-            }
-            Node::Macro(m) => {
-                if m.macroname == "label" {
-                    continue;
-                }
-                return MARKUP_MACROS.contains(&m.macroname.as_str());
-            }
-            Node::Group(_) => return false,
-            _ => {}
-        }
-    }
-    false
-}
-
-fn keyword_missing_leading_cap(entries: &[String]) -> bool {
-    let Some(first) = entries.first() else {
-        return false;
-    };
-    let ws: Vec<&str> = first.split_whitespace().collect();
-    let Some(&first_word) = ws.first() else {
-        return false;
-    };
-    let bare: String = first_word
-        .chars()
-        .filter(|c| c.is_ascii_alphabetic())
-        .collect();
-    if bare.is_empty() || !bare.chars().next().unwrap().is_lowercase() {
-        return false;
-    }
-    if PROPER_NOUNS.contains(first_word) || PROPER_NOUNS.contains(&bare) {
-        return false;
-    }
-    true
-}
-
 fn keyword_case_violation(entries: &[String]) -> bool {
     for entry in entries {
         let ws: Vec<&str> = entry.split_whitespace().collect();
@@ -700,15 +657,16 @@ pub fn check_cap_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             .map(|e| e.trim().to_string())
             .filter(|e| !e.is_empty())
             .collect();
-        let missing_lead = !first_keyword_is_markup(group) && keyword_missing_leading_cap(&entries);
-        if keyword_case_violation(&entries) || missing_lead {
+        // Only Title Case across entries is a defect; a fully-lowercase
+        // list is the journal's published convention (F5 narrowing).
+        if keyword_case_violation(&entries) {
             out.push(tex_violation_with_fix(
                 file,
                 &line_index,
                 m.span.pos,
                 "JSS-CAP-004",
                 Some(
-                    "Use sentence case for keywords (capitalise only the first word of each entry unless a proper name)."
+                    "Use sentence case for keywords: do not capitalise words after the first in an entry (proper names and abbreviations excepted)."
                         .to_string(),
                 ),
                 None,

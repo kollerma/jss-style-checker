@@ -26,7 +26,7 @@ audit:
 	cd .. && $(PY) -m tools.generate_paper_stats --audit
 
 spelling:
-	@! grep -nwiE 'capitalis(ation|ed?|ing)|summaris(ed?|ing)|organis(ed?|ation)|normalis(ed?|ation)|minimis(ed?|ing)|analys(ed?|ing)|initialis(ed?|ation)|colour|behaviour|modelling|labelled|licence' paper.tex
+	@! grep -nwiE 'capitalis(ation|ed?|ing)|summaris(ed?|ing)|organis(ed?|ation)|normalis(ed?|ation)|minimis(ed?|ing)|analys(ed?|ing)|initialis(ed?|ation)|colour|behaviour|modelling|labelled|licence' paper.tex generated/*.tex
 
 check:
 	cd .. && $(PY) -m tools.generate_paper_stats --check

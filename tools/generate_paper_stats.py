@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import os
 import re
 import sqlite3
@@ -40,6 +41,11 @@ GATE_EXCEPTIONS = REPO_ROOT / "eval" / "gate-exceptions.toml"
 BENCHMARK_MD = REPO_ROOT / "eval" / "benchmark-results.md"
 GOLD_SUMMARY_MD = REPO_ROOT / "eval" / "labeler-benchmark-summary.md"
 NONR_SOURCES_MD = REPO_ROOT / "eval" / "non-cran-jss-sources.md"
+# Committed, referee-auditable label artifacts (tools/export_labels.py).
+# Provenance and adjusted-precision macros read these — NOT eval.db —
+# so the manuscript's honesty numbers replicate from committed files.
+LABELS_EXPORT = REPO_ROOT / "eval" / "labels-export.csv.gz"
+GOLD_EXPORT = REPO_ROOT / "eval" / "gold-set-export.csv.gz"
 OUTPUT_DIR = REPO_ROOT / "paper" / "generated"
 PAPER_TEX = REPO_ROOT / "paper" / "paper.tex"
 
@@ -48,9 +54,9 @@ PAPER_TEX = REPO_ROOT / "paper" / "paper.tex"
 # The precision-history DB is append-only, so pinning an iteration label and
 # a recall run timestamp makes regeneration byte-identical forever.
 # --------------------------------------------------------------------------
-PIN_ITERATION_LABEL = "post-code003-cli-flags"
-PIN_RECALL_TS = "2026-07-11T21:23:39Z"
-PIN_RECALL_HASH = "d5aab71bb82f97ee"
+PIN_ITERATION_LABEL = "post-cap004-keywords"
+PIN_RECALL_TS = "2026-07-12T12:15:22Z"
+PIN_RECALL_HASH = "70951d5371df0734"
 PIN_SCOPE = "full"
 MIN_PLANTS = 10  # per-rule recall reported only at >= this many plants
 PRECISION_GATE = 0.90
@@ -233,6 +239,77 @@ def load_gold_set_size() -> int:
     return int(m.group(1).replace(",", ""))
 
 
+def _read_csv_gz(path: Path) -> list[dict]:
+    with gzip.open(path, "rt", encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def load_label_provenance() -> dict:
+    """Label-provenance counts over the committed live TP/FP labels
+    export (finding F1). reviewer_class is already collapsed into
+    {human, ai_model, auto_deterministic, auto_other} by
+    tools/export_labels.py; we only tally here."""
+    rows = _read_csv_gz(LABELS_EXPORT)
+    total = len(rows)
+    cls = Counter(r["reviewer_class"] for r in rows)
+    ai = cls["ai_model"]
+    human = cls["human"]
+    auto = cls["auto_deterministic"] + cls["auto_other"]
+    tp_total = sum(1 for r in rows if r["verdict"] == "true_positive")
+    fp_total = total - tp_total
+    human_rows = [r for r in rows if r["reviewer_class"] == "human"]
+    human_tp = sum(1 for r in human_rows if r["verdict"] == "true_positive")
+    tp_ai = sum(
+        1
+        for r in rows
+        if r["reviewer_class"] == "ai_model" and r["verdict"] == "true_positive"
+    )
+    return {
+        "total": total,
+        "ai": ai,
+        "human": human,
+        "auto": auto,
+        "ai_share": ai / total,
+        "tp_total": tp_total,
+        "fp_total": fp_total,
+        "tp_ai": tp_ai,
+        "human_precision": human_tp / len(human_rows) if human_rows else 0.0,
+    }
+
+
+def load_gold_stats() -> dict:
+    """Labeler-benchmark agreement and TP-error, recomputed from the
+    committed gold-set export (finding F1). Each model's column is its
+    verdict on the same 1,410-row human gold; ``verdict`` is the human
+    gold verdict.
+
+    * agreement = fraction of DECIDED rows (model != uncertain) where the
+      model matches the human gold.
+    * tp_error = fraction of the model's true_positive verdicts the human
+      gold called false_positive (the labels the model wrongly accepted).
+    """
+    rows = _read_csv_gz(GOLD_EXPORT)
+
+    def stats(col: str) -> tuple[float, float]:
+        decided = [r for r in rows if r[col] != "uncertain"]
+        correct = sum(1 for r in decided if r[col] == r["verdict"])
+        model_tp = [r for r in rows if r[col] == "true_positive"]
+        tp_err = sum(1 for r in model_tp if r["verdict"] == "false_positive")
+        agreement = correct / len(decided) if decided else 0.0
+        err = tp_err / len(model_tp) if model_tp else 0.0
+        return agreement, err
+
+    qwen_agree, qwen_err = stats("qwen3_verdict")
+    bonsai_agree, bonsai_err = stats("bonsai_verdict")
+    return {
+        "qwen_agree": qwen_agree,
+        "qwen_err": qwen_err,
+        "bonsai_agree": bonsai_agree,
+        "bonsai_err": bonsai_err,
+        "n": len(rows),
+    }
+
+
 def count_tests() -> int:
     out = subprocess.run(
         [sys.executable, "-m", "pytest", "--collect-only", "-q", "tests"],
@@ -322,11 +399,28 @@ def render_stats(data: dict) -> str:
     m(_macro("StatTestCount", _fmt_int(data["n_tests"])))
     m(_macro("StatCommitsApprox", _fmt_int(_round_down(data["n_commits"]))))
     m(_macro("StatAICommitsApprox", _fmt_int(_round_down(data["n_ai_commits"]))))
-    # Corpus composition
-    m(_macro("StatCorpusSize", str(prec["corpus_size"])))
+    # Corpus composition (F3 — single source of truth is the manifest).
+    # The manifest is the reproducible PINNED corpus: 254 rows
+    # (cran + github + synthetic manual placeholders). The pinned
+    # precision iteration was scanned over one MORE directory,
+    # examples/jss5342-versions — a single manuscript in four revision
+    # stages (initial/resubmission/resubmission2/final) kept for the
+    # trajectory study, source=manual, absent from the manifest. So
+    # corpus_size (255) = manifest rows (254) + 1 auxiliary directory.
+    # Its labels are baked into the frozen iteration_rule_stats and
+    # cannot be re-sliced out, so we report the manifest count as the
+    # corpus size and expose the scanned/auxiliary counts separately.
+    manifest_rows = len(man["rows"])
+    synthetic = man["source"].get("manual", 0)
+    scanned = prec["corpus_size"]
+    m(_macro("StatCorpusSize", str(manifest_rows)))
+    m(_macro("StatCorpusPinned", str(manifest_rows)))
+    m(_macro("StatCorpusScanned", str(scanned)))
+    m(_macro("StatCorpusAuxiliary", str(scanned - manifest_rows)))
+    m(_macro("StatCorpusSynthetic", str(synthetic)))
     m(_macro("StatCorpusCran", str(man["source"].get("cran", 0))))
     m(_macro("StatCorpusGithub", str(man["source"].get("github", 0))))
-    m(_macro("StatCorpusManual", str(man["source"].get("manual", 0))))
+    m(_macro("StatCorpusManual", str(synthetic)))
     m(_macro("StatCorpusRnw", str(rnw)))
     m(_macro("StatCorpusRmd", str(rmd)))
     m(_macro("StatCorpusTex", str(tex)))
@@ -344,6 +438,38 @@ def render_stats(data: dict) -> str:
     m(_macro("StatRulesPerfect", str(perfect)))
     m(_macro("StatGateExemptCount", str(len(exceptions))))
     m(_macro("StatGatePct", f"{PRECISION_GATE * 100:.0f}\\%"))
+    # Label provenance + honesty macros (F1). Counts over the committed
+    # live TP/FP labels export; the headline precision is a LABEL-SET
+    # estimate, and 88.5% of those labels were issued by AI classifiers.
+    prov = data["provenance"]
+    gold = data["gold_stats"]
+    m(_macro("StatLabelsTotal", _fmt_int(prov["total"])))
+    m(_macro("StatLabelsAI", _fmt_int(prov["ai"])))
+    m(_macro("StatLabelsHuman", _fmt_int(prov["human"])))
+    m(_macro("StatLabelsAuto", _fmt_int(prov["auto"])))
+    m(_macro("StatLabelsAIShare", _fmt_pct(prov["ai_share"])))
+    m(_macro("StatPrecisionHumanOnly", _fmt_pct(prov["human_precision"])))
+    # Labeler gold-set agreement and TP-error (the share of a model's
+    # true_positive verdicts the human gold called false_positive).
+    m(_macro("StatGoldAgreementQwen", _fmt_pct(gold["qwen_agree"])))
+    m(_macro("StatGoldAgreementBonsai", _fmt_pct(gold["bonsai_agree"])))
+    m(_macro("StatGoldTPErrQwen", _fmt_pct(gold["qwen_err"])))
+    m(_macro("StatGoldTPErrBonsai", _fmt_pct(gold["bonsai_err"])))
+    # Adjusted-precision interval (F1). Propagate the measured labeler
+    # TP-error over the AI-issued TP labels; human + auto labels taken at
+    # face value. For a model TP-error rate ``err``, corrected_TP =
+    # TP_nonai + TP_ai*(1-err); since the total label count is fixed,
+    # adjusted precision = (TP_total - TP_ai*err) / (TP_total + FP_total).
+    # LOW uses the WORST (largest) model error rate; HIGH the best. This
+    # is a deliberately conservative uniform bracket — production routing
+    # sends each rule to one model, so the true value sits inside it.
+    tp_t, fp_t, tp_ai = prov["tp_total"], prov["fp_total"], prov["tp_ai"]
+    err_worst = max(gold["qwen_err"], gold["bonsai_err"])
+    err_best = min(gold["qwen_err"], gold["bonsai_err"])
+    adj_low = (tp_t - tp_ai * err_worst) / (tp_t + fp_t)
+    adj_high = (tp_t - tp_ai * err_best) / (tp_t + fp_t)
+    m(_macro("StatPrecisionAdjLow", _fmt_pct(adj_low)))
+    m(_macro("StatPrecisionAdjHigh", _fmt_pct(adj_high)))
     # Recall (pinned run)
     m(_macro("StatRecallMicro", _fmt_pct(rtp / (rtp + rfn))))
     m(_macro("StatRecallMacro", _fmt_pct(macro)))
@@ -363,6 +489,8 @@ def render_stats(data: dict) -> str:
     m(_macro("StatBenchThroughput", f"{bench['throughput']:.1f}"))
     m(_macro("StatBenchMedianMs", f"{bench['metrics']['median'] * 1000:.0f}"))
     m(_macro("StatBenchPNinetyFiveMs", f"{bench['metrics']['p95'] * 1000:.0f}"))
+    # Benchmark hardware (F6) — the caption must state where it ran.
+    m(_macro("StatBenchMachine", _tex_escape(bench["machine"])))
     # Release artifacts (\urldef because \url{} cannot take a macro arg)
     m(f"\\urldef{{\\StatRepoUrl}}\\url{{{REPO_URL}}}\n")
     m(_macro("StatPyPIName", PYPI_NAME))
@@ -451,7 +579,8 @@ def render_catalogue_table(data: dict) -> str:
         for r in sorted(rules, key=lambda r: int(r["rule_id"].rsplit("-", 1)[-1])):
             rid = r["rule_id"]
             desc = r["summary"] if "summary" in r else r["description"]
-            desc = _tex_escape(desc.strip().rstrip("."))
+            # Americanise the paraphrase only (F7); the source stays British.
+            desc = _tex_escape(_americanize(desc.strip().rstrip(".")))
             t, f = by_rule.get(rid, (0, 0))
             prec = _fmt_pct(t / (t + f)) if t + f else "---"
             rows.append(
@@ -460,6 +589,59 @@ def render_catalogue_table(data: dict) -> str:
             )
         rows.append("\\addlinespace\n")
     return _HEADER + "".join(rows)
+
+
+# British -> American spellings for the catalogue APPENDIX only (F7).
+# The catalogue `description`/`summary` source stays British because those
+# strings are the rule message templates: they are part of the eval label
+# key (UNIQUE(paper, rule, line, message, file)) and the Rust parity
+# surface, so editing them would orphan every existing label. This map
+# touches only the rendered paraphrase column, never the source.
+_BRITISH_TO_AMERICAN = {
+    "capitalise": "capitalize",
+    "capitalises": "capitalizes",
+    "capitalised": "capitalized",
+    "capitalising": "capitalizing",
+    "capitalisation": "capitalization",
+    "normalise": "normalize",
+    "normalised": "normalized",
+    "normalisation": "normalization",
+    "behaviour": "behavior",
+    "behaviours": "behaviors",
+    "labelled": "labeled",
+    "labelling": "labeling",
+    "modelling": "modeling",
+    "modelled": "modeled",
+    "centre": "center",
+    "colour": "color",
+    "organise": "organize",
+    "analyse": "analyze",
+    "emphasise": "emphasize",
+    "summarise": "summarize",
+    "minimise": "minimize",
+    "maximise": "maximize",
+    "recognise": "recognize",
+}
+_BRITISH_RE = re.compile(
+    r"\b(" + "|".join(sorted(_BRITISH_TO_AMERICAN, key=len, reverse=True)) + r")\b",
+    re.IGNORECASE,
+)
+
+
+def _americanize(text: str) -> str:
+    """Map British spellings to American in appendix paraphrase text,
+    preserving the matched word's case pattern (F7)."""
+
+    def repl(m: re.Match[str]) -> str:
+        word = m.group(0)
+        american = _BRITISH_TO_AMERICAN[word.lower()]
+        if word.isupper():
+            return american.upper()
+        if word[:1].isupper():
+            return american[:1].upper() + american[1:]
+        return american
+
+    return _BRITISH_RE.sub(repl, text)
 
 
 _TEX_ESCAPES = {
@@ -562,6 +744,8 @@ def collect() -> dict:
         "exceptions": load_gate_exceptions(),
         "benchmark": load_benchmark(),
         "gold_set_size": load_gold_set_size(),
+        "provenance": load_label_provenance(),
+        "gold_stats": load_gold_stats(),
         "n_tests": count_tests(),
         "n_commits": n_total,
         "n_ai_commits": n_ai,

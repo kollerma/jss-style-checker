@@ -23,11 +23,11 @@ file = "deSolve.Rnw"
 line = 5
 comment = "graphicx is included via jss.cls already"
 
-[[violations]]
-rule_id = "JSS-CAP-004"
-file = "deSolve.Rnw"
-line = 30
-comment = "Keywords not in sentence case, first word should be upper case"
+# Removed 2026-07-12 (review F5): the CAP-004 plant at deSolve.Rnw:30
+# (\Keywords{differential equations, ...}) asserted "first word should be
+# upper case" — the REJECTED semantics. A fully-lowercase keyword list is
+# the journal's published convention; the narrowed rule keeps only
+# Title-Case-across-entries, so this is not a violation.
 
 [[violations]]
 rule_id = "JSS-CAP-002"

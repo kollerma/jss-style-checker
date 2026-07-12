@@ -40,11 +40,12 @@ file = "HardyWeinberg.Rnw"
 line = 24
 comment = '\Plaintitle should not include markup, drop \pkg{}'
 
-[[violations]]
-rule_id = "JSS-CAP-004"
-file = "HardyWeinberg.Rnw"
-line = 30
-comment = 'Keywords are in sentence case, "ternary" should be capitalised'
+# Removed 2026-07-12 (review F5): the CAP-004 plant at HardyWeinberg.Rnw:30
+# (\Keywords{ternary plot, Q-Q plot, ...}) encoded the REJECTED semantics —
+# it flagged a fully-lowercase keyword list, which is the journal's
+# published convention (article.tex asks for sentence case, not a leading
+# capital). The narrowed rule keeps only Title-Case-across-entries, so this
+# is no longer a violation and must not be a recall plant.
 
 [[violations]]
 rule_id = "JSS-XREF-004"

@@ -60,11 +60,12 @@ file = "rlmer.bib"
 line = 224
 comment = 'R — DOI 10.32614/r.manuals registered under the CRAN/R DOI scheme; add to the entry as doi="10.32614/r.manuals".'
 
-[[violations]]
-rule_id = "JSS-CAP-004"
-file = "simulationStudies.Rnw"
-line = 27
-comment = 'Keywords not in sentence case, "robust" should be capitalised'
+# Removed 2026-07-12 (review F5): the CAP-004 plant at
+# simulationStudies.Rnw:27 (\Keywords{robust statistics, mixed-effects
+# model, ...}) asserted "robust should be capitalised" — the REJECTED
+# semantics. A fully-lowercase keyword list is the journal's published
+# convention; the narrowed rule keeps only Title-Case-across-entries, so
+# this is not a violation.
 
 [[violations]]
 rule_id = "JSS-CITE-002"
