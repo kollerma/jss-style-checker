@@ -303,8 +303,12 @@ static LOWERCASE_CANONICAL_TERMS: LazyLock<HashSet<String>> = LazyLock::new(|| {
         .collect()
 });
 
-static COLON_MARKUP_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^\\(?:pkg|proglang|code|fct|verb)\b").unwrap());
+// Beyond the standard JSS semantic-markup set, also recognise `\class`
+// (S4 class names) and typewriter-font wrappers (`\texttt`/`{\tt ...}`/
+// `\ttfamily`) authors use for code tokens after a colon.
+static COLON_MARKUP_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^\\(?:pkg|proglang|code|fct|verb|class|texttt|ttfamily|tt)\b").unwrap()
+});
 static AFTER_COLON_REST_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?s):\s*(.+)").unwrap());
 static AFTER_COLON_TOKEN_RE: LazyLock<Regex> =
@@ -323,8 +327,11 @@ fn markup_source(group: &GroupNode) -> String {
                 if m.macroname == "label" {
                     continue;
                 }
+                // Trailing space guarantees a word boundary even when the
+                // parser consumed the macro's post-space (`{\tt as.xts}`).
                 parts.push('\\');
                 parts.push_str(&m.macroname);
+                parts.push(' ');
             }
             Node::Group(g) => {
                 parts.push('{');

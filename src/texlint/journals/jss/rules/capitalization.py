@@ -328,7 +328,16 @@ _LOWERCASE_CANONICAL_TERMS: frozenset[str] = frozenset(
     _pkg_token(t) for t in (LANGUAGES | R_PACKAGES) if t[:1].islower()
 )
 
-_COLON_MARKUP_RE = re.compile(r"\\(?:pkg|proglang|code|fct|verb)\b")
+# Macros whose argument is an author-dictated code identifier / class /
+# package name after a colon. Beyond the standard JSS semantic-markup
+# set (pkg/proglang/code/fct/verb) this also recognises ``\class`` (S4
+# class names, e.g. surveillance's vignettes) and the typewriter-font
+# wrappers (``\texttt``/``{\tt ...}``/``\ttfamily``) authors use for code
+# tokens — flagging their casing after a colon is a false positive (the
+# identifier's case is fixed by convention, not forgotten capitalisation).
+_COLON_MARKUP_RE = re.compile(
+    r"\\(?:pkg|proglang|code|fct|verb|class|texttt|ttfamily|tt)\b"
+)
 
 
 def _markup_source(group: Any) -> str:
@@ -345,7 +354,11 @@ def _markup_source(group: Any) -> str:
         elif isinstance(child, LatexMacroNode):
             if child.macroname == "label":
                 continue
-            parts.append("\\" + child.macroname)
+            # Trailing space guarantees a word boundary even when the
+            # parser consumed the macro's post-space (``{\tt as.xts}`` →
+            # the space after ``\tt`` is absorbed, so ``\ttas.xts`` would
+            # defeat the ``\tt\b`` markup probe).
+            parts.append("\\" + child.macroname + " ")
         elif isinstance(child, LatexGroupNode):
             parts.append("{" + _markup_source(child) + "}")
     return "".join(parts)

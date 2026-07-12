@@ -240,6 +240,27 @@ class TestCap002:
         src = r"\section{Models And Statistics}"
         assert len(run_rule(jss_cap_002, src)) == 1
 
+    def test_class_macro_after_colon_clean(self, run_rule):
+        # \class{} wraps an S4 class name (surveillance vignettes) —
+        # author-dictated casing, exempt like \code/\pkg.
+        src = r"\section{Data structure: \class{epidata}}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_texttt_after_colon_clean(self, run_rule):
+        src = r"\subsection{Empirical processes: \texttt{efp}}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_tt_font_group_after_colon_clean(self, run_rule):
+        # {\tt as.xts} — typewriter-font code token (xts vignette).
+        src = r"\subsection{Creating data objects: {\tt as.xts} and xts}"
+        assert run_rule(jss_cap_002, src) == []
+
+    def test_bare_lowercase_dataset_after_colon_flagged(self, run_rule):
+        # A BARE lowercase identifier (no markup) after a colon is a TP —
+        # it should be capitalised or wrapped in \code{}/\pkg{}.
+        src = r"\section{Example: hbk data}"
+        assert len(run_rule(jss_cap_002, src)) == 1
+
 
 # ---------------------------------------------------------------------------
 # JSS-CAP-004 — Keywords sentence case
