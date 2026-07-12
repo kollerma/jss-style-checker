@@ -8,6 +8,10 @@
 \documentclass[article]{jss}
 \usepackage{booktabs}
 \usepackage{longtable}
+%% Keep the double hyphen of command-line flags (e.g. \code{--fix})
+%% from collapsing into an en-dash ligature in the monospaced font.
+\usepackage{microtype}
+\DisableLigatures[-]{encoding = T1, family = tt*}
 
 \input{generated/stats.tex}
 %% Rule mentions link to their definition in Appendix A.
@@ -46,12 +50,16 @@
   WebAssembly that processes manuscripts entirely locally. The rules
   were developed with extensive AI assistance under human review and
   hardened by an evaluation-improvement loop against a pinned corpus
-  of \StatCorpusSize{} real manuscripts: after \StatIterationCount{}
-  recorded iterations, measured precision is \StatPrecisionOverall{}
-  over \StatPrecisionReviewed{} human- and AI-adjudicated violation
-  instances, and measured recall against a hand-annotated ground-truth
-  corpus is \StatRecallMicro{} (per instance) and \StatRecallMacro{}
-  (averaged per rule). The methodology --- specification-driven
+  of \StatCorpusSize{} JSS-format manuscripts. After
+  \StatIterationCount{} recorded iterations, precision estimated over
+  \StatPrecisionReviewed{} adjudicated violation instances is
+  \StatPrecisionOverall{}; because most of those labels are
+  model-issued, we treat this as a label-set estimate and bracket it
+  with the human-only subset (\StatPrecisionHumanOnly{}) and a
+  labeler-error-propagated band (\StatPrecisionAdjLow{}--%
+  \StatPrecisionAdjHigh{}), and measured recall against a
+  hand-annotated ground-truth corpus is \StatRecallMicro{} per
+  instance. The methodology --- specification-driven
   development, adversarially checked AI labeling, and per-rule
   precision gates with documented exemptions and rule retirement ---
   is described in detail and offers a replicable template for similar
@@ -119,7 +127,7 @@ a command-line tool, a \proglang{Python} package, an \proglang{R}
 package, and a fully client-side browser application --- with an
 auto-fix mode that repairs the mechanical subset of violations.
 Second, a measured account of its accuracy: precision evaluated over
-\StatCorpusSize{} real manuscripts and \StatPrecisionReviewed{}
+\StatCorpusSize{} JSS-format manuscripts and \StatPrecisionReviewed{}
 adjudicated violation instances, and recall evaluated against a
 hand-annotated ground-truth corpus --- numbers of a kind that linters
 rarely report. Third, a development methodology: the tool was built
@@ -208,11 +216,17 @@ hyphenated $p$~value spelling should use an italicized symbol and a
 tie (\rulelink{JSS-OPER-001}). The remaining three require
 judgment: the missing \code{\textbackslash{}Address}
 (\rulelink{JSS-PRE-002}), the title-style section heading ``Our New
-Method'' (\rulelink{JSS-CAP-002}), and the capitalized keyword list
-(\rulelink{JSS-CAP-004}). Each report carries the source position,
-the style-guide clause it enforces, and a concrete suggestion; the
-mechanical four are repaired automatically by the auto-fix mode shown
-in Section~\ref{sec:usage}.
+Method'' (\rulelink{JSS-CAP-002}), and the title-cased keyword entry
+``Robust Statistics'' (\rulelink{JSS-CAP-004}). Each report carries
+the source position, the style-guide clause it enforces, and a
+concrete suggestion; the mechanical four are repaired automatically by
+the auto-fix mode shown in Section~\ref{sec:usage}. The fragment is
+not exhaustively caught: the bare package name \pkg{lme4}
+\citep{lme4} in the prose should be wrapped in
+\code{\textbackslash{}pkg}, but \pkg{lme4} is absent from the markup
+rule's recognized-package set and so goes unflagged --- a concrete
+instance of the recall boundary quantified in
+Section~\ref{sec:recall}.
 
 %%--------------------------------------------------------------------
 \section{Design and architecture}
@@ -262,8 +276,11 @@ glance whether a submission is ready for content review.
 \subsection{One engine, four channels}
 \label{sec:channels}
 
-\pkg{jss-lint} began as a pure \proglang{Python} package. Version
-\StatToolVersion{} moves the engine --- parsing, all
+\pkg{jss-lint} began as a pure \proglang{Python} package, distributed
+on the \proglang{Python} Package Index as \pkg{\StatPyPIName} with the
+import module \code{texlint} and the \code{jss-lint} command-line
+entry point; it remains the reference implementation and parity
+oracle. Version \StatToolVersion{} moves the engine --- parsing, all
 \StatRuleCount{} rules, auto-fixes, and every output renderer --- into
 a single \proglang{Rust} \citep{rustlang} crate, \pkg{jsslint-core},
 compiled into four distribution channels:
@@ -271,9 +288,11 @@ compiled into four distribution channels:
 \begin{itemize}
   \item \pkg{jsslint-cli}, a standalone native binary exposing the
     full command-line interface;
-  \item \pkg{jsslint} on the \proglang{Python} Package Index, a
-    \pkg{PyO3}-based extension module \citep{pyo3} that preserves the
-    original \proglang{Python} API;
+  \item \pkg{jsslint}, a \proglang{Python} wheel on the
+    \proglang{Python} Package Index built as a \pkg{PyO3}-based
+    extension module \citep{pyo3} that preserves the original
+    \proglang{Python} API (distinct from the pure-\proglang{Python}
+    \pkg{\StatPyPIName} reference package above);
   \item \pkg{jsslintr}, an \proglang{R} package built with
     \pkg{extendr} \citep{extendr}, so that the community JSS serves
     most directly can run the checker from the language it already
@@ -329,7 +348,7 @@ GitHub Action & Reusable CI gate with SARIF upload \\
 \label{sec:performance}
 
 Table~\ref{tab:performance} reports single-threaded timings of the
-\proglang{Python} reference engine over the full evaluation corpus;
+\proglang{Python} reference engine over every scanned directory;
 checking a typical manuscript takes a fraction of a second, so the
 tool is comfortably interactive both at the command line and behind
 the language server.
@@ -342,9 +361,11 @@ Measure & Value \\
 \midrule
 \rawinput{generated/tab-benchmark.tex}
 \end{tabular}
-\caption{Linting performance on the evaluation corpus
-  (\proglang{Python} reference engine, single thread; parse and rule
-  execution, excluding interpreter startup).}
+\caption{Linting performance over all \StatCorpusScanned{} scanned
+  directories (the \StatCorpusPinned{} pinned corpus members plus the
+  auxiliary multi-version study directory), \proglang{Python}
+  reference engine, single thread, parse and rule execution excluding
+  interpreter startup, measured on \StatBenchMachine{}.}
 \label{tab:performance}
 \end{table}
 
@@ -534,17 +555,28 @@ justify exemption are retired.
 
 Every precision figure in this paper is a ratio of labeled
 violations, so the labels' provenance matters as much as the rules'.
-Labels come from three sources, in decreasing volume: local language
-models, deterministic auto-labeling, and the human author.
-AI labeling uses two local models with a per-rule routing table,
+Of the \StatLabelsTotal{} labels behind the pinned evaluation,
+\StatLabelsAI{} (\StatLabelsAIShare{}) are model-issued,
+\StatLabelsHuman{} are human, and \StatLabelsAuto{} are deterministic
+auto-labels; the headline precision is thus predominantly an estimate
+against machine labels, which is why we audit those labels and
+propagate their error into the interval reported in
+Section~\ref{sec:precision}. AI labeling uses two locally run
+open-weight models --- Bonsai-8B (an MLX build) and Qwen3-30B-A3B ---
+routed per rule through a committed routing table, because the two
+models' agreement profiles are strongly complementary. Both are
 benchmarked against a gold set of \StatGoldSetSize{} independently
-human-labeled violations; per-rule routing exists because the two
-models' agreement profiles are strongly complementary. A skip list
-excludes rules on which AI labeling proved unreliable --- those go
-directly to interactive human review --- and uncertain or disputed
-labels are adjudicated by the human at the manuscript source.
+human-labeled violations: Qwen3 agrees with the human verdict on
+\StatGoldAgreementQwen{} of the gold set and Bonsai on
+\StatGoldAgreementBonsai{}, and on the true-positive verdicts
+specifically their error rates are \StatGoldTPErrQwen{} and
+\StatGoldTPErrBonsai{} respectively --- the two numbers that drive
+the adjusted-precision band. A skip list excludes rules on which AI
+labeling proved unreliable --- those go directly to interactive human
+review --- and uncertain or disputed labels are adjudicated by the
+human at the manuscript source.
 
-Two audit findings shaped this design, and we report them because
+Three audit findings shaped this design, and we report them because
 they generalize. First, at one recorded iteration the AI labelers
 were found to contradict their own earlier verdicts on re-presented
 violations, which prompted the gold-set benchmark and periodic
@@ -557,8 +589,15 @@ macro presence), routing firings to an AI labeler only
 their true precision for weeks because a language model
 second-guessed objective facts. Such rules are now auto-labeled by
 construction, tagged distinctly, and kept out of the model gold set.
-The general lesson: use an AI judge only where judgment is actually
-required.
+Third, a gold-set decontamination sweep on 2026-07-06 found two
+hundred sixty-eight model-generated adjudications recorded under
+human-namespace reviewer tags --- including one workflow in which a
+model had overridden prior human verdicts. These were re-namespaced to their true machine origin
+and excluded from the gold set, which is what forced us to treat
+``human-labeled'' as itself an audited category rather than a trusted
+one. The general lesson: use an AI judge only where judgment is
+actually required, and audit the provenance tags too, not just the
+verdicts.
 
 \subsection{What transfers}
 \label{sec:lessons}
@@ -584,19 +623,25 @@ it refuses to claim as much as by what it catches.
 \subsection{Corpus construction}
 \label{sec:corpus}
 
-The precision corpus contains \StatCorpusSize{} real JSS-format
-manuscripts: \StatCorpusCran{} vignettes of published JSS papers
-shipped in CRAN package archives, \StatCorpusGithub{} standalone
-manuscripts collected from public repositories, and
-\StatCorpusManual{} synthetic fixtures retained from early
-development. By source format, \StatCorpusRnw{} are \code{.Rnw},
-\StatCorpusRmd{} are \code{.Rmd}, and \StatCorpusTex{} are plain
-\LaTeX{}. The corpus is pinned by a manifest recording an immutable
-source URL and SHA-256 hash per manuscript, so every evaluation run
-sees byte-identical inputs; it contains no duplicate manuscripts and
-no same-paper format doubles (an earlier, larger corpus used during
-development contained near-duplicates and was replaced by the pinned,
-deduplicated manifest).
+The precision corpus is pinned by a manifest of \StatCorpusPinned{}
+members: \StatCorpusCran{} vignettes of published JSS papers shipped
+in CRAN package archives and \StatCorpusGithub{} standalone
+manuscripts collected from public repositories --- the real
+manuscripts --- together with \StatCorpusSynthetic{} synthetic
+fixtures retained from early development. The synthetic fixtures are
+counted separately and never folded into a ``real manuscript'' total.
+One further directory, an auxiliary multi-version study of a single
+manuscript preserved in four revision stages, is scanned but left out
+of the pinned manifest, so \StatCorpusScanned{} directories are
+scanned in total while every precision figure is reported over the
+\StatCorpusPinned{} pinned members. By source format,
+\StatCorpusRnw{} are \code{.Rnw}, \StatCorpusRmd{} are \code{.Rmd},
+and \StatCorpusTex{} are plain \LaTeX{}. The manifest records an
+immutable source URL and SHA-256 hash per member, so every evaluation
+run sees byte-identical inputs; it contains no duplicate manuscripts
+and no same-paper format doubles (an earlier, larger corpus used
+during development contained near-duplicates and was replaced by the
+pinned, deduplicated manifest).
 
 Because CRAN vignettes describe \proglang{R} software exclusively,
 the repository-sourced portion was hand-curated to include
@@ -609,6 +654,23 @@ vignettes never trigger, both fixed and re-measured within the loop.
 The corpus remains \proglang{R}-weighted, and per-rule precision on
 non-\proglang{R} manuscripts is measured with correspondingly less
 data; we scope our claims accordingly.
+
+One selection effect deserves emphasis, because it cuts against the
+headline. The \StatCorpusCran{} CRAN vignettes --- the bulk of the
+corpus --- are versions of papers that JSS has already published, and
+therefore already copy-edited: the style violations that reached
+review were, by construction, either caught by a human editor or
+judged acceptable. The tool's actual use case is the opposite
+population, unedited submissions, where both the base rate and the
+difficulty of violations are almost certainly higher than this corpus
+shows. Our precision estimate is therefore measured on the easier
+distribution, and recall on submissions may be lower than
+Section~\ref{sec:recall} reports. The \rulelink{JSS-CODE-003} episode
+of Section~\ref{sec:casestudies} is in-paper evidence: a
+false-positive class that no published \proglang{R} vignette in the
+corpus could surface appeared the moment the corpus was extended with
+a genuinely new manuscript genre. New submissions will move the
+boundary again.
 
 \subsection{Precision}
 \label{sec:precision}
@@ -628,6 +690,34 @@ not over the union of everything any historical version ever
 reported; an earlier accounting bug of exactly that kind made two
 already-fixed rules look permanently imprecise, and the fix
 (tracking each violation's last-seen run) is part of the harness.
+
+The \StatPrecisionOverall{} figure is a ratio of \emph{labels}, and
+this paper's own thesis is that labels are fallible measurements, so
+we apply that thesis to our own headline rather than exempt it. Three
+readings bracket the truth. The label-set estimate is
+\StatPrecisionOverall{} (all labels at face value). Restricted to the
+\StatLabelsHuman{} human labels alone, precision is
+\StatPrecisionHumanOnly{}. Between the two sits a
+labeler-error-propagated band: taking the human and auto labels at
+face value but discounting the AI-issued true positives by the
+model true-positive-error rate $e$ measured on the gold set, adjusted
+precision is
+\[
+  \frac{\mathrm{TP} - e\cdot\mathrm{TP}_{\mathrm{AI}}}
+       {\mathrm{TP} + \mathrm{FP}},
+\]
+which for $e$ ranging over the worst and best measured model error
+(Bonsai \StatGoldTPErrBonsai{}, Qwen3 \StatGoldTPErrQwen{}) yields
+\StatPrecisionAdjLow{}--\StatPrecisionAdjHigh{}. This band is
+deliberately conservative: the gold set is enriched in hard,
+skip-listed, and disputed cases, so its measured TP-error overstates
+the error on the full label population, and propagating it therefore
+leans the band toward a lower bound. The honest one-line summary is
+that \StatPrecisionOverall{} is the label-set estimate,
+\StatPrecisionHumanOnly{} is the human-only subset, and
+\StatPrecisionAdjLow{}--\StatPrecisionAdjHigh{} is the
+error-propagated bracket; we quote all three and never let
+\StatPrecisionOverall{} stand alone as ``the tool's precision.''
 
 \subsection{Recall}
 \label{sec:recall}
@@ -655,10 +745,19 @@ At the pinned recall run, the tool recovers \StatRecallTP{} of the
 plants --- \StatRecallPerfect{} of which recover every plant --- and
 pool the thinner rules into a single row in
 Appendix~\ref{app:perrule}, because a recall estimate on two plants
-is noise. The two figures differ because high-volume rules are
-harder: the largest gaps concentrate in exactly the rules whose
-false-positive analysis also revealed inherent ambiguity, as
-discussed next.
+is noise. The two figures differ substantially, and the micro figure
+is the honest headline: the macro average is buoyed by many thin,
+easy rules, whereas the largest gaps concentrate in exactly the
+high-volume rules whose false-positive analysis also revealed
+inherent ambiguity. The four lowest-recall thick rules, worst first,
+are the house-style comma after \code{e.g.,}/\code{i.e.,}
+(\rulelink{JSS-HOUSE-001}), inline-code markup
+(\rulelink{JSS-MARKUP-003}), the expectation and probability
+operators (\rulelink{JSS-OPER-004}), and the missing-DOI advisory
+(\rulelink{JSS-REFS-003}); each recovers between roughly half and
+two-thirds of its plants, with the exact figures in
+Table~\ref{tab:perrule-recall} of Appendix~\ref{app:perrule}. These
+are the rules discussed next.
 
 \subsection{Two case studies and the accuracy ceiling}
 \label{sec:casestudies}
@@ -709,10 +808,23 @@ implemented against failing tests in both engines, re-scanned, and
 source-audited --- it silenced six corpus violations previously
 labeled true positives, of which five turned out to be label debt of
 exactly this class and one a genuine single-letter subtraction, the
-same inherent token ambiguity the rule has always accepted. The
-episode is the methodology in miniature: heuristics over tokens have
-a measurable boundary, new manuscript genres move it, and the loop
-prices every guard in both currencies before it ships.
+same inherent token ambiguity the rule has always accepted. In candor,
+that re-adjudication of the six rows was performed by the same
+automated workflow that authored the fix, so it is not an independent
+check; a human spot-check of those six specific rows remains an open
+item, recorded in the follow-ups. The episode is the methodology in
+miniature: heuristics over tokens have a measurable boundary, new
+manuscript genres move it, and the loop prices every guard in both
+currencies before it ships.
+
+A related limitation of the tool's self-check surfaced while preparing
+this manuscript's appendix. The captions-below-floats rule
+(\rulelink{JSS-TYPO-004}) inspects \code{figure} and \code{table}
+floats but does not see \code{longtable}, so a top-caption on a
+\code{longtable} passes the linter silently --- the appendix tables of
+this paper were corrected by hand, not by the tool. The blindness is
+disclosed here and tracked as a follow-up rather than papered over,
+for the same reason we report retirements.
 
 \subsection{Reproducibility}
 \label{sec:reproducibility}
@@ -729,17 +841,61 @@ the committed values differ from regeneration. The replication script
 compare, lint this manuscript with \pkg{jss-lint} itself (any
 violation fails the build), and recompile the PDF. The history
 database is append-only, so the pinned queries return byte-identical
-results indefinitely.
+results indefinitely. What replication establishes is
+\emph{consistency} --- that every figure faithfully transcribes the
+pinned evaluation state and that the manuscript is self-compliant ---
+not the \emph{validity} of the underlying labels; label validity is a
+separate question, which is why the labels are shipped for independent
+audit in \code{eval/labels-export.csv.gz} together with the gold-set
+export, so a reader can re-adjudicate any figure at its source.
 
 %%--------------------------------------------------------------------
 \section[Using jss-lint]{Using \pkg{jss-lint}}
 \label{sec:usage}
 
-The tool installs from the standard channel of each ecosystem: the
-\proglang{Python} package \pkg{\StatPyPIName} via \code{pip}, the
-native binary via \code{cargo install jsslint-cli}, the \proglang{R}
-package \pkg{jsslintr}, and the browser version, which requires no
-installation. Development happens at \StatRepoUrl{}.
+The engine reaches users through the four channels of
+Table~\ref{tab:install}, one per ecosystem. A naming note, because the
+channels differ: the original pure-\proglang{Python} reference
+implementation is published as \pkg{\StatPyPIName} and installs a
+\code{jss-lint} command; the \proglang{Rust}-backed wheel is
+\pkg{jsslint}; the native binary crate is \pkg{jsslint-cli} and
+installs a \code{jsslint} executable. One honest caveat on
+availability: at the time of submission none of the four channels is
+published to its public registry --- each installs from the
+repository at \StatRepoUrl{} today, and the tag-triggered publish
+workflows for the registry releases are in place but not yet run.
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{p{0.20\textwidth}p{0.34\textwidth}p{0.34\textwidth}}
+\toprule
+Channel & Install & What you get \\
+\midrule
+CLI binary & \code{cargo install jsslint-cli} & the native \code{jsslint} executable with the full command line, \code{--fix}, \code{explain}, and the language server \\
+\proglang{Python} (reference) & \code{pip install jss-style-checker} & the \code{texlint} module and the \code{jss-lint} command \\
+\proglang{Python} (\proglang{Rust} wheel) & \code{pip install jsslint} & a \pkg{PyO3} extension with the same \proglang{Python} API \\
+\proglang{R} & \code{install.packages("jsslintr")} & the \code{jsslintr::render} function \\
+Browser / \code{npm} & \code{jsslint-wasm} & a client-side checker that needs no installation and no network \\
+\bottomrule
+\end{tabular}
+\caption{Distribution channels of \pkg{jss-lint}. Install commands
+  show the intended registry form; until the registries are populated,
+  each channel builds from the repository checkout.}
+\label{tab:install}
+\end{table}
+
+From \proglang{R}, the ecosystem JSS serves most directly, the
+package exposes a single \code{render} entry point that returns the
+report as a string:
+
+\begin{Code}
+library("jsslintr")
+report <- jsslintr::render(
+  files = c("paper.tex" = paste(readLines("paper.tex"),
+                                collapse = "\n"))
+)
+cat(report)
+\end{Code}
 
 \subsection{Author workflow}
 \label{sec:authormode}
@@ -748,7 +904,9 @@ Running \code{jss-lint} on the manuscript of
 Section~\ref{sec:example} prints the seven violations as a table with
 positions, messages, and suggestions. The mechanical subset can be
 repaired directly; \code{--fix --dry-run} previews the repairs as a
-unified diff without touching the file:
+unified diff without touching the file, then prints the table of
+violations that remain after the repairs (the judgment calls the
+auto-fixer leaves alone). The listing below shows the diff portion:
 
 \VerbatimInput[frame=single, fontsize=\small]{generated/listings/demo-fix-diff.txt}
 
@@ -789,10 +947,18 @@ Category & Status & Applied & Passed \\
 \label{tab:reviewer}
 \end{table}
 
-The same interface serves automation. In continuous integration, the
-provided GitHub Action lints the manuscript on every push and
-uploads SARIF so violations annotate the diff; the exit status is the
-gate. While editing, the language server surfaces the diagnostics
+The same interface serves automation. On a clean manuscript the tool
+prints nothing and exits~0, so it composes quietly in a pipeline;
+otherwise it exits~1 when any violation reaches the \code{--fail-on}
+severity and~2 when it cannot complete (bad arguments, an unreadable
+file). The \code{--fail-on} threshold defaults to \code{warning}, so
+info-severity advisories --- the missing-DOI check, for instance ---
+are reported but do not by themselves fail the build; a stricter gate
+sets \code{--fail-on error} or a looser one \code{--fail-on info}. In
+continuous integration, the provided GitHub Action lints the
+manuscript on every push and uploads SARIF so violations annotate the
+diff; the exit status is the gate. While editing, the language server
+surfaces the diagnostics
 and safe fixes inside any LSP-capable editor, with a packaged
 extension for VS~Code. For bibliography hygiene, the opt-in
 \code{--crossref} mode queries the Crossref REST API
@@ -809,9 +975,10 @@ General-purpose \LaTeX{} linters --- \pkg{chktex} \citep{chktex},
 \citep{texlint_js} --- check language-level hygiene: mismatched
 delimiters, spacing around punctuation, deprecated constructs. They
 know nothing of any journal's requirements; running \pkg{chktex} on
-the compliant demonstration manuscript of
-Section~\ref{sec:example} produces advice about \LaTeX{} idioms and
-none about JSS style. At the other end, commercial AI writing
+the corrected demonstration manuscript of Section~\ref{sec:example}
+--- the \code{--fix} output, which still carries the residual
+judgment items the auto-fixer deliberately leaves --- produces advice
+about \LaTeX{} idioms and none about JSS style. At the other end, commercial AI writing
 assistants such as \pkg{Writefull} \citep{writefull} give
 probabilistic language feedback: valuable for prose, but
 non-deterministic, unspecific to journal rules, and requiring
@@ -843,10 +1010,27 @@ Fully local            & yes & yes & yes & -- & yes \\
 
 The comparison is not adversarial: the tools operate at different
 layers, and a JSS author can productively run \pkg{chktex} for
-\LaTeX{} hygiene alongside \pkg{jss-lint} for journal compliance. To
-our knowledge, however, \pkg{jss-lint} is the first checker that
-encodes a statistical journal's style guide as an executable,
-measured rule set.
+\LaTeX{} hygiene alongside \pkg{jss-lint} for journal compliance.
+
+Two adjacent categories are worth naming even though neither targets
+JSS manuscript style. Within statistical computing itself,
+\pkg{lintr} \citep{lintr} and \pkg{styler} \citep{styler} lint and
+format \proglang{R} source; they act on code rather than on
+manuscripts, but they establish the community's own expectation that
+a linter and a formatter are ordinary parts of the workflow, and the
+methodological claim of this paper --- that a rule set is an empirical
+object to be measured against real inputs --- transfers directly from
+their setting to ours. On the publisher side, several journals and
+preprint systems run internal submission checkers for structural
+completeness and metadata. What distinguishes \pkg{jss-lint} is thus
+not that it stands alone --- it does not --- but that it publishes
+precision and recall against a real-manuscript corpus, which the
+general-purpose and publisher-side tools do not report and largely
+cannot, because measuring those quantities requires journal-specific
+ground truth that a language-level or metadata-level checker never
+constructs. To our knowledge, \pkg{jss-lint} is the first checker to
+encode a statistical journal's style guide as an executable rule set
+and report its accuracy this way.
 
 %%--------------------------------------------------------------------
 \section{Summary and outlook}
@@ -855,9 +1039,12 @@ measured rule set.
 \pkg{jss-lint} makes the editorial form of a JSS submission checkable
 in the same sense that its computational results are reproducible: by
 a deterministic tool, before a human referee spends time on it. The
-rule set is not merely plausible --- it is measured, with
-\StatPrecisionOverall{} precision over \StatPrecisionReviewed{}
-adjudicated instances, \StatRecallMicro{} micro recall against
+rule set is not merely plausible --- it is measured, with a label-set
+precision of \StatPrecisionOverall{} over \StatPrecisionReviewed{}
+adjudicated instances (bracketed by the human-only
+\StatPrecisionHumanOnly{} and the error-propagated
+\StatPrecisionAdjLow{}--\StatPrecisionAdjHigh{} of
+Section~\ref{sec:precision}), \StatRecallMicro{} micro recall against
 hand-annotated ground truth, a documented exemption, and
 \StatRetiredCount{} public retirements. The development methodology
 --- specifications for cross-cutting work, AI assistance under
@@ -908,8 +1095,6 @@ from the machine-readable catalogue; rule identifiers referenced in
 the text link here.
 
 \begin{longtable}{p{0.21\textwidth}p{0.62\textwidth}r}
-\caption{Active rules in version \StatToolVersion{} with measured
-  precision.\label{tab:catalogue}}\\
 \toprule
 Rule & Requirement & Precision \\
 \midrule
@@ -918,8 +1103,13 @@ Rule & Requirement & Precision \\
 Rule & Requirement & Precision \\
 \midrule
 \endhead
-\bottomrule
+\midrule
+\multicolumn{3}{r}{(continued on next page)}\\
 \endfoot
+\bottomrule
+\caption{Active rules in version \StatToolVersion{} with measured
+  precision.}\label{tab:catalogue}\\
+\endlastfoot
 \rawinput{generated/tab-catalogue.tex}
 \end{longtable}
 
@@ -933,8 +1123,6 @@ with at least \StatRecallMinPlants{} planted ground-truth violations,
 pooling thinner rules.
 
 \begin{longtable}{lrrrl}
-\caption{Per-rule precision at the pinned iteration
-  (\code{\StatPinnedIteration}).\label{tab:perrule-precision}}\\
 \toprule
 Rule & TP & FP & Precision & Gate \\
 \midrule
@@ -943,14 +1131,17 @@ Rule & TP & FP & Precision & Gate \\
 Rule & TP & FP & Precision & Gate \\
 \midrule
 \endhead
-\bottomrule
+\midrule
+\multicolumn{5}{r}{(continued on next page)}\\
 \endfoot
+\bottomrule
+\caption{Per-rule precision at the pinned iteration
+  (\code{\StatPinnedIteration}).}\label{tab:perrule-precision}\\
+\endlastfoot
 \rawinput{generated/tab-precision.tex}
 \end{longtable}
 
 \begin{longtable}{lrrr}
-\caption{Per-rule recall at the pinned run against the hand-annotated
-  ground-truth corpus.\label{tab:perrule-recall}}\\
 \toprule
 Rule & Plants & Recovered & Recall \\
 \midrule
@@ -959,8 +1150,13 @@ Rule & Plants & Recovered & Recall \\
 Rule & Plants & Recovered & Recall \\
 \midrule
 \endhead
-\bottomrule
+\midrule
+\multicolumn{4}{r}{(continued on next page)}\\
 \endfoot
+\bottomrule
+\caption{Per-rule recall at the pinned run against the hand-annotated
+  ground-truth corpus.}\label{tab:perrule-recall}\\
+\endlastfoot
 \rawinput{generated/tab-recall.tex}
 \end{longtable}
 
