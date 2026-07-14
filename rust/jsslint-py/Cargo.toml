@@ -16,4 +16,13 @@ jsslint-core = { workspace = true }
 # abi3-py310: builds one wheel per platform valid for CPython 3.10+ via
 # the stable ABI, instead of one wheel per (platform, Python minor
 # version) — keeps the PyPI release matrix to one job per platform.
-pyo3 = { version = "0.29", features = ["extension-module", "abi3-py310"] }
+pyo3 = { version = "0.29", features = ["abi3-py310"] }
+
+[features]
+# extension-module tells pyo3 not to link libpython (correct for a wheel —
+# the host interpreter supplies those symbols at runtime). maturin enables
+# it via [tool.maturin] features in pyproject.toml. Left off by default so
+# `cargo test` links against libpython normally instead of failing on
+# platforms (e.g. macOS) whose linker won't tolerate the unresolved
+# `_Py*` symbols that `extension-module` produces.
+extension-module = ["pyo3/extension-module"]

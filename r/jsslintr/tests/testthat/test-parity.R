@@ -6,6 +6,10 @@ test_that("jsslintr::render matches the real jss-lint CLI", {
   paper_dir <- file.path(repo_root, "eval", "recall-corpus", "opentsne")
   tex_path <- file.path(paper_dir, "main.tex")
   bib_path <- file.path(paper_dir, "references.bib")
+  skip_if_not(
+    file.exists(tex_path) && file.exists(bib_path),
+    "recall corpus not materialized; run `eval-jss corpus fetch` then `python -m eval.recall_corpus_scaffold`"
+  )
 
   read_file <- function(path) {
     readChar(path, file.info(path)$size, useBytes = TRUE)

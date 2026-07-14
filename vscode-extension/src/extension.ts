@@ -31,7 +31,7 @@ let statusBar: StatusBarItem;
 
 function canRunServer(python: string): Promise<boolean> {
   // A candidate interpreter qualifies iff it exists AND has the
-  // texlint package (`pip install "jss-lint[lsp]"`).
+  // texlint package (`pip install "jss-style-checker[lsp]"`).
   return new Promise((resolve) => {
     cp.execFile(python, ["-c", "import texlint"], (err) => resolve(!err));
   });
@@ -56,7 +56,7 @@ async function resolvePython(): Promise<string | undefined> {
     window.showErrorMessage(
       `JSS Style Checker: "jssStyleChecker.python.path" (${setting}) ` +
         `is not a Python interpreter with jss-lint installed. ` +
-        `Install with: ${setting} -m pip install "jss-lint[lsp]"`
+        `Install with: ${setting} -m pip install "jss-style-checker[lsp]"`
     );
     return undefined;
   }
@@ -89,7 +89,7 @@ async function resolvePython(): Promise<string | undefined> {
   window.showErrorMessage(
     'JSS Style Checker: no Python interpreter with jss-lint found ' +
       `(tried: ${candidates.join(", ")}). Install the server with ` +
-      '`pip install "jss-lint[lsp]"` or point ' +
+      '`pip install "jss-style-checker[lsp]"` or point ' +
       '"jssStyleChecker.python.path" at the right interpreter.'
   );
   return undefined;

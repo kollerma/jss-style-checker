@@ -13,7 +13,7 @@ guide directly inside VS Code.
 ## Install (once the LSP server ships)
 
 ```sh
-pip install "jss-lint[lsp]"
+pip install "jss-style-checker[lsp]"
 code --install-extension kollerma.jss-style-checker
 ```
 

@@ -57,7 +57,7 @@ runs:
       run: |
         case "${{ inputs.version }}" in
           latest)
-            pip install jss-lint
+            pip install jss-style-checker
             ;;
           local)
             # Smoke-test mode: install from the action's checked-out
@@ -66,7 +66,7 @@ runs:
             pip install "${{ github.action_path }}/.."
             ;;
           *)
-            pip install "jss-lint==${{ inputs.version }}"
+            pip install "jss-style-checker==${{ inputs.version }}"
             ;;
         esac
 

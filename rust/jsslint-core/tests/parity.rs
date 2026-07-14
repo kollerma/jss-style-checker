@@ -107,7 +107,7 @@ fn compliant_minimal_tex_matches_python_byte_for_byte() {
         return; // Python venv unavailable — see skip message above.
     };
     let report = ComplianceReport {
-        tool_version: "0.1.0".to_string(),
+        tool_version: env!("CARGO_PKG_VERSION").to_string(),
         journal_id: "jss".to_string(),
         violations: Vec::new(),
         categories: base_categories(&[]),
@@ -135,7 +135,7 @@ fn single_violation_matches_python_byte_for_byte_incl_unicode_escaping() {
         return;
     };
     let report = ComplianceReport {
-        tool_version: "0.1.0".to_string(),
+        tool_version: env!("CARGO_PKG_VERSION").to_string(),
         journal_id: "jss".to_string(),
         violations: vec![Violation {
             file: fixture.to_string(),

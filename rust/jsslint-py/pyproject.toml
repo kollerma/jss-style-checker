@@ -21,3 +21,4 @@ Repository = "https://github.com/kollerma/jss-style-checker-dev"
 
 [tool.maturin]
 module-name = "jsslint"
+features = ["pyo3/extension-module"]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -193,10 +194,12 @@ class TestDirectoryInputs:
             " author = {A. Author}, year = {2020}}\n",
             encoding="utf-8",
         )
-        result = runner.invoke(main, [str(tmp_path)])
+        result = runner.invoke(main, ["--output", "json", str(tmp_path)])
         assert result.exit_code == 1, result.output
-        assert "a.tex" in result.output
-        assert "refs.bib" in result.output
+        payload = json.loads(result.output)
+        files = {Path(v["file"]).name for v in payload["violations"]}
+        assert "a.tex" in files
+        assert "refs.bib" in files
 
     def test_empty_directory_exits_two(self, tmp_path: Path, runner: CliRunner):
         result = runner.invoke(main, [str(tmp_path)])

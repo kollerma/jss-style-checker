@@ -55,6 +55,13 @@ def test_jsslint_matches_python_engine(
     paper_dir: str, files: list[str], ignore_rules: list[str]
 ) -> None:
     full_paper_dir = REPO_ROOT / paper_dir
+    missing = [f for f in files if not (full_paper_dir / f).exists()]
+    if missing:
+        pytest.skip(
+            f"recall corpus not materialized ({paper_dir}: missing {missing}); "
+            "run `eval-jss corpus fetch` then "
+            "`python -m eval.recall_corpus_scaffold` to fetch it"
+        )
     rust_files = [
         (str(full_paper_dir / f), (full_paper_dir / f).read_text(encoding="utf-8"))
         for f in files
