@@ -9,9 +9,10 @@ name: publish-badges
 # eval.badge.PINNED_ITERATION_LABEL / PINNED_RECALL_TIMESTAMP — not
 # "whatever's latest in precision-history.db". Without pinning, the
 # badges would silently drift with every push to this dev repo
-# (jss-style-checker-dev) even though the public jss-style-checker
-# repo only ships squashed per-release commits. Re-pin (bump those two
-# constants) when cutting the next release.
+# (jss-style-checker-dev), even though the public jss-style-checker
+# repo only picks up a new push (and re-runs this workflow) when the
+# `public` branch is explicitly merged from `main` and pushed there.
+# Re-pin (bump those two constants) when cutting the next release.
 #
 # Trigger: every push to `main`. Idempotent — re-running with the
 # same DB state produces byte-identical badge JSON, so the
