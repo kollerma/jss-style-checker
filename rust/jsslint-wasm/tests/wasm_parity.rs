@@ -51,6 +51,14 @@ fn wasm_render_matches_python_cli() {
         eprintln!("SKIP: node not on PATH");
         return;
     }
+    let corpus_sentinel = root.join("eval/recall-corpus/opentsne/main.tex");
+    if !corpus_sentinel.exists() {
+        eprintln!(
+            "SKIP: {} not found (run `eval-jss corpus fetch` && `python -m eval.recall_corpus_scaffold` to materialize the recall corpus)",
+            corpus_sentinel.display()
+        );
+        return;
+    }
 
     let rust_dir = root.join("rust");
     let build = Command::new("cargo")

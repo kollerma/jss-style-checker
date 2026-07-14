@@ -20,6 +20,8 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
+mod common;
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -84,6 +86,16 @@ fn report_matches_python_cli() {
             "SKIP: {} not found (Python venv not set up)",
             jss_lint.display()
         );
+        return;
+    }
+    if let Some(msg) = common::corpus_missing(
+        &root,
+        &[
+            "eval/recall-corpus/opentsne/main.tex",
+            "eval/recall-corpus/trueskill/article.tex",
+        ],
+    ) {
+        eprintln!("{msg}");
         return;
     }
     let jss_lint = jss_lint.to_string_lossy().to_string();

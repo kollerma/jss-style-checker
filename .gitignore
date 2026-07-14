@@ -205,6 +205,10 @@ examples/jss5342-versions/
 # `package-lock.json` IS tracked (reproducible installs).
 vscode-extension/node_modules/
 vscode-extension/out/
+vscode-extension/*.vsix
+
+# r/jsslintr — testthat writes this on test failure.
+r/jsslintr/tests/testthat/_problems/
 
 # web/ (spec 018 browser WASM app) — `wasm-pack build --target web
 # --out-dir web/pkg` output. Built by .github/workflows/publish-web.yml

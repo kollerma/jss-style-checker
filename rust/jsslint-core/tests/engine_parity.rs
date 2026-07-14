@@ -13,6 +13,8 @@ use jsslint_core::json_output;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+mod common;
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -86,6 +88,16 @@ fn engine_run_matches_python_cli_json() {
             "SKIP: {} not found (Python venv not set up)",
             jss_lint.display()
         );
+        return;
+    }
+    if let Some(msg) = common::corpus_missing(
+        &root,
+        &[
+            "eval/recall-corpus/opentsne/main.tex",
+            "eval/recall-corpus/trueskill/article.tex",
+        ],
+    ) {
+        eprintln!("{msg}");
         return;
     }
 

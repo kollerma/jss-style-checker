@@ -22,10 +22,10 @@ fn sarif_level(severity: Severity) -> &'static str {
     }
 }
 
-/// Lexically normalizes `.`/`..` components (no symlink resolution —
-/// `std::fs::canonicalize` is tried first by callers, this is only
-/// the fallback for paths that don't exist on disk, matching
-/// `Path.resolve()`'s tolerance of non-existent paths in Python).
+/// Lexically normalizes `.`/`..` components. Last-resort fallback for
+/// when even the longest-existing-ancestor walk in `resolve_path`
+/// can't canonicalize anything (e.g. no component of the path exists
+/// at all). Does not resolve symlinks.
 fn normalize_lexically(p: &Path) -> PathBuf {
     let mut out = PathBuf::new();
     for comp in p.components() {
@@ -40,15 +40,40 @@ fn normalize_lexically(p: &Path) -> PathBuf {
     out
 }
 
+/// Mirrors `pathlib.Path.resolve()`: makes `p` absolute and resolves
+/// symlinks, tolerating a path that doesn't exist. Python's
+/// `resolve()` still resolves symlinks in whatever prefix of the path
+/// *does* exist, even when the leaf component is missing — plain
+/// `std::fs::canonicalize` requires the whole path to exist, so on
+/// its failure we walk up to the longest existing ancestor,
+/// canonicalize that, and re-append the non-existent tail.
 fn resolve_path(p: &Path) -> PathBuf {
-    std::fs::canonicalize(p).unwrap_or_else(|_| {
-        if p.is_absolute() {
-            normalize_lexically(p)
-        } else {
-            let cwd = std::env::current_dir().unwrap_or_default();
-            normalize_lexically(&cwd.join(p))
+    if let Ok(c) = std::fs::canonicalize(p) {
+        return c;
+    }
+    let abs = if p.is_absolute() {
+        p.to_path_buf()
+    } else {
+        std::env::current_dir().unwrap_or_default().join(p)
+    };
+    let mut tail: Vec<std::ffi::OsString> = Vec::new();
+    let mut cur = abs.as_path();
+    loop {
+        if let Ok(base) = std::fs::canonicalize(cur) {
+            let mut out = base;
+            for c in tail.iter().rev() {
+                out.push(c);
+            }
+            return out;
         }
-    })
+        match (cur.parent(), cur.file_name()) {
+            (Some(parent), Some(name)) => {
+                tail.push(name.to_os_string());
+                cur = parent;
+            }
+            _ => return normalize_lexically(&abs),
+        }
+    }
 }
 
 /// Mirrors `os.path.relpath(target, base)`: the relative path from
