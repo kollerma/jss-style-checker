@@ -93,12 +93,12 @@ jobs:
 
       - name: cargo clippy
         working-directory: rust
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
       - name: cargo build
         working-directory: rust
-        run: cargo build --workspace
+        run: cargo build --workspace --locked
 
       - name: cargo test
         working-directory: rust
-        run: cargo test --workspace
+        run: cargo test --workspace --locked

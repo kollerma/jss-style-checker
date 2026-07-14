@@ -40,7 +40,7 @@ jobs:
 
       - name: Build
         working-directory: rust/jsslint-wasm
-        run: wasm-pack build --release --target bundler
+        run: wasm-pack build --release --target bundler --locked
 
       - uses: actions/setup-node@v4
         with:
