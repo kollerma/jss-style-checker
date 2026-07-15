@@ -1,0 +1,55 @@
+name: release-pypkg
+
+# Publishes the pure-Python `jss-style-checker` distribution (top-level
+# pyproject.toml: the `jss-lint` CLI + importable `texlint`) to PyPI.
+# This is a DIFFERENT PyPI project from `jsslint` (the PyO3 binding
+# published by release-pypi.yml). The GitHub Action installs THIS one.
+#
+# Trigger: a `v*-pypkg` tag.
+#
+# One-time manual setup required before this can run: register a PyPI
+# "pending publisher" for project `jss-style-checker` pointing at this
+# repo, this workflow file (release-pypkg.yml), and the `pypi`
+# environment below (https://docs.pypi.org/trusted-publishers/). This
+# is SEPARATE from the `jsslint` publisher already configured for
+# release-pypi.yml.
+on:
+  push:
+    tags:
+      - 'v*-pypkg'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-pypkg
+          path: dist
+
+  publish:
+    needs: [build]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-pypkg
+          path: dist
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
