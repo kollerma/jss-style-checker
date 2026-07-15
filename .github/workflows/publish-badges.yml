@@ -36,8 +36,14 @@ concurrency:
   # (badges/ here, the site root there) — but two workflows racing to
   # fetch/commit/push gh-pages independently would non-fast-forward
   # reject whichever pushes second. Sharing the group serializes them.
+  #
+  # cancel-in-progress MUST be false: every push puts BOTH workflows in
+  # this group, so `true` makes them cancel each other ("Canceling since
+  # a higher priority waiting request for gh-pages exists") and one of
+  # the two deploys is lost on nearly every push. `false` queues the
+  # second run to start when the first finishes, so both complete.
   group: gh-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   publish:

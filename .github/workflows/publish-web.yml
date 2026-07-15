@@ -23,9 +23,10 @@ permissions:
   contents: write
 
 concurrency:
-  # Shared with publish-badges.yml — see that workflow's comment.
+  # Shared with publish-badges.yml — see that workflow's comment for why
+  # the group is shared and why cancel-in-progress must be false.
   group: gh-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   publish:
