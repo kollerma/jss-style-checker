@@ -126,8 +126,7 @@ fn python_oracle_dump_all(python: &Path, fixture: &Path) -> HashMap<String, Stri
         "expected output to start with the \\x00 sentinel"
     );
     let mut by_rule: HashMap<String, String> = HashMap::new();
-    loop {
-        let Some(rule_id) = parts.next() else { break };
+    while let Some(rule_id) = parts.next() {
         let blob = parts
             .next()
             .unwrap_or_else(|| panic!("sentinel for {rule_id} missing its blob"));
