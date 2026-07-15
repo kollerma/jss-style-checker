@@ -51,7 +51,10 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-import tomllib
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # pragma: no cover - covered on 3.10 only
+    import tomli as tomllib
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CORPUS_ROOT = REPO_ROOT / "eval" / "recall-corpus"

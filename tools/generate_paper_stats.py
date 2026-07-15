@@ -30,8 +30,12 @@ import tempfile
 from collections import Counter
 from pathlib import Path
 
-import tomllib
 import yaml
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # pragma: no cover - covered on 3.10 only
+    import tomli as tomllib
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CATALOGUE_YAML = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "catalogue.yaml"

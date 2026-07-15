@@ -181,7 +181,10 @@ def _exclusion_clause(path: Path | None = None) -> str:
     path = path or _EXCLUSIONS_PATH
     if not path.exists():
         return ""
-    import tomllib
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # pragma: no cover - py<3.11
+        import tomli as tomllib  # type: ignore[no-redef]
 
     data = tomllib.loads(path.read_text(encoding="utf-8"))
     clauses: list[str] = []
@@ -270,7 +273,10 @@ def _gate_exceptions(path: Path | None = None) -> frozenset[str]:
     path = path or _GATE_EXCEPTIONS_PATH
     if not path.exists():
         return frozenset()
-    import tomllib
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # pragma: no cover - py<3.11
+        import tomli as tomllib  # type: ignore[no-redef]
 
     data = tomllib.loads(path.read_text(encoding="utf-8"))
     return frozenset(

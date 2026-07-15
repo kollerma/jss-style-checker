@@ -20,7 +20,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import tomllib
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # pragma: no cover - covered on 3.10 only
+    import tomli as tomllib
 
 from texlint.config import load as load_config
 from texlint.core.engine import load_journal, parse_document

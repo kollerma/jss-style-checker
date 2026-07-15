@@ -14,7 +14,10 @@ import re
 import sys
 from pathlib import Path
 
-import tomllib
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # pragma: no cover - covered on 3.10 only
+    import tomli as tomllib
 
 RECALL = Path(__file__).resolve().parent.parent / "eval" / "recall-corpus"
 _RULE = re.compile(r'rule_id\s*=\s*"([^"]+)"')
