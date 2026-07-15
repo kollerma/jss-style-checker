@@ -12,6 +12,7 @@ use jsslint_core::rules::{
     markup, naming, operators, preamble, structure, typography,
 };
 use jsslint_core::tex;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -91,22 +92,48 @@ fn find_tex_fixtures(dir: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-fn python_oracle_dump(python: &Path, rule_id: &str, fixture: &Path) -> String {
+/// Dumps every rule's violations for `fixture` via a single subprocess call
+/// (`--all`), parsing the file only once on the Python side, at ~1/46th the
+/// subprocess+reparse cost of dumping one rule at a time.
+///
+/// Frames are delimited by `\x00<rule_id>\x00<blob>` rather than split by
+/// newline: a violation's `fix.replacement` can itself contain embedded
+/// newlines (e.g. an inserted line of LaTeX), which line-based re-grouping
+/// would silently misfile onto the wrong rule. NUL can't appear in real
+/// LaTeX source, so it's safe as a frame delimiter. Must match
+/// `tools/dump_tex_violations.py`'s `_RULE_SENTINEL`.
+fn python_oracle_dump_all(python: &Path, fixture: &Path) -> HashMap<String, String> {
     let output = Command::new(python)
         .arg("-m")
         .arg("tools.dump_tex_violations")
-        .arg(rule_id)
+        .arg("--all")
         .arg(fixture)
         .current_dir(repo_root())
         .output()
-        .expect("failed to run tools.dump_tex_violations");
+        .expect("failed to run tools.dump_tex_violations --all");
     assert!(
         output.status.success(),
-        "dump_tex_violations failed on {rule_id} {}: {}",
+        "dump_tex_violations --all failed on {}: {}",
         fixture.display(),
         String::from_utf8_lossy(&output.stderr)
     );
-    String::from_utf8(output.stdout).expect("oracle output must be valid UTF-8")
+    let text = String::from_utf8(output.stdout).expect("oracle output must be valid UTF-8");
+
+    let mut parts = text.split('\x00');
+    assert_eq!(
+        parts.next(),
+        Some(""),
+        "expected output to start with the \\x00 sentinel"
+    );
+    let mut by_rule: HashMap<String, String> = HashMap::new();
+    loop {
+        let Some(rule_id) = parts.next() else { break };
+        let blob = parts
+            .next()
+            .unwrap_or_else(|| panic!("sentinel for {rule_id} missing its blob"));
+        by_rule.insert(rule_id.to_string(), blob.to_string());
+    }
+    by_rule
 }
 
 fn format_violation(v: &Violation) -> String {
@@ -209,8 +236,9 @@ fn all_tex_rules_match_python_oracle() {
             .replace('\\', "/");
         let source = std::fs::read_to_string(fixture)
             .unwrap_or_else(|e| panic!("failed to read {}: {e}", fixture.display()));
+        let oracle = python_oracle_dump_all(&python, fixture);
         for &rule_id in RULE_IDS {
-            let expected = python_oracle_dump(&python, rule_id, fixture);
+            let expected = oracle.get(rule_id).cloned().unwrap_or_default();
             let mut actual_violations = rust_violations(rule_id, fixture, &source);
             actual_violations.sort_by(|a, b| {
                 (a.line, a.column.unwrap_or(0), a.rule_id.as_str()).cmp(&(
