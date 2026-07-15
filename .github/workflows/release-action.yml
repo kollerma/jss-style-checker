@@ -3,13 +3,18 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:  # dry run: prints what the rolling tag update would do, pushes nothing
+    inputs:
+      tag:
+        description: 'Tag to simulate (e.g. v1.2.3) — no tag is created or pushed'
+        required: true
 
 permissions:
   contents: write
 
 jobs:
   rolling-tag:
-    if: ${{ !contains(github.ref_name, '-') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.ref_name, '-') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,10 +22,14 @@ jobs:
           fetch-depth: 0
       - name: Update rolling v<MAJOR> tag
         run: |
-          tag="${GITHUB_REF_NAME}"
+          tag="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
           # tag = vX.Y.Z; rolling = vX
           major="${tag%%.*}"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git tag -f "$major" "$tag"
-          git push -f origin "$major"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git tag -f "$major" "$tag"
+            git push -f origin "$major"
+          else
+            echo "dry run: would force-tag $major -> $tag and push it, but this is a manual dispatch — nothing pushed"
+          fi

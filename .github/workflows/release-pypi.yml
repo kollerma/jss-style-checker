@@ -19,6 +19,7 @@ on:
   push:
     tags:
       - 'v*-py'
+  workflow_dispatch: {}  # dry run: builds wheels/sdist as artifacts, skips the publish job
 
 permissions:
   contents: read
@@ -93,6 +94,7 @@ jobs:
           path: dist
 
   publish:
+    if: github.event_name == 'push'
     needs: [linux, windows, macos, sdist]
     runs-on: ubuntu-latest
     environment: pypi

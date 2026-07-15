@@ -18,6 +18,7 @@ on:
   push:
     tags:
       - 'v*-cli'
+  workflow_dispatch: {}  # dry run: `cargo publish --dry-run` + cross-compiled binaries, no publish/upload
 
 permissions:
   contents: write  # to upload release binaries
@@ -32,9 +33,16 @@ jobs:
 
       - name: Publish jsslint-core
         working-directory: rust
-        run: cargo publish -p jsslint-core --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        # workflow_dispatch runs `--dry-run`: packages and builds jsslint-core
+        # for verification without uploading it to crates.io. continue-on-error
+        # only applies to the dry run — `cargo publish --dry-run` also fails
+        # if this exact version is already live on crates.io, which is an
+        # expected/harmless outcome for a dry run re-run, not a real error.
+        continue-on-error: ${{ github.event_name != 'push' }}
+        run: cargo publish -p jsslint-core --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ github.event_name != 'push' && '--dry-run' || '' }}
 
       - name: Wait for jsslint-core to be indexed
+        if: github.event_name == 'push'
         # jsslint-cli depends on jsslint-core as a workspace path
         # dependency; `cargo publish` rewrites that to a registry
         # dependency, which requires the just-published version to
@@ -43,7 +51,14 @@ jobs:
 
       - name: Publish jsslint-cli
         working-directory: rust
-        run: cargo publish -p jsslint-cli --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        # On a dry run, jsslint-core was never actually published above, so
+        # jsslint-cli's registry-rewritten dependency won't resolve either —
+        # `cargo publish --dry-run` here still exercises packaging/build for
+        # jsslint-cli itself, but is expected to fail the dependency-resolution
+        # check unless jsslint-core is already published at this version.
+        # continue-on-error only applies to the dry run, same reasoning as above.
+        continue-on-error: ${{ github.event_name != 'push' }}
+        run: cargo publish -p jsslint-cli --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ github.event_name != 'push' && '--dry-run' || '' }}
 
   release-binaries:
     needs: publish-crates
@@ -85,7 +100,15 @@ jobs:
           if [ "${{ runner.os }}" = "Windows" ]; then src="${src}.exe"; fi
           cp "$src" "${{ matrix.artifact_name }}"
 
+      - name: Upload build artifact
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}
+
       - name: Upload to GitHub Release
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.artifact_name }}

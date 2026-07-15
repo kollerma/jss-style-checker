@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - 'v*-vscode'
+  workflow_dispatch: {}  # dry run: compiles + packages the .vsix, skips the marketplace publish steps
 
 permissions:
   contents: read
@@ -24,12 +25,20 @@ jobs:
       - name: Package
         working-directory: vscode-extension
         run: npx --yes vsce package
+      - name: Upload .vsix artifact
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: vscode-extension/*.vsix
       - name: Publish to VS Code marketplace
+        if: github.event_name == 'push'
         working-directory: vscode-extension
         run: npx --yes vsce publish
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
       - name: Publish to Open VSX
+        if: github.event_name == 'push'
         working-directory: vscode-extension
         run: npx --yes ovsx publish
         env:

@@ -17,6 +17,7 @@ on:
   push:
     tags:
       - 'v*-pypkg'
+  workflow_dispatch: {}  # dry run: builds the sdist/wheel as an artifact, skips the publish job
 
 permissions:
   contents: read
@@ -39,6 +40,7 @@ jobs:
           path: dist
 
   publish:
+    if: github.event_name == 'push'
     needs: [build]
     runs-on: ubuntu-latest
     environment: pypi
