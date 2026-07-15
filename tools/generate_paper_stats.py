@@ -62,7 +62,7 @@ MIN_PLANTS = 10  # per-rule recall reported only at >= this many plants
 PRECISION_GATE = 0.90
 # Release-artifact facts (update at the pre-submission gate; see
 # paper/revision-checklist.md items C1/C2).
-REPO_URL = "https://github.com/kollerma/jss-style-checker-dev"
+REPO_URL = "https://github.com/kollerma/jss-style-checker"
 PYPI_NAME = "jss-style-checker"
 
 _HEADER = (

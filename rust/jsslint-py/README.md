@@ -1,6 +1,6 @@
 # jsslint
 
-Native Python binding for the [JSS style checker](https://github.com/kollerma/jss-style-checker-dev)'s Rust core (`jsslint-core`).
+Native Python binding for the [JSS style checker](https://github.com/kollerma/jss-style-checker)'s Rust core (`jsslint-core`).
 
 ```python
 import jsslint

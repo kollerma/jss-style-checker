@@ -17,7 +17,7 @@ classifiers = [
 dynamic = ["version"]
 
 [project.urls]
-Repository = "https://github.com/kollerma/jss-style-checker-dev"
+Repository = "https://github.com/kollerma/jss-style-checker"
 
 [tool.maturin]
 module-name = "jsslint"
