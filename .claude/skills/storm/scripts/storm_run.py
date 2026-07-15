@@ -15,11 +15,11 @@ to make citation numbering deterministic and parallel-safe: each interview
 writes its own sources file, and merge collapses them into one numbered list.
 """
 
-import sys
+import glob
+import json
 import os
 import re
-import json
-import glob
+import sys
 
 
 def slugify(text, max_len=60):

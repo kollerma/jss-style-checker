@@ -56,10 +56,8 @@ static PATH_LIKE_RE: LazyLock<Regex> =
 // applied per whitespace-separated token so a real expression anywhere
 // in the sample still trips the operator check.
 static NAME_LIKE_TOKEN_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(
-        r"^(?:--?|\.)?[A-Za-z][A-Za-z0-9_.\-]*$|^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]*)+/?$",
-    )
-    .unwrap()
+    Regex::new(r"^(?:--?|\.)?[A-Za-z][A-Za-z0-9_.\-]*$|^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]*)+/?$")
+        .unwrap()
 });
 static SCIENTIFIC_NOTATION_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\b\d+(?:\.\d+)?[eE][-+]?\d+\b").unwrap());

@@ -311,8 +311,7 @@ static COLON_MARKUP_RE: LazyLock<Regex> = LazyLock::new(|| {
 });
 static AFTER_COLON_REST_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?s):\s*(.+)").unwrap());
-static AFTER_COLON_TOKEN_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r":\s*(\S+)").unwrap());
+static AFTER_COLON_TOKEN_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r":\s*(\S+)").unwrap());
 
 /// Reconstruct a light LaTeX source of `group` preserving markup macros
 /// and math delimiters (which `group_plain_text` strips). Mirrors
