@@ -41,8 +41,14 @@
   }
   button:hover { background: #084; }
   button:disabled { opacity: 0.5; cursor: default; }
+  button.secondary {
+    background: #fff;
+    color: #0a5;
+  }
+  button.secondary:hover { background: #f0faf5; }
   label { font-size: 0.9rem; color: #555; }
   select { font-size: 0.95rem; padding: 0.3rem 0.5rem; border-radius: 4px; }
+  p.hint { font-size: 0.85rem; color: #777; margin: 0.75rem 0 0; }
   #status { margin-top: 0.75rem; font-size: 0.9rem; color: #555; min-height: 1.2em; }
   #status.error { color: #b00020; }
   #results {
@@ -83,8 +89,10 @@
 
   <div class="panel">
     <div class="controls">
-      <button id="pick-button">Choose a folder…</button>
+      <button id="folder-button">Choose a folder…</button>
       <input id="folder-input" type="file" webkitdirectory multiple hidden>
+      <button id="files-button" class="secondary">Choose files…</button>
+      <input id="files-input" type="file" multiple accept=".tex,.ltx,.bib" hidden>
       <label>
         Mode:
         <select id="mode-select">
@@ -93,6 +101,13 @@
         </select>
       </label>
     </div>
+    <p class="hint">
+      "Choose a folder" scans everything in it before this page ever sees
+      it — slow or unresponsive if the folder also holds a lot of
+      unrelated files (a <code>.git</code> checkout, cached data, image
+      assets). If that happens, use "Choose files…" instead and
+      Cmd/Ctrl-click just your <code>.tex</code>/<code>.bib</code> files.
+    </p>
     <div id="status">Loading checker…</div>
   </div>
 
