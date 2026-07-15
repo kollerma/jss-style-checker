@@ -1,0 +1,24 @@
+{
+  "name": "jsslint-wasm",
+  "type": "module",
+  "collaborators": [
+    "Manuel Koller"
+  ],
+  "description": "Browser/WASM binding (Phase 5 stub — spec 018). No network access must ever be reachable from this crate; see the plan's crossref callout.",
+  "version": "1.0.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kollerma/jss-style-checker"
+  },
+  "files": [
+    "jsslint_wasm_bg.wasm",
+    "jsslint_wasm.js",
+    "jsslint_wasm.d.ts"
+  ],
+  "main": "jsslint_wasm.js",
+  "types": "jsslint_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
