@@ -18,20 +18,20 @@ render(
 }
 \arguments{
 \item{files}{A named character vector: names are file paths
-(\code{.tex}/\code{.ltx}/\code{.bib}), values are the file contents.}
+(`.tex`/`.ltx`/`.bib`), values are the file contents.}
 
-\item{journal}{Journal identifier (default: \code{"jss"}).}
+\item{journal}{Journal identifier (default: `"jss"`).}
 
-\item{mode}{\code{"author"} or \code{"reviewer"} (default: \code{"author"}).}
+\item{mode}{`"author"` or `"reviewer"` (default: `"author"`).}
 
-\item{output}{\code{"terminal"}, \code{"json"}, \code{"sarif"}, or \code{"html"}
-(default: \code{"terminal"}).}
+\item{output}{`"terminal"`, `"json"`, `"sarif"`, or `"html"`
+(default: `"terminal"`).}
 
 \item{ignore_rules}{Comma-separated rule ids to suppress.}
 
-\item{min_confidence}{\code{"low"}, \code{"medium"}, or \code{"high"}.}
+\item{min_confidence}{`"low"`, `"medium"`, or `"high"`.}
 
-\item{fail_on}{\code{"error"}, \code{"warning"}, or \code{"info"}.}
+\item{fail_on}{`"error"`, `"warning"`, or `"info"`.}
 
 \item{source_root}{Base directory for SARIF artifact URIs.}
 
@@ -41,6 +41,6 @@ render(
 The rendered report, as a single string.
 }
 \description{
-Mirrors \code{jsslint::render} (the PyO3 binding) / the WASM binding's
-\code{render()}.
+Mirrors `jsslint::render` (the PyO3 binding) / the WASM binding's
+`render()`.
 }
