@@ -14,6 +14,8 @@ $(SHLIB): $(STATLIB)
 # so the R wrapper signatures can never drift from the actual `#[extendr]`
 # functions.
 $(STATLIB):
+	rustc --version
+	cargo --version
 	cargo build --lib --release --locked --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR)
 	cargo run --bin document --release --locked --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR)
 

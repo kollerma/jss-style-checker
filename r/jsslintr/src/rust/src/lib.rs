@@ -14,8 +14,10 @@ use jsslint_core::config::{self, RawOverrides};
 use jsslint_core::engine::{self, ParsedDocument};
 use jsslint_core::{html_output, json_output, sarif, terminal};
 
-/// Lints `files` and renders the report in `output` format. Mirrors
-/// `jsslint::render` (the PyO3 binding) / the WASM binding's `render()`.
+/// Lint files against the JSS style guide
+///
+/// Mirrors `jsslint::render` (the PyO3 binding) / the WASM binding's
+/// `render()`.
 /// @param files A named character vector: names are file paths
 ///   (`.tex`/`.ltx`/`.bib`), values are the file contents.
 /// @param journal Journal identifier (default: `"jss"`).
