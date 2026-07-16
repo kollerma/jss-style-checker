@@ -1,0 +1,23 @@
+[package]
+name = "jsslint-core"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+authors = ["Manuel Koller"]
+repository = "https://github.com/kollerma/jss-style-checker"
+description = "Core rule engine for the JSS style checker (spec 018 Rust port)."
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+regex = "1"
+difflib = "0.4"
+toml = "1"
+
+[build-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[dev-dependencies]
+# Used by tests/parity.rs to shell out to `jss-lint` and compare output.

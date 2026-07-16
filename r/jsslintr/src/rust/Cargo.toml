@@ -17,8 +17,10 @@ path = "document.rs"
 extendr-api = "0.9"
 # The same rule engine every other spec-018 binding wraps (jsslint-cli,
 # jsslint-wasm, jsslint-py) — this crate is pure marshalling, no rule
-# logic of its own.
-jsslint-core = { path = "../../../../rust/jsslint-core" }
+# logic of its own. Vendored locally (not a path into the main rust/
+# workspace) because `R CMD build` only tars up files under r/jsslintr;
+# run tools/vendor-jsslint-core.sh after changing the canonical crate.
+jsslint-core = { path = "jsslint-core" }
 
 [profile.release]
 lto = true
