@@ -41,7 +41,7 @@ jobs:
 
       - name: Build
         working-directory: rust/jsslint-wasm
-        run: wasm-pack build --release --target bundler --locked
+        run: wasm-pack build --release --target bundler -- --locked
 
       - name: Upload package artifact
         if: github.event_name != 'push'
