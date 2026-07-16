@@ -1,0 +1,69 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# and https://github.com/extendr/rextendr/blob/main/.github/workflows/R-CMD-check.yaml
+# (jsslintr links a Rust static lib via extendr, so R's own toolchain
+# setup isn't enough — Windows in particular needs the GNU-target Rust
+# toolchain to match Rtools' linker).
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+name: R-CMD-check
+
+concurrency:
+  group: r-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macOS-latest,   r: 'release',  rust-version: 'stable'}
+          - {os: macOS-latest,   r: 'oldrel-1', rust-version: 'stable'}
+          - {os: windows-latest, r: 'release',  rust-version: 'stable-msvc', rust-target: 'x86_64-pc-windows-gnu'}
+          - {os: ubuntu-latest,  r: 'devel',    rust-version: 'stable', http-user-agent: 'release'}
+          - {os: ubuntu-latest,  r: 'release',  rust-version: 'stable'}
+          - {os: ubuntu-latest,  r: 'oldrel-1', rust-version: 'stable'}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.config.rust-version }}
+          targets: ${{ matrix.config.rust-target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: r/jsslintr/src/rust
+          shared-key: ${{ matrix.config.os }}-${{ matrix.config.r }}
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: r/jsslintr
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          working-directory: r/jsslintr
+          build_args: '"--no-manual"'
+          args: 'c("--no-manual", "--as-cran", "--no-stop-on-test-error")'
