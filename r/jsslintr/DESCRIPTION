@@ -9,7 +9,6 @@ Description: Lints LaTeX/BibTeX manuscripts against the Journal of Statistical
     binding (spec 018) via extendr.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
 SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65
 Depends:
     R (>= 4.2)
