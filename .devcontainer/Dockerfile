@@ -62,6 +62,10 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
   rustup target add wasm32-unknown-unknown && \
   chmod -R a+w /usr/local/rustup /usr/local/cargo
 
+# Install roxygen2 for jsslintr documentation/NAMESPACE generation.
+# cran.r-project.org is the CRAN mirror allowlisted in init-firewall.sh.
+RUN Rscript -e 'options(repos = c(CRAN = "https://cran.r-project.org")); install.packages("roxygen2")'
+
 # Ensure default node user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
   chown -R node:node /usr/local/share
