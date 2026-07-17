@@ -13,7 +13,10 @@ SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65
 Depends:
     R (>= 4.2)
 Suggests:
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
 Config/rextendr/version: 0.3.1

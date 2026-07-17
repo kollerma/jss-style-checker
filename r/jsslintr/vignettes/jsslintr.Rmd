@@ -1,0 +1,127 @@
+---
+title: "Checking a paper with jsslintr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Checking a paper with jsslintr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+# Run every chunk inside a scratch directory so the example can use
+# plain relative file names, as you would in a real paper directory.
+paper_dir <- tempfile("jsslintr-demo-")
+dir.create(paper_dir)
+knitr::opts_knit$set(root.dir = paper_dir)
+```
+
+jsslintr checks LaTeX/BibTeX manuscripts against the Journal of
+Statistical Software (JSS) style guide and can apply many of the
+fixes automatically. This vignette walks through the typical
+workflow: lint, inspect, fix, re-lint.
+
+## A small example paper
+
+Let's write a deliberately sloppy two-file manuscript to work with:
+
+```{r}
+writeLines(c(
+  "\\documentclass[nojss]{jss}",
+  "\\author{Jane Doe\\\\University of Somewhere}",
+  "\\title{A great package for doing things in R}",
+  "\\Abstract{We present a package for R, e.g. for plotting.}",
+  "\\Keywords{stuff, things}",
+  "\\begin{document}",
+  "\\section{introduction}",
+  "We use R and the ggplot2 package for our p-values.",
+  "\\end{document}"
+), "paper.tex")
+
+writeLines(c(
+  "@article{smith2020,",
+  "  author = {John Smith},",
+  "  title = {Some Methods for Data},",
+  "  journal = {Journal of Statistical Software},",
+  "  year = {2020},",
+  "  volume = {95},",
+  "  pages = {1--20}",
+  "}"
+), "refs.bib")
+```
+
+## Lint
+
+`jsslint()` takes the file paths, reads them, and returns a check
+result. Printing it gives a quick overview; each line is one issue
+in `file:line:column` form. (Called with no arguments, `jsslint()`
+checks every `.tex`/`.ltx`/`.bib` file in the working directory.)
+
+```{r}
+library(jsslintr)
+res <- jsslint(c("paper.tex", "refs.bib"))
+res
+```
+
+## Inspect
+
+`summary()` breaks the issues down by rule, file, and style-guide
+category:
+
+```{r}
+summary(res)
+```
+
+For programmatic access — filtering, counting, or feeding issues
+into your own tooling — `as.data.frame()` gives one row per issue,
+including the suggested rewrite and whether an automatic fix exists:
+
+```{r}
+df <- as.data.frame(res)
+df[df$fixable, c("file", "line", "rule_id", "suggestion")]
+```
+
+## Fix
+
+`jssfix()` applies the automatic fixes in place. Pass the check
+result (its files and options are reused) or file paths directly.
+With `dry_run = TRUE` it only shows the diff of what would change:
+
+```{r}
+jssfix(res, dry_run = TRUE)
+```
+
+That looks right, so let it write the files:
+
+```{r}
+jssfix(res)
+```
+
+Fixes are applied atomically, and a fix that would reintroduce its
+own violation is rolled back. Overlapping fixes are resolved to one
+winner per span; if any were skipped as conflicting, running
+`jssfix()` again picks them up. A `rules` argument restricts fixing
+to selected rules, e.g. `jssfix(res, rules = "JSS-HOUSE-001")`.
+
+## Re-lint
+
+The remaining issues need manual attention — the printed
+suggestions say what to do:
+
+```{r}
+jsslint(c("paper.tex", "refs.bib"))
+```
+
+## Lower-level access
+
+`render()` is the bare in-memory binding underneath `jsslint()`: it
+takes a named character vector (names = paths, values = contents)
+and returns a report rendered as `"terminal"`, `"json"`, `"sarif"`,
+or `"html"` text — useful when the files never touch disk or you
+want machine-readable output:
+
+```{r}
+cat(substr(render(c("paper.tex" = "\\documentclass{article}"),
+  output = "json"
+), 1, 300), "...\n")
+```
