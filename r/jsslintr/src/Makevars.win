@@ -1,0 +1,50 @@
+# R for Windows only ships Rtools' GNU (MinGW-w64) toolchain, not an MSVC
+# one, so the Rust build must target x86_64-pc-windows-gnu explicitly —
+# left to Cargo's default host toolchain it picks -msvc, which produces
+# object code Rtools' linker can't consume (this is also why R doesn't
+# ship an MSVC-style R.lib import library, only what Rtools' ld needs).
+# ws2_32/advapi32/userenv/bcrypt/ntdll are what Rust's std runtime itself
+# needs on Windows; see extendr/rextendr's own Makevars.win.in template
+# for the same set.
+TARGET = x86_64-pc-windows-gnu
+TARGET_DIR = ./rust/target
+LIBDIR = $(TARGET_DIR)/$(TARGET)/release
+STATLIB = $(LIBDIR)/libjsslintr.a
+PKG_LIBS = -L$(LIBDIR) -ljsslintr -lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
+
+all: $(SHLIB) rust_clean
+
+.PHONY: $(STATLIB)
+
+$(SHLIB): $(STATLIB)
+
+# Unlike src/Makevars (Unix), this doesn't regenerate R/extendr-wrappers.R
+# via `cargo run --bin document`: linking a Rust *binary* (as opposed to
+# the staticlib below, which R's own final link step assembles into
+# jsslintr.dll) against R needs R's import library, and R for Windows
+# doesn't ship one in a form Cargo's linker can consume — the same root
+# cause worked around above for the staticlib itself doesn't have a
+# Cargo-level fix for a `cargo run`-built binary; extendr/rextendr's own
+# Makevars.win.in routes around it with a hand-linked C driver instead of
+# a Cargo-built binary. Regenerate R/extendr-wrappers.R on macOS/Linux
+# (where `cargo run --bin document` works) after changing the #[extendr]
+# API surface, and commit the result — Windows installs from that
+# checked-in copy.
+#
+# libgcc_mock/libgcc_eh.a: Rtools' bundled gcc doesn't ship a libgcc_eh.a
+# matching what the windows-gnu target's panic-unwinding code expects;
+# rextendr's template papers over this with an empty stub on the link
+# search path, same as here.
+$(STATLIB):
+	rustc --version
+	cargo --version
+	mkdir -p "$(TARGET_DIR)/libgcc_mock"
+	touch "$(TARGET_DIR)/libgcc_mock/libgcc_eh.a"
+	export LIBRARY_PATH="$$LIBRARY_PATH;$(CURDIR)/$(TARGET_DIR)/libgcc_mock" && \
+		cargo build --lib --release --locked --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) --target=$(TARGET)
+
+rust_clean: $(SHLIB)
+	rm -Rf $(TARGET_DIR)
+
+clean:
+	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) $(TARGET_DIR)
