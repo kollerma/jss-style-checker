@@ -17,7 +17,16 @@ repo_root="$(cd "$pkg_dir/../.." && pwd)"
 core_src="$repo_root/rust/jsslint-core"
 core_dest="$pkg_dir/src/rust/jsslint-core"
 catalogue_src="$repo_root/specs/003-jss-rule-catalogue"
-catalogue_dest="$pkg_dir/src/rust/specs/003-jss-rule-catalogue"
+# Deliberately NOT src/rust/specs: that would put a directory literally
+# named "specs" directly in the Cargo workspace root (src/rust, where
+# Cargo.toml lives), which is also the cwd the Rust build's linker step
+# runs from. Rtools' relocatable mingw-w64 gcc probes its cwd for a
+# "specs" override file at startup; finding a directory there instead of
+# a file makes it fail with "cannot read spec file './specs': Permission
+# denied" on Windows (win-builder). One extra level of nesting keeps
+# find_repo_root()'s `specs/003-jss-rule-catalogue/...` marker intact
+# while keeping src/rust itself free of a literal "specs" entry.
+catalogue_dest="$pkg_dir/src/specs/003-jss-rule-catalogue"
 
 rm -rf "$core_dest"
 mkdir -p "$core_dest"
