@@ -24,4 +24,18 @@ NULL
 #' @export
 render <- function(files, journal = NULL, mode = NULL, output = NULL, ignore_rules = NULL, min_confidence = NULL, fail_on = NULL, source_root = NULL, verbose = NULL) .Call(wrap__render, files, journal, mode, output, ignore_rules, min_confidence, fail_on, source_root, verbose)
 
+#' Structured lint results backing `jsslint()` — internal; the
+#' user-facing wrapper turns the parallel vectors into data frames.
+#' @noRd
+lint_data <- function(files, journal = NULL, mode = NULL, ignore_rules = NULL, min_confidence = NULL, verbose = NULL) .Call(wrap__lint_data, files, journal, mode, ignore_rules, min_confidence, verbose)
+
+#' Auto-fix backing `jssfix()` — internal. Lints `files` (named
+#' character vector, same shape as `render`), then hands the report to
+#' `fixer::apply_fixes`, which reads/writes the files at the paths
+#' given by `names(files)` on disk (atomic write + re-validation with
+#' rollback on regression). In dry-run mode nothing is written and the
+#' captured `output` holds the unified diffs that would be applied.
+#' @noRd
+fix_data <- function(files, dry_run = FALSE, rules = NULL, journal = NULL, mode = NULL, ignore_rules = NULL, min_confidence = NULL, verbose = NULL) .Call(wrap__fix_data, files, dry_run, rules, journal, mode, ignore_rules, min_confidence, verbose)
+
 # nolint end

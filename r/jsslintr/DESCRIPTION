@@ -15,5 +15,6 @@ Depends:
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
 Config/rextendr/version: 0.3.1
 Config/roxygen2/version: 8.0.0
