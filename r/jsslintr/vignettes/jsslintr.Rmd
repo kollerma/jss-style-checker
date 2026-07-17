@@ -1,8 +1,8 @@
 ---
-title: "Checking a paper with jsslintr"
+title: "Checking a Paper with jsslintr"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Checking a paper with jsslintr}
+  %\VignetteIndexEntry{Checking a Paper with jsslintr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -58,7 +58,7 @@ in `file:line:column` form. (Called with no arguments, `jsslint()`
 checks every `.tex`/`.ltx`/`.bib` file in the working directory.)
 
 ```{r}
-library(jsslintr)
+library("jsslintr")
 res <- jsslint(c("paper.tex", "refs.bib"))
 res
 ```
@@ -101,7 +101,7 @@ Fixes are applied atomically, and a fix that would reintroduce its
 own violation is rolled back. Overlapping fixes are resolved to one
 winner per span; if any were skipped as conflicting, running
 `jssfix()` again picks them up. A `rules` argument restricts fixing
-to selected rules, e.g. `jssfix(res, rules = "JSS-HOUSE-001")`.
+to selected rules, e.g., `jssfix(res, rules = "JSS-HOUSE-001")`.
 
 ## Re-lint
 
