@@ -15,7 +15,9 @@ authors = ["Manuel Koller"]
 repository = "https://github.com/kollerma/jss-style-checker"
 
 [workspace.dependencies]
-jsslint-core = { path = "jsslint-core", version = "1.0.1" }
+# version is a range, not the exact release, so a suite version bump doesn't
+# have to touch this line — crates.io still requires *a* version on the dep.
+jsslint-core = { path = "jsslint-core", version = "1" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 clap = { version = "4", features = ["derive"] }

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jss-style-checker"
-version = "1.0.1"
+dynamic = ["version"]
 description = "Style checker for manuscripts submitted to the Journal of Statistical Software (JSS)."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -66,6 +66,12 @@ jss = "texlint.journals.jss:JSSJournal"
 [project.urls]
 Homepage = "https://github.com/kollerma/jss-style-checker"
 Issues = "https://github.com/kollerma/jss-style-checker/issues"
+
+# Single source of truth for the Python package version: texlint.__version__,
+# which the scripts/set_version.py propagator keeps in sync with the root
+# VERSION file (guarded by tests/unit/test_version_single_source.py).
+[tool.hatch.version]
+path = "src/texlint/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/texlint", "eval"]
