@@ -29,11 +29,6 @@
     "configuration": {
       "title": "JSS Style Checker",
       "properties": {
-        "jssStyleChecker.serverPath": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the `jsslint` binary (the Rust CLI, install with `cargo install jsslint-cli`). Leave empty to use `jsslint` on PATH."
-        },
         "jssStyleChecker.severityOverrides": {
           "type": "object",
           "default": {},
@@ -85,6 +80,7 @@
     ]
   },
   "scripts": {
+    "build:wasm": "cd ../rust/jsslint-wasm && wasm-pack build --release --target nodejs --out-dir ../../vscode-extension/wasm",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
@@ -94,9 +90,6 @@
     "@types/node": "^25.9.1",
     "@types/vscode": "^1.85.0",
     "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "vscode-languageclient": "^9.0.0"
   },
   "repository": {
     "type": "git",

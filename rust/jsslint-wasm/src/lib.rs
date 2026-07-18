@@ -1,4 +1,4 @@
-//! Browser/npm binding (spec 018 Phase 5), built with `wasm-bindgen`.
+//! Browser/npm binding, built with `wasm-bindgen`.
 //! **Hard constraint (see the plan's network-dependency callout): this
 //! crate must never link anything equivalent to `texlint.crossref`'s
 //! live DOI verification.** The privacy promise ("manuscripts never
@@ -15,9 +15,11 @@
 //! needed, and no path on this target ever touches anything outside
 //! the in-memory `files` the caller passes in.
 
+use std::collections::HashMap;
+
 use jsslint_core::config::{self, RawOverrides};
 use jsslint_core::engine::ParsedDocument;
-use jsslint_core::{engine, html_output, json_output, sarif, terminal};
+use jsslint_core::{engine, fixer, html_output, json_output, sarif, terminal};
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
@@ -36,44 +38,54 @@ struct LintRequest {
     fail_on: Option<String>,
     source_root: Option<String>,
     verbose: Option<bool>,
+    code_width: Option<u32>,
+    severity_overrides: Option<HashMap<String, String>>,
 }
 
-/// Lints `request.files` and renders the report in `request.output`
-/// format. Mirrors `jsslint::render` / `jsslint-cli`'s bare-lint
-/// invocation. `request` is a JS object shaped like `LintRequest`
-/// (camelCase keys: `files`, `journal`, `mode`, `output`,
-/// `ignoreRules`, `minConfidence`, `failOn`, `sourceRoot`, `verbose`).
-#[wasm_bindgen]
-pub fn render(request: JsValue) -> Result<String, JsValue> {
-    let req: LintRequest = serde_wasm_bindgen::from_value(request)
-        .map_err(|e| JsValue::from_str(&format!("invalid lint request: {e}")))?;
-
-    let document =
-        ParsedDocument::from_sources(&req.files).map_err(|e| JsValue::from_str(&e.to_string()))?;
-
-    let overrides = RawOverrides {
-        journal: req.journal,
-        mode: req.mode,
-        output: req.output,
-        ignore_rules: req.ignore_rules.map(|s| {
+fn overrides_from(req: &LintRequest) -> RawOverrides {
+    RawOverrides {
+        journal: req.journal.clone(),
+        mode: req.mode.clone(),
+        output: req.output.clone(),
+        ignore_rules: req.ignore_rules.as_ref().map(|s| {
             s.split(',')
                 .map(|p| p.trim().to_string())
                 .filter(|p| !p.is_empty())
                 .collect()
         }),
         verbose: req.verbose,
-        code_width: None,
-        source_root: req.source_root.map(std::path::PathBuf::from),
-        min_confidence: req.min_confidence,
-        fail_on: req.fail_on,
-        severity_overrides: None,
-    };
-    // No meaningful "current working directory" in a browser; `.` is
-    // never resolvable to a real `.jss-lint.toml` on this target
-    // anyway (see module doc comment), so this is just a stable,
-    // harmless base path.
-    let cfg = config::load(std::path::Path::new("."), &overrides);
+        code_width: req.code_width,
+        // No meaningful cwd in a browser; `.` never resolves to a real
+        // `.jss-lint.toml` on this target (see module docs), so it's just a
+        // stable, harmless base path.
+        source_root: req.source_root.as_ref().map(std::path::PathBuf::from),
+        min_confidence: req.min_confidence.clone(),
+        fail_on: req.fail_on.clone(),
+        severity_overrides: req.severity_overrides.clone(),
+    }
+}
+
+fn lint(
+    req: &LintRequest,
+) -> Result<(config::ToolConfig, jsslint_core::report::ComplianceReport), JsValue> {
+    let document =
+        ParsedDocument::from_sources(&req.files).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let cfg = config::load(std::path::Path::new("."), &overrides_from(req));
     let report = engine::run(&cfg, &document);
+    Ok((cfg, report))
+}
+
+/// Lints `request.files` and renders the report in `request.output`
+/// format. Mirrors `jsslint::render` / `jsslint-cli`'s bare-lint
+/// invocation. `request` is a JS object shaped like `LintRequest`
+/// (camelCase keys: `files`, `journal`, `mode`, `output`, `ignoreRules`,
+/// `minConfidence`, `failOn`, `sourceRoot`, `verbose`, `codeWidth`,
+/// `severityOverrides`).
+#[wasm_bindgen]
+pub fn render(request: JsValue) -> Result<String, JsValue> {
+    let req: LintRequest = serde_wasm_bindgen::from_value(request)
+        .map_err(|e| JsValue::from_str(&format!("invalid lint request: {e}")))?;
+    let (cfg, report) = lint(&req)?;
 
     let rendered = match cfg.output {
         config::OutputFormat::Json => json_output::render(&report),
@@ -82,4 +94,44 @@ pub fn render(request: JsValue) -> Result<String, JsValue> {
         config::OutputFormat::Html => html_output::render(&report, cfg.mode),
     };
     Ok(rendered)
+}
+
+/// Applies every available auto-fix in memory and returns the files whose
+/// contents changed, as `[path, fixedContents]` pairs (same shape as the
+/// `files` input). Files with no applicable fix are omitted. Takes the same
+/// request shape as `render`; the `output` field is ignored. No filesystem
+/// access — the caller writes the results back however it likes.
+#[wasm_bindgen]
+pub fn fix(request: JsValue) -> Result<JsValue, JsValue> {
+    let req: LintRequest = serde_wasm_bindgen::from_value(request)
+        .map_err(|e| JsValue::from_str(&format!("invalid fix request: {e}")))?;
+    let (_cfg, report) = lint(&req)?;
+
+    let mut by_file: std::collections::BTreeMap<String, Vec<fixer::Candidate>> =
+        std::collections::BTreeMap::new();
+    for c in fixer::candidates_from_violations(&report.violations) {
+        by_file.entry(c.file.clone()).or_default().push(c);
+    }
+
+    let originals: HashMap<&str, &str> =
+        req.files.iter().map(|(p, c)| (p.as_str(), c.as_str())).collect();
+
+    let mut changed: Vec<(String, String)> = Vec::new();
+    for (file, candidates) in by_file {
+        let (applied, _skipped) = fixer::resolve_conflicts(candidates);
+        if applied.is_empty() {
+            continue;
+        }
+        let Some(source) = originals.get(file.as_str()) else {
+            continue;
+        };
+        let chars: Vec<char> = source.chars().collect();
+        let fixed = fixer::apply_to_text(&chars, &applied);
+        if &fixed != source {
+            changed.push((file, fixed));
+        }
+    }
+
+    serde_wasm_bindgen::to_value(&changed)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize fix result: {e}")))
 }

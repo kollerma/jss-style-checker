@@ -1,9 +1,18 @@
 name: vscode-publish
+
+# Builds the JSS Style Checker VS Code extension and publishes it to the
+# VS Code Marketplace and Open VSX. The extension runs the checker in-process
+# via its WebAssembly build (jsslint-wasm), so this is a single universal
+# VSIX — no per-platform binaries. Triggered by a `v*-vscode` tag.
+#
+# Auth: PATs (VSCE_PAT for the Marketplace, OVSX_PAT for Open VSX) — the two
+# marketplaces don't offer OIDC trusted publishing.
+
 on:
   push:
     tags:
       - 'v*-vscode'
-  workflow_dispatch: {}  # dry run: compiles + packages the .vsix, skips the marketplace publish steps
+  workflow_dispatch: {}  # dry run: builds the WASM + .vsix, skips the publish steps
 
 permissions:
   contents: read
@@ -13,30 +22,49 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: latest
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Build the WASM engine
+        working-directory: vscode-extension
+        run: npm run build:wasm
+
       - name: Install
         working-directory: vscode-extension
         run: npm ci
+
       - name: Compile
         working-directory: vscode-extension
         run: npm run compile
+
       - name: Package
         working-directory: vscode-extension
         run: npx --yes vsce package
+
       - name: Upload .vsix artifact
         if: github.event_name != 'push'
         uses: actions/upload-artifact@v4
         with:
           name: vsix
           path: vscode-extension/*.vsix
+
       - name: Publish to VS Code marketplace
         if: github.event_name == 'push'
         working-directory: vscode-extension
         run: npx --yes vsce publish
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
       - name: Publish to Open VSX
         if: github.event_name == 'push'
         working-directory: vscode-extension

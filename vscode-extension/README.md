@@ -3,26 +3,22 @@
 Lint LaTeX / Sweave / R Markdown manuscripts against the JSS style
 guide directly inside VS Code, as you type.
 
-The extension runs the JSS style checker's language server — the standalone
-Rust `jsslint` binary. No Python required. It uses `jsslint` on your PATH, or
-you can point it at a specific binary with `jssStyleChecker.serverPath`.
+The checker runs entirely inside the extension via WebAssembly — no Python, no
+separate binary, nothing to install. Manuscripts never leave your machine.
 
 ## Install
 
 ```sh
-cargo install jsslint-cli          # provides the `jsslint` binary
 code --install-extension kollerma.jss-style-checker
 ```
 
-Alternatively, download a prebuilt `jsslint` binary from the project's
-[GitHub releases](https://github.com/kollerma/jss-style-checker/releases) and
-set `jssStyleChecker.serverPath` to its path.
+Or find "JSS Style Checker" in the VS Code Marketplace / Open VSX. That's it —
+the engine is bundled.
 
 ## Settings
 
 | Setting                                | Default      | Description                                                |
 | -------------------------------------- | ------------ | ---------------------------------------------------------- |
-| `jssStyleChecker.serverPath`           | `""`         | Path to the `jsslint` binary (default: `jsslint` on PATH).  |
 | `jssStyleChecker.severityOverrides`    | `{}`         | Per-rule severity override map.                             |
 | `jssStyleChecker.ignoreRules`          | `[]`         | Rule ids to suppress.                                       |
 | `jssStyleChecker.codeWidth`            | `80`         | Max line width for `JSS-WIDTH-001`.                         |
@@ -30,17 +26,18 @@ set `jssStyleChecker.serverPath` to its path.
 
 ## Commands
 
-- **jss-lint: Run init** — generate `.jss-lint.toml` for the
+- **jss-lint: Run init** — write a starter `.jss-lint.toml` in the
   workspace folder.
-- **jss-lint: Apply all fixes** — apply every safe-confidence
-  auto-fix across open buffers.
+- **jss-lint: Apply all fixes** — apply every available auto-fix to the
+  active file.
 
 ## Develop
 
 ```sh
 cd vscode-extension
 npm install
-npm run watch    # incremental TS build
+npm run build:wasm   # compile the Rust engine to WASM (needs Rust + wasm-pack)
+npm run watch        # incremental TS build
 ```
 
 In a separate VS Code window, press `F5` to launch the Extension
