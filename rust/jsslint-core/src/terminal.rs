@@ -351,8 +351,13 @@ fn collapse_widths(mut widths: Vec<usize>, wrapable: &[bool], max_width: usize) 
         let mut remaining = excess;
         let mut total_ratio = candidates.len() as i64;
         for &i in &candidates {
+            // Python's `round()` on a float is round-half-to-even, not
+            // `f64::round()`'s round-half-away-from-zero — an exact
+            // `.5` tie here is a realistic occurrence (small integer
+            // ratios), not a hypothetical edge case; ported this way
+            // once already in `conformance.rs::python_round_to_i64`.
             let distributed =
-                max_reduce.min((remaining as f64 / total_ratio as f64).round() as i64);
+                max_reduce.min((remaining as f64 / total_ratio as f64).round_ties_even() as i64);
             widths[i] = (widths[i] as i64 - distributed).max(0) as usize;
             remaining -= distributed;
             total_ratio -= 1;

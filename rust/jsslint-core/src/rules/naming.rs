@@ -27,7 +27,7 @@ static BARE_URL_RE: LazyLock<Regex> =
 /// members and would wrongly fire on e.g. bare "R") — mirrors
 /// `naming.py::check_jss_name_001`'s `token not in CANONICAL` guard.
 pub fn check_name_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
     let mut ancestors: Vec<&Node> = Vec::new();

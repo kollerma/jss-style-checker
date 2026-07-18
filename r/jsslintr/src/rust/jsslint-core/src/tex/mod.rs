@@ -27,6 +27,14 @@ pub struct ParsedTex {
     pub source: String,
     pub chars: Vec<char>,
     pub nodes: Vec<Node>,
+    /// Zero for a normal `.tex`/`.rnw` file. Non-zero for a `.Rmd`
+    /// raw-LaTeX prose fragment (see `crate::rmd`): `chars`/`node.pos`
+    /// stay 0-based within the fragment's own (unpadded) text — same
+    /// as Python's `node.pos`, which `_OffsetWalker` never touches —
+    /// while every rule module's `LineIndex::with_offset(&parsed.chars,
+    /// parsed.line_offset)` call adds this back in so reported lines
+    /// stay source-accurate on the original `.Rmd`.
+    pub line_offset: u32,
 }
 
 pub fn parse_tex_source(source: &str) -> ParsedTex {
@@ -36,5 +44,6 @@ pub fn parse_tex_source(source: &str) -> ParsedTex {
         source: preprocessed,
         chars,
         nodes,
+        line_offset: 0,
     }
 }

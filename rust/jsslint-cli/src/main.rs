@@ -48,7 +48,10 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-const SUPPORTED_SUFFIXES: &[&str] = &[".tex", ".ltx", ".bib"];
+/// Mirrors `cli.py::_SUPPORTED_SUFFIXES`. Kept in the same sorted order
+/// Python's `', '.join(sorted(_SUPPORTED_SUFFIXES))` produces, since
+/// this array is also joined verbatim into user-facing messages below.
+const SUPPORTED_SUFFIXES: &[&str] = &[".bib", ".ltx", ".rmd", ".rnw", ".tex"];
 const PARSE_RULE_ID: &str = "JSS-PARSE-000";
 
 #[derive(Parser)]

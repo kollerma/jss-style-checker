@@ -395,7 +395,7 @@ fn check_bare_terms(
     skip_initials: bool,
     emit_fix: bool,
 ) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, ancestors| {
         let Node::Chars(c) = node else { return };
@@ -533,7 +533,7 @@ fn project_title_plain_text(group: &GroupNode) -> String {
 /// Flags `\title{pkgname ...}` openings as MARKUP-002. Mirrors
 /// `markup.py::_check_title_package_idiom`.
 fn check_title_package_idiom(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |_parent, _idx, node| {
         let Node::Macro(m) = node else { return };
@@ -705,7 +705,7 @@ fn is_inside_jss_markup(ancestors: &[&Node]) -> bool {
 /// sentinel values wrapped in `\code{}`; `\texttt{}` retargeted to the
 /// appropriate JSS markup macro.
 pub fn check_markup_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let wrappers = custom_code_wrapper_macros(&parsed.source);
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
@@ -991,7 +991,7 @@ fn build_markup_004_fix(macro_node: &MacroNode) -> Option<Fix> {
 /// JSS-MARKUP-004 — section titles with markup supply a plain-text
 /// optional arg: `\section[plain]{markup}`.
 pub fn check_markup_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |_parent, _idx, node| {
         let Node::Macro(m) = node else { return };

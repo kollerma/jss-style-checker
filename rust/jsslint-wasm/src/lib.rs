@@ -114,8 +114,11 @@ pub fn fix(request: JsValue) -> Result<JsValue, JsValue> {
         by_file.entry(c.file.clone()).or_default().push(c);
     }
 
-    let originals: HashMap<&str, &str> =
-        req.files.iter().map(|(p, c)| (p.as_str(), c.as_str())).collect();
+    let originals: HashMap<&str, &str> = req
+        .files
+        .iter()
+        .map(|(p, c)| (p.as_str(), c.as_str()))
+        .collect();
 
     let mut changed: Vec<(String, String)> = Vec::new();
     for (file, candidates) in by_file {

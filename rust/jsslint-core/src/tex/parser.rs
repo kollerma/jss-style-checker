@@ -207,31 +207,39 @@ impl<'a> Parser<'a> {
             .copied()
     }
 
-    /// TeX whitespace skip: spaces/tabs freely, and a newline UNLESS
-    /// the very next char is also a newline (blank-line / paragraph
-    /// boundary — left untouched). See module docs rule 1.
-    fn skip_tex_whitespace(&self, mut pos: usize) -> usize {
+    /// TeX whitespace skip (control-word / macro post-space eating).
+    /// Mirrors pylatexenc's tokenizer loop exactly: consume ANY
+    /// Unicode-whitespace char (not just space/tab/`\n` — `\r`, form
+    /// feed, etc. all count, like Python's `str.isspace()`), UNLESS
+    /// doing so would make the just-consumed run end with a LITERAL
+    /// `"\n\n"` (two LF in a row — a paragraph boundary), in which case
+    /// back off those 2 chars and stop. This is a literal `"\n\n"`
+    /// check, not "any two newline-class chars in a row": a `\r\n\r\n`
+    /// blank line (CRLF) does NOT trigger it and is consumed in full —
+    /// see module docs rule 1.
+    fn skip_tex_whitespace(&self, pos: usize) -> usize {
         let n = self.len();
-        while pos < n {
-            match self.chars[pos] {
-                ' ' | '\t' => pos += 1,
-                '\n' => {
-                    if pos + 1 < n && self.chars[pos + 1] == '\n' {
-                        break;
-                    }
-                    pos += 1;
-                }
-                _ => break,
+        let mut i = pos;
+        while i < n && self.chars[i].is_whitespace() {
+            i += 1;
+            if i - pos >= 2 && self.chars[i - 2] == '\n' && self.chars[i - 1] == '\n' {
+                i -= 2;
+                break;
             }
         }
-        pos
+        i
     }
 
     fn parse_comment(&self, pos: usize) -> (CommentNode, usize) {
         debug_assert_eq!(self.chars[pos], '%');
         let n = self.len();
         let mut i = pos + 1;
-        while i < n && self.chars[i] != '\n' {
+        // `\r` terminates a comment exactly like `\n` — mirrors
+        // pylatexenc's tokenizer regex `(\n|\r|\n\r)(?P<extraspace>\s*)`,
+        // which matches whichever of `\n`/`\r` occurs first (a bare `\r`
+        // stops the comment scan on its own, `\r\n` is NOT treated as
+        // one atomic terminator).
+        while i < n && self.chars[i] != '\n' && self.chars[i] != '\r' {
             i += 1;
         }
         let text_end = i;
@@ -239,7 +247,15 @@ impl<'a> Parser<'a> {
         // UNLESS doing so would cross into a blank line — same rule as
         // control-word whitespace-eating (`skip_tex_whitespace`); empirically
         // verified against pylatexenc (module docs rule 1 applies here too).
-        let span_end = if i < n && !(i + 1 < n && self.chars[i + 1] == '\n') {
+        // `\r` counts as a newline for THIS check too: since a bare `\r`
+        // is itself "the terminator" the regex matches, a `\r\n` pair
+        // means the very next char after that terminator is ALSO
+        // newline-class, so pylatexenc's paragraph-break branch fires —
+        // net effect: a `\r\n` line ending is never consumed into a
+        // comment's span at all (differs from a plain `\n`, which IS
+        // consumed when not followed by a second newline).
+        let is_newline_class = |c: char| c == '\n' || c == '\r';
+        let span_end = if i < n && !(i + 1 < n && is_newline_class(self.chars[i + 1])) {
             i + 1
         } else {
             i
@@ -527,13 +543,23 @@ impl<'a> Parser<'a> {
         let body_end = i;
         let span_end = if i < n { i + marker.len() } else { i };
         let body_text: String = self.chars[pos..body_end].iter().collect();
-        let nodelist = vec![Node::Chars(CharsNode {
+        // Mirrors pylatexenc's `VerbatimArgsParser`: the raw body lives
+        // in the environment's ARGUMENT list (`nodeargd.argnlist`), not
+        // its `nodelist` — `nodelist` is empty. This matters beyond
+        // cosmetics: `prose::walk`/`_walk_with_context` only recurse
+        // into `nodelist` for an `Environment` node, so a body stored
+        // there would be visible to prose-context walking, while one
+        // stored in `args` (matching pylatexenc) is invisible to it —
+        // and WIDTH-001/CODE-* read `env.nodelist` too, so this also
+        // reproduces Python's (accidental, but real) gap where content
+        // inside a literal `verbatim` env is never width/style-checked.
+        let verbatim_arg = vec![Some(Node::Chars(CharsNode {
             span: Span {
                 pos,
                 len: body_end - pos,
             },
             chars: body_text,
-        })];
+        }))];
         (
             Node::Environment(EnvironmentNode {
                 span: Span {
@@ -541,8 +567,8 @@ impl<'a> Parser<'a> {
                     len: span_end - macro_start,
                 },
                 environmentname: name,
-                args: Vec::new(),
-                nodelist,
+                args: verbatim_arg,
+                nodelist: Vec::new(),
             }),
             span_end,
         )
@@ -614,6 +640,26 @@ impl<'a> Parser<'a> {
     /// Simplified single-token read for an unbraced mandatory argument
     /// — see module docs' "known simplification" note.
     fn parse_single_token(&self, pos: usize) -> (Node, usize) {
+        if self.chars[pos] == '}' {
+            // A lone closing brace can never BE an argument — it's
+            // whatever group we're already inside trying to close.
+            // Mirrors pylatexenc's `get_latex_expression`'s
+            // `tok.tok == 'brace_close'` branch: return an empty node
+            // at this position WITHOUT consuming the brace, so the
+            // enclosing group's own close-brace scan sees it next.
+            // Without this, a macro used bare (no explicit `{...}`) as
+            // the last thing before a group closes — e.g.
+            // `\newcommand{\mbf}{ \mathbf }` — swallows the `}` as
+            // `\mathbf`'s "argument", and the enclosing group never
+            // finds its own terminator, running away to end of input.
+            return (
+                Node::Chars(CharsNode {
+                    span: Span { pos, len: 0 },
+                    chars: String::new(),
+                }),
+                pos,
+            );
+        }
         if self.chars[pos] == '\\' {
             let n = self.len();
             if pos + 1 >= n {

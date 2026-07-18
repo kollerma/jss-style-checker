@@ -38,6 +38,33 @@ PAPERS = [
     ),
 ]
 
+# Every `.Rnw` file in the recall corpus (see the Rust `engine_parity.rs`
+# tests for why the full set, not a sample) plus the `.Rmd` fixtures
+# (no `.Rmd` recall corpus exists). `malformed-yaml.Rmd` is excluded —
+# its `JSS-PARSE-000` warning message is a documented, out-of-scope
+# PyYAML-vs-this-port's-own-YAML-parser text mismatch on the Rust side,
+# not relevant to this in-process Python-vs-Python-via-PyO3 test, but
+# excluded here too for consistency with the other parity suites.
+RNW_RMD_PAPERS = [
+    ("eval/recall-corpus/CARBayesST", ["CARBayesST.Rnw"], []),
+    ("eval/recall-corpus/clifford", ["clifford.Rnw"], []),
+    ("eval/recall-corpus/CUB", ["CUBvignette-knitr.Rnw"], []),
+    ("eval/recall-corpus/cusp", ["Cusp-JSS.Rnw"], []),
+    ("eval/recall-corpus/DBR", ["DBR.Rnw"], []),
+    ("eval/recall-corpus/deSolve", ["deSolve.Rnw"], []),
+    ("eval/recall-corpus/HardyWeinberg", ["HardyWeinberg.Rnw"], []),
+    ("eval/recall-corpus/mlt.docreg", ["mlt.Rnw"], []),
+    ("eval/recall-corpus/pmclust", ["pmclust-guide.Rnw"], []),
+    ("eval/recall-corpus/robustlmm", ["simulationStudies.Rnw"], []),
+    ("eval/recall-corpus/rstpm2", ["multistate.Rnw"], []),
+    ("eval/recall-corpus/SightabilityModel", ["a-SightabilityModel.Rnw"], []),
+    ("eval/recall-corpus/spacetime", ["jss816.Rnw"], []),
+    ("tests/fixtures/compliant", ["minimal.Rmd"], []),
+    ("tests/fixtures/violations/rmd", ["JSS-MARKUP-002-bad.Rmd"], []),
+    ("tests/fixtures/violations/rmd", ["unterminated-frontmatter.Rmd"], []),
+    ("tests/fixtures/violations/rmd", ["unterminated-fence.Rmd"], []),
+]
+
 
 def _python_oracle_json(paper_dir: Path, files: list[str], ignore_rules: list[str]) -> str:
     paths = [paper_dir / f for f in files]
@@ -52,6 +79,33 @@ def _python_oracle_json(paper_dir: Path, files: list[str], ignore_rules: list[st
 
 @pytest.mark.parametrize("paper_dir,files,ignore_rules", PAPERS)
 def test_jsslint_matches_python_engine(
+    paper_dir: str, files: list[str], ignore_rules: list[str]
+) -> None:
+    full_paper_dir = REPO_ROOT / paper_dir
+    missing = [f for f in files if not (full_paper_dir / f).exists()]
+    if missing:
+        pytest.skip(
+            f"recall corpus not materialized ({paper_dir}: missing {missing}); "
+            "run `eval-jss corpus fetch` then "
+            "`python -m eval.recall_corpus_scaffold` to fetch it"
+        )
+    rust_files = [
+        (str(full_paper_dir / f), (full_paper_dir / f).read_text(encoding="utf-8"))
+        for f in files
+    ]
+
+    expected = _python_oracle_json(full_paper_dir, files, ignore_rules)
+    actual = jsslint.render(
+        rust_files,
+        output="json",
+        ignore_rules=",".join(ignore_rules) if ignore_rules else None,
+    )
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize("paper_dir,files,ignore_rules", RNW_RMD_PAPERS)
+def test_jsslint_matches_python_engine_rnw_rmd(
     paper_dir: str, files: list[str], ignore_rules: list[str]
 ) -> None:
     full_paper_dir = REPO_ROOT / paper_dir

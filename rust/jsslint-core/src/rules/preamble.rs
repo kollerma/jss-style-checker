@@ -222,7 +222,7 @@ fn py_repr_list(items: &[String]) -> String {
 /// JSS-PRE-001 — `\documentclass` must be jss with a valid class
 /// option.
 pub fn check_pre_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let Some((macro_node, class_name, options)) = class_and_options(parsed) else {
         return out;
@@ -311,7 +311,7 @@ fn project_nodelist_to_plain(source_chars: &[char], nodelist: &[Node]) -> String
 /// JSS-PRE-003 — if `\title{}` has markup, `\Plaintitle{}` is also
 /// defined.
 pub fn check_pre_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     if !has_strict_jss_class(parsed) {
         return out;
@@ -466,7 +466,7 @@ fn check_markup_plain_pair(
 /// JSS-PRE-007 — if `\author{}` has markup, `\Plainauthor{}` is also
 /// defined.
 pub fn check_pre_007(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     check_markup_plain_pair(
         file,
         parsed,
@@ -481,7 +481,7 @@ pub fn check_pre_007(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
 /// JSS-PRE-008 — if `\Keywords{}` has markup, `\Plainkeywords{}` is
 /// also defined.
 pub fn check_pre_008(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     check_markup_plain_pair(
         file,
         parsed,
@@ -531,7 +531,7 @@ fn check_required_macro(
 /// JSS-PRE-004 — `\Abstract{}` is present and not the sentinel
 /// placeholder.
 pub fn check_pre_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     check_required_macro(
         file,
         parsed,
@@ -547,7 +547,7 @@ pub fn check_pre_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
 /// JSS-PRE-005 — `\Keywords{}` is present and not the sentinel
 /// placeholder.
 pub fn check_pre_005(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     check_required_macro(
         file,
         parsed,
@@ -563,7 +563,7 @@ pub fn check_pre_005(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
 /// JSS-PRE-006 — `\Plaintitle`/`\Plainauthor`/`\Plainkeywords`
 /// contain no LaTeX markup.
 pub fn check_pre_006(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     for &name in PLAIN_MACROS {
         for (macro_node, parent, idx) in iter_macros(&parsed.nodes, name) {

@@ -67,6 +67,34 @@ const CASES: &[SarifCase] = &[
     ),
 ];
 
+/// Every `.Rnw` file in the recall corpus (see `engine_parity.rs`'s
+/// identical constant for why the full set, not a sample).
+const RNW_PAPERS: &[&str] = &[
+    "eval/recall-corpus/CARBayesST/CARBayesST.Rnw",
+    "eval/recall-corpus/clifford/clifford.Rnw",
+    "eval/recall-corpus/CUB/CUBvignette-knitr.Rnw",
+    "eval/recall-corpus/cusp/Cusp-JSS.Rnw",
+    "eval/recall-corpus/DBR/DBR.Rnw",
+    "eval/recall-corpus/deSolve/deSolve.Rnw",
+    "eval/recall-corpus/HardyWeinberg/HardyWeinberg.Rnw",
+    "eval/recall-corpus/mlt.docreg/mlt.Rnw",
+    "eval/recall-corpus/pmclust/pmclust-guide.Rnw",
+    "eval/recall-corpus/robustlmm/simulationStudies.Rnw",
+    "eval/recall-corpus/rstpm2/multistate.Rnw",
+    "eval/recall-corpus/SightabilityModel/a-SightabilityModel.Rnw",
+    "eval/recall-corpus/spacetime/jss816.Rnw",
+];
+
+/// `.Rmd` fixtures (see `engine_parity.rs`'s identical constant for
+/// why fixtures, not a recall corpus, and why `malformed-yaml.Rmd` is
+/// excluded).
+const RMD_FIXTURES: &[&str] = &[
+    "tests/fixtures/compliant/minimal.Rmd",
+    "tests/fixtures/violations/rmd/JSS-MARKUP-002-bad.Rmd",
+    "tests/fixtures/violations/rmd/unterminated-frontmatter.Rmd",
+    "tests/fixtures/violations/rmd/unterminated-fence.Rmd",
+];
+
 fn python_oracle_sarif(
     jss_lint: &Path,
     dir: &Path,
@@ -156,6 +184,64 @@ fn sarif_render_matches_python_cli() {
         if actual != expected {
             mismatches.push(format!(
                 "{paper_dir} source_root={source_root:?}\n  expected:\n{expected}\n  actual:\n{actual}"
+            ));
+        }
+    }
+
+    assert!(
+        mismatches.is_empty(),
+        "{} mismatches:\n{}",
+        mismatches.len(),
+        mismatches.join("\n---\n")
+    );
+}
+
+/// `.Rnw`/`.Rmd` counterpart of `sarif_render_matches_python_cli`.
+/// `byteOffset` (rendered from `Fix::start`) is exactly the field that
+/// caught a real bug during the `.Rmd` port (a fragment's raw
+/// character offsets must stay fragment-local, matching Python's
+/// `node.pos` — see `rmd.rs`'s module doc comment), so this is a
+/// meaningful check beyond `engine_parity.rs`'s JSON coverage, not a
+/// redundant one.
+#[test]
+fn sarif_render_matches_python_cli_rnw_rmd() {
+    let root = repo_root();
+    let jss_lint = root.join(".venv/bin/jss-lint");
+    if !jss_lint.exists() {
+        eprintln!(
+            "SKIP: {} not found (Python venv not set up)",
+            jss_lint.display()
+        );
+        return;
+    }
+    if let Some(msg) = common::corpus_missing(&root, RNW_PAPERS) {
+        eprintln!("{msg}");
+        return;
+    }
+
+    let mut mismatches = Vec::new();
+    for &rel_path in RNW_PAPERS.iter().chain(RMD_FIXTURES) {
+        let full_path = root.join(rel_path);
+        let dir = full_path.parent().unwrap();
+        let file_name = full_path.file_name().unwrap().to_str().unwrap();
+        let files = &[file_name];
+
+        let expected = python_oracle_sarif(&jss_lint, dir, files, &[], None);
+        let source = std::fs::read_to_string(&full_path)
+            .unwrap_or_else(|e| panic!("failed to read {}: {e}", full_path.display()));
+        let document = ParsedDocument::from_sources(&[(file_name.to_string(), source)])
+            .unwrap_or_else(|e| panic!("{rel_path}: failed to build ParsedDocument: {e}"));
+
+        let prev_cwd = std::env::current_dir().unwrap();
+        std::env::set_current_dir(dir).unwrap();
+        let config = ToolConfig::default();
+        let report = engine::run(&config, &document);
+        let actual = sarif::render(&report, &config);
+        std::env::set_current_dir(&prev_cwd).unwrap();
+
+        if actual != expected {
+            mismatches.push(format!(
+                "{rel_path}\n  expected:\n{expected}\n  actual:\n{actual}"
             ));
         }
     }

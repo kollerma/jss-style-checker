@@ -14,7 +14,7 @@ use crate::tex::{position::LineIndex, ParsedTex};
 /// column — matches `code_width.py::_violation`'s documented quirk
 /// (width violations are line-anchored, not position-anchored).
 pub fn check_width_001(file: &str, parsed: &ParsedTex, code_width: u32) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, _ancestors| {
         let Node::Environment(env) = node else { return };

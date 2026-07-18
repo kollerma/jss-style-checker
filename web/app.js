@@ -10,7 +10,7 @@
 
 import init, { render } from "./pkg/jsslint_wasm.js";
 
-const SUPPORTED_SUFFIXES = [".tex", ".ltx", ".bib"];
+const SUPPORTED_SUFFIXES = [".tex", ".ltx", ".bib", ".rnw", ".rmd"];
 
 const folderButton = document.getElementById("folder-button");
 const folderInput = document.getElementById("folder-input");
@@ -76,7 +76,7 @@ async function handlePickedFiles(input, allFiles) {
 
   if (files.length === 0) {
     setStatus(
-      `No .tex/.ltx/.bib files found among the ${allFiles.length} file(s) selected.`,
+      `No .tex/.ltx/.bib/.Rnw/.Rmd files found among the ${allFiles.length} file(s) selected.`,
       true
     );
     // Reset so re-selecting the same folder/files (e.g. after adding a

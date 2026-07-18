@@ -2,12 +2,9 @@
 //! (JSS-CAP-001/002/004; JSS-CAP-003 is retired — see
 //! `specs/003-jss-rule-catalogue/catalogue.yaml`'s `retired_rule_ids`).
 //!
-//! Scope simplification: `_doc_pkg_names_lower` (CAP-001) scans
-//! `doc.all_tex_like()` in Python (every tex-like file in the whole
-//! document). This port, like every other Phase 3 rule so far, only
-//! ever receives a single `ParsedTex` — consistent with the rest of
-//! this phase's per-file scope; multi-file documents are Phase 4
-//! engine territory.
+//! `check_cap_001` spans every tex-like fragment in the document (not
+//! just one `ParsedTex`) so `_doc_pkg_names_lower`'s `\pkg{}` scan
+//! matches Python's `doc.all_tex_like()` — see its doc comment.
 
 use super::tex_common::tex_violation_with_fix;
 use crate::report::Violation;
@@ -261,8 +258,8 @@ fn pkg_token(word: &str) -> String {
     kept.trim_matches('.').to_lowercase()
 }
 
-/// Mirrors `capitalization.py::_doc_pkg_names_lower` — see module docs
-/// for the single-file scope simplification.
+/// Mirrors `capitalization.py::_doc_pkg_names_lower` for a single
+/// fragment; `check_cap_001` unions this across every fragment.
 fn doc_pkg_names_lower(nodes: &[Node]) -> HashSet<String> {
     let mut out = HashSet::new();
     extract::iter_with_parent_visit(nodes, &mut |parent: &[Slot], idx, node| {
@@ -382,10 +379,20 @@ fn lowercase_after_colon_offender(group: &GroupNode) -> bool {
 }
 
 /// JSS-CAP-001 — `\title{}` is in title style.
-pub fn check_cap_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+/// `doc_pkgs_lower` spans every tex-like fragment, NOT just this one:
+/// a `.Rmd` paper's `\pkg{}` mentions (which exempt that package's own
+/// name from the title-case check) can live in a different prose
+/// block than `\title{}` itself. Mirrors `capitalization.py::check_jss_cap_001`
+/// computing `_doc_pkg_names_lower(doc)` once, over the whole document,
+/// before its per-fragment walk — see `check_cap_001`, the public
+/// entry point that assembles it across all fragments first.
+fn check_cap_001_fragment(
+    file: &str,
+    parsed: &ParsedTex,
+    doc_pkgs_lower: &HashSet<String>,
+) -> Vec<Violation> {
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
-    let doc_pkgs_lower = doc_pkg_names_lower(&parsed.nodes);
 
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent: &[Slot], idx, node| {
         let Node::Macro(m) = node else { return };
@@ -466,6 +473,22 @@ pub fn check_cap_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             }
         }
     });
+    out
+}
+
+/// JSS-CAP-001 — paper title uses title-style capitalisation. Mirrors
+/// `capitalization.py::check_jss_cap_001`'s document-wide
+/// `_doc_pkg_names_lower(doc)` pre-pass — called once per document
+/// with every tex-like fragment.
+pub fn check_cap_001(fragments: &[(&str, &ParsedTex)]) -> Vec<Violation> {
+    let mut doc_pkgs_lower = HashSet::new();
+    for (_, parsed) in fragments {
+        doc_pkgs_lower.extend(doc_pkg_names_lower(&parsed.nodes));
+    }
+    let mut out = Vec::new();
+    for (file, parsed) in fragments {
+        out.extend(check_cap_001_fragment(file, parsed, &doc_pkgs_lower));
+    }
     out
 }
 
@@ -689,7 +712,7 @@ fn check_sentence_style(
 
 /// JSS-CAP-002 — section titles are in sentence style.
 pub fn check_cap_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent: &[Slot], idx, node| {
         let Node::Macro(m) = node else { return };
@@ -765,7 +788,7 @@ fn keyword_case_violation(entries: &[String]) -> bool {
 /// JSS-CAP-004 — `\Keywords{}` entries are in sentence case,
 /// comma-separated.
 pub fn check_cap_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent: &[Slot], idx, node| {
         let Node::Macro(m) = node else { return };

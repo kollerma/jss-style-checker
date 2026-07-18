@@ -329,13 +329,13 @@ fn first_macro_arg_text(nodes: &[Node], macronames: &[&str]) -> Option<String> {
 }
 
 /// Returns `(title, author)` extracted from the parsed document's
-/// preamble. Mirrors `report.py::extract_metadata`; this port has no
-/// `.rnw`/`.rmd` support yet, so `all_tex_like()` reduces to iterating
-/// `document.tex_files`.
+/// preamble. Mirrors `report.py::extract_metadata`, which iterates
+/// `document.all_tex_like()` — every `.tex`/`.rnw` file plus every
+/// `.Rmd` file's raw-LaTeX prose fragments.
 pub fn extract_metadata(document: &ParsedDocument) -> (Option<String>, Option<String>) {
     let mut title: Option<String> = None;
     let mut author: Option<String> = None;
-    for tex_file in &document.tex_files {
+    for tex_file in document.all_tex_like_docs() {
         let nodes = &tex_file.parsed.nodes;
         if title.is_none() {
             title = first_macro_arg_text(nodes, TITLE_MACROS);

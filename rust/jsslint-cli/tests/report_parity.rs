@@ -93,6 +93,7 @@ fn report_matches_python_cli() {
         &[
             "eval/recall-corpus/opentsne/main.tex",
             "eval/recall-corpus/trueskill/article.tex",
+            "eval/recall-corpus/HardyWeinberg/HardyWeinberg.Rnw",
         ],
     ) {
         eprintln!("{msg}");
@@ -118,6 +119,21 @@ fn report_matches_python_cli() {
                 "--author",
                 "Custom Author",
             ],
+        ),
+        // `.Rnw`/`.Rmd`: exercises `extract_metadata` reading
+        // `\title{}`/`\author{}` out of `all_tex_like_docs()` (tex_files
+        // + rmd fragments), not just `tex_files` — a real fix during
+        // the spec-023 port (see `conformance.rs`'s doc comment).
+        (
+            "rnw-single-file",
+            &[
+                "report",
+                "eval/recall-corpus/HardyWeinberg/HardyWeinberg.Rnw",
+            ],
+        ),
+        (
+            "rmd-single-file",
+            &["report", "tests/fixtures/compliant/minimal.Rmd"],
         ),
     ];
 

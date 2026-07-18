@@ -90,7 +90,7 @@ fn lint_report(
 /// Mirrors `jsslint::render` (the PyO3 binding) / the WASM binding's
 /// `render()`.
 /// @param files A named character vector: names are file paths
-///   (`.tex`/`.ltx`/`.bib`), values are the file contents.
+///   (`.tex`/`.ltx`/`.bib`/`.Rnw`/`.Rmd`), values are the file contents.
 /// @param journal Journal identifier (default: `"jss"`).
 /// @param mode `"author"` or `"reviewer"` (default: `"author"`).
 /// @param output `"terminal"`, `"json"`, `"sarif"`, or `"html"`

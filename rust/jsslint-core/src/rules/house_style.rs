@@ -116,7 +116,7 @@ pub fn check_house_002(
 
 /// JSS-HOUSE-001 — "e.g." / "i.e." are followed by a comma.
 pub fn check_house_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
     let mut ancestors: Vec<&Node> = Vec::new();
@@ -227,7 +227,7 @@ pub fn check_house_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
     if !super::preamble::has_jss_class(parsed) {
         return out;
     }
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent, idx, node| {
         let Node::Macro(m) = node else { return };
         if m.macroname != "usepackage" {

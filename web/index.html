@@ -92,7 +92,7 @@
       <button id="folder-button">Choose a folder…</button>
       <input id="folder-input" type="file" webkitdirectory multiple hidden>
       <button id="files-button" class="secondary">Choose files…</button>
-      <input id="files-input" type="file" multiple accept=".tex,.ltx,.bib" hidden>
+      <input id="files-input" type="file" multiple accept=".tex,.ltx,.bib,.Rnw,.Rmd" hidden>
       <label>
         Mode:
         <select id="mode-select">
@@ -114,7 +114,7 @@
   <iframe id="results" title="Style check results" sandbox="allow-same-origin allow-popups"></iframe>
 
   <footer>
-    Checks <code>.tex</code> / <code>.ltx</code> / <code>.bib</code> files only (no <code>.Rnw</code>/<code>.Rmd</code> yet).
+    Checks <code>.tex</code> / <code>.ltx</code> / <code>.bib</code> / <code>.Rnw</code> / <code>.Rmd</code> files.
     Source, the command-line tool, and Python/R packages:
     <a href="https://github.com/kollerma/jss-style-checker" target="_blank" rel="noopener">github.com/kollerma/jss-style-checker</a>.
   </footer>

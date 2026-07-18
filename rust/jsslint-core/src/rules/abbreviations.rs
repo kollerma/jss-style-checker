@@ -84,7 +84,7 @@ fn floor_char_boundary(s: &str, mut i: usize) -> usize {
 /// JSS-ABBR-001 — abbreviations are uppercase without periods
 /// (`U.S.A.` -> `USA`), excluding author-initial patterns.
 pub fn check_abbr_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
     let mut ancestors: Vec<&Node> = Vec::new();

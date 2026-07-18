@@ -139,7 +139,7 @@ fn is_cross_paper_reference(
 
 /// JSS-XREF-001 — figures/tables referenced by `\ref{}`, not by number.
 pub fn check_xref_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
     let mut ancestors: Vec<&Node> = Vec::new();
@@ -253,7 +253,7 @@ static EQ_ABBREV_TAIL_RE: LazyLock<Regex> =
 /// than bare `(\ref{...})` or `\eqref{...}`; also normalizes the
 /// `Eq.~\ref{...}` abbreviation.
 pub fn check_xref_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent, idx, node| {
         let Node::Macro(m) = node else { return };
@@ -382,7 +382,7 @@ static SUBSECTION_RE: LazyLock<Regex> =
 /// JSS-XREF-003 — subsection references say "Section x.y", not
 /// "Subsection x.y".
 pub fn check_xref_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, ancestors| {
         let Node::Chars(c) = node else { return };
@@ -674,10 +674,20 @@ fn check_multiline_eq_rows(
 
 /// JSS-XREF-004 — numbered equations carry `\label{}` and are
 /// referenced.
-pub fn check_xref_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+/// `referenced` spans every tex-like fragment in the document, NOT
+/// just this one — in `.Rmd` input, each prose block is its own
+/// fragment, and an equation's `\label{}` is commonly `\ref{}`'d from
+/// a *different* prose block. Mirrors `crossrefs.py::check_jss_xref_004`
+/// calling `_collect_referenced_labels(doc)` (whole-document) before
+/// its per-fragment walk — see `check_xref_004`, the public entry
+/// point that assembles `referenced` across all fragments first.
+fn check_xref_004_fragment(
+    file: &str,
+    parsed: &ParsedTex,
+    referenced: &HashSet<String>,
+) -> Vec<Violation> {
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
-    let referenced = collect_referenced_labels(parsed);
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
     let mut ancestors: Vec<&Node> = Vec::new();
     walk_with_context(
@@ -698,7 +708,7 @@ pub fn check_xref_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                     &parsed.chars,
                     env,
                     ancestors,
-                    &referenced,
+                    referenced,
                     &mut out,
                 );
                 return;
@@ -735,6 +745,22 @@ pub fn check_xref_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             }
         },
     );
+    out
+}
+
+/// Mirrors `crossrefs.py::check_jss_xref_004`'s document-wide
+/// `_collect_referenced_labels(doc)` pre-pass — public entry point
+/// called once per document with every tex-like fragment, not once
+/// per fragment (see `check_xref_004_fragment`'s doc comment for why).
+pub fn check_xref_004(fragments: &[(&str, &ParsedTex)]) -> Vec<Violation> {
+    let mut referenced = HashSet::new();
+    for (_, parsed) in fragments {
+        referenced.extend(collect_referenced_labels(parsed));
+    }
+    let mut out = Vec::new();
+    for (file, parsed) in fragments {
+        out.extend(check_xref_004_fragment(file, parsed, &referenced));
+    }
     out
 }
 
@@ -867,10 +893,15 @@ fn lstlisting_caption_and_labels(
 /// JSS-XREF-005 — captioned figures/tables/listings carry `\label{}`
 /// and are referenced from the text (the float analogue of
 /// JSS-XREF-004).
-pub fn check_xref_005(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+/// `referenced` spans every tex-like fragment (see `check_xref_004_fragment`'s
+/// doc comment) — `check_xref_005` assembles it across all fragments first.
+fn check_xref_005_fragment(
+    file: &str,
+    parsed: &ParsedTex,
+    referenced: &HashSet<String>,
+) -> Vec<Violation> {
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
-    let referenced = collect_referenced_labels(parsed);
     walk(&parsed.nodes, &mut |node, _ancestors| {
         let Node::Environment(env) = node else { return };
         let envname = env.environmentname.as_str();
@@ -922,13 +953,30 @@ pub fn check_xref_005(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
     out
 }
 
+/// JSS-XREF-005 — captioned figures/tables/listings carry `\label{}`
+/// and are referenced from the text (the float analogue of
+/// JSS-XREF-004). Mirrors `crossrefs.py::check_jss_xref_005`'s
+/// document-wide `_collect_referenced_labels(doc)` pre-pass — called
+/// once per document with every tex-like fragment.
+pub fn check_xref_005(fragments: &[(&str, &ParsedTex)]) -> Vec<Violation> {
+    let mut referenced = HashSet::new();
+    for (_, parsed) in fragments {
+        referenced.extend(collect_referenced_labels(parsed));
+    }
+    let mut out = Vec::new();
+    for (file, parsed) in fragments {
+        out.extend(check_xref_005_fragment(file, parsed, &referenced));
+    }
+    out
+}
+
 // ---------------------------------------------------------------------
 // JSS-XREF-006 — figure/table floats carry a \caption{}
 // ---------------------------------------------------------------------
 
 /// JSS-XREF-006 — figure/table floats carry a `\caption{}`.
 pub fn check_xref_006(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, _ancestors| {
         let Node::Environment(env) = node else { return };
@@ -993,7 +1041,7 @@ fn chars_ends_with_figsectab_abbrev(node: Slot) -> Option<(usize, String)> {
 /// JSS-XREF-007 — abbreviated cross-reference nouns (Fig./Sec./Tab.)
 /// before `\ref{}` are spelled out.
 pub fn check_xref_007(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent, idx, node| {
         let Node::Macro(m) = node else { return };

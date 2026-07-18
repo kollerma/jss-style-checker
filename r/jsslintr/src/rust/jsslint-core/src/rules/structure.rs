@@ -45,7 +45,7 @@ fn first_arg_text<'a>(macro_node: &'a MacroNode, parent: &[Slot<'a>], idx: usize
 /// JSS-STRUCT-001 — document ends with a summary/discussion section
 /// before the bibliography.
 pub fn check_struct_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let Some(bib_pos) = find_bibliography_pos(&parsed.nodes) else {
         return out;
@@ -120,7 +120,7 @@ fn struct_002_replacement(matched: &str) -> String {
 
 /// JSS-STRUCT-002 — "Acknowledgments" uses American spelling.
 pub fn check_struct_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent: &[Slot], idx, node| {
         let Node::Macro(m) = node else { return };
@@ -187,7 +187,7 @@ fn is_bare_appendix(title: &str) -> bool {
 
 /// JSS-STRUCT-003 — appendix sections have descriptive titles.
 pub fn check_struct_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk_envs(&parsed.nodes, "appendix", |env| {
         extract::iter_with_parent_visit(&env.nodelist, &mut |parent: &[Slot], idx, node| {
@@ -216,7 +216,7 @@ pub fn check_struct_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
 
 /// JSS-STRUCT-004 — no hand-written `thebibliography`.
 pub fn check_struct_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk_envs(&parsed.nodes, "thebibliography", |env| {
         out.push(tex_violation_with_fix(
@@ -282,7 +282,7 @@ fn iter_text_and_offsets(group: &GroupNode) -> Vec<(&crate::tex::node::CharsNode
 
 /// JSS-STRUCT-005 — `\author{}` separates authors with `\And`/`\AND`.
 pub fn check_struct_005(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent: &[Slot], idx, node| {
         let Node::Macro(m) = node else { return };
@@ -402,7 +402,7 @@ fn has_pagebreak_between(nodes: &[Node], start: usize, end: usize) -> bool {
 /// JSS-STRUCT-006 — appendix follows the bibliography with a page
 /// separator.
 pub fn check_struct_006(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let Some(bib_pos) = find_bibliography_macro_pos(&parsed.nodes) else {
         return out;

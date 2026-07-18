@@ -36,6 +36,33 @@ const PAPERS: &[(&str, &[&str], &[&str])] = &[
 
 const OUTPUT_FORMATS: &[&str] = &["json", "sarif"];
 
+/// Every `.Rnw` file in the recall corpus (see `engine_parity.rs` in
+/// `jsslint-core/tests` for why the full set, not a sample).
+const RNW_PAPERS: &[&str] = &[
+    "eval/recall-corpus/CARBayesST/CARBayesST.Rnw",
+    "eval/recall-corpus/clifford/clifford.Rnw",
+    "eval/recall-corpus/CUB/CUBvignette-knitr.Rnw",
+    "eval/recall-corpus/cusp/Cusp-JSS.Rnw",
+    "eval/recall-corpus/DBR/DBR.Rnw",
+    "eval/recall-corpus/deSolve/deSolve.Rnw",
+    "eval/recall-corpus/HardyWeinberg/HardyWeinberg.Rnw",
+    "eval/recall-corpus/mlt.docreg/mlt.Rnw",
+    "eval/recall-corpus/pmclust/pmclust-guide.Rnw",
+    "eval/recall-corpus/robustlmm/simulationStudies.Rnw",
+    "eval/recall-corpus/rstpm2/multistate.Rnw",
+    "eval/recall-corpus/SightabilityModel/a-SightabilityModel.Rnw",
+    "eval/recall-corpus/spacetime/jss816.Rnw",
+];
+
+/// `.Rmd` fixtures (see `engine_parity.rs` for why fixtures, not a
+/// recall corpus, and why `malformed-yaml.Rmd` is excluded).
+const RMD_FIXTURES: &[&str] = &[
+    "tests/fixtures/compliant/minimal.Rmd",
+    "tests/fixtures/violations/rmd/JSS-MARKUP-002-bad.Rmd",
+    "tests/fixtures/violations/rmd/unterminated-frontmatter.Rmd",
+    "tests/fixtures/violations/rmd/unterminated-fence.Rmd",
+];
+
 struct Outcome {
     stdout: String,
     exit_code: Option<i32>,
@@ -98,6 +125,62 @@ fn cli_matches_python_cli_end_to_end() {
             if actual.exit_code != expected.exit_code {
                 mismatches.push(format!(
                     "{paper_dir} [--output {output}] EXIT CODE differs: expected {:?}, actual {:?}",
+                    expected.exit_code, actual.exit_code
+                ));
+            }
+        }
+    }
+
+    assert!(
+        mismatches.is_empty(),
+        "{} mismatches:\n{}",
+        mismatches.len(),
+        mismatches.join("\n---\n")
+    );
+}
+
+/// `.Rnw`/`.Rmd` counterpart of `cli_matches_python_cli_end_to_end`:
+/// exit codes matter here too — `.Rmd`'s unterminated-frontmatter/fence
+/// fixtures exit 2 (fatal `JSS-PARSE-000`), exercising
+/// `determine_exit_code`'s fatal-parse-error path for the first time
+/// with real `.Rmd` input.
+#[test]
+fn cli_matches_python_cli_end_to_end_rnw_rmd() {
+    let root = repo_root();
+    let jss_lint = root.join(".venv/bin/jss-lint");
+    if !jss_lint.exists() {
+        eprintln!(
+            "SKIP: {} not found (Python venv not set up)",
+            jss_lint.display()
+        );
+        return;
+    }
+    if let Some(msg) = common::corpus_missing(&root, RNW_PAPERS) {
+        eprintln!("{msg}");
+        return;
+    }
+    let jss_lint = jss_lint.to_string_lossy().to_string();
+    let jsslint_bin = env!("CARGO_BIN_EXE_jsslint");
+
+    let mut mismatches = Vec::new();
+    for &rel_path in RNW_PAPERS.iter().chain(RMD_FIXTURES) {
+        let full_path = root.join(rel_path);
+        let dir = full_path.parent().unwrap().to_path_buf();
+        let file_name = full_path.file_name().unwrap().to_str().unwrap();
+        let files = &[file_name];
+        for &output in OUTPUT_FORMATS {
+            let expected = run(&jss_lint, &dir, files, &[], output);
+            let actual = run(jsslint_bin, &dir, files, &[], output);
+
+            if actual.stdout != expected.stdout {
+                mismatches.push(format!(
+                    "{rel_path} [--output {output}] STDOUT differs\n  expected:\n{}\n  actual:\n{}",
+                    expected.stdout, actual.stdout
+                ));
+            }
+            if actual.exit_code != expected.exit_code {
+                mismatches.push(format!(
+                    "{rel_path} [--output {output}] EXIT CODE differs: expected {:?}, actual {:?}",
                     expected.exit_code, actual.exit_code
                 ));
             }

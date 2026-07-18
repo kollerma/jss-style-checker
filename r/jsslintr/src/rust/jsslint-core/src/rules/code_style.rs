@@ -68,7 +68,7 @@ const SINGLE_CHAR_ESCAPE_MACROS: &[&str] = &["%", "&", "_", "#", "$", "{", "}", 
 
 /// JSS-CODE-001 — code-display envs contain no `#`-style comments.
 pub fn check_code_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, _ancestors| {
         let Node::Environment(env) = node else { return };
@@ -98,7 +98,7 @@ pub fn check_code_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
 /// JSS-CODE-002 — `library()`/`data()`/`require()`/`requireNamespace()`
 /// quote their first argument.
 pub fn check_code_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, _ancestors| {
         let Node::Environment(env) = node else { return };
@@ -147,7 +147,7 @@ pub fn check_code_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
 /// JSS-CODE-003 — code samples use spaces around operators and after
 /// commas, checked both inside code-display envs and `\code{...}`.
 pub fn check_code_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
 
     walk(&parsed.nodes, &mut |node, _ancestors| {

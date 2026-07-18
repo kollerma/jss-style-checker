@@ -112,7 +112,7 @@ fn caption_period_insert_pos(group: &GroupNode) -> Option<usize> {
 
 /// JSS-TYPO-001 — figure/table captions end with a period.
 pub fn check_typo_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     for (node, parent, idx, env) in iter_captions(&parsed.nodes, true) {
         if env.is_none() {
@@ -165,7 +165,7 @@ fn strip_trailing_punct(mut visible: Vec<&Node>) -> Vec<&Node> {
 
 /// JSS-TYPO-002 — caption not wholly wrapped in an emphasis macro.
 pub fn check_typo_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     for (node, parent, idx, env) in iter_captions(&parsed.nodes, false) {
         if env.is_none() {
@@ -199,7 +199,7 @@ pub fn check_typo_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
 
 /// JSS-TYPO-003 — no `\footnote` inside table environments.
 pub fn check_typo_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, ancestors| {
         let Node::Macro(m) = node else { return };
@@ -252,7 +252,7 @@ fn has_content_before(children: &[Node], cap_idx: usize) -> bool {
 
 /// JSS-TYPO-004 — `\caption{}` follows the figure/table content.
 pub fn check_typo_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, _ancestors| {
         let Node::Environment(env) = node else { return };

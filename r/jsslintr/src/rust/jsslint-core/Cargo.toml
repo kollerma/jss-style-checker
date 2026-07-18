@@ -5,11 +5,13 @@ edition = "2021"
 license = "MIT"
 authors = ["Manuel Koller"]
 repository = "https://github.com/kollerma/jss-style-checker"
-description = "Core rule engine for the JSS style checker (spec 018 Rust port)."
+readme = "README.md"
+description = "Rule engine behind the Journal of Statistical Software (JSS) LaTeX/BibTeX style checker. Powers the jsslint CLI, WASM, Python, and R distributions."
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
+serde_yaml = "0.9"
 regex = "1"
 difflib = "0.4"
 toml = "1"

@@ -16,8 +16,9 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
 /// Lints `files` (a list of `(path, contents)` pairs — `path`'s
-/// extension dispatches `.tex`/`.ltx` to the LaTeX parser and `.bib`
-/// to the BibTeX parser, matching `ParsedDocument::from_sources`) and
+/// extension dispatches `.tex`/`.ltx`/`.rnw` to the LaTeX parser,
+/// `.bib` to the BibTeX parser, and `.rmd` to the R Markdown parser,
+/// matching `ParsedDocument::from_sources`) and
 /// renders the report in the requested `output` format. Mirrors
 /// `jsslint-cli`'s bare-lint invocation: `journal`/`mode`/`output`/
 /// `ignore_rules`/`min_confidence`/`fail_on`/`source_root`/`verbose`

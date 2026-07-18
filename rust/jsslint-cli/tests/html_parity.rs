@@ -49,6 +49,7 @@ fn html_output_matches_python_cli() {
         &[
             "eval/recall-corpus/opentsne/main.tex",
             "eval/recall-corpus/trueskill/article.tex",
+            "eval/recall-corpus/CARBayesST/CARBayesST.Rnw",
         ],
     ) {
         eprintln!("{msg}");
@@ -112,6 +113,131 @@ fn html_output_matches_python_cli() {
                 "--mode",
                 "reviewer",
                 "tests/fixtures/compliant/minimal.tex",
+            ],
+        ),
+        // Every `.Rnw` file in the recall corpus (author mode) — the
+        // Definition of Done for spec-023 is byte-identical output for
+        // every one of these, so the full set belongs here.
+        (
+            "rnw-CARBayesST",
+            &[
+                "--output",
+                "html",
+                "eval/recall-corpus/CARBayesST/CARBayesST.Rnw",
+            ],
+        ),
+        (
+            "rnw-clifford",
+            &[
+                "--output",
+                "html",
+                "eval/recall-corpus/clifford/clifford.Rnw",
+            ],
+        ),
+        (
+            "rnw-CUB",
+            &[
+                "--output",
+                "html",
+                "eval/recall-corpus/CUB/CUBvignette-knitr.Rnw",
+            ],
+        ),
+        (
+            "rnw-cusp",
+            &["--output", "html", "eval/recall-corpus/cusp/Cusp-JSS.Rnw"],
+        ),
+        (
+            "rnw-DBR",
+            &["--output", "html", "eval/recall-corpus/DBR/DBR.Rnw"],
+        ),
+        (
+            "rnw-deSolve",
+            &["--output", "html", "eval/recall-corpus/deSolve/deSolve.Rnw"],
+        ),
+        (
+            "rnw-HardyWeinberg-reviewer",
+            &[
+                "--output",
+                "html",
+                "--mode",
+                "reviewer",
+                "eval/recall-corpus/HardyWeinberg/HardyWeinberg.Rnw",
+            ],
+        ),
+        (
+            "rnw-mlt",
+            &["--output", "html", "eval/recall-corpus/mlt.docreg/mlt.Rnw"],
+        ),
+        (
+            "rnw-pmclust",
+            &[
+                "--output",
+                "html",
+                "eval/recall-corpus/pmclust/pmclust-guide.Rnw",
+            ],
+        ),
+        (
+            "rnw-robustlmm",
+            &[
+                "--output",
+                "html",
+                "eval/recall-corpus/robustlmm/simulationStudies.Rnw",
+            ],
+        ),
+        (
+            "rnw-rstpm2",
+            &[
+                "--output",
+                "html",
+                "eval/recall-corpus/rstpm2/multistate.Rnw",
+            ],
+        ),
+        (
+            "rnw-SightabilityModel",
+            &[
+                "--output",
+                "html",
+                "eval/recall-corpus/SightabilityModel/a-SightabilityModel.Rnw",
+            ],
+        ),
+        (
+            "rnw-spacetime",
+            &[
+                "--output",
+                "html",
+                "eval/recall-corpus/spacetime/jss816.Rnw",
+            ],
+        ),
+        // `.Rmd` fixtures — no recall corpus exists for `.Rmd` (see the
+        // spec-023 plan), so these are the checked-in deterministic
+        // fixtures. `malformed-yaml.Rmd` is excluded (documented,
+        // out-of-scope PyYAML-message-text parity gap).
+        (
+            "rmd-minimal",
+            &["--output", "html", "tests/fixtures/compliant/minimal.Rmd"],
+        ),
+        (
+            "rmd-markup-002-bad",
+            &[
+                "--output",
+                "html",
+                "tests/fixtures/violations/rmd/JSS-MARKUP-002-bad.Rmd",
+            ],
+        ),
+        (
+            "rmd-unterminated-frontmatter",
+            &[
+                "--output",
+                "html",
+                "tests/fixtures/violations/rmd/unterminated-frontmatter.Rmd",
+            ],
+        ),
+        (
+            "rmd-unterminated-fence",
+            &[
+                "--output",
+                "html",
+                "tests/fixtures/violations/rmd/unterminated-fence.Rmd",
             ],
         ),
     ];

@@ -313,12 +313,20 @@ fn cited_in_wrapper_paragraph(
     false
 }
 
-/// JSS-CITE-002 — first `\pkg{X}` mention per distinct X needs a
-/// citation in the same paragraph.
-pub fn check_cite_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+/// `seen` spans the entire document, NOT each tex-like fragment — in
+/// `.Rmd` input, each prose block becomes its own fragment, and a
+/// per-fragment `seen` would re-ask for a citation on every prose
+/// block that mentions `\pkg{X}`, even when `X` was already cited
+/// earlier in the document. Mirrors `citations.py::check_jss_cite_002`'s
+/// own `seen` comment verbatim. `check_cite_002` (the public entry
+/// point) threads one `seen` across every fragment in document order.
+fn check_cite_002_fragment(
+    file: &str,
+    parsed: &ParsedTex,
+    seen: &mut HashSet<String>,
+) -> Vec<Violation> {
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
-    let mut seen: HashSet<String> = HashSet::new();
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
 
     // Position map (node ptr -> its parent seq + index) so a \pkg
@@ -400,6 +408,19 @@ pub fn check_cite_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
     out
 }
 
+/// JSS-CITE-002 — first `\pkg{X}` mention per distinct X needs a
+/// citation in the same paragraph. Mirrors `citations.py::check_jss_cite_002`
+/// threading one `seen` set across every tex-like fragment in the
+/// document — see `check_cite_002_fragment`'s doc comment.
+pub fn check_cite_002(fragments: &[(&str, &ParsedTex)]) -> Vec<Violation> {
+    let mut seen: HashSet<String> = HashSet::new();
+    let mut out = Vec::new();
+    for (file, parsed) in fragments {
+        out.extend(check_cite_002_fragment(file, parsed, &mut seen));
+    }
+    out
+}
+
 // ---------------------------------------------------------------------
 // JSS-CITE-003 — (\cite{...}) bracket-in-bracket.
 // ---------------------------------------------------------------------
@@ -470,7 +491,7 @@ fn find_matching_close_paren(source: &[char], pos: usize) -> Option<usize> {
 /// JSS-CITE-003 — no bracket-in-bracket citation forms like
 /// `(\cite{...})` — use `\citep{...}` instead.
 pub fn check_cite_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let mut emitted: HashSet<usize> = HashSet::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |_parent, _idx, node| {
@@ -640,7 +661,7 @@ fn is_masked(ancestors: &[&Node]) -> bool {
 /// JSS-CITE-004 — hardcoded author-year `(Name, YYYY)` references
 /// bypass the bibliography; use natbib commands.
 pub fn check_cite_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, _walk_ancestors| {
         let Node::Chars(c) = node else { return };

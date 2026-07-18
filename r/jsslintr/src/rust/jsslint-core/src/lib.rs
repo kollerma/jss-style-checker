@@ -18,6 +18,8 @@ pub mod html_output;
 pub mod json_output;
 pub mod lsp;
 pub mod report;
+pub mod rmd;
+pub mod rnw;
 pub mod rules;
 pub mod sarif;
 pub mod terminal;

@@ -1,10 +1,9 @@
 //! Operator/math-notation rules — mirrors
 //! `journals/jss/rules/operators.py` (JSS-OPER-001/002/003/004).
 //!
-//! Scope simplification: like `capitalization::check_cap_001`,
-//! OPER-004's document-wide alias pre-scan (`doc.all_tex_like()` in
-//! Python) collapses to single-file scope here — consistent with every
-//! other Phase 3 rule so far.
+//! `check_oper_004` spans every tex-like fragment in the document (not
+//! just one `ParsedTex`) so its `flag_pr`/alias pre-scan matches
+//! Python's `doc.all_tex_like()` — see its doc comment.
 
 use super::tex_common::tex_violation_with_fix;
 use crate::report::{Fix, FixConfidence, Violation};
@@ -36,7 +35,7 @@ static SYMBOL_NOUN_RE: LazyLock<Regex> =
 
 /// JSS-OPER-001 — `p-value`-style constructs use `$p$~value`.
 pub fn check_oper_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     walk(&parsed.nodes, &mut |node, ancestors| {
         let Node::Chars(c) = node else { return };
@@ -160,7 +159,7 @@ fn t_caret_follows_big_operator(parent: &[Slot], idx: usize, match_start: usize)
 
 /// JSS-OPER-002 — literal `^T` transpose should be `\top`.
 pub fn check_oper_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
     let mut ancestors: Vec<&Node> = Vec::new();
@@ -262,7 +261,7 @@ fn chars_starts_with_blank_line(node: Option<&Node>) -> bool {
 
 /// JSS-OPER-003 — no blank lines immediately around display equations.
 pub fn check_oper_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+    let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
     extract::iter_with_parent_visit(&parsed.nodes, &mut |parent: &[Slot], idx, node| {
         let Node::Environment(env) = node else { return };
@@ -480,52 +479,74 @@ fn doc_uses_prob_macro(nodes: &[Node]) -> bool {
 }
 
 struct ProbAlias<'a> {
+    /// Index into the `fragments` slice this def site came from —
+    /// `check_oper_004` needs it to resolve the right `file`/`LineIndex`
+    /// when reporting the violation (mirrors `operators.py::_collect_prob_aliases`
+    /// returning `(tex, pos, alias, shortcut)` tuples that carry their
+    /// owning fragment directly).
+    fragment_idx: usize,
     pos: usize,
     alias: &'a str,
     shortcut: &'static str,
 }
 
-/// Mirrors `operators.py::_collect_prob_aliases`.
-fn collect_prob_aliases(nodes: &[Node]) -> (HashMap<&str, &'static str>, Vec<ProbAlias<'_>>) {
+/// Mirrors `operators.py::_collect_prob_aliases`, generalized to scan
+/// every tex-like fragment (not just one) — see `check_oper_004`'s doc
+/// comment for why `aliases`/`def_sites` need whole-document scope.
+fn collect_prob_aliases<'a>(
+    fragments: &'a [(&str, &ParsedTex)],
+) -> (HashMap<&'a str, &'static str>, Vec<ProbAlias<'a>>) {
     let mut aliases = HashMap::new();
     let mut def_sites = Vec::new();
-    let top: Vec<Slot> = nodes.iter().map(Some).collect();
-    let mut ancestors: Vec<&Node> = Vec::new();
-    walk_with_context(
-        &top,
-        &mut ancestors,
-        &mut |node, _ancestors, parent, idx| {
-            let Node::Macro(m) = node else { return };
-            if !DEF_MACROS.contains(&m.macroname.as_str()) {
-                return;
-            }
-            let (alias, shortcut) = parse_prob_def(m, parent, idx);
-            let (Some(alias), Some(shortcut)) = (alias, shortcut) else {
-                return;
-            };
-            if alias == "Pr" {
-                return;
-            }
-            aliases.insert(alias, shortcut);
-            def_sites.push(ProbAlias {
-                pos: m.span.pos,
-                alias,
-                shortcut,
-            });
-        },
-    );
+    for (fragment_idx, (_file, parsed)) in fragments.iter().enumerate() {
+        let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
+        let mut ancestors: Vec<&Node> = Vec::new();
+        walk_with_context(
+            &top,
+            &mut ancestors,
+            &mut |node, _ancestors, parent, idx| {
+                let Node::Macro(m) = node else { return };
+                if !DEF_MACROS.contains(&m.macroname.as_str()) {
+                    return;
+                }
+                let (alias, shortcut) = parse_prob_def(m, parent, idx);
+                let (Some(alias), Some(shortcut)) = (alias, shortcut) else {
+                    return;
+                };
+                if alias == "Pr" {
+                    return;
+                }
+                aliases.insert(alias, shortcut);
+                def_sites.push(ProbAlias {
+                    fragment_idx,
+                    pos: m.span.pos,
+                    alias,
+                    shortcut,
+                });
+            },
+        );
+    }
     (aliases, def_sites)
 }
 
 /// JSS-OPER-004 — probability/expectation notation uses jss.cls
-/// shortcuts (`\E`/`\VAR`/`\COV`/`\Prob`).
-pub fn check_oper_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
-    let line_index = LineIndex::new(&parsed.chars);
+/// shortcuts (`\E`/`\VAR`/`\COV`/`\Prob`). `flag_pr` and
+/// `aliases`/`def_sites` need whole-document scope: `flag_pr` must know
+/// whether `\Prob` appears ANYWHERE before deciding to flag a bare
+/// `\Pr` elsewhere, and an alias defined via `\newcommand` in one
+/// `.Rmd` prose block must still be recognized when used in a later
+/// one. Mirrors `operators.py::check_jss_oper_004` computing both
+/// before its per-fragment walk.
+pub fn check_oper_004(fragments: &[(&str, &ParsedTex)]) -> Vec<Violation> {
     let mut out = Vec::new();
-    let flag_pr = doc_uses_prob_macro(&parsed.nodes);
-    let (aliases, def_sites) = collect_prob_aliases(&parsed.nodes);
+    let flag_pr = fragments
+        .iter()
+        .any(|(_, parsed)| doc_uses_prob_macro(&parsed.nodes));
+    let (aliases, def_sites) = collect_prob_aliases(fragments);
 
     for site in &def_sites {
+        let (file, parsed) = fragments[site.fragment_idx];
+        let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
         out.push(tex_violation_with_fix(
             file,
             &line_index,
@@ -540,6 +561,22 @@ pub fn check_oper_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
         ));
     }
 
+    for (file, parsed) in fragments {
+        let file = *file;
+        let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
+        check_oper_004_fragment(file, parsed, &line_index, flag_pr, &aliases, &mut out);
+    }
+    out
+}
+
+fn check_oper_004_fragment(
+    file: &str,
+    parsed: &ParsedTex,
+    line_index: &LineIndex,
+    flag_pr: bool,
+    aliases: &HashMap<&str, &'static str>,
+    out: &mut Vec<Violation>,
+) {
     let top: Vec<Slot> = parsed.nodes.iter().map(Some).collect();
     let mut ancestors: Vec<&Node> = Vec::new();
     walk_with_context(&top, &mut ancestors, &mut |node, ancestors, parent, idx| {
@@ -561,7 +598,7 @@ pub fn check_oper_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                 let abs_pos = c.span.pos + c.chars[..whole.start()].chars().count();
                 out.push(tex_violation_with_fix(
                     file,
-                    &line_index,
+                    line_index,
                     abs_pos,
                     "JSS-OPER-004",
                     Some(format!("Use the jss.cls shortcut {shortcut} instead of a bare '{token}(' operator.")),
@@ -580,7 +617,7 @@ pub fn check_oper_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                 let abs_pos = c.span.pos + c.chars[..whole.start()].chars().count();
                 out.push(tex_violation_with_fix(
                     file,
-                    &line_index,
+                    line_index,
                     abs_pos,
                     "JSS-OPER-004",
                     Some("Use the jss.cls shortcut \\Prob instead of a bare 'P(' probability operator.".to_string()),
@@ -597,7 +634,7 @@ pub fn check_oper_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             if !CANONICAL_PROB_MACROS.contains(&m.macroname.as_str()) {
                 out.push(tex_violation_with_fix(
                     file,
-                    &line_index,
+                    line_index,
                     m.span.pos,
                     "JSS-OPER-004",
                     Some(format!(
@@ -614,7 +651,7 @@ pub fn check_oper_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             if flag_pr {
                 out.push(tex_violation_with_fix(
                     file,
-                    &line_index,
+                    line_index,
                     m.span.pos,
                     "JSS-OPER-004",
                     Some("Use \\Prob from jss.cls instead of \\Pr.".to_string()),
@@ -630,7 +667,7 @@ pub fn check_oper_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
         if NONCANON_PROB_ARGS.contains(&arg_text.as_str()) {
             out.push(tex_violation_with_fix(
                 file,
-                &line_index,
+                line_index,
                 m.span.pos,
                 "JSS-OPER-004",
                 Some(format!(
@@ -641,7 +678,6 @@ pub fn check_oper_004(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             ));
         }
     });
-    out
 }
 
 /// Mirrors the Python regex's `(?<![A-Za-z\\])` negative lookbehind for

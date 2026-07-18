@@ -64,8 +64,8 @@ Exit codes: `0` clean · `1` violations found (at/above `--fail-on`, default
 `info`) · `2` the tool could not complete (bad args, unreadable file, unknown
 journal, etc).
 
-A directory argument is expanded to every `.tex`/`.ltx`/`.bib` file inside
-it. `.jss-lint.toml` in the current directory (or an ancestor) supplies
+A directory argument is expanded to every `.tex`/`.ltx`/`.bib`/`.Rnw`/`.Rmd`
+file inside it. `.jss-lint.toml` in the current directory (or an ancestor) supplies
 defaults for any flag you don't pass explicitly — CLI flags win.
 
 ### Auto-fix

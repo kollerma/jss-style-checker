@@ -23,7 +23,7 @@ list_to_df <- function(x) {
 
 read_sources <- function(files) {
   if (!is.character(files) || length(files) == 0) {
-    stop("`files` must be a character vector of .tex/.ltx/.bib file paths",
+    stop("`files` must be a character vector of .tex/.ltx/.bib/.Rnw/.Rmd file paths",
       call. = FALSE
     )
   }
@@ -56,15 +56,16 @@ severity_phrase <- function(severity) {
 
 #' Find manuscript files for a JSS style check
 #'
-#' Lists the `.tex`, `.ltx`, and `.bib` files in a directory -- the
-#' file set [jsslint()] checks when called without arguments.
+#' Lists the `.tex`, `.ltx`, `.bib`, `.Rnw`, and `.Rmd` files in a
+#' directory -- the file set [jsslint()] checks when called without
+#' arguments.
 #'
 #' @param path Directory to search (default: the working directory).
 #' @return A character vector of file paths.
 #' @export
 jss_files <- function(path = ".") {
   list.files(path,
-    pattern = "\\.(tex|ltx|bib)$", ignore.case = TRUE,
+    pattern = "\\.(tex|ltx|bib|Rnw|Rmd)$", ignore.case = TRUE,
     full.names = !identical(path, ".")
   )
 }
