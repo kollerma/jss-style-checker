@@ -5,7 +5,7 @@
     "Manuel Koller"
   ],
   "description": "Browser/WASM binding (Phase 5 stub — spec 018). No network access must ever be reachable from this crate; see the plan's crossref callout.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "repository": {
     "type": "git",
