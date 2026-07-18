@@ -1,7 +1,7 @@
 Package: jsslintr
 Type: Package
 Title: JSS LaTeX/BibTeX Style Checker
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: person("Manuel", "Koller", role = c("aut", "cre"), email = "kollerma@proton.me")
 Description: Lints LaTeX/BibTeX manuscripts against the Journal of Statistical
     Software (JSS) style guide. Wraps the same Rust rule engine used by the

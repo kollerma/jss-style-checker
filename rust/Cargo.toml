@@ -8,14 +8,14 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 license = "MIT"
 authors = ["Manuel Koller"]
 repository = "https://github.com/kollerma/jss-style-checker"
 
 [workspace.dependencies]
-jsslint-core = { path = "jsslint-core" }
+jsslint-core = { path = "jsslint-core", version = "1.0.1" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 clap = { version = "4", features = ["derive"] }

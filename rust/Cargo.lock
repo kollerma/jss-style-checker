@@ -389,7 +389,7 @@ dependencies = [
 
 [[package]]
 name = "jsslint-cli"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "clap",
  "crossbeam-channel",
@@ -406,7 +406,7 @@ dependencies = [
 
 [[package]]
 name = "jsslint-core"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "difflib",
  "regex",
@@ -418,7 +418,7 @@ dependencies = [
 
 [[package]]
 name = "jsslint-py"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "jsslint-core",
  "pyo3",
@@ -426,7 +426,7 @@ dependencies = [
 
 [[package]]
 name = "jsslint-wasm"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "jsslint-core",
  "serde",

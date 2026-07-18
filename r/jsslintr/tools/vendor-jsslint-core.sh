@@ -42,8 +42,12 @@ cp -R "$core_src/src" "$core_dest/src"
 # "workspace" (jsslintr/src/rust/Cargo.toml's empty [workspace] table) —
 # it must NOT declare its own [workspace] table, since a workspace root
 # can't contain another workspace root in its directory tree.
+# Track the workspace version rather than hardcoding it, so a release bump
+# in rust/Cargo.toml can't silently leave this vendored copy (and the R
+# package's --locked Cargo.lock) stale.
+ws_version="$(grep -m1 '^version = ' "$repo_root/rust/Cargo.toml" | sed -E 's/^version = "([^"]+)".*/\1/')"
 sed \
-  -e 's/^version\.workspace = true$/version = "1.0.0"/' \
+  -e "s/^version\\.workspace = true\$/version = \"$ws_version\"/" \
   -e 's/^edition\.workspace = true$/edition = "2021"/' \
   -e 's/^license\.workspace = true$/license = "MIT"/' \
   -e 's/^authors\.workspace = true$/authors = ["Manuel Koller"]/' \
