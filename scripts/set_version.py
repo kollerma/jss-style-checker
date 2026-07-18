@@ -57,7 +57,7 @@ def _run(cmd: list[str]) -> bool:
         print(f"  ! {cmd[0]} not found on PATH — skipping (regenerate the lockfile manually)")
         return False
     except subprocess.CalledProcessError as exc:
-        raise SystemExit(f"set_version: `{' '.join(cmd)}` failed ({exc.returncode})")
+        raise SystemExit(f"set_version: `{' '.join(cmd)}` failed ({exc.returncode})") from exc
 
 
 def main(argv: list[str]) -> None:
@@ -105,7 +105,7 @@ def main(argv: list[str]) -> None:
     _run(["cargo", "update", "-p", "jsslint-core", "-p", "jsslint-cli",
           "-p", "jsslint-wasm", "-p", "jsslint-py", "--manifest-path", "rust/Cargo.toml"])
 
-    print(f"Done. Run `python -m pytest tests/unit/test_version_single_source.py` to verify.")
+    print("Done. Run `python -m pytest tests/unit/test_version_single_source.py` to verify.")
 
 
 if __name__ == "__main__":

@@ -59,7 +59,11 @@ _SOURCES = [
     ("vscode package-lock (top)", "vscode-extension/package-lock.json", _json_version),
     ("vscode package-lock (pkg)", "vscode-extension/package-lock.json", _lock_pkg_version),
     ("R embedded jsslintr crate", "r/jsslintr/src/rust/Cargo.toml", _first_toml_version),
-    ("R vendored jsslint-core crate", "r/jsslintr/src/rust/jsslint-core/Cargo.toml", _first_toml_version),
+    (
+        "R vendored jsslint-core crate",
+        "r/jsslintr/src/rust/jsslint-core/Cargo.toml",
+        _first_toml_version,
+    ),
 ]
 
 
