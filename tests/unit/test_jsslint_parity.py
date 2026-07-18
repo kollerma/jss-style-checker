@@ -60,6 +60,9 @@ RNW_RMD_PAPERS = [
     ("eval/recall-corpus/SightabilityModel", ["a-SightabilityModel.Rnw"], []),
     ("eval/recall-corpus/spacetime", ["jss816.Rnw"], []),
     ("tests/fixtures/compliant", ["minimal.Rmd"], []),
+    # Same content, prefixed with a UTF-8 BOM (U+FEFF) — regression
+    # coverage for the Rust engine's BOM-stripping fix.
+    ("tests/fixtures/compliant", ["minimal-bom.Rmd"], []),
     ("tests/fixtures/violations/rmd", ["JSS-MARKUP-002-bad.Rmd"], []),
     ("tests/fixtures/violations/rmd", ["unterminated-frontmatter.Rmd"], []),
     ("tests/fixtures/violations/rmd", ["unterminated-fence.Rmd"], []),

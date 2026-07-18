@@ -216,6 +216,17 @@ fn html_output_matches_python_cli() {
             "rmd-minimal",
             &["--output", "html", "tests/fixtures/compliant/minimal.Rmd"],
         ),
+        // Same content, prefixed with a UTF-8 BOM — regression
+        // coverage for the BOM-stripping fix in
+        // `ParsedDocument::from_sources`.
+        (
+            "rmd-minimal-bom",
+            &[
+                "--output",
+                "html",
+                "tests/fixtures/compliant/minimal-bom.Rmd",
+            ],
+        ),
         (
             "rmd-markup-002-bad",
             &[

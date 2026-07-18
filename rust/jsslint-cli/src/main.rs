@@ -29,9 +29,9 @@
 //! scope note — `report`'s `conformance.html.j2` is a separate
 //! template from `--output html`'s `author.html.j2`/
 //! `reviewer.html.j2`). `--crossref` (an online, opt-in feature) is
-//! out of scope per the plan's network-dependency callout, and
-//! `.rnw`/`.rmd` inputs have no parser yet — see
-//! `jsslint_core::engine`'s doc comment.
+//! out of scope per the plan's network-dependency callout.
+//! `.rnw`/`.rmd` inputs ARE supported (`SUPPORTED_SUFFIXES`, below)
+//! — see `jsslint_core::engine`'s doc comment for the parsers.
 
 mod init;
 mod localdate;

@@ -86,6 +86,15 @@ impl ParsedDocument {
     pub fn from_sources(files: &[(String, String)]) -> Result<Self, EngineError> {
         let mut doc = ParsedDocument::default();
         for (path, source) in files {
+            // Mirrors `core/parser.py::_read_utf8`: strip exactly one
+            // leading UTF-8 BOM (U+FEFF), if present, before parsing.
+            // Applied here — the single choke point every suffix
+            // branch and every binding (CLI/WASM/PyO3/R) goes through
+            // — rather than separately inside each parser, mirroring
+            // how Python's `_read_utf8` is called uniformly by
+            // `parse_tex_file`/`parse_bib_file`/`parse_rnw_file`/
+            // `parse_rmd_file`. A source with no BOM is unaffected.
+            let source: &str = source.strip_prefix('\u{FEFF}').unwrap_or(source);
             let lower = path.to_lowercase();
             if lower.ends_with(".tex") || lower.ends_with(".ltx") {
                 let parsed = tex::parse_tex_source(source);
@@ -640,13 +649,18 @@ fn ordered_rules() -> Vec<(&'static str, RuleAction<'static>)> {
 /// Run every registered rule over `document`, applying the
 /// ignore-rules and min-confidence gates, and assemble a
 /// `ComplianceReport`. Mirrors `core/engine.py::run`'s algorithm
-/// (category/rule iteration, `SkippedRule` bookkeeping,
-/// `compliance_percentage`, sorted violations) for the tex+bib-only
-/// scope this engine currently supports — see the module doc comment
-/// for what's deferred (`.rnw`/`.rmd`, format gating, inline
-/// suppression, `JSS-PARSE-000` synthetic category, severity
-/// overrides are applied but parse-error handling is not since this
-/// engine's tex parser doesn't emit `JSS-PARSE-000` yet).
+/// (category/rule iteration, `SkippedRule` bookkeeping, format
+/// gating, the synthetic `JSS-PARSE-000` "parse" category,
+/// `compliance_percentage`, sorted violations, severity overrides).
+/// One thing still deferred: inline suppression comments (`%
+/// jss-lint: ignore [RULE-IDS]`) aren't implemented — every rule
+/// finding is reported regardless. `JSS-PARSE-000` findings currently
+/// only ever come from `.Rmd`'s tokenizer (unterminated
+/// frontmatter/fence, malformed YAML); the tex tokenizer itself
+/// (`.tex`/`.ltx`/`.rnw`) never emits one — it only implements
+/// pylatexenc's tolerant-parsing path, which never raises, unlike
+/// Python's strict-then-tolerant-retry `parse_tex_source` (see
+/// `tex::parse_tex_source`'s doc comment).
 pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
     let tex_like = document.tex_like();
     let tex_file_line_indexes = document.tex_file_line_indexes();

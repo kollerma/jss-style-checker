@@ -58,6 +58,13 @@ const RNW_PAPERS: &[&str] = &[
 /// recall corpus, and why `malformed-yaml.Rmd` is excluded).
 const RMD_FIXTURES: &[&str] = &[
     "tests/fixtures/compliant/minimal.Rmd",
+    // Same content as `minimal.Rmd`, prefixed with a UTF-8 BOM
+    // (U+FEFF) — regression coverage for the BOM-stripping fix in
+    // `ParsedDocument::from_sources` (a BOM broke the `.Rmd`
+    // frontmatter delimiter check, which isn't Unicode-whitespace-
+    // aware, letting frontmatter fall through to being linted as
+    // prose).
+    "tests/fixtures/compliant/minimal-bom.Rmd",
     "tests/fixtures/violations/rmd/JSS-MARKUP-002-bad.Rmd",
     "tests/fixtures/violations/rmd/unterminated-frontmatter.Rmd",
     "tests/fixtures/violations/rmd/unterminated-fence.Rmd",

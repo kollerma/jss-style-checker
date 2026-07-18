@@ -11,8 +11,19 @@ use jsslint_core::engine::{self, ParsedDocument};
 use jsslint_core::sarif;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Mutex;
 
 mod common;
+
+/// `std::env::set_current_dir` mutates process-global state, but
+/// Rust's default test harness runs `#[test]` functions in parallel
+/// threads within the same process — so the two `set_current_dir`
+/// critical sections below (one per test function in this file) can
+/// interleave, making either test flakily pick up the wrong cwd mid-run.
+/// Held only around each `set_current_dir(dir)` .. `set_current_dir
+/// (prev_cwd)` window, not the whole test, so the two tests' oracle
+/// subprocess calls (which don't touch process cwd) can still overlap.
+static CWD_LOCK: Mutex<()> = Mutex::new(());
 
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -90,6 +101,13 @@ const RNW_PAPERS: &[&str] = &[
 /// excluded).
 const RMD_FIXTURES: &[&str] = &[
     "tests/fixtures/compliant/minimal.Rmd",
+    // Same content as `minimal.Rmd`, prefixed with a UTF-8 BOM
+    // (U+FEFF) — regression coverage for the BOM-stripping fix in
+    // `ParsedDocument::from_sources` (a BOM broke the `.Rmd`
+    // frontmatter delimiter check, which isn't Unicode-whitespace-
+    // aware, letting frontmatter fall through to being linted as
+    // prose).
+    "tests/fixtures/compliant/minimal-bom.Rmd",
     "tests/fixtures/violations/rmd/JSS-MARKUP-002-bad.Rmd",
     "tests/fixtures/violations/rmd/unterminated-frontmatter.Rmd",
     "tests/fixtures/violations/rmd/unterminated-fence.Rmd",
@@ -165,7 +183,9 @@ fn sarif_render_matches_python_cli() {
 
         // Match the oracle's cwd (the paper directory) so relative
         // `--source-root` values and the default (cwd) resolve the
-        // same way on both sides.
+        // same way on both sides. Guarded by `CWD_LOCK` — see its doc
+        // comment — since process cwd is global, not per-thread.
+        let cwd_guard = CWD_LOCK.lock().unwrap();
         let prev_cwd = std::env::current_dir().unwrap();
         std::env::set_current_dir(&dir).unwrap();
 
@@ -180,6 +200,7 @@ fn sarif_render_matches_python_cli() {
         let actual = sarif::render(&report, &config);
 
         std::env::set_current_dir(&prev_cwd).unwrap();
+        drop(cwd_guard);
 
         if actual != expected {
             mismatches.push(format!(
@@ -232,12 +253,14 @@ fn sarif_render_matches_python_cli_rnw_rmd() {
         let document = ParsedDocument::from_sources(&[(file_name.to_string(), source)])
             .unwrap_or_else(|e| panic!("{rel_path}: failed to build ParsedDocument: {e}"));
 
+        let cwd_guard = CWD_LOCK.lock().unwrap();
         let prev_cwd = std::env::current_dir().unwrap();
         std::env::set_current_dir(dir).unwrap();
         let config = ToolConfig::default();
         let report = engine::run(&config, &document);
         let actual = sarif::render(&report, &config);
         std::env::set_current_dir(&prev_cwd).unwrap();
+        drop(cwd_guard);
 
         if actual != expected {
             mismatches.push(format!(
