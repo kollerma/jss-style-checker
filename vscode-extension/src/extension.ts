@@ -1,22 +1,19 @@
-// Spec 012 — VS Code extension entry point.
+// VS Code extension entry point.
 //
 // The extension activates on .tex/.ltx/.Rnw/.Rmd files and spawns the
-// spec-011 LSP server (`<python> -m texlint.cli lsp`) using the user's
-// configured Python interpreter. The actual LSP wire is handled by
-// `vscode-languageclient`; this module is the thin orchestration layer.
+// standalone Rust language server (`jsslint lsp`). No Python is involved.
+// The actual LSP wire is handled by `vscode-languageclient`; this module is
+// the thin orchestration layer.
 
-import * as path from "path";
 import * as cp from "child_process";
 import {
   workspace,
   window,
   commands,
-  extensions,
   ExtensionContext,
   StatusBarItem,
   StatusBarAlignment,
   Diagnostic,
-  Uri,
   languages,
 } from "vscode";
 import {
@@ -29,83 +26,57 @@ import {
 let client: LanguageClient | undefined;
 let statusBar: StatusBarItem;
 
-function canRunServer(python: string): Promise<boolean> {
-  // A candidate interpreter qualifies iff it exists AND has the
-  // texlint package (`pip install "jss-style-checker[lsp]"`).
+const INSTALL_HINT =
+  "Install it with `cargo install jsslint-cli`, or download the `jsslint` " +
+  "binary from the project's GitHub releases and set " +
+  '"jssStyleChecker.serverPath" to its location.';
+
+function canRunServer(binary: string): Promise<boolean> {
+  // A candidate qualifies iff it runs and reports a version — cheap and
+  // side-effect-free, unlike actually starting the `lsp` server.
   return new Promise((resolve) => {
-    cp.execFile(python, ["-c", "import texlint"], (err) => resolve(!err));
+    cp.execFile(binary, ["--version"], (err) => resolve(!err));
   });
 }
 
-async function resolvePython(): Promise<string | undefined> {
-  // Four-layer discovery (research §2):
-  //   1. `jssStyleChecker.python.path` setting — explicit, validated;
-  //      a broken value surfaces an error instead of being silently
-  //      replaced by a fallback the user did not choose.
-  //   2. The VS Code Python extension's selected interpreter.
-  //   3. `python3` on PATH (modern macOS / most Linux distros ship no
-  //      bare `python`).
-  //   4. `python` on PATH.
-  const setting = workspace
+async function resolveServer(): Promise<string | undefined> {
+  //   1. `jssStyleChecker.serverPath` — explicit; a broken value surfaces an
+  //      error instead of being silently replaced by a fallback.
+  //   2. `jsslint` on PATH.
+  const configured = workspace
     .getConfiguration("jssStyleChecker")
-    .get<string>("python.path");
-  if (setting) {
-    if (await canRunServer(setting)) {
-      return setting;
+    .get<string>("serverPath");
+  if (configured) {
+    if (await canRunServer(configured)) {
+      return configured;
     }
     window.showErrorMessage(
-      `JSS Style Checker: "jssStyleChecker.python.path" (${setting}) ` +
-        `is not a Python interpreter with jss-lint installed. ` +
-        `Install with: ${setting} -m pip install "jss-style-checker[lsp]"`
+      `JSS Style Checker: "jssStyleChecker.serverPath" (${configured}) is not ` +
+        `a runnable jsslint binary. ${INSTALL_HINT}`
     );
     return undefined;
   }
 
-  const candidates: string[] = [];
-  const pythonExt = extensions.getExtension("ms-python.python");
-  if (pythonExt) {
-    try {
-      const api = await pythonExt.activate();
-      // Modern environments API (2023+), then the legacy settings API.
-      const active = api?.environments?.getActiveEnvironmentPath?.();
-      if (active?.path) {
-        candidates.push(active.path);
-      }
-      const exec = api?.settings?.getExecutionDetails?.()?.execCommand;
-      if (Array.isArray(exec) && exec.length > 0) {
-        candidates.push(exec[0]);
-      }
-    } catch {
-      // Python extension misbehaving — fall through to PATH probing.
-    }
-  }
-  candidates.push("python3", "python");
-
-  for (const candidate of candidates) {
-    if (await canRunServer(candidate)) {
-      return candidate;
-    }
+  if (await canRunServer("jsslint")) {
+    return "jsslint";
   }
   window.showErrorMessage(
-    'JSS Style Checker: no Python interpreter with jss-lint found ' +
-      `(tried: ${candidates.join(", ")}). Install the server with ` +
-      '`pip install "jss-style-checker[lsp]"` or point ' +
-      '"jssStyleChecker.python.path" at the right interpreter.'
+    `JSS Style Checker: the \`jsslint\` binary was not found on PATH. ${INSTALL_HINT}`
   );
   return undefined;
 }
 
 export async function activate(context: ExtensionContext): Promise<void> {
-  const pythonPath = await resolvePython();
-  if (!pythonPath) {
-    // No usable interpreter — the error message above tells the user
-    // how to fix it; starting a doomed client would only add noise.
+  const server = await resolveServer();
+  if (!server) {
+    // No usable binary — the error message above tells the user how to fix
+    // it; starting a doomed client would only add noise.
     return;
   }
 
   const serverOptions: ServerOptions = {
-    command: pythonPath,
-    args: ["-m", "texlint.cli", "lsp"],
+    command: server,
+    args: ["lsp"],
     transport: TransportKind.stdio,
   };
 
@@ -115,12 +86,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
       { scheme: "file", language: "tex" },
       { scheme: "file", language: "rnoweb" },
       { scheme: "file", language: "rmd" },
-      // Pattern fallback: bind by filename so the LSP still lints
-      // when no sibling LaTeX language pack is installed (the file
-      // resolves as `plaintext`, but the extension still activates
-      // and diagnostics flow). Spec 012 v1 originally relied on
-      // LaTeX Workshop registering the `rnoweb` / `latex` ids; this
-      // pattern entry makes the extension self-sufficient.
+      // Pattern fallback: bind by filename so the LSP still lints when no
+      // sibling LaTeX language pack is installed (the file resolves as
+      // `plaintext`, but the extension still activates and diagnostics flow).
       { scheme: "file", pattern: "**/*.{tex,ltx,Rnw,rnw,Rmd,rmd,bib}" },
     ],
     synchronize: {
@@ -137,8 +105,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   );
   client.start().catch((err) => {
     window.showErrorMessage(
-      `JSS Style Checker: failed to start LSP server (${err}). ` +
-        `Verify the Python interpreter has jss-lint[lsp] installed.`
+      `JSS Style Checker: failed to start the jsslint LSP server (${err}). ` +
+        INSTALL_HINT
     );
   });
 
@@ -165,11 +133,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
   );
   refreshStatus();
 
-  // Commands. Only register ids the LSP server does NOT declare in
-  // its `executeCommandProvider.commands` capability — vscode-
-  // languageclient auto-registers a VS Code command for each of
-  // those, and registering them again here would throw "command X
-  // already exists", crashing the LSP startup.
+  // Commands. Only register ids the LSP server does NOT declare in its
+  // `executeCommandProvider.commands` capability — vscode-languageclient
+  // auto-registers a VS Code command for each of those, and registering them
+  // again here would throw "command X already exists", crashing LSP startup.
   //
   // Server-side (auto-registered by vscode-languageclient):
   //   - jss-lint.applyAllFixes
@@ -183,18 +150,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
         return;
       }
       const cwd = folder.uri.fsPath;
-      cp.execFile(
-        pythonPath,
-        ["-m", "texlint.cli", "init"],
-        { cwd },
-        (err, stdout, stderr) => {
-          if (err) {
-            window.showErrorMessage(`jss-lint init failed: ${stderr || err.message}`);
-            return;
-          }
-          window.showInformationMessage("jss-lint: wrote .jss-lint.toml");
+      cp.execFile(server, ["init"], { cwd }, (err, _stdout, stderr) => {
+        if (err) {
+          window.showErrorMessage(`jss-lint init failed: ${stderr || err.message}`);
+          return;
         }
-      );
+        window.showInformationMessage("jss-lint: wrote .jss-lint.toml");
+      });
     })
   );
 }

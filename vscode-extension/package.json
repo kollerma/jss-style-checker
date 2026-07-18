@@ -29,10 +29,10 @@
     "configuration": {
       "title": "JSS Style Checker",
       "properties": {
-        "jssStyleChecker.python.path": {
+        "jssStyleChecker.serverPath": {
           "type": "string",
           "default": "",
-          "description": "Path to the Python interpreter that has jss-lint[lsp] installed (default: discover via the VS Code Python extension or fallback to `python` on PATH)."
+          "description": "Path to the `jsslint` binary (the Rust CLI, install with `cargo install jsslint-cli`). Leave empty to use `jsslint` on PATH."
         },
         "jssStyleChecker.severityOverrides": {
           "type": "object",

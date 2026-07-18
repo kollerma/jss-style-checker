@@ -3,23 +3,26 @@
 Lint LaTeX / Sweave / R Markdown manuscripts against the JSS style
 guide directly inside VS Code, as you type.
 
-The extension runs the JSS style checker's language server, which ships in
-the Python `jss-style-checker` package. You need a Python interpreter
-(3.10+) with that package installed; the extension discovers it
-automatically, or you can point it at one with `jssStyleChecker.python.path`.
+The extension runs the JSS style checker's language server — the standalone
+Rust `jsslint` binary. No Python required. It uses `jsslint` on your PATH, or
+you can point it at a specific binary with `jssStyleChecker.serverPath`.
 
 ## Install
 
 ```sh
-pip install "jss-style-checker[lsp]"
+cargo install jsslint-cli          # provides the `jsslint` binary
 code --install-extension kollerma.jss-style-checker
 ```
+
+Alternatively, download a prebuilt `jsslint` binary from the project's
+[GitHub releases](https://github.com/kollerma/jss-style-checker/releases) and
+set `jssStyleChecker.serverPath` to its path.
 
 ## Settings
 
 | Setting                                | Default      | Description                                                |
 | -------------------------------------- | ------------ | ---------------------------------------------------------- |
-| `jssStyleChecker.python.path`          | `""`         | Override Python interpreter (default: discover).            |
+| `jssStyleChecker.serverPath`           | `""`         | Path to the `jsslint` binary (default: `jsslint` on PATH).  |
 | `jssStyleChecker.severityOverrides`    | `{}`         | Per-rule severity override map.                             |
 | `jssStyleChecker.ignoreRules`          | `[]`         | Rule ids to suppress.                                       |
 | `jssStyleChecker.codeWidth`            | `80`         | Max line width for `JSS-WIDTH-001`.                         |
