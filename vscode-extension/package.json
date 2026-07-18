@@ -13,6 +13,7 @@
   ],
   "main": "./out/extension.js",
   "activationEvents": [
+    "onStartupFinished",
     "onLanguage:latex",
     "onLanguage:tex",
     "onLanguage:rnoweb",

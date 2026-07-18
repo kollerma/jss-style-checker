@@ -24,19 +24,48 @@ import {
   StatusBarAlignment,
   WorkspaceEdit,
   Uri,
+  OutputChannel,
+  CodeAction,
+  CodeActionKind,
+  CodeActionContext,
 } from "vscode";
+
+interface WasmFix {
+  start: number;
+  end: number;
+  replacement: string;
+  description: string;
+}
+
+interface WasmViolation {
+  ruleId: string;
+  severity: "error" | "warning" | "info";
+  message: string;
+  line: number; // 1-based
+  column: number | null; // 1-based, or null for line-granularity rules
+  fix?: WasmFix;
+}
 
 interface WasmModule {
   render(request: unknown): string;
   fix(request: unknown): Array<[string, string]>;
+  analyze(request: unknown): WasmViolation[];
 }
 
 let wasm: WasmModule | undefined;
 let diagnostics: DiagnosticCollection;
 let statusBar: StatusBarItem;
+let output: OutputChannel | undefined;
 const debounce = new Map<string, NodeJS.Timeout>();
+// Per document (uri string): the fix for each fixable diagnostic, keyed by
+// `${line}:${character}:${ruleId}` of its diagnostic range start.
+const fixIndex = new Map<string, Map<string, WasmFix>>();
 
 const SUPPORTED = /\.(tex|ltx|Rnw|rnw|Rmd|rmd|bib)$/i;
+
+function log(message: string): void {
+  output?.appendLine(message);
+}
 
 function loadWasm(context: ExtensionContext): WasmModule | undefined {
   try {
@@ -75,30 +104,40 @@ function lint(doc: TextDocument): void {
   if (!wasm || doc.uri.scheme !== "file" || !SUPPORTED.test(doc.fileName)) {
     return;
   }
-  let results: Array<Record<string, any>>;
+  let violations: WasmViolation[];
   try {
-    const sarif = JSON.parse(wasm.render({ ...requestFor(doc), output: "sarif" }));
-    results = sarif.runs?.[0]?.results ?? [];
-  } catch {
+    violations = wasm.analyze(requestFor(doc));
+  } catch (err) {
     // Unparseable source (e.g. mid-edit) — clear stale diagnostics, wait.
+    log(`analyze failed for ${doc.fileName}: ${err}`);
     diagnostics.delete(doc.uri);
+    fixIndex.delete(doc.uri.toString());
     return;
   }
 
   const diags: Diagnostic[] = [];
-  for (const r of results) {
-    const region = r.locations?.[0]?.physicalLocation?.region ?? {};
-    const line = Math.max(0, (region.startLine ?? 1) - 1);
+  const fixes = new Map<string, WasmFix>();
+  for (const v of violations) {
+    const line = Math.max(0, v.line - 1);
     if (line >= doc.lineCount) continue;
     const lineText = doc.lineAt(line);
-    const col = Math.min(Math.max(0, (region.startColumn ?? 1) - 1), lineText.text.length);
+    const col =
+      v.column != null
+        ? Math.min(Math.max(0, v.column - 1), lineText.text.length)
+        : 0;
     const range = new Range(new Position(line, col), lineText.range.end);
-    const d = new Diagnostic(range, r.message?.text ?? "", severityFor(r.level));
+    const d = new Diagnostic(range, v.message, severityFor(v.severity));
     d.source = "jss-lint";
-    d.code = r.ruleId;
+    d.code = v.ruleId;
     diags.push(d);
+    if (v.fix) fixes.set(`${line}:${col}:${v.ruleId}`, v.fix);
   }
   diagnostics.set(doc.uri, diags);
+  fixIndex.set(doc.uri.toString(), fixes);
+  log(
+    `linted ${path.basename(doc.fileName)}: ${diags.length} diagnostic(s), ` +
+      `${fixes.size} auto-fixable`
+  );
 }
 
 function scheduleLint(doc: TextDocument): void {
@@ -142,6 +181,45 @@ async function applyAllFixes(): Promise<void> {
   lint(doc);
 }
 
+function provideCodeActions(
+  doc: TextDocument,
+  _range: Range,
+  context: CodeActionContext
+): CodeAction[] {
+  const fixes = fixIndex.get(doc.uri.toString());
+  const actions: CodeAction[] = [];
+  let anyOurs = false;
+  for (const d of context.diagnostics) {
+    if (d.source !== "jss-lint") continue;
+    anyOurs = true;
+    const fix = fixes?.get(`${d.range.start.line}:${d.range.start.character}:${d.code}`);
+    if (!fix) continue;
+    const action = new CodeAction(fix.description, CodeActionKind.QuickFix);
+    action.edit = new WorkspaceEdit();
+    action.edit.replace(
+      doc.uri,
+      new Range(doc.positionAt(fix.start), doc.positionAt(fix.end)),
+      fix.replacement
+    );
+    action.diagnostics = [d];
+    action.isPreferred = true;
+    actions.push(action);
+  }
+  // Offer a whole-file fix whenever any of our diagnostics are present.
+  if (anyOurs) {
+    const all = new CodeAction(
+      "Fix all JSS style issues in this file",
+      CodeActionKind.QuickFix
+    );
+    all.command = {
+      command: "jss-lint.applyAllFixes",
+      title: "Fix all JSS style issues",
+    };
+    actions.push(all);
+  }
+  return actions;
+}
+
 async function runInit(): Promise<void> {
   const folder = workspace.workspaceFolders?.[0];
   if (!folder) {
@@ -180,8 +258,16 @@ function refreshStatus(): void {
 }
 
 export function activate(context: ExtensionContext): void {
+  output = window.createOutputChannel("JSS Style Checker");
+  context.subscriptions.push(output);
+  log("JSS Style Checker activating…");
+
   wasm = loadWasm(context);
-  if (!wasm) return;
+  if (!wasm) {
+    log("WASM engine failed to load — see the error notification.");
+    return;
+  }
+  log("WASM engine loaded.");
 
   diagnostics = languages.createDiagnosticCollection("jss-lint");
   context.subscriptions.push(diagnostics);
@@ -208,17 +294,25 @@ export function activate(context: ExtensionContext): void {
     }),
     languages.onDidChangeDiagnostics(refreshStatus),
     window.onDidChangeActiveTextEditor(refreshStatus),
+    languages.registerCodeActionsProvider(
+      { scheme: "file", pattern: "**/*.{tex,ltx,Rnw,rnw,Rmd,rmd,bib}" },
+      { provideCodeActions },
+      { providedCodeActionKinds: [CodeActionKind.QuickFix] }
+    ),
     commands.registerCommand("jss-lint.applyAllFixes", applyAllFixes),
     commands.registerCommand("jss-lint.runInit", runInit)
   );
 
   // Lint whatever is already open.
-  workspace.textDocuments.forEach((doc) => lint(doc));
+  const open = workspace.textDocuments.filter((d) => SUPPORTED.test(d.fileName));
+  log(`activated; ${open.length} supported document(s) already open.`);
+  open.forEach((doc) => lint(doc));
   refreshStatus();
 }
 
 export function deactivate(): void {
   for (const t of debounce.values()) clearTimeout(t);
   debounce.clear();
+  fixIndex.clear();
   diagnostics?.dispose();
 }

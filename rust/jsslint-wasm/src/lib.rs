@@ -19,8 +19,9 @@ use std::collections::HashMap;
 
 use jsslint_core::config::{self, RawOverrides};
 use jsslint_core::engine::ParsedDocument;
+use jsslint_core::report::Severity;
 use jsslint_core::{engine, fixer, html_output, json_output, sarif, terminal};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 /// Mirrors `jsslint::render`'s parameter shape (the PyO3 binding), as a single
@@ -134,4 +135,63 @@ pub fn fix(request: JsValue) -> Result<JsValue, JsValue> {
 
     serde_wasm_bindgen::to_value(&changed)
         .map_err(|e| JsValue::from_str(&format!("failed to serialize fix result: {e}")))
+}
+
+#[derive(Serialize)]
+struct WasmFix {
+    /// Character offsets into the file (same convention the whole engine uses).
+    start: usize,
+    end: usize,
+    replacement: String,
+    description: String,
+}
+
+#[derive(Serialize)]
+struct WasmViolation {
+    rule_id: String,
+    severity: &'static str,
+    message: String,
+    /// 1-based.
+    line: u32,
+    /// 1-based; null when the rule operates at line granularity.
+    column: Option<u32>,
+    /// Present only when the violation carries a safe auto-fix.
+    fix: Option<WasmFix>,
+}
+
+/// Lints `request.files` and returns the violations as structured data
+/// (camelCase), each carrying its auto-fix (`fix`) when one exists. Unlike
+/// `render(output:"json")` — whose `fix` field is hardcoded null for
+/// byte-parity with the Python contract — this exposes the real fixes so a
+/// UI (e.g. the VS Code extension) can offer per-diagnostic quick fixes.
+#[wasm_bindgen]
+pub fn analyze(request: JsValue) -> Result<JsValue, JsValue> {
+    let req: LintRequest = serde_wasm_bindgen::from_value(request)
+        .map_err(|e| JsValue::from_str(&format!("invalid analyze request: {e}")))?;
+    let (_cfg, report) = lint(&req)?;
+
+    let out: Vec<WasmViolation> = report
+        .violations
+        .iter()
+        .map(|v| WasmViolation {
+            rule_id: v.rule_id.clone(),
+            severity: match v.severity {
+                Severity::Error => "error",
+                Severity::Warning => "warning",
+                Severity::Info => "info",
+            },
+            message: v.message.clone(),
+            line: v.line,
+            column: v.column,
+            fix: v.fix.as_ref().map(|f| WasmFix {
+                start: f.start,
+                end: f.end,
+                replacement: f.replacement.clone(),
+                description: f.description.clone(),
+            }),
+        })
+        .collect();
+
+    serde_wasm_bindgen::to_value(&out)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize analyze result: {e}")))
 }
