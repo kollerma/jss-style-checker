@@ -58,28 +58,104 @@ fn run(bin: &str, root: &PathBuf, args: &[&str]) -> Outcome {
 }
 
 /// Extracts every `<src> <dst>` token pair inside `beginbfchar` ...
-/// `endbfchar` blocks of a saved PDF's raw bytes, as `(src_hex, dst_hex)`
+/// `endbfchar` blocks anywhere in a saved PDF, as `(src_hex, dst_hex)`
 /// strings (angle brackets stripped).
 ///
 /// This is a plain byte-scan, not a PDF/CMap parser — deliberately, since
 /// the one property under test (regression coverage for the vendored
 /// `printpdf` ToUnicode-CMap fix, see `vendor/printpdf-0.3.4/NOTICE.md`)
-/// only needs the raw hex tokens, not a structural parse. It relies on
-/// this ToUnicode stream never being FlateDecode-compressed: `printpdf`'s
-/// `generate_cid_to_unicode_map` builds it as plain ASCII and marks it
-/// with the default `allows_compression: true`, but nothing on the
-/// `genpdf`/`printpdf` save path ever calls `Document::compress()` (only
-/// `xobject.rs` compresses image XObjects) — so the bytes are always
-/// present verbatim in the saved file. `String::from_utf8_lossy` is safe
-/// here even though most of the file is binary (font/PDF structure
-/// bytes): we only care about locating and reading the ASCII
-/// `beginbfchar`/`endbfchar` markers and the hex tokens between them, and
-/// lossy replacement of unrelated invalid-UTF-8 bytes elsewhere in the
-/// file can't produce those exact ASCII markers by coincidence.
+/// only needs the raw hex tokens, not a structural parse. But the
+/// ToUnicode stream's compression is build-profile-dependent, not
+/// something we can assume away: `lopdf`'s `Stream::new` defaults every
+/// stream to `allows_compression: true`, and `pdf_document.rs`'s
+/// `optimize()` (unmodified upstream code, vendored as-is) calls
+/// `Document::compress()` under `cfg(all(not(debug_assertions),
+/// not(feature = "less-optimization")))` — a no-op in debug builds, but
+/// it runs for every release build, which FlateDecode-compresses the
+/// CMap stream along with everything else. So the literal `beginbfchar`
+/// text is present verbatim in a debug-built PDF's raw bytes, but sits
+/// inside compressed stream data in a release-built one.
+///
+/// Branching on *this test binary's* `cfg(debug_assertions)` wouldn't
+/// track that correctly — the `jsslint` binary under test is a
+/// completely separate `cargo build` invocation, so its profile isn't
+/// guaranteed to match this test binary's. Instead: every `stream ...
+/// endstream` region in the file is unconditionally run through zlib
+/// inflate, and whatever comes out (or, if inflation fails because that
+/// particular stream was never compressed to begin with, the stream's
+/// raw bytes) is appended to the search corpus alongside the full raw
+/// file — so `beginbfchar`/`endbfchar` is found either way, regardless
+/// of which build produced the PDF.
 fn extract_bfchar_pairs(pdf_bytes: &[u8]) -> Vec<(String, String)> {
-    let text = String::from_utf8_lossy(pdf_bytes);
+    let mut corpus = String::from_utf8_lossy(pdf_bytes).into_owned();
+    for stream_body in extract_stream_bodies(pdf_bytes) {
+        let decoded = inflate(&stream_body).unwrap_or(stream_body);
+        corpus.push('\n');
+        corpus.push_str(&String::from_utf8_lossy(&decoded));
+    }
+    parse_bfchar_pairs(&corpus)
+}
+
+/// Returns the byte contents between every `stream<CRLF|LF>` / `endstream`
+/// marker pair in a raw PDF file. A best-effort scan, not xref-table-aware
+/// parsing: guards against the one sharp edge a naive substring search
+/// would hit — `endstream` itself contains `stream` as a substring (the
+/// last 6 of its 9 bytes), so a bare search for `stream` would otherwise
+/// spuriously "start" a new region right on top of the marker that just
+/// closed the previous one. Every other PDF-writer quirk (comments,
+/// stray literal "stream" text inside uncompressed content) is out of
+/// scope: worst case here is failing to inflate a bogus region, which
+/// `extract_bfchar_pairs` already treats as "not compressed" and falls
+/// back to raw bytes for, so it can't hide the real CMap stream.
+fn extract_stream_bodies(pdf_bytes: &[u8]) -> Vec<Vec<u8>> {
+    const END: &[u8] = b"endstream";
+    let mut bodies = Vec::new();
+    let mut pos = 0;
+    while let Some(rel) = find_bytes(&pdf_bytes[pos..], b"stream") {
+        let stream_kw = pos + rel;
+        if stream_kw >= 3 && &pdf_bytes[stream_kw - 3..stream_kw] == b"end" {
+            // The tail of a preceding "endstream" marker, not a real
+            // "stream" keyword — keep scanning right after it.
+            pos = stream_kw + 1;
+            continue;
+        }
+        let after_kw = stream_kw + b"stream".len();
+        let body_start = if pdf_bytes[after_kw..].starts_with(b"\r\n") {
+            after_kw + 2
+        } else if pdf_bytes[after_kw..].starts_with(b"\n") {
+            after_kw + 1
+        } else {
+            // Not followed by the mandatory EOL — not a genuine
+            // "stream" keyword occurrence.
+            pos = after_kw;
+            continue;
+        };
+        let Some(end_rel) = find_bytes(&pdf_bytes[body_start..], END) else {
+            break;
+        };
+        let body_end = body_start + end_rel;
+        bodies.push(pdf_bytes[body_start..body_end].to_vec());
+        pos = body_end + END.len();
+    }
+    bodies
+}
+
+fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    haystack.windows(needle.len()).position(|w| w == needle)
+}
+
+fn inflate(bytes: &[u8]) -> Option<Vec<u8>> {
+    use flate2::read::ZlibDecoder;
+    use std::io::Read;
+    let mut decoder = ZlibDecoder::new(bytes);
+    let mut out = Vec::new();
+    decoder.read_to_end(&mut out).ok()?;
+    Some(out)
+}
+
+fn parse_bfchar_pairs(text: &str) -> Vec<(String, String)> {
     let mut pairs = Vec::new();
-    let mut rest: &str = text.as_ref();
+    let mut rest: &str = text;
     while let Some(start) = rest.find("beginbfchar") {
         let after_start = &rest[start + "beginbfchar".len()..];
         let Some(end) = after_start.find("endbfchar") else {

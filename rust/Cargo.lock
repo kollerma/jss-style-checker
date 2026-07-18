@@ -658,6 +658,7 @@ version = "1.0.1"
 dependencies = [
  "clap",
  "crossbeam-channel",
+ "flate2",
  "genpdf",
  "jsslint-core",
  "jsslint-crossref",
