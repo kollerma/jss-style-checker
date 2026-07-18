@@ -61,6 +61,10 @@ fn explain_matches_python_cli() {
         &["explain", "--format", "markdown"],
         &["explain", "JSS-STRUCT-001"],
         &["explain", "JSS-STRUCT-001", "--format", "markdown"],
+        // Mixed-case --format: Python's click.Choice(..., case_sensitive=False)
+        // accepts any case; clap's `ignore_case = true` must too.
+        &["explain", "JSS-STRUCT-001", "--format", "MARKDOWN"],
+        &["explain", "JSS-STRUCT-001", "--format", "Markdown"],
         &["explain", "JSS-CITE-002"],
         &["explain", "JSS-CITE-002", "--format", "markdown"],
         &["explain", "  jss-cite-002  "],

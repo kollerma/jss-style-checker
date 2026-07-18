@@ -150,6 +150,33 @@ fn config_load_matches_python_cli() {
             toml_body: "output = \"json\"\njournal = \"nature\"\n",
             args: &["before.tex"],
         },
+        // Mixed-case CLI flag values: Python's click.Choice(...,
+        // case_sensitive=False) accepts any case for --output/--mode/
+        // --min-confidence/--fail-on; clap's `ignore_case = true` must
+        // too, and (unlike Click, which normalizes the parsed value)
+        // clap preserves the caller's casing, so `main.rs` lowercases
+        // by hand before these ever reach `RawOverrides` — these
+        // scenarios are the regression coverage for that.
+        Scenario {
+            name: "cli-output-mixed-case",
+            toml_body: "",
+            args: &["--output", "JSON", "before.tex"],
+        },
+        Scenario {
+            name: "cli-mode-mixed-case",
+            toml_body: "",
+            args: &["--output", "html", "--mode", "AUTHOR", "before.tex"],
+        },
+        Scenario {
+            name: "cli-min-confidence-mixed-case",
+            toml_body: "output = \"json\"\nmin_confidence = \"high\"\n",
+            args: &["--min-confidence", "LOW", "before.tex"],
+        },
+        Scenario {
+            name: "cli-fail-on-mixed-case",
+            toml_body: "output = \"json\"\n",
+            args: &["--fail-on", "ERROR", "before.tex"],
+        },
     ];
 
     let mut mismatches = Vec::new();

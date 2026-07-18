@@ -25,3 +25,11 @@ serde_json = { version = "1", features = ["preserve_order"] }
 clap = { version = "4", features = ["derive"] }
 difflib = "0.4"
 toml = "1"
+
+# `printpdf` 0.3.4 (pulled in transitively by `genpdf`, used only by
+# `jsslint-cli`'s `report --format pdf`) writes malformed ToUnicode CMap
+# entries for any embedded-font glyph above U+FFFF — see
+# `vendor/printpdf-0.3.4/NOTICE.md` for the bug, why no compatible
+# upstream fix exists, and exactly what this vendored copy changes.
+[patch.crates-io]
+printpdf = { path = "vendor/printpdf-0.3.4" }

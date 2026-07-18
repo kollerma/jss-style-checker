@@ -120,6 +120,19 @@ infeasible. This port's PDF is an independently laid out document carrying
 the same content instead. `--format pdf` requires `--out FILE` (PDF is
 binary, so there's no stdout behavior — same guard as the Python CLI).
 
+`genpdf` pulls in `printpdf` 0.3.4 transitively, and that version writes a
+malformed ToUnicode CMap for any embedded font glyph above U+FFFF (a raw
+5-hex-digit codepoint instead of a UTF-16BE surrogate pair) — the vendored
+DejaVu Sans faces trip this on *every* generated PDF regardless of report
+content, since their cmap tables include supplementary-plane glyphs. Fixed
+by vendoring a patched `printpdf` 0.3.4 (`rust/vendor/printpdf-0.3.4`, wired
+up via `[patch.crates-io]` in `rust/Cargo.toml`) rather than bumping the
+version: `genpdf` 0.2.0 (the only release on crates.io) pins `printpdf`
+to exactly `0.3.4`, no newer 0.3.x patch release exists, the bug is still
+present unfixed through 0.11.x, and the 0.12.0 rewrite that does fix it has
+a completely different, incompatible API that `genpdf` 0.2.0 can't consume.
+See `rust/vendor/printpdf-0.3.4/NOTICE.md` for the full writeup.
+
 `jsslint lsp` starts a synchronous LSP 3.17 server over stdio (diagnostics +
 code actions + workspace edits). You don't run this by hand; point an
 editor's LSP client at the `jsslint lsp` command the way the VS Code

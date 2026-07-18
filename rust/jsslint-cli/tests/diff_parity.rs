@@ -137,6 +137,10 @@ fn diff_matches_python_cli() {
         &["diff", "old.json", "new.json"],
         &["diff", "old.json", "new.json", "--format", "markdown"],
         &["diff", "old.json", "new.json", "--format", "json"],
+        // Mixed-case --format: Python's click.Choice(..., case_sensitive=False)
+        // accepts any case; clap's `ignore_case = true` must too.
+        &["diff", "old.json", "new.json", "--format", "MARKDOWN"],
+        &["diff", "old.json", "new.json", "--format", "Json"],
         &["diff", "old.json", "old.json"],
         &["diff", "old.json", "old.json", "--ignore-line-drift"],
         &["diff", "missing_keys.json", "old.json"],

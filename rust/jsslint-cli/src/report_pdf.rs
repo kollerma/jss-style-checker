@@ -14,6 +14,21 @@
 //! PDF is CLI-only scope (the `report` subcommand doesn't exist in the
 //! WASM/PyO3 surfaces), so `genpdf` is a dependency of `jsslint-cli`
 //! only, not `jsslint-core`.
+//!
+//! `genpdf` pulls in `printpdf` 0.3.4 transitively, which writes a
+//! malformed ToUnicode CMap for any embedded-font glyph above U+FFFF —
+//! and the vendored DejaVu Sans faces we embed contain plenty of those
+//! (musical symbols, ancient scripts, a few emoticon-block glyphs),
+//! regardless of what a given report's own content is, so every PDF
+//! this module produced was affected. Harmless for on-screen
+//! rendering (glyph selection goes through CIDToGIDMap, not
+//! ToUnicode), but it broke text search/copy-paste/accessibility
+//! tooling and would plausibly fail a strict PDF/A or accessibility
+//! validator — worth caring about given this tool's job is producing
+//! journal-submission-ready output. Fixed via a `[patch.crates-io]`
+//! override at `rust/vendor/printpdf-0.3.4` (see that directory's
+//! `NOTICE.md` for the bug, why no compatible upstream fix exists at a
+//! version `genpdf` 0.2.0 can actually use, and exactly what changed).
 
 use genpdf::elements::{Break, FrameCellDecorator, OrderedList, Paragraph, TableLayout};
 use genpdf::style::{Color, Style};

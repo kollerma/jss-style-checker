@@ -69,10 +69,10 @@ struct Cli {
     #[arg(long)]
     journal: Option<String>,
 
-    #[arg(long, value_parser = ["author", "reviewer"])]
+    #[arg(long, value_parser = ["author", "reviewer"], ignore_case = true)]
     mode: Option<String>,
 
-    #[arg(long, value_parser = ["terminal", "json", "html", "sarif"])]
+    #[arg(long, value_parser = ["terminal", "json", "html", "sarif"], ignore_case = true)]
     output: Option<String>,
 
     #[arg(long)]
@@ -81,10 +81,10 @@ struct Cli {
     #[arg(long)]
     ignore_rules: Option<String>,
 
-    #[arg(long, value_parser = ["low", "medium", "high"])]
+    #[arg(long, value_parser = ["low", "medium", "high"], ignore_case = true)]
     min_confidence: Option<String>,
 
-    #[arg(long, value_parser = ["error", "warning", "info"])]
+    #[arg(long, value_parser = ["error", "warning", "info"], ignore_case = true)]
     fail_on: Option<String>,
 
     #[arg(short = 'v', long)]
@@ -134,7 +134,7 @@ struct ExplainArgs {
     /// Rule id to explain; omit to list every rule by category.
     rule_id: Option<String>,
 
-    #[arg(long = "format", value_parser = ["terminal", "markdown"], default_value = "terminal")]
+    #[arg(long = "format", value_parser = ["terminal", "markdown"], default_value = "terminal", ignore_case = true)]
     format: String,
 
     /// Reserved for fixture pull-through; currently a no-op.
@@ -144,10 +144,16 @@ struct ExplainArgs {
 }
 
 fn run_explain(args: &[String]) -> ExitCode {
-    let parsed = ExplainArgs::try_parse_from(
+    let mut parsed = ExplainArgs::try_parse_from(
         std::iter::once("jss-lint-explain".to_string()).chain(args.iter().cloned()),
     )
     .unwrap_or_else(|e| e.exit());
+    // `ignore_case = true` on `--format` accepts mixed case (mirrors
+    // Python's `click.Choice(..., case_sensitive=False)`) but — unlike
+    // Click, which normalizes to the declared-choice casing — preserves
+    // whatever casing the user typed. Lowercase explicitly so the
+    // `parsed.format` string comparisons below keep working unmodified.
+    parsed.format = parsed.format.to_lowercase();
 
     match jsslint_core::explain::render(parsed.rule_id.as_deref(), &parsed.format) {
         Ok(out) => {
@@ -174,7 +180,7 @@ struct DiffArgs {
     #[arg(long = "ignore-line-drift")]
     ignore_line_drift: bool,
 
-    #[arg(long = "format", value_parser = ["terminal", "markdown", "json"], default_value = "terminal")]
+    #[arg(long = "format", value_parser = ["terminal", "markdown", "json"], default_value = "terminal", ignore_case = true)]
     format: String,
 }
 
@@ -226,10 +232,13 @@ fn load_diff_input(path: &Path) -> Result<Vec<serde_json::Value>, ExitCode> {
 }
 
 fn run_diff(args: &[String]) -> ExitCode {
-    let parsed = DiffArgs::try_parse_from(
+    let mut parsed = DiffArgs::try_parse_from(
         std::iter::once("jss-lint-diff".to_string()).chain(args.iter().cloned()),
     )
     .unwrap_or_else(|e| e.exit());
+    // See `run_explain`'s comment on `ignore_case = true`: clap preserves
+    // the user's casing, Click normalizes it, so we normalize by hand.
+    parsed.format = parsed.format.to_lowercase();
 
     let old = match load_diff_input(&parsed.old) {
         Ok(v) => v,
@@ -413,7 +422,7 @@ struct ReportArgs {
     /// File or directory to lint.
     path: String,
 
-    #[arg(long = "format", value_parser = ["md", "html", "pdf"], default_value = "md")]
+    #[arg(long = "format", value_parser = ["md", "html", "pdf"], default_value = "md", ignore_case = true)]
     format: String,
 
     /// Write the report to FILE instead of stdout.
@@ -434,10 +443,13 @@ struct ReportArgs {
 /// documented scope decision as `diff`/`init` (see
 /// `load_diff_input`'s doc comment).
 fn run_report(args: &[String]) -> ExitCode {
-    let parsed = ReportArgs::try_parse_from(
+    let mut parsed = ReportArgs::try_parse_from(
         std::iter::once("jss-lint-report".to_string()).chain(args.iter().cloned()),
     )
     .unwrap_or_else(|e| e.exit());
+    // See `run_explain`'s comment on `ignore_case = true`: clap preserves
+    // the user's casing, Click normalizes it, so we normalize by hand.
+    parsed.format = parsed.format.to_lowercase();
 
     let target = pathlib_normalize(&PathBuf::from(&parsed.path));
     if !target.exists() {
@@ -584,7 +596,14 @@ fn main() -> ExitCode {
 }
 
 fn run_lint() -> ExitCode {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
+    // See `run_explain`'s comment on `ignore_case = true`: clap preserves
+    // the user's casing, Click normalizes it, so we normalize by hand —
+    // `config::load`/`RawOverrides` match against lowercase literals.
+    cli.mode = cli.mode.map(|s| s.to_lowercase());
+    cli.output = cli.output.map(|s| s.to_lowercase());
+    cli.min_confidence = cli.min_confidence.map(|s| s.to_lowercase());
+    cli.fail_on = cli.fail_on.map(|s| s.to_lowercase());
 
     if cli.paths.is_empty() {
         eprint_line("jss-lint: at least one FILE argument is required.");

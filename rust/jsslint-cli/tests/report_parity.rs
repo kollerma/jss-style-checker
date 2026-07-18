@@ -57,6 +57,50 @@ fn run(bin: &str, root: &PathBuf, args: &[&str]) -> Outcome {
     }
 }
 
+/// Extracts every `<src> <dst>` token pair inside `beginbfchar` ...
+/// `endbfchar` blocks of a saved PDF's raw bytes, as `(src_hex, dst_hex)`
+/// strings (angle brackets stripped).
+///
+/// This is a plain byte-scan, not a PDF/CMap parser — deliberately, since
+/// the one property under test (regression coverage for the vendored
+/// `printpdf` ToUnicode-CMap fix, see `vendor/printpdf-0.3.4/NOTICE.md`)
+/// only needs the raw hex tokens, not a structural parse. It relies on
+/// this ToUnicode stream never being FlateDecode-compressed: `printpdf`'s
+/// `generate_cid_to_unicode_map` builds it as plain ASCII and marks it
+/// with the default `allows_compression: true`, but nothing on the
+/// `genpdf`/`printpdf` save path ever calls `Document::compress()` (only
+/// `xobject.rs` compresses image XObjects) — so the bytes are always
+/// present verbatim in the saved file. `String::from_utf8_lossy` is safe
+/// here even though most of the file is binary (font/PDF structure
+/// bytes): we only care about locating and reading the ASCII
+/// `beginbfchar`/`endbfchar` markers and the hex tokens between them, and
+/// lossy replacement of unrelated invalid-UTF-8 bytes elsewhere in the
+/// file can't produce those exact ASCII markers by coincidence.
+fn extract_bfchar_pairs(pdf_bytes: &[u8]) -> Vec<(String, String)> {
+    let text = String::from_utf8_lossy(pdf_bytes);
+    let mut pairs = Vec::new();
+    let mut rest: &str = text.as_ref();
+    while let Some(start) = rest.find("beginbfchar") {
+        let after_start = &rest[start + "beginbfchar".len()..];
+        let Some(end) = after_start.find("endbfchar") else {
+            break;
+        };
+        let block = &after_start[..end];
+        for line in block.lines() {
+            let tokens: Vec<&str> = line
+                .split(['<', '>'])
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .collect();
+            if tokens.len() == 2 {
+                pairs.push((tokens[0].to_string(), tokens[1].to_string()));
+            }
+        }
+        rest = &after_start[end + "endbfchar".len()..];
+    }
+    pairs
+}
+
 fn compare(name: &str, expected: &Outcome, actual: &Outcome, mismatches: &mut Vec<String>) {
     if actual.stdout != expected.stdout {
         mismatches.push(format!(
@@ -153,6 +197,13 @@ fn report_matches_python_cli() {
             "html-dir-trueskill",
             &["report", "eval/recall-corpus/trueskill", "--format", "html"],
         ),
+        // Mixed-case --format: Python's click.Choice(..., case_sensitive=False)
+        // accepts any case; clap's `ignore_case = true` must too, and the
+        // normalized-lowercase value must still select the html renderer.
+        (
+            "html-format-mixed-case",
+            &["report", "eval/recall-corpus/opentsne", "--format", "HTML"],
+        ),
         (
             "html-title-author-escaping",
             &[
@@ -224,6 +275,9 @@ fn report_matches_python_cli() {
         let dir = scratch_base().join("report-out-pdf");
         fs::create_dir_all(&dir).expect("failed to create scratch dir");
         let pdf_out = dir.join("rs.pdf");
+        // Mixed-case "Pdf": Python's click.Choice(..., case_sensitive=False)
+        // accepts any case; clap's `ignore_case = true` must too, and the
+        // normalized-lowercase value must still select the pdf renderer.
         let with_out = run(
             jsslint_bin,
             &root,
@@ -231,7 +285,7 @@ fn report_matches_python_cli() {
                 "report",
                 "eval/recall-corpus/opentsne",
                 "--format",
-                "pdf",
+                "Pdf",
                 "--out",
                 pdf_out.to_str().unwrap(),
             ],
@@ -255,6 +309,42 @@ fn report_matches_python_cli() {
                     mismatches.push(format!(
                         "format-pdf-with-out: suspiciously small PDF ({} bytes)",
                         bytes.len()
+                    ));
+                }
+
+                // Regression coverage for the vendored `printpdf` fix
+                // (see `vendor/printpdf-0.3.4/NOTICE.md`): the embedded
+                // DejaVu Sans faces contain supplementary-plane glyphs
+                // (musical symbols, etc.) regardless of the report's own
+                // (here: pure-ASCII) content, so every ToUnicode CMap
+                // this tool emits exercises the bug — every `<src> <dst>`
+                // pair's hex strings must be non-empty and even-length
+                // (a well-formed hex string / valid UTF-16BE code-unit
+                // sequence). Before the fix, `<dst>` was a raw 5-hex-digit
+                // codepoint for anything above U+FFFF — odd length, and
+                // not valid UTF-16BE.
+                let pairs = extract_bfchar_pairs(&bytes);
+                if pairs.is_empty() {
+                    mismatches.push(
+                        "format-pdf-with-out: no beginbfchar/endbfchar blocks found in the PDF \
+                         (ToUnicode CMap missing — test can't verify the fix)"
+                            .to_string(),
+                    );
+                }
+                let is_valid_hex = |s: &str| {
+                    !s.is_empty()
+                        && s.len().is_multiple_of(2)
+                        && s.chars().all(|c| c.is_ascii_hexdigit())
+                };
+                let malformed: Vec<&(String, String)> = pairs
+                    .iter()
+                    .filter(|(src, dst)| !is_valid_hex(src) || !is_valid_hex(dst))
+                    .collect();
+                if !malformed.is_empty() {
+                    mismatches.push(format!(
+                        "format-pdf-with-out: {} malformed ToUnicode CMap pair(s), e.g. {:?}",
+                        malformed.len(),
+                        &malformed[..malformed.len().min(5)]
                     ));
                 }
             }
