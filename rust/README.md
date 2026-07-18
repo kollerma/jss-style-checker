@@ -106,9 +106,19 @@ jsslint report paper.tex              # one-page conformance report, markdown
 jsslint report paper.tex --out report.md --title "My Paper" --author "Jane Doe"
 ```
 
-`report --format html`/`pdf` are accepted by the flag parser but not yet
-implemented (errors with exit code 2) — markdown is the only working format
-today.
+`report --format html` is byte-for-byte identical to the Python CLI's HTML
+output (see `rust/jsslint-cli/tests/report_parity.rs`).
+
+`report --format pdf` renders a self-contained PDF via the pure-Rust `genpdf`
+crate (`rust/jsslint-cli/src/report_pdf.rs`), embedding a vendored DejaVu Sans
+font (`rust/jsslint-cli/assets/fonts/`) so it works without any fonts
+installed on the host. **It is not byte- or visually-identical to the Python
+CLI's PDF**: Python renders `conformance.html.j2` through WeasyPrint (a full
+HTML+CSS layout engine), and no pure-Rust equivalent exists that reproduces
+WeasyPrint's output — reproducing it byte-for-byte was evaluated and ruled
+infeasible. This port's PDF is an independently laid out document carrying
+the same content instead. `--format pdf` requires `--out FILE` (PDF is
+binary, so there's no stdout behavior — same guard as the Python CLI).
 
 `jsslint lsp` starts a synchronous LSP 3.17 server over stdio (diagnostics +
 code actions + workspace edits). You don't run this by hand; point an

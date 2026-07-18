@@ -23,12 +23,15 @@
 //! (`invoke_without_command=True` plus manually forwarding when
 //! `paths[0]` matches a registered subcommand name) — clap's derive
 //! subcommand DSL doesn't cleanly coexist with a catch-all `paths:
-//! Vec<String>` positional on the same struct. `report --format
-//! html`/`pdf` aren't wired (markdown only, matching the porting
-//! plan's "HTML/PDF report optional — can stay Python-only initially"
-//! scope note — `report`'s `conformance.html.j2` is a separate
+//! Vec<String>` positional on the same struct. `report --format html`
+//! is byte-for-byte identical to Python's (`conformance.html.j2`,
+//! rendered via `jsslint_core::conformance::render_html` — a separate
 //! template from `--output html`'s `author.html.j2`/
-//! `reviewer.html.j2`). `--crossref`/`--crossref-mailto` (online,
+//! `reviewer.html.j2`). `report --format pdf` renders a self-contained
+//! but *not* byte/visually-identical PDF via this crate's own
+//! `report_pdf` module (`genpdf`, pure Rust — see that module's doc
+//! comment and `rust/README.md` for why parity with WeasyPrint's
+//! output isn't the goal there). `--crossref`/`--crossref-mailto` (online,
 //! opt-in `JSS-REFS-003` DOI verification) are wired via
 //! `jsslint_crossref::make_resolver` — see that crate's module doc for
 //! why the network client lives there and not in `jsslint-core`.
@@ -38,6 +41,7 @@
 mod init;
 mod localdate;
 mod lsp_server;
+mod report_pdf;
 
 use clap::Parser;
 use jsslint_core::catalogue;
@@ -508,14 +512,6 @@ fn run_report(args: &[String]) -> ExitCode {
         .author
         .unwrap_or_else(|| extracted_author.unwrap_or_else(|| "(unknown)".to_string()));
 
-    if parsed.format != "md" {
-        eprint_line(&format!(
-            "jss-lint: --format {} is not yet implemented in this binary",
-            parsed.format
-        ));
-        return ExitCode::from(2);
-    }
-
     let run_date = localdate::today_iso();
     let summary = jsslint_core::conformance::compute_summary(
         &report,
@@ -525,7 +521,34 @@ fn run_report(args: &[String]) -> ExitCode {
         &run_date,
         &HashSet::new(),
     );
-    let rendered = jsslint_core::conformance::render_md(&summary);
+
+    if parsed.format == "pdf" {
+        // Mirrors the Python CLI's own `--format pdf requires --out
+        // FILE` guard (`cli.py::report_cmd`) — PDF is bytes, not text,
+        // so there's no sensible stdout behavior.
+        let Some(out_path) = &parsed.out else {
+            eprint_line("jss-lint: --format pdf requires --out FILE");
+            return ExitCode::from(2);
+        };
+        let pdf_bytes = match report_pdf::render_pdf(&summary) {
+            Ok(bytes) => bytes,
+            Err(msg) => {
+                eprint_line(&format!("jss-lint: {msg}"));
+                return ExitCode::from(2);
+            }
+        };
+        if let Err(exc) = std::fs::write(out_path, &pdf_bytes) {
+            eprint_line(&format!("jss-lint: {exc}"));
+            return ExitCode::from(2);
+        }
+        return ExitCode::from(0);
+    }
+
+    let rendered = if parsed.format == "html" {
+        jsslint_core::conformance::render_html(&summary)
+    } else {
+        jsslint_core::conformance::render_md(&summary)
+    };
 
     match &parsed.out {
         None => print!("{rendered}"),
