@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   cmake \
   libgit2-dev \
   libuv1-dev \
+  binaryen \
   && sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen \
   && locale-gen \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -61,6 +62,13 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
   sh -s -- -y --default-toolchain stable --profile default && \
   rustup target add wasm32-unknown-unknown && \
   chmod -R a+w /usr/local/rustup /usr/local/cargo
+
+# wasm-pack builds the browser/npm/VS Code WASM bundles (rust/jsslint-wasm).
+# binaryen (installed via apt above) provides wasm-opt on PATH, so wasm-pack
+# doesn't fetch it from a GitHub CDN at build time — which the container
+# firewall (init-firewall.sh) would block.
+RUN cargo install wasm-pack --locked && \
+  chmod -R a+w /usr/local/cargo
 
 # Install roxygen2 for jsslintr documentation/NAMESPACE generation.
 # cran.r-project.org is the CRAN mirror allowlisted in init-firewall.sh.
