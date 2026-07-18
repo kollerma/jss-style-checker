@@ -8,12 +8,12 @@ name: release-npm-wasm
 # the crate's [package] name — already `jsslint-wasm`, matching the
 # chosen npm name, so no rename step is needed here.
 #
-# One-time manual setup required before this can run:
-#   - An npm access token with publish rights for the `jsslint-wasm`
-#     package, stored as the NPM_TOKEN repository secret.
-#     (npm also supports OIDC "Trusted Publishing" as a token-free
-#     alternative once configured on npmjs.org — not used here to
-#     keep this workflow on the well-established token flow.)
+# Auth: OIDC Trusted Publishing — no token/secret. Configure a trusted
+# publisher for the `jsslint-wasm` package on npmjs.com pointing at this
+# repo + this workflow file (release-npm-wasm.yml); the `id-token: write`
+# permission below lets `npm publish` mint a short-lived credential via
+# GitHub Actions OIDC and attach provenance automatically. Requires
+# npm >= 11.5.1, installed in the publish job below (Node 20 ships npm 10).
 
 on:
   push:
@@ -55,9 +55,14 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1; Node 20 ships npm 10.
+      - name: Upgrade npm for OIDC trusted publishing
+        if: github.event_name == 'push'
+        run: npm install -g npm@latest
+
       - name: Publish to npm
         if: github.event_name == 'push'
         working-directory: rust/jsslint-wasm/pkg
+        # No NODE_AUTH_TOKEN: with a trusted publisher configured for this
+        # repo + workflow, npm authenticates via OIDC and attaches provenance.
         run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
