@@ -1,16 +1,14 @@
 # JSS Style Checker — VS Code Extension
 
 Lint LaTeX / Sweave / R Markdown manuscripts against the JSS style
-guide directly inside VS Code.
+guide directly inside VS Code, as you type.
 
-> **Status (spec 012):** scaffolded. The extension is built on top of
-> the spec-011 LSP server which is staged but not yet shipped; once
-> the server lands, this extension wires up to it via
-> `vscode-languageclient`. See
-> `specs/011-language-server/spec.md` and
-> `specs/012-vscode-extension/spec.md` for the full design.
+The extension runs the JSS style checker's language server, which ships in
+the Python `jss-style-checker` package. You need a Python interpreter
+(3.10+) with that package installed; the extension discovers it
+automatically, or you can point it at one with `jssStyleChecker.python.path`.
 
-## Install (once the LSP server ships)
+## Install
 
 ```sh
 pip install "jss-style-checker[lsp]"

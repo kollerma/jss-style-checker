@@ -5,7 +5,8 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "Standalone jsslint binary (Phase 4 stub — spec 018)."
+readme = "README.md"
+description = "Command-line style checker for LaTeX/BibTeX manuscripts submitted to the Journal of Statistical Software (JSS). Installs the `jsslint` binary."
 
 [[bin]]
 name = "jsslint"

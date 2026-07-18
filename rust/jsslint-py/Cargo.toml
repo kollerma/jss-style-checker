@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "Python wheel binding + in-process parity oracle (spec 018 Phase 5). Published to PyPI as `jsslint`."
+description = "Python binding for the Journal of Statistical Software (JSS) LaTeX/BibTeX style-checker engine. Published to PyPI as `jsslint`."
 
 [lib]
 name = "jsslint"

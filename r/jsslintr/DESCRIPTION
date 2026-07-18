@@ -6,7 +6,7 @@ Authors@R: person("Manuel", "Koller", role = c("aut", "cre"), email = "kollerma@
 Description: Lints LaTeX/BibTeX manuscripts against the Journal of Statistical
     Software (JSS) style guide. Wraps the same Rust rule engine used by the
     standalone jsslint binary, the browser/WASM build, and the Python
-    binding (spec 018) via extendr.
+    binding, exposed to R via extendr.
 License: MIT + file LICENSE
 Encoding: UTF-8
 SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65

@@ -5,7 +5,8 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "Browser/WASM binding (Phase 5 stub — spec 018). No network access must ever be reachable from this crate; see the plan's crossref callout."
+readme = "README.md"
+description = "Browser/Node WASM build of the Journal of Statistical Software (JSS) LaTeX/BibTeX style checker. Runs fully client-side — no network access is reachable from this crate by construction."
 
 [lib]
 crate-type = ["cdylib", "rlib"]
