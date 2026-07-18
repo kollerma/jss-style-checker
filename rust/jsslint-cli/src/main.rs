@@ -28,8 +28,10 @@
 //! plan's "HTML/PDF report optional — can stay Python-only initially"
 //! scope note — `report`'s `conformance.html.j2` is a separate
 //! template from `--output html`'s `author.html.j2`/
-//! `reviewer.html.j2`). `--crossref` (an online, opt-in feature) is
-//! out of scope per the plan's network-dependency callout.
+//! `reviewer.html.j2`). `--crossref`/`--crossref-mailto` (online,
+//! opt-in `JSS-REFS-003` DOI verification) are wired via
+//! `jsslint_crossref::make_resolver` — see that crate's module doc for
+//! why the network client lives there and not in `jsslint-core`.
 //! `.rnw`/`.rmd` inputs ARE supported (`SUPPORTED_SUFFIXES`, below)
 //! — see `jsslint_core::engine`'s doc comment for the parsers.
 
@@ -99,6 +101,19 @@ struct Cli {
     /// Repeatable; limits --fix to the named rule ids.
     #[arg(long = "fix-rule")]
     fix_rules: Vec<String>,
+
+    /// Online mode: verify missing DOIs against Crossref (articles,
+    /// books, proceedings) and CRAN (package @Manual entries).
+    /// JSS-REFS-003 then reports the exact DOI to add and suppresses
+    /// the advisory when no DOI exists. Combine with --fix to write
+    /// the DOIs into the .bib. Needs network access; off by default.
+    #[arg(long)]
+    crossref: bool,
+
+    /// Contact e-mail for the Crossref polite pool (recommended when
+    /// using --crossref).
+    #[arg(long = "crossref-mailto")]
+    crossref_mailto: Option<String>,
 }
 
 /// Subcommand names this port currently registers. Mirrors `cli.py`'s
@@ -571,7 +586,19 @@ fn run_lint() -> ExitCode {
         severity_overrides: None,
     };
     let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    let config = config::load(&cwd, &cli_overrides);
+    let mut config = config::load(&cwd, &cli_overrides);
+    if cli.crossref {
+        // Online DOI verification is opt-in and injected here (never
+        // via `.jss-lint.toml`), so the linter stays offline by
+        // default — mirrors `cli.py`'s `cfg = replace(cfg,
+        // doi_resolver=...)`.
+        config.doi_resolver = Some(jsslint_crossref::make_resolver(
+            jsslint_crossref::CrossrefOptions {
+                mailto: cli.crossref_mailto.clone(),
+                ..Default::default()
+            },
+        ));
+    }
 
     let (sources, exit_code) = match parse_inputs(&cli.paths) {
         Ok(s) => s,

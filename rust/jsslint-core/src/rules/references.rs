@@ -1,23 +1,28 @@
 //! References rules — mirrors `journals/jss/rules/references.py`'s
 //! bib-facing rules (JSS-REFS-001/003/004/005/006/007). All operate on
-//! plain field-value strings (title/journal/note/year) — none need the
-//! tex surface or a byte-offset `Fix`.
+//! plain field-value strings (title/journal/note/year) — most need
+//! neither the tex surface nor a byte-offset `Fix`.
 //!
-//! **JSS-REFS-003's online path is deliberately not ported.** Python's
-//! `check_jss_refs_003` accepts a `cfg.doi_resolver` (wired only when
-//! `jss-lint --crossref` is passed) that calls the live CrossRef API to
-//! verify/populate a DOI — see `src/texlint/crossref.py` and the
-//! plan's network-dependency callout: that path must never be silently
-//! reachable, least of all from a bib-rule port with no visible
-//! indication it makes a network call. This module implements only the
-//! offline advisory (`resolver is None`) branch.
+//! **JSS-REFS-003 stays network-free itself.** It only *consumes* an
+//! already-resolved DOI via the injected `config::DoiResolver` hook
+//! (`Option<&DoiResolver>`, wired only when `jss-lint --crossref` is
+//! passed) — mirrors Python's `check_jss_refs_003` accepting
+//! `cfg.doi_resolver`. The actual network lookup lives in the separate
+//! `jsslint-crossref` crate (see its module doc), never in
+//! `jsslint-core`, so this module (shared with `jsslint-wasm`) can't
+//! reach the network even by accident. With `resolver = None` (always
+//! true on wasm), this rule keeps today's offline advisory exactly.
 
-use super::{entry_violation, py_repr, referenced_entries};
+use super::{
+    entry_source_span, entry_violation, entry_violation_with_fix, py_repr, referenced_entries,
+};
 use crate::bib::{Entry, Library};
-use crate::report::Violation;
+use crate::config::DoiResolver;
+use crate::report::{Fix, FixConfidence, Violation};
 use crate::terms::TERMS;
 use crate::tex::node::Node as TexNode;
 use regex::{Regex, RegexBuilder};
+use std::collections::HashMap;
 use std::sync::LazyLock;
 
 fn field_value(entry: &Entry, name: &str) -> String {
@@ -118,16 +123,53 @@ pub fn check_refs_001(file: &str, library: &Library, tex_like: &[&[TexNode]]) ->
         .collect()
 }
 
-// --- JSS-REFS-003 (offline advisory only) -------------------------------
+// --- JSS-REFS-003 ---------------------------------------------------------
 
 static YEAR_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\d{4}").unwrap());
 const DOI_ENTRY_TYPES: &[&str] = &["article", "inproceedings", "incollection", "book", "manual"];
 const DOI_ERA_CUTOFF_YEAR: i32 = 2000;
 
+/// Matches an entry's `@type{key,` header, anchored at the start of its
+/// source span. Mirrors `crossref.py::_doi_insertion_fix`'s
+/// `re.match(r"@\w+\s*\{\s*[^,\s]+\s*,", raw)`.
+static ENTRY_HEAD_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^@\w+\s*\{\s*[^,\s]+\s*,").unwrap());
+
+/// A `doi = {<doi>},` insertion `Fix` right after the entry key, so
+/// `jsslint --crossref --fix` populates the field. Mirrors
+/// `references.py::_doi_insertion_fix`. `None` when the entry's header
+/// can't be relocated in the source (then the violation is reported
+/// without an auto-fix, same as Python).
+fn doi_insertion_fix(source_chars: &[char], entry: &Entry, doi: &str) -> Option<Fix> {
+    let (es, ee) = entry_source_span(source_chars, entry);
+    let span: String = source_chars[es..ee].iter().collect();
+    let m = ENTRY_HEAD_RE.find(&span)?;
+    // `m.end()` is a byte offset into `span`; convert to a char offset
+    // before adding to `es` (also char-indexed) — see `field_value_span`'s
+    // doc comment on the same char-vs-byte pitfall.
+    let at = es + span[..m.end()].chars().count();
+    Some(Fix {
+        start: at,
+        end: at,
+        replacement: format!("\n  doi = {{{doi}}},"),
+        description: format!("insert doi = {{{doi}}}"),
+        confidence: FixConfidence::Safe,
+    })
+}
+
 /// JSS-REFS-003 — advisory: article/inproceedings/incollection/book/
-/// manual entries should carry a `doi`. Offline path only (see module
-/// docs) — no `Fix`, matching Python's non-resolver branch.
-pub fn check_refs_003(file: &str, library: &Library, tex_like: &[&[TexNode]]) -> Vec<Violation> {
+/// manual entries should carry a `doi`. With `resolver` (`jss-lint
+/// --crossref`'s online mode, see module docs), reports/suppresses the
+/// advisory based on Crossref/CRAN's actual answer and attaches a
+/// `Fix`; with none, keeps the offline "add one if available" advisory.
+/// Mirrors `references.py::check_jss_refs_003` exactly.
+pub fn check_refs_003(
+    file: &str,
+    source_chars: &[char],
+    library: &Library,
+    tex_like: &[&[TexNode]],
+    resolver: Option<&DoiResolver>,
+) -> Vec<Violation> {
     let mut out = Vec::new();
     for entry in referenced_entries(library, tex_like) {
         if !DOI_ENTRY_TYPES.contains(&entry.entry_type.to_lowercase().as_str()) {
@@ -148,6 +190,32 @@ pub fn check_refs_003(file: &str, library: &Library, tex_like: &[&[TexNode]]) ->
         } else {
             &entry.key
         };
+        if let Some(resolver) = resolver {
+            // Online mode: verify the DOI actually exists. Report the
+            // concrete DOI (with a --fix to populate it) when found;
+            // suppress the advisory when Crossref/CRAN has none —
+            // there is nothing to add.
+            let fields: HashMap<String, String> = entry
+                .fields
+                .iter()
+                .map(|f| (f.key.to_lowercase(), f.value.clone()))
+                .collect();
+            let Some(doi) = resolver(&fields, &entry.entry_type.to_lowercase()) else {
+                continue;
+            };
+            out.push(entry_violation_with_fix(
+                file,
+                entry,
+                "JSS-REFS-003",
+                Some(format!(
+                    "DOI {} is registered for entry {}; add doi = {{{doi}}} (use --fix to insert it).",
+                    py_repr(&doi),
+                    py_repr(key)
+                )),
+                doi_insertion_fix(source_chars, entry, &doi),
+            ));
+            continue;
+        }
         out.push(entry_violation(
             file,
             entry,

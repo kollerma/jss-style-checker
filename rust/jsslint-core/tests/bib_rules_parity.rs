@@ -129,7 +129,7 @@ fn rust_violations(rule_id: &str, fixture: &Path, source: &str) -> Vec<Violation
         "JSS-NAME-002" => naming::check_name_002(&file, &chars, &library, empty),
         "JSS-HOUSE-002" => house_style::check_house_002(&file, &chars, &library, empty),
         "JSS-REFS-001" => references::check_refs_001(&file, &library, empty),
-        "JSS-REFS-003" => references::check_refs_003(&file, &library, empty),
+        "JSS-REFS-003" => references::check_refs_003(&file, &chars, &library, empty, None),
         "JSS-REFS-004" => references::check_refs_004(&file, &library, empty),
         "JSS-REFS-005" => references::check_refs_005(&file, &library, empty),
         "JSS-REFS-006" => references::check_refs_006(&file, &library, empty),

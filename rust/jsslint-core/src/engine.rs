@@ -16,7 +16,7 @@
 
 use crate::bib::{self, Library};
 use crate::catalogue;
-use crate::config::{ConfidenceTier, ToolConfig};
+use crate::config::{ConfidenceTier, DoiResolver, ToolConfig};
 use crate::report::{CategorySummary, ComplianceReport, SkippedRule, Violation};
 use crate::rules::{
     abbreviations, capitalization, citations, code_style, code_width, crossrefs, house_style,
@@ -157,8 +157,18 @@ impl ParsedDocument {
 }
 
 type TexCheckFn = fn(&str, &ParsedTex, u32) -> Vec<Violation>;
-type BibCheckFn =
-    fn(&str, &[char], &Library, &[&[TexNode]], &[(&str, &LineIndex)]) -> Vec<Violation>;
+/// The trailing `Option<&DoiResolver>` is `JSS-REFS-003`'s online-mode
+/// hook (`config.doi_resolver.as_deref()`, threaded in from `run()`
+/// below); every other bib rule's closure just ignores it, same as the
+/// existing `_tl`/`_tf`-ignoring closures below.
+type BibCheckFn = fn(
+    &str,
+    &[char],
+    &Library,
+    &[&[TexNode]],
+    &[(&str, &LineIndex)],
+    Option<&DoiResolver>,
+) -> Vec<Violation>;
 /// Called ONCE per document with every tex-like fragment together,
 /// unlike `TexCheckFn` (called once per fragment). Mirrors
 /// `Rule.check(doc, cfg)` receiving the whole `ParsedDocument` in
@@ -464,55 +474,55 @@ mod rules_registry {
     pub const BIB_RULES: &[BibRuleEntry] = &[
         BibRuleEntry {
             id: "JSS-BIBTEX-001",
-            check: |f, _c, lib, tl, _tf| crate::rules::bibtex::check_bibtex_001(f, lib, tl),
+            check: |f, _c, lib, tl, _tf, _r| crate::rules::bibtex::check_bibtex_001(f, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-BIBTEX-002",
-            check: |f, _c, lib, _tl, _tf| crate::rules::bibtex::check_bibtex_002(f, lib),
+            check: |f, _c, lib, _tl, _tf, _r| crate::rules::bibtex::check_bibtex_002(f, lib),
         },
         BibRuleEntry {
             id: "JSS-BIBTEX-003",
-            check: |f, _c, lib, tl, _tf| crate::rules::bibtex::check_bibtex_003(f, lib, tl),
+            check: |f, _c, lib, tl, _tf, _r| crate::rules::bibtex::check_bibtex_003(f, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-BIBTEX-004",
-            check: |f, _c, lib, tl, tf| crate::rules::bibtex::check_bibtex_004(f, tf, lib, tl),
+            check: |f, _c, lib, tl, tf, _r| crate::rules::bibtex::check_bibtex_004(f, tf, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-BIBTEX-005",
-            check: |f, _c, lib, _tl, _tf| crate::rules::bibtex::check_bibtex_005(f, lib),
+            check: |f, _c, lib, _tl, _tf, _r| crate::rules::bibtex::check_bibtex_005(f, lib),
         },
         BibRuleEntry {
             id: "JSS-NAME-002",
-            check: |f, c, lib, tl, _tf| naming::check_name_002(f, c, lib, tl),
+            check: |f, c, lib, tl, _tf, _r| naming::check_name_002(f, c, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-HOUSE-002",
-            check: |f, c, lib, tl, _tf| house_style::check_house_002(f, c, lib, tl),
+            check: |f, c, lib, tl, _tf, _r| house_style::check_house_002(f, c, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-REFS-001",
-            check: |f, _c, lib, tl, _tf| references::check_refs_001(f, lib, tl),
+            check: |f, _c, lib, tl, _tf, _r| references::check_refs_001(f, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-REFS-003",
-            check: |f, _c, lib, tl, _tf| references::check_refs_003(f, lib, tl),
+            check: |f, c, lib, tl, _tf, r| references::check_refs_003(f, c, lib, tl, r),
         },
         BibRuleEntry {
             id: "JSS-REFS-004",
-            check: |f, _c, lib, tl, _tf| references::check_refs_004(f, lib, tl),
+            check: |f, _c, lib, tl, _tf, _r| references::check_refs_004(f, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-REFS-005",
-            check: |f, _c, lib, tl, _tf| references::check_refs_005(f, lib, tl),
+            check: |f, _c, lib, tl, _tf, _r| references::check_refs_005(f, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-REFS-006",
-            check: |f, _c, lib, tl, _tf| references::check_refs_006(f, lib, tl),
+            check: |f, _c, lib, tl, _tf, _r| references::check_refs_006(f, lib, tl),
         },
         BibRuleEntry {
             id: "JSS-REFS-007",
-            check: |f, _c, lib, tl, _tf| references::check_refs_007(f, lib, tl),
+            check: |f, _c, lib, tl, _tf, _r| references::check_refs_007(f, lib, tl),
         },
     ];
 
@@ -812,6 +822,7 @@ pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
                         &bf.library,
                         &tex_like,
                         &tex_file_line_indexes,
+                        config.doi_resolver.as_deref(),
                     ));
                 }
                 run_one(rule_id, rule_violations);

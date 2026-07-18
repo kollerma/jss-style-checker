@@ -1,11 +1,14 @@
 //! Browser/npm binding, built with `wasm-bindgen`.
-//! **Hard constraint (see the plan's network-dependency callout): this
-//! crate must never link anything equivalent to `texlint.crossref`'s
-//! live DOI verification.** The privacy promise ("manuscripts never
-//! leave the machine") depends on that being true by construction, not
-//! a runtime flag default — satisfied here simply by not depending on
-//! anything network-capable at all: `jsslint-core` has none, and this
-//! binding adds none.
+//! **Hard constraint: this crate must never link anything network-capable
+//! at all** — in particular never `jsslint-crossref`, the crate that ports
+//! `texlint.crossref`'s live DOI verification for `jss-lint --crossref`
+//! (see that crate's module doc). The privacy promise ("manuscripts never
+//! leave the machine") depends on that being true by construction, not a
+//! runtime flag default: `jsslint-core` depends on nothing network-capable
+//! and only exposes an inert injection hook (`config::DoiResolver`) that
+//! this binding never fills in, and this binding itself adds no network
+//! dependency either. Checkable, not just asserted: `cargo tree -p
+//! jsslint-wasm` never mentions `jsslint-crossref` or `ureq`.
 //!
 //! `.jss-lint.toml` loading degrades gracefully rather than being
 //! specially disabled for this target: `wasm32-unknown-unknown` has no

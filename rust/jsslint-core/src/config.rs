@@ -1,12 +1,29 @@
 //! Tool configuration — mirrors `texlint.api.ToolConfig` (the fields
-//! Phase 4 needs; `doi_resolver`/`--crossref` is an online, opt-in
-//! feature explicitly out of scope for this port, see the plan's
-//! network-dependency callout) plus `texlint.config`'s
+//! Phase 4 needs, plus `doi_resolver`) and `texlint.config`'s
 //! defaults-then-`.jss-lint.toml`-then-CLI merge (`load`).
+//!
+//! `doi_resolver` is a plain injection hook — the type alias below
+//! requires no networking dependency to *define*, only to *implement*.
+//! Mirrors `texlint.crossref.Resolver`: `jss-lint --crossref` builds
+//! the real (network-backed) resolver and hands it to `cfg.doi_resolver`;
+//! with no resolver, `JSS-REFS-003` keeps its offline-advisory behavior.
+//! The live implementation lives in the separate `jsslint-crossref`
+//! crate (depends on `jsslint-core`, not the reverse) precisely so that
+//! `jsslint-wasm` — which depends on `jsslint-core` but never on
+//! `jsslint-crossref` — can't reach the network even by accident: this
+//! field being `Option<Arc<DoiResolver>>` rather than a concrete
+//! network client is what makes that guarantee structural. See
+//! `jsslint-wasm/src/lib.rs`'s module doc and `jsslint-crossref/src/lib.rs`'s.
 
 use crate::report::Severity;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
+/// `(fields, entry_type) -> Option<doi>`. `fields` is a lowercase-keyed
+/// field map (title/author/year/url…); `entry_type` is the lowercase
+/// BibTeX entry type. Mirrors `texlint.crossref.Resolver`.
+pub type DoiResolver = dyn Fn(&HashMap<String, String>, &str) -> Option<String> + Send + Sync;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -51,7 +68,10 @@ impl ConfidenceTier {
     }
 }
 
-#[derive(Debug, Clone)]
+/// `#[derive(Debug)]` doesn't reach here — `dyn Fn` isn't `Debug` — so
+/// `Debug` is hand-written just below, printing `doi_resolver` as
+/// present/absent rather than skipping the derive on the whole struct.
+#[derive(Clone)]
 pub struct ToolConfig {
     pub journal: String,
     pub mode: Mode,
@@ -64,6 +84,30 @@ pub struct ToolConfig {
     /// Exit-code policy: the minimum severity that makes the CLI exit 1.
     pub fail_on: Severity,
     pub severity_overrides: HashMap<String, Severity>,
+    /// Online DOI verification hook (`jss-lint --crossref`). `None`
+    /// (the default, always true on the wasm target) keeps
+    /// `JSS-REFS-003` offline. Not part of `.jss-lint.toml`/CLI-flag
+    /// merging below — injected directly by the caller, same as Python's
+    /// `cfg = replace(cfg, doi_resolver=...)` in `cli.py`.
+    pub doi_resolver: Option<Arc<DoiResolver>>,
+}
+
+impl std::fmt::Debug for ToolConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToolConfig")
+            .field("journal", &self.journal)
+            .field("mode", &self.mode)
+            .field("output", &self.output)
+            .field("ignore_rules", &self.ignore_rules)
+            .field("verbose", &self.verbose)
+            .field("code_width", &self.code_width)
+            .field("source_root", &self.source_root)
+            .field("min_confidence", &self.min_confidence)
+            .field("fail_on", &self.fail_on)
+            .field("severity_overrides", &self.severity_overrides)
+            .field("doi_resolver", &self.doi_resolver.is_some())
+            .finish()
+    }
 }
 
 impl Default for ToolConfig {
@@ -79,6 +123,7 @@ impl Default for ToolConfig {
             min_confidence: ConfidenceTier::Low,
             fail_on: Severity::Warning,
             severity_overrides: HashMap::new(),
+            doi_resolver: None,
         }
     }
 }

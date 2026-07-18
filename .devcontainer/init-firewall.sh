@@ -80,7 +80,14 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 # api.crossref.org feeds the recall-corpus DOI lookup
 # (eval/crossref_doi_lookup.py): it queries https://api.crossref.org/works
 # to find DOIs for cited bib entries that lack a doi field, used to seed
-# JSS-REFS-003 ground-truth annotations.
+# JSS-REFS-003 ground-truth annotations. Also queried by `jss-lint
+# --crossref` / `jsslint --crossref` (texlint/crossref.py,
+# rust/jsslint-crossref) for the same title/author/year lookup, live.
+#
+# doi.org feeds `--crossref`'s CRAN/DataCite path: a `@Manual` entry's
+# minted `10.32614/CRAN.package.NAME` DOI is confirmed with a HEAD
+# request there (texlint/crossref.py::_doi_resolves,
+# jsslint-crossref/src/resolve.rs::doi_resolves) before it's reported.
 #
 # crates.io / index.crates.io / static.crates.io feed `cargo build`
 # (spec 018 — Rust core): the toolchain itself is baked into the image
@@ -103,6 +110,7 @@ for domain in \
     "archive.softwareheritage.org" \
     "crandb.r-pkg.org" \
     "api.crossref.org" \
+    "doi.org" \
     "www.jstatsoft.org" \
     "crates.io" \
     "index.crates.io" \

@@ -5,6 +5,7 @@ members = [
     "jsslint-cli",
     "jsslint-wasm",
     "jsslint-py",
+    "jsslint-crossref",
 ]
 
 [workspace.package]
@@ -18,6 +19,7 @@ repository = "https://github.com/kollerma/jss-style-checker"
 # version is a range, not the exact release, so a suite version bump doesn't
 # have to touch this line — crates.io still requires *a* version on the dep.
 jsslint-core = { path = "jsslint-core", version = "1" }
+jsslint-crossref = { path = "jsslint-crossref", version = "1" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 clap = { version = "4", features = ["derive"] }

@@ -77,6 +77,23 @@ jsslint --fix --apply paper.tex                # prompt [y/n/a/q] per fix
 jsslint --fix --fix-rule JSS-MARKUP-001 paper.tex  # repeatable; limit to named rules
 ```
 
+### Online DOI verification (opt-in, needs network)
+
+```sh
+jsslint --crossref refs.bib                              # verify/report missing DOIs
+jsslint --crossref --crossref-mailto you@example.org refs.bib   # polite pool
+jsslint --crossref --fix refs.bib                         # write the resolved DOIs in
+```
+
+`--crossref` looks up `JSS-REFS-003`-eligible entries (article/book/
+inproceedings/incollection against Crossref; `@Manual` CRAN packages against
+`doi.org`) and turns the offline "add a doi if available" advisory into an
+online-verified one: it reports the exact DOI when one exists (with a `--fix`
+payload) and suppresses the advisory when it doesn't. Off by default —
+everything else in `jsslint` stays fully offline. The network client lives in
+a separate crate, `jsslint-crossref` (below), never linked into
+`jsslint-wasm`/`jsslint-py`/`jsslintr`.
+
 ### Subcommands
 
 ```sh
@@ -97,6 +114,20 @@ today.
 code actions + workspace edits). You don't run this by hand; point an
 editor's LSP client at the `jsslint lsp` command the way the VS Code
 extension (`vscode-extension/`) points at the Python `jss-lint lsp` today.
+
+### `jsslint-crossref` — the `--crossref` network client
+
+Source: `rust/jsslint-crossref/`. Not a standalone tool — an internal
+dependency of `jsslint-cli` only, kept in its own crate so the network
+client (`ureq`, pure-Rust/rustls) can never end up in `jsslint-wasm`'s
+dependency graph even by accident (`cargo tree -p jsslint-wasm` never
+mentions it — that's a CI-checkable fact, not a convention). It ports
+`texlint/crossref.py`: Crossref title/author/year matching for
+article/book/inproceedings/incollection entries, and the CRAN
+`10.32614/CRAN.package.NAME` DOI shortcut (confirmed via `doi.org`) for
+`@Manual` entries. `jsslint-core` itself stays fully offline — it only
+defines the injection hook (`config::DoiResolver`) that
+`JSS-REFS-003` consumes; see that crate's and this one's module docs.
 
 ---
 
