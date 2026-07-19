@@ -8,6 +8,10 @@ authors:
     given-names: Manuel
     orcid: "https://orcid.org/0000-0002-4159-922X"
 license: MIT
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21441932
+    description: "Concept DOI — resolves to the latest archived version."
 repository-code: "https://github.com/kollerma/jss-style-checker"
 url: "https://kollerma.github.io/jss-style-checker/"
 keywords:

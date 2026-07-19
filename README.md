@@ -3,6 +3,7 @@
 [![precision](https://img.shields.io/endpoint?url=https%3A%2F%2Fkollerma.github.io%2Fjss-style-checker%2Fbadges%2Fprecision.json)](https://kollerma.github.io/jss-style-checker/)
 [![recall](https://img.shields.io/endpoint?url=https%3A%2F%2Fkollerma.github.io%2Fjss-style-checker%2Fbadges%2Frecall.json)](https://kollerma.github.io/jss-style-checker/)
 [![F1](https://img.shields.io/endpoint?url=https%3A%2F%2Fkollerma.github.io%2Fjss-style-checker%2Fbadges%2Ff1.json)](https://kollerma.github.io/jss-style-checker/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21441932.svg)](https://doi.org/10.5281/zenodo.21441932)
 
 Style checker for manuscripts submitted to the
 [Journal of Statistical Software](https://www.jstatsoft.org/) (JSS).
