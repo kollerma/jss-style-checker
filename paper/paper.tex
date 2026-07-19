@@ -874,7 +874,10 @@ the committed values differ from regeneration. The replication script
 compare, lint this manuscript with \pkg{jss-lint} itself (any
 violation fails the build), and recompile the PDF. The history
 database is append-only, so the pinned queries return byte-identical
-results indefinitely. What replication establishes is
+results indefinitely, and the evaluated software itself is archived:
+every tagged release is deposited on Zenodo
+(\StatSoftwareDoiUrl{}), independent of the repository's continued
+existence. What replication establishes is
 \emph{consistency} --- that every figure faithfully transcribes the
 pinned evaluation state and that the manuscript is self-compliant ---
 not the \emph{validity} of the underlying labels; label validity is a
@@ -892,11 +895,14 @@ channels differ: the original pure-\proglang{Python} reference
 implementation is published as \pkg{\StatPyPIName} and installs a
 \code{jss-lint} command; the \proglang{Rust}-backed wheel is
 \pkg{jsslint}; the native binary crate is \pkg{jsslint-cli} and
-installs a \code{jsslint} executable. One honest caveat on
-availability: at the time of submission none of the four channels is
-published to its public registry --- each installs from the
-repository at \StatRepoUrl{} today, and the tag-triggered publish
-workflows for the registry releases are in place but not yet run.
+installs a \code{jsslint} executable. All channels are published to
+their public registries as version \StatToolVersion{}: the crates on
+crates.io, both \proglang{Python} packages on the Package Index, the
+WebAssembly build on npm, and the editor extension on the VS~Code
+Marketplace and Open~VSX. Development takes place in the repository
+at \StatRepoUrl{}, and each tagged release is archived on Zenodo ---
+the concept DOI \code{\StatSoftwareDoi} resolves permanently to the
+latest archived version.
 
 \begin{table}[t!]
 \centering
