@@ -786,6 +786,8 @@ DETERMINISTIC_RULE_IDS: frozenset[str] = frozenset({
     'JSS-PRE-006',
     'JSS-PRE-007',
     'JSS-PRE-008',
+    'JSS-PROJECT-001',
+    'JSS-PROJECT-002',
     'JSS-REFS-001',
     'JSS-REFS-007',
     'JSS-STRUCT-002',

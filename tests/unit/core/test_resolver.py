@@ -116,3 +116,104 @@ class TestResolve:
         _write(root, r"\input{paper}")
         project = resolve(root)
         assert project.cycles
+
+    def test_commented_out_input_is_not_a_reference(self, tmp_path: Path) -> None:
+        root = tmp_path / "paper.tex"
+        _write(root, "%\\input{ghost}\n")
+        project = resolve(root)
+        assert project.references == ()
+        assert project.missing == ()
+
+    def test_commented_out_bibliography_is_not_a_reference(
+        self, tmp_path: Path
+    ) -> None:
+        root = tmp_path / "paper.tex"
+        _write(root, "text before\n%\\bibliography{ghost}\n")
+        project = resolve(root)
+        assert project.references == ()
+        assert project.missing == ()
+
+    def test_inline_comment_after_content_still_strips(self, tmp_path: Path) -> None:
+        _write(tmp_path / "intro.tex", "Intro.")
+        root = tmp_path / "paper.tex"
+        _write(root, r"\input{intro}  % comment mentioning \bibliography{ghost}")
+        project = resolve(root)
+        assert len(project.references) == 1
+        assert project.references[0].name == "intro"
+
+    def test_escaped_percent_is_not_a_comment(self, tmp_path: Path) -> None:
+        _write(tmp_path / "intro.tex", "Intro.")
+        root = tmp_path / "paper.tex"
+        _write(root, "100\\% done \\input{intro}\n")
+        project = resolve(root)
+        assert len(project.references) == 1
+        assert project.references[0].found
+
+    def test_nested_braces_in_argument_are_matched(self, tmp_path: Path) -> None:
+        # Sweave-computed bibliography filename — the argument as a
+        # whole isn't a literal filename (it contains a macro
+        # invocation), so it must be recognized as unresolvable and
+        # silently skipped, not truncated at the first "}" and
+        # reported as a spurious missing reference.
+        root = tmp_path / "paper.tex"
+        _write(root, r"\bibliography{\Sexpr{Rcpp:::bib()}}")
+        project = resolve(root)
+        assert project.references == ()
+        assert project.missing == ()
+
+    def test_dynamic_input_argument_is_skipped_not_missing(
+        self, tmp_path: Path
+    ) -> None:
+        root = tmp_path / "paper.tex"
+        _write(root, r"\input{\Sexpr{some_r_call()}}")
+        project = resolve(root)
+        assert project.references == ()
+        assert project.missing == ()
+
+    def test_nested_input_resolves_relative_to_root_not_immediate_parent(
+        self, tmp_path: Path
+    ) -> None:
+        # root.tex (at the project root) \input's script/technical.tex,
+        # which itself \input's fig/figure — a path that only exists
+        # relative to the ROOT's directory, not to script/'s own
+        # directory. Mirrors real LaTeX \input path semantics (paths
+        # resolve against the main document's directory / compile-time
+        # CWD, not the file that issued the nested \input) — and the
+        # real-world false positive this fixed (cran_gems).
+        _write(tmp_path / "fig" / "figure.tex", "A figure.")
+        _write(tmp_path / "script" / "technical.tex", r"\input{fig/figure}")
+        root = tmp_path / "root.tex"
+        _write(root, r"\input{script/technical}")
+        project = resolve(root)
+        assert project.missing == ()
+        assert (tmp_path / "fig" / "figure.tex").resolve() in project.files
+
+    def test_nested_input_falls_back_to_parent_directory(
+        self, tmp_path: Path
+    ) -> None:
+        # sections/a.tex \input's "b", intending sections/b.tex (a
+        # sibling within the same subdirectory) — root's own directory
+        # doesn't have a matching file, so this must still fall back
+        # to a.tex's own directory, not just root's.
+        _write(tmp_path / "sections" / "a.tex", r"\input{b}")
+        _write(tmp_path / "sections" / "b.tex", "Body.")
+        root = tmp_path / "root.tex"
+        _write(root, r"\input{sections/a}")
+        project = resolve(root)
+        assert project.missing == ()
+        assert (tmp_path / "sections" / "b.tex").resolve() in project.files
+
+    def test_root_directory_takes_priority_over_parent_directory(
+        self, tmp_path: Path
+    ) -> None:
+        # Both root_dir/b.tex and sections/b.tex exist; real LaTeX
+        # (CWD == root's directory for the whole compile) would pick
+        # the root-relative one, not the parent-relative one.
+        _write(tmp_path / "b.tex", "Root-level b.")
+        _write(tmp_path / "sections" / "a.tex", r"\input{b}")
+        _write(tmp_path / "sections" / "b.tex", "Sibling b.")
+        root = tmp_path / "root.tex"
+        _write(root, r"\input{sections/a}")
+        project = resolve(root)
+        ref = next(r for r in project.references if r.name == "b")
+        assert ref.target == (tmp_path / "b.tex").resolve()
