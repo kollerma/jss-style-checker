@@ -55,7 +55,15 @@ fn portable_crates_link_no_network_code() {
         let out = Command::new(&cargo)
             // normal+build edges = what ships; dev-dependencies (test
             // harnesses) are excluded deliberately.
-            .args(["tree", "-p", pkg, "--edges", "normal,build", "--prefix", "none"])
+            .args([
+                "tree",
+                "-p",
+                pkg,
+                "--edges",
+                "normal,build",
+                "--prefix",
+                "none",
+            ])
             .current_dir(&workspace)
             .output()
             .expect("failed to spawn cargo tree");
@@ -74,8 +82,7 @@ fn vendored_r_crate_links_no_network_code() {
     // committed Cargo.lock, which enumerates every crate in its graph — so a
     // hermetic lockfile scan suffices (no cargo invocation that might need
     // the network to resolve a second workspace in CI).
-    let lock = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../r/jsslintr/src/rust/Cargo.lock");
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../r/jsslintr/src/rust/Cargo.lock");
     let text = std::fs::read_to_string(&lock)
         .unwrap_or_else(|e| panic!("cannot read {}: {e}", lock.display()));
     for forbidden in FORBIDDEN {

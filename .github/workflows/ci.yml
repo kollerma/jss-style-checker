@@ -102,3 +102,121 @@ jobs:
       - name: cargo test
         working-directory: rust
         run: cargo test --workspace --locked
+
+  # Constitution §XIII — the corpus-backed Rust/Python parity sweep. The
+  # parity suites skip gracefully when the (gitignored, SHA256-pinned)
+  # eval corpus isn't materialized, which means the plain `test`/`rust`
+  # jobs above never actually exercise the headline byte-parity invariant
+  # on real papers. This job materializes the corpus (cached by manifest
+  # hash — a network fetch only happens when eval/corpus-manifest.csv
+  # changes), builds the PyO3 oracle, and runs the corpus-dependent parity
+  # tests on both sides.
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Build the Python venv the parity tests look for
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -e .[dev] -e tests/fixtures/stub_journal
+
+      - name: Restore the eval corpus
+        id: corpus-cache
+        uses: actions/cache@v4
+        with:
+          # Only the fetched (gitignored) payloads — never committed
+          # examples, so a stale cache can't shadow checked-in files.
+          path: examples/cran_*
+          key: eval-corpus-${{ hashFiles('eval/corpus-manifest.csv') }}
+
+      - name: Fetch the eval corpus (cache miss only)
+        if: steps.corpus-cache.outputs.cache-hit != 'true'
+        run: .venv/bin/eval-jss corpus fetch
+
+      - name: Materialize the recall corpus
+        run: .venv/bin/python -m eval.recall_corpus_scaffold
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Build the in-process PyO3 oracle
+        working-directory: rust/jsslint-py
+        run: |
+          source ../../.venv/bin/activate
+          maturin develop --release --locked
+
+      - name: Python-side parity (PyO3 oracle vs texlint)
+        run: .venv/bin/python -m pytest tests/unit/test_jsslint_parity.py -q
+
+      - name: Rust-side parity (jsslint vs .venv/bin/jss-lint)
+        working-directory: rust
+        run: cargo test -p jsslint-core -p jsslint-cli --locked
+
+  # macOS coverage. CI was Linux-only while two real breakages (a PyO3
+  # link failure in `cargo test --workspace` and a terminal-width test
+  # assumption) were macOS-only and invisible here. Corpus-free: the
+  # corpus-dependent parity cases skip, everything else runs.
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Build the Python venv
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -e .[dev] -e tests/fixtures/stub_journal
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Set up Node (for the WASM binding's differential test)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install wasm-bindgen-cli (version-matched to the wasm-bindgen crate)
+        run: |
+          version=$(grep -A1 '^name = "wasm-bindgen"' rust/Cargo.lock | grep version | head -1 | cut -d '"' -f2)
+          cargo install wasm-bindgen-cli --version "$version"
+
+      - name: Build the in-process PyO3 oracle
+        working-directory: rust/jsslint-py
+        run: |
+          source ../../.venv/bin/activate
+          maturin develop --release --locked
+
+      - name: Pytest
+        run: |
+          export PATH="$PWD/.venv/bin:$PATH"
+          .venv/bin/python -m pytest -q
+
+      - name: cargo test
+        working-directory: rust
+        run: cargo test --workspace --locked

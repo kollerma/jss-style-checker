@@ -41,6 +41,20 @@ else
     "$ruff_cmd" check .
 fi
 
+# Rust formatting gate: only when the commit stages Rust files (fmt is
+# ~instant; clippy is deliberately left to CI — too slow for a hook).
+# Same warn-and-pass philosophy as above when cargo isn't installed.
+if git diff --cached --name-only | grep -qE '^rust/.*\.rs$'; then
+    if command -v cargo >/dev/null 2>&1; then
+        if ! (cd "$repo_root/rust" && cargo fmt --all --check); then
+            echo "pre-commit: rustfmt drift — run: (cd rust && cargo fmt --all)" >&2
+            exit 1
+        fi
+    else
+        echo "pre-commit: cargo not found; skipping rustfmt check." >&2
+    fi
+fi
+
 if [ "${SKIP_PYTEST:-0}" = "1" ]; then
     echo "pre-commit: SKIP_PYTEST=1 set; skipping pytest." >&2
     exit 0
