@@ -44,6 +44,10 @@ jobs:
       - name: Regenerate R/extendr-wrappers.R and diff against the committed copy
         working-directory: r/jsslintr/src
         run: |
+          # The document binary links libR.so, which lives in $(R RHOME)/lib —
+          # not on the runner's default linker path (running `R` itself works
+          # only because R's launcher script exports this same variable).
+          export LD_LIBRARY_PATH="$(R RHOME)/lib:${LD_LIBRARY_PATH:-}"
           cargo run --bin document --release --locked --manifest-path=./rust/Cargo.toml --target-dir ./rust/target
           cd ..
           git diff --exit-code -- R/extendr-wrappers.R
