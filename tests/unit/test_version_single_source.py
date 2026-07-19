@@ -49,6 +49,12 @@ def _lock_pkg_version(path: Path) -> str:
     return json.loads(path.read_text(encoding="utf-8"))["packages"][""]["version"]
 
 
+def _cff_version(path: Path) -> str:
+    m = re.search(r"^version: (.+)$", path.read_text(encoding="utf-8"), re.MULTILINE)
+    assert m, f"no `version:` field in {path}"
+    return m.group(1).strip()
+
+
 # (label, path, extractor) — one row per place that must equal VERSION exactly.
 # The R DESCRIPTION is handled separately: it may carry a CRAN-resubmission
 # revision suffix (see below).
@@ -64,6 +70,7 @@ _SOURCES = [
         "r/jsslintr/src/rust/jsslint-core/Cargo.toml",
         _first_toml_version,
     ),
+    ("CITATION.cff", "CITATION.cff", _cff_version),
 ]
 
 

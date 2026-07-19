@@ -95,6 +95,18 @@ def main(argv: list[str]) -> None:
     _sub(REPO / "r/jsslintr/src/rust/Cargo.toml",
          r'^version = "[^"]*"', f'version = "{version}"', count=1, flags=re.MULTILINE)
 
+    # 5. Citation metadata (CITATION.cff drives GitHub's "cite this
+    #    repository" box and Zenodo's archive records). The bump runs at
+    #    release-prep time, so today is the release date.
+    import datetime
+
+    _sub(REPO / "CITATION.cff",
+         r'^version: .*$', f'version: {version}', flags=re.MULTILINE)
+    _sub(REPO / "CITATION.cff",
+         r'^date-released: .*$',
+         f'date-released: {datetime.date.today().isoformat()}',
+         flags=re.MULTILINE)
+
     # Derived artifacts: the R package's vendored jsslint-core (its Cargo.toml
     # version is stamped from rust/Cargo.toml by the vendor script) and the two
     # Cargo.lock files that --locked builds pin against.

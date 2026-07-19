@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "jss-style-checker: a style checker for Journal of Statistical Software manuscripts"
+version: 1.1.0
+date-released: 2026-07-19
+authors:
+  - family-names: Koller
+    given-names: Manuel
+license: MIT
+repository-code: "https://github.com/kollerma/jss-style-checker"
+url: "https://kollerma.github.io/jss-style-checker/"
+keywords:
+  - LaTeX
+  - BibTeX
+  - linter
+  - style-checker
+  - Journal of Statistical Software
+  - reproducible-research
+  - Rust
+  - Python
+  - R
+  - WebAssembly
+abstract: >-
+  A linter for LaTeX / Sweave / R Markdown manuscripts submitted to the
+  Journal of Statistical Software (JSS). One rule engine, shipped as a
+  Python package, a Rust CLI, a browser/npm WebAssembly build, a native
+  Python extension, an R package, a zero-install VS Code extension, and a
+  GitHub Action — with byte-identical output across engines, and per-rule
+  precision measured empirically against a pinned corpus of real JSS
+  manuscripts.
