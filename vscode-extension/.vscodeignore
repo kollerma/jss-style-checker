@@ -1,0 +1,11 @@
+# Explicit exclude list for the packaged VSIX (everything else ships).
+# The load-bearing inclusions are out/ (compiled extension), wasm/ (the
+# bundled engine), README.md (the marketplace page), LICENSE, and
+# package.json — do not exclude those.
+src/**
+tsconfig.json
+out/**/*.js.map
+node_modules/**
+.vscode/**
+*.vsix
+DEBUGGING.md
