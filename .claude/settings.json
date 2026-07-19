@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "entire hooks claude-code post-task"
+            "command": "entire hooks claude-code post-task",
+            "timeout": 90
           }
         ]
       },
@@ -15,7 +16,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "entire hooks claude-code post-todo"
+            "command": "entire hooks claude-code post-todo",
+            "timeout": 90
           }
         ]
       }
@@ -26,7 +28,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "entire hooks claude-code pre-task"
+            "command": "entire hooks claude-code pre-task",
+            "timeout": 90
           }
         ]
       }
@@ -37,7 +40,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "entire hooks claude-code session-end"
+            "command": "entire hooks claude-code session-end",
+            "timeout": 90
           }
         ]
       }
@@ -48,7 +52,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "entire hooks claude-code session-start"
+            "command": "entire hooks claude-code session-start",
+            "timeout": 90
           }
         ]
       }
@@ -59,7 +64,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "entire hooks claude-code stop"
+            "command": "entire hooks claude-code stop",
+            "timeout": 90
           }
         ]
       }
@@ -70,7 +76,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "entire hooks claude-code user-prompt-submit"
+            "command": "entire hooks claude-code user-prompt-submit",
+            "async": true,
+            "timeout": 90
           }
         ]
       }
