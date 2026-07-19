@@ -3,24 +3,37 @@ LIBDIR = $(TARGET_DIR)/release
 STATLIB = $(LIBDIR)/libjsslintr.a
 PKG_LIBS = -L$(LIBDIR) -ljsslintr
 
+CARGOTMP = $(CURDIR)/.cargo
+VENDOR_DIR = $(CURDIR)/vendor
+
 all: $(SHLIB) rust_clean
 
 .PHONY: $(STATLIB)
 
 $(SHLIB): $(STATLIB)
 
-# `document` (src/rust/document.rs) regenerates R/extendr-wrappers.R
-# from the compiled library's own extendr metadata after every build,
-# so the R wrapper signatures can never drift from the actual `#[extendr]`
-# functions.
+# CRAN Repository Policy forbids install-time network access and writes
+# outside the build area. rust/vendor.tar.xz (built by
+# tools/vendor-crate-archive.sh) holds every crates.io dependency, and
+# rust/vendor-config.toml is the matching source-replacement config that
+# makes `cargo build --offline` resolve them from there instead of
+# ~/.cargo. R/extendr-wrappers.R (normally regenerated here via
+# `cargo run --bin document`) is pre-generated and committed instead —
+# running an extra binary at install time bought nothing offline can't
+# also guarantee, and check-standard.yaml diffs the committed copy
+# against a fresh regeneration so it can't silently drift.
 $(STATLIB):
 	rustc --version
 	cargo --version
-	cargo build --lib --release --locked --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR)
-	cargo run --bin document --release --locked --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR)
+	tar xf rust/vendor.tar.xz
+	mkdir -p $(CARGOTMP)
+	cp rust/vendor-config.toml $(CARGOTMP)/config.toml
+	export CARGO_HOME=$(CARGOTMP) && \
+		cargo build --offline --locked --lib --release -j 2 --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR)
+	rm -Rf $(CARGOTMP)
 
 rust_clean: $(SHLIB)
-	rm -Rf $(TARGET_DIR)
+	rm -Rf $(TARGET_DIR) $(VENDOR_DIR) $(CARGOTMP)
 
 clean:
-	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) $(TARGET_DIR)
+	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) $(TARGET_DIR) $(VENDOR_DIR) $(CARGOTMP)

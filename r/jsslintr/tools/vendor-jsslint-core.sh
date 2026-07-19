@@ -64,3 +64,9 @@ cp "$catalogue_src/catalogue.yaml" "$catalogue_src/terms.json" "$catalogue_src/l
 
 echo "Vendored jsslint-core -> $core_dest"
 echo "Vendored catalogue data -> $catalogue_dest"
+
+# jsslint-core's version (and possibly its own deps) may have just changed,
+# which moves the src/rust Cargo.lock — refresh the offline vendor archive,
+# CRAN cargo config, and pre-generated R wrappers to match in the same run,
+# so this stays the one command that keeps everything in sync.
+"$script_dir/vendor-crate-archive.sh"

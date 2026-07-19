@@ -1,3 +1,8 @@
 *.o
 *.so
 *.dll
+# Install-time offline-build scratch: Makevars/Makevars.win extract
+# rust/vendor.tar.xz here and point a throwaway CARGO_HOME at .cargo/,
+# both removed again once the build finishes.
+/vendor
+/.cargo

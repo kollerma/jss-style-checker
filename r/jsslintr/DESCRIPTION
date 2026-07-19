@@ -2,14 +2,17 @@ Package: jsslintr
 Type: Package
 Title: JSS LaTeX/BibTeX Style Checker
 Version: 1.1.0
-Authors@R: person("Manuel", "Koller", role = c("aut", "cre"), email = "kollerma@proton.me")
+Authors@R: person("Manuel", "Koller", role = c("aut", "cre"), email = "kollerma@proton.me",
+    comment = c(ORCID = "0000-0002-4159-922X"))
 Description: Lints LaTeX/BibTeX manuscripts against the Journal of Statistical
     Software (JSS) style guide. Wraps the same Rust rule engine used by the
     standalone jsslint binary, the browser/WASM build, and the Python
     binding, exposed to R via extendr.
 License: MIT + file LICENSE
 Encoding: UTF-8
-SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65
+URL: https://github.com/kollerma/jss-style-checker, https://kollerma.github.io/jss-style-checker/
+BugReports: https://github.com/kollerma/jss-style-checker/issues
+SystemRequirements: Cargo (Rust's package manager), rustc >= 1.85
 Depends:
     R (>= 4.2)
 Suggests:

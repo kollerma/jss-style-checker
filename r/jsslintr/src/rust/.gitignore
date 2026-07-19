@@ -1,2 +1,4 @@
 target
-.cargo
+# Ephemeral extraction of vendor.tar.xz — vendor-crate-archive.sh always
+# tars and removes it again, but ignore it in case a run is interrupted.
+vendor

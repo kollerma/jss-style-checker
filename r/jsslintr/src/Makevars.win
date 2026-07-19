@@ -12,24 +12,35 @@ LIBDIR = $(TARGET_DIR)/$(TARGET)/release
 STATLIB = $(LIBDIR)/libjsslintr.a
 PKG_LIBS = -L$(LIBDIR) -ljsslintr -lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
 
+CARGOTMP = $(CURDIR)/.cargo
+VENDOR_DIR = $(CURDIR)/vendor
+
 all: $(SHLIB) rust_clean
 
 .PHONY: $(STATLIB)
 
 $(SHLIB): $(STATLIB)
 
-# Unlike src/Makevars (Unix), this doesn't regenerate R/extendr-wrappers.R
-# via `cargo run --bin document`: linking a Rust *binary* (as opposed to
-# the staticlib below, which R's own final link step assembles into
-# jsslintr.dll) against R needs R's import library, and R for Windows
-# doesn't ship one in a form Cargo's linker can consume — the same root
-# cause worked around above for the staticlib itself doesn't have a
-# Cargo-level fix for a `cargo run`-built binary; extendr/rextendr's own
+# Neither Makevars regenerates R/extendr-wrappers.R via
+# `cargo run --bin document` at install time any more: linking a Rust
+# *binary* (as opposed to the staticlib below, which R's own final link
+# step assembles into jsslintr.dll) against R needs R's import library,
+# and R for Windows doesn't ship one in a form Cargo's linker can consume
+# — the same root cause worked around below for the staticlib doesn't have
+# a Cargo-level fix for a `cargo run`-built binary (extendr/rextendr's own
 # Makevars.win.in routes around it with a hand-linked C driver instead of
-# a Cargo-built binary. Regenerate R/extendr-wrappers.R on macOS/Linux
-# (where `cargo run --bin document` works) after changing the #[extendr]
-# API surface, and commit the result — Windows installs from that
-# checked-in copy.
+# a Cargo-built binary). Separately, CRAN Repository Policy forbids
+# install-time network access anyway, which running `document` would need
+# on a fresh checkout. R/extendr-wrappers.R is pre-generated and
+# committed instead — run tools/vendor-crate-archive.sh on macOS/Linux
+# after changing the #[extendr] API surface and commit the result;
+# check-standard.yaml diffs a fresh regeneration against the committed
+# copy so it can't silently drift.
+#
+# rust/vendor.tar.xz + rust/vendor-config.toml (see src/Makevars for how
+# they're built) make the `cargo build --offline` below resolve every
+# crates.io dependency without touching the network or ~/.cargo, same as
+# on Unix.
 #
 # libgcc_mock/libgcc_eh.a: Rtools' bundled gcc doesn't ship a libgcc_eh.a
 # matching what the windows-gnu target's panic-unwinding code expects;
@@ -40,11 +51,16 @@ $(STATLIB):
 	cargo --version
 	mkdir -p "$(TARGET_DIR)/libgcc_mock"
 	touch "$(TARGET_DIR)/libgcc_mock/libgcc_eh.a"
-	export LIBRARY_PATH="$$LIBRARY_PATH;$(CURDIR)/$(TARGET_DIR)/libgcc_mock" && \
-		cargo build --lib --release --locked --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) --target=$(TARGET)
+	tar xf rust/vendor.tar.xz
+	mkdir -p $(CARGOTMP)
+	cp rust/vendor-config.toml $(CARGOTMP)/config.toml
+	export CARGO_HOME=$(CARGOTMP) && \
+		export LIBRARY_PATH="$$LIBRARY_PATH;$(CURDIR)/$(TARGET_DIR)/libgcc_mock" && \
+		cargo build --offline --locked --lib --release -j 2 --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) --target=$(TARGET)
+	rm -Rf $(CARGOTMP)
 
 rust_clean: $(SHLIB)
-	rm -Rf $(TARGET_DIR)
+	rm -Rf $(TARGET_DIR) $(VENDOR_DIR) $(CARGOTMP)
 
 clean:
-	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) $(TARGET_DIR)
+	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) $(TARGET_DIR) $(VENDOR_DIR) $(CARGOTMP)

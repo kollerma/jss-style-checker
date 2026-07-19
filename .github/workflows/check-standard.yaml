@@ -17,6 +17,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # R/extendr-wrappers.R is committed and pre-generated (Makevars/Makevars.win
+  # don't regenerate it at install time any more — CRAN forbids the network
+  # access `cargo run --bin document` would otherwise need on a fresh
+  # checkout). This job is the drift guard: regenerate it for real and fail
+  # if the committed copy has diverged from the current #[extendr] surface,
+  # mirroring tests/unit/test_vendored_catalogue_in_sync.py's guard style.
+  wrapper-drift-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: r/jsslintr/src/rust
+
+      - name: Regenerate R/extendr-wrappers.R and diff against the committed copy
+        working-directory: r/jsslintr/src
+        run: |
+          cargo run --bin document --release --locked --manifest-path=./rust/Cargo.toml --target-dir ./rust/target
+          cd ..
+          git diff --exit-code -- R/extendr-wrappers.R
+
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
