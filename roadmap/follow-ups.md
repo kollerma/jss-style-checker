@@ -477,6 +477,20 @@ and tracked here rather than papered over.
       `kollerma.github.io/jss-style-checker/badges/*.json`. The
       JSONs are populated by the deferred gh-pages workflow.)
 
+## Feature 018 — Rust core & multi-engine distribution
+
+- [ ] **Feature 018** — Rust journal registration
+      (`rust/jsslint-core/src/`) — the Rust engine hardcodes the
+      built-in `jss` journal; there is no counterpart to the
+      Python `importlib.metadata` plugin mechanism. Documented
+      deviation from Constitution §IV (see its v1.1.0 scope
+      note); design a registration seam if/when a second real
+      journal materializes.
+- [ ] **Feature 018** — expose `--crossref` in `jsslintr`
+      (`r/jsslintr/`) — opt-in only, graceful offline failure,
+      and no network during `R CMD check` (CRAN policy; see
+      `specs/024-crossref-doi-verification/spec.md`).
+
 ## Rule catalogue follow-ups surfaced by recall annotation
 
 New rule proposals and existing-rule behaviour fixes discovered

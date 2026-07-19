@@ -1,52 +1,58 @@
 <!--
 Sync Impact Report
 ==================
-Version change: (uninitialized template) → 1.0.0
-Rationale: Initial ratification of the jss-style-checker constitution. A MAJOR
-(1.0.0) bump is appropriate for first adoption; no prior governance existed.
+Version change: 1.0.0 → 1.1.0
+Rationale: MINOR bump — three new principles added (XIII–XV, governing the
+Rust reimplementation) plus material expansion of existing principles IV,
+VIII, and IX with explicit engine scoping. No principle was removed or
+inverted.
 
-Principles added (all new; no prior versions to rename):
-  I.   Deterministic Rule Engine
-  II.  AST-First, Source-Scan Second
-  III. Parse Errors Are Non-Fatal
-  IV.  Zero Core Edits to Add a Journal
-  V.   Every Rule Cites an Authority
-  VI.  Empirical Quality Gate (≥90% precision per rule)
-  VII. Auto-Fix Is Verified, Atomic, and Optional
-  VIII. TDD: Tests Fail Before Implementation
-  IX.  100% Branch Coverage on Rule Modules
-  X.   Small Surface, Known Semantics
-  XI.  Spec-Kit Is Reserved for Cross-Cutting Work
-  XII. Reproducible Corpus
-  XIII. Constitution Amendments Go Through This Skill
+Principles added:
+  XIII. Rust/Python Engine Parity
+  XIV.  Portable-Core Isolation
+  XV.   Single-Source Version
+
+Principles modified:
+  IV.   Zero Core Edits to Add a Journal — scoped to the Python reference
+        implementation; the Rust engine's hardcoded single-journal limit is
+        recorded as a documented deviation with follow-up.
+  VIII. TDD: Tests Fail Before Implementation — scoped: governs the Python
+        reference implementation where rules originate; Rust ports are
+        governed by §XIII parity instead.
+  IX.   100% Branch Coverage on Rule Modules — same scoping as VIII.
+  XVI.  (renumbered from XIII, content unchanged) Constitution Amendments Go
+        Through This Skill. Renumbering verified safe: no reference to
+        "§XIII"/"Principle XIII" exists anywhere in the repo outside this
+        file. Principles I–XII keep their numbers because they are cited
+        throughout CHANGELOG.md, README.md, eval/, rust/, paper/, and
+        specs/001–017.
 
 Sections added:
-  - Core Principles (Engineering)
-  - Testing & Quality Standards
-  - Collaboration & Workflow
-  - Governance
+  - Multi-Engine Architecture (holding XIII–XV)
 
-Sections removed: none (no prior constitution).
+Sections removed: none.
 
 Templates requiring updates:
-  ✅ .specify/templates/plan-template.md — Constitution Check section replaced
-      with the concrete gate checklist derived from Principles I–X, XII.
-  ✅ .specify/templates/tasks-template.md — test-mandate line qualified: unit
-      tests are MANDATORY for files under src/texlint/journals/*/rules/
-      (Constitution §VIII, §IX); test tasks phrased as optional only outside
-      that scope.
-  ✅ .specify/templates/spec-template.md — no changes required; authority
-      citation (§V) is enforced at /speckit.clarify, not at spec drafting.
+  ✅ .specify/templates/plan-template.md — Constitution Check gains gate items
+      for §XIII (parity), §XIV (isolation), §XV (single-source version).
+  ✅ .specify/templates/tasks-template.md — test-mandate paragraph extended:
+      changes to rule behavior MUST include parity-suite tasks for both
+      engines (§XIII).
+  ✅ .specify/templates/spec-template.md — no changes required.
   ✅ .specify/templates/checklist-template.md — no changes required.
-  ✅ CLAUDE.md, README.md — no references to principle content; no edits.
+  ✅ CLAUDE.md — refreshed separately in the same change set (stale
+      spec-017/"roadmap complete" framing replaced; now points at the
+      multi-engine layout and this constitution).
   N/A .specify/templates/commands/*.md — directory does not exist in this repo.
 
 Follow-up TODOs:
-  - TODO(RE_IMPLEMENTATION_PLAN): Principle XI references
-    `re-implementation-plan.md`, which is not yet committed to the repo.
-    The reference is retained as the authoritative source for step-to-workflow
-    mapping; author must create the file or update the reference once the
-    plan is drafted.
+  - TODO(RE_IMPLEMENTATION_PLAN): carried over from v1.0.0 — Principle XI
+    references `re-implementation-plan.md`, which is still not committed.
+  - Follow-up (§IV deviation): the Rust engine registers only the built-in
+    `jss` journal; a Rust journal-registration mechanism is tracked in
+    roadmap/follow-ups.md.
+  - Follow-up (§XIV enforcement): the dependency-graph isolation check is
+    being added to CI in the same change set (tests/rust dep-graph guard).
 -->
 
 # JSS Style Checker Constitution
@@ -94,6 +100,14 @@ points in the `texlint.journals` group. Touching `src/texlint/core/` or
 `src/texlint/api.py` to add a journal is a design failure and MUST be
 rejected in review.
 
+**Scope (added v1.1.0)**: This principle governs the Python reference
+implementation. The Rust engine (`rust/jsslint-core`) currently registers
+only the built-in `jss` journal and has no third-party registration
+mechanism — a known, documented deviation tracked in `roadmap/follow-ups.md`.
+Until a Rust registration mechanism ships, "the Rust engine doesn't support
+plugins" is never a justification for editing `src/texlint/core/` to add a
+journal on the Python side.
+
 **Rationale**: The core exists to dispatch; adding journals by editing it
 entangles policy with mechanism and blocks third-party journal packages.
 
@@ -140,6 +154,11 @@ Every new rule MUST ship with a failing unit test committed (or demonstrably
 failing in the working tree) before the rule's `check` body exists. The
 Red-Green-Refactor cycle is the only accepted workflow for rule development.
 
+**Scope (added v1.1.0)**: This workflow governs the Python reference
+implementation, where rules originate. Porting an existing rule to the Rust
+engine is governed by §XIII (byte-for-byte parity against the Python oracle),
+not by an independent red-green cycle — the parity suite is the failing test.
+
 **Rationale**: A test written after the code documents behavior instead of
 specifying it. Writing the test first is the only reliable way to prove the
 rule catches what it claims to catch.
@@ -150,6 +169,13 @@ Every file under `src/texlint/journals/*/rules/` MUST achieve 100% branch
 coverage. Coverage gaps in these files are a blocker, not a nice-to-have.
 Coverage requirements outside the rule modules are governed by ordinary
 engineering judgment.
+
+**Scope (added v1.1.0)**: The coverage mandate applies to the Python rule
+modules, where rules are precision-graded. The Rust ports under
+`rust/jsslint-core/src/rules/` are verified by the §XIII parity suites
+against the Python oracle rather than by an independent coverage gate;
+imposing a second, duplicate coverage regime on ports of already-covered
+logic would violate §X.
 
 **Rationale**: Rule files are small, self-contained, and directly
 precision-graded. Full branch coverage is cheap to obtain and the only
@@ -197,9 +223,68 @@ citing a corpus commit hash.
 unfalsifiable. Immutable distribution sources are the only way to keep
 historical claims checkable as upstream repositories evolve.
 
+## Multi-Engine Architecture
+
+### XIII. Rust/Python Engine Parity
+
+The Python package (`src/texlint/`) is the reference implementation. The
+Rust workspace (`rust/jsslint-core` plus the CLI, WASM, PyO3, and R bindings)
+is a port of it, not a fork. Every rule and every user-visible behavior MUST
+exist in both engines, and for identical input and configuration the two
+engines MUST produce byte-identical output in every shared format
+(`terminal`, `json`, `sarif`, `html`). Parity is enforced by the parity
+suites (`rust/*/tests/*_parity.rs`, `tests/unit/test_jsslint_parity.py`,
+`r/jsslintr/tests/testthat/`); a behavior change that lands in one engine
+without its counterpart and parity coverage MUST be rejected in review.
+Deliberate divergences (e.g., the Rust CLI's independently laid-out PDF
+report, per-ecosystem exit/return conventions) MUST be documented in
+`rust/README.md` and excluded from the byte-parity claim explicitly.
+
+**Rationale**: "One engine, compiled five ways" is the product promise. The
+moment the engines drift silently, every distribution beyond the Python
+original becomes untrustworthy, and the precision numbers measured on one
+engine stop being valid for the others.
+
+### XIV. Portable-Core Isolation
+
+`jsslint-core` and every portable binding built on it (`jsslint-wasm`,
+`jsslint-py`, `jsslintr`) MUST NOT link network-capable code, and the shared
+core MUST NOT perform filesystem or network I/O beyond the in-memory inputs
+its caller supplies. Capability-requiring features live at the outer layer:
+network lookups (Crossref/CRAN DOI verification) live in the separate
+`jsslint-crossref` crate consumed only by `jsslint-cli`; filesystem concerns
+(multi-file `\input` resolution, `.jss-lint.toml` discovery, atomic `--fix`
+writes) live in the CLI/binding layer. The isolation MUST be structural — a
+separate crate, not a feature flag — and MUST be verifiable from the
+dependency graph: `cargo tree` for `jsslint-wasm`, `jsslint-py`, and the
+vendored `jsslintr` crate never mentions `jsslint-crossref` or an HTTP
+client. That check MUST be enforced by an automated test, not convention.
+
+**Rationale**: The WASM build's privacy guarantee — manuscripts never leave
+the machine — is only credible if it holds by construction. A feature flag
+can be flipped; an absent dependency edge cannot.
+
+### XV. Single-Source Version
+
+The suite version MUST be edited in exactly one place: the root `VERSION`
+file, propagated by `scripts/set_version.py` into every ecosystem manifest
+(Python `texlint.__version__`, the Cargo workspace, the VS Code
+`package.json`/lock, the R `DESCRIPTION` and vendored crates) and their
+derived lockfiles. Hand-editing a version string in any manifest is
+forbidden; `tests/unit/test_version_single_source.py` MUST fail naming the
+offending file when any manifest disagrees with `VERSION`. One sanctioned
+exception: the R `DESCRIPTION` MAY carry a CRAN-resubmission revision suffix
+(`X.Y.Z-N`) on the same base version.
+
+**Rationale**: The 1.0.1 release demonstrated the failure mode this
+prevents: ~10 hand-maintained version strings across four ecosystems, two of
+which were missed during a bump, breaking parity tests and the R build. A
+single edited file plus a guard test makes stale versions impossible to ship
+silently.
+
 ## Governance
 
-### XIII. Constitution Amendments Go Through This Skill
+### XVI. Constitution Amendments Go Through This Skill
 
 Changes to these principles MUST re-run `/speckit.constitution` so that
 dependent templates (`plan-template.md`, `spec-template.md`,
@@ -220,7 +305,7 @@ Report as the PR description, and (c) updates every template flagged
 - **PATCH**: Clarifications, wording, typo fixes, non-semantic refinements.
 
 **Compliance review**: Every PR reviewer MUST verify that the change
-complies with Principles I–XII. Any deviation MUST be justified in the PR
+complies with Principles I–XV. Any deviation MUST be justified in the PR
 description and recorded in the plan's Complexity Tracking table.
 
-**Version**: 1.0.0 | **Ratified**: 2026-04-22 | **Last Amended**: 2026-04-22
+**Version**: 1.1.0 | **Ratified**: 2026-04-22 | **Last Amended**: 2026-07-19

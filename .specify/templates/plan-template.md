@@ -62,6 +62,16 @@ FAIL or deviation in the Complexity Tracking table.
       are introduced. Any new abstraction has at least three concrete callers.
 - [ ] **§XII Reproducible Corpus**: If this plan introduces a precision claim,
       the corpus commit hash and manifest path are referenced.
+- [ ] **§XIII Engine Parity**: If this plan changes any rule or user-visible
+      behavior, it lands in BOTH engines (Python `src/texlint/` and Rust
+      `rust/jsslint-core/`) with parity-suite coverage; any deliberate
+      divergence is documented in `rust/README.md`.
+- [ ] **§XIV Portable-Core Isolation**: No network or filesystem I/O is added
+      to `jsslint-core` or the portable bindings; capability-requiring code
+      lives in `jsslint-crossref` / the CLI-binding layer, and the dep-graph
+      guard test still passes.
+- [ ] **§XV Single-Source Version**: No manifest version string is hand-edited;
+      any version change goes through `VERSION` + `scripts/set_version.py`.
 
 ## Project Structure
 

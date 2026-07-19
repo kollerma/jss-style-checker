@@ -11,8 +11,12 @@ description: "Task list template for feature implementation"
 **Tests**: Unit tests are MANDATORY for any task that creates or edits a file
 under `src/texlint/journals/*/rules/` (Constitution §VIII TDD, §IX 100%
 branch coverage) and the test task MUST precede the implementation task it
-covers. Outside that scope, tests are OPTIONAL — include them only if
-explicitly requested in the feature specification.
+covers. Any task that changes rule or user-visible engine behavior MUST have
+a sibling task porting the change to the other engine plus parity-suite
+coverage (Constitution §XIII — Python `src/texlint/` and Rust
+`rust/jsslint-core/` stay byte-identical). Outside those scopes, tests are
+OPTIONAL — include them only if explicitly requested in the feature
+specification.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
