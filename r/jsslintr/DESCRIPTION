@@ -1,7 +1,7 @@
 Package: jsslintr
 Type: Package
 Title: JSS LaTeX/BibTeX Style Checker
-Version: 1.1.0
+Version: 1.1.0-1
 Authors@R: person("Manuel", "Koller", role = c("aut", "cre"), email = "kollerma@proton.me",
     comment = c(ORCID = "0000-0002-4159-922X"))
 Description: Lints LaTeX/BibTeX manuscripts against the Journal of Statistical
