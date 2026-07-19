@@ -3,7 +3,8 @@
   "description": "A linter for LaTeX / Sweave / R Markdown manuscripts submitted to the Journal of Statistical Software (JSS). One rule engine, shipped as a Python package, a Rust CLI, a browser/npm WebAssembly build, a native Python extension, an R package, a zero-install VS Code extension, and a GitHub Action — with byte-identical output across engines, and per-rule precision measured empirically against a pinned corpus of real JSS manuscripts.",
   "creators": [
     {
-      "name": "Koller, Manuel"
+      "name": "Koller, Manuel",
+      "orcid": "0000-0002-4159-922X"
     }
   ],
   "license": "MIT",

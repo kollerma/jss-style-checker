@@ -6,6 +6,7 @@ date-released: 2026-07-19
 authors:
   - family-names: Koller
     given-names: Manuel
+    orcid: "https://orcid.org/0000-0002-4159-922X"
 license: MIT
 repository-code: "https://github.com/kollerma/jss-style-checker"
 url: "https://kollerma.github.io/jss-style-checker/"
