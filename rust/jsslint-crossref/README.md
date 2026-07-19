@@ -11,5 +11,9 @@ depends on this crate. See this crate's `src/lib.rs` module doc for the
 full rationale, and `jsslint-core::config::DoiResolver` for the injection
 hook `JSS-REFS-003` consumes.
 
-Not published independently — it's an internal dependency of the `jsslint`
-CLI binary.
+Published on crates.io because cargo requires a published crate's
+dependencies to be published too — but it is **not a supported standalone
+API**. It exists solely as an internal dependency of the `jsslint` CLI
+binary; its interface may change in any release without notice. There is
+no reason to depend on it directly: use `jsslint-cli` for the tool, or
+`jsslint-core` for the (fully offline) engine.
