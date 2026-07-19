@@ -52,13 +52,20 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          # Current LTS. Node 20 is EOL and npm 12 dropped support for it,
+          # which made `npm install -g npm@latest` fail (EBADENGINE) at the
+          # 1.1.0 release. Node here only drives `npm publish` — the wasm
+          # itself is built by wasm-pack above, node-independent.
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
-      # Trusted Publishing (OIDC) requires npm >= 11.5.1; Node 20 ships npm 10.
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1; upgrade in case
+      # the runner's bundled npm is older.
       - name: Upgrade npm for OIDC trusted publishing
         if: github.event_name == 'push'
-        run: npm install -g npm@latest
+        run: |
+          npm install -g npm@latest
+          npm --version
 
       - name: Publish to npm
         if: github.event_name == 'push'
