@@ -110,9 +110,22 @@ budget).
 
 ## C. Pre-submission gate (not blocking writing)
 
-- [ ] Public repo URL + rename decision (C1) → set `\StatRepoUrl`
-- [ ] Zenodo DOI + CITATION.cff (C2) → set `\StatZenodoDoi`
-- [ ] Run scaffolded publish workflows: crates.io / npm / PyPI (one-time registry setup each)
-- [ ] VS Code marketplace publish; fix stale vscode-extension/README.md
-- [ ] jsslintr: R-universe/CRAN plan
-- [ ] Windows CI matrix entry
+- [x] Public repo URL + rename decision (C1) → set `\StatRepoUrl`
+      (done: public repo `kollerma/jss-style-checker`, `\StatRepoUrl` set)
+- [x] Zenodo DOI + CITATION.cff (C2) → set `\StatZenodoDoi`
+      (done 2026-07-19: concept DOI 10.5281/zenodo.21441932; macro landed
+      as `\StatSoftwareDoi` + `\StatSoftwareDoiUrl`, not `\StatZenodoDoi`;
+      CITATION.cff + .zenodo.json committed, with ORCID)
+- [x] Run scaffolded publish workflows: crates.io / npm / PyPI
+      (done: 1.1.0 live — jsslint-core/-crossref/-cli on crates.io,
+      jss-style-checker + jsslint on PyPI, jsslint-wasm on npm via OIDC
+      trusted publishing)
+- [x] VS Code marketplace publish; fix stale vscode-extension/README.md
+      (done: 1.1.0 on VS Code Marketplace + Open VSX; README rewritten
+      for the in-process WASM design)
+- [x] jsslintr: R-universe/CRAN plan
+      (CRAN chosen; 1.1.0-1 submitted 2026-07-19 with vendored crates +
+      offline install; under review — the paper's availability text and
+      Table install caption say so)
+- [x] Windows CI matrix entry
+      (done: check-standard.yaml runs windows-latest (release))

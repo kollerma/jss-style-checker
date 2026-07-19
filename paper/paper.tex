@@ -895,14 +895,16 @@ channels differ: the original pure-\proglang{Python} reference
 implementation is published as \pkg{\StatPyPIName} and installs a
 \code{jss-lint} command; the \proglang{Rust}-backed wheel is
 \pkg{jsslint}; the native binary crate is \pkg{jsslint-cli} and
-installs a \code{jsslint} executable. All channels are published to
-their public registries as version \StatToolVersion{}: the crates on
-crates.io, both \proglang{Python} packages on the Package Index, the
-WebAssembly build on npm, and the editor extension on the VS~Code
-Marketplace and Open~VSX. Development takes place in the repository
-at \StatRepoUrl{}, and each tagged release is archived on Zenodo ---
-the concept DOI \code{\StatSoftwareDoi} resolves permanently to the
-latest archived version.
+installs a \code{jsslint} executable. The channels are published to
+their public registries as version \StatToolVersion{} --- the crates
+on crates.io, both \proglang{Python} packages on the Package Index,
+the WebAssembly build on npm, and the editor extension on the VS~Code
+Marketplace and Open~VSX --- with one exception: the \proglang{R}
+package's CRAN submission is under review at the time of writing.
+Development takes place in the repository at \StatRepoUrl{}, and each
+tagged release is archived on Zenodo --- the concept DOI
+\code{\StatSoftwareDoi} resolves permanently to the latest archived
+version.
 
 \begin{table}[t!]
 \centering
@@ -913,13 +915,14 @@ Channel & Install & What you get \\
 CLI binary & \code{cargo install jsslint-cli} & the native \code{jsslint} executable with the full command line, \code{--fix}, \code{explain}, and the language server \\
 \proglang{Python} (reference) & \code{pip install jss-style-checker} & the \code{texlint} module and the \code{jss-lint} command \\
 \proglang{Python} (\proglang{Rust} wheel) & \code{pip install jsslint} & a \pkg{PyO3} extension with the same \proglang{Python} API \\
-\proglang{R} & \code{install.packages("jsslintr")} & the \code{jsslintr::render} function \\
+\proglang{R} & \code{install.packages("jsslintr")} & \code{jsslint()} and \code{jssfix()} over project files, plus the low-level \code{render()} \\
 Browser / \code{npm} & \code{jsslint-wasm} & a client-side checker that needs no installation and no network \\
 \bottomrule
 \end{tabular}
-\caption{Distribution channels of \pkg{jss-lint}. Install commands
-  show the intended registry form; until the registries are populated,
-  each channel builds from the repository checkout.}
+\caption{Distribution channels of \pkg{jss-lint}. All install
+  commands are live, except that the \proglang{R} package's CRAN
+  submission is under review at the time of writing (it installs from
+  the repository checkout meanwhile).}
 \label{tab:install}
 \end{table}
 
