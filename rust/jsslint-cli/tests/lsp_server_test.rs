@@ -26,6 +26,18 @@ use std::path::PathBuf;
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use std::time::Duration;
 
+/// Asserts a response is `Ok` and returns its result payload, panicking
+/// with the full response (including the error) otherwise. lsp-server 0.10
+/// models `Response::response_result` as `Result<Value, ResponseError>`
+/// rather than separate `result`/`error` fields, so "no error" and "has a
+/// result" are the same fact — this asserts both at once.
+fn expect_ok_result(resp: &Response, action: &str) -> serde_json::Value {
+    match &resp.response_result {
+        Ok(value) => value.clone(),
+        Err(err) => panic!("{action} returned an error: {resp:?} ({err:?})"),
+    }
+}
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -139,7 +151,7 @@ impl Client {
     fn shutdown_and_exit(&mut self) {
         let id = self.request("shutdown", json!(null));
         let (resp, _) = self.expect_response(&id);
-        assert!(resp.error.is_none(), "shutdown returned an error: {resp:?}");
+        expect_ok_result(&resp, "shutdown");
         self.notify("exit", json!(null));
         let status = self
             .child
@@ -183,11 +195,7 @@ fn initialize(client: &mut Client) {
         json!({"processId": null, "rootUri": null, "capabilities": {}}),
     );
     let (resp, _) = client.expect_response(&id);
-    assert!(
-        resp.error.is_none(),
-        "initialize returned an error: {resp:?}"
-    );
-    let result = resp.result.expect("initialize must return a result");
+    let result = expect_ok_result(&resp, "initialize");
     assert_eq!(
         result["capabilities"]["codeActionProvider"], true,
         "server must advertise code action support"
@@ -271,13 +279,9 @@ fn lsp_publishes_diagnostics_and_code_action_for_a_known_violation() {
         },
     );
     let (resp, _) = client.expect_response(&id);
-    assert!(
-        resp.error.is_none(),
-        "codeAction returned an error: {resp:?}"
-    );
+    let result = expect_ok_result(&resp, "codeAction");
     let actions: Vec<lsp_types::CodeActionOrCommand> =
-        serde_json::from_value(resp.result.expect("codeAction must return a result"))
-            .expect("valid CodeActionOrCommand array");
+        serde_json::from_value(result).expect("valid CodeActionOrCommand array");
     assert!(!actions.is_empty(), "expected at least one code action");
     let lsp_types::CodeActionOrCommand::CodeAction(action) = &actions[0] else {
         panic!("expected a CodeAction, got a Command");
@@ -438,10 +442,7 @@ fn lsp_debounces_did_change_and_applies_all_fixes_via_execute_command() {
         },
     );
     let (resp, apply_edit_req) = client.expect_response_answering_apply_edit(&id);
-    assert!(
-        resp.error.is_none(),
-        "executeCommand returned an error: {resp:?}"
-    );
+    let summary = expect_ok_result(&resp, "executeCommand");
     let apply_edit_req = apply_edit_req.expect("server must issue a workspace/applyEdit request");
     let edit_params: lsp_types::ApplyWorkspaceEditParams =
         serde_json::from_value(apply_edit_req.params).unwrap();
@@ -460,7 +461,6 @@ fn lsp_debounces_did_change_and_applies_all_fixes_via_execute_command() {
     );
     assert!(edits[0].new_text.contains("\\proglang{Python}"));
 
-    let summary = resp.result.expect("executeCommand must return a summary");
     assert_eq!(summary["files"], 1);
     assert_eq!(summary["edits"], 1);
 
