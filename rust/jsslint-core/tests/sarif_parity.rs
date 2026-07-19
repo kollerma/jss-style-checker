@@ -120,7 +120,14 @@ fn python_oracle_sarif(
     ignore_rules: &[&str],
     source_root: Option<&str>,
 ) -> String {
+    // This harness tests `sarif::render` given an already-assembled
+    // `ParsedDocument` — deliberately bypassing spec-013 auto-resolve
+    // (tested separately by `jsslint-cli`'s own parity suite).
+    // `--no-resolve` keeps single-file invocations
+    // (`RNW_PAPERS`/`RMD_FIXTURES`) from canonicalizing their path to
+    // absolute (contract C-12), matching the hand-built document.
     let mut cmd = Command::new(jss_lint);
+    cmd.arg("--no-resolve");
     cmd.arg("--output").arg("sarif");
     if !ignore_rules.is_empty() {
         cmd.arg("--ignore-rules").arg(ignore_rules.join(","));

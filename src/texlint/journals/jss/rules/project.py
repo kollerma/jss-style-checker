@@ -7,21 +7,15 @@ These two rules surface multi-file project diagnostics:
 * ``JSS-PROJECT-002`` — a referenced file that did not resolve to
   an existing path on disk.
 
-They are tool-side: they are NOT registered in the catalogue YAML
-because they describe linter-internal diagnostics, not author-
-facing JSS-guide rules. The journal plugin imports them on demand
-once the engine receives a :class:`texlint.api.ParsedProject`.
-
-Limitation tracked under spec 013 follow-ups: the public
-:class:`texlint.api.ParsedProject` dataclass currently only carries
-``root``, ``documents``, and ``tree``. The resolver's richer
-``ResolvedProject`` (with explicit ``cycles`` and ``missing``
-fields) is not threaded through yet. Until the resolver-to-project
-bridge lands, JSS-PROJECT-001 detects cycles by DFS over
-``project.tree`` and JSS-PROJECT-002 is a no-op stub. Both are
-wired through the engine's ``check_project`` dispatch so the
-follow-up that fills in ``missing`` will be a single-line change
-inside :func:`check_project_missing_refs`.
+They are tool-side: they describe linter-internal diagnostics about
+the resolved file graph, not author-facing JSS-guide requirements —
+``guide_section`` carries the ``"internal"`` sentinel (spec 007) and
+``category: project`` sits in ``TOOL_SIDE_CATEGORIES`` (spec 007's
+citation contract), so neither rule needs a JSS-guide citation. They
+are registered in the catalogue YAML like any other rule (category
+``project``) and only fire via ``check_project`` — ``Rule.check`` is
+a permanent no-op since these are graph-level, not per-document,
+diagnostics.
 """
 
 from __future__ import annotations
@@ -91,24 +85,30 @@ def check_project_cycles(project: ParsedProject) -> Iterable[Violation]:
 def check_project_missing_refs(project: ParsedProject) -> Iterable[Violation]:
     """Emit ``JSS-PROJECT-002`` violations for unresolved references.
 
-    Currently a no-op stub: :class:`ParsedProject` does not carry
-    the ``missing`` references tuple yet (it lives on
-    :class:`texlint.core.resolver.ResolvedProject` but is not
-    threaded through). The body fills in once the resolver →
-    ParsedProject bridge lands as a separate follow-up.
+    One violation per :class:`~texlint.core.resolver.ResolvedReference`
+    in :attr:`ParsedProject.missing`, anchored on the file that
+    *contained* the reference (the parent), per data-model.md §6.
     """
-    # Touch the parameter so static analysers don't flag it as unused
-    # while the bridge is pending.
-    _ = project
-    return ()
+    for ref in project.missing:
+        yield Violation(
+            file=ref.parent,
+            line=1,
+            column=None,
+            rule_id="JSS-PROJECT-002",
+            severity=Severity.ERROR,
+            message=f"referenced file not found: {ref.name}",
+        )
 
 
 jss_project_001 = Rule(
     id="JSS-PROJECT-001",
-    category="parse",
+    category="project",
     severity=Severity.ERROR,
-    message_template="cycle detected in input file graph",
-    authority="jss_cls",
+    message_template=(
+        "A cycle exists in the \\input/\\include/\\subfile/\\bibliography "
+        "reference graph"
+    ),
+    authority="author_instructions",
     check=lambda _doc, _cfg: iter(()),
     check_project=check_project_cycles,
 )
@@ -116,10 +116,10 @@ jss_project_001 = Rule(
 
 jss_project_002 = Rule(
     id="JSS-PROJECT-002",
-    category="parse",
+    category="project",
     severity=Severity.ERROR,
-    message_template="referenced file not found",
-    authority="jss_cls",
+    message_template="A \\input/\\include/\\subfile/\\bibliography target could not be found",
+    authority="author_instructions",
     check=lambda _doc, _cfg: iter(()),
     check_project=check_project_missing_refs,
 )

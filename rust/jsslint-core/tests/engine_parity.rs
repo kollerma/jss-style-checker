@@ -97,6 +97,17 @@ fn python_oracle_json(
     ignore_rules: &[&str],
 ) -> String {
     let mut cmd = Command::new(jss_lint);
+    // This harness tests `engine::run` + `json_output::render` given
+    // an ALREADY-ASSEMBLED `ParsedDocument` — deliberately bypassing
+    // any resolution concern (spec 013 auto-resolve, tested separately
+    // by `jsslint-cli`'s own parity suite). `--no-resolve` keeps the
+    // oracle's single-file invocations (`RNW_PAPERS`/`RMD_FIXTURES`)
+    // aligned with the plain `ParsedDocument::from_sources` built
+    // below: without it, `jss-lint`'s bare single-file CLI path would
+    // auto-resolve (canonicalizing the path to absolute, and pulling
+    // in any `\input`-referenced files) while this test's hand-built
+    // document never does either.
+    cmd.arg("--no-resolve");
     cmd.arg("--output").arg("json");
     if !ignore_rules.is_empty() {
         cmd.arg("--ignore-rules").arg(ignore_rules.join(","));

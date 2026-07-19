@@ -19,12 +19,23 @@ from .api import (
     InvalidJournalError,
     JournalNotFoundError,
     ParsedDocument,
+    ParsedProject,
     ToolConfig,
 )
 from .config import load as load_config
-from .core.engine import UnsupportedSuffixError, load_journal, parse_document, run
+from .core.engine import (
+    UnsupportedSuffixError,
+    load_journal,
+    parse_document,
+    resolve_project,
+    run,
+)
 
 _SUPPORTED_SUFFIXES = {".tex", ".ltx", ".bib", ".rnw", ".rmd"}
+# Spec 013: auto-resolve triggers only for a single positional argument
+# that is itself a root document (not a directory, not a .bib file —
+# \bibliography is a resolution *target*, never a root).
+_RESOLVE_ROOT_SUFFIXES = {".tex", ".ltx", ".rnw", ".rmd"}
 _PARSE_RULE_ID = "JSS-PARSE-000"
 
 _JOURNAL_CHOICES: tuple[str, ...] | None = None  # resolved lazily; click accepts any string
@@ -86,6 +97,29 @@ def _parse_inputs(paths: tuple[str, ...]) -> tuple[ParsedDocument | None, int]:
     except UnsupportedSuffixError as exc:
         _eprint(f"jss-lint: {exc}")
         return None, 2
+
+
+def _parse_root_or_paths(
+    paths: tuple[str, ...], *, no_resolve: bool
+) -> tuple[ParsedDocument | ParsedProject | None, int]:
+    """Like :func:`_parse_inputs`, but auto-resolves a single root file's
+    ``\\input``/``\\include``/``\\subfile``/``\\bibliography`` graph
+    (spec 013) into a :class:`ParsedProject` unless ``--no-resolve`` is
+    set. Only the bare ``jss-lint <PATHS>`` invocation opts into this;
+    a directory argument or multiple explicit paths keep today's flat,
+    unresolved multi-file behaviour (spec 013 FR-002/FR-003), and so
+    does ``explain``/``init``/``report``, which call :func:`_parse_inputs`
+    directly.
+    """
+    if not no_resolve and len(paths) == 1:
+        candidate = Path(paths[0])
+        if candidate.is_file() and candidate.suffix.lower() in _RESOLVE_ROOT_SUFFIXES:
+            try:
+                return resolve_project(candidate), 0
+            except UnsupportedSuffixError as exc:
+                _eprint(f"jss-lint: {exc}")
+                return None, 2
+    return _parse_inputs(paths)
 
 
 def _dispatch_renderer(output: str, report: Any, cfg: ToolConfig) -> None:
@@ -285,8 +319,7 @@ def _lint_paths_with_doc(
     default=False,
     help=(
         "Skip recursive \\input / \\include / \\subfile / "
-        "\\bibliography resolution (currently a no-op until "
-        "auto-resolve ships)."
+        "\\bibliography resolution; lint only the file(s) you pass."
     ),
 )
 @click.option(
@@ -380,13 +413,6 @@ def main(
         cli_overrides["fail_on"] = fail_on.lower()
     if verbose is not None:
         cli_overrides["verbose"] = verbose
-    # Spec 013 follow-up: ``--no-resolve`` is a reserved flag. The
-    # CLI does not currently auto-resolve, so the flag is wired
-    # through ``cli_overrides`` but has no observable effect today.
-    # Reserving it now lets users start scripting against the flag
-    # before auto-resolve ships.
-    if no_resolve:
-        cli_overrides["no_resolve"] = True
 
     try:
         cfg = load_config(cli_overrides, Path.cwd())
@@ -403,7 +429,7 @@ def main(
 
         cfg = replace(cfg, doi_resolver=make_resolver(mailto=crossref_mailto))
 
-    document, code = _parse_inputs(paths)
+    document, code = _parse_root_or_paths(paths, no_resolve=no_resolve)
     if document is None:
         sys.exit(code)
 

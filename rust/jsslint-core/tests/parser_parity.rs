@@ -25,6 +25,19 @@ use std::process::Command;
 /// pipeline regardless of exact downstream node shape.
 const KNOWN_DIVERGENCES: &[&str] = &["tests/fixtures/violations/JSS-PARSE-000.tex"];
 
+/// Fixtures that are deliberately NOT valid UTF-8 (spec 013's lenient
+/// Latin-1 decode fallback — see `decode::read_lenient_utf8` and its
+/// dedicated coverage in `jsslint-cli`'s `decode` unit tests and
+/// `cli_resolve_matches_python_cli_end_to_end`). Out of scope for this
+/// harness, which feeds `tex::parse_tex_source` already-decoded text
+/// and compares against `tools.dump_tex_nodes` — both would need the
+/// same lenient decode applied first, which is exactly what's under
+/// test elsewhere, not here.
+const NON_UTF8_FIXTURES: &[&str] = &[
+    "tests/fixtures/resolver_projects/latin1_root/root.tex",
+    "tests/fixtures/resolver_projects/latin1_included/intro.tex",
+];
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -95,7 +108,9 @@ fn all_tex_fixtures_match_python_oracle() {
             .unwrap()
             .to_string_lossy()
             .replace('\\', "/");
-        if KNOWN_DIVERGENCES.contains(&relative.as_str()) {
+        if KNOWN_DIVERGENCES.contains(&relative.as_str())
+            || NON_UTF8_FIXTURES.contains(&relative.as_str())
+        {
             continue;
         }
         let source = std::fs::read_to_string(fixture)

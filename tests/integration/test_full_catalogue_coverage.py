@@ -20,6 +20,12 @@ from texlint.journals.jss import JSSJournal, _catalogue_data
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "violations"
 
+# JSS-PROJECT-* rules only fire via Rule.check_project against a whole
+# ParsedProject (spec 013) — Rule.check is a permanent no-op for them,
+# so the single-file check() harness below can never trigger them.
+# Covered separately in test_project.py against a real ParsedProject.
+_PROJECT_LEVEL_CATEGORIES = frozenset({"project"})
+
 
 def _fixture_path(rule_id: str, category: str) -> Path:
     """Return the bad-fixture path for ``rule_id``; ``.bib`` for bib-only rules."""
@@ -33,7 +39,12 @@ def _fixture_path(rule_id: str, category: str) -> Path:
 
 
 @pytest.mark.parametrize(
-    "rule_id", sorted(_catalogue_data.RULES.keys())
+    "rule_id",
+    sorted(
+        rid
+        for rid, meta in _catalogue_data.RULES.items()
+        if meta["category"] not in _PROJECT_LEVEL_CATEGORIES
+    ),
 )
 def test_rule_fires_on_its_bad_fixture(rule_id: str) -> None:
     meta = _catalogue_data.RULES[rule_id]

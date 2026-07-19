@@ -31,7 +31,7 @@ CITABLE_CATEGORIES = frozenset(
     }
 )
 
-TOOL_SIDE_CATEGORIES = frozenset({"parse", "internal"})
+TOOL_SIDE_CATEGORIES = frozenset({"parse", "internal", "project"})
 
 
 class TestCitationContract:

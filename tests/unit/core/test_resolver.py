@@ -45,6 +45,8 @@ class TestResolve:
         assert len(project.files) == 1
         assert len(project.missing) == 1
         assert project.missing[0].macro == "input"
+        assert project.missing[0].name == "ghost"
+        assert project.missing[0].parent == root.resolve()
 
     def test_bibliography_resolves(self, tmp_path: Path) -> None:
         _write(tmp_path / "refs.bib", "@article{}")
@@ -52,6 +54,52 @@ class TestResolve:
         _write(root, r"\bibliography{refs}")
         project = resolve(root)
         assert (tmp_path / "refs.bib").resolve() in project.files
+
+    def test_bibliography_comma_separated_resolves_each_independently(
+        self, tmp_path: Path
+    ) -> None:
+        _write(tmp_path / "refs1.bib", "@article{}")
+        _write(tmp_path / "refs2.bib", "@article{}")
+        root = tmp_path / "paper.tex"
+        _write(root, r"\bibliography{refs1,refs2}")
+        project = resolve(root)
+        assert (tmp_path / "refs1.bib").resolve() in project.files
+        assert (tmp_path / "refs2.bib").resolve() in project.files
+        assert project.missing == ()
+        assert len(project.references) == 2
+        assert {r.name for r in project.references} == {"refs1", "refs2"}
+
+    def test_bibliography_comma_separated_trims_whitespace(
+        self, tmp_path: Path
+    ) -> None:
+        _write(tmp_path / "refs1.bib", "@article{}")
+        _write(tmp_path / "refs2.bib", "@article{}")
+        root = tmp_path / "paper.tex"
+        _write(root, r"\bibliography{ refs1 , refs2 }")
+        project = resolve(root)
+        assert (tmp_path / "refs1.bib").resolve() in project.files
+        assert (tmp_path / "refs2.bib").resolve() in project.files
+        assert project.missing == ()
+
+    def test_bibliography_comma_separated_reports_only_missing_one(
+        self, tmp_path: Path
+    ) -> None:
+        _write(tmp_path / "refs1.bib", "@article{}")
+        root = tmp_path / "paper.tex"
+        _write(root, r"\bibliography{refs1,ghost}")
+        project = resolve(root)
+        assert (tmp_path / "refs1.bib").resolve() in project.files
+        assert len(project.missing) == 1
+        assert project.missing[0].name == "ghost"
+
+    def test_bibliography_trailing_comma_is_ignored(self, tmp_path: Path) -> None:
+        _write(tmp_path / "refs1.bib", "@article{}")
+        root = tmp_path / "paper.tex"
+        _write(root, r"\bibliography{refs1,}")
+        project = resolve(root)
+        assert (tmp_path / "refs1.bib").resolve() in project.files
+        assert project.missing == ()
+        assert len(project.references) == 1
 
     def test_cycle_detected(self, tmp_path: Path) -> None:
         a = tmp_path / "a.tex"

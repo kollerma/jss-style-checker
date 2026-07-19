@@ -37,18 +37,29 @@
 //! why the network client lives there and not in `jsslint-core`.
 //! `.rnw`/`.rmd` inputs ARE supported (`SUPPORTED_SUFFIXES`, below)
 //! — see `jsslint_core::engine`'s doc comment for the parsers.
+//!
+//! Spec 013: a single root-file positional argument auto-resolves its
+//! `\input`/`\include`/`\subfile`/`\bibliography` graph (`resolver`
+//! module, mirroring `core/resolver.py`) into a combined multi-file
+//! lint, with `JSS-PROJECT-001`/`JSS-PROJECT-002` reporting cycles /
+//! unresolved references (`jsslint_core::engine::run_with_project`).
+//! `--no-resolve` disables it. A directory argument or multiple
+//! explicit paths never auto-resolve (FR-002/FR-003) — see
+//! `parse_root_or_paths`.
 
+mod decode;
 mod init;
 mod localdate;
 mod lsp_server;
 mod report_pdf;
+mod resolver;
 
 use clap::Parser;
 use jsslint_core::catalogue;
 use jsslint_core::config::{self, OutputFormat, RawOverrides};
 use jsslint_core::engine::{self, EngineError, ParsedDocument};
 use jsslint_core::fixer::{self, ApplyMode};
-use jsslint_core::report::{ComplianceReport, Severity};
+use jsslint_core::report::{ComplianceReport, Severity, Violation};
 use jsslint_core::{json_output, sarif, terminal};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -59,6 +70,11 @@ use std::process::ExitCode;
 /// this array is also joined verbatim into user-facing messages below.
 const SUPPORTED_SUFFIXES: &[&str] = &[".bib", ".ltx", ".rmd", ".rnw", ".tex"];
 const PARSE_RULE_ID: &str = "JSS-PARSE-000";
+/// Spec 013: auto-resolve triggers only for a single positional
+/// argument that is itself a root document (not a directory, not a
+/// `.bib` file — `\bibliography` is a resolution *target*, never a
+/// root). Mirrors `cli.py::_RESOLVE_ROOT_SUFFIXES`.
+const RESOLVE_ROOT_SUFFIXES: &[&str] = &[".ltx", ".rmd", ".rnw", ".tex"];
 
 #[derive(Parser)]
 #[command(name = "jss-lint", version, about = "JSS LaTeX/BibTeX style checker")]
@@ -105,6 +121,11 @@ struct Cli {
     /// Repeatable; limits --fix to the named rule ids.
     #[arg(long = "fix-rule")]
     fix_rules: Vec<String>,
+
+    /// Skip recursive \input / \include / \subfile / \bibliography
+    /// resolution; lint only the file(s) you pass.
+    #[arg(long = "no-resolve")]
+    no_resolve: bool,
 
     /// Online mode: verify missing DOIs against Crossref (articles,
     /// books, proceedings) and CRAN (package @Manual entries).
@@ -642,19 +663,22 @@ fn run_lint() -> ExitCode {
         ));
     }
 
-    let (sources, exit_code) = match parse_inputs(&cli.paths) {
-        Ok(s) => s,
-        Err(code) => return ExitCode::from(code),
-    };
-    let _ = exit_code;
+    let (sources, decode_violations, project_extra) =
+        match parse_root_or_paths(&cli.paths, cli.no_resolve) {
+            Ok(s) => s,
+            Err(code) => return ExitCode::from(code),
+        };
 
-    let document = match ParsedDocument::from_sources(&sources) {
+    let mut document = match ParsedDocument::from_sources(&sources) {
         Ok(d) => d,
         Err(EngineError::UnsupportedSuffix(msg)) => {
             eprint_line(&format!("jss-lint: {msg}"));
             return ExitCode::from(2);
         }
     };
+    for (path, violation) in decode_violations {
+        document.attach_violation(&path, violation);
+    }
 
     // Mirrors `cli.py`'s `load_journal(cfg.journal)` call (which runs
     // after `_parse_inputs`): only the "jss" journal is registered in
@@ -669,7 +693,10 @@ fn run_lint() -> ExitCode {
         return ExitCode::from(2);
     }
 
-    let report = engine::run(&config, &document);
+    let report = match project_extra {
+        Some((cycles, missing)) => engine::run_with_project(&config, &document, cycles, missing),
+        None => engine::run(&config, &document),
+    };
 
     if cli.dry_run && !cli.fix {
         eprint_line("jss-lint: --dry-run requires --fix");
@@ -773,9 +800,13 @@ fn is_supported_suffix(path: &Path) -> bool {
 
 /// Reads every input path (expanding directories), returning
 /// `(path_string, contents)` pairs in the order Python's
-/// `_parse_inputs` would process them, or an exit code on the first
-/// error. Mirrors `cli.py::_parse_inputs`.
-fn parse_inputs(paths: &[String]) -> Result<(Vec<(String, String)>, u8), u8> {
+/// `_parse_inputs` would process them, plus any per-path
+/// decode/read-failure `JSS-PARSE-000` violations (lenient UTF-8
+/// fallback — see `decode::read_lenient_utf8`), or an exit code on a
+/// fatal (missing-argument / unsupported-suffix) error. Mirrors
+/// `cli.py::_parse_inputs`, whose per-file leniency comes from
+/// `parse_document` calling `_read_utf8` for every path.
+fn parse_inputs(paths: &[String]) -> Result<(Sources, DecodeViolations), u8> {
     let mut resolved: Vec<PathBuf> = Vec::new();
     for raw in paths {
         let path = PathBuf::from(raw);
@@ -809,17 +840,93 @@ fn parse_inputs(paths: &[String]) -> Result<(Vec<(String, String)>, u8), u8> {
     }
 
     let mut sources = Vec::with_capacity(resolved.len());
+    let mut decode_violations = Vec::new();
     for path in resolved {
-        let contents = match std::fs::read_to_string(&path) {
-            Ok(c) => c,
-            Err(exc) => {
-                eprint_line(&format!("jss-lint: {}: {exc}", path.display()));
-                return Err(2);
-            }
-        };
-        sources.push((path.to_string_lossy().to_string(), contents));
+        let path_str = path.to_string_lossy().to_string();
+        let (contents, violation) = decode::read_lenient_utf8(&path);
+        sources.push((path_str.clone(), contents.unwrap_or_default()));
+        if let Some(v) = violation {
+            decode_violations.push((path_str, v));
+        }
     }
-    Ok((sources, 0))
+    Ok((sources, decode_violations))
+}
+
+/// `(cycle violations, missing-reference violations)` from a resolved
+/// project — `None` when no resolution happened.
+type ProjectExtra = Option<(Vec<Violation>, Vec<Violation>)>;
+
+/// Per-path `JSS-PARSE-000` findings from the lenient UTF-8 decode
+/// fallback (`decode::read_lenient_utf8`) — attached to the built
+/// `ParsedDocument` via `ParsedDocument::attach_violation` once it
+/// exists, since `from_sources` itself never touches a filesystem.
+type DecodeViolations = Vec<(String, Violation)>;
+
+/// `(path_string, contents)` pairs ready for `ParsedDocument::from_sources`.
+type Sources = Vec<(String, String)>;
+
+/// Like `parse_inputs`, but auto-resolves a single root file's
+/// `\input`/`\include`/`\subfile`/`\bibliography` graph (spec 013)
+/// into the resolved `(path, contents)` set plus its `JSS-PROJECT-001`
+/// (cycle) / `JSS-PROJECT-002` (missing) violations, unless
+/// `--no-resolve` is set. Only the bare `jsslint <PATHS>` invocation
+/// (this function) opts in; a directory argument or multiple explicit
+/// paths keep today's flat, unresolved multi-file behaviour (spec 013
+/// FR-002/FR-003), same as `explain`/`init`/`report`/`diff`, which
+/// never call this. Mirrors `cli.py::_parse_root_or_paths`.
+fn parse_root_or_paths(
+    paths: &[String],
+    no_resolve: bool,
+) -> Result<(Sources, DecodeViolations, ProjectExtra), u8> {
+    if !no_resolve && paths.len() == 1 {
+        let candidate = PathBuf::from(&paths[0]);
+        if candidate.is_file() {
+            let dotted_ext = candidate
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| format!(".{}", e.to_lowercase()));
+            if dotted_ext
+                .as_deref()
+                .is_some_and(|e| RESOLVE_ROOT_SUFFIXES.contains(&e))
+            {
+                let project = resolver::resolve(&candidate);
+                let tree = resolver::build_tree(&project);
+                let cycles = resolver::check_project_cycles(&project.root, &tree);
+                let missing = resolver::check_project_missing_refs(&project.missing);
+
+                // `resolver::resolve` doesn't filter by extension at
+                // all — a real JSS vignette can legitimately `\input`
+                // a non-lintable file, e.g. a bundled custom `.cls`
+                // (observed in the wild: `pmclust`'s
+                // `\input{./pmclust-include/my_jss.cls}`) — so a
+                // resolved file with an unsupported suffix is silently
+                // excluded from the parsed set (it still contributed
+                // to `tree`/cycle-detection above) rather than hitting
+                // `ParsedDocument::from_sources`'s `UnsupportedSuffix`
+                // error and aborting the whole lint over one non-source
+                // include. Mirrors `core/engine.py::resolve_project`'s
+                // `_RESOLVE_LINTABLE_SUFFIXES` filter.
+                let lintable: Vec<&PathBuf> = project
+                    .files
+                    .iter()
+                    .filter(|p| is_supported_suffix(p))
+                    .collect();
+                let mut sources = Vec::with_capacity(lintable.len());
+                let mut decode_violations = Vec::new();
+                for path in lintable {
+                    let path_str = path.to_string_lossy().to_string();
+                    let (contents, violation) = decode::read_lenient_utf8(path);
+                    sources.push((path_str.clone(), contents.unwrap_or_default()));
+                    if let Some(v) = violation {
+                        decode_violations.push((path_str, v));
+                    }
+                }
+                return Ok((sources, decode_violations, Some((cycles, missing))));
+            }
+        }
+    }
+    let (sources, decode_violations) = parse_inputs(paths)?;
+    Ok((sources, decode_violations, None))
 }
 
 /// Exit 2 if any error-severity `JSS-PARSE-000` finding is present;

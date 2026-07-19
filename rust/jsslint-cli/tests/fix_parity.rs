@@ -73,6 +73,16 @@ fn setup_scratch(fixture: &str, side: &str, mode: &str, source: &Path, file_name
     dir
 }
 
+/// Spec 013 auto-resolve canonicalizes a bare single-file root
+/// argument to an absolute path (contract C-12). `py_dir`/`rs_dir` are
+/// distinct scratch directories by construction (`{fixture}-py-*` vs
+/// `{fixture}-rs-*`), so their absolute-path prefixes never match even
+/// when the linted content is identical; normalize both to a shared
+/// placeholder before comparing stdout.
+fn normalize(stdout: &str, dir: &Path) -> String {
+    stdout.replace(&dir.display().to_string(), "<SCRATCH>")
+}
+
 fn all_fixtures() -> Vec<String> {
     let dir = repo_root().join("tests/fixtures/auto-fix");
     let mut names: Vec<String> = fs::read_dir(&dir)
@@ -107,11 +117,12 @@ fn fix_write_matches_python_cli() {
 
         let expected = run_fix(&jss_lint, &py_dir, file_name, &[]);
         let actual = run_fix(jsslint_bin, &rs_dir, file_name, &[]);
+        let expected_stdout = normalize(&expected.stdout, &py_dir);
+        let actual_stdout = normalize(&actual.stdout, &rs_dir);
 
-        if actual.stdout != expected.stdout {
+        if actual_stdout != expected_stdout {
             mismatches.push(format!(
-                "{fixture} STDOUT differs\n  expected:\n{}\n  actual:\n{}",
-                expected.stdout, actual.stdout
+                "{fixture} STDOUT differs\n  expected:\n{expected_stdout}\n  actual:\n{actual_stdout}"
             ));
         }
         if actual.exit_code != expected.exit_code {
@@ -165,11 +176,12 @@ fn fix_dry_run_matches_python_cli_and_does_not_write() {
 
         let expected = run_fix(&jss_lint, &py_dir, file_name, &["--dry-run"]);
         let actual = run_fix(jsslint_bin, &rs_dir, file_name, &["--dry-run"]);
+        let expected_stdout = normalize(&expected.stdout, &py_dir);
+        let actual_stdout = normalize(&actual.stdout, &rs_dir);
 
-        if actual.stdout != expected.stdout {
+        if actual_stdout != expected_stdout {
             mismatches.push(format!(
-                "{fixture} STDOUT differs\n  expected:\n{}\n  actual:\n{}",
-                expected.stdout, actual.stdout
+                "{fixture} STDOUT differs\n  expected:\n{expected_stdout}\n  actual:\n{actual_stdout}"
             ));
         }
         if actual.exit_code != expected.exit_code {
@@ -234,10 +246,11 @@ fn fix_rule_filter_and_unknown_rule_match_python_cli() {
             file_name,
             &["--fix-rule", "JSS-TYPO-001"],
         );
-        if actual.stdout != expected.stdout {
+        let expected_stdout = normalize(&expected.stdout, &py_dir);
+        let actual_stdout = normalize(&actual.stdout, &rs_dir);
+        if actual_stdout != expected_stdout {
             mismatches.push(format!(
-                "filter-other STDOUT differs\n  expected:\n{}\n  actual:\n{}",
-                expected.stdout, actual.stdout
+                "filter-other STDOUT differs\n  expected:\n{expected_stdout}\n  actual:\n{actual_stdout}"
             ));
         }
         if actual.exit_code != expected.exit_code {

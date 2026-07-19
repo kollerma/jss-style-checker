@@ -48,6 +48,7 @@ CATEGORY_PREFIX: Mapping[str, str] = {
     "operators": "JSS-OPER-",
     "crossrefs": "JSS-XREF-",
     "house_style": "JSS-HOUSE-",
+    "project": "JSS-PROJECT-",
 }
 
 REQUIRED_TOP_KEYS: frozenset[str] = frozenset(

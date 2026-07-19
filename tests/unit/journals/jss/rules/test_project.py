@@ -6,7 +6,7 @@ Covered:
   * JSS-PROJECT-001 fires on a self-referencing root.
   * Each distinct cycle reported at most once.
   * Rule.check stays a no-op (per-document fires nothing).
-  * JSS-PROJECT-002 is a documented no-op stub today.
+  * JSS-PROJECT-002 fires one violation per ParsedProject.missing entry.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from texlint.api import (
     Severity,
     ToolConfig,
 )
+from texlint.core.resolver import ResolvedReference
 from texlint.journals.jss.rules.project import (
     check_project_cycles,
     check_project_missing_refs,
@@ -35,10 +36,12 @@ def _doc(path: Path) -> ParsedDocument:
 
 
 def _project(
-    root: Path, tree: dict[Path, tuple[Path, ...]]
+    root: Path,
+    tree: dict[Path, tuple[Path, ...]],
+    missing: tuple[ResolvedReference, ...] = (),
 ) -> ParsedProject:
     documents = tuple(_doc(p) for p in tree)
-    return ParsedProject(root=root, documents=documents, tree=tree)
+    return ParsedProject(root=root, documents=documents, tree=tree, missing=missing)
 
 
 def test_rules_tuple_exposes_both_project_rules() -> None:
@@ -47,7 +50,7 @@ def test_rules_tuple_exposes_both_project_rules() -> None:
 
 def test_jss_project_001_metadata() -> None:
     assert jss_project_001.severity == Severity.ERROR
-    assert jss_project_001.category == "parse"
+    assert jss_project_001.category == "project"
     assert jss_project_001.check_project is not None
     # Per-document check stays a no-op.
     cfg = ToolConfig()
@@ -57,7 +60,7 @@ def test_jss_project_001_metadata() -> None:
 
 def test_jss_project_002_metadata() -> None:
     assert jss_project_002.severity == Severity.ERROR
-    assert jss_project_002.category == "parse"
+    assert jss_project_002.category == "project"
     assert jss_project_002.check_project is not None
     cfg = ToolConfig()
     doc = _doc(Path("/tmp/x.tex"))
@@ -162,8 +165,50 @@ def test_disjoint_cycles_each_reported(tmp_path: Path) -> None:
     assert files == {a, b}
 
 
-def test_missing_refs_stub_is_empty(tmp_path: Path) -> None:
+def test_missing_refs_empty_when_none_missing(tmp_path: Path) -> None:
     a = tmp_path / "a.tex"
     project = _project(a, {a: ()})
 
     assert list(check_project_missing_refs(project)) == []
+
+
+def test_missing_refs_emits_one_violation_per_entry(tmp_path: Path) -> None:
+    a = tmp_path / "a.tex"
+    ref = ResolvedReference(
+        parent=a,
+        macro="input",
+        name="ghost",
+        target=tmp_path / "ghost",
+        found=False,
+    )
+    project = _project(a, {a: ()}, missing=(ref,))
+
+    violations = list(check_project_missing_refs(project))
+
+    assert len(violations) == 1
+    v = violations[0]
+    assert v.rule_id == "JSS-PROJECT-002"
+    assert v.severity == Severity.ERROR
+    assert v.file == a
+    assert v.line == 1
+    assert v.column is None
+    assert v.message == "referenced file not found: ghost"
+
+
+def test_missing_refs_emits_one_violation_per_missing_ref(tmp_path: Path) -> None:
+    a = tmp_path / "a.tex"
+    refs = tuple(
+        ResolvedReference(
+            parent=a, macro="input", name=name, target=tmp_path / name, found=False
+        )
+        for name in ("ghost1", "ghost2")
+    )
+    project = _project(a, {a: ()}, missing=refs)
+
+    violations = list(check_project_missing_refs(project))
+
+    assert len(violations) == 2
+    assert {v.message for v in violations} == {
+        "referenced file not found: ghost1",
+        "referenced file not found: ghost2",
+    }

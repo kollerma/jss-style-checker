@@ -13,7 +13,10 @@ from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
+
+if TYPE_CHECKING:
+    from texlint.core.resolver import ResolvedReference
 
 
 class Severity(str, Enum):
@@ -423,11 +426,15 @@ class ParsedProject:
       * ``tree`` — adjacency list mapping each file to its direct
         ``\\input`` / ``\\include`` / ``\\subfile`` / ``\\bibliography``
         references. A leaf file maps to the empty tuple.
+      * ``missing`` — references that did not resolve to an existing
+        file, one entry per unresolved macro hit. Consumed by
+        ``JSS-PROJECT-002``.
     """
 
     root: Path
     documents: tuple[ParsedDocument, ...]
     tree: dict[Path, tuple[Path, ...]]
+    missing: tuple[ResolvedReference, ...] = ()
 
 
 class JournalRuleModule(ABC):

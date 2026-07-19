@@ -37,7 +37,15 @@ fn python_jss_lint_reference(fixture: &str) -> Option<String> {
         eprintln!("SKIP: {} not found (Python venv not set up)", bin.display());
         return None;
     }
+    // This harness tests `engine::run` + `json_output::render` given
+    // an ALREADY-ASSEMBLED `ParsedDocument` (see call sites below) —
+    // deliberately bypassing spec-013 auto-resolve (tested separately
+    // by `jsslint-cli`'s own parity suite). `--no-resolve` keeps the
+    // oracle's single-file invocation from canonicalizing `fixture`'s
+    // path to absolute (contract C-12), which the hand-built document
+    // never does either.
     let output = Command::new(bin)
+        .arg("--no-resolve")
         .arg("--output")
         .arg("json")
         .arg(fixture)
@@ -55,10 +63,14 @@ fn python_jss_lint_reference(fixture: &str) -> Option<String> {
     Some(String::from_utf8(output.stdout).expect("jss-lint output must be valid UTF-8"))
 }
 
-/// The 15-category, journal-declared (ROLLOUT_ORDER) list every fixture
+/// The 16-category, journal-declared (ROLLOUT_ORDER) list every fixture
 /// in this file produces, each `(rules_applied, rules_passed)` pair
 /// overridable per test. Hardcoded from real reference runs — see
-/// module docs.
+/// module docs. `project` (JSS-PROJECT-001/002) always shows
+/// `applied=2` regardless of `--no-resolve`: both rules' `Rule.check`
+/// is a no-op lambda (not `None`), which the engine still counts as
+/// "ran" for any document with at least one file — see
+/// `engine::run_impl`'s doc comment on the `project_extra` dispatch.
 fn base_categories(overrides: &[(&str, u32)]) -> Vec<CategorySummary> {
     let cats: &[(&str, &str, u32)] = &[
         ("preamble", "Preamble", 8),
@@ -76,6 +88,7 @@ fn base_categories(overrides: &[(&str, u32)]) -> Vec<CategorySummary> {
         ("operators", "Operators", 4),
         ("crossrefs", "Cross-references", 7),
         ("house_style", "House style", 3),
+        ("project", "Project", 2),
     ];
     cats.iter()
         .map(|(id, title, applied)| {
@@ -150,7 +163,7 @@ fn single_violation_matches_python_byte_for_byte_incl_unicode_escaping() {
             fix: None,
         }],
         categories: base_categories(&[("preamble", 7)]),
-        compliance_percentage: Some(93.3),
+        compliance_percentage: Some(93.8),
         skipped_rules: Vec::new(),
     };
     let actual = jsslint_core::json_output::render(&report);

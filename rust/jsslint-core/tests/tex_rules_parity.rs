@@ -16,6 +16,15 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+/// Fixtures that are deliberately NOT valid UTF-8 (spec 013's lenient
+/// Latin-1 decode fallback — see `jsslint-cli`'s `decode` module and
+/// its dedicated coverage). Out of scope for this harness, which reads
+/// fixtures as UTF-8 directly.
+const NON_UTF8_FIXTURES: &[&str] = &[
+    "tests/fixtures/resolver_projects/latin1_root/root.tex",
+    "tests/fixtures/resolver_projects/latin1_included/intro.tex",
+];
+
 const RULE_IDS: &[&str] = &[
     "JSS-WIDTH-001",
     "JSS-CODE-001",
@@ -233,6 +242,9 @@ fn all_tex_rules_match_python_oracle() {
             .unwrap()
             .to_string_lossy()
             .replace('\\', "/");
+        if NON_UTF8_FIXTURES.contains(&relative.as_str()) {
+            continue;
+        }
         let source = std::fs::read_to_string(fixture)
             .unwrap_or_else(|e| panic!("failed to read {}: {e}", fixture.display()));
         let oracle = python_oracle_dump_all(&python, fixture);

@@ -111,7 +111,14 @@ fn python_oracle_terminal(
     ignore_rules: &[&str],
     extra_args: &[&str],
 ) -> String {
+    // This harness tests `engine::run` + `terminal::render` given an
+    // already-assembled `ParsedDocument` — deliberately bypassing
+    // spec-013 auto-resolve (tested separately by `jsslint-cli`'s own
+    // parity suite). `--no-resolve` keeps single-file invocations
+    // (`RNW_PAPERS`/`RMD_FIXTURES`) from canonicalizing their path to
+    // absolute (contract C-12), matching the hand-built document.
     let mut cmd = Command::new(jss_lint);
+    cmd.arg("--no-resolve");
     if !ignore_rules.is_empty() {
         cmd.arg("--ignore-rules").arg(ignore_rules.join(","));
     }
@@ -299,7 +306,10 @@ fn terminal_render_format_gate_edge_cases() {
     for &(path, filename) in cases {
         let expected = {
             let mut cmd = Command::new(&jss_lint);
-            cmd.arg("--mode").arg("reviewer").arg(filename);
+            cmd.arg("--no-resolve")
+                .arg("--mode")
+                .arg("reviewer")
+                .arg(filename);
             cmd.current_dir(&scratch);
             let output = cmd.output().expect("failed to run jss-lint");
             String::from_utf8(output.stdout).unwrap()

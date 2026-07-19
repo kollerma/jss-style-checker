@@ -1,0 +1,12 @@
+---
+title: "A Short Demo"
+author: "Jane Doe"
+date: "2026-04-24"
+output: html_document
+---
+
+# Introduction
+
+We use the `mgcv` package for generalized additive models.
+
+\input{intro}

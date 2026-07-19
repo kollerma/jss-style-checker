@@ -10,6 +10,24 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ### Changed
 
+- **`\input`/`\include`/`\subfile`/`\bibliography` auto-resolution now
+  ships (spec 013).** `jss-lint root.tex` / `jsslint root.tex` — a
+  *single* file argument, not a directory or multiple explicit paths —
+  now walks the reference graph and lints every reachable file as one
+  project; diagnostics are attributed to the file that actually
+  contains them, not the root. `--no-resolve` (previously a documented
+  no-op) now genuinely disables this and lints only the file you pass.
+  Two new tool-side rules surface graph problems:
+  `JSS-PROJECT-001` (a cycle in the reference graph) and
+  `JSS-PROJECT-002` (a `\input`/`\include`/`\subfile`/`\bibliography`
+  target that doesn't resolve to an existing file); both participate
+  in `--ignore-rules` like any other rule. A resolved file with a
+  non-lintable suffix (e.g. a custom `.cls` loaded via `\input`, seen
+  in real JSS vignettes) is silently excluded from linting rather than
+  aborting the run. **JSON-output shape change**: when auto-resolve
+  triggers, `Violation.file` becomes an absolute, canonicalized path
+  (previously always the literal string you passed on the command
+  line) — pass `--no-resolve` to keep the old single-file behaviour.
 - **Default `--fail-on` is now `warning`** (was `info`). Info-severity
   advisories (e.g. the missing-DOI rule JSS-REFS-003) are still
   reported but no longer flip CI red by default; pass

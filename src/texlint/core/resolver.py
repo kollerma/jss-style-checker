@@ -32,6 +32,7 @@ class ResolvedReference:
 
     parent: Path
     macro: str
+    name: str
     target: Path
     found: bool
 
@@ -121,20 +122,32 @@ def resolve(root: Path) -> ResolvedProject:
             return
         for match in _MACRO_RE.finditer(text):
             macro = match.group(1)
-            name = match.group(2).strip()
-            target = _resolve_one(macro, name, path.parent)
-            ref = ResolvedReference(
-                parent=path,
-                macro=macro,
-                target=target if target else path.parent / name,
-                found=target is not None,
-            )
-            references.append(ref)
-            if not ref.found:
-                missing.append(ref)
-                continue
-            assert target is not None
-            visit(target)
+            # `\bibliography{a,b,c}` is standard BibTeX: a comma-
+            # separated list of .bib names, each resolved (or missing)
+            # independently — not one literal "a,b,c.bib" target.
+            # Empty entries from a stray/trailing comma are dropped
+            # rather than reported as a missing reference.
+            if macro == "bibliography":
+                names = [
+                    n.strip() for n in match.group(2).split(",") if n.strip()
+                ]
+            else:
+                names = [match.group(2).strip()]
+            for name in names:
+                target = _resolve_one(macro, name, path.parent)
+                ref = ResolvedReference(
+                    parent=path,
+                    macro=macro,
+                    name=name,
+                    target=target if target else path.parent / name,
+                    found=target is not None,
+                )
+                references.append(ref)
+                if not ref.found:
+                    missing.append(ref)
+                    continue
+                assert target is not None
+                visit(target)
         stack.pop()
 
     visit(root)

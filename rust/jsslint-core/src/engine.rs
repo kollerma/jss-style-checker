@@ -50,12 +50,20 @@ pub struct ParsedTexFileDoc {
     pub path: String,
     pub parsed: ParsedTex,
     pub line_index: LineIndex,
+    /// `JSS-PARSE-000` findings attached to this file directly (not a
+    /// rule finding) — currently only the CLI's lenient-UTF-8-decode
+    /// warning (`attach_violation`); the tex tokenizer itself never
+    /// raises (see `run`'s doc comment). Empty for `.Rmd` raw-LaTeX
+    /// prose fragments (`ParsedRmdFileDoc` carries its own).
+    pub violations: Vec<Violation>,
 }
 
 pub struct ParsedBibFileDoc {
     pub path: String,
     pub source_chars: Vec<char>,
     pub library: Library,
+    /// See `ParsedTexFileDoc::violations`.
+    pub violations: Vec<Violation>,
 }
 
 /// Mirrors `api.py::ParsedRmdFile`. `latex_fragments` are the raw-LaTeX
@@ -103,6 +111,7 @@ impl ParsedDocument {
                     path: path.clone(),
                     parsed,
                     line_index,
+                    violations: Vec::new(),
                 });
             } else if lower.ends_with(".bib") {
                 let library = bib::parse(source);
@@ -110,6 +119,7 @@ impl ParsedDocument {
                     path: path.clone(),
                     source_chars: source.chars().collect(),
                     library,
+                    violations: Vec::new(),
                 });
             } else if lower.ends_with(".rnw") {
                 let rewritten = crate::rnw::wrap_rnw_chunks_as_sinput(source);
@@ -119,6 +129,7 @@ impl ParsedDocument {
                     path: path.clone(),
                     parsed,
                     line_index,
+                    violations: Vec::new(),
                 });
             } else if lower.ends_with(".rmd") {
                 doc.rmd_files
@@ -131,6 +142,36 @@ impl ParsedDocument {
             }
         }
         Ok(doc)
+    }
+
+    /// Attach a `JSS-PARSE-000` finding directly to the parsed file at
+    /// `path` — used by the CLI's lenient UTF-8 fallback
+    /// (`decode::read_lenient_utf8`) to surface a degraded-parse (or
+    /// unreadable-file) diagnostic after the fact, without needing
+    /// `from_sources` itself to know about filesystem-level concerns
+    /// (mirrors `core/parser.py::parse_tex_file`/`parse_bib_file`/
+    /// `parse_rmd_file` prepending `read_err` to `parsed.violations`).
+    /// A no-op if `path` isn't in this document (shouldn't happen —
+    /// callers pass back exactly the paths they built `sources` from).
+    pub fn attach_violation(&mut self, path: &str, violation: Violation) {
+        for tf in &mut self.tex_files {
+            if tf.path == path {
+                tf.violations.push(violation);
+                return;
+            }
+        }
+        for bf in &mut self.bib_files {
+            if bf.path == path {
+                bf.violations.push(violation);
+                return;
+            }
+        }
+        for rf in &mut self.rmd_files {
+            if rf.path == path {
+                rf.violations.push(violation);
+                return;
+            }
+        }
     }
 
     /// Every tex-shaped parsed view: native `.tex`/`.rnw` files plus
@@ -570,6 +611,20 @@ pub(crate) fn python_list_repr(items: &[&str]) -> String {
     format!("[{}]", quoted.join(", "))
 }
 
+/// Mirrors Python's `round(x, 1)`: round-half-to-even on the exact
+/// binary value, not `f64::round()`'s round-half-away-from-zero.
+/// `compliance_percentage` is always `100.0 * k / n` for small integer
+/// `k`/`n` (the ratable-category counts), so exact `.x5` ties — where
+/// the two rounding rules disagree — are common (e.g. `13/16 * 100 ==
+/// 81.25` exactly, since both `13` and `16` are exactly representable
+/// in binary). Rust's fixed-precision float formatting already applies
+/// round-half-to-even (IEEE 754 default), so routing through it here
+/// reproduces Python's tie-breaking exactly instead of reimplementing
+/// the rounding algorithm.
+fn python_round1(x: f64) -> f64 {
+    format!("{x:.1}").parse().unwrap_or(x)
+}
+
 /// Mirrors `journals/jss/__init__.py::_TITLE_MAP` — display titles for
 /// `catalogue::categories()`'s ids, hand-maintained on the Python side
 /// too (not generated from catalogue.yaml).
@@ -590,6 +645,7 @@ fn category_title(category_id: &str) -> &'static str {
         "operators" => "Operators",
         "crossrefs" => "Cross-references",
         "house_style" => "House style",
+        "project" => "Project",
         other => {
             panic!("unknown category id {other:?} (not in journals/jss/__init__.py's _TITLE_MAP)")
         }
@@ -672,6 +728,36 @@ fn ordered_rules() -> Vec<(&'static str, RuleAction<'static>)> {
 /// Python's strict-then-tolerant-retry `parse_tex_source` (see
 /// `tex::parse_tex_source`'s doc comment).
 pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
+    run_impl(config, document, None)
+}
+
+/// Like `run`, but also dispatches `JSS-PROJECT-001` (cycle) /
+/// `JSS-PROJECT-002` (missing reference) — the graph-level violations
+/// a filesystem-bound resolver (`jsslint-cli`'s `resolver` module,
+/// mirroring `core/resolver.py`) already computed by walking
+/// `document`'s `\input`/`\include`/`\subfile`/`\bibliography` graph.
+/// Mirrors `core/engine.py::run` being handed a `ParsedProject` instead
+/// of a plain `ParsedDocument`: these two rules only ever run when a
+/// project was actually resolved (spec 013's auto-resolve path); a
+/// bare multi-file `document` (explicit CLI args, `--no-resolve`, or
+/// any other subcommand) uses plain `run` above and never invokes them
+/// — leaving the "project" category at 0 rules applied (SKIPPED),
+/// same as Python leaves `rule.check_project` uncalled for a bare
+/// `ParsedDocument`.
+pub fn run_with_project(
+    config: &ToolConfig,
+    document: &ParsedDocument,
+    cycles: Vec<Violation>,
+    missing: Vec<Violation>,
+) -> ComplianceReport {
+    run_impl(config, document, Some((cycles, missing)))
+}
+
+fn run_impl(
+    config: &ToolConfig,
+    document: &ParsedDocument,
+    project_extra: Option<(Vec<Violation>, Vec<Violation>)>,
+) -> ComplianceReport {
     let tex_like = document.tex_like();
     let tex_file_line_indexes = document.tex_file_line_indexes();
 
@@ -846,6 +932,37 @@ pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
         }
     }
 
+    // Mirrors `core/engine.py::run`'s dispatch for JSS-PROJECT-001/002.
+    // Subtly, these two rules count as "applied" (and, absent findings,
+    // "passed") on EVERY run, project or not: Python's `Rule.check` for
+    // both is a no-op lambda (not `None`), and the engine's `if
+    // rule.check is not None: ... check_ran = True` branch runs it
+    // unconditionally over the given `ParsedDocument` before ever
+    // looking at `rule.check_project` — so a bare multi-file document
+    // (explicit CLI args, `--no-resolve`, or any other subcommand that
+    // never resolves) still shows category "project" as 2 applied / 2
+    // passed / PASS, same as a resolved project with zero cycles/
+    // missing refs. Only actual cycle/missing violations (only
+    // possible via `run_with_project`) can turn it FAIL. `--ignore-rules`
+    // applies (spec 013 data-model.md §13: no sentinel exception); the
+    // confidence-floor gate is skipped since both rules are always
+    // "high" (the catalogue default, no narrowed tier) and every valid
+    // `ConfidenceTier` is `<= High`, so the gate can never actually
+    // filter them — mirrors why Python's identical per-rule gate is a
+    // no-op for these two ids in practice.
+    let has_any_file = !document.tex_files.is_empty()
+        || !document.bib_files.is_empty()
+        || !document.rmd_files.is_empty();
+    if has_any_file {
+        let (cycles, missing) = project_extra.unwrap_or_default();
+        if !config.ignore_rules.contains("JSS-PROJECT-001") {
+            run_one("JSS-PROJECT-001", cycles);
+        }
+        if !config.ignore_rules.contains("JSS-PROJECT-002") {
+            run_one("JSS-PROJECT-002", missing);
+        }
+    }
+
     let mut summaries: Vec<CategorySummary> = Vec::new();
     for &category_id in catalogue::categories() {
         let applied = applied_by_category.get(category_id).copied().unwrap_or(0);
@@ -864,14 +981,28 @@ pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
 
     // Synthetic "parse" category — mirrors `core/engine.py::run` lines
     // ~317-334: collects every `JSS-PARSE-000` finding recorded during
-    // parsing (currently only `.Rmd`'s tokenizer: unterminated
-    // frontmatter/fence, malformed YAML frontmatter). Appended last,
-    // only when non-empty; excluded from `compliance_percentage` below
-    // exactly like Python's `s.category_id != _PARSE_CATEGORY_ID` guard.
+    // parsing — `.Rmd`'s tokenizer (unterminated frontmatter/fence,
+    // malformed YAML frontmatter) plus, on every file type, the CLI's
+    // lenient-UTF-8-decode warning/unreadable-file error attached via
+    // `attach_violation`. Appended last, only when non-empty; excluded
+    // from `compliance_percentage` below exactly like Python's
+    // `s.category_id != _PARSE_CATEGORY_ID` guard.
     let parse_errors: Vec<Violation> = document
-        .rmd_files
+        .tex_files
         .iter()
-        .flat_map(|r| r.violations.iter().cloned())
+        .flat_map(|t| t.violations.iter().cloned())
+        .chain(
+            document
+                .bib_files
+                .iter()
+                .flat_map(|b| b.violations.iter().cloned()),
+        )
+        .chain(
+            document
+                .rmd_files
+                .iter()
+                .flat_map(|r| r.violations.iter().cloned()),
+        )
         .collect();
     if !parse_errors.is_empty() {
         summaries.push(CategorySummary {
@@ -895,7 +1026,7 @@ pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
             .iter()
             .filter(|s| s.status == crate::report::CategoryStatus::Pass)
             .count();
-        Some((100.0 * passed as f64 / ratable.len() as f64 * 10.0).round() / 10.0)
+        Some(python_round1(100.0 * passed as f64 / ratable.len() as f64))
     };
 
     let mut all_violations: Vec<Violation> = summaries

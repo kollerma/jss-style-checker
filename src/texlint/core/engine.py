@@ -127,6 +127,67 @@ def parse_document(
         rmd_files=tuple(rmd_files),
     )
 
+
+_RESOLVE_LINTABLE_SUFFIXES = {".tex", ".ltx", ".bib", ".rnw", ".rmd"}
+
+
+def resolve_project(root: Path) -> ParsedProject:
+    """Walk *root*'s ``\\input``/``\\include``/``\\subfile``/``\\bibliography``
+    graph (spec 013 ``core/resolver.py::resolve``) and assemble a
+    :class:`ParsedProject`.
+
+    ``documents`` is a *single* combined :class:`ParsedDocument` over
+    every reachable file — deliberately, not one document per file.
+    Rules dispatched via plain ``rule.check`` (e.g. the JSS-REFS-*
+    citation/bibliography cross-checks) reason about ``doc.bib_files``
+    and ``doc.all_tex_like()`` together to scope bib entries to what's
+    actually ``\\cite``'d (``_helpers._iter_referenced_entries``);
+    splitting the project into isolated single-file documents would
+    silently widen every such rule to "bib-only" scope the moment a
+    project is auto-resolved, since no individual per-file document
+    would ever see both the citing tex and the cited bib at once. A
+    single combined document reproduces exactly the existing flat
+    multi-file behaviour (``jss-lint a.tex b.tex``) for ``rule.check``,
+    while ``tree``/``missing`` still carry the full per-file resolver
+    graph for ``rule.check_project`` (JSS-PROJECT-001/002). Per-file
+    :class:`Violation` attribution is unaffected either way — it comes
+    from each parsed file's own ``path``, not from document grouping.
+
+    Only files with a lintable suffix are parsed. ``resolver.py``'s
+    walk doesn't filter by extension at all — a real JSS vignette can
+    legitimately ``\\input`` a non-``.tex`` file, e.g. a bundled custom
+    ``.cls`` (observed in the wild: ``pmclust``'s
+    ``\\input{./pmclust-include/my_jss.cls}``) — so a resolved file
+    with an unsupported suffix is silently excluded from the document
+    set (it still contributes to ``tree``/cycle-detection below) rather
+    than raising :class:`~texlint.core.engine.UnsupportedSuffixError`
+    and aborting the whole lint over one non-source include.
+    """
+    from texlint.core.resolver import resolve
+
+    resolved = resolve(root)
+    lintable = [
+        p for p in resolved.files if p.suffix.lower() in _RESOLVE_LINTABLE_SUFFIXES
+    ]
+    documents = (parse_document(lintable),)
+
+    children: dict[Path, list[Path]] = {}
+    for ref in resolved.references:
+        if not ref.found:
+            continue
+        bucket = children.setdefault(ref.parent, [])
+        if ref.target not in bucket:
+            bucket.append(ref.target)
+    tree = {path: tuple(children.get(path, ())) for path in resolved.files}
+
+    return ParsedProject(
+        root=resolved.root,
+        documents=documents,
+        tree=tree,
+        missing=resolved.missing,
+    )
+
+
 _ENTRY_POINT_GROUP = "texlint.journals"
 _PARSE_RULE_ID = "JSS-PARSE-000"
 _PARSE_CATEGORY_ID = "parse"

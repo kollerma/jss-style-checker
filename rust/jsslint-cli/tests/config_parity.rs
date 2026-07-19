@@ -185,10 +185,27 @@ fn config_load_matches_python_cli() {
         let expected = run(&jss_lint, &py_dir, scenario.args);
         let actual = run(jsslint_bin, &rs_dir, scenario.args);
 
-        if actual.stdout != expected.stdout {
+        // Spec 013 auto-resolve canonicalizes a bare single-file root
+        // argument to an absolute path (`resolver.py`/`resolver.rs`
+        // both call `.resolve()`/`canonicalize()` — contract C-12:
+        // deterministic across hosts). `py_dir`/`rs_dir` are two
+        // distinct scratch directories with different names by
+        // construction (`setup_scenario`), so their absolute-path
+        // prefixes never match even when the linted content is
+        // identical; normalize both to a shared placeholder before
+        // comparing so this scenario harness keeps working for scans
+        // that resolve.
+        let expected_stdout = expected
+            .stdout
+            .replace(&py_dir.display().to_string(), "<SCRATCH>");
+        let actual_stdout = actual
+            .stdout
+            .replace(&rs_dir.display().to_string(), "<SCRATCH>");
+
+        if actual_stdout != expected_stdout {
             mismatches.push(format!(
                 "{} STDOUT differs\n  expected:\n{}\n  actual:\n{}",
-                scenario.name, expected.stdout, actual.stdout
+                scenario.name, expected_stdout, actual_stdout
             ));
         }
         // `invalid-journal-in-toml`'s exact message lists every

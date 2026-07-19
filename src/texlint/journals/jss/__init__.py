@@ -27,6 +27,7 @@ _TITLE_MAP: dict[str, str] = {
     "operators": "Operators",
     "crossrefs": "Cross-references",
     "house_style": "House style",
+    "project": "Project",
 }
 
 

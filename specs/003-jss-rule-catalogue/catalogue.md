@@ -4,8 +4,8 @@
 
 **Schema version**: 1  
 **Vendored sources**: `docs/jss-template/jss.cls` dated 2021-05-23  
-**Rule count**: 60  
-**Category count**: 15
+**Rule count**: 62  
+**Category count**: 16
 
 ---
 
@@ -173,6 +173,15 @@ _house_style_ — 3 rule(s)
 | `JSS-HOUSE-001` | warning | "e.g." and "i.e." are followed by a comma so LaTeX does not treat the period as a sentence end | style_guide | `#miscellaneous` | ✓ |
 | `JSS-HOUSE-002` | warning | Book editions are indicated as 2nd, 3rd, etc., not as "second" or "2e" | style_guide | `#miscellaneous` | ✓ |
 | `JSS-HOUSE-003` | info | Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref) | jss_cls | `jss.cls:54` | ✓ |
+
+## Project
+
+_project_ — 2 rule(s)
+
+| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|
+| `JSS-PROJECT-001` | error | A cycle exists in the \input/\include/\subfile/\bibliography reference graph | author_instructions | `multi-file-projects` | — |
+| `JSS-PROJECT-002` | error | A \input/\include/\subfile/\bibliography target could not be found | author_instructions | `multi-file-projects` | — |
 
 ## Rule details
 
@@ -2415,6 +2424,72 @@ Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, 
 </details>
 
 **Notes**: jss.cls:54 loads graphicx/xcolor/ae/fancyvrb and jss.cls:254 loads hyperref; duplicate \usepackage calls are silently ignored by LaTeX but clutter the preamble. Style guide SG-002 ("keep LaTeX code as simple as possible") backs this.
+
+---
+
+### JSS-PROJECT-001
+
+**Category**: `project` · **Severity**: `error` · **Auto-fixable**: no
+
+A cycle exists in the \input/\include/\subfile/\bibliography reference graph
+
+**Authority**: `author_instructions` → `multi-file-projects`
+
+**Inspects**: `tex_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+% a.tex
+\input{b}
+% b.tex
+\input{a}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+% a.tex
+\input{b}
+% b.tex
+No back-reference to a.tex here.
+```
+
+</details>
+
+---
+
+### JSS-PROJECT-002
+
+**Category**: `project` · **Severity**: `error` · **Auto-fixable**: no
+
+A \input/\include/\subfile/\bibliography target could not be found
+
+**Authority**: `author_instructions` → `multi-file-projects`
+
+**Inspects**: `tex_files`, `bib_files`
+
+<details>
+<summary>Example violation</summary>
+
+```latex
+\input{missing-file}
+```
+
+</details>
+
+<details>
+<summary>Example fix</summary>
+
+```latex
+\input{existing-file}
+```
+
+</details>
 
 ---
 

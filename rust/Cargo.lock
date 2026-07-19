@@ -665,6 +665,7 @@ dependencies = [
  "libc",
  "lsp-server",
  "lsp-types",
+ "regex",
  "rusqlite",
  "serde",
  "serde_json",

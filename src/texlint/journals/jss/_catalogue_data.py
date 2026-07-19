@@ -733,6 +733,28 @@ RULES: Mapping[str, Mapping[str, object]] = MappingProxyType({
         "guide_url": 'https://www.jstatsoft.org/about/submissions#house-style',
         "explanation": 'Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref).',
     }),
+    'JSS-PROJECT-001': MappingProxyType({
+        "category": 'project',
+        "severity": Severity.ERROR,
+        "message_template": 'A cycle exists in the \\input/\\include/\\subfile/\\bibliography reference graph',
+        "authority": 'author_instructions',
+        "authority_ref": 'multi-file-projects',
+        "inspects": ('tex_files',),
+        "auto_fixable": False,
+        "guide_section": 'internal',
+        "explanation": 'The resolver found a cycle while following \\input/\\include/\\subfile/\\bibliography references from the root file. The file that closes the cycle is reported once and is not processed a second time.',
+    }),
+    'JSS-PROJECT-002': MappingProxyType({
+        "category": 'project',
+        "severity": Severity.ERROR,
+        "message_template": 'A \\input/\\include/\\subfile/\\bibliography target could not be found',
+        "authority": 'author_instructions',
+        "authority_ref": 'multi-file-projects',
+        "inspects": ('tex_files', 'bib_files'),
+        "auto_fixable": False,
+        "guide_section": 'internal',
+        "explanation": "The resolver followed a \\input/\\include/\\subfile/\\bibliography reference to a name that does not exist under the referencing file's directory, TEXINPUTS, or BIBINPUTS search path.",
+    }),
 })
 
 RETIRED_RULE_IDS: frozenset[str] = frozenset({
@@ -796,4 +818,5 @@ ROLLOUT_ORDER: tuple[str, ...] = (
     'operators',
     'crossrefs',
     'house_style',
+    'project',
 )

@@ -16,6 +16,7 @@ path = "src/main.rs"
 jsslint-core = { workspace = true }
 jsslint-crossref = { workspace = true }
 clap = { workspace = true }
+regex = "1"
 serde_json = { workspace = true }
 rusqlite = { version = "0.40", default-features = false, features = ["bundled"] }
 lsp-server = "0.8"

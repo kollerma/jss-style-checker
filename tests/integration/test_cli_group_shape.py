@@ -52,12 +52,8 @@ def test_main_is_a_click_group() -> None:
 
 
 def test_no_resolve_flag_accepted(runner: CliRunner) -> None:
-    """Spec 013 follow-up: ``--no-resolve`` is accepted as a reserved flag.
-
-    It currently has no observable effect (auto-resolve is not wired
-    yet), but adding it now lets users script against it ahead of
-    time. The flag must round-trip through the CLI without error.
-    """
+    """``--no-resolve`` disables spec-013 auto-resolve; the CLI still
+    accepts explicit multi-file invocations unresolved either way."""
     result = runner.invoke(
         main,
         [
