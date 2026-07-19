@@ -818,6 +818,25 @@ def main(argv: list[str] | None = None) -> int:
                 "error: paper/generated/ is out of date: " + ", ".join(stale),
                 file=sys.stderr,
             )
+            # Print the actual line-level differences so an environment-
+            # dependent value (e.g. a pytest collection count computed
+            # without the PyO3 oracle installed) is diagnosable straight
+            # from the CI log instead of requiring local reproduction.
+            import difflib
+
+            for name in stale:
+                path = OUTPUT_DIR / name
+                committed = (
+                    path.read_text(encoding="utf-8").splitlines()
+                    if path.exists()
+                    else []
+                )
+                computed = rendered[name].splitlines()
+                for line in difflib.unified_diff(
+                    committed, computed, f"committed {name}", f"computed {name}",
+                    lineterm="", n=0,
+                ):
+                    print(line, file=sys.stderr)
             return 1
         return 0
 

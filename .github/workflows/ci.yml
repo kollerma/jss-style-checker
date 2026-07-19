@@ -40,6 +40,28 @@ jobs:
       - name: Pytest
         run: pytest
 
+  # The VS Code extension's TypeScript compile. Without this, a breaking
+  # dev-dependency bump (e.g. the TypeScript 7 native port dropping
+  # automatic @types discovery) merges green and only fails at publish
+  # time — vscode-publish.yml is tag-triggered and never runs on PRs.
+  vscode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install
+        working-directory: vscode-extension
+        run: npm ci
+
+      - name: Compile
+        working-directory: vscode-extension
+        run: npm run compile
+
   # Spec 018 — Rust core (jsslint-core/jsslint-cli/jsslint-wasm/
   # jsslint-py). Every jsslint-core/jsslint-cli test that differentially
   # checks output against the real jss-lint CLI looks specifically for
