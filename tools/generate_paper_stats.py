@@ -347,17 +347,25 @@ def count_commits() -> tuple[int, int]:
 
 def count_specs() -> int:
     specs = REPO_ROOT / "specs"
-    return sum(1 for p in specs.iterdir() if p.is_dir() and re.match(r"\d{3}-", p.name))
+    # Count only features that actually went through the full spec-kit
+    # workflow — the paper's §speckit prose claims specify->clarify->plan->
+    # tasks->implement for each counted feature. tasks.md is that workflow's
+    # signature artifact; retroactive records (specs/018, 023-026) are
+    # spec.md-only and are deliberately excluded from this claim.
+    return sum(
+        1
+        for p in specs.iterdir()
+        if p.is_dir() and re.match(r"\d{3}-", p.name) and (p / "tasks.md").is_file()
+    )
 
 
 def tool_version() -> str:
-    m = re.search(
-        r'^version = "([^"]+)"',
-        (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"),
-        re.M,
-    )
-    assert m, "pyproject.toml version not found"
-    return m.group(1)
+    # The suite version is single-sourced in the root VERSION file
+    # (Constitution §XV); pyproject.toml reads it dynamically via hatch and
+    # no longer carries a literal version string.
+    version = (REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    assert re.fullmatch(r"\d+\.\d+\.\d+", version), f"bad VERSION: {version!r}"
+    return version
 
 
 # --------------------------------------------------------------------------

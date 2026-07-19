@@ -8,15 +8,13 @@ Style checker for manuscripts submitted to the
 [Journal of Statistical Software](https://www.jstatsoft.org/) (JSS).
 
 **[Try it in your browser](https://kollerma.github.io/jss-style-checker/)** —
-no install, nothing uploaded. Pick a folder and it checks the `.tex`/`.bib`
-files on the spot, entirely client-side via WebAssembly.
+no install, nothing uploaded. Pick a folder and it checks the
+`.tex`/`.ltx`/`.bib`/`.Rnw`/`.Rmd` files on the spot, entirely client-side
+via WebAssembly.
 
-> The badges above read shields.io endpoint JSON files refreshed by
-> CI from the spec-002 precision-history DB and the spec-017 recall
-> corpus. They go live when the gh-pages publish workflow ships and
-> the recall corpus is annotated; until then they render as the
-> shields-io fallback. See
-> [`roadmap/follow-ups.md`](roadmap/follow-ups.md).
+> The badges above are refreshed by CI on every push to `main`: shields.io
+> endpoint JSON derived from the spec-002 precision-history DB and the
+> spec-017 hand-annotated recall corpus.
 
 The package ships:
 
@@ -27,11 +25,17 @@ The package ships:
   [`eval/README.md`](eval/README.md) and
   [`specs/002-eval-jss-harness/quickstart.md`](specs/002-eval-jss-harness/quickstart.md)).
 
-The same engine is also being ported to Rust and compiled to a standalone
-binary, a browser/npm WASM package (the [in-browser checker](https://kollerma.github.io/jss-style-checker/)
-above — source at [`web/`](web/)), a native Python extension, and an R
-package — see [`rust/README.md`](rust/README.md) for how to use each (including
-how to build and run the web app locally).
+The same engine also ships as a Rust port, compiled five ways: a standalone
+binary ([`jsslint-cli`](https://crates.io/crates/jsslint-cli) on crates.io),
+a browser/npm WASM package ([`jsslint-wasm`](https://www.npmjs.com/package/jsslint-wasm) —
+the [in-browser checker](https://kollerma.github.io/jss-style-checker/)
+above, source at [`web/`](web/)), a native Python extension
+([`jsslint`](https://pypi.org/project/jsslint/) on PyPI), an R package
+(`jsslintr`), and a zero-install VS Code extension that runs the WASM
+in-process ([`vscode-extension/`](vscode-extension/)) — see
+[`rust/README.md`](rust/README.md) for how to use each (including how to
+build and run the web app locally). Both engines produce byte-identical
+output; that parity is CI-enforced (Constitution §XIII).
 
 ## Install (development)
 
@@ -43,7 +47,10 @@ python3 -m venv .venv
 
 ## Quick start
 
-Run the linter against a LaTeX manuscript and its bibliography:
+Run the linter against a LaTeX (or Sweave `.Rnw` / R Markdown `.Rmd`)
+manuscript and its bibliography. Linting a root file automatically follows
+`\input`/`\include`/`\subfile`/`\bibliography` references and lints the
+whole reachable project (`--no-resolve` restricts to the named files):
 
 ```sh
 jss-lint paper.tex refs.bib              # author mode, terminal output
@@ -110,7 +117,7 @@ for a developer walkthrough see
 The `jss` journal ships with the package; third-party packages can register
 additional journals with zero edits to this repo (Constitution §IV).
 
-The `jss` journal ships **58 rules** across 15 categories — full
+The `jss` journal ships **62 rules** across 16 categories — full
 catalogue with descriptions, severity, JSS-guide §, example
 violations, and example fixes:
 
@@ -137,15 +144,18 @@ Helper scripts activate the project `.venv` and forward their arguments:
 - `scripts/vtest.sh` — run `pytest`. Supports `--tail=N` and `--grep=PATTERN`
   to replace `| tail` / `| grep` idioms.
 
-**Pre-commit hook** — `.githooks/pre-commit` runs `ruff check .` so the
-CI lint gate never sees a dirty commit. Activate it once per clone:
+**Pre-commit hook** — `.githooks/pre-commit` runs `ruff check .`, the
+pytest suite (`SKIP_PYTEST=1` to opt out per commit), and — when Rust files
+are staged — `cargo fmt --all --check`, so the CI gates never see a dirty
+commit. Activate it once per clone:
 
 ```sh
 git config core.hooksPath .githooks
 ```
 
-The hook is lenient when `ruff` isn't on `PATH` (skips with a warning)
+The hook is lenient when a tool isn't on `PATH` (skips with a warning)
 so it doesn't block users who haven't yet run `pip install -e .[dev]`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full gate list.
 
 Mandatory gate (Constitution §IX — 100% branch coverage on every rule module):
 

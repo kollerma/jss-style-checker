@@ -11,12 +11,14 @@ Python package also ships. One engine, compiled four ways:
 | `jsslint` | Python extension module | `jsslint` (PyPI) | `rust/jsslint-py/` |
 | `jsslintr` | R package | `jsslintr` (CRAN, eventually) | `r/jsslintr/` |
 
-**None of these are published yet.** The publish workflows
-(`.github/workflows/release-{crates,npm-wasm,pypi}.yml`) exist and are
-tag-triggered, but no tag has been pushed and each needs a one-time registry
-setup step first (see the header comment in each workflow file). Until then,
-"install" below means "build from source in this checkout" — the commands
-under "Once published" are what the same workflow produces for the future.
+The CLI, WASM, and Python packages are **published** (crates.io / npm /
+PyPI; tag-triggered workflows at
+`.github/workflows/release-{crates,npm-wasm,pypi}.yml`). The R package is
+not yet on CRAN — install it from this checkout (section 4). On top of the
+four libraries sit two ready-made applications: the
+[in-browser checker](https://kollerma.github.io/jss-style-checker/)
+(`web/`) and a zero-install VS Code extension that runs the WASM in-process
+(`vscode-extension/`).
 
 All four tools accept the same logical inputs (file paths + contents,
 `journal`/`mode`/`output`/`ignore_rules`/`min_confidence`/`fail_on`) and
@@ -30,21 +32,19 @@ Exit-code / return-value conventions differ per ecosystem (see each section).
 Source: `rust/jsslint-cli/`. Wraps the same engine as the Python `jss-lint`
 CLI, plus `explain`/`diff`/`init`/`report`/`lsp` subcommands.
 
-### Build
+### Install
+
+```sh
+cargo install jsslint-cli        # from crates.io
+```
+
+Or build from this checkout:
 
 ```sh
 cd rust
-cargo build --release -p jsslint-cli
-# binary at rust/target/release/jsslint
+cargo build --release -p jsslint-cli   # binary at rust/target/release/jsslint
+cargo install --path jsslint-cli       # or install onto your PATH
 ```
-
-Or install it onto your `PATH`:
-
-```sh
-cargo install --path rust/jsslint-cli
-```
-
-**Once published:** `cargo install jsslint-cli` (crates.io).
 
 ### Lint a manuscript
 
@@ -134,9 +134,10 @@ a completely different, incompatible API that `genpdf` 0.2.0 can't consume.
 See `rust/vendor/printpdf-0.3.4/NOTICE.md` for the full writeup.
 
 `jsslint lsp` starts a synchronous LSP 3.17 server over stdio (diagnostics +
-code actions + workspace edits). You don't run this by hand; point an
-editor's LSP client at the `jsslint lsp` command the way the VS Code
-extension (`vscode-extension/`) points at the Python `jss-lint lsp` today.
+code actions + workspace edits) for any editor with an LSP client. (The
+project's own VS Code extension does NOT use it — it runs the WASM build
+in-process instead, so it needs no installed binary; the LSP server is for
+other editors.)
 
 ### `jsslint-crossref` — the `--crossref` network client
 
@@ -189,7 +190,13 @@ for `file://` origins, so it needs a real (even if local) HTTP server.
 `web/pkg/` is build output (git-ignored); re-run the `wasm-pack build` step
 after any change under `rust/jsslint-core/` or `rust/jsslint-wasm/`.
 
-### Build
+### Install
+
+```sh
+npm install jsslint-wasm         # from npm
+```
+
+Or build from this checkout:
 
 ```sh
 cd rust/jsslint-wasm
@@ -199,14 +206,23 @@ wasm-pack build --release --target bundler   # for webpack/vite/rollup consumers
 # output: rust/jsslint-wasm/pkg/
 ```
 
-**Once published:** `npm install jsslint-wasm`.
-
 ### Use it
 
-The exported `render(request)` function takes one object (camelCase keys)
-and returns the rendered report as a string, or throws on a malformed
-request or unparseable input. The call itself is identical regardless of
-build target — only how you import the module differs:
+Three exports, all taking the same request object (camelCase keys):
+
+- `render(request)` — lint and return the report as a string
+  (`terminal`/`json`/`sarif`/`html` via `output`).
+- `fix(request)` — apply every safe auto-fix in memory and return the
+  changed files as `[path, fixedContents]` pairs (`output` ignored; files
+  with nothing to fix are omitted).
+- `analyze(request)` — return structured violations, each carrying its
+  auto-fix payload (`{start, end, replacement, description}`) when one
+  exists. This is what the VS Code extension's per-diagnostic quick fixes
+  use — `render(json)`'s `fix` field is deliberately `null` for byte-parity
+  with the Python JSON contract.
+
+The call is identical regardless of build target — only how you import the
+module differs:
 
 ```js
 // --target bundler (webpack/vite/rollup) — wasm loading is handled by the
@@ -243,17 +259,21 @@ Source: `rust/jsslint-py/`. A PyO3 native extension; also doubles as this
 project's in-process Rust/Python parity oracle
 (`tests/unit/test_jsslint_parity.py`).
 
-### Build
+### Install
+
+```sh
+pip install jsslint              # from PyPI
+```
+
+One wheel per platform covers CPython 3.10+ via the stable ABI
+(`abi3-py310`) — no per-Python-version wheel needed. Or build from this
+checkout:
 
 ```sh
 cd rust/jsslint-py
 pip install maturin   # already in the root project's [dev] extras
 maturin develop --release   # builds + installs into your active venv
 ```
-
-**Once published:** `pip install jsslint` (PyPI). One wheel per platform
-covers CPython 3.10+ via the stable ABI (`abi3-py310`) — no per-Python-version
-wheel needed.
 
 ### Use it
 
@@ -310,9 +330,23 @@ neither is something a workflow in this repo can automate.
 
 ### Use it
 
+The convenience API lints files straight from disk — `jss_files()`
+discovers every `.tex`/`.ltx`/`.bib`/`.Rnw`/`.Rmd` in the working
+directory:
+
 ```r
 library(jsslintr)
 
+jsslint()                       # lint everything jss_files() finds
+jsslint(c("paper.Rnw", "refs.bib"), mode = "reviewer")
+jssfix("paper.tex")             # apply safe auto-fixes in place
+jssfix("paper.tex", dry_run = TRUE)   # preview without writing
+```
+
+The lower-level `render()` takes file *contents* (no filesystem access —
+it is the same in-memory seam the other bindings expose):
+
+```r
 report <- jsslintr::render(
   files = c(
     "paper.tex" = paste(readLines("paper.tex"), collapse = "\n"),
@@ -339,15 +373,19 @@ malformed `files` argument or an unparseable input file.
 
 ## Which one should I actually use?
 
-- **Command-line / CI**: the `jsslint` binary — it's the only one with
-  `--fix`, `explain`, `report`, and the LSP server.
-- **Browser / privacy-sensitive**: `jsslint-wasm` — the only build with a
-  hard, by-construction guarantee that nothing reaches the network.
+- **Editing a manuscript in VS Code**: the extension — zero-install
+  (bundled WASM), live diagnostics and per-violation quick fixes.
+- **Command-line / CI**: the `jsslint` binary — the fullest surface:
+  `--fix`, `--crossref` online DOI verification, `explain`, `diff`,
+  `init`, `report` (md/html/pdf), and an LSP server for other editors.
+- **Browser / privacy-sensitive**: `jsslint-wasm` (or the hosted web app) —
+  a hard, by-construction guarantee that nothing reaches the network.
 - **Scripting inside a larger Python pipeline**: `jsslint` (PyPI) — avoids
   shelling out to the binary; also what this repo's own Rust-vs-Python
   parity tests use.
-- **R / JSS-author workflows**: `jsslintr` — native to the ecosystem most
-  JSS authors already work in.
+- **R / JSS-author workflows**: `jsslintr` — `jsslint()`/`jssfix()` on the
+  files in your project, native to the ecosystem most JSS authors already
+  work in.
 
 All four are driven by the same `jsslint-core` engine, so results are
 identical regardless of which one you reach for — that parity is what the

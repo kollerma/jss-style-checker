@@ -4,9 +4,13 @@ The rule engine behind the [JSS style checker](https://github.com/kollerma/jss-s
 a linter for LaTeX/BibTeX manuscripts submitted to the
 [Journal of Statistical Software](https://www.jstatsoft.org/) (JSS).
 
-This crate is the shared engine, not an application. It parses `.tex`/`.bib`
-sources, applies the JSS rule catalogue, and renders reports (`terminal`,
-`json`, `sarif`, `html`). It is compiled into every JSS-checker distribution:
+This crate is the shared engine, not an application. It parses
+`.tex`/`.ltx`/`.bib` sources — plus Sweave (`.Rnw`) and R Markdown (`.Rmd`)
+manuscripts — applies the JSS rule catalogue, and renders reports
+(`terminal`, `json`, `sarif`, `html`). It performs no network or filesystem
+I/O beyond the in-memory inputs its caller supplies (that isolation is a
+project invariant, CI-enforced). It is compiled into every JSS-checker
+distribution:
 
 - **`jsslint`** — command-line binary ([`jsslint-cli`](https://crates.io/crates/jsslint-cli))
 - **`jsslint-wasm`** — browser / Node.js ([npm](https://www.npmjs.com/package/jsslint-wasm))

@@ -32,8 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kollerma/jss-style-checker-action@v1
+      - uses: kollerma/jss-style-checker/action@v1
 ```
+
+(The action lives in the [`action/`](.) subdirectory of the main repo; a
+dedicated `jss-style-checker-action` marketplace repo is tracked in
+`roadmap/follow-ups.md` but does not exist yet.)
 
 ## Inputs
 
@@ -66,13 +70,13 @@ The calling workflow must grant:
 
 ```yaml
 # Pin everything for reproducible CI.
-- uses: kollerma/jss-style-checker-action@v1.5.0
+- uses: kollerma/jss-style-checker/action@v1.0.1
   with:
-    version: '0.5.0'
+    version: '1.0.1'
     fail-on-severity: 'warning'
 
 # SARIF only, no inline comments.
-- uses: kollerma/jss-style-checker-action@v1
+- uses: kollerma/jss-style-checker/action@v1
   with:
     comment-mode: 'none'
 ```
