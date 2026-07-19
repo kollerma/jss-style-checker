@@ -84,8 +84,9 @@ Every rule carries a measured-precision **confidence tier** (`high` /
 precision history. Medium/low findings are marked in the terminal
 table and in the JSON `confidence` field; `--min-confidence` skips
 rules below the floor, and `--fail-on` sets the severity that flips
-the exit code (default `info`: any violation fails). Both are also
-settable in `.jss-lint.toml` (`min_confidence`, `fail_on`).
+the exit code (default `warning`: info-severity advisories are reported
+but don't fail the run). Both are also settable in `.jss-lint.toml`
+(`min_confidence`, `fail_on`).
 
 To silence a single false positive in place (instead of disabling the
 whole rule project-wide), add an inline comment on the offending line —

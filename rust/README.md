@@ -61,7 +61,7 @@ jsslint --journal jss --source-root . paper.tex
 ```
 
 Exit codes: `0` clean · `1` violations found (at/above `--fail-on`, default
-`info`) · `2` the tool could not complete (bad args, unreadable file, unknown
+`warning`) · `2` the tool could not complete (bad args, unreadable file, unknown
 journal, etc).
 
 A directory argument is expanded to every `.tex`/`.ltx`/`.bib`/`.Rnw`/`.Rmd`

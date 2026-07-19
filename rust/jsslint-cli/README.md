@@ -42,7 +42,7 @@ Everything is offline by default; `--crossref` is the only network feature
 content).
 
 Exit codes: `0` clean · `1` violations found (at/above `--fail-on`, default
-`info`) · `2` the tool could not complete (bad args, unreadable file, unknown
+`warning`) · `2` the tool could not complete (bad args, unreadable file, unknown
 journal).
 
 ### Subcommands

@@ -8,8 +8,43 @@ version bump and an entry in this file — see the spec's Clarification Q2.
 
 ## [Unreleased]
 
+### Added
+
+- **`.Rnw` (Sweave/knitr) and `.Rmd` (R Markdown) support in the Rust
+  engine** — previously Python-only. Because every non-Python
+  distribution shares `jsslint-core`, this lands at once in the
+  `jsslint` CLI, the browser/npm WASM build (and the hosted web app),
+  the `jsslint` PyO3 wheel, and the R package, with output
+  byte-identical to the Python engine.
+- **`--crossref` online DOI verification in the Rust CLI** — the port
+  of the Python `--crossref`/`--crossref-mailto` flow (Crossref
+  title/author/year matching; CRAN `@Manual` DOIs confirmed via
+  `doi.org`; `--crossref --fix` writes the DOIs into the `.bib`). The
+  network client lives in a dedicated `jsslint-crossref` crate that is
+  never linked into the WASM/PyO3/R builds — those stay offline by
+  construction, now guarded by a CI dependency-graph test.
+- **`report --format html` and `--format pdf` in the Rust CLI.** HTML
+  is byte-identical to the Python CLI's output. PDF is rendered by a
+  pure-Rust layout (embedded fonts, works with no host fonts
+  installed) and is deliberately *not* byte-identical to Python's
+  WeasyPrint PDF — the one documented parity divergence.
+- **`jsslint-wasm`: `fix()` and `analyze()` exports** alongside
+  `render()` — in-memory auto-fixing, and structured violations with
+  per-violation fix payloads (`render(json)` keeps `fix: null` for
+  byte-parity with the Python JSON contract).
+- **The VS Code extension runs the checker in-process via WASM.** One
+  universal VSIX, nothing else to install — no Python interpreter, no
+  binary. Live diagnostics while typing, per-violation quick fixes,
+  and a "Fix all JSS style issues in this file" action. Replaces the
+  Python-LSP design; the `jssStyleChecker.python.path` setting is gone
+  (`severityOverrides`/`ignoreRules`/`codeWidth`/`runOn` remain).
+
 ### Changed
 
+- **The release version is single-sourced.** Edit the root `VERSION`
+  file and run `scripts/set_version.py`; a guard test fails CI naming
+  any manifest that drifts from it. The R `DESCRIPTION` may carry a
+  CRAN-resubmission suffix (`X.Y.Z-N`) on the same base version.
 - **`\input`/`\include`/`\subfile`/`\bibliography` auto-resolution now
   ships (spec 013).** `jss-lint root.tex` / `jsslint root.tex` — a
   *single* file argument, not a directory or multiple explicit paths —
@@ -28,6 +63,24 @@ version bump and an entry in this file — see the spec's Clarification Q2.
   triggers, `Violation.file` becomes an absolute, canonicalized path
   (previously always the literal string you passed on the command
   line) — pass `--no-resolve` to keep the old single-file behaviour.
+
+## [1.0.1] — 2026-07-18
+
+The first published release, across four registries: crates.io
+(`jsslint-core`, `jsslint-cli`), PyPI (`jss-style-checker` — the Python
+package providing `jss-lint` — and `jsslint`, the PyO3 binding), and npm
+(`jsslint-wasm`). The R package (`jsslintr`) gained the
+`jsslint()`/`jssfix()`/`jss_files()` convenience API and a
+getting-started vignette but is not yet on CRAN.
+
+Version 1.0.0 was burned: `jsslint-core` 1.0.0 reached crates.io
+unbuildable (its build script reads rule-catalogue data that wasn't in
+the crate tarball) and was yanked; 1.0.1 vendors the catalogue into the
+crate, drift-guarded by a test. Everything below shipped as part of
+1.0.1.
+
+### Changed
+
 - **Default `--fail-on` is now `warning`** (was `info`). Info-severity
   advisories (e.g. the missing-DOI rule JSS-REFS-003) are still
   reported but no longer flip CI red by default; pass
