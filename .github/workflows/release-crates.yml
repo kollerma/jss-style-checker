@@ -1,14 +1,23 @@
 name: release-crates
 
-# Spec 018 Phase 6 — publishes jsslint-core + jsslint-cli to crates.io
+# Publishes the three crates in dependency order — jsslint-core, then
+# jsslint-crossref (depends on core), then jsslint-cli (depends on both) —
 # and cross-compiles jsslint-cli release binaries to a GitHub Release.
 # Triggered by a `v*-cli` tag (mirrors vscode-publish.yml's `v*-vscode`
 # convention: one tag suffix per independently-released component).
 #
+# Each publish step is IDEMPOTENT: it skips a version that is already
+# live on crates.io. That makes a partially-failed release recoverable by
+# re-pushing the tag on a fixed commit — exactly what the 1.1.0 release
+# needed when jsslint-crossref was missing from this sequence (core had
+# already published; the re-run had to skip it, publish crossref, then
+# cli). crates.io versions are immutable, so "already published" can
+# never mean "stale content" for a given version.
+#
 # One-time manual setup required before this can run:
-#   - A crates.io API token with publish rights for jsslint-core and
-#     jsslint-cli (crates.io Account Settings -> API Tokens), stored
-#     as the CARGO_REGISTRY_TOKEN repository secret.
+#   - A crates.io API token with publish rights for jsslint-core,
+#     jsslint-crossref, and jsslint-cli (crates.io Account Settings ->
+#     API Tokens), stored as the CARGO_REGISTRY_TOKEN repository secret.
 #     (crates.io also supports GitHub OIDC "Trusted Publishing" as a
 #     token-free alternative — worth switching to once set up per
 #     crate on crates.io, not used here to keep this workflow on the
@@ -31,34 +40,63 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      # The three publish steps share this shape: on push, skip the crate
+      # if this exact version is already on crates.io (idempotent re-run),
+      # otherwise publish. On workflow_dispatch, run `cargo publish
+      # --dry-run` instead (packages + builds, uploads nothing);
+      # continue-on-error applies only to the dry run, where dependency
+      # resolution legitimately fails for crates whose just-"published"
+      # dependency never actually reached the registry.
       - name: Publish jsslint-core
         working-directory: rust
-        # workflow_dispatch runs `--dry-run`: packages and builds jsslint-core
-        # for verification without uploading it to crates.io. continue-on-error
-        # only applies to the dry run — `cargo publish --dry-run` also fails
-        # if this exact version is already live on crates.io, which is an
-        # expected/harmless outcome for a dry run re-run, not a real error.
         continue-on-error: ${{ github.event_name != 'push' }}
-        run: cargo publish -p jsslint-core --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ github.event_name != 'push' && '--dry-run' || '' }}
+        run: |
+          version=$(cat ../VERSION)
+          if [ "${{ github.event_name }}" = "push" ] && \
+             curl -sf -A "jss-style-checker release workflow" \
+               "https://crates.io/api/v1/crates/jsslint-core/${version}" >/dev/null; then
+            echo "jsslint-core ${version} already on crates.io — skipping"
+            exit 0
+          fi
+          cargo publish -p jsslint-core --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ github.event_name != 'push' && '--dry-run' || '' }}
 
       - name: Wait for jsslint-core to be indexed
         if: github.event_name == 'push'
-        # jsslint-cli depends on jsslint-core as a workspace path
+        # Downstream crates depend on jsslint-core as a workspace path
         # dependency; `cargo publish` rewrites that to a registry
         # dependency, which requires the just-published version to
         # already be resolvable on crates.io's index.
         run: sleep 30
 
+      - name: Publish jsslint-crossref
+        working-directory: rust
+        continue-on-error: ${{ github.event_name != 'push' }}
+        run: |
+          version=$(cat ../VERSION)
+          if [ "${{ github.event_name }}" = "push" ] && \
+             curl -sf -A "jss-style-checker release workflow" \
+               "https://crates.io/api/v1/crates/jsslint-crossref/${version}" >/dev/null; then
+            echo "jsslint-crossref ${version} already on crates.io — skipping"
+            exit 0
+          fi
+          cargo publish -p jsslint-crossref --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ github.event_name != 'push' && '--dry-run' || '' }}
+
+      - name: Wait for jsslint-crossref to be indexed
+        if: github.event_name == 'push'
+        run: sleep 30
+
       - name: Publish jsslint-cli
         working-directory: rust
-        # On a dry run, jsslint-core was never actually published above, so
-        # jsslint-cli's registry-rewritten dependency won't resolve either —
-        # `cargo publish --dry-run` here still exercises packaging/build for
-        # jsslint-cli itself, but is expected to fail the dependency-resolution
-        # check unless jsslint-core is already published at this version.
-        # continue-on-error only applies to the dry run, same reasoning as above.
         continue-on-error: ${{ github.event_name != 'push' }}
-        run: cargo publish -p jsslint-cli --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ github.event_name != 'push' && '--dry-run' || '' }}
+        run: |
+          version=$(cat ../VERSION)
+          if [ "${{ github.event_name }}" = "push" ] && \
+             curl -sf -A "jss-style-checker release workflow" \
+               "https://crates.io/api/v1/crates/jsslint-cli/${version}" >/dev/null; then
+            echo "jsslint-cli ${version} already on crates.io — skipping"
+            exit 0
+          fi
+          cargo publish -p jsslint-cli --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ github.event_name != 'push' && '--dry-run' || '' }}
 
   release-binaries:
     needs: publish-crates
