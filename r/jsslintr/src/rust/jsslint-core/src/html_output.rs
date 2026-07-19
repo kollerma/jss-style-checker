@@ -10,11 +10,11 @@
 //! adjacent source newlines/indentation in the output) and cross-
 //! checked against real `jss-lint --output html` renders.
 //!
-//! `report --format html`/`pdf` (spec 015's `conformance.html.j2`,
-//! rendered via `jsslint_core::conformance`) is a separate template
-//! and stays Python-only per the porting plan's report-subcommand
-//! scope note — this module only covers the bare-lint `--output html`
-//! path (`author.html.j2`/`reviewer.html.j2`).
+//! `report --format html` (spec 015's `conformance.html.j2`) is a
+//! separate template, rendered by `conformance.rs::render_html`
+//! (which reuses this module's `escape_html`) — this module only
+//! covers the bare-lint `--output html` path
+//! (`author.html.j2`/`reviewer.html.j2`).
 
 use crate::catalogue;
 use crate::report::ComplianceReport;
@@ -22,7 +22,9 @@ use std::collections::BTreeMap;
 
 /// Mirrors `markupsafe.escape()`, which Jinja2's `select_autoescape`
 /// uses for every `{{ }}` interpolation in these `.html.j2` templates.
-fn escape_html(s: &str) -> String {
+/// `pub(crate)`: also reused by `conformance.rs` for
+/// `conformance.html.j2`, which autoescapes with the same rules.
+pub(crate) fn escape_html(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for c in s.chars() {
         match c {

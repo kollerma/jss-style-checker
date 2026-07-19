@@ -6,7 +6,7 @@ JSON-output shape (see
 `specs/001-linter-foundation/contracts/json-output.md`) require a major
 version bump and an entry in this file — see the spec's Clarification Q2.
 
-## [Unreleased]
+## [1.1.0] — 2026-07-19
 
 ### Added
 

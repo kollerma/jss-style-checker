@@ -2,7 +2,7 @@
   "name": "jss-style-checker",
   "displayName": "JSS Style Checker",
   "description": "Lint LaTeX/BibTeX manuscripts against the JSS style guide.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publisher": "kollerma",
   "license": "MIT",
   "engines": {

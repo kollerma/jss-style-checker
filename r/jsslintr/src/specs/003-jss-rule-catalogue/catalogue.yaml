@@ -77,6 +77,8 @@ deterministic_rule_ids:
   - JSS-PRE-006
   - JSS-PRE-007
   - JSS-PRE-008
+  - JSS-PROJECT-001
+  - JSS-PROJECT-002
   - JSS-REFS-001
   - JSS-REFS-007
   - JSS-STRUCT-002
@@ -107,6 +109,7 @@ categories:
   - operators
   - crossrefs
   - house_style
+  - project
 
 rules:
 
@@ -1586,3 +1589,48 @@ rules:
     explanation: "Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref)."
     notes: |
       jss.cls:54 loads graphicx/xcolor/ae/fancyvrb and jss.cls:254 loads hyperref; duplicate \usepackage calls are silently ignored by LaTeX but clutter the preamble. Style guide SG-002 ("keep LaTeX code as simple as possible") backs this.
+
+  # ---------------------------------------------------------------------------
+  # project — spec 013: multi-file \input/\include/\subfile/\bibliography
+  # resolution. Tool-side diagnostics about the resolved file graph itself
+  # (not JSS-guide compliance) — no style-guide citation exists for them,
+  # so guide_section carries the "internal" sentinel (spec 007).
+  # ---------------------------------------------------------------------------
+
+  - rule_id: JSS-PROJECT-001
+    category: project
+    severity: error
+    description: A cycle exists in the \input/\include/\subfile/\bibliography reference graph
+    authority: author_instructions
+    authority_ref: "multi-file-projects"
+    example_violation: |
+      % a.tex
+      \input{b}
+      % b.tex
+      \input{a}
+    example_fix: |
+      % a.tex
+      \input{b}
+      % b.tex
+      No back-reference to a.tex here.
+    inspects: [tex_files]
+    auto_fixable: false
+    guide_section: "internal"
+    guide_url: null
+    explanation: "The resolver found a cycle while following \\input/\\include/\\subfile/\\bibliography references from the root file. The file that closes the cycle is reported once and is not processed a second time."
+
+  - rule_id: JSS-PROJECT-002
+    category: project
+    severity: error
+    description: A \input/\include/\subfile/\bibliography target could not be found
+    authority: author_instructions
+    authority_ref: "multi-file-projects"
+    example_violation: |
+      \input{missing-file}
+    example_fix: |
+      \input{existing-file}
+    inspects: [tex_files, bib_files]
+    auto_fixable: false
+    guide_section: "internal"
+    guide_url: null
+    explanation: "The resolver followed a \\input/\\include/\\subfile/\\bibliography reference to a name that does not exist under the referencing file's directory, TEXINPUTS, or BIBINPUTS search path."

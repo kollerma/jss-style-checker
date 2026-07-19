@@ -364,6 +364,7 @@ pub fn parse_rmd_source(path: &str, src: &str) -> ParsedRmdFileDoc {
             path: path.to_string(),
             parsed,
             line_index,
+            violations: Vec::new(),
         });
     }
 
