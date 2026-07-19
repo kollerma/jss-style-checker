@@ -49,7 +49,7 @@ jobs:
 
       - name: Package
         working-directory: vscode-extension
-        run: npx --yes vsce package
+        run: npx --yes @vscode/vsce package
 
       - name: Upload .vsix artifact
         if: github.event_name != 'push'
@@ -61,7 +61,7 @@ jobs:
       - name: Publish to VS Code marketplace
         if: github.event_name == 'push'
         working-directory: vscode-extension
-        run: npx --yes vsce publish
+        run: npx --yes @vscode/vsce publish
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 

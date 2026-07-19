@@ -6,7 +6,7 @@
   "publisher": "kollerma",
   "license": "MIT",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.125.0"
   },
   "categories": [
     "Linters"
@@ -84,8 +84,8 @@
     "build:wasm": "cd ../rust/jsslint-wasm && wasm-pack build --release --target nodejs --out-dir ../../vscode-extension/wasm",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package",
-    "publish": "vsce publish"
+    "package": "npx --yes @vscode/vsce package",
+    "publish": "npx --yes @vscode/vsce publish"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
