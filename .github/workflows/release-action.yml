@@ -12,6 +12,14 @@ on:
 permissions:
   contents: write
 
+# Moving the rolling tag is a ref push whose diff usually touches
+# .github/workflows/** (any release after workflow edits does), and the
+# default GITHUB_TOKEN is categorically forbidden from pushing workflow
+# file changes — there is no grantable `workflows` permission for it.
+# This is what failed the v1.1.0 release. Configure a fine-grained PAT
+# with Contents:RW + Workflows:RW as the RELEASE_TAG_PAT repository
+# secret to let this job push; without it, the job fails with a message
+# telling the operator to move the tag by hand.
 jobs:
   rolling-tag:
     if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.ref_name, '-') }}
@@ -20,6 +28,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TAG_PAT || github.token }}
       - name: Update rolling v<MAJOR> tag
         run: |
           tag="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
@@ -29,7 +38,14 @@ jobs:
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git tag -f "$major" "$tag"
-            git push -f origin "$major"
+            if ! git push -f origin "$major"; then
+              echo "::error::Pushing the rolling '$major' tag was rejected. If the error" \
+                "mentions workflow files, the default GITHUB_TOKEN cannot push refs whose" \
+                "diff touches .github/workflows/ — add a fine-grained PAT (Contents:RW +" \
+                "Workflows:RW) as the RELEASE_TAG_PAT secret, or move the tag manually:" \
+                "git tag -f $major $tag && git push -f <remote> $major"
+              exit 1
+            fi
           else
             echo "dry run: would force-tag $major -> $tag and push it, but this is a manual dispatch — nothing pushed"
           fi
