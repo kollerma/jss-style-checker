@@ -1,11 +1,46 @@
 /* @ts-self-types="./jsslint_wasm.d.ts" */
 
 /**
+ * Lints `request.files` and returns the violations as structured data
+ * (camelCase), each carrying its auto-fix (`fix`) when one exists. Unlike
+ * `render(output:"json")` — whose `fix` field is hardcoded null for
+ * byte-parity with the Python contract — this exposes the real fixes so a
+ * UI (e.g. the VS Code extension) can offer per-diagnostic quick fixes.
+ * @param {any} request
+ * @returns {any}
+ */
+export function analyze(request) {
+    const ret = wasm.analyze(request);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Applies every available auto-fix in memory and returns the files whose
+ * contents changed, as `[path, fixedContents]` pairs (same shape as the
+ * `files` input). Files with no applicable fix are omitted. Takes the same
+ * request shape as `render`; the `output` field is ignored. No filesystem
+ * access — the caller writes the results back however it likes.
+ * @param {any} request
+ * @returns {any}
+ */
+export function fix(request) {
+    const ret = wasm.fix(request);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * Lints `request.files` and renders the report in `request.output`
  * format. Mirrors `jsslint::render` / `jsslint-cli`'s bare-lint
  * invocation. `request` is a JS object shaped like `LintRequest`
- * (camelCase keys: `files`, `journal`, `mode`, `output`,
- * `ignoreRules`, `minConfidence`, `failOn`, `sourceRoot`, `verbose`).
+ * (camelCase keys: `files`, `journal`, `mode`, `output`, `ignoreRules`,
+ * `minConfidence`, `failOn`, `sourceRoot`, `verbose`, `codeWidth`,
+ * `severityOverrides`).
  * @param {any} request
  * @returns {string}
  */
@@ -32,6 +67,10 @@ function __wbg_get_imports() {
         __proto__: null,
         __wbg_Error_92b29b0548f8b746: function(arg0, arg1) {
             const ret = Error(getStringFromWasm0(arg0, arg1));
+            return ret;
+        },
+        __wbg_Number_9a4e0ecb0fa16705: function(arg0) {
+            const ret = Number(arg0);
             return ret;
         },
         __wbg_String_8564e559799eccda: function(arg0, arg1) {
@@ -99,6 +138,14 @@ function __wbg_get_imports() {
             const ret = arg0.done;
             return ret;
         },
+        __wbg_entries_015dc610cd81ede0: function(arg0) {
+            const ret = Object.entries(arg0);
+            return ret;
+        },
+        __wbg_get_507a50627bffa49b: function(arg0, arg1) {
+            const ret = arg0[arg1 >>> 0];
+            return ret;
+        },
         __wbg_get_c7eb1f358a7654df: function() { return handleError(function (arg0, arg1) {
             const ret = Reflect.get(arg0, arg1);
             return ret;
@@ -135,6 +182,10 @@ function __wbg_get_imports() {
             const ret = Array.isArray(arg0);
             return ret;
         },
+        __wbg_isSafeInteger_04f36e4056f1b851: function(arg0) {
+            const ret = Number.isSafeInteger(arg0);
+            return ret;
+        },
         __wbg_iterator_6f722e4a93058b71: function() {
             const ret = Symbol.iterator;
             return ret;
@@ -147,8 +198,16 @@ function __wbg_get_imports() {
             const ret = arg0.length;
             return ret;
         },
+        __wbg_new_32b398fb48b6d94a: function() {
+            const ret = new Array();
+            return ret;
+        },
         __wbg_new_cd45aabdf6073e84: function(arg0) {
             const ret = new Uint8Array(arg0);
+            return ret;
+        },
+        __wbg_new_da52cf8fe3429cb2: function() {
+            const ret = new Object();
             return ret;
         },
         __wbg_next_6dbf2c0ac8cde20f: function(arg0) {
@@ -162,13 +221,29 @@ function __wbg_get_imports() {
         __wbg_prototypesetcall_4770620bbe4688a0: function(arg0, arg1, arg2) {
             Uint8Array.prototype.set.call(getArrayU8FromWasm0(arg0, arg1), arg2);
         },
+        __wbg_set_6be42768c690e380: function(arg0, arg1, arg2) {
+            arg0[arg1] = arg2;
+        },
+        __wbg_set_8a16b38e4805b298: function(arg0, arg1, arg2) {
+            arg0[arg1 >>> 0] = arg2;
+        },
         __wbg_value_a5d5488a9589444a: function(arg0) {
             const ret = arg0.value;
             return ret;
         },
-        __wbindgen_cast_0000000000000001: function(arg0, arg1) {
+        __wbindgen_cast_0000000000000001: function(arg0) {
+            // Cast intrinsic for `F64 -> Externref`.
+            const ret = arg0;
+            return ret;
+        },
+        __wbindgen_cast_0000000000000002: function(arg0, arg1) {
             // Cast intrinsic for `Ref(String) -> Externref`.
             const ret = getStringFromWasm0(arg0, arg1);
+            return ret;
+        },
+        __wbindgen_cast_0000000000000003: function(arg0) {
+            // Cast intrinsic for `U64 -> Externref`.
+            const ret = BigInt.asUintN(64, arg0);
             return ret;
         },
         __wbindgen_init_externref_table: function() {

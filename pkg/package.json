@@ -4,7 +4,7 @@
   "collaborators": [
     "Manuel Koller"
   ],
-  "description": "Browser/WASM binding (Phase 5 stub — spec 018). No network access must ever be reachable from this crate; see the plan's crossref callout.",
+  "description": "Browser/Node WASM build of the Journal of Statistical Software (JSS) LaTeX/BibTeX style checker. Runs fully client-side — no network access is reachable from this crate by construction.",
   "version": "1.0.1",
   "license": "MIT",
   "repository": {
