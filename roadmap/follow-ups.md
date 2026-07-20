@@ -154,8 +154,9 @@ and tracked here rather than papered over.
       **Action**: a human should re-rule those six specific rows at
       source before the precision figure is frozen.
       Confirmed 2026-07-20 by human spot-check: 5 FP (shell commands
-      x3, code output, name), 1 TP (single-letter subtraction);
-      verdicts unchanged, recorded as reviewer human:kollerma.
+      x3, code output, name), 1 TP (single-letter subtraction) --
+      the same split the automated re-adjudication concluded; recorded
+      in the DB as reviewer human:kollerma.
       Discovered in the process: the original re-adjudication existed
       only in the prose (follow-ups + paper), not in the database --
       `eval/eval.db` still carried all six rows as `true_positive`
