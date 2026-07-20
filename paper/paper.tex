@@ -81,9 +81,8 @@
 
 \Address{
   Manuel Koller\\
-  Department\\
-  Institution\\
-  E-mail: \email{author@institution.edu}
+  Zürich, Switzerland\\
+  E-mail: \email{kollerma@protonmail.com}\\
 }
 
 \begin{document}
@@ -533,10 +532,14 @@ the requirements level}: the author intervened not in the code but
 in what the rules should mean, whenever measured behavior diverged
 from the style guide or from the journal's published practice. Two
 adjacent examples: the keyword-case rule initially demanded a
-leading capital that published JSS keyword lists do not carry, and
-was relaxed on instruction; the guide's capital-after-colon
-requirement was then found to be enforced for reference titles but
-not for section titles, and was tightened for consistency --- both
+leading capital, but the journal's template defines keyword
+``sentence case'' by example as fully lowercase --- its canonical
+list literally reads ``comma-separated, not capitalized'' --- so
+the rule was relaxed to follow the template, the higher authority;
+conversely, the capital-after-colon requirement, on which both
+capitalisation styles agree, was found to be enforced for reference
+titles but not for section titles, and --- published practice not
+being an authority --- was tightened for consistency. Both
 corrections entered as instructions and flowed through the standard
 loop, tests first.
 
@@ -927,17 +930,22 @@ Browser / \code{npm} & \code{jsslint-wasm} & a client-side checker that needs no
 \end{table}
 
 From \proglang{R}, the ecosystem JSS serves most directly, the
-package exposes a single \code{render} entry point that returns the
-report as a string:
+package works directly on the files of a manuscript project:
+\code{jsslint()} lints every \code{.tex}/\code{.Rnw}/\code{.Rmd}/%
+\code{.bib} file that \code{jss\_files()} discovers in the working
+directory (or any explicitly named files), and \code{jssfix()}
+applies the safe automatic fixes in place, with a \code{dry\_run}
+mode that previews them as a diff:
 
 \begin{Code}
 library("jsslintr")
-report <- jsslintr::render(
-  files = c("paper.tex" = paste(readLines("paper.tex"),
-                                collapse = "\n"))
-)
-cat(report)
+jsslint()
+jssfix("paper.Rnw", dry_run = TRUE)
 \end{Code}
+
+A lower-level \code{render()} mirrors the other bindings' in-memory
+interface --- file contents in, rendered report out --- and a
+getting-started vignette walks through the workflow.
 
 \subsection{Author workflow}
 \label{sec:authormode}
@@ -996,7 +1004,8 @@ severity and~2 when it cannot complete (bad arguments, an unreadable
 file). The \code{--fail-on} threshold defaults to \code{warning}, so
 info-severity advisories --- the missing-DOI check, for instance ---
 are reported but do not by themselves fail the build; a stricter gate
-sets \code{--fail-on error} or a looser one \code{--fail-on info}. In
+sets \code{--fail-on info} (any finding fails), a looser one
+\code{--fail-on error} (only errors do). In
 continuous integration, the provided GitHub Action lints the
 manuscript on every push and uploads SARIF so violations annotate the
 diff; the exit status is the gate. While editing, the language server
