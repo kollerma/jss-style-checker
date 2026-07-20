@@ -145,14 +145,34 @@ and tracked here rather than papered over.
       infrastructure for the new firings (deferred on this host).
       **Severity**: existing rule severity (warning).
 
-- [ ] **Human spot-check of the six re-adjudicated CODE-003 rows**
+- [x] **Human spot-check of the six re-adjudicated CODE-003 rows**
       (`eval/`). The 2026-07-11 CODE-003 CLI-flag fix silenced six
       corpus violations previously labeled true positives; the
       re-adjudication (five label debt, one genuine subtraction) was
       performed by the same automated workflow that authored the fix,
-      so it is not an independent check. **Provenance**: review F11.
+      so it was not an independent check. **Provenance**: review F11.
       **Action**: a human should re-rule those six specific rows at
       source before the precision figure is frozen.
+      Confirmed 2026-07-20 by human spot-check: 5 FP (shell commands
+      x3, code output, name), 1 TP (single-letter subtraction);
+      verdicts unchanged, recorded as reviewer human:kollerma.
+      Discovered in the process: the original re-adjudication existed
+      only in the prose (follow-ups + paper), not in the database --
+      `eval/eval.db` still carried all six rows as `true_positive`
+      until this spot-check recorded the verdicts. The flip is inert
+      for both the live export and the pinned iteration-115 figures
+      (the six rows are silenced as of run 249, before the current
+      max run and before the export/stats snapshot), so no
+      re-record/re-pin was needed.
+
+- [ ] **Refresh `eval/labels-export.csv.gz`** (`eval/`, `tools/`).
+      The committed export predates roughly 660 labels from the
+      2026-07-19 resolve-era iterations (`StatLabelsTotal` 19,779
+      committed vs. 20,440 from `eval.db`). **Action**: regenerate the
+      export from the container DB, then regenerate the paper stats,
+      in a full dev environment (PyO3 oracle installed -- the
+      container's 1,891 test count is a known environment artifact,
+      not drift), and review the provenance macros that move.
 
 ## Cross-cutting (touches multiple features)
 
