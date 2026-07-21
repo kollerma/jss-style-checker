@@ -53,6 +53,13 @@ jobs:
           git diff --exit-code -- R/extendr-wrappers.R
 
   R-CMD-check:
+    # macOS entries are restricted to the public repo: macOS runners bill
+    # at a 10x minutes multiplier, and the private -dev repo's much higher
+    # push volume burns through its Actions minutes quota fast. windows/
+    # ubuntu entries still run everywhere; macOS still runs on every push
+    # to the public repo, including main pushed there via the dev ->
+    # public merge flow.
+    if: matrix.config.os != 'macOS-latest' || github.repository == 'kollerma/jss-style-checker'
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})

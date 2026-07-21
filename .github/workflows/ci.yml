@@ -204,7 +204,15 @@ jobs:
   # link failure in `cargo test --workspace` and a terminal-width test
   # assumption) were macOS-only and invisible here. Corpus-free: the
   # corpus-dependent parity cases skip, everything else runs.
+  #
+  # Restricted to the public repo: macOS runners bill at a 10x minutes
+  # multiplier, and the private -dev repo's much higher push volume
+  # (every feature branch, not just release-quality main merges) burns
+  # through its Actions minutes quota fast. The public repo still gets
+  # full coverage on every push, including main pushed there via the
+  # dev -> public merge flow.
   macos:
+    if: github.repository == 'kollerma/jss-style-checker'
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
