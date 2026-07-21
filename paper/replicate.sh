@@ -67,10 +67,14 @@ print("Overall compliance & \\multicolumn{3}{r}{" + format(pct, ".1f")
 print("\\bottomrule")
 ' > generated/tab-demo-reviewer.tex || {
         echo "error: reviewer JSON transform failed" >&2; exit 1; }
-# 3b. auto-fix preview: unified-diff portion of --fix --dry-run
+# 3b. auto-fix preview: unified-diff portion of --fix --dry-run.
+# --no-resolve keeps the diff header at the literal "demo.tex": since
+# multi-file auto-resolution shipped, a single-file invocation
+# canonicalizes paths to absolute, which would bake the random mktemp
+# directory into the listing and make this regeneration nondeterministic.
 TMPDIR_FIX=$(mktemp -d)
 cp examples/demo.tex "$TMPDIR_FIX/demo.tex"
-(cd "$TMPDIR_FIX" && JSS_LINT --fix --dry-run demo.tex || true) \
+(cd "$TMPDIR_FIX" && JSS_LINT --fix --dry-run --no-resolve demo.tex || true) \
     | awk '/^─/{exit} {print}' > generated/listings/demo-fix-diff.txt
 rm -rf "$TMPDIR_FIX"
 # 3c. rule documentation
