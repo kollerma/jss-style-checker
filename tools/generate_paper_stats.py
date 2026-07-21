@@ -680,11 +680,16 @@ def _tex_escape(text: str) -> str:
     text = re.sub(r'"([^"]*)"', r"``\1''", text)
     escaped = "".join(_TEX_ESCAPES.get(ch, ch) for ch in text)
     # Render macro mentions in code face: \textbackslash{}Foo -> \code{...}
-    return re.sub(
+    escaped = re.sub(
         r"(\\textbackslash\{\}[A-Za-z@]+(?:\\\{\\\})?)",
         r"\\code{\1}",
         escaped,
     )
+    # A slash-joined run of macro mentions (\input/\include/\subfile/
+    # \bibliography, from the JSS-PROJECT descriptions) is one unbreakable
+    # box to TeX and overflows the catalogue table column by ~35pt; permit
+    # a line break after each joining slash.
+    return escaped.replace("}/\\code{", "}/\\allowbreak\\code{")
 
 
 def render_benchmark_table(data: dict) -> str:

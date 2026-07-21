@@ -868,12 +868,12 @@ for the same reason we report retirements.
 
 Every number, table body, and listing in this paper is generated ---
 none is typed by hand. A generator script queries the pinned
-evaluation state (precision iteration \code{\StatPinnedIteration},
-recall run \StatPinnedRecallRun{}, ground-truth corpus hash
-\code{\StatPinnedRecallHash}) together with the rule catalogue,
-corpus manifest, and benchmark records, and emits the macros and
-table bodies this manuscript inputs; a drift check fails the build if
-the committed values differ from regeneration. The replication script
+evaluation state (recall run \StatPinnedRecallRun{}, ground-truth
+corpus hash \code{\StatPinnedRecallHash}, and the precision iteration
+labelled \code{\StatPinnedIteration}) together with the rule
+catalogue, corpus manifest, and benchmark records, and emits the
+macros and table bodies this manuscript inputs; a drift check fails
+the build if the committed values differ from regeneration. The replication script
 \code{replicate.sh} performs the full sequence --- regenerate,
 compare, lint this manuscript with \pkg{jss-lint} itself (any
 violation fails the build), and recompile the PDF. The history
@@ -912,7 +912,7 @@ version.
 
 \begin{table}[t!]
 \centering
-\begin{tabular}{p{0.20\textwidth}p{0.34\textwidth}p{0.34\textwidth}}
+\begin{tabular}{p{0.18\textwidth}p{0.37\textwidth}p{0.33\textwidth}}
 \toprule
 Channel & Install & What you get \\
 \midrule
@@ -969,10 +969,10 @@ including the style-guide clause it enforces:
 
 \VerbatimInput[frame=single, fontsize=\small]{generated/listings/explain-cite003.txt}
 
-A per-project configuration file (\code{.jss-lint.toml}) or the
-\code{--ignore-rules} and \code{--min-confidence} options control
-rule selection; suppressions are explicit and reportable, never
-silent.
+Rule selection is controlled by a per-project configuration file
+(\code{.jss-lint.toml}) or by the \code{--ignore-rules} and
+\code{--min-confidence} options; suppressions are explicit and
+reportable, never silent.
 
 \subsection{Reviewer workflow and continuous integration}
 \label{sec:reviewermode}
