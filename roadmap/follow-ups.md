@@ -166,7 +166,7 @@ and tracked here rather than papered over.
       max run and before the export/stats snapshot), so no
       re-record/re-pin was needed.
 
-- [ ] **Refresh `eval/labels-export.csv.gz`** (`eval/`, `tools/`).
+- [x] **Refresh `eval/labels-export.csv.gz`** (`eval/`, `tools/`).
       The committed export predates roughly 660 labels from the
       2026-07-19 resolve-era iterations (`StatLabelsTotal` 19,779
       committed vs. 20,440 from `eval.db`). **Action**: regenerate the
@@ -174,6 +174,48 @@ and tracked here rather than papered over.
       in a full dev environment (PyO3 oracle installed -- the
       container's 1,891 test count is a known environment artifact,
       not drift), and review the provenance macros that move.
+      Done 2026-07-20 in a full dev environment (`maturin develop
+      --release --locked` for the PyO3 oracle; `pytest --collect-only`
+      matched the committed `StatTestCount` before touching anything).
+      True new total is `StatLabelsTotal` **20,073** (not 20,440 --
+      that figure was inflated by CSV corruption discovered along the
+      way, see below): 294 net-added labels, 0 removed, led by
+      JSS-REFS-004 (37), JSS-CODE-003 (36), JSS-MARKUP-001 (34),
+      JSS-REFS-003 (34), JSS-CAP-002 (30), JSS-REFS-006 (25), with the
+      rest spread thin; by reviewer class: 225 ai_model, 53
+      auto_deterministic, 16 human. Pinned figures
+      (`StatPrecisionOverall`, per-rule tables, recall pins) did not
+      move, confirming the six spot-checked CODE-003 rows stayed
+      silenced and excluded. `StatTestCount` moved 1,911 -> 1,915,
+      which is expected here (4 new regression tests added by the
+      fix below), not drift.
+
+      **Discovery en route**: the first regeneration attempt produced
+      a *structurally corrupted* `labels-export.csv.gz` -- 367 rows
+      shattered mid-record. Root cause: 347 `verdict_reason` values
+      from run 249 (`ai:bonsai` et al., mostly JSS-XREF-002/007)
+      contained a raw control byte (CR/TAB/LF/BS) where a LaTeX macro
+      like `\ref{...}`, `\top`, `{\tt ...}`, `\bibliography{...}`
+      should have been. Traced to `eval/review.py::_parse_client_response`:
+      a model reply with an under-escaped backslash (`\r` instead of
+      the JSON-correct `\\r`) is still syntactically valid JSON --
+      `\r`/`\t`/`\n`/`\b`/`\f` are all legal one-character JSON
+      escapes -- so `json.loads` silently decoded it to the control
+      byte instead of erroring. Every one of the 472 occurrences
+      (BS 9, TAB ~89, LF 6, CR 367) reconstructed unambiguously to a
+      plausible LaTeX macro on inspection; none were skipped or
+      guessed. Fixed in three places, each with a regression test:
+      (1) repaired the 347 `eval.db` rows in place (gitignored, not
+      committed) by reversing the decode; (2) hardened the ingestion
+      seam (`eval/review.py`) to re-escape those five control bytes
+      back to their literal backslash-letter form before the reason
+      ever reaches the DB; (3) hardened `tools/export_labels.py` on
+      two independent layers -- `verdict_reason` is now normalized
+      (any control byte flattened to a space) before it reaches the
+      writer, and the writer itself now uses `QUOTE_ALL` so a hostile
+      or corrupted field can no longer shatter a row regardless (the
+      previous `lineterminator="\n"` override silently disabled
+      csv.writer's usual bare-`\r` quoting).
 
 ## Cross-cutting (touches multiple features)
 

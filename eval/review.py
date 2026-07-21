@@ -87,6 +87,36 @@ def load_skip_list(path: Path | None) -> set[str]:
 # -----------------------------------------------------------------------------
 
 
+_JSON_ESCAPE_REVERSAL = {
+    "\x08": "\\b",
+    "\x09": "\\t",
+    "\x0a": "\\n",
+    "\x0c": "\\f",
+    "\x0d": "\\r",
+}
+
+
+def _reescape_control_chars(text: str) -> str:
+    """Undo an under-escaped-backslash JSON decode of ``reason``.
+
+    A model reply that means the literal two characters ``\\r`` (as in
+    LaTeX ``\\ref{...}``) but emits a bare backslash instead of the
+    doubled ``\\\\r`` JSON requires is still syntactically valid JSON —
+    ``\r``/``\t``/``\n``/``\f``/``\b`` are all legal single-character
+    escapes, so `json.loads` silently decodes them to the control byte
+    instead of erroring. A terse one-line rationale should never
+    legitimately contain a raw control character, so any that survive
+    here are that failure mode; restore the backslash-letter form the
+    model meant. (Regression: run 249 mangled ~350 rationales this way,
+    turning ``\ref{...}``/``\top``/``\bibliography{...}`` into bare
+    CR/TAB/BS bytes that later shattered the CSV export — see
+    roadmap/follow-ups.md.)
+    """
+    for byte, literal in _JSON_ESCAPE_REVERSAL.items():
+        text = text.replace(byte, literal)
+    return text
+
+
 def _parse_client_response(content: str) -> api.ClassifyResult:
     """Parse the model's JSON reply into a `ClassifyResult`.
 
@@ -119,7 +149,7 @@ def _parse_client_response(content: str) -> api.ClassifyResult:
 
     verdict_str = str(payload.get("verdict", "")).lower()
     confidence = payload.get("confidence", 0.0)
-    reason = str(payload.get("reason", ""))[:200]
+    reason = _reescape_control_chars(str(payload.get("reason", ""))[:200])
 
     try:
         confidence_f = float(confidence)

@@ -272,6 +272,22 @@ def test_llama_server_client_parses_stripped_code_fence() -> None:
     assert result.reason == "ok"
 
 
+def test_llama_server_client_reescapes_under_escaped_json_reason() -> None:
+    """Regression for the run-249 corruption: a model reply with a bare
+    backslash before r/t/n/f/b (instead of the doubled backslash JSON
+    requires) is still valid JSON — json.loads silently decodes it to
+    a raw control byte, mangling e.g. \\ref{...} into CR + "ef{...}".
+    _parse_client_response must restore the literal backslash-letter
+    form so verdict_reason never carries a raw control character."""
+    content = (
+        '{"verdict": "true_positive", "confidence": 0.9, '
+        '"reason": "wrong case \\ref{fig:x} should use \\top instead"}'
+    )
+    result = review._parse_client_response(content)
+    assert result.reason == "wrong case \\ref{fig:x} should use \\top instead"
+    assert not any(c in result.reason for c in "\x08\x09\x0a\x0c\x0d")
+
+
 def test_llama_server_client_malformed_response_is_uncertain() -> None:
     result = review._parse_client_response("not json at all")
     assert result.verdict == api.Verdict.UNCERTAIN

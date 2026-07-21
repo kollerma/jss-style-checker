@@ -64,6 +64,7 @@ import csv
 import gzip
 import io
 import json
+import re
 import sqlite3
 import sys
 from collections.abc import Sequence
@@ -117,11 +118,32 @@ def reviewer_class(reviewer: str | None) -> str:
     return "auto_other"
 
 
+_CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f]+")
+
+
+def _normalize_text(text: str) -> str:
+    """Flatten embedded control characters (raw CR/LF/TAB/etc., however
+    they got there) to a single space so a corrupted or hostile field
+    can never carry one into the CSV. Defensive counterpart to the
+    _rows_to_csv_gz quoting fix below — see roadmap/follow-ups.md for
+    the run-249 incident this guards against."""
+    return _CONTROL_CHAR_RE.sub(" ", text).strip()
+
+
 def _rows_to_csv_gz(header: Sequence[str], rows: Sequence[Sequence[object]]) -> bytes:
     """Serialise rows to a byte-stable gzip-CSV blob (mtime pinned to 0,
-    LF line endings, fixed compression level)."""
+    LF line endings, fixed compression level).
+
+    ``quoting=QUOTE_ALL``: with a custom ``lineterminator`` csv's
+    default QUOTE_MINIMAL only quotes a field for the delimiter, the
+    quotechar, or characters in *that* lineterminator string — not for
+    a bare ``\\r``/``\\n`` that isn't part of it. A field carrying one
+    would then split the row when read back. Quoting every field is
+    correct unconditionally, independent of what does or doesn't slip
+    past upstream normalization.
+    """
     text = io.StringIO()
-    writer = csv.writer(text, lineterminator="\n")
+    writer = csv.writer(text, lineterminator="\n", quoting=csv.QUOTE_ALL)
     writer.writerow(header)
     writer.writerows(rows)
     raw = text.getvalue().encode("utf-8")
@@ -146,7 +168,7 @@ def build_labels_export(db_path: Path) -> bytes:
             r["line"] if r["line"] is not None else "",
             r["verdict"],
             reviewer_class(r["reviewer"]),
-            (r["verdict_reason"] or "").replace("\r\n", " ").replace("\n", " ").strip(),
+            _normalize_text(r["verdict_reason"] or ""),
         )
         for r in rows
     ]
