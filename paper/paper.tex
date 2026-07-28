@@ -537,7 +537,7 @@ leading capital, but the journal's template defines keyword
 list literally reads ``comma-separated, not capitalized'' --- so
 the rule was relaxed to follow the template, the higher authority;
 conversely, the capital-after-colon requirement, on which both
-capitalisation styles agree, was found to be enforced for reference
+capitalization styles agree, was found to be enforced for reference
 titles but not for section titles, and --- published practice not
 being an authority --- was tightened for consistency. Both
 corrections entered as instructions and flowed through the standard
@@ -870,7 +870,7 @@ Every number, table body, and listing in this paper is generated ---
 none is typed by hand. A generator script queries the pinned
 evaluation state (recall run \StatPinnedRecallRun{}, ground-truth
 corpus hash \code{\StatPinnedRecallHash}, and the precision iteration
-labelled \code{\StatPinnedIteration}) together with the rule
+labeled \code{\StatPinnedIteration}) together with the rule
 catalogue, corpus manifest, and benchmark records, and emits the
 macros and table bodies this manuscript inputs; a drift check fails
 the build if the committed values differ from regeneration. The replication script
@@ -902,9 +902,9 @@ implementation is published as \pkg{\StatPyPIName} and installs a
 installs a \code{jsslint} executable. The channels are published to
 their public registries as version \StatToolVersion{} --- the crates
 on crates.io, both \proglang{Python} packages on the Package Index,
-the WebAssembly build on npm, and the editor extension on the VS~Code
-Marketplace and Open~VSX --- with one exception: the \proglang{R}
-package's CRAN submission is under review at the time of writing.
+the WebAssembly build on npm, the editor extension on the VS~Code
+Marketplace and Open~VSX, and the \proglang{R} package
+\pkg{jsslintr} on CRAN.
 Development takes place in the repository at \StatRepoUrl{}, and each
 tagged release is archived on Zenodo --- the concept DOI
 \code{\StatSoftwareDoi} resolves permanently to the latest archived
@@ -924,9 +924,7 @@ Browser / \code{npm} & \code{jsslint-wasm} & a client-side checker that needs no
 \bottomrule
 \end{tabular}
 \caption{Distribution channels of \pkg{jss-lint}. All install
-  commands are live, except that the \proglang{R} package's CRAN
-  submission is under review at the time of writing (it installs from
-  the repository checkout meanwhile).}
+  commands are live.}
 \label{tab:install}
 \end{table}
 

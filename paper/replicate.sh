@@ -97,10 +97,16 @@ if [ "$NO_PDF" != "--no-pdf" ]; then
     bibtex paper > /dev/null
     pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null
     pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null
-    if grep -E "Warning.*undefined" paper.log | grep -Ev "^$" ; then
+    # Citation/reference warnings only: font-shape "undefined" warnings
+    # depend on the local TeX installation, not the manuscript.
+    if grep -E "Warning.*(Citation|Reference).*undefined" paper.log ; then
         echo "error: undefined citations/references" >&2; exit 1
     fi
-    PAGES=$(pdfinfo paper.pdf | awk '/^Pages:/{print $2}')
+    if command -v pdfinfo > /dev/null; then
+        PAGES=$(pdfinfo paper.pdf | awk '/^Pages:/{print $2}')
+    else
+        PAGES=$(sed -n 's/.*Output written on paper\.pdf (\([0-9]*\) pages.*/\1/p' paper.log)
+    fi
     echo "paper.pdf: $PAGES pages"
     [ "$PAGES" -le 34 ] || { echo "error: page budget exceeded" >&2; exit 1; }
 fi

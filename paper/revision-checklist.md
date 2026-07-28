@@ -125,7 +125,7 @@ budget).
       for the in-process WASM design)
 - [x] jsslintr: R-universe/CRAN plan
       (CRAN chosen; 1.1.0-1 submitted 2026-07-19 with vendored crates +
-      offline install; under review — the paper's availability text and
-      Table install caption say so)
+      offline install; accepted 2026-07-28 — paper availability text and
+      Table install caption updated to "on CRAN" / "all live")
 - [x] Windows CI matrix entry
       (done: check-standard.yaml runs windows-latest (release))
