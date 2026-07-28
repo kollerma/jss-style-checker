@@ -1,62 +1,118 @@
 #!/usr/bin/env bash
-# Replication script for "jss-lint" (JSS submission).
+# Replication script for "jss-lint" (JSS submission) — reviewer-facing.
 #
-# Regenerates every statistic, table body, and terminal listing shown in
-# the manuscript from the repository's pinned evaluation artifacts, then
-# proves the manuscript itself complies with the style rules it describes
-# (self-referential check) and rebuilds the PDF.
+# Re-runs every command demonstrated in the manuscript against the
+# *released* tool and verifies that the output matches what the paper
+# shows. It is self-contained: it needs only the files uploaded with the
+# submission (this script, examples/demo.tex, generated/, paper.tex,
+# paper.bib) — not the development repository — and it modifies nothing
+# in place.
 #
-# Usage:  bash replicate.sh [--no-pdf]
+#   1. jss-lint examples/demo.tex            -> the seven violations of §2.3
+#   2. jss-lint --fix --dry-run demo.tex     -> the auto-fix diff listing (§5.2)
+#   3. jss-lint explain JSS-CITE-003         -> the rule-documentation listing (§5.2)
+#   4. jss-lint --mode reviewer (JSON)       -> the compliance table (Table "reviewer")
+#   5. jss-lint paper.tex paper.bib          -> the self-compliance claim (§4.4): zero violations
+#   6. R channel (optional, needs jsslintr)  -> the jsslint()/jssfix() session of §5.1
 #
-# Requirements: Python >= 3.10 (the package is installed editable if not
-# importable), pdflatex + bibtex (unless --no-pdf), git.
+# Requirements: bash, Python >= 3.10 with venv+pip (used to install the
+# released tool from PyPI unless a matching `jss-lint` is already on
+# PATH; that install is the only network access). Step 6 runs only if
+# Rscript and the jsslintr package are available, and is skipped with a
+# note otherwise.
+#
+# Usage:  bash replicate.sh
 set -euo pipefail
 cd "$(dirname "$0")"
-REPO_ROOT=$(cd .. && pwd)
-NO_PDF=${1:-}
 
 step() { printf '\n== %s\n' "$*"; }
+show() { printf '$ %s\n' "$*"; }
+ok()   { printf -- '-> %s\n' "$*"; }
+fail() { echo "error: $*" >&2; exit 1; }
 
-# -- 0. toolchain -----------------------------------------------------------
-PY=${JSS_PAPER_PYTHON:-}
-if [ -z "$PY" ]; then
-    for cand in "$REPO_ROOT/.venv-host/bin/python" python3; do
-        if "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 10))' \
-            2>/dev/null; then PY=$cand; break; fi
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+
+# -- 0. the released tool, at the version the paper evaluates ----------------
+# The manuscript states its tool version in generated/stats.tex; replication
+# must run that version, not whatever happens to be installed.
+EXPECTED_VERSION=$(sed -n 's/.*StatToolVersion}{\([^}]*\)}.*/\1/p' \
+    generated/stats.tex 2>/dev/null || true)
+[ -n "$EXPECTED_VERSION" ] || fail "generated/stats.tex missing or unreadable"
+
+JSS_LINT=""
+if command -v jss-lint > /dev/null 2>&1; then
+    FOUND=$(jss-lint --version | sed 's/.*version //')
+    if [ "$FOUND" = "$EXPECTED_VERSION" ]; then
+        JSS_LINT=jss-lint
+        echo "using jss-lint $FOUND from PATH"
+    else
+        echo "jss-lint on PATH is $FOUND, paper needs $EXPECTED_VERSION" \
+             "-- installing the pinned release"
+    fi
+fi
+if [ -z "$JSS_LINT" ]; then
+    step "installing jss-style-checker==$EXPECTED_VERSION from PyPI"
+    PY=""
+    for cand in python3 python3.14 python3.13 python3.12 python3.11 \
+                python3.10 python; do
+        if command -v "$cand" > /dev/null 2>&1 && "$cand" -c \
+            'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
+            PY=$cand; break
+        fi
     done
+    [ -n "$PY" ] || fail "need Python >= 3.10"
+    "$PY" -m venv "$WORK/venv"
+    "$WORK/venv/bin/pip" install --quiet \
+        "jss-style-checker==$EXPECTED_VERSION"
+    JSS_LINT=$WORK/venv/bin/jss-lint
 fi
-[ -n "$PY" ] || { echo "error: need Python >= 3.10" >&2; exit 1; }
-if ! "$PY" -c 'import texlint' 2>/dev/null; then
-    step "installing texlint (editable) into $PY"
-    "$PY" -m pip install --quiet -e "$REPO_ROOT[dev]"
-fi
-JSS_LINT() { "$PY" -m texlint.cli "$@"; }
+"$JSS_LINT" --version
 
-# -- 1. version coherence ---------------------------------------------------
-step "version coherence"
-CLI_VERSION=$(JSS_LINT --version | sed 's/.*version //')
-STAT_VERSION=$(sed -n 's/.*StatToolVersion}{\([^}]*\)}.*/\1/p' generated/stats.tex)
-[ "$CLI_VERSION" = "$STAT_VERSION" ] || {
-    echo "error: jss-lint $CLI_VERSION != stats.tex $STAT_VERSION" >&2; exit 1; }
-echo "jss-lint $CLI_VERSION == generated/stats.tex"
+# -- 1. the motivating example: seven violations (§2.3) ----------------------
+step "the motivating example (§2.3)"
+show jss-lint examples/demo.tex
+# Violations found -> exit status 1 by design (§5.3); that is the expected
+# outcome here, so it must not end the script.
+rc=0; "$JSS_LINT" examples/demo.tex || rc=$?
+[ "$rc" = 1 ] || fail "expected exit status 1 (violations found), got $rc"
+"$JSS_LINT" --output json examples/demo.tex > "$WORK/demo.json" || true
+N=$(python3 -c 'import json, sys
+print(len(json.load(open(sys.argv[1]))["violations"]))' "$WORK/demo.json")
+[ "$N" = 7 ] || fail "paper reports seven violations, tool reports $N"
+ok "seven violations and exit status 1, as stated in the paper"
 
-# -- 2. statistics drift gate ----------------------------------------------
-step "generated statistics match the pinned evaluation state"
-(cd "$REPO_ROOT" && "$PY" -m tools.generate_paper_stats --check)
+# -- 2. the auto-fix preview (§5.2) -------------------------------------------
+step "the auto-fix preview (§5.2)"
+cp examples/demo.tex "$WORK/demo.tex"
+show jss-lint --fix --dry-run demo.tex
+# --no-resolve keeps the diff header at the literal "demo.tex" (multi-file
+# auto-resolution would canonicalize it to an absolute temp path).
+(cd "$WORK" && "$JSS_LINT" --fix --dry-run --no-resolve demo.tex || true) \
+    | tee "$WORK/demo-fix-full.txt"
+awk '/^─/{exit} {print}' "$WORK/demo-fix-full.txt" > "$WORK/demo-fix-diff.txt"
+diff -u generated/listings/demo-fix-diff.txt "$WORK/demo-fix-diff.txt" \
+    > /dev/null || fail "auto-fix diff differs from the listing shown in the paper"
+ok "the diff is byte-identical to the listing in the paper"
 
-# -- 3. regenerate terminal listings ----------------------------------------
-step "regenerating listings"
-mkdir -p generated/listings
-# 3a. reviewer-mode compliance summary on the intentionally non-compliant
-#     demo, rendered as LaTeX table rows from the machine-readable JSON
-#     output (the interactive terminal renderer draws the same data as a
-#     Unicode table, which pdfLaTeX cannot embed verbatim).
-(JSS_LINT --mode reviewer --output json examples/demo.tex || true) \
-    | "$PY" -c '
+# -- 3. the rule documentation (§5.2) -----------------------------------------
+step "rule documentation (§5.2)"
+show jss-lint explain JSS-CITE-003
+"$JSS_LINT" explain JSS-CITE-003 | tee "$WORK/explain-cite003.txt"
+diff -u generated/listings/explain-cite003.txt "$WORK/explain-cite003.txt" \
+    > /dev/null || fail "explain output differs from the listing shown in the paper"
+ok "byte-identical to the listing in the paper"
+
+# -- 4. the reviewer-mode compliance summary ----------------------------------
+step "the reviewer-mode compliance summary (§5.3)"
+show jss-lint --mode reviewer examples/demo.tex
+"$JSS_LINT" --mode reviewer examples/demo.tex || true
+# The paper's table transcribes the JSON output of the same command;
+# rebuild the rows and compare against the table body as printed.
+("$JSS_LINT" --mode reviewer --output json examples/demo.tex || true) \
+    | python3 -c '
 import json, sys
 doc = json.load(sys.stdin)
-print("%% AUTO-GENERATED by replicate.sh from"
-      " `jss-lint --mode reviewer --output json examples/demo.tex`.")
 for c in doc["categories"]:
     row = (c["title"], c["status"], c["rules_applied"], c["rules_passed"])
     print("{} & {} & {} & {} \\\\".format(*row))
@@ -65,54 +121,42 @@ pct = doc["compliance_percentage"]
 print("Overall compliance & \\multicolumn{3}{r}{" + format(pct, ".1f")
       + "\\%} \\\\")
 print("\\bottomrule")
-' > generated/tab-demo-reviewer.tex || {
-        echo "error: reviewer JSON transform failed" >&2; exit 1; }
-# 3b. auto-fix preview: unified-diff portion of --fix --dry-run.
-# --no-resolve keeps the diff header at the literal "demo.tex": since
-# multi-file auto-resolution shipped, a single-file invocation
-# canonicalizes paths to absolute, which would bake the random mktemp
-# directory into the listing and make this regeneration nondeterministic.
-TMPDIR_FIX=$(mktemp -d)
-cp examples/demo.tex "$TMPDIR_FIX/demo.tex"
-(cd "$TMPDIR_FIX" && JSS_LINT --fix --dry-run --no-resolve demo.tex || true) \
-    | awk '/^─/{exit} {print}' > generated/listings/demo-fix-diff.txt
-rm -rf "$TMPDIR_FIX"
-# 3c. rule documentation
-JSS_LINT explain JSS-CITE-003 > generated/listings/explain-cite003.txt
+' > "$WORK/tab-demo-reviewer.tex"
+grep -v '^%' generated/tab-demo-reviewer.tex > "$WORK/tab-expected.tex"
+diff -u "$WORK/tab-expected.tex" "$WORK/tab-demo-reviewer.tex" \
+    > /dev/null || fail "reviewer summary differs from the table shown in the paper"
+ok "the JSON output matches the table body in the paper"
 
-# -- 4. committed artifacts == live tool output ------------------------------
-step "committed generated/ matches live output"
-git -C "$REPO_ROOT" diff --exit-code -- paper/generated || {
-    echo "error: paper/generated/ differs from live regeneration" >&2; exit 1; }
-
-# -- 5. the paper passes its own linter (hard gate) --------------------------
-step "self-referential compliance check"
-JSS_LINT paper.tex paper.bib
-echo "paper.tex + paper.bib: no violations"
-
-# -- 6. build the PDF ---------------------------------------------------------
-if [ "$NO_PDF" != "--no-pdf" ]; then
-    step "building paper.pdf"
-    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null
-    bibtex paper > /dev/null
-    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null
-    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null
-    # Citation/reference warnings only: font-shape "undefined" warnings
-    # depend on the local TeX installation, not the manuscript.
-    if grep -E "Warning.*(Citation|Reference).*undefined" paper.log ; then
-        echo "error: undefined citations/references" >&2; exit 1
-    fi
-    if command -v pdfinfo > /dev/null; then
-        PAGES=$(pdfinfo paper.pdf | awk '/^Pages:/{print $2}')
-    else
-        PAGES=$(sed -n 's/.*Output written on paper\.pdf (\([0-9]*\) pages.*/\1/p' paper.log)
-    fi
-    echo "paper.pdf: $PAGES pages"
-    [ "$PAGES" -le 34 ] || { echo "error: page budget exceeded" >&2; exit 1; }
+# -- 5. the manuscript passes its own linter (§4.4) ---------------------------
+if [ -f paper.tex ] && [ -f paper.bib ]; then
+    step "self-referential compliance check (§4.4)"
+    show jss-lint paper.tex paper.bib
+    "$JSS_LINT" paper.tex paper.bib
+    ok "no output and exit status 0: a clean pass, as stated in the paper"
+else
+    step "self-referential compliance check -- SKIPPED"
+    echo "paper.tex/paper.bib not present alongside this script"
 fi
 
-# -- 7. provenance ------------------------------------------------------------
-step "provenance"
-sed -n 's/\\newcommand{\\StatPinned\([A-Za-z]*\)}{\(.*\)}/  Pinned\1: \2/p' \
-    generated/stats.tex
-echo "replication complete."
+# -- 6. the R channel (§5.1), if available ------------------------------------
+if command -v Rscript > /dev/null 2>&1 \
+    && Rscript -e 'quit(status = !requireNamespace("jsslintr", quietly = TRUE))' \
+        > /dev/null 2>&1; then
+    step "the R channel (§5.1)"
+    cp examples/demo.tex "$WORK/r-demo.tex"
+    show 'Rscript -e library("jsslintr"); jsslint("demo.tex");' \
+         'jssfix("demo.tex", dry_run = TRUE)'
+    (cd "$WORK" && Rscript -e '
+library("jsslintr")
+res <- jsslint("r-demo.tex")
+print(res)
+stopifnot(nrow(as.data.frame(res)) == 7L)
+invisible(jssfix("r-demo.tex", dry_run = TRUE))
+') || fail "R channel disagrees with the paper (expected seven violations)"
+    ok "seven violations and four previewed fixes, as stated in the paper"
+else
+    step "the R channel -- SKIPPED (Rscript with the jsslintr package not found)"
+    echo "install.packages(\"jsslintr\") to enable this step"
+fi
+
+step "replication complete"

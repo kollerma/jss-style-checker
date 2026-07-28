@@ -1,14 +1,16 @@
 # Build/verification targets for the JSS manuscript.
-# `make replicate` is the one-command reproduction entry point.
+# `make regenerate` is the one-command manuscript-regeneration gate
+# (internal, needs the repo); `make replicate` runs the reviewer-facing
+# replication script against the released tool.
 PY ?= ../.venv-host/bin/python
 
-.PHONY: stats listings pdf lint pages check audit replicate clean
+.PHONY: stats listings pdf lint pages check audit regenerate replicate clean
 
 stats:
 	cd .. && $(PY) -m tools.generate_paper_stats
 
 listings:
-	bash replicate.sh --no-pdf
+	bash regenerate.sh --no-pdf
 
 pdf:
 	pdflatex -interaction=nonstopmode -halt-on-error paper.tex
@@ -31,6 +33,9 @@ spelling:
 check:
 	cd .. && $(PY) -m tools.generate_paper_stats --check
 	$(MAKE) lint spelling audit
+
+regenerate:
+	bash regenerate.sh
 
 replicate:
 	bash replicate.sh
