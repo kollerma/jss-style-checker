@@ -959,9 +959,8 @@ Running \code{jss-lint} on the manuscript of
 Section~\ref{sec:example} prints the seven violations as a table with
 positions, messages, and suggestions. The mechanical subset can be
 repaired directly; \code{--fix --dry-run} previews the repairs as a
-unified diff without touching the file, then prints the table of
-violations that remain after the repairs (the judgment calls the
-auto-fixer leaves alone). The listing below shows the diff portion:
+unified diff without touching the file, printed ahead of the
+unchanged violation table. The listing below shows the diff portion:
 
 \VerbatimInput[frame=single, fontsize=\small]{generated/listings/demo-fix-diff.txt}
 
