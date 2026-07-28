@@ -468,7 +468,9 @@ def _fetch_one(row: ManifestRow, target_dir: Path) -> _Gap | None:
 
 def _write_gaps(gaps_path: Path, gaps: list[_Gap]) -> None:
     with gaps_path.open("w", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
+        # LF, not the csv-dialect default CRLF: the file is committed, and a
+        # CRLF rewrite shows up as a phantom modification on LF checkouts.
+        w = csv.writer(f, lineterminator="\n")
         w.writerow(["manifest_row", "source", "source_id", "version", "reason", "ts"])
         ts = db.now_utc()
         for g in gaps:

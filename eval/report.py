@@ -806,7 +806,9 @@ def append_csv(path: Path, rows: list[dict]) -> None:
     write_header = not path.exists()
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
+        # LF, not the csv-dialect default CRLF: the file is committed with LF
+        # endings, and appending CRLF rows would leave it mixed.
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES, lineterminator="\n")
         if write_header:
             writer.writeheader()
         for row in rows:
