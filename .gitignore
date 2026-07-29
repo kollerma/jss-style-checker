@@ -214,3 +214,7 @@ r/jsslintr/tests/testthat/_problems/
 # --out-dir web/pkg` output. Built by .github/workflows/publish-web.yml
 # on every push to main; not committed.
 web/pkg/
+
+# JSS submission bundle — assembled output of `make -C paper bundle`
+# (paper/bundle.sh); regenerable, never committed.
+/submission/

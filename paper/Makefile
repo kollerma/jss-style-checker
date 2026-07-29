@@ -1,10 +1,12 @@
 # Build/verification targets for the JSS manuscript.
 # `make regenerate` is the one-command manuscript-regeneration gate
 # (internal, needs the repo); `make replicate` runs the reviewer-facing
-# replication script against the released tool.
+# replication script against the released tool; `make bundle` assembles
+# the submission upload set into <repo>/submission/.
 PY ?= ../.venv-host/bin/python
 
-.PHONY: stats listings pdf lint pages check audit regenerate replicate clean
+.PHONY: stats listings pdf lint pages check audit regenerate replicate \
+        bundle clean
 
 stats:
 	cd .. && $(PY) -m tools.generate_paper_stats
@@ -39,6 +41,9 @@ regenerate:
 
 replicate:
 	bash replicate.sh
+
+bundle:
+	bash bundle.sh
 
 clean:
 	rm -f paper.aux paper.bbl paper.blg paper.log paper.out paper.toc paper.pdf
