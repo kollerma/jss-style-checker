@@ -4,6 +4,9 @@
 [![recall](https://img.shields.io/endpoint?url=https%3A%2F%2Fkollerma.github.io%2Fjss-style-checker%2Fbadges%2Frecall.json)](https://kollerma.github.io/jss-style-checker/)
 [![F1](https://img.shields.io/endpoint?url=https%3A%2F%2Fkollerma.github.io%2Fjss-style-checker%2Fbadges%2Ff1.json)](https://kollerma.github.io/jss-style-checker/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21441932.svg)](https://doi.org/10.5281/zenodo.21441932)
+[![CI](https://github.com/kollerma/jss-style-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/kollerma/jss-style-checker/actions/workflows/ci.yml)
+[![CRAN](https://www.r-pkg.org/badges/version/jsslintr)](https://cran.r-project.org/package=jsslintr)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Style checker for manuscripts submitted to the
 [Journal of Statistical Software](https://www.jstatsoft.org/) (JSS).
@@ -37,6 +40,26 @@ in-process ([`vscode-extension/`](vscode-extension/)) — see
 [`rust/README.md`](rust/README.md) for how to use each (including how to
 build and run the web app locally). Both engines produce byte-identical
 output; that parity is CI-enforced (Constitution §XIII).
+
+## Install
+
+One command per ecosystem — every channel is MIT-licensed:
+
+```sh
+pip install jss-style-checker    # Python reference; texlint module + jss-lint CLI
+pip install jsslint              # the Rust engine as a Python wheel (same API)
+cargo install jsslint-cli        # native binary; installs `jsslint`
+npm install jsslint-wasm         # WebAssembly module for browser/Node
+```
+
+```r
+install.packages("jsslintr")     # R package (CRAN); jsslint(), jssfix(), render()
+```
+
+The VS Code extension is on the
+[Marketplace](https://marketplace.visualstudio.com/items?itemName=kollerma.jss-style-checker)
+and [Open VSX](https://open-vsx.org/extension/kollerma/jss-style-checker);
+it runs the bundled WASM in-process, no other install needed.
 
 ## Install (development)
 
