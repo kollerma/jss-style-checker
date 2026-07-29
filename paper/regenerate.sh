@@ -105,6 +105,17 @@ Rscript -e 'quit(status = !requireNamespace("jsslintr", quietly = TRUE))' \
     2>/dev/null || {
         echo "error: Rscript with the jsslintr package is required" \
              "(install.packages(\"jsslintr\"))" >&2; exit 1; }
+# The session must come from the released jsslintr matching the tool
+# version the paper states (a stale library produced a wrong listing
+# once: 1.0.1 lacked the Project category row).
+R_PKG_VERSION=$(Rscript -e \
+    'cat(as.character(packageVersion("jsslintr")))' 2>/dev/null)
+case "$R_PKG_VERSION" in
+    "$STAT_VERSION" | "$STAT_VERSION".*) ;;
+    *) echo "error: jsslintr $R_PKG_VERSION found, need $STAT_VERSION" \
+            "(check R_LIBS_USER / .libPaths for stale installs)" >&2
+       exit 1 ;;
+esac
 TMPDIR_R=$(mktemp -d)
 cp examples/demo.tex "$TMPDIR_R/demo.tex"
 (cd "$TMPDIR_R" && Rscript -e '

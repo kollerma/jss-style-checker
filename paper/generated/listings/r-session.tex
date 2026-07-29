@@ -8,7 +8,7 @@ R> summary(res)
 \end{CodeInput}
 \begin{CodeOutput}
 JSS style check (journal "jss"): demo.tex
-Compliance: 60.0% -- 7 issues (1 error, 6 warnings; 4 auto-fixable)
+Compliance: 62.5% -- 7 issues (1 error, 6 warnings; 4 auto-fixable)
 
 Files:
      file error warning info total
@@ -41,6 +41,7 @@ Categories:
         Operators   FAIL          3/4      1
  Cross-references   PASS          7/7      0
       House style   PASS          3/3      0
+          Project   PASS          2/2      0
 \end{CodeOutput}
 \begin{CodeInput}
 R> jssfix("demo.tex", dry_run = TRUE)

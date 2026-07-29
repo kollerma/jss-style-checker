@@ -154,9 +154,20 @@ else
 fi
 
 # -- 6. the R channel (§7), if available ------------------------------------
-if command -v Rscript > /dev/null 2>&1 \
-    && Rscript -e 'quit(status = !requireNamespace("jsslintr", quietly = TRUE))' \
-        > /dev/null 2>&1; then
+# The printed session comes from the jsslintr release matching the tool
+# version the paper states; a different installed version could format
+# its output differently, so anything else skips rather than fails.
+R_PKG_VERSION=""
+if command -v Rscript > /dev/null 2>&1; then
+    R_PKG_VERSION=$(Rscript -e 'if (requireNamespace("jsslintr",
+        quietly = TRUE)) cat(as.character(packageVersion("jsslintr")))' \
+        2>/dev/null || true)
+fi
+case "$R_PKG_VERSION" in
+    "$EXPECTED_VERSION" | "$EXPECTED_VERSION".*) R_CHANNEL=yes ;;
+    *) R_CHANNEL=no ;;
+esac
+if [ "$R_CHANNEL" = yes ]; then
     step "the R channel (§7)"
     # The same session the paper prints: jsslint() discovers the demo in
     # an otherwise empty directory, summary() aggregates, jssfix()
@@ -185,8 +196,14 @@ invisible(jssfix("demo.tex", dry_run = TRUE))
         || fail "R session output differs from the listing in the paper"
     ok "output identical to the R session printed in the paper"
 else
-    step "the R channel -- SKIPPED (Rscript with the jsslintr package not found)"
-    echo "install.packages(\"jsslintr\") to enable this step"
+    step "the R channel -- SKIPPED"
+    if [ -n "$R_PKG_VERSION" ]; then
+        echo "jsslintr $R_PKG_VERSION installed, the paper's session ran" \
+             "$EXPECTED_VERSION -- install that release to enable this step"
+    else
+        echo "Rscript with the jsslintr package not found;" \
+             "install.packages(\"jsslintr\") to enable this step"
+    fi
 fi
 
 step "replication complete"
