@@ -143,6 +143,16 @@ capture.output(invisible(jssfix("demo.tex", dry_run = TRUE)),
 } > generated/listings/r-session.tex
 rm -rf "$TMPDIR_R"
 
+# 3f. byte-parity evidence: both engines render the demo in all four
+# output formats, compared byte-for-byte (fails on any drift). Needs the
+# jsslint PyO3 wheel in $PY (rust/jsslint-py: maturin develop --release).
+"$PY" -c 'import jsslint' 2>/dev/null || {
+    echo "error: the jsslint wheel is not importable from $PY" \
+         "(build it: cd rust/jsslint-py && maturin develop --release)" >&2
+    exit 1; }
+"$PY" parity_verify.py > generated/listings/parity-verify.txt || {
+    echo "error: engine parity verification failed" >&2; exit 1; }
+
 # -- 4. committed artifacts == live tool output ------------------------------
 step "committed generated/ matches live output"
 git -C "$REPO_ROOT" diff --exit-code -- paper/generated || {

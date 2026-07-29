@@ -325,7 +325,9 @@ compiled into four distribution channels:
 The port is validated by differential testing rather than by trust:
 every rule and every renderer is required to produce byte-identical
 output to the \proglang{Python} engine, enforced by per-rule parity
-tests and a differential sweep over the full evaluation corpus. This
+tests and a differential sweep over the full evaluation corpus
+(Appendix~\ref{app:parity} prints the regenerated evidence for the
+demonstration manuscript). This
 byte-parity contract is also what allows the empirical results of
 Section~\ref{sec:validation}, produced with the \proglang{Python}
 engine, to stand for the \proglang{Rust} engine verbatim. The
@@ -382,7 +384,9 @@ Measure & Value \\
   directories (the \StatCorpusPinned{} pinned corpus members plus the
   auxiliary multi-version study directory), \proglang{Python}
   reference engine, single thread, parse and rule execution excluding
-  interpreter startup, measured on \StatBenchMachine{}.}
+  interpreter startup, one timed pass per manuscript, measured on
+  \StatBenchMachine{}; the median and 95th percentile summarize the
+  per-manuscript distribution.}
 \label{tab:performance}
 \end{table}
 
@@ -926,7 +930,8 @@ their public registries as version \StatToolVersion{} --- the crates
 on crates.io, both \proglang{Python} packages on the Package Index,
 the WebAssembly build on npm, the editor extension on the VS~Code
 Marketplace and Open~VSX, and the \proglang{R} package
-\pkg{jsslintr} on CRAN.
+\pkg{jsslintr} on CRAN. All components are released under the MIT
+license.
 Development takes place in the repository at \StatRepoUrl{}, and each
 tagged release is archived on Zenodo --- the concept DOI
 \code{\StatSoftwareDoi} resolves permanently to the latest archived
@@ -1233,6 +1238,19 @@ Rule & Plants & Recovered & Recall \\
 \endlastfoot
 \rawinput{generated/tab-recall.tex}
 \end{longtable}
+
+\section{Engine parity evidence}
+\label{app:parity}
+
+The byte-parity claim of Section~\ref{sec:channels} is continuously
+enforced by the test suites; the listing below is the evidence for
+the demonstration manuscript, regenerated with every build of this
+paper. Both engines --- the \proglang{Python} reference and the
+\proglang{Rust} port, loaded in-process through the \pkg{jsslint}
+wheel --- render \code{examples/demo.tex} in all four output
+formats, and the renderings are compared byte for byte:
+
+\VerbatimInput[frame=single, fontsize=\footnotesize]{generated/listings/parity-verify.txt}
 
 \end{appendix}
 

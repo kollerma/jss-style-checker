@@ -1,0 +1,14 @@
+Byte-parity of the two engines on examples/demo.tex
+reference: jss-style-checker 1.1.0 (Python)
+port:      jsslint 1.1.0 (Rust, in-process wheel)
+
+terminal    5022 bytes  IDENTICAL
+  sha256 896c5bbac511b0faa088bd53c7c2e54bec31a33093c0b6551f945d0013a9a2c4
+json        6163 bytes  IDENTICAL
+  sha256 7a52d8ddcf55ec42f29ccec503fc814f329b37885e0ef436688469a23d65290f
+sarif      53711 bytes  IDENTICAL
+  sha256 01470b1abce5ce78c4c722fc0be66c5afdf1691a66d1936a651f8dce45569d6f
+html        4294 bytes  IDENTICAL
+  sha256 7e94949b93dbac3846dae5c5b93604415357b08e496b46f637c7638256daee1c
+
+4/4 output formats byte-identical.
