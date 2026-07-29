@@ -53,20 +53,27 @@ jobs:
           git diff --exit-code -- R/extendr-wrappers.R
 
   R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
     # macOS entries are restricted to the public repo: macOS runners bill
     # at a 10x minutes multiplier, and the private -dev repo's much higher
     # push volume burns through its Actions minutes quota fast. windows/
     # ubuntu entries still run everywhere; macOS still runs on every push
     # to the public repo, including main pushed there via the dev ->
-    # public merge flow.
-    if: matrix.config.os != 'macOS-latest' || github.repository == 'kollerma/jss-style-checker'
-    runs-on: ${{ matrix.config.os }}
-
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
-
+    # public merge flow. Done via a matrix flag + exclude because the
+    # `matrix` context is not available in a job-level `if:` (the matrix
+    # doesn't exist yet when that expression is evaluated — a job-level
+    # `if:` referencing it makes the whole workflow file invalid); the
+    # `github` context IS available inside `strategy`. The exclude
+    # entries must repeat each macOS config verbatim: object-valued
+    # matrix variables only match on deep equality.
     strategy:
       fail-fast: false
       matrix:
+        on-public-repo:
+          - ${{ github.repository == 'kollerma/jss-style-checker' }}
         config:
           - {os: macOS-latest,   r: 'release',  rust-version: 'stable'}
           - {os: macOS-latest,   r: 'oldrel-1', rust-version: 'stable'}
@@ -74,6 +81,11 @@ jobs:
           - {os: ubuntu-latest,  r: 'devel',    rust-version: 'stable', http-user-agent: 'release'}
           - {os: ubuntu-latest,  r: 'release',  rust-version: 'stable'}
           - {os: ubuntu-latest,  r: 'oldrel-1', rust-version: 'stable'}
+        exclude:
+          - on-public-repo: false
+            config: {os: macOS-latest, r: 'release',  rust-version: 'stable'}
+          - on-public-repo: false
+            config: {os: macOS-latest, r: 'oldrel-1', rust-version: 'stable'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
