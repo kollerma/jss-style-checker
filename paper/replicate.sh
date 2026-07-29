@@ -23,17 +23,44 @@
 # Rscript and the jsslintr package are available, and is skipped with a
 # note otherwise.
 #
-# Usage:  bash replicate.sh
+# Usage:  bash replicate.sh [--no-install]
+#   --no-install   never touch the network: require a matching jss-lint
+#                  already on PATH instead of installing from PyPI
 set -euo pipefail
 cd "$(dirname "$0")"
 # Pin terminal captures to UTF-8, independent of the local locale — the
 # listings in the paper are UTF-8 captures.
 export PYTHONIOENCODING=utf-8
 
+NO_INSTALL=0
+for arg in "$@"; do
+    case "$arg" in
+        --no-install) NO_INSTALL=1 ;;
+        -h|--help)
+            cat <<'EOF'
+Usage: bash replicate.sh [--no-install]
+
+Re-runs every command demonstrated in the paper against the released
+tool and verifies the output matches the printed listings. See the
+header of this script for the step-by-step list.
+
+  --no-install   never touch the network: require a matching jss-lint
+                 already on PATH instead of installing from PyPI
+EOF
+            exit 0 ;;
+        *) echo "error: unknown option '$arg' (try --help)" >&2; exit 2 ;;
+    esac
+done
+
 step() { printf '\n== %s\n' "$*"; }
 show() { printf '$ %s\n' "$*"; }
 ok()   { printf -- '-> %s\n' "$*"; }
 fail() { echo "error: $*" >&2; exit 1; }
+
+for cmd in diff awk sed tee grep tail; do
+    command -v "$cmd" > /dev/null 2>&1 \
+        || fail "required command '$cmd' not found on PATH"
+done
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -45,34 +72,46 @@ EXPECTED_VERSION=$(sed -n 's/.*StatToolVersion}{\([^}]*\)}.*/\1/p' \
     generated/stats.tex 2>/dev/null || true)
 [ -n "$EXPECTED_VERSION" ] || fail "generated/stats.tex missing or unreadable"
 
+PY=""
+for cand in python3 python3.14 python3.13 python3.12 python3.11 \
+            python3.10 python; do
+    if command -v "$cand" > /dev/null 2>&1 && "$cand" -c \
+        'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
+        PY=$cand; break
+    fi
+done
+[ -n "$PY" ] || fail "need Python >= 3.10"
+
 JSS_LINT=""
 if command -v jss-lint > /dev/null 2>&1; then
-    FOUND=$(jss-lint --version | sed 's/.*version //')
+    # Last token of the --version line, robust to its exact phrasing.
+    FOUND=$(jss-lint --version 2>/dev/null || true)
+    FOUND=${FOUND##* }
     if [ "$FOUND" = "$EXPECTED_VERSION" ]; then
         JSS_LINT=jss-lint
         echo "using jss-lint $FOUND from PATH"
+    elif [ "$NO_INSTALL" = 1 ]; then
+        fail "jss-lint on PATH is $FOUND, paper needs $EXPECTED_VERSION," \
+             "and --no-install forbids installing it"
     else
         echo "jss-lint on PATH is $FOUND, paper needs $EXPECTED_VERSION" \
              "-- installing the pinned release"
     fi
 fi
 if [ -z "$JSS_LINT" ]; then
+    [ "$NO_INSTALL" = 1 ] \
+        && fail "no jss-lint on PATH and --no-install forbids installing"
     step "installing jss-style-checker==$EXPECTED_VERSION from PyPI"
-    PY=""
-    for cand in python3 python3.14 python3.13 python3.12 python3.11 \
-                python3.10 python; do
-        if command -v "$cand" > /dev/null 2>&1 && "$cand" -c \
-            'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
-            PY=$cand; break
-        fi
-    done
-    [ -n "$PY" ] || fail "need Python >= 3.10"
     "$PY" -m venv "$WORK/venv"
     "$WORK/venv/bin/pip" install --quiet \
         "jss-style-checker==$EXPECTED_VERSION"
     JSS_LINT=$WORK/venv/bin/jss-lint
 fi
-"$JSS_LINT" --version
+# Whatever we ended up with must report the paper's version.
+GOT=$("$JSS_LINT" --version 2>/dev/null || true)
+[ "${GOT##* }" = "$EXPECTED_VERSION" ] \
+    || fail "jss-lint reports '${GOT:-nothing}', expected $EXPECTED_VERSION"
+echo "$GOT"
 
 # -- 1. the motivating example: seven violations (§2.2) ----------------------
 step "the motivating example (§2.2)"
@@ -87,7 +126,7 @@ tail -n +2 generated/listings/demo-lint.txt > "$WORK/demo-lint-expected.txt"
 diff -u "$WORK/demo-lint-expected.txt" "$WORK/demo-lint.txt" \
     > /dev/null || fail "report differs from Figure 1 in the paper"
 "$JSS_LINT" --output json examples/demo.tex > "$WORK/demo.json" || true
-N=$(python3 -c 'import json, sys
+N=$("$PY" -c 'import json, sys
 print(len(json.load(open(sys.argv[1]))["violations"]))' "$WORK/demo.json")
 [ "$N" = 7 ] || fail "paper reports seven violations, tool reports $N"
 ok "seven violations, exit status 1, and byte-identical to Figure 1"
@@ -125,7 +164,7 @@ show jss-lint --mode reviewer examples/demo.tex
 # The paper's table transcribes the JSON output of the same command;
 # rebuild the rows and compare against the table body as printed.
 ("$JSS_LINT" --mode reviewer --output json examples/demo.tex || true) \
-    | python3 -c '
+    | "$PY" -c '
 import json, sys
 doc = json.load(sys.stdin)
 for c in doc["categories"]:
