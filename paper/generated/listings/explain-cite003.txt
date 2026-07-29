@@ -1,3 +1,4 @@
+$ jss-lint explain JSS-CITE-003
 JSS-CITE-003 (WARNING)
   Category: citations
   Authority: style_guide (#what-are-the-different-cite-citet-citep-commands-about)

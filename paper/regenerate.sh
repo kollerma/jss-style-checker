@@ -78,11 +78,17 @@ print("\\bottomrule")
 # directory into the listing and make this regeneration nondeterministic.
 TMPDIR_FIX=$(mktemp -d)
 cp examples/demo.tex "$TMPDIR_FIX/demo.tex"
-(cd "$TMPDIR_FIX" && JSS_LINT --fix --dry-run --no-resolve demo.tex || true) \
-    | awk '/^─/{exit} {print}' > generated/listings/demo-fix-diff.txt
+{
+    echo '$ jss-lint --fix --dry-run --no-resolve demo.tex'
+    (cd "$TMPDIR_FIX" && JSS_LINT --fix --dry-run --no-resolve demo.tex \
+        || true) | awk '/^─/{exit} {print}'
+} > generated/listings/demo-fix-diff.txt
 rm -rf "$TMPDIR_FIX"
 # 3c. rule documentation
-JSS_LINT explain JSS-CITE-003 > generated/listings/explain-cite003.txt
+{
+    echo '$ jss-lint explain JSS-CITE-003'
+    JSS_LINT explain JSS-CITE-003
+} > generated/listings/explain-cite003.txt
 # 3d. author-mode report on the demo, exactly as the terminal renderer
 # prints it (fixed 120-column width, box-drawing rules), headed by the
 # command line that produced it; exit 1 (violations found) is the

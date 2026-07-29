@@ -976,7 +976,9 @@ Figure~\ref{fig:authorreport}: the seven violations as a table with
 positions, messages, and suggestions. The mechanical subset can be
 repaired directly; \code{--fix --dry-run} previews the repairs as a
 unified diff without touching the file, printed ahead of the
-unchanged violation table. The listing below shows the diff portion:
+unchanged violation table. The listing below shows the diff portion,
+with \code{--no-resolve} keeping the file name in the diff header
+relative rather than resolved to an absolute path:
 
 \VerbatimInput[frame=single, fontsize=\small]{generated/listings/demo-fix-diff.txt}
 

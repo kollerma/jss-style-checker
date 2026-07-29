@@ -95,13 +95,16 @@ ok "seven violations, exit status 1, and byte-identical to Figure 1"
 # -- 2. the auto-fix preview (§7.1) -------------------------------------------
 step "the auto-fix preview (§7.1)"
 cp examples/demo.tex "$WORK/demo.tex"
-show jss-lint --fix --dry-run demo.tex
 # --no-resolve keeps the diff header at the literal "demo.tex" (multi-file
 # auto-resolution would canonicalize it to an absolute temp path).
+show jss-lint --fix --dry-run --no-resolve demo.tex
 (cd "$WORK" && "$JSS_LINT" --fix --dry-run --no-resolve demo.tex || true) \
     | tee "$WORK/demo-fix-full.txt"
 awk '/^─/{exit} {print}' "$WORK/demo-fix-full.txt" > "$WORK/demo-fix-diff.txt"
-diff -u generated/listings/demo-fix-diff.txt "$WORK/demo-fix-diff.txt" \
+# The paper's listing is headed by the command line; the capture starts
+# at the diff.
+tail -n +2 generated/listings/demo-fix-diff.txt > "$WORK/demo-fix-expected.txt"
+diff -u "$WORK/demo-fix-expected.txt" "$WORK/demo-fix-diff.txt" \
     > /dev/null || fail "auto-fix diff differs from the listing shown in the paper"
 ok "the diff is byte-identical to the listing in the paper"
 
@@ -109,7 +112,9 @@ ok "the diff is byte-identical to the listing in the paper"
 step "rule documentation (§7.1)"
 show jss-lint explain JSS-CITE-003
 "$JSS_LINT" explain JSS-CITE-003 | tee "$WORK/explain-cite003.txt"
-diff -u generated/listings/explain-cite003.txt "$WORK/explain-cite003.txt" \
+tail -n +2 generated/listings/explain-cite003.txt \
+    > "$WORK/explain-expected.txt"
+diff -u "$WORK/explain-expected.txt" "$WORK/explain-cite003.txt" \
     > /dev/null || fail "explain output differs from the listing shown in the paper"
 ok "byte-identical to the listing in the paper"
 

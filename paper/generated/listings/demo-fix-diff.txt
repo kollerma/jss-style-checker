@@ -1,3 +1,4 @@
+$ jss-lint --fix --dry-run --no-resolve demo.tex
 --- demo.tex
 +++ demo.tex
 @@ -1,11 +1,11 @@
