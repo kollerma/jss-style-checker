@@ -22,13 +22,20 @@ $(SHLIB): $(STATLIB)
 # running an extra binary at install time bought nothing offline can't
 # also guarantee, and check-standard.yaml diffs the committed copy
 # against a fresh regeneration so it can't silently drift.
+#
+# The CRAN macOS builders have rustc/cargo under ~/.cargo/bin but NOT on
+# PATH (documented in CRAN's "Using Rust in CRAN packages"), so every
+# recipe line that runs the toolchain appends it. Appending (not
+# prepending) keeps a toolchain that IS on PATH taking precedence.
 $(STATLIB):
-	rustc --version
-	cargo --version
+	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
+		rustc --version && \
+		cargo --version
 	tar xf rust/vendor.tar.xz
 	mkdir -p $(CARGOTMP)
 	cp rust/vendor-config.toml $(CARGOTMP)/config.toml
-	export CARGO_HOME=$(CARGOTMP) && \
+	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
+		export CARGO_HOME=$(CARGOTMP) && \
 		cargo build --offline --locked --lib --release -j 2 --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR)
 	rm -Rf $(CARGOTMP)
 

@@ -46,15 +46,20 @@ $(SHLIB): $(STATLIB)
 # matching what the windows-gnu target's panic-unwinding code expects;
 # rextendr's template papers over this with an empty stub on the link
 # search path, same as here.
+# PATH append: same reason as src/Makevars (CRAN builders keep the Rust
+# toolchain in ~/.cargo/bin off PATH); on Windows rustup installs under
+# %USERPROFILE%\.cargo\bin, so both spellings are appended.
 $(STATLIB):
-	rustc --version
-	cargo --version
+	export PATH="$(PATH):$(HOME)/.cargo/bin:$(USERPROFILE)/.cargo/bin" && \
+		rustc --version && \
+		cargo --version
 	mkdir -p "$(TARGET_DIR)/libgcc_mock"
 	touch "$(TARGET_DIR)/libgcc_mock/libgcc_eh.a"
 	tar xf rust/vendor.tar.xz
 	mkdir -p $(CARGOTMP)
 	cp rust/vendor-config.toml $(CARGOTMP)/config.toml
-	export CARGO_HOME=$(CARGOTMP) && \
+	export PATH="$(PATH):$(HOME)/.cargo/bin:$(USERPROFILE)/.cargo/bin" && \
+		export CARGO_HOME=$(CARGOTMP) && \
 		export LIBRARY_PATH="$$LIBRARY_PATH;$(CURDIR)/$(TARGET_DIR)/libgcc_mock" && \
 		cargo build --offline --locked --lib --release -j 2 --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) --target=$(TARGET)
 	rm -Rf $(CARGOTMP)

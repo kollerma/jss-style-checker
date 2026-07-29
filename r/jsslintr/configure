@@ -1,0 +1,55 @@
+#!/bin/sh
+# Toolchain check per CRAN's "Using Rust in CRAN packages" note: verify
+# cargo and rustc are available — on PATH or in ~/.cargo/bin (the CRAN
+# macOS builders keep rustup installs there, off PATH) — report their
+# versions in the install log before compilation starts, and enforce the
+# minimum rustc declared in DESCRIPTION's SystemRequirements. The build
+# itself happens in src/Makevars, which appends the same PATH entry.
+#
+# The 1.85 floor is not chosen by this package's own code (which is
+# edition 2021): it is the minimum supported Rust version of several
+# vendored dependency crates (hashbrown 0.17, indexmap 2.14, the toml
+# 1.x family). Keep it in sync with SystemRequirements and
+# src/rust/Cargo.toml's rust-version when re-vendoring.
+
+MINIMUM_RUSTC_MINOR=85
+
+PATH="$PATH:$HOME/.cargo/bin"
+export PATH
+
+fail_missing () {
+    echo "------------------------- RUST NOT FOUND --------------------------"
+    echo "The '$1' command was not found on PATH or in ~/.cargo/bin, but is"
+    echo "required to build jsslintr's Rust code (see SystemRequirements in"
+    echo "DESCRIPTION). Install a Rust toolchain, either from your OS"
+    echo "distribution, e.g."
+    echo "    apt-get install cargo rustc     (Debian/Ubuntu)"
+    echo "    dnf install cargo rust          (Fedora)"
+    echo "    brew install rustup             (macOS Homebrew)"
+    echo "or via rustup from <https://rustup.rs/>, then retry the install."
+    echo "-------------------------------------------------------------------"
+    exit 1
+}
+
+command -v cargo > /dev/null 2>&1 || fail_missing cargo
+command -v rustc > /dev/null 2>&1 || fail_missing rustc
+
+echo "using Rust toolchain:"
+rustc --version
+cargo --version
+
+rustc_version=`rustc --version | sed -e 's/^rustc //' -e 's/ .*//'`
+rustc_major=`echo "$rustc_version" | cut -d. -f1`
+rustc_minor=`echo "$rustc_version" | cut -d. -f2`
+if [ "$rustc_major" -lt 1 ] || { [ "$rustc_major" -eq 1 ] && [ "$rustc_minor" -lt "$MINIMUM_RUSTC_MINOR" ]; }; then
+    echo "------------------------ RUST TOO OLD -----------------------------"
+    echo "rustc $rustc_version is older than the required 1.$MINIMUM_RUSTC_MINOR (see"
+    echo "SystemRequirements in DESCRIPTION; the floor comes from the vendored"
+    echo "dependency crates). Please update your Rust toolchain, e.g. with"
+    echo "    rustup update"
+    echo "or your OS package manager, then retry the install."
+    echo "-------------------------------------------------------------------"
+    exit 1
+fi
+
+exit 0

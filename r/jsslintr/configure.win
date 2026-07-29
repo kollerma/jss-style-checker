@@ -1,0 +1,45 @@
+#!/bin/sh
+# Windows twin of ./configure (see there for the full rationale): check
+# cargo/rustc, report versions, enforce the SystemRequirements rustc
+# floor. rustup on Windows installs under %USERPROFILE%\.cargo\bin, so
+# that spelling is appended alongside the Unix one.
+
+MINIMUM_RUSTC_MINOR=85
+
+PATH="$PATH:$HOME/.cargo/bin:$USERPROFILE/.cargo/bin"
+export PATH
+
+fail_missing () {
+    echo "------------------------- RUST NOT FOUND --------------------------"
+    echo "The '$1' command was not found on PATH or in ~/.cargo/bin, but is"
+    echo "required to build jsslintr's Rust code (see SystemRequirements in"
+    echo "DESCRIPTION). Install a Rust toolchain via rustup from"
+    echo "<https://rustup.rs/> — including the x86_64-pc-windows-gnu target:"
+    echo "    rustup target add x86_64-pc-windows-gnu"
+    echo "then retry the install."
+    echo "-------------------------------------------------------------------"
+    exit 1
+}
+
+command -v cargo > /dev/null 2>&1 || fail_missing cargo
+command -v rustc > /dev/null 2>&1 || fail_missing rustc
+
+echo "using Rust toolchain:"
+rustc --version
+cargo --version
+
+rustc_version=`rustc --version | sed -e 's/^rustc //' -e 's/ .*//'`
+rustc_major=`echo "$rustc_version" | cut -d. -f1`
+rustc_minor=`echo "$rustc_version" | cut -d. -f2`
+if [ "$rustc_major" -lt 1 ] || { [ "$rustc_major" -eq 1 ] && [ "$rustc_minor" -lt "$MINIMUM_RUSTC_MINOR" ]; }; then
+    echo "------------------------ RUST TOO OLD -----------------------------"
+    echo "rustc $rustc_version is older than the required 1.$MINIMUM_RUSTC_MINOR (see"
+    echo "SystemRequirements in DESCRIPTION; the floor comes from the vendored"
+    echo "dependency crates). Please update your Rust toolchain, e.g. with"
+    echo "    rustup update"
+    echo "then retry the install."
+    echo "-------------------------------------------------------------------"
+    exit 1
+fi
+
+exit 0

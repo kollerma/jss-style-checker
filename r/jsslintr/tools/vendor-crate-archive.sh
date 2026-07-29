@@ -53,6 +53,10 @@ echo "==> Archiving vendor/ -> src/rust/vendor.tar.xz"
   rm -rf vendor
 )
 
+echo "==> Regenerating inst/AUTHORS from the vendor archive"
+python3 "$script_dir/generate-rust-authors.py"
+
 echo "Wrote $rust_dir/vendor.tar.xz"
 echo "Wrote $rust_dir/vendor-config.toml"
 echo "Refreshed $pkg_dir/R/extendr-wrappers.R"
+echo "Refreshed $pkg_dir/inst/AUTHORS"
