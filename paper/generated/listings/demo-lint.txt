@@ -1,0 +1,32 @@
+$ jss-lint examples/demo.tex
+────────────────────────────────────────────────── examples/demo.tex ───────────────────────────────────────────────────
+┏━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Line:Col ┃ Severity ┃ Rule           ┃ Message                               ┃ Suggestion                            ┃
+┡━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 1:1      │ error    │ JSS-PRE-002    │ Preamble defines \Address{} with      │ Add \Address{...} in the preamble     │
+│          │          │                │ author affiliation and contact (see   │ with author affiliation and e-mail.   │
+│          │          │                │ §2.1 Preamble)                        │                                       │
+│ 2:19     │ warning  │ JSS-STRUCT-005 │ \author{} separates authors with \And │ Separate authors with \And (inline)   │
+│          │          │                │ or \AND (not lowercase \and) (see     │ or \AND (line break), not lowercase   │
+│          │          │                │ §2.2 Structure)                       │ \and.                                 │
+│ 5:1      │ warning  │ JSS-CAP-004    │ \Keywords{} is comma-separated and in │ Use sentence case for keywords: do    │
+│          │          │                │ sentence case (see §6.2               │ not capitalise words after the first  │
+│          │          │                │ Capitalisation)                       │ in an entry (proper names and         │
+│          │          │                │                                       │ abbreviations excepted).              │
+│ 7:1      │ warning  │ JSS-CAP-002    │ Section titles are in sentence style  │ Use sentence style: capitalise only   │
+│          │          │ (medium conf.) │ (first word capitalised; others       │ the first word (proper names remain   │
+│          │          │                │ lowercase except proper names) (see   │ capitalised).                         │
+│          │          │                │ §6.2 Capitalisation)                  │                                       │
+│ 8:31     │ warning  │ JSS-MARKUP-001 │ Programming-language names in prose   │ Wrap 'R' in \proglang{R}.             │
+│          │          │ (medium conf.) │ are wrapped in \proglang{} (see §4.1  │                                       │
+│          │          │                │ Markup)                               │                                       │
+│ 9:2      │ warning  │ JSS-CITE-003   │ Avoid bracket-in-bracket citation     │ Citation inside parens: replace       │
+│          │          │                │ forms like (\cite{...}); use          │ (\cite{...}) with \citep{...}, or use │
+│          │          │                │ \citep{...} instead (see §3.2         │ \citealp{...} when additional text    │
+│          │          │                │ Citations)                            │ shares the parens.                    │
+│ 9:53     │ warning  │ JSS-OPER-001   │ Symbol-plus-noun constructs like      │ Replace 'p-value' with '$p$~value'    │
+│          │          │                │ p-value and t-statistic are typeset   │ (italicized symbol, tie).             │
+│          │          │                │ as $p$~value and $t$~statistic (tie,  │                                       │
+│          │          │                │ no hyphen) (see §4.4 Mathematical     │                                       │
+│          │          │                │ notation)                             │                                       │
+└──────────┴──────────┴────────────────┴───────────────────────────────────────┴───────────────────────────────────────┘

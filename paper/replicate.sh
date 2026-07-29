@@ -8,12 +8,14 @@
 # paper.bib) — not the development repository — and it modifies nothing
 # in place.
 #
-#   1. jss-lint examples/demo.tex            -> the seven violations of §2.3
-#   2. jss-lint --fix --dry-run demo.tex     -> the auto-fix diff listing (§5.2)
-#   3. jss-lint explain JSS-CITE-003         -> the rule-documentation listing (§5.2)
+#   1. jss-lint examples/demo.tex            -> the seven violations of §2.2,
+#                                               byte-identical to Figure 1
+#   2. jss-lint --fix --dry-run demo.tex     -> the auto-fix diff listing (§7.1)
+#   3. jss-lint explain JSS-CITE-003         -> the rule-documentation listing (§7.1)
 #   4. jss-lint --mode reviewer (JSON)       -> the compliance table (Table "reviewer")
-#   5. jss-lint paper.tex paper.bib          -> the self-compliance claim (§4.4): zero violations
-#   6. R channel (optional, needs jsslintr)  -> the jsslint()/jssfix() session of §5.1
+#   5. jss-lint paper.tex paper.bib          -> the self-compliance claim (§6.5): zero violations
+#   6. R channel (optional, needs jsslintr)  -> the R session of §7, output
+#                                               compared against the printed one
 #
 # Requirements: bash, Python >= 3.10 with venv+pip (used to install the
 # released tool from PyPI unless a matching `jss-lint` is already on
@@ -24,6 +26,9 @@
 # Usage:  bash replicate.sh
 set -euo pipefail
 cd "$(dirname "$0")"
+# Pin terminal captures to UTF-8, independent of the local locale — the
+# listings in the paper are UTF-8 captures.
+export PYTHONIOENCODING=utf-8
 
 step() { printf '\n== %s\n' "$*"; }
 show() { printf '$ %s\n' "$*"; }
@@ -69,21 +74,26 @@ if [ -z "$JSS_LINT" ]; then
 fi
 "$JSS_LINT" --version
 
-# -- 1. the motivating example: seven violations (§2.3) ----------------------
-step "the motivating example (§2.3)"
+# -- 1. the motivating example: seven violations (§2.2) ----------------------
+step "the motivating example (§2.2)"
 show jss-lint examples/demo.tex
-# Violations found -> exit status 1 by design (§5.3); that is the expected
+# Violations found -> exit status 1 by design (§7.2); that is the expected
 # outcome here, so it must not end the script.
-rc=0; "$JSS_LINT" examples/demo.tex || rc=$?
+rc=0; "$JSS_LINT" examples/demo.tex | tee "$WORK/demo-lint.txt" || rc=$?
 [ "$rc" = 1 ] || fail "expected exit status 1 (violations found), got $rc"
+# Figure 1's first line is the command line itself; the capture starts
+# at the report.
+tail -n +2 generated/listings/demo-lint.txt > "$WORK/demo-lint-expected.txt"
+diff -u "$WORK/demo-lint-expected.txt" "$WORK/demo-lint.txt" \
+    > /dev/null || fail "report differs from Figure 1 in the paper"
 "$JSS_LINT" --output json examples/demo.tex > "$WORK/demo.json" || true
 N=$(python3 -c 'import json, sys
 print(len(json.load(open(sys.argv[1]))["violations"]))' "$WORK/demo.json")
 [ "$N" = 7 ] || fail "paper reports seven violations, tool reports $N"
-ok "seven violations and exit status 1, as stated in the paper"
+ok "seven violations, exit status 1, and byte-identical to Figure 1"
 
-# -- 2. the auto-fix preview (§5.2) -------------------------------------------
-step "the auto-fix preview (§5.2)"
+# -- 2. the auto-fix preview (§7.1) -------------------------------------------
+step "the auto-fix preview (§7.1)"
 cp examples/demo.tex "$WORK/demo.tex"
 show jss-lint --fix --dry-run demo.tex
 # --no-resolve keeps the diff header at the literal "demo.tex" (multi-file
@@ -95,8 +105,8 @@ diff -u generated/listings/demo-fix-diff.txt "$WORK/demo-fix-diff.txt" \
     > /dev/null || fail "auto-fix diff differs from the listing shown in the paper"
 ok "the diff is byte-identical to the listing in the paper"
 
-# -- 3. the rule documentation (§5.2) -----------------------------------------
-step "rule documentation (§5.2)"
+# -- 3. the rule documentation (§7.1) -----------------------------------------
+step "rule documentation (§7.1)"
 show jss-lint explain JSS-CITE-003
 "$JSS_LINT" explain JSS-CITE-003 | tee "$WORK/explain-cite003.txt"
 diff -u generated/listings/explain-cite003.txt "$WORK/explain-cite003.txt" \
@@ -104,7 +114,7 @@ diff -u generated/listings/explain-cite003.txt "$WORK/explain-cite003.txt" \
 ok "byte-identical to the listing in the paper"
 
 # -- 4. the reviewer-mode compliance summary ----------------------------------
-step "the reviewer-mode compliance summary (§5.3)"
+step "the reviewer-mode compliance summary (§7.2)"
 show jss-lint --mode reviewer examples/demo.tex
 "$JSS_LINT" --mode reviewer examples/demo.tex || true
 # The paper's table transcribes the JSON output of the same command;
@@ -127,9 +137,9 @@ diff -u "$WORK/tab-expected.tex" "$WORK/tab-demo-reviewer.tex" \
     > /dev/null || fail "reviewer summary differs from the table shown in the paper"
 ok "the JSON output matches the table body in the paper"
 
-# -- 5. the manuscript passes its own linter (§4.4) ---------------------------
+# -- 5. the manuscript passes its own linter (§6.5) ---------------------------
 if [ -f paper.tex ] && [ -f paper.bib ]; then
-    step "self-referential compliance check (§4.4)"
+    step "self-referential compliance check (§6.5)"
     show jss-lint paper.tex paper.bib
     "$JSS_LINT" paper.tex paper.bib
     ok "no output and exit status 0: a clean pass, as stated in the paper"
@@ -138,22 +148,37 @@ else
     echo "paper.tex/paper.bib not present alongside this script"
 fi
 
-# -- 6. the R channel (§5.1), if available ------------------------------------
+# -- 6. the R channel (§7), if available ------------------------------------
 if command -v Rscript > /dev/null 2>&1 \
     && Rscript -e 'quit(status = !requireNamespace("jsslintr", quietly = TRUE))' \
         > /dev/null 2>&1; then
-    step "the R channel (§5.1)"
-    cp examples/demo.tex "$WORK/r-demo.tex"
-    show 'Rscript -e library("jsslintr"); jsslint("demo.tex");' \
-         'jssfix("demo.tex", dry_run = TRUE)'
-    (cd "$WORK" && Rscript -e '
-library("jsslintr")
-res <- jsslint("r-demo.tex")
-print(res)
-stopifnot(nrow(as.data.frame(res)) == 7L)
-invisible(jssfix("r-demo.tex", dry_run = TRUE))
-') || fail "R channel disagrees with the paper (expected seven violations)"
-    ok "seven violations and four previewed fixes, as stated in the paper"
+    step "the R channel (§7)"
+    # The same session the paper prints: jsslint() discovers the demo in
+    # an otherwise empty directory, summary() aggregates, jssfix()
+    # previews the diff.
+    mkdir "$WORK/rdemo"
+    cp examples/demo.tex "$WORK/rdemo/demo.tex"
+    show 'R> library("jsslintr")'
+    show 'R> res <- jsslint()'
+    show 'R> summary(res)'
+    (cd "$WORK/rdemo" && Rscript -e '
+suppressMessages(library("jsslintr"))
+res <- jsslint()
+summary(res)
+' | tee "$WORK/r-summary.txt")
+    show 'R> jssfix("demo.tex", dry_run = TRUE)'
+    (cd "$WORK/rdemo" && Rscript -e '
+suppressMessages(library("jsslintr"))
+invisible(jssfix("demo.tex", dry_run = TRUE))
+' | tee "$WORK/r-fixdiff.txt")
+    # The paper's session listing is these two outputs wrapped in jss.cls
+    # code environments; strip the wrappers and compare.
+    awk '/^\\begin{CodeOutput}/{on=1; next} /^\\end{CodeOutput}/{on=0} on' \
+        generated/listings/r-session.tex > "$WORK/r-expected.txt"
+    cat "$WORK/r-summary.txt" "$WORK/r-fixdiff.txt" > "$WORK/r-got.txt"
+    diff -u "$WORK/r-expected.txt" "$WORK/r-got.txt" > /dev/null \
+        || fail "R session output differs from the listing in the paper"
+    ok "output identical to the R session printed in the paper"
 else
     step "the R channel -- SKIPPED (Rscript with the jsslintr package not found)"
     echo "install.packages(\"jsslintr\") to enable this step"
