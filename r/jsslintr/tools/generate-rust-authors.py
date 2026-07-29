@@ -13,8 +13,9 @@ the end of tools/vendor-crate-archive.sh; never runs at install time.
 from __future__ import annotations
 
 import tarfile
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 PKG_DIR = Path(__file__).resolve().parents[1]
 VENDOR_ARCHIVE = PKG_DIR / "src/rust/vendor.tar.xz"
