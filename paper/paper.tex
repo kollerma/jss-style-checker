@@ -6,7 +6,9 @@
 %% replicate.sh re-runs the demonstrations against the released tool.
 %% Compilation requires jss.cls (https://www.jstatsoft.org/style).
 
-\documentclass[article]{jss}
+%% nojss: build as a preprint (no JSS masthead/footer) while the
+%% submission is under review; JSS's production build drops the option.
+\documentclass[nojss,article]{jss}
 \usepackage{booktabs}
 \usepackage{longtable}
 %% The author-mode report (Figure 1) is a verbatim 120-column terminal
