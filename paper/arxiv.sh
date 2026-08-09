@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
 # Assemble the arXiv source tarball into <repo>/submission/ — internal.
 #
-# arXiv compiles the submission itself (pdflatex, no BibTeX run), so the
-# tarball ships the .bbl alongside the sources:
-#   paper.tex (nojss preprint), paper.bbl, paper.bib (documentation
-#   only), jss.cls, examples/demo.tex, generated/** (stats, table
-#   bodies, listings).
+# arXiv compiles the submission itself and prefers running BibTeX over a
+# shipped .bbl, so the tarball carries the bibliography sources:
+#   paper.tex (nojss preprint), paper.bib, jss.bst, jss.cls,
+#   examples/demo.tex, generated/** (stats, table bodies, listings).
 #
 # The assembly is verified before packaging: the staged directory is
-# compiled the way arXiv does (pdflatex only, three passes, using the
-# shipped .bbl) and must produce the same page count as the repository
-# build, with no undefined citations or references.
+# compiled the way arXiv does (pdflatex, bibtex, pdflatex twice) and
+# must produce the same page count as the repository build, with no
+# undefined citations or references.
 #
-# Requirements: a fresh `make pdf` beforehand (provides paper.bbl and
-# the reference page count), pdflatex.
+# Requirements: a fresh `make pdf` beforehand (provides the reference
+# page count), pdflatex + bibtex.
 #
 # Usage:  bash arxiv.sh   (or: make arxiv)
 set -euo pipefail
@@ -26,7 +25,6 @@ fail() { echo "error: $*" >&2; exit 1; }
 
 [ -f paper.pdf ] || fail "paper.pdf missing -- run 'make pdf' first"
 [ paper.pdf -nt paper.tex ] || fail "paper.pdf older than paper.tex -- run 'make pdf'"
-[ -f paper.bbl ] || fail "paper.bbl missing -- run 'make pdf' first"
 grep -q 'nojss' paper.tex \
     || fail "paper.tex does not use the nojss option; arXiv gets the preprint build"
 REF_PAGES=$(pdfinfo paper.pdf | awk '/^Pages:/{print $2}')
@@ -36,14 +34,15 @@ trap 'rm -rf "$STAGE"' EXIT
 
 step "staging arXiv sources"
 mkdir "$STAGE/arxiv"
-cp paper.tex paper.bbl paper.bib jss.cls "$STAGE/arxiv/"
+cp paper.tex paper.bib jss.bst jss.cls "$STAGE/arxiv/"
 mkdir -p "$STAGE/arxiv/examples"
 cp examples/demo.tex "$STAGE/arxiv/examples/"
 cp -R generated "$STAGE/arxiv/"
 
-step "compiling the staged sources the way arXiv does (no BibTeX)"
+step "compiling the staged sources the way arXiv does (with BibTeX)"
 (cd "$STAGE/arxiv" \
     && pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null \
+    && bibtex paper > /dev/null \
     && pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null \
     && pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null) \
     || fail "staged sources do not compile standalone"
@@ -60,6 +59,7 @@ rm -f "$DEST/arxiv-source.tar.gz"
 # Tar the *contents* (arXiv wants sources at the archive root); strip
 # build products of the verification compile first.
 (cd "$STAGE/arxiv" && rm -f paper.pdf paper.log paper.aux paper.out \
+        paper.bbl paper.blg \
     && tar czf "$DEST/arxiv-source.tar.gz" .)
 ls -l "$DEST/arxiv-source.tar.gz"
 echo "arxiv source complete."
