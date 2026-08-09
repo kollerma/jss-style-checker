@@ -41,6 +41,16 @@ in-process ([`vscode-extension/`](vscode-extension/)) — see
 build and run the web app locally). Both engines produce byte-identical
 output; that parity is CI-enforced (Constitution §XIII).
 
+## Paper
+
+The accompanying paper — *jss-lint: Automated Style Checking for
+Journal of Statistical Software Manuscripts* — describes the design,
+the AI-assisted development methodology, and the measured
+precision/recall of the rule set. A preprint is on arXiv:
+<https://arxiv.org/abs/XXXX.XXXXX> <!-- TODO: fill in the arXiv ID
+after announcement -->. Sources, the replication script, and the
+submission tooling live under [`paper/`](paper/).
+
 ## Install
 
 One command per ecosystem — every channel is MIT-licensed:
