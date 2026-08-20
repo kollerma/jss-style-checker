@@ -8,12 +8,35 @@
 #   and specs/025-report-html-pdf/spec.md); genpdf/printpdf are ignored below
 #   because genpdf 0.2.0 pins printpdf =0.3.4 and the 0.12 rewrite has an
 #   incompatible API — a naive bump breaks the PDF report.
+#
+# Actions-minutes budget. Every version-update PR fires CI + R-CMD-check +
+# test-action, which cost ~50 runner-minutes between them, so the PR *count*
+# is the cost driver — not the size of any one PR. Three settings bound it:
+#
+#   1. `interval: monthly` instead of weekly — 4.3 update cycles a month
+#      collapse to 1. Security updates are a SEPARATE mechanism that ignores
+#      this schedule entirely, so they still land immediately.
+#   2. Two groups per ecosystem (minor+patch, major) instead of one — a
+#      bare `update-types: [minor, patch]` group leaves every major bump to
+#      open its own PR. Majors are kept in their own group rather than
+#      folded into `patterns: ["*"]`: a breaking major (e.g. the TypeScript
+#      7 native port) then blocks only itself, not the safe minor/patch
+#      stream behind it.
+#   3. `open-pull-requests-limit` matching the group count, so a stalled PR
+#      caps the queue instead of letting reruns pile up. (This limit does
+#      not apply to security updates either.)
+#
+# check-standard.yaml additionally trims its OS x R matrix down to
+# ubuntu-release for `dependabot[bot]` PRs; the full matrix still runs on
+# the push to main that merges them. See the comment above its `strategy:`.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
+    # One group covering every update type -> at most one PR.
+    open-pull-requests-limit: 1
     groups:
       actions:
         patterns: ["*"]
@@ -21,15 +44,19 @@ updates:
   - package-ecosystem: pip
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 2
     groups:
       python-minor-patch:
         update-types: ["minor", "patch"]
+      python-major:
+        update-types: ["major"]
 
   - package-ecosystem: cargo
     directory: "/rust"
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 2
     ignore:
       # Pinned pair — see header comment and specs/025-report-html-pdf.
       - dependency-name: genpdf
@@ -37,11 +64,16 @@ updates:
     groups:
       rust-minor-patch:
         update-types: ["minor", "patch"]
+      rust-major:
+        update-types: ["major"]
 
   - package-ecosystem: npm
     directory: "/vscode-extension"
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 2
     groups:
       npm-minor-patch:
         update-types: ["minor", "patch"]
+      npm-major:
+        update-types: ["major"]
