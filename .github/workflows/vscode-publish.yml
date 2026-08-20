@@ -57,6 +57,7 @@ jobs:
         with:
           name: vsix
           path: vscode-extension/*.vsix
+          retention-days: 1
 
       - name: Publish to VS Code marketplace
         if: github.event_name == 'push'

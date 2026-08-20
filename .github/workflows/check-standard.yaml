@@ -57,23 +57,41 @@ jobs:
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
-    # macOS entries are restricted to the public repo: macOS runners bill
-    # at a 10x minutes multiplier, and the private -dev repo's much higher
-    # push volume burns through its Actions minutes quota fast. windows/
-    # ubuntu entries still run everywhere; macOS still runs on every push
-    # to the public repo, including main pushed there via the dev ->
-    # public merge flow. Done via a matrix flag + exclude because the
-    # `matrix` context is not available in a job-level `if:` (the matrix
-    # doesn't exist yet when that expression is evaluated — a job-level
-    # `if:` referencing it makes the whole workflow file invalid); the
-    # `github` context IS available inside `strategy`. The exclude
-    # entries must repeat each macOS config verbatim: object-valued
-    # matrix variables only match on deep equality.
+    # Two cost gates, both built the same way: a single-valued matrix flag
+    # computed from the `github` context, plus `exclude` entries that drop
+    # configs when the flag has the wrong value. This shape is forced —
+    # the `matrix` context is not available in a job-level `if:` (the
+    # matrix doesn't exist yet when that expression is evaluated, and a
+    # job-level `if:` referencing it makes the whole workflow file
+    # invalid), whereas the `github` context IS available inside
+    # `strategy`. Because the flags are single-valued they add combos, not
+    # multiples: the matrix stays 6 cells. Every exclude entry must repeat
+    # its config verbatim — object-valued matrix variables only match on
+    # deep equality.
+    #
+    # `on-public-repo` — macOS entries are restricted to the public repo:
+    # macOS runners bill at a 10x minutes multiplier, and the private -dev
+    # repo's much higher push volume burns through its Actions minutes
+    # quota fast. macOS still runs on every push to the public repo,
+    # including main pushed there via the dev -> public merge flow.
+    #
+    # `from-dependabot` — a dependency bump gets ubuntu-release only. The
+    # full OS x R matrix cost ~37 of the ~50 runner-minutes each Dependabot
+    # PR burned, and windows-latest alone is half of that at its 2x
+    # multiplier while being the leg least likely to catch a bad bump.
+    # ubuntu-release plus the wrapper-drift-check job above (which is
+    # ungated, and is where an extendr-surface break actually surfaces)
+    # still proves the package configures, compiles, links the Rust
+    # staticlib and passes R CMD check with the new dependency. Nothing
+    # ships on this signal alone: merging the PR pushes to main, and that
+    # push runs the matrix in full — on the public repo, macOS included.
     strategy:
       fail-fast: false
       matrix:
         on-public-repo:
           - ${{ github.repository == 'kollerma/jss-style-checker' }}
+        from-dependabot:
+          - ${{ github.actor == 'dependabot[bot]' }}
         config:
           - {os: macOS-latest,   r: 'release',  rust-version: 'stable'}
           - {os: macOS-latest,   r: 'oldrel-1', rust-version: 'stable'}
@@ -86,6 +104,17 @@ jobs:
             config: {os: macOS-latest, r: 'release',  rust-version: 'stable'}
           - on-public-repo: false
             config: {os: macOS-latest, r: 'oldrel-1', rust-version: 'stable'}
+          # Everything except ubuntu-release, for Dependabot PRs only.
+          - from-dependabot: true
+            config: {os: macOS-latest, r: 'release',  rust-version: 'stable'}
+          - from-dependabot: true
+            config: {os: macOS-latest, r: 'oldrel-1', rust-version: 'stable'}
+          - from-dependabot: true
+            config: {os: windows-latest, r: 'release',  rust-version: 'stable-msvc', rust-target: 'x86_64-pc-windows-gnu'}
+          - from-dependabot: true
+            config: {os: ubuntu-latest,  r: 'devel',    rust-version: 'stable', http-user-agent: 'release'}
+          - from-dependabot: true
+            config: {os: ubuntu-latest,  r: 'oldrel-1', rust-version: 'stable'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

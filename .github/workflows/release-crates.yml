@@ -138,12 +138,19 @@ jobs:
           if [ "${{ runner.os }}" = "Windows" ]; then src="${src}.exe"; fi
           cp "$src" "${{ matrix.artifact_name }}"
 
+      # Dry-run path only. The two upload steps are mutually exclusive by
+      # event type and never coexist in a run: a real tag push attaches
+      # the binaries to the GitHub Release below (Release assets don't
+      # count against the Actions storage quota), while a
+      # workflow_dispatch dry run has no Release to attach to and leaves
+      # them here instead. A day is long enough to inspect a dry run.
       - name: Upload build artifact
         if: github.event_name != 'push'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.artifact_name }}
+          retention-days: 1
 
       - name: Upload to GitHub Release
         if: github.event_name == 'push'
