@@ -11,10 +11,42 @@
 Style checker for manuscripts submitted to the
 [Journal of Statistical Software](https://www.jstatsoft.org/) (JSS).
 
+> **Independence notice**: this is an independent, third-party project.
+> It is **not affiliated with, endorsed by, or connected to** the Journal
+> of Statistical Software, its editors, or its publisher. It checks
+> manuscripts against the journal's publicly documented
+> [style requirements](https://www.jstatsoft.org/style).
+
 **[Try it in your browser](https://kollerma.github.io/jss-style-checker/)** —
 no install, nothing uploaded. Pick a folder and it checks the
 `.tex`/`.ltx`/`.bib`/`.Rnw`/`.Rmd` files on the spot, entirely client-side
 via WebAssembly.
+
+## Why this exists
+
+JSS's style guide covers preamble macros, semantic markup, citation
+conventions, capitalization, code formatting, and bibliography
+completeness. Violations that reach peer review cost editors, reviewers,
+and authors extra revision rounds for problems a machine can find — so
+this tool finds them first, deterministically: the same input always
+produces the same violations, byte for byte, which is what makes it
+usable as a CI gate and its accuracy measurable (the badges above are
+real precision/recall figures against a pinned corpus of 254 published
+JSS-format manuscripts).
+
+It serves three audiences:
+
+- **Authors** — check before submitting: CLI, R, Python, VS Code, or the
+  browser app (nothing leaves your machine in any of them).
+- **Reviewers and editors** — `--mode reviewer` aggregates findings into
+  a per-category compliance summary, separating form from content.
+- **Package maintainers** — gate CI on JSS-format vignettes with the
+  GitHub Action.
+
+Design rationale — why AST parsing instead of regexes, why rules are
+deterministic-only, why one Rust core ships through four channels with
+byte-identical output — is written up in
+[`docs/design.md`](docs/design.md).
 
 > The badges above are refreshed by CI on every push to `main`: shields.io
 > endpoint JSON derived from the spec-002 precision-history DB and the
@@ -45,11 +77,24 @@ output; that parity is CI-enforced (Constitution §XIII).
 
 The accompanying paper — *jss-lint: Automated Style Checking for
 Journal of Statistical Software Manuscripts* — describes the design,
-the AI-assisted development methodology, and the measured
-precision/recall of the rule set. A preprint is on arXiv:
-<https://arxiv.org/abs/XXXX.XXXXX> <!-- TODO: fill in the arXiv ID
-after announcement -->. Sources, the replication script, and the
+the AI-development methodology, and the measured precision/recall of
+the rule set. The full-length preprint is archived on Zenodo:
+<https://doi.org/10.5281/zenodo.XXXXXXXX> <!-- TODO: fill in the
+reserved preprint DOI (see the Zenodo deposit checklist) -->. A short
+companion paper for the *Journal of Open Source Software* lives at
+[`paper/joss/`](paper/joss/). Sources, the replication script, and the
 submission tooling live under [`paper/`](paper/).
+
+**How it was built**: the code, tests, and papers were written by large
+language models under human direction — the human contribution was
+requirements, corrective direction, and adjudication of the evaluation
+labels, verifying measured behavior rather than reviewing code. The
+process artifacts are all in this repository: feature specifications
+under [`specs/`](specs/), the evaluation-improvement loop under
+[`eval/`](eval/) (including the per-iteration
+[improvement log](eval/improvement-log.md) and
+[gate exceptions](eval/gate-exceptions.toml)), and the project
+[constitution](.specify/memory/constitution.md).
 
 ## Install
 
