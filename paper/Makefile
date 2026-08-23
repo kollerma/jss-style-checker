@@ -7,10 +7,20 @@
 PY ?= ../.venv-host/bin/python
 
 .PHONY: stats listings pdf lint pages check audit regenerate replicate \
-        bundle arxiv clean
+        bundle arxiv joss joss-pdf clean
 
 stats:
 	cd .. && $(PY) -m tools.generate_paper_stats
+
+# Regenerate the JOSS paper (joss/paper.md from joss/paper.md.in); the
+# word-count bound (750-1750) and placeholder substitution are enforced
+# inside the generator, and drift is covered by `make check`.
+joss: stats
+
+# Render joss/paper.md with JOSS's own toolchain (needs docker).
+joss-pdf:
+	docker run --rm -v $(CURDIR)/joss:/data -u $$(id -u):$$(id -g) \
+	  openjournals/inara -o pdf paper.md
 
 listings:
 	bash regenerate.sh --no-pdf
@@ -31,7 +41,7 @@ audit:
 	cd .. && $(PY) -m tools.generate_paper_stats --audit
 
 spelling:
-	@! grep -nwiE 'capitalis(ation|ed?|ing)|summaris(ed?|ing)|organis(ed?|ation)|normalis(ed?|ation)|minimis(ed?|ing)|analys(ed?|ing)|initialis(ed?|ation)|colour|behaviour|modelling|labelled|licence' paper.tex generated/*.tex
+	@! grep -nwiE 'capitalis(ation|ed?|ing)|summaris(ed?|ing)|organis(ed?|ation)|normalis(ed?|ation)|minimis(ed?|ing)|analys(ed?|ing)|initialis(ed?|ation)|colour|behaviour|modelling|labelled|licence' paper.tex generated/*.tex joss/paper.md.in
 
 check:
 	cd .. && $(PY) -m tools.generate_paper_stats --check

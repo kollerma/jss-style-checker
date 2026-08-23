@@ -52,6 +52,11 @@ LABELS_EXPORT = REPO_ROOT / "eval" / "labels-export.csv.gz"
 GOLD_EXPORT = REPO_ROOT / "eval" / "gold-set-export.csv.gz"
 OUTPUT_DIR = REPO_ROOT / "paper" / "generated"
 PAPER_TEX = REPO_ROOT / "paper" / "paper.tex"
+# JOSS paper: paper/joss/paper.md is generated from paper.md.in by
+# substituting @StatName@ placeholders with markdown-safe versions of the
+# same stats.tex values, so both papers share one pinned source of truth.
+JOSS_TEMPLATE = REPO_ROOT / "paper" / "joss" / "paper.md.in"
+JOSS_PAPER = REPO_ROOT / "paper" / "joss" / "paper.md"
 
 # --------------------------------------------------------------------------
 # Pin constants — the ONLY values to touch when re-freezing the evaluation.
@@ -788,6 +793,79 @@ def render_all(data: dict) -> dict[str, str]:
     }
 
 
+_STAT_MACRO_RE = re.compile(r"\\newcommand\{\\(Stat\w+)\}\{(.*)\}$")
+_JOSS_PLACEHOLDER_RE = re.compile(r"@(Stat\w+)@")
+
+
+def _markdown_value(latex: str) -> str:
+    """Convert a stats.tex macro value to plain markdown text."""
+    text = latex.replace("\\%", "%")
+    text = re.sub(r"\\(?:proglang|pkg|code)\{([^}]*)\}", r"\1", text)
+    return text
+
+
+def _stats_markdown_map(stats_tex: str) -> dict[str, str]:
+    """Parse rendered stats.tex into {StatName: markdown-safe value}."""
+    values: dict[str, str] = {}
+    for line in stats_tex.splitlines():
+        m = _STAT_MACRO_RE.match(line)
+        if m:
+            values[m.group(1)] = _markdown_value(m.group(2))
+    return values
+
+
+def render_joss_paper(stats_tex: str) -> str:
+    """Substitute @StatName@ placeholders in the JOSS paper template.
+
+    The leading HTML template comment (before the YAML frontmatter) is
+    replaced by an auto-generated marker placed AFTER the frontmatter,
+    because JOSS's inara toolchain expects the YAML block first.
+    """
+    template = JOSS_TEMPLATE.read_text(encoding="utf-8")
+    template = re.sub(r"\A<!--.*?-->\n*", "", template, flags=re.S)
+
+    values = _stats_markdown_map(stats_tex)
+
+    def sub(m: re.Match) -> str:
+        name = m.group(1)
+        if name not in values:
+            raise SystemExit(
+                f"error: {JOSS_TEMPLATE.name} references unknown stat "
+                f"@{name}@ (not a \\Stat... macro in stats.tex)"
+            )
+        return values[name]
+
+    body = _JOSS_PLACEHOLDER_RE.sub(sub, template)
+
+    marker = (
+        "<!-- AUTO-GENERATED from paper/joss/paper.md.in by\n"
+        "     `python -m tools.generate_paper_stats`. Do not edit by hand:\n"
+        f"     numbers are pinned to precision iteration"
+        f" `{PIN_ITERATION_LABEL}`\n"
+        f"     and recall run {PIN_RECALL_TS} (corpus {PIN_RECALL_HASH}). -->\n"
+    )
+    end = body.find("\n---\n", body.find("---\n") + 4)
+    if not body.startswith("---\n") or end == -1:
+        raise SystemExit(
+            f"error: {JOSS_TEMPLATE.name} must begin with a YAML"
+            " frontmatter block after the template comment"
+        )
+    insert_at = end + len("\n---\n")
+    result = body[:insert_at] + "\n" + marker + body[insert_at:]
+
+    # JOSS requires 750-1750 words. Count prose only: body after the
+    # frontmatter, minus HTML comments and [@...] citation markers.
+    prose = re.sub(r"<!--.*?-->", "", result[insert_at:], flags=re.S)
+    prose = re.sub(r"\[@[^\]]*\]", "", prose)
+    n_words = len(prose.split())
+    if not 750 <= n_words <= 1750:
+        raise SystemExit(
+            f"error: JOSS paper body is {n_words} words; the journal"
+            " requires 750-1750"
+        )
+    return result
+
+
 def _atomic_write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
@@ -815,17 +893,21 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
     rendered = render_all(data)
+    targets = {OUTPUT_DIR / name: content for name, content in rendered.items()}
+    if JOSS_TEMPLATE.exists():
+        targets[JOSS_PAPER] = render_joss_paper(rendered["stats.tex"])
 
     if args.check:
         stale = [
-            name
-            for name, content in rendered.items()
-            if not (OUTPUT_DIR / name).exists()
-            or (OUTPUT_DIR / name).read_text(encoding="utf-8") != content
+            path
+            for path, content in targets.items()
+            if not path.exists()
+            or path.read_text(encoding="utf-8") != content
         ]
         if stale:
+            names = ", ".join(str(p.relative_to(REPO_ROOT)) for p in stale)
             print(
-                "error: paper/generated/ is out of date: " + ", ".join(stale),
+                "error: generated paper files are out of date: " + names,
                 file=sys.stderr,
             )
             # Print the actual line-level differences so an environment-
@@ -834,14 +916,14 @@ def main(argv: list[str] | None = None) -> int:
             # from the CI log instead of requiring local reproduction.
             import difflib
 
-            for name in stale:
-                path = OUTPUT_DIR / name
+            for path in stale:
+                name = str(path.relative_to(REPO_ROOT))
                 committed = (
                     path.read_text(encoding="utf-8").splitlines()
                     if path.exists()
                     else []
                 )
-                computed = rendered[name].splitlines()
+                computed = targets[path].splitlines()
                 for line in difflib.unified_diff(
                     committed, computed, f"committed {name}", f"computed {name}",
                     lineterm="", n=0,
@@ -850,9 +932,9 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         return 0
 
-    for name, content in rendered.items():
-        _atomic_write(OUTPUT_DIR / name, content)
-        print(f"wrote paper/generated/{name}")
+    for path, content in targets.items():
+        _atomic_write(path, content)
+        print(f"wrote {path.relative_to(REPO_ROOT)}")
     return 0
 
 
