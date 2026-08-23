@@ -1,4 +1,6 @@
 cff-version: 1.2.0
+# TODO (post-JOSS-acceptance): add a `preferred-citation` block pointing
+# at the JOSS paper's DOI, per JOSS's post-acceptance checklist.
 message: "If you use this software, please cite it using these metadata."
 title: "jss-style-checker: a style checker for Journal of Statistical Software manuscripts"
 version: 1.1.0

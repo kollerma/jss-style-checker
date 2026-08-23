@@ -71,7 +71,9 @@ The first published release, across four registries: crates.io
 package providing `jss-lint` — and `jsslint`, the PyO3 binding), and npm
 (`jsslint-wasm`). The R package (`jsslintr`) gained the
 `jsslint()`/`jssfix()`/`jss_files()` convenience API and a
-getting-started vignette but is not yet on CRAN.
+getting-started vignette but was not yet on CRAN at release time
+(it was subsequently accepted: `jsslintr` 1.1.0-1 published
+2026-07-28, 1.1.0-2 on 2026-07-29).
 
 Version 1.0.0 was burned: `jsslint-core` 1.0.0 reached crates.io
 unbuildable (its build script reads rule-catalogue data that wasn't in

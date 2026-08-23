@@ -361,8 +361,9 @@ and tracked here rather than papered over.
 - [ ] `vscode-extension/` build verification — `npm install`,
       `npm run compile`, `vsce package` produces a `.vsix`.
       Requires Node 20+ in CI.
-- [ ] Live publish to the VS Code marketplace and Open VSX —
-      requires `VSCE_PAT` and `OVSX_PAT` secrets in the repo;
+- [x] Live publish to the VS Code marketplace and Open VSX —
+      done: `kollerma.jss-style-checker` 1.1.0 is live on both
+      (verified 2026-08-23 via the marketplace/Open VSX APIs);
       the workflow at `.github/workflows/vscode-publish.yml`
       runs on `v*-vscode` tags.
 - [ ] End-to-end smoke test inside a headless VS Code instance
