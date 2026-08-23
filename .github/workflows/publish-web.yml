@@ -58,19 +58,19 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           tmpdir=$(mktemp -d)
-          cp -r web/index.html web/app.js web/pkg "$tmpdir/"
+          cp -r web/index.html web/app.js web/pkg web/blog "$tmpdir/"
           if git fetch origin gh-pages; then
             git checkout gh-pages
           else
             git checkout --orphan gh-pages
             git rm -rf .
           fi
-          rm -rf index.html app.js pkg
+          rm -rf index.html app.js pkg blog
           cp -r "$tmpdir"/* .
           # -f: wasm-pack writes a `pkg/.gitignore` containing `*`, so a
           # plain `git add pkg` silently skips the entire engine and ships
           # a page that hangs on "Loading checker…". Force past it.
-          git add -f index.html app.js pkg
+          git add -f index.html app.js pkg blog
           if git diff --cached --quiet; then
             echo "no web app changes; skipping commit"
             exit 0
