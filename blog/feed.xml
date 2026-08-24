@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>jss-style-checker blog</title>
+  <subtitle>Announcements from the jss-lint / jsslintr project — an independent style checker for Journal of Statistical Software manuscripts (not affiliated with JSS).</subtitle>
+  <link href="https://kollerma.github.io/jss-style-checker/blog/feed.xml" rel="self"/>
+  <link href="https://kollerma.github.io/jss-style-checker/blog/"/>
+  <id>https://kollerma.github.io/jss-style-checker/blog/</id>
+  <updated>2026-08-23T12:00:00Z</updated>
+  <author><name>Manuel Koller</name></author>
+
+  <entry>
+    <title>jsslintr: check JSS manuscript style from R (and everywhere else)</title>
+    <link href="https://kollerma.github.io/jss-style-checker/blog/"/>
+    <id>https://kollerma.github.io/jss-style-checker/blog/#jsslintr-announcement</id>
+    <published>2026-08-23T12:00:00Z</published>
+    <updated>2026-08-23T12:00:00Z</updated>
+    <summary>jsslintr, now on CRAN, checks JSS-format manuscripts (.tex/.Rnw/.Rmd + .bib) against 62 deterministic rules with measured precision (97.2%) and recall (80.7%) — also available as a CLI, Python package, VS Code extension, GitHub Action, and a fully client-side browser app. Independent project, not affiliated with JSS.</summary>
+  </entry>
+</feed>

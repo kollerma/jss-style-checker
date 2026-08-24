@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jsslintr: check JSS manuscript style from R (and everywhere else)</title>
+<meta name="description" content="Announcing jsslintr on CRAN: a deterministic style checker for Journal of Statistical Software manuscripts, with measured precision and recall.">
+<link rel="alternate" type="application/atom+xml" title="jss-style-checker blog" href="feed.xml">
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    max-width: 46rem; margin: 0 auto; padding: 2rem 1rem; line-height: 1.55;
+  }
+  pre { overflow-x: auto; padding: .7rem; background: rgba(127,127,127,.12); border-radius: 6px; }
+  code { font-size: .92em; }
+  h1 { line-height: 1.25; }
+  footer, .meta { font-size: .85rem; color: #888; }
+  footer a, .meta a { color: inherit; }
+  blockquote { border-left: 3px solid #888; margin-left: 0; padding-left: 1rem; color: inherit; }
+</style>
+</head>
+<body>
+<article>
+<h1>jsslintr: check JSS manuscript style from R (and everywhere else)</h1>
+<p class="meta">2026-08-23 · Manuel Koller ·
+<a href="https://github.com/kollerma/jss-style-checker">source</a></p>
+
+<p>If you have ever submitted to the <em>Journal of Statistical
+Software</em>, you know the drill: the science is done, the package
+works, and then a revision round arrives about <code>\pkg{}</code>
+markup, capitalization in section titles, citation macros, and a
+<code>doi</code> field missing from half the bibliography. None of it
+improves the paper; all of it costs a round trip.</p>
+
+<p><strong>jsslintr</strong>, now on CRAN, checks a JSS-format
+manuscript (<code>.tex</code>, <code>.Rnw</code>, or
+<code>.Rmd</code> plus its <code>.bib</code>) against 62 deterministic
+rules derived from the journal's published style guide — before an
+editor ever sees it:</p>
+
+<pre><code>install.packages("jsslintr")
+library(jsslintr)
+jsslint("paper.Rnw")      # report violations with positions + fixes
+jssfix("paper.Rnw")       # apply the auto-fixable subset
+</code></pre>
+
+<p>The same engine — one Rust core — also ships as a command-line tool
+(<code>cargo install jsslint-cli</code>), Python packages
+(<code>pip install jss-style-checker</code> or <code>jsslint</code>),
+an npm/WASM module, a VS Code extension, a GitHub Action for CI on
+package vignettes, and a
+<a href="https://kollerma.github.io/jss-style-checker/">browser app</a>
+that runs entirely client-side — your manuscript never leaves your
+machine. All channels produce byte-identical output; that parity is
+enforced in CI.</p>
+
+<h2>The interesting part: the accuracy is measured</h2>
+
+<p>A linter's real cost is false positives. Instead of hoping the rules
+are right, the project maintains a pinned evaluation corpus of 254 real
+JSS-format manuscripts (mostly CRAN vignettes of published JSS papers)
+and measures every rule against it: precision is currently 97.2% over
+20,060 adjudicated violation instances, recall 80.7% against a
+hand-annotated ground-truth corpus, and the README badges regenerate
+from the evaluation database on every push. Rules that could not reach
+90% precision were narrowed or publicly retired.</p>
+
+<p>Honesty note, since it is unusual: the code, tests, and evaluation
+tooling were written by large language models under human direction —
+the human role was setting requirements, adjudicating evaluation
+labels, and verifying measured behavior rather than reviewing lines of
+code. The measurement apparatus above (plus byte-parity between two
+independently implemented engines) is what makes that workable, and
+every process artifact is in the public repository. A full write-up of
+the methodology and the empirical results is linked from the
+<a href="https://github.com/kollerma/jss-style-checker#paper">README</a>.</p>
+
+<h2>For reviewers and editors, too</h2>
+
+<p>Reviewer mode aggregates the findings into a per-category
+PASS/FAIL compliance summary:</p>
+
+<pre><code>jss-lint --mode reviewer paper.tex</code></pre>
+
+<p>so questions of form can be separated from questions of content in
+one glance.</p>
+
+<blockquote><p>jsslintr and jss-lint are an independent, third-party
+project — not affiliated with, endorsed by, or connected to the
+Journal of Statistical Software, its editors, or its
+publisher.</p></blockquote>
+
+<p>Bug reports — especially false positives, which feed directly into
+the precision measurement — are very welcome on
+<a href="https://github.com/kollerma/jss-style-checker/issues">GitHub</a>.</p>
+</article>
+
+<footer>
+<p><a href="../">← the browser checker</a> ·
+<a href="feed.xml">Atom feed</a></p>
+</footer>
+</body>
+</html>
