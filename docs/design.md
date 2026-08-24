@@ -49,13 +49,15 @@ Real manuscripts contain unbalanced braces in verbatim environments
 and other legacy constructs, and a checker that dies on them never
 gets to report anything useful.
 
-### 4. Two audiences
+### 4. Two report modes
 
 Author mode reports each violation with its position and a fix
 suggestion. Reviewer mode aggregates the same findings into a
 per-category compliance summary, so editors and reviewers can see at a
 glance whether a submission is ready for content review. Same engine,
-same findings — two presentations.
+same findings — two presentations. (The README's third audience,
+package maintainers, is served by the same findings as
+machine-readable JSON in CI rather than by a mode of its own.)
 
 ## One engine, four channels
 

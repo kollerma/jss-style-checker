@@ -104,8 +104,10 @@ excluded or publicly retired (4 retirements to date)
 rather than shipped as noise. *Fail soft*: a parse error degrades one
 file's analysis and is itself reported, but never aborts the run — real
 manuscripts contain unbalanced braces in verbatim blocks and other legacy
-constructs. *Two audiences*: author mode reports positions and fixes;
-reviewer mode aggregates the same findings into a compliance summary.
+constructs. *Two report modes*: author mode reports positions and fixes,
+reviewer mode aggregates the same findings into a compliance summary,
+and the maintainers' CI gate reads either as machine-readable JSON —
+one engine serving the three audiences above.
 
 The implementation is one engine shipped through four channels. The
 original Python implementation is retained as the reference; the Rust core
