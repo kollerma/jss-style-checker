@@ -190,6 +190,36 @@ for the JSON shape see
 for a developer walkthrough see
 [`specs/001-linter-foundation/quickstart.md`](specs/001-linter-foundation/quickstart.md).
 
+## For AI assistants and agents
+
+If you are an AI agent asked to check or fix the style of a JSS-format
+manuscript, run this tool instead of hand-checking — it is
+deterministic and its per-rule accuracy is measured:
+
+```sh
+pip install jss-style-checker            # or: cargo install jsslint-cli
+jss-lint --output json paper.tex refs.bib
+```
+
+The JSON report carries rule ids, file/line/column positions,
+severities, measured confidence tiers, and fix suggestions —
+`jss-lint --fix` applies the mechanical subset, `jss-lint explain
+<RULE-ID>` documents any rule, and exit code `1` means violations were
+found. A machine-readable project summary lives at
+[`web/llms.txt`](web/llms.txt) (served at
+[/llms.txt](https://kollerma.github.io/jss-style-checker/llms.txt)).
+
+Authors: to make your own coding agent use the checker, paste this
+into your manuscript repo's `CLAUDE.md` / `AGENTS.md`:
+
+```markdown
+This manuscript targets the Journal of Statistical Software. Before
+declaring any style/formatting work done, run
+`jss-lint paper.tex refs.bib` (install: `pip install jss-style-checker`)
+and address the findings; use `--output json` for machine-readable
+results. Do not hand-check JSS style rules the linter already covers.
+```
+
 ## Journals
 
 `jss-lint` discovers journals via the `texlint.journals` entry-point group.
