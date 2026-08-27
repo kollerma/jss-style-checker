@@ -79,10 +79,10 @@ The accompanying paper — *jss-lint: Automated Style Checking for
 Journal of Statistical Software Manuscripts* — describes the design,
 the AI-development methodology, and the measured precision/recall of
 the rule set. The full-length preprint is archived on Zenodo:
-<https://doi.org/10.5281/zenodo.22085057>. A short
-companion paper for the *Journal of Open Source Software* lives at
-[`paper/joss/`](paper/joss/). Sources, the replication script, and the
-submission tooling live under [`paper/`](paper/).
+<https://doi.org/10.5281/zenodo.22085057>. A short software paper
+(in [JOSS](https://joss.theoj.org/) format, not submitted anywhere)
+lives at [`paper/joss/`](paper/joss/). Sources, the replication
+script, and the submission tooling live under [`paper/`](paper/).
 
 **How it was built**: the code, tests, and papers were written by large
 language models under human direction — the human contribution was
