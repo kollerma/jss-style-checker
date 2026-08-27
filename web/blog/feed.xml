@@ -15,5 +15,77 @@
     <published>2026-08-23T12:00:00Z</published>
     <updated>2026-08-23T12:00:00Z</updated>
     <summary>jsslintr, now on CRAN, checks JSS-format manuscripts (.tex/.Rnw/.Rmd + .bib) against 62 deterministic rules with measured precision (97.2%) and recall (80.7%) — also available as a CLI, Python package, VS Code extension, GitHub Action, and a fully client-side browser app. Independent project, not affiliated with JSS.</summary>
+    <content type="html">&lt;h1&gt;jsslintr: check JSS manuscript style from R (and everywhere else)&lt;/h1&gt;
+&lt;p class=&quot;meta&quot;&gt;2026-08-23 · Manuel Koller ·
+&lt;a href=&quot;https://github.com/kollerma/jss-style-checker&quot;&gt;source&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;If you have ever submitted to the &lt;em&gt;Journal of Statistical
+Software&lt;/em&gt;, you know the drill: the science is done, the package
+works, and then a revision round arrives about &lt;code&gt;\pkg{}&lt;/code&gt;
+markup, capitalization in section titles, citation macros, and a
+&lt;code&gt;doi&lt;/code&gt; field missing from half the bibliography. None of it
+improves the paper; all of it costs a round trip.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;jsslintr&lt;/strong&gt;, now on CRAN, checks a JSS-format
+manuscript (&lt;code&gt;.tex&lt;/code&gt;, &lt;code&gt;.Rnw&lt;/code&gt;, or
+&lt;code&gt;.Rmd&lt;/code&gt; plus its &lt;code&gt;.bib&lt;/code&gt;) against 62 deterministic
+rules derived from the journal&#x27;s published style guide — before an
+editor ever sees it:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;install.packages(&quot;jsslintr&quot;)
+library(jsslintr)
+jsslint(&quot;paper.Rnw&quot;)      # report violations with positions + fixes
+jssfix(&quot;paper.Rnw&quot;)       # apply the auto-fixable subset
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The same engine — one Rust core — also ships as a command-line tool
+(&lt;code&gt;cargo install jsslint-cli&lt;/code&gt;), Python packages
+(&lt;code&gt;pip install jss-style-checker&lt;/code&gt; or &lt;code&gt;jsslint&lt;/code&gt;),
+an npm/WASM module, a VS Code extension, a GitHub Action for CI on
+package vignettes, and a
+&lt;a href=&quot;https://kollerma.github.io/jss-style-checker/&quot;&gt;browser app&lt;/a&gt;
+that runs entirely client-side — your manuscript never leaves your
+machine. All channels produce byte-identical output; that parity is
+enforced in CI.&lt;/p&gt;
+
+&lt;h2&gt;The interesting part: the accuracy is measured&lt;/h2&gt;
+
+&lt;p&gt;A linter&#x27;s real cost is false positives. Instead of hoping the rules
+are right, the project maintains a pinned evaluation corpus of 254 real
+JSS-format manuscripts (mostly CRAN vignettes of published JSS papers)
+and measures every rule against it: precision is currently 97.2% over
+20,060 adjudicated violation instances, recall 80.7% against a
+hand-annotated ground-truth corpus, and the README badges regenerate
+from the evaluation database on every push. Rules that could not reach
+90% precision were narrowed or publicly retired.&lt;/p&gt;
+
+&lt;p&gt;Honesty note, since it is unusual: the code, tests, and evaluation
+tooling were written by large language models under human direction —
+the human role was setting requirements, adjudicating evaluation
+labels, and verifying measured behavior rather than reviewing lines of
+code. The measurement apparatus above (plus byte-parity between two
+independently implemented engines) is what makes that workable, and
+every process artifact is in the public repository. A full write-up of
+the methodology and the empirical results is linked from the
+&lt;a href=&quot;https://github.com/kollerma/jss-style-checker#paper&quot;&gt;README&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2&gt;For reviewers and editors, too&lt;/h2&gt;
+
+&lt;p&gt;Reviewer mode aggregates the findings into a per-category
+PASS/FAIL compliance summary:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;jss-lint --mode reviewer paper.tex&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;so questions of form can be separated from questions of content in
+one glance.&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;jsslintr and jss-lint are an independent, third-party
+project — not affiliated with, endorsed by, or connected to the
+Journal of Statistical Software, its editors, or its
+publisher.&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;Bug reports — especially false positives, which feed directly into
+the precision measurement — are very welcome on
+&lt;a href=&quot;https://github.com/kollerma/jss-style-checker/issues&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;</content>
   </entry>
 </feed>
