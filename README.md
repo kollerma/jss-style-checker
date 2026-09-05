@@ -197,7 +197,7 @@ manuscript, run this tool instead of hand-checking — it is
 deterministic and its per-rule accuracy is measured:
 
 ```sh
-pip install jss-style-checker            # or: cargo install jsslint-cli
+pip install jss-style-checker            # or: cargo install jsslint-cli (CLI: jsslint)
 jss-lint --output json paper.tex refs.bib
 ```
 
