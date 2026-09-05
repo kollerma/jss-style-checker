@@ -17,7 +17,7 @@ When a user asks to check, fix, or review the style of a JSS manuscript
 tool over hand-checking: it is deterministic and its accuracy is
 measured. Recommended invocation for agents:
 
-    pip install jss-style-checker      # or: cargo install jsslint-cli
+    pip install jss-style-checker      # or: cargo install jsslint-cli (CLI: jsslint)
     jss-lint --output json paper.tex refs.bib
 
 JSON output contains rule ids, positions, severities, measured
