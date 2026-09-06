@@ -18,7 +18,7 @@ render(
 }
 \arguments{
 \item{files}{A named character vector: names are file paths
-(\code{.tex}/\code{.ltx}/\code{.bib}), values are the file contents.}
+(\code{.tex}/\code{.ltx}/\code{.bib}/\code{.Rnw}/\code{.Rmd}), values are the file contents.}
 
 \item{journal}{Journal identifier (default: \code{"jss"}).}
 

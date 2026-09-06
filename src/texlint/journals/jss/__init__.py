@@ -9,7 +9,13 @@ from __future__ import annotations
 from dataclasses import replace
 from importlib import import_module
 
-from texlint.api import JournalRuleModule, Rule, RuleCategory
+from texlint.api import (
+    JournalMetadata,
+    JournalRuleModule,
+    Rule,
+    RuleCategory,
+    RuleSetInfo,
+)
 
 _TITLE_MAP: dict[str, str] = {
     "preamble": "Preamble",
@@ -47,6 +53,18 @@ class JSSJournal(JournalRuleModule):
                 RuleCategory(id=cat, title=_TITLE_MAP[cat], rules=rules)
             )
         return tuple(out)
+
+    def metadata(self) -> JournalMetadata:
+        from texlint.journals.jss import _catalogue_data
+
+        return JournalMetadata(
+            rule_set=RuleSetInfo(
+                version=_catalogue_data.RULESET_VERSION,
+                fingerprint=_catalogue_data.RULESET_FINGERPRINT,
+                guide_edition=_catalogue_data.GUIDE_EDITION,
+                source_vendored_at=_catalogue_data.SOURCE_VENDORED_AT,
+            )
+        )
 
 
 def _load_category_rules(category: str) -> tuple[Rule, ...]:

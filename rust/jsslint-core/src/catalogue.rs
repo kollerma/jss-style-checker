@@ -55,3 +55,20 @@ pub fn all_rules() -> &'static [RuleMeta] {
 pub fn categories() -> &'static [&'static str] {
     CATEGORIES
 }
+
+/// Rule-set provenance for the built-in `jss` journal (spec 027 item D).
+///
+/// Mirrors `JSSJournal.metadata().rule_set` on the Python side. This
+/// engine registers no other journal (a documented §IV deviation, see
+/// `rust/README.md`), so there is no per-journal dispatch here — but
+/// callers still route through `report::RuleSetInfo` so the surfaces
+/// stay identical to Python's, where a third-party journal may supply
+/// nothing.
+pub fn rule_set() -> crate::report::RuleSetInfo {
+    crate::report::RuleSetInfo {
+        version: Some(RULESET_VERSION.to_string()),
+        fingerprint: Some(RULESET_FINGERPRINT.to_string()),
+        guide_edition: Some(GUIDE_EDITION.to_string()),
+        source_vendored_at: Some(SOURCE_VENDORED_AT.to_string()),
+    }
+}

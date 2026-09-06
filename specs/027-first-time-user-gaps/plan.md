@@ -812,3 +812,38 @@ decision precedence, the strip-SGR invariant; `version-output.md`),
 | Author-mode stdout is never empty any more | The "no findings ≠ compliant" statement is the point of P0-A. | Printing it only with `--verbose` would hide it from exactly the first-time user it targets; printing it on stderr would leave a saved text report of a clean run empty, which is the unearned all-clear. Exit codes remain the CI contract. |
 | Coloured terminal bytes excluded from the byte-parity claim | Identical escape bytes across engines would cost a post-render parser, shared goldens, and Windows FFI for a stream nobody diffs. | §XIII allows documented divergences; the plain stream stays identical and both engines prove colour never changes layout. |
 | 10 rule modules reworded in the same release as the baseline (item S) | `suggestion` is a baseline-key and fingerprint input; rewording later invalidates users' baselines. | A catalogue-flagged source-line context key (1.5 d) was measured and rejected by the maintainer: whole-line context re-keys 5 of 44 persisting findings on a heavy revision, and leaves the generic messages in place. The prototype (research.md §3) confirmed S's predicted key gain (49 → 80) and set the volume cut; `WIDTH-001` is excluded because no stable identifier exists for it. |
+
+## 15. Deviations found during implementation
+
+Recorded per the implementation brief: the smallest correct thing was
+done and the plan detail is noted here. Nothing below changes a decision
+recorded in `research.md`.
+
+### Item D — version and rule-set provenance
+
+| # | Plan said | Reality | What was done |
+|---|---|---|---|
+| D-1 | "`messages.json` is generated exactly once, after S" | The fingerprint covers `messages.json`, so item D's own `--check` and guard tests cannot pass without the file existing. D lands before S by the fixed phase order. | The generator ships in D and is run there against the pre-S wording so D's PR is internally consistent; item S regenerates it once and re-stamps the date. The **shipped** 1.2.0 `messages.json` and fingerprint are the post-S ones, which is what the constraint protects. This is also the documented user-facing workflow (quickstart "Common pitfalls"). |
+| D-2 | The stamp tool "refuses when the computed fingerprint changed but the date did not" | Taken literally, a second rule-set change on the same day is unstampable: the stored date already *is* today's, so the tool would refuse forever and `--check` would stay red. | The gate is: an explicit `--ruleset-version` is **required** once the fingerprint moved, and a date may never move backwards. Re-stamping the same date is possible but never the default — the deliberate act, not the silent one, is what the policy is for. |
+| D-3 | `RuleSetInfo{version, fingerprint, guide_source, recall}` | `--version` line 3 renders `2026-09-06 (jss.cls 3.3, vendored 2021-05-23)` while JSON's `guide_source` is `jss.cls 3.3 (2021-05-23)`. Storing only the joined form would mean parsing our own string back apart. | `RuleSetInfo` stores `guide_edition` and `source_vendored_at`; `guide_source` is a derived property/method in both engines. `recall` is added in item A, where it has a producer. |
+| D-4 | Codegen emits `GUIDE_SOURCE` | The version line needs the two parts (D-3). | Codegen emits `RULESET_VERSION`, `RULESET_FINGERPRINT`, `GUIDE_EDITION`, `SOURCE_VENDORED_AT`, and the derived `GUIDE_SOURCE` — one generator, so no drift. |
+| D-5 | (not anticipated) | `JSS-PROJECT-001`'s message quotes the *resolved* (absolute) paths of the cycle, so a raw fixture snapshot would be host-specific and the fingerprint would differ per checkout. | `generate_message_snapshot.py` strips the repository prefix; what remains is the fixture-relative path, i.e. exactly the varying part of the wording. |
+| D-6 | "`JournalRuleModule.metadata()` … (item A)" | Item D needs the journal seam for `--version` line 3, and §14 forbids new lazy `journals.jss` imports in output/CLI code. | `metadata()` and `JournalMetadata` land in D carrying `rule_set` only; item A adds `recall_by_rule` and `coverage` to the same object. No shim, no temporary field. |
+| D-7 | `bash r/jsslintr/tools/vendor-jsslint-core.sh` after every core change | That script refreshes the **R package's** vendored copy only. `rust/jsslint-core/specs/003-jss-rule-catalogue/` (the crate's own copy, which `build.rs` reads from a crates.io tarball and which `tests/unit/test_vendored_catalogue_in_sync.py` guards) has no script and must be copied by hand. | Both copies are refreshed; the sync test catches the omission. Worth a follow-up: fold the crate copy into the same script. |
+
+### Environment
+
+- The brief says `.venv-host` holds the real interpreter. In this
+  container it does not: `.venv-host/bin/python` symlinks to
+  `/opt/homebrew/opt/python@3.14` (the macOS host's path) and cannot
+  execute. `.venv` is the working environment (CPython 3.11.2) and is
+  what every gate below was run with.
+- The §IX coverage command in the brief
+  (`pytest tests/unit/journals/jss/ --cov=…/rules --cov-fail-under=100`)
+  measures 17 %: the rule unit tests live in `tests/unit/rules/`, not
+  under `tests/unit/journals/jss/`. Run over the **whole** suite the
+  same measurement is 93.3 % branch coverage, and **every** rule module
+  is below 100 % — on the untouched branch, before any 1.2.0 code. The
+  §IX gate is therefore not met by the repository as it stands and no
+  CI job runs it. Flagged for item S, which is the first item to touch
+  rule modules; see the report accompanying that item.

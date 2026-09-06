@@ -20,6 +20,7 @@ from .api import (
     JournalNotFoundError,
     ParsedDocument,
     ParsedProject,
+    RuleSetInfo,
     ToolConfig,
 )
 from .config import load as load_config
@@ -30,6 +31,7 @@ from .core.engine import (
     resolve_project,
     run,
 )
+from .version import format_rule_set, format_version_block
 
 _SUPPORTED_SUFFIXES = {".tex", ".ltx", ".bib", ".rnw", ".rmd"}
 # Spec 013: auto-resolve triggers only for a single positional argument
@@ -180,6 +182,40 @@ def _determine_exit_code(report: Any, fail_on: str = "info") -> int:
     return 0
 
 
+def _print_version(journal: str | None) -> None:
+    """Print the four-line ``--version`` block (contract: version-output.md).
+
+    Deliberately not eager: ``.jss-lint.toml`` and ``--journal`` are
+    resolved first, so lines 3 and 4 describe the rule set this
+    invocation would actually apply. An unregistered journal is reported,
+    not an error — asking a tool what it is must never fail.
+    """
+    try:
+        cfg = load_config({"journal": journal} if journal else {}, Path.cwd())
+    except Exception as exc:  # pragma: no cover - defensive; matches the lint path
+        _eprint(f"jss-lint: failed to load .jss-lint.toml: {exc}")
+        sys.exit(2)
+
+    try:
+        metadata = load_journal(cfg.journal).metadata()
+    except (JournalNotFoundError, InvalidJournalError):
+        journal_line = f"{cfg.journal} (not registered)"
+        rule_set = format_rule_set(RuleSetInfo())
+    else:
+        journal_line = cfg.journal
+        rule_set = format_rule_set(metadata.rule_set)
+
+    click.echo(
+        format_version_block(
+            tool=__version__,
+            engine="texlint/python",
+            rule_set=rule_set,
+            journal=journal_line,
+        ),
+        nl=False,
+    )
+
+
 def _lint_paths(paths: tuple[str, ...]) -> tuple[Any, ToolConfig]:
     """Shared lint pipeline used by ``init`` and ``report`` subcommands.
 
@@ -222,7 +258,6 @@ def _lint_paths_with_doc(
     name="jss-lint",
     invoke_without_command=True,
 )
-@click.version_option(__version__, prog_name="jss-lint")
 @click.option(
     "--journal",
     "journal",
@@ -344,6 +379,16 @@ def _lint_paths_with_doc(
         "(recommended when using --crossref)."
     ),
 )
+@click.option(
+    "--version",
+    "version",
+    is_flag=True,
+    default=False,
+    help=(
+        "Print the tool, engine, rule-set, and journal versions, then exit. "
+        "Not eager: .jss-lint.toml and --journal are honoured first."
+    ),
+)
 @click.argument("paths", nargs=-1, type=click.Path(path_type=str))
 @click.pass_context
 def main(
@@ -363,6 +408,7 @@ def main(
     no_resolve: bool,
     crossref: bool,
     crossref_mailto: str | None,
+    version: bool,
     paths: tuple[str, ...],
 ) -> None:
     """Lint LaTeX/BibTeX manuscripts against journal style guides.
@@ -390,6 +436,10 @@ def main(
         sub_ctx = sub.make_context(paths[0], list(paths[1:]), parent=ctx)
         with sub_ctx:
             sub.invoke(sub_ctx)
+        return
+
+    if version:
+        _print_version(journal)
         return
 
     if not paths:

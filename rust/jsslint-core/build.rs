@@ -17,6 +17,14 @@ use std::path::PathBuf;
 struct CatalogueDoc {
     categories: Vec<String>,
     rules: Vec<RawRule>,
+    /// Rule-set provenance (spec 027 item D). Never recomputed here:
+    /// the fingerprint is computed by `tools/generate_catalogue_data.py`
+    /// (it covers `messages.json`, which is Python-only) and embedded
+    /// verbatim, so both engines report the same string.
+    guide_edition: String,
+    ruleset_version: String,
+    ruleset_fingerprint: String,
+    source_vendored_at: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -92,6 +100,12 @@ fn main() {
     let doc: CatalogueDoc = serde_yaml::from_str(&yaml_src)
         .unwrap_or_else(|e| panic!("failed to parse {}: {e}", catalogue_path.display()));
     let categories = doc.categories;
+    let doc_provenance = (
+        doc.ruleset_version,
+        doc.ruleset_fingerprint,
+        doc.guide_edition,
+        doc.source_vendored_at,
+    );
 
     // Deterministic (alphabetical by rule_id) so codegen output is stable
     // across runs regardless of catalogue.yaml's on-disk rule order.
@@ -151,6 +165,24 @@ fn main() {
         out.push_str("    },\n");
     }
     out.push_str("];\n\n");
+
+    out.push_str("// Rule-set provenance, from catalogue.yaml (spec 027 item D).\n");
+    out.push_str(&format!(
+        "pub static RULESET_VERSION: &str = {:?};\n",
+        doc_provenance.0
+    ));
+    out.push_str(&format!(
+        "pub static RULESET_FINGERPRINT: &str = {:?};\n",
+        doc_provenance.1
+    ));
+    out.push_str(&format!(
+        "pub static GUIDE_EDITION: &str = {:?};\n",
+        doc_provenance.2
+    ));
+    out.push_str(&format!(
+        "pub static SOURCE_VENDORED_AT: &str = {:?};\n\n",
+        doc_provenance.3
+    ));
 
     out.push_str("// Rollout order, from catalogue.yaml's top-level `categories` field.\n");
     out.push_str("pub static CATEGORIES: &[&str] = &[\n");

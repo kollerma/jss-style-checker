@@ -52,7 +52,17 @@ CATEGORY_PREFIX: Mapping[str, str] = {
 }
 
 REQUIRED_TOP_KEYS: frozenset[str] = frozenset(
-    {"version", "source_vendored_at", "categories", "rules"}
+    {
+        "version",
+        "source_vendored_at",
+        "categories",
+        "rules",
+        # Rule-set provenance (spec 027 D4). Required so a catalogue can
+        # never ship without a rule-set date users' baselines can name.
+        "guide_edition",
+        "ruleset_version",
+        "ruleset_fingerprint",
+    }
 )
 
 OPTIONAL_TOP_KEYS: frozenset[str] = frozenset(
@@ -106,6 +116,8 @@ OPTIONAL_RULE_KEYS: frozenset[str] = frozenset(
 ALL_RULE_KEYS: frozenset[str] = REQUIRED_RULE_KEYS | OPTIONAL_RULE_KEYS
 
 _RULE_ID_RE = re.compile(r"^JSS-[A-Z]+-\d{3}$")
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_FINGERPRINT_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _WEB_ANCHOR_RE = re.compile(r"^#?[a-z0-9][a-z0-9-]*$")
 
 
@@ -176,6 +188,7 @@ def validate(
         errors.append(
             CatalogueError("top-level", "source_vendored_at must be a non-empty string")
         )
+    errors.extend(_validate_ruleset_provenance(doc))
 
     categories = doc["categories"]
     if not isinstance(categories, list) or not all(isinstance(c, str) for c in categories):
@@ -228,6 +241,41 @@ def validate(
         )
     )
 
+    return errors
+
+
+def _validate_ruleset_provenance(doc: Mapping[str, Any]) -> Iterable[CatalogueError]:
+    """Shape checks for the three spec-027 provenance keys.
+
+    Only shape is checked here. That the stored fingerprint still equals
+    the computed one is a separate, more expensive check owned by
+    ``tools.generate_catalogue_data --check`` (it has to read
+    ``messages.json``), so a format-only lint in a sandbox without the
+    fixtures still validates the document.
+    """
+    errors: list[CatalogueError] = []
+    edition = doc["guide_edition"]
+    if not isinstance(edition, str) or not edition:
+        errors.append(
+            CatalogueError("top-level", "guide_edition must be a non-empty string")
+        )
+    version = doc["ruleset_version"]
+    if not isinstance(version, str) or not _ISO_DATE_RE.match(version):
+        errors.append(
+            CatalogueError(
+                "top-level",
+                f"ruleset_version must be an ISO date (YYYY-MM-DD), got {version!r}",
+            )
+        )
+    fingerprint = doc["ruleset_fingerprint"]
+    if not isinstance(fingerprint, str) or not _FINGERPRINT_RE.match(fingerprint):
+        errors.append(
+            CatalogueError(
+                "top-level",
+                "ruleset_fingerprint must look like 'sha256:<64 lowercase hex>', "
+                f"got {fingerprint!r}",
+            )
+        )
     return errors
 
 

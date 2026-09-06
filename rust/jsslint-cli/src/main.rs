@@ -77,7 +77,7 @@ const PARSE_RULE_ID: &str = "JSS-PARSE-000";
 const RESOLVE_ROOT_SUFFIXES: &[&str] = &[".ltx", ".rmd", ".rnw", ".tex"];
 
 #[derive(Parser)]
-#[command(name = "jss-lint", version, about = "JSS LaTeX/BibTeX style checker")]
+#[command(name = "jss-lint", about = "JSS LaTeX/BibTeX style checker")]
 struct Cli {
     /// Files or directories to lint.
     paths: Vec<String>,
@@ -139,6 +139,14 @@ struct Cli {
     /// using --crossref).
     #[arg(long = "crossref-mailto")]
     crossref_mailto: Option<String>,
+
+    /// Print the tool, engine, rule-set, and journal versions, then exit.
+    /// Not clap's built-in `version` flag: that one is eager, and this
+    /// block reports the journal `.jss-lint.toml`/`--journal` selects,
+    /// so it must be handled after the config is loaded (mirrors
+    /// `cli.py`'s dropped `click.version_option`).
+    #[arg(long)]
+    version: bool,
 }
 
 /// Subcommand names this port currently registers. Mirrors `cli.py`'s
@@ -616,6 +624,46 @@ fn main() -> ExitCode {
     run_lint()
 }
 
+/// Prints the four-line `--version` block (contract:
+/// `specs/027-first-time-user-gaps/contracts/version-output.md`).
+///
+/// Mirrors `cli.py::_print_version`: config is loaded first so
+/// `.jss-lint.toml` and `--journal` are honoured, and an unregistered
+/// journal is reported rather than treated as an error — asking a tool
+/// what it is must never fail. Only `jss` is registered in this engine
+/// (documented §IV deviation), so anything else is "not registered".
+fn print_version(journal: Option<&str>) -> ExitCode {
+    let overrides = RawOverrides {
+        journal: journal.map(str::to_string),
+        ..Default::default()
+    };
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let config = config::load(&cwd, &overrides);
+
+    let (rule_set, journal_line) = if config.journal == "jss" {
+        (
+            jsslint_core::version::format_rule_set(&catalogue::rule_set()),
+            config.journal.clone(),
+        )
+    } else {
+        (
+            jsslint_core::version::format_rule_set(&Default::default()),
+            format!("{} (not registered)", config.journal),
+        )
+    };
+
+    print!(
+        "{}",
+        jsslint_core::version::format_block(
+            env!("CARGO_PKG_VERSION"),
+            "jsslint-core/rust",
+            &rule_set,
+            &journal_line,
+        )
+    );
+    ExitCode::from(0)
+}
+
 fn run_lint() -> ExitCode {
     let mut cli = Cli::parse();
     // See `run_explain`'s comment on `ignore_case = true`: clap preserves
@@ -625,6 +673,10 @@ fn run_lint() -> ExitCode {
     cli.output = cli.output.map(|s| s.to_lowercase());
     cli.min_confidence = cli.min_confidence.map(|s| s.to_lowercase());
     cli.fail_on = cli.fail_on.map(|s| s.to_lowercase());
+
+    if cli.version {
+        return print_version(cli.journal.as_deref());
+    }
 
     if cli.paths.is_empty() {
         eprint_line("jss-lint: at least one FILE argument is required.");

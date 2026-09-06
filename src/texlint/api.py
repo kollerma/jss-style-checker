@@ -437,6 +437,49 @@ class ParsedProject:
     missing: tuple[ResolvedReference, ...] = ()
 
 
+@dataclass(frozen=True)
+class RuleSetInfo:
+    """Provenance of a journal's rule set (spec 027 item D).
+
+    ``version`` is a date, not a semantic version: it names *which* rule
+    set produced a finding, which is what a baseline file stamps and
+    ``--version`` prints. ``fingerprint`` is what forces that date to
+    move when a rule or its wording changes. The two guide fields are
+    kept apart rather than pre-joined because the two renderings differ:
+    ``--version`` writes ``jss.cls 3.3, vendored 2021-05-23`` while JSON
+    and the report carry :attr:`guide_source`.
+
+    A journal that ships no provenance leaves every field ``None``; the
+    surfaces then render ``n/a`` (``--version``) or ``null`` (JSON).
+    """
+
+    version: str | None = None
+    fingerprint: str | None = None
+    guide_edition: str | None = None
+    source_vendored_at: str | None = None
+
+    @property
+    def guide_source(self) -> str | None:
+        if self.guide_edition is None:
+            return None
+        if self.source_vendored_at is None:
+            return self.guide_edition
+        return f"{self.guide_edition} ({self.source_vendored_at})"
+
+
+@dataclass(frozen=True)
+class JournalMetadata:
+    """Journal-level facts that no rule decides on, but users read.
+
+    Supplied by :meth:`JournalRuleModule.metadata`, copied onto the
+    :class:`ComplianceReport` by the engine, and read from there by the
+    renderers — so no renderer imports a journal package (Constitution
+    §IV).
+    """
+
+    rule_set: RuleSetInfo = RuleSetInfo()
+
+
 class JournalRuleModule(ABC):
     id: ClassVar[str]
 
@@ -446,6 +489,14 @@ class JournalRuleModule(ABC):
 
     def rules(self) -> tuple[Rule, ...]:
         return tuple(r for c in self.categories() for r in c.rules)
+
+    def metadata(self) -> JournalMetadata:
+        """Provenance and measurement facts about this journal's rules.
+
+        Non-abstract: a third-party journal that supplies nothing keeps
+        working and its surfaces degrade to ``n/a`` / ``null``.
+        """
+        return JournalMetadata()
 
 
 class JournalNotFoundError(LookupError):
