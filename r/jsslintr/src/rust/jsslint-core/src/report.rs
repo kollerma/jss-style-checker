@@ -191,6 +191,32 @@ pub struct SkippedRule {
     pub reason: String,
 }
 
+/// Provenance of a journal's rule set — mirrors `api.RuleSetInfo`.
+///
+/// Every field is optional so a journal without provenance renders
+/// `n/a` / `null` exactly as the Python reference does for a
+/// third-party journal that supplies no metadata.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct RuleSetInfo {
+    pub version: Option<String>,
+    pub fingerprint: Option<String>,
+    pub guide_edition: Option<String>,
+    pub source_vendored_at: Option<String>,
+}
+
+impl RuleSetInfo {
+    /// `"jss.cls 3.3 (2021-05-23)"` — the report/JSON rendering.
+    /// `--version` lays the same two parts out differently, which is why
+    /// they are stored apart. Mirrors `RuleSetInfo.guide_source`.
+    pub fn guide_source(&self) -> Option<String> {
+        let edition = self.guide_edition.as_ref()?;
+        Some(match &self.source_vendored_at {
+            Some(date) => format!("{edition} ({date})"),
+            None => edition.clone(),
+        })
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ComplianceReport {
     pub tool_version: String,

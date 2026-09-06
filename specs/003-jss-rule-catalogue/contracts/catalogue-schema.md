@@ -11,6 +11,9 @@ Exactly one YAML mapping at the document root, with exactly these keys:
 ```yaml
 version: 1
 source_vendored_at: "2021-05-23"
+guide_edition: "jss.cls 3.3"
+ruleset_version: "2026-09-06"
+ruleset_fingerprint: "sha256:e31a6e94...f40fb"
 categories:
   - preamble
   - structure
@@ -38,6 +41,9 @@ rules:
 | `source_vendored_at` | str (ISO-8601 date) | Required. The vendored `docs/jss-template/jss.cls`'s `\filedate`. Updated when the annual re-fetch lands. |
 | `categories` | list[str] | Required. The pinned category list (FR-005). A category may be added, merged, or dropped here; rule rows must then align. |
 | `rules` | list[mapping] | Required. The rule rows. Order here is irrelevant — `render_catalogue.py` sorts on output. |
+| `guide_edition` | str | Required (spec 027 item D). The dated edition of the primary authority the rule set derives from, e.g. `"jss.cls 3.3"`. The prose style guide has no edition; per-source fetch dates live in `guide-coverage.yaml`. |
+| `ruleset_version` | str (ISO-8601 date) | Required (spec 027 item D). Names *which* rule set produced a finding: printed by `jss-lint --version`, stamped into baseline files, and reported back when a user's baseline was written for an older set. Must be ≥ `source_vendored_at` and ≤ today. Never hand-edited — see the stamping command below. |
+| `ruleset_fingerprint` | str (`sha256:<64 hex>`) | Required (spec 027 item D). Hash over the canonical JSON of every active rule's `{rule_id, category, severity, description, guide_section, confidence, auto_fixable}` **and** `messages.json` (the message/suggestion wording the reference engine emits on the per-rule fixtures). Wording is in scope because baseline entries are keyed on it. Never hand-edited. |
 | `retired_rule_ids` | list[str] | Optional. Ids permanently reserved per FR-004 (never reused by any active rule). Each entry matches `^JSS-[A-Z]+-\d{3}$`, is unique within the list, and is disjoint from the set of active `rule_id`s. Added 2026-04-23 via a spec-004 amendment so the catalogue-consistency test in spec 004 can identify retirements programmatically rather than parsing a comment block. |
 
 ## Per-rule fields
@@ -197,3 +203,23 @@ Every invariant below is enforced by `tests/unit/journals/jss/test_catalogue.py`
     AST for \emph macros whose argument matches the bibkey regex
     ^[A-Za-z][A-Za-z0-9_-]*\d{4}$.
 ```
+
+
+## Stamping the rule set (spec 027 item D)
+
+`ruleset_version` and `ruleset_fingerprint` are generated, never typed:
+
+```sh
+python -m tools.generate_message_snapshot                 # refresh messages.json
+python -m tools.generate_catalogue_data \
+    --stamp-fingerprint --ruleset-version YYYY-MM-DD      # re-stamp + regenerate
+python -m tools.generate_catalogue_data --check           # what CI runs
+```
+
+The stamp command refuses to run without an explicit `--ruleset-version`
+once the fingerprint has moved, and refuses a date older than the stored
+one. That is the policy gate: a rule, a severity, or the wording users'
+baselines key on cannot change without a visible rule-set date change.
+Consequently a patch release may only make findings *disappear*; adding
+a rule, rewording a message or suggestion, or changing a severity or
+tier is a minor release (`docs/versions.md`).

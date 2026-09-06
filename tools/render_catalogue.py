@@ -139,6 +139,11 @@ def _emit_header(
     )
     out.append(f"**Schema version**: {doc['version']}  \n")
     out.append(
+        f"**Rule set**: {doc['ruleset_version']} "
+        f"({doc['guide_edition']}, vendored {doc['source_vendored_at']})  \n"
+    )
+    out.append(f"**Rule-set fingerprint**: `{doc['ruleset_fingerprint']}`  \n")
+    out.append(
         f"**Vendored sources**: `docs/jss-template/jss.cls` dated "
         f"{doc['source_vendored_at']}  \n"
     )

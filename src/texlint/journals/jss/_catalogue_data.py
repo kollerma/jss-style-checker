@@ -803,6 +803,15 @@ DETERMINISTIC_RULE_IDS: frozenset[str] = frozenset({
     'JSS-XREF-004',
 })
 
+# Rule-set provenance (spec 027 item D). GUIDE_SOURCE is the
+# report/JSON rendering; GUIDE_EDITION and SOURCE_VENDORED_AT are its
+# parts, which `--version` line 3 lays out differently.
+RULESET_VERSION: str = '2026-09-06'
+RULESET_FINGERPRINT: str = 'sha256:e31a6e940447389a1c775cf12eb6c9ca047d0072a85659fd3d25480c749f40fb'
+GUIDE_EDITION: str = 'jss.cls 3.3'
+SOURCE_VENDORED_AT: str = '2021-05-23'
+GUIDE_SOURCE: str = 'jss.cls 3.3 (2021-05-23)'
+
 # Rollout order (from catalogue.yaml top-level categories field).
 ROLLOUT_ORDER: tuple[str, ...] = (
     'preamble',

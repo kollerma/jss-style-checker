@@ -201,3 +201,28 @@ pub fn analyze(request: JsValue) -> Result<JsValue, JsValue> {
     serde_wasm_bindgen::to_value(&out)
         .map_err(|e| JsValue::from_str(&format!("failed to serialize analyze result: {e}")))
 }
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WasmVersion {
+    tool: &'static str,
+    engine: &'static str,
+    ruleset_version: Option<String>,
+    guide_source: Option<String>,
+}
+
+/// Which engine and which rule set this bundle carries (spec 027 item D,
+/// contracts/version-output.md C-4): the same facts `jsslint --version`
+/// prints, minus the journal line (this binding is always `jss`). Lets a
+/// page show the rule-set date its results were produced under.
+#[wasm_bindgen]
+pub fn version() -> Result<JsValue, JsValue> {
+    let rule_set = jsslint_core::catalogue::rule_set();
+    serde_wasm_bindgen::to_value(&WasmVersion {
+        tool: env!("CARGO_PKG_VERSION"),
+        engine: "jsslint-core/rust",
+        ruleset_version: rule_set.version.clone(),
+        guide_source: rule_set.guide_source(),
+    })
+    .map_err(|e| JsValue::from_str(&format!("failed to serialize version: {e}")))
+}

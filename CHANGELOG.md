@@ -6,6 +6,36 @@ JSON-output shape (see
 `specs/001-linter-foundation/contracts/json-output.md`) require a major
 version bump and an entry in this file — see the spec's Clarification Q2.
 
+The **rule set** carries its own date, printed by `jss-lint --version` and
+stamped into baseline files. A patch release may only make findings
+disappear; a minor release may add rules or reword messages and
+suggestions, which bumps that date and means baseline entries for the
+reworded rules go stale — re-run `--update-baseline`. Channel-by-channel
+version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
+
+## [Unreleased]
+
+### Added
+
+- **Rule-set provenance.** `catalogue.yaml` now carries a dated
+  `ruleset_version`, a `ruleset_fingerprint` over every active rule's
+  contract fields *and* the message/suggestion wording, and the
+  `guide_edition` the rules derive from. A rewording can no longer ship
+  without a visible rule-set date change, which matters because baseline
+  entries are keyed on that wording.
+- **`--version` prints a four-line block** in both CLIs — tool, engine,
+  rule set with its authority edition, and the effective journal — after
+  `.jss-lint.toml` and `--journal` are resolved, so it reports the rule
+  set the invocation would actually apply. The two engines differ only
+  in the engine line.
+- **Version functions in every binding**: `version()` in the WASM build,
+  `jsslint.version()` / `jsslint.__version__` in the PyO3 wheel, and
+  `jsslintr::jsslint_version()` in R, which additionally reports the
+  CRAN package version (`1.2.0-N`) alongside the engine it wraps.
+- **[`docs/versions.md`](docs/versions.md)**: the distribution → engine →
+  rule-set mapping for all seven channels, each channel's version-string
+  constraints, the compatibility policy, and what to pin.
+
 ## [1.1.0] — 2026-07-19
 
 ### Added

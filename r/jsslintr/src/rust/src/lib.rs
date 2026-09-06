@@ -434,9 +434,27 @@ fn fix_data(
     ]))
 }
 
+/// Engine and rule-set provenance backing `jsslint_version()` —
+/// internal; the R wrapper adds the package version (which may carry a
+/// CRAN resubmission suffix, e.g. "1.2.0-1", the one sanctioned
+/// deviation from single-source versioning). Spec 027 item D,
+/// contracts/version-output.md C-4.
+/// @noRd
+#[extendr]
+fn version_data() -> List {
+    let rule_set = catalogue::rule_set();
+    List::from_pairs([
+        ("tool", Robj::from(env!("CARGO_PKG_VERSION"))),
+        ("engine", Robj::from("jsslint-core/rust")),
+        ("ruleset_version", Robj::from(rule_set.version.clone())),
+        ("guide_source", Robj::from(rule_set.guide_source())),
+    ])
+}
+
 extendr_module! {
     mod jsslintr;
     fn render;
     fn lint_data;
     fn fix_data;
+    fn version_data;
 }

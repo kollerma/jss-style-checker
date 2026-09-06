@@ -308,3 +308,66 @@ class TestDiff:
         result = runner.invoke(main, ["diff", str(old), str(new)])
         assert result.exit_code == 2
         assert "missing key" in result.stderr.lower()
+
+
+# ---------------------------------------------------------------- version ----
+
+
+class TestVersion:
+    """Contract: specs/027-first-time-user-gaps/contracts/version-output.md."""
+
+    def test_four_line_block(self, runner: CliRunner) -> None:
+        from texlint import __version__
+        from texlint.journals.jss import _catalogue_data
+
+        result = runner.invoke(main, ["--version"])
+        assert result.exit_code == 0, result.stderr
+        assert result.stdout == (
+            f"jss-lint {__version__}\n"
+            f"engine: texlint/python {__version__}\n"
+            f"rule set: {_catalogue_data.RULESET_VERSION} "
+            f"({_catalogue_data.GUIDE_EDITION}, vendored "
+            f"{_catalogue_data.SOURCE_VENDORED_AT})\n"
+            "journal: jss\n"
+        )
+
+    def test_explicit_jss_journal_matches_the_default(
+        self, runner: CliRunner
+    ) -> None:
+        default = runner.invoke(main, ["--version"])
+        explicit = runner.invoke(main, ["--version", "--journal", "jss"])
+        assert explicit.exit_code == 0
+        assert explicit.stdout == default.stdout
+
+    def test_registered_journal_without_metadata_reports_n_a(
+        self, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(main, ["--version", "--journal", "stub"])
+        assert result.exit_code == 0, result.stderr
+        lines = result.stdout.splitlines()
+        assert lines[2] == "rule set: n/a"
+        assert lines[3] == "journal: stub"
+
+    def test_unregistered_journal_still_exits_zero(
+        self, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(main, ["--version", "--journal", "nope"])
+        assert result.exit_code == 0, result.stderr
+        lines = result.stdout.splitlines()
+        assert lines[2] == "rule set: n/a"
+        assert lines[3] == "journal: nope (not registered)"
+
+    def test_toml_journal_is_honoured(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """`--version` is not eager: config is loaded before it prints."""
+        (tmp_path / ".jss-lint.toml").write_text(
+            'journal = "nope"\n', encoding="utf-8"
+        )
+        with runner.isolated_filesystem(temp_dir=tmp_path) as cwd:
+            (Path(cwd) / ".jss-lint.toml").write_text(
+                'journal = "nope"\n', encoding="utf-8"
+            )
+            result = runner.invoke(main, ["--version"])
+        assert result.exit_code == 0, result.stderr
+        assert result.stdout.splitlines()[3] == "journal: nope (not registered)"

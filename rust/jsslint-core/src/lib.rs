@@ -25,6 +25,7 @@ pub mod sarif;
 pub mod terminal;
 pub mod terms;
 pub mod tex;
+pub mod version;
 
 pub use catalogue::{lookup as lookup_rule, RuleMeta};
 pub use report::{

@@ -34,6 +34,32 @@
 version: 1
 source_vendored_at: "2021-05-23"
 
+# Rule-set provenance (spec 027 item D). These three keys are DATA, not a
+# suite version (Constitution §XV governs `VERSION`, not this file):
+#
+#   guide_edition        the dated edition of the primary authority the rule
+#                        set derives from. The prose style guide has no
+#                        edition, so the honest pin is the vendored jss.cls;
+#                        per-source fetch dates live in guide-coverage.yaml.
+#   ruleset_version      ISO date, bumped whenever ruleset_fingerprint
+#                        changes. Printed by `jss-lint --version`, stamped
+#                        into baseline files, and reported back to users
+#                        when their baseline was written for an older set.
+#   ruleset_fingerprint  sha256 over the catalogue-declared contract fields
+#                        of every active rule AND the message/suggestion
+#                        wording the reference engine emits on the per-rule
+#                        fixtures (specs/003-jss-rule-catalogue/messages.json).
+#                        Wording is in scope because baseline entries are
+#                        keyed on it.
+#
+# Never hand-edit the two generated values; run
+#   python -m tools.generate_catalogue_data \
+#       --stamp-fingerprint --ruleset-version YYYY-MM-DD
+# which refuses to keep the date when the fingerprint moved.
+guide_edition: "jss.cls 3.3"
+ruleset_version: "2026-09-06"
+ruleset_fingerprint: "sha256:e31a6e940447389a1c775cf12eb6c9ca047d0072a85659fd3d25480c749f40fb"
+
 # Retired rule ids — structured field read by tools/_catalogue_validate.py and
 # the catalogue-consistency test. Every id here is permanently reserved per
 # FR-004 and MUST NOT appear in the active `rules:` list. The top-of-file

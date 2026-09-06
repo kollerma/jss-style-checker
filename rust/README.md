@@ -133,6 +133,23 @@ present unfixed through 0.11.x, and the 0.12.0 rewrite that does fix it has
 a completely different, incompatible API that `genpdf` 0.2.0 can't consume.
 See `rust/vendor/printpdf-0.3.4/NOTICE.md` for the full writeup.
 
+`jsslint --version` prints the same four-line block the Python CLI does
+— tool version, engine, rule set with the authority edition it derives
+from, and the effective journal — after `.jss-lint.toml` and `--journal`
+are resolved. **Line 2 is the one deliberate divergence**: this engine
+prints `engine: jsslint-core/rust <v>` where Python prints
+`engine: texlint/python <v>`. Lines 1, 3, and 4 are byte-identical and
+`rust/jsslint-cli/tests/version_parity.rs` compares them with line 2
+masked. The rule-set date is embedded at build time from
+`specs/003-jss-rule-catalogue/catalogue.yaml`; this engine never
+recomputes the fingerprint (its wording half, `messages.json`, is
+produced by the Python reference), it embeds the stored string, and the
+vendored-catalogue sync test keeps the two equal. The same facts are
+exported by the bindings: `version()` (WASM), `jsslint.version()` /
+`jsslint.__version__` (PyO3), `jsslint_version()` (R, which also reports
+the CRAN package version and its resubmission suffix). See
+`docs/versions.md`.
+
 `jsslint lsp` starts a synchronous LSP 3.17 server over stdio (diagnostics +
 code actions + workspace edits) for any editor with an LSP client. (The
 project's own VS Code extension does NOT use it — it runs the WASM build

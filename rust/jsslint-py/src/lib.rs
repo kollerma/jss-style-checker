@@ -11,9 +11,10 @@
 
 use jsslint_core::config::{self, RawOverrides};
 use jsslint_core::engine::ParsedDocument;
-use jsslint_core::{engine, html_output, json_output, sarif, terminal};
+use jsslint_core::{catalogue, engine, html_output, json_output, sarif, terminal};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
 /// Lints `files` (a list of `(path, contents)` pairs — `path`'s
 /// extension dispatches `.tex`/`.ltx`/`.rnw` to the LaTeX parser,
@@ -82,8 +83,25 @@ fn render(
     Ok(rendered)
 }
 
+/// Which engine and which rule set this wheel carries (spec 027 item D,
+/// contracts/version-output.md C-4). Same four facts `jsslint --version`
+/// prints, as a dict — a caller pinning the wheel can check the rule-set
+/// date its baselines were written for without shelling out.
+#[pyfunction]
+fn version(py: Python<'_>) -> PyResult<Py<PyDict>> {
+    let rule_set = catalogue::rule_set();
+    let out = PyDict::new(py);
+    out.set_item("tool", env!("CARGO_PKG_VERSION"))?;
+    out.set_item("engine", "jsslint-core/rust")?;
+    out.set_item("rulesetVersion", rule_set.version.clone())?;
+    out.set_item("guideSource", rule_set.guide_source())?;
+    Ok(out.unbind())
+}
+
 #[pymodule]
 fn jsslint(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(render, m)?)?;
+    m.add_function(wrap_pyfunction!(version, m)?)?;
+    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
 }
