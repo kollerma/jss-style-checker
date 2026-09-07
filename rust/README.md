@@ -150,6 +150,14 @@ exported by the bindings: `version()` (WASM), `jsslint.version()` /
 the CRAN package version and its resubmission suffix). See
 `docs/versions.md`.
 
+`jsslint --fix` behaves exactly as `jss-lint --fix` does, including the
+closing receipt (`Applied 3 fixes to 1 file (1 skipped: conflict 1).`,
+or the `Dry run: …` form), which `fix_parity.rs` compares across write,
+dry-run, and interactive modes. Neither engine reads or changes
+version-control state: commit first, or preview with `--dry-run`. Writes
+are atomic and every applied fix is re-validated against its own rule,
+with a rollback if it re-triggers.
+
 `jsslint --baseline FILE` / `--update-baseline` implement spec 027's
 baseline mode, byte-compatible with the Python CLI's: a file written by
 either engine is read by the other, and `--update-baseline` produces

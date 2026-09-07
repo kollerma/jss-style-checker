@@ -212,12 +212,12 @@ jss5342 replay reports the recorded matched/stale/new counts.
 
 **Independent Test**: `fix_parity.rs` asserts the line for write, dry-run, and interactive modes.
 
-- [ ] T076 [P] [US5] Failing assertions for the summary line in `tests/integration/test_cli_fix_apply.py`
-- [ ] T077 [US5] Emit the summary line at the end of `apply_fixes` in `src/texlint/core/fixer.py` (stdout, before the report render)
-- [ ] T078 [US5] Mirror it in `rust/jsslint-core/src/fixer.rs` / `rust/jsslint-cli/src/main.rs`
-- [ ] T079 [US5] Extend `rust/jsslint-cli/tests/fix_parity.rs` to cover write, dry-run, and interactive modes
-- [ ] T080 [P] [US5] "Before `--fix`" sections in `README.md`, `rust/README.md`, and the R vignette under `r/jsslintr/vignettes/`
-- [ ] T081 [US5] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
+- [x] T076 [P] [US5] Failing assertions for the summary line in `tests/integration/test_cli_fix_apply.py`
+- [x] T077 [US5] Emit the summary line at the end of `apply_fixes` in `src/texlint/core/fixer.py` (stdout, before the report render)
+- [x] T078 [US5] Mirror it in `rust/jsslint-core/src/fixer.rs` / `rust/jsslint-cli/src/main.rs`
+- [x] T079 [US5] Extend `rust/jsslint-cli/tests/fix_parity.rs` to cover write, dry-run, and interactive modes
+- [x] T080 [P] [US5] "Before `--fix`" sections in `README.md`, `rust/README.md`, and the R vignette under `r/jsslintr/vignettes/`
+- [x] T081 [US5] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
 
 **Checkpoint**: fix receipt visible in both CLIs
 

@@ -48,14 +48,35 @@ struct Outcome {
 }
 
 fn run_fix(bin: &str, scratch: &Path, file_name: &str, extra_args: &[&str]) -> Outcome {
+    run_fix_with_stdin(bin, scratch, file_name, extra_args, "")
+}
+
+fn run_fix_with_stdin(
+    bin: &str,
+    scratch: &Path,
+    file_name: &str,
+    extra_args: &[&str],
+    stdin: &str,
+) -> Outcome {
+    use std::io::Write;
+    use std::process::Stdio;
+
     let mut cmd = Command::new(bin);
     cmd.arg("--fix").arg("--output").arg("json");
     cmd.args(extra_args);
     cmd.arg(file_name);
     cmd.current_dir(scratch);
-    let output = cmd
-        .output()
+    cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    let mut child = cmd
+        .spawn()
         .unwrap_or_else(|e| panic!("failed to run {bin}: {e}"));
+    child
+        .stdin
+        .as_mut()
+        .expect("piped stdin")
+        .write_all(stdin.as_bytes())
+        .expect("write stdin");
+    let output = child.wait_with_output().expect("wait for child");
     let file_after = fs::read_to_string(scratch.join(file_name)).unwrap_or_default();
     Outcome {
         stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
@@ -294,6 +315,55 @@ fn fix_rule_filter_and_unknown_rule_match_python_cli() {
         }
         if expected.file_after != original || actual.file_after != original {
             mismatches.push("unknown-rule: file was unexpectedly modified".to_string());
+        }
+    }
+
+    assert!(
+        mismatches.is_empty(),
+        "{} mismatches:\n{}",
+        mismatches.len(),
+        mismatches.join("\n---\n")
+    );
+}
+
+/// Interactive mode (`--fix --apply`), which spec 027 item C's summary
+/// line also has to cover: the prompt stream, the accepted fixes, and
+/// the closing receipt must all match. `a` accepts the rest of the
+/// file's fixes, so one scripted keystroke exercises the whole pass.
+#[test]
+fn fix_interactive_matches_python_cli() {
+    let root = repo_root();
+    let jss_lint = root.join(".venv/bin/jss-lint");
+    if !jss_lint.exists() {
+        eprintln!("SKIP: {} not found", jss_lint.display());
+        return;
+    }
+    let jss_lint = jss_lint.to_string_lossy().to_string();
+    let jsslint_bin = env!("CARGO_BIN_EXE_jsslint");
+
+    let mut mismatches = Vec::new();
+    for fixture in all_fixtures() {
+        let (source, file_name) = fixture_source(&fixture);
+        let py_dir = setup_scratch(&fixture, "py", "interactive", &source, file_name);
+        let rs_dir = setup_scratch(&fixture, "rs", "interactive", &source, file_name);
+
+        let expected =
+            run_fix_with_stdin(&jss_lint, &py_dir, file_name, &["--apply"], "a\n");
+        let actual =
+            run_fix_with_stdin(jsslint_bin, &rs_dir, file_name, &["--apply"], "a\n");
+        let expected_stdout = normalize(&expected.stdout, &py_dir);
+        let actual_stdout = normalize(&actual.stdout, &rs_dir);
+
+        if actual_stdout != expected_stdout {
+            mismatches.push(format!(
+                "{fixture} STDOUT differs\n  expected:\n{expected_stdout}\n  actual:\n{actual_stdout}"
+            ));
+        }
+        if actual.file_after != expected.file_after {
+            mismatches.push(format!(
+                "{fixture} FILE CONTENT differs\n  expected:\n{}\n  actual:\n{}",
+                expected.file_after, actual.file_after
+            ));
         }
     }
 
