@@ -84,6 +84,10 @@ pub struct ToolConfig {
     /// Exit-code policy: the minimum severity that makes the CLI exit 1.
     pub fail_on: Severity,
     pub severity_overrides: HashMap<String, Severity>,
+    /// Baseline file to apply (spec 027 item B). TOML key `baseline`;
+    /// `--baseline` wins. Never auto-discovered: a file that silences
+    /// findings must be named, not found.
+    pub baseline: Option<PathBuf>,
     /// Online DOI verification hook (`jss-lint --crossref`). `None`
     /// (the default, always true on the wasm target) keeps
     /// `JSS-REFS-003` offline. Not part of `.jss-lint.toml`/CLI-flag
@@ -105,6 +109,7 @@ impl std::fmt::Debug for ToolConfig {
             .field("min_confidence", &self.min_confidence)
             .field("fail_on", &self.fail_on)
             .field("severity_overrides", &self.severity_overrides)
+            .field("baseline", &self.baseline)
             .field("doi_resolver", &self.doi_resolver.is_some())
             .finish()
     }
@@ -123,6 +128,7 @@ impl Default for ToolConfig {
             min_confidence: ConfidenceTier::Low,
             fail_on: Severity::Warning,
             severity_overrides: HashMap::new(),
+            baseline: None,
             doi_resolver: None,
         }
     }
@@ -143,6 +149,7 @@ const KNOWN_FIELDS: &[&str] = &[
     "min_confidence",
     "fail_on",
     "severity_overrides",
+    "baseline",
 ];
 
 /// Values a caller (CLI flags today; any other binding tomorrow) wants
@@ -162,6 +169,7 @@ pub struct RawOverrides {
     pub min_confidence: Option<String>,
     pub fail_on: Option<String>,
     pub severity_overrides: Option<HashMap<String, String>>,
+    pub baseline: Option<PathBuf>,
 }
 
 fn toml_value_to_string_list(value: &toml::Value) -> Vec<String> {
@@ -226,6 +234,9 @@ fn read_toml_overrides(cwd: &Path) -> (RawOverrides, Vec<String>) {
     if let Some(v) = table.get("source_root").and_then(|v| v.as_str()) {
         out.source_root = Some(PathBuf::from(v));
     }
+    if let Some(v) = table.get("baseline").and_then(|v| v.as_str()) {
+        out.baseline = Some(PathBuf::from(v));
+    }
     if let Some(v) = table.get("min_confidence").and_then(|v| v.as_str()) {
         out.min_confidence = Some(v.to_string());
     }
@@ -284,6 +295,9 @@ fn apply_overrides(cfg: &mut ToolConfig, overrides: &RawOverrides) {
     }
     if let Some(v) = &overrides.source_root {
         cfg.source_root = v.clone();
+    }
+    if let Some(v) = &overrides.baseline {
+        cfg.baseline = Some(v.clone());
     }
     if let Some(v) = &overrides.min_confidence {
         if let Some(tier) = ConfidenceTier::parse(v) {

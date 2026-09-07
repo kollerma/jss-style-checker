@@ -58,3 +58,29 @@ class TestSourceRootWiring:
         assert "$GITHUB_WORKSPACE" in run_block or "${{ env.GITHUB_WORKSPACE }}" in run_block, (
             "lint step must thread $GITHUB_WORKSPACE into --source-root"
         )
+
+
+class TestBaselineInput:
+    """Spec 027 item B (FR-B-008): the Action forwards `--baseline`.
+
+    SARIF omits baselined results, so the existing jq severity gate and
+    the Security tab both narrow to what is new with no further change.
+    """
+
+    def test_baseline_input_is_declared_and_optional(self) -> None:
+        manifest = _load_manifest()
+        baseline = manifest["inputs"]["baseline"]
+        assert baseline["required"] is False
+        assert baseline["default"] == ""
+
+    def test_lint_step_forwards_the_baseline_flag(self) -> None:
+        run_block = _lint_step(_load_manifest())["run"]
+        assert "--baseline" in run_block
+        assert "inputs.baseline" in run_block
+
+    def test_empty_baseline_passes_no_flag(self) -> None:
+        # Guarded by a shell conditional rather than interpolated
+        # unconditionally: an empty `--baseline ''` would be a usage
+        # error, not a no-op.
+        run_block = _lint_step(_load_manifest())["run"]
+        assert 'if [ -n "${{ inputs.baseline }}" ]' in run_block

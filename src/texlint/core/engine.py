@@ -435,4 +435,5 @@ def run(
         categories=tuple(summaries),
         compliance_percentage=percentage,
         skipped_rules=tuple(skipped),
+        rule_set=journal.metadata().rule_set,
     )

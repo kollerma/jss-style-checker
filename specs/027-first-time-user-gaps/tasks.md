@@ -177,30 +177,30 @@ jss5342 replay reports the recorded matched/stale/new counts.
 
 ### PR 2 — baseline core (pure, both engines)
 
-- [ ] T058 [P] [US3] Unit tests for `src/texlint/core/baseline.py`: parse/build/dumps round-trip, sorted output, `schema_version` and journal mismatch, `path_map` miss, multiset consumption in sort order, stale vs unevaluated
-- [ ] T059 [US3] Implement `src/texlint/core/baseline.py` (`BaselineDocument`, `BaselineEntry`, `BaselineSummary`, `BaselineError`, `parse`, `build`, `dumps`, `BaselineMatcher`) per data-model §2
-- [ ] T060 [US3] Mirror in `rust/jsslint-core/src/baseline.rs`, serialising through `json_output::write_value` for byte equality
-- [ ] T061 [US3] Add `ComplianceReport.baseline` in `src/texlint/api.py` and `rust/jsslint-core/src/report.rs` (update the literals at `engine.rs` and `rust/jsslint-core/tests/parity.rs`)
+- [x] T058 [P] [US3] Unit tests for `src/texlint/core/baseline.py`: parse/build/dumps round-trip, sorted output, `schema_version` and journal mismatch, `path_map` miss, multiset consumption in sort order, stale vs unevaluated
+- [x] T059 [US3] Implement `src/texlint/core/baseline.py` (`BaselineDocument`, `BaselineEntry`, `BaselineSummary`, `BaselineError`, `parse`, `build`, `dumps`, `BaselineMatcher`) per data-model §2
+- [x] T060 [US3] Mirror in `rust/jsslint-core/src/baseline.rs`, serialising through `json_output::write_value` for byte equality
+- [x] T061 [US3] Add `ComplianceReport.baseline` in `src/texlint/api.py` and `rust/jsslint-core/src/report.rs` (update the literals at `engine.rs` and `rust/jsslint-core/tests/parity.rs`)
 
 ### PR 2 — CLI layer
 
-- [ ] T062 [US3] `ToolConfig.baseline` + `KNOWN_FIELDS` in `src/texlint/config.py`; `RawOverrides.baseline` in `rust/jsslint-core/src/config.rs` and the four struct-literal sites (`rust/jsslint-cli/src/main.rs`, `rust/jsslint-wasm/src/lib.rs`, `rust/jsslint-py/src/lib.rs`, `r/jsslintr/src/rust/src/lib.rs`)
-- [ ] T063 [US3] `--baseline` / `--update-baseline` flags, path relativisation, and the run flow in `src/texlint/cli.py` (read → parse → `path_map` → `run(suppress=matcher)` → `replace(report, baseline=summary)`)
-- [ ] T064 [US3] Same flags and flow in `rust/jsslint-cli/src/main.rs`, canonicalising as `resolver.rs` does and stripping `\\?\`
-- [ ] T065 [US3] `--update-baseline` write path: tempfile + `os.replace`, stderr receipt, exit 0 (2 on error-severity parse failure), no report rendered — both CLIs
-- [ ] T066 [US3] Terminal summary line (both engines, after the footer) incl. the rule-set-date mismatch clause
-- [ ] T067 [US3] Always-present JSON `baseline` key in `src/texlint/output/json_output.py` and `rust/jsslint-core/src/json_output.rs`; update the exact key-set assertion in `tests/integration/test_cli_json.py`
-- [ ] T068 [US3] HTML `<p class="note">` in `src/texlint/output/html_output.py` (+ template) and `rust/jsslint-core/src/html_output.rs`
-- [ ] T069 [US3] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
+- [x] T062 [US3] `ToolConfig.baseline` + `KNOWN_FIELDS` in `src/texlint/config.py`; `RawOverrides.baseline` in `rust/jsslint-core/src/config.rs` and the four struct-literal sites (`rust/jsslint-cli/src/main.rs`, `rust/jsslint-wasm/src/lib.rs`, `rust/jsslint-py/src/lib.rs`, `r/jsslintr/src/rust/src/lib.rs`)
+- [x] T063 [US3] `--baseline` / `--update-baseline` flags, path relativisation, and the run flow in `src/texlint/cli.py` (read → parse → `path_map` → `run(suppress=matcher)` → `replace(report, baseline=summary)`)
+- [x] T064 [US3] Same flags and flow in `rust/jsslint-cli/src/main.rs`, canonicalising as `resolver.rs` does and stripping `\\?\`
+- [x] T065 [US3] `--update-baseline` write path: tempfile + `os.replace`, stderr receipt, exit 0 (2 on error-severity parse failure), no report rendered — both CLIs
+- [x] T066 [US3] Terminal summary line (both engines, after the footer) incl. the rule-set-date mismatch clause
+- [x] T067 [US3] Always-present JSON `baseline` key in `src/texlint/output/json_output.py` and `rust/jsslint-core/src/json_output.rs`; update the exact key-set assertion in `tests/integration/test_cli_json.py`
+- [x] T068 [US3] HTML `<p class="note">` in `src/texlint/output/html_output.py` (+ template) and `rust/jsslint-core/src/html_output.rs`
+- [x] T069 [US3] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
 
 ### PR 2 — tests, action, docs
 
-- [ ] T070 [P] [US3] `tests/integration/test_cli_baseline.py`: create → hide → exit 0; new `(rule, message, suggestion)` → exit 1; TOML key; subdirectory `../` paths; `--no-resolve` vs auto-resolve equivalence; summary in terminal/json/html; `--fix` skips baselined; journal mismatch exit 2
-- [ ] T071 [US3] New `rust/jsslint-cli/tests/baseline_parity.rs` (identical `--update-baseline` bytes; identical stdout/exit for terminal/json/sarif; drift; TOML; subdirectory; journal mismatch)
-- [ ] T072 [US3] `tests/integration/test_baseline_replay.py` replaying `examples/jss5342-versions` initial → resubmission: distinct keys ≥ 75, re-keyed persisting findings ≤ 4 (plan §5.5, research.md §3/§5)
-- [ ] T073 [P] [US3] `baseline` input in `action/action.yml` forwarded as `--baseline`; assert it in `tests/integration/test_action_manifest.py`
-- [ ] T074 [P] [US3] `docs/baseline.md` (adoption recipe, documented limits C-8) and the bindings/divergence notes in `rust/README.md`
-- [ ] T075 [P] [US3] CHANGELOG entries for the baseline feature and the JSON addition
+- [x] T070 [P] [US3] `tests/integration/test_cli_baseline.py`: create → hide → exit 0; new `(rule, message, suggestion)` → exit 1; TOML key; subdirectory `../` paths; `--no-resolve` vs auto-resolve equivalence; summary in terminal/json/html; `--fix` skips baselined; journal mismatch exit 2
+- [x] T071 [US3] New `rust/jsslint-cli/tests/baseline_parity.rs` (identical `--update-baseline` bytes; identical stdout/exit for terminal/json/sarif; drift; TOML; subdirectory; journal mismatch)
+- [x] T072 [US3] `tests/integration/test_baseline_replay.py` replaying `examples/jss5342-versions` initial → resubmission: distinct keys ≥ 75, re-keyed persisting findings ≤ 4 (plan §5.5, research.md §3/§5)
+- [x] T073 [P] [US3] `baseline` input in `action/action.yml` forwarded as `--baseline`; assert it in `tests/integration/test_action_manifest.py`
+- [x] T074 [P] [US3] `docs/baseline.md` (adoption recipe, documented limits C-8) and the bindings/divergence notes in `rust/README.md`
+- [x] T075 [P] [US3] CHANGELOG entries for the baseline feature and the JSON addition
 
 **Checkpoint**: adoption workflow works end to end; both PRs merged; parity suites green
 

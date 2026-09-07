@@ -31,6 +31,10 @@ inputs:
     description: 'Python version (default: 3.12).'
     required: false
     default: '3.12'
+  baseline:
+    description: 'Baseline file to apply (spec 027 item B). Findings it records are hidden from the SARIF, so the severity gate and the Security tab show only what is new. Empty (the default) applies no baseline.'
+    required: false
+    default: ''
   version:
     description: "jss-lint PyPI version. 'latest' pulls the latest release from PyPI; 'local' installs from the action's checked-out source (used by this repo's smoke-test workflow); any other value is treated as a pinned PyPI version."
     required: false
@@ -105,8 +109,13 @@ runs:
       shell: bash
       run: |
         set +e
+        baseline_args=()
+        if [ -n "${{ inputs.baseline }}" ]; then
+          baseline_args=(--baseline "${{ inputs.baseline }}")
+        fi
         jss-lint --output sarif --source-root "$GITHUB_WORKSPACE" \
           --journal "${{ inputs.journal }}" \
+          "${baseline_args[@]}" \
           ${{ steps.paths.outputs.list }} > jss-lint.sarif
         rc=$?
         echo "sarif-path=jss-lint.sarif" >> "$GITHUB_OUTPUT"

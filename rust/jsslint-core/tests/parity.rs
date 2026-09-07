@@ -126,6 +126,8 @@ fn compliant_minimal_tex_matches_python_byte_for_byte() {
         categories: base_categories(&[]),
         compliance_percentage: Some(100.0),
         skipped_rules: Vec::new(),
+        baseline: None,
+        rule_set: jsslint_core::catalogue::rule_set(),
     };
     let actual = jsslint_core::json_output::render(&report);
     assert_eq!(
@@ -165,6 +167,8 @@ fn single_violation_matches_python_byte_for_byte_incl_unicode_escaping() {
         categories: base_categories(&[("preamble", 7)]),
         compliance_percentage: Some(93.8),
         skipped_rules: Vec::new(),
+        baseline: None,
+        rule_set: jsslint_core::catalogue::rule_set(),
     };
     let actual = jsslint_core::json_output::render(&report);
     assert_eq!(

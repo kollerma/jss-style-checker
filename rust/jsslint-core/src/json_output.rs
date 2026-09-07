@@ -42,7 +42,24 @@ pub fn to_payload(report: &ComplianceReport) -> Value {
         "categories": categories,
         "violations": violations,
         "skipped_rules": skipped_rules,
+        // Always present, `null` when no baseline was applied — the
+        // same "every key always there" contract
+        // `compliance_percentage` follows.
+        "baseline": baseline_value(report),
     })
+}
+
+fn baseline_value(report: &ComplianceReport) -> Value {
+    match &report.baseline {
+        None => Value::Null,
+        Some(summary) => json!({
+            "matched": summary.matched,
+            "path": summary.path,
+            "ruleset_version": summary.ruleset_version,
+            "stale": summary.stale,
+            "unevaluated": summary.unevaluated,
+        }),
+    }
 }
 
 fn violation_value(v: &Violation) -> Value {

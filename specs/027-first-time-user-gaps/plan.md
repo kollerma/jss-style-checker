@@ -842,6 +842,15 @@ recorded in `research.md`.
 | S-5 | The replay test runs against `examples/jss5342-versions/` (committed) | That directory is **gitignored** (`.gitignore:202`) — the manuscript is not redistributable. | `tests/integration/test_baseline_replay.py` skips cleanly when it is absent, exactly like the recall-corpus parity suites, and asserts counts only (no manuscript text in a committed artifact). |
 | S-6 | "distinct keys ≥ 75, re-keyed ≤ 4" | The re-keyed figure in research.md §3 is measured against the **pre-item-S** key, which cannot be recomputed once the old wording is gone. | The pre-S survivor count (26) is recorded as a constant in the test, measured by running the same code against the commit before item S. Replay results: distinct keys **49 → 79** (research predicted ~80), matched `26 → 22`, i.e. **4 re-keyed** — research.md's number exactly. |
 
+### Item B — baseline mode
+
+| # | Plan said | Reality | What was done |
+|---|---|---|---|
+| B-1 | The terminal summary names both rule-set dates when they differ | The renderer had no way to know the *current* date without importing the journal, which §14 forbids. | `ComplianceReport.rule_set` is stamped by the engine in **both** engines already in item B, from the `JournalRuleModule.metadata()` seam item D built. Item A extends the same object with `recall`/`coverage` rather than introducing it. |
+| B-2 | Baseline surfaces in HTML | The Jinja `{% if %}` block added a newline to *every* author/reviewer page, including runs with no baseline — caught by `config_parity.rs`, not by any Python test. | Whitespace-controlled tags (`{%- if %}` / `{%- endif %}`) so a run without a baseline is byte-identical to 1.1.0, and the Rust `baseline_note` matches the active case exactly. Verified across mode × baseline (4 combinations). |
+| B-3 | `path_map` built from `document.all_files()` | `ParsedProject` has no `all_files`; it holds `documents`. | The CLI iterates `project.documents` (or the single document) — the same set the engine lints. |
+| B-4 | (not anticipated) | The PyO3 wheel is built from the workspace and is *stale* after any core change, so `tests/unit/test_jsslint_parity.py` fails misleadingly until `maturin develop --release` is re-run. | Noted here for the next session: rebuild the wheel after touching `jsslint-core`, exactly as the R package needs re-vendoring. |
+
 ### Environment
 
 - `.venv-host` is the **macOS host's** venv (`/workspace` is a bind mount

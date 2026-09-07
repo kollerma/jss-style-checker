@@ -522,10 +522,43 @@ pub fn render(report: &ComplianceReport, config: &ToolConfig) -> String {
     } else {
         render_author(report, &mut out);
     }
+    if let Some(summary) = &report.baseline {
+        render_baseline(summary, report, &mut out);
+    }
     if config.verbose && !report.skipped_rules.is_empty() {
         render_skipped_rules(report, &mut out);
     }
     out
+}
+
+/// One line saying what the baseline hid (`baseline-file.md` C-6).
+///
+/// Printed in both modes, and in particular on an otherwise clean run:
+/// "no findings" and "no findings you have not already accepted" are
+/// different claims, and the user must be able to tell them apart.
+fn render_baseline(
+    summary: &crate::report::BaselineSummary,
+    report: &ComplianceReport,
+    out: &mut String,
+) {
+    out.push_str(&format!(
+        "Baseline: {} findings hidden by {} ({} stale, {} unevaluated)",
+        summary.matched, summary.path, summary.stale, summary.unevaluated
+    ));
+    if let (Some(written), Some(current)) =
+        (&summary.ruleset_version, &report.rule_set.version)
+    {
+        if written != current {
+            // The wording users' baselines key on may change in a minor
+            // release (docs/versions.md), which strands entries silently
+            // unless the two dates are named.
+            out.push_str(&format!(
+                " \u{2014} written for rule set {written}, current {current}; run \
+                 --update-baseline"
+            ));
+        }
+    }
+    out.push('\n');
 }
 
 fn render_author(report: &ComplianceReport, out: &mut String) {
