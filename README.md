@@ -178,7 +178,10 @@ The sandwich estimator is robust.  % jss-lint: ignore JSS-MARKUP-002
 
 A bare `% jss-lint: ignore` suppresses every rule on the target line;
 free text after the rule ids is treated as rationale. Parse errors
-(`JSS-PARSE-000`) are never suppressed.
+(`JSS-PARSE-000`) are never suppressed. Since 1.2.0 every distribution
+honours the directives — the `jsslint` binary, the browser/WASM build
+and the web app, the VS Code extension, the PyO3 wheel, and the R
+package, not just `jss-lint`.
 
 Exit codes: `0` clean · `1` violations found · `2` tool could not complete
 (unknown journal, missing file, parse error, unsupported extension).

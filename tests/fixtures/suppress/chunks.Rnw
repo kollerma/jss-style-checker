@@ -1,0 +1,13 @@
+\documentclass[article]{jss}
+\title{A Short Demo}
+\Abstract{Demo.}
+\Keywords{Demo}
+\Address{Demo}
+\begin{document}
+<<setup, echo=FALSE>>=
+x <- 1
+# % jss-lint: ignore JSS-MARKUP-001
+@
+We use R below the chunk. % jss-lint: ignore JSS-MARKUP-001
+We use Python below the chunk.
+\end{document}

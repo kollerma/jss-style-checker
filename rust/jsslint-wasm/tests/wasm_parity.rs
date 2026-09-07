@@ -150,6 +150,51 @@ process.stdout.write(result);
         "WASM render() output diverges from jss-lint --output json"
     );
 
+    // Spec 027 item B: the bundle honours `% jss-lint: ignore`. This is
+    // the surface the fix is *for* — the web app and the VS Code
+    // extension both run this bundle, and both used to report findings
+    // their author had signed off on in the source.
+    let suppress_fixture = root.join("tests/fixtures/suppress/inline.tex");
+    let suppress_script = format!(
+        r#"
+const jsslint = require({glue_path:?});
+const fs = require('fs');
+const tex = fs.readFileSync({fixture:?}, 'utf8');
+process.stdout.write(jsslint.render({{
+  files: [['tests/fixtures/suppress/inline.tex', tex]],
+  output: 'json',
+}}));
+"#,
+        glue_path = scratch.join("jsslint_wasm.js").to_string_lossy(),
+        fixture = suppress_fixture.to_string_lossy(),
+    );
+    let suppress_script_path = scratch.join("suppress.js");
+    std::fs::write(&suppress_script_path, suppress_script).expect("write suppress script");
+    let suppress_output = Command::new("node")
+        .arg(&suppress_script_path)
+        .output()
+        .expect("failed to run node");
+    assert!(
+        suppress_output.status.success(),
+        "node suppress script failed: {}",
+        String::from_utf8_lossy(&suppress_output.stderr)
+    );
+    let actual = String::from_utf8(suppress_output.stdout).expect("valid UTF-8");
+
+    let py_output = Command::new(&jss_lint)
+        .arg("--no-resolve")
+        .arg("--output")
+        .arg("json")
+        .arg("tests/fixtures/suppress/inline.tex")
+        .current_dir(&root)
+        .output()
+        .expect("failed to run jss-lint");
+    let expected = String::from_utf8(py_output.stdout).expect("valid UTF-8");
+    assert_eq!(
+        actual, expected,
+        "WASM render() ignores an inline `% jss-lint: ignore` the CLI honours"
+    );
+
     // Spec 027 item D: the bundle reports the rule set it was compiled
     // with. A drifted bundle would tell a page a different rule-set date
     // than the CLI stamps into baseline files.

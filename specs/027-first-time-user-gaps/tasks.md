@@ -162,18 +162,18 @@ jss5342 replay reports the recorded matched/stale/new counts.
 
 ### PR 1 — inline ignores in the Rust engine + Python suppress fixes (own CHANGELOG *Fixed* entry)
 
-- [ ] T046 [US3] Failing cases in `tests/unit/core/test_suppress.py`: `.Rmd` prose block not starting at line 1, `.Rnw`, form feed / `\v` / `\x85` in `directive_lines`
-- [ ] T047 [US3] Add `line_offset: int = 0` to `ParsedTexFile` in `src/texlint/api.py` and set it from `prose.line - 1` in `src/texlint/core/rmd_parser.py`
-- [ ] T048 [US3] Add `line_offset` in `build_index` and switch `directive_lines` to `source.split("\n")` in `src/texlint/core/suppress.py`
-- [ ] T049 [US3] Introduce `Suppressor` in `src/texlint/api.py` and the `suppress=` keyword on `run()` in `src/texlint/core/engine.py`, ordering sort → inline-drop → `suppress(v)` → severity remap → bookkeeping; parse errors bypass
-- [ ] T050 [US3] Port the suppression scanner to `rust/jsslint-core/src/suppress.rs` (no-lookbehind regex, id pattern, index over `all_tex_like_docs()` with `parsed.source` + `line_offset`, bib sources) with unit tests
-- [ ] T051 [US3] Add `pub trait Suppressor` + `engine::run_with(...)` in `rust/jsslint-core/src/engine.rs`, delegate `run`/`run_with_project`, apply inside `run_one` before the severity remap, and delete the "not implemented" note
-- [ ] T052 [US3] Add the suppression fixtures `tests/fixtures/suppress/{inline.tex,scoped.tex,verbatim.tex,escaped.tex,entries.bib,chunks.Rnw,prose.Rmd}`
-- [ ] T053 [US3] New `rust/jsslint-core/tests/suppress_parity.rs` over those fixtures
-- [ ] T054 [P] [US3] Inline-ignore case in `rust/jsslint-wasm/tests/wasm_parity.rs`
-- [ ] T055 [US3] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
-- [ ] T056 [P] [US3] CHANGELOG *Fixed* entry naming the Rust/WASM/VS Code/PyO3/R inline-ignore fix and the two Python suppress fixes
-- [ ] T057 [US3] Merge PR 1 before any baseline code lands
+- [x] T046 [US3] Failing cases in `tests/unit/core/test_suppress.py`: `.Rmd` prose block not starting at line 1, `.Rnw`, form feed / `\v` / `\x85` in `directive_lines`
+- [x] T047 [US3] Add `line_offset: int = 0` to `ParsedTexFile` in `src/texlint/api.py` and set it from `prose.line - 1` in `src/texlint/core/rmd_parser.py`
+- [x] T048 [US3] Add `line_offset` in `build_index` and switch `directive_lines` to `source.split("\n")` in `src/texlint/core/suppress.py`
+- [x] T049 [US3] Introduce `Suppressor` in `src/texlint/api.py` and the `suppress=` keyword on `run()` in `src/texlint/core/engine.py`, ordering sort → inline-drop → `suppress(v)` → severity remap → bookkeeping; parse errors bypass
+- [x] T050 [US3] Port the suppression scanner to `rust/jsslint-core/src/suppress.rs` (no-lookbehind regex, id pattern, index over `all_tex_like_docs()` with `parsed.source` + `line_offset`, bib sources) with unit tests
+- [x] T051 [US3] Add `pub trait Suppressor` + `engine::run_with(...)` in `rust/jsslint-core/src/engine.rs`, delegate `run`/`run_with_project`, apply inside `run_one` before the severity remap, and delete the "not implemented" note
+- [x] T052 [US3] Add the suppression fixtures `tests/fixtures/suppress/{inline.tex,scoped.tex,verbatim.tex,escaped.tex,entries.bib,chunks.Rnw,prose.Rmd}`
+- [x] T053 [US3] New `rust/jsslint-core/tests/suppress_parity.rs` over those fixtures
+- [x] T054 [P] [US3] Inline-ignore case in `rust/jsslint-wasm/tests/wasm_parity.rs`
+- [x] T055 [US3] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
+- [x] T056 [P] [US3] CHANGELOG *Fixed* entry naming the Rust/WASM/VS Code/PyO3/R inline-ignore fix and the two Python suppress fixes
+- [x] T057 [US3] Merge PR 1 before any baseline code lands
 
 ### PR 2 — baseline core (pure, both engines)
 

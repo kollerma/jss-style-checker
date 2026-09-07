@@ -161,3 +161,145 @@ class TestEngineIntegration:
         assert any(
             v.rule_id == "JSS-PARSE-000" for v in report.violations
         )
+
+
+class TestLineCounting:
+    """`directive_lines` must count lines the way the parsers do.
+
+    `str.splitlines()` also breaks on form feed, vertical tab, `\x1c`-`\x1f`
+    and `\x85`, while every line number a violation carries comes from
+    counting `\n`. A single form feed in a manuscript therefore shifted
+    every directive below it by one line, silently suppressing the wrong
+    line (spec 027 §2).
+    """
+
+    def test_form_feed_does_not_start_a_new_line(self):
+        src = "first\x0cstill first\nUses R % jss-lint: ignore\n"
+        assert directive_lines(src) == {2: frozenset({ALL_RULES})}
+
+    def test_vertical_tab_does_not_start_a_new_line(self):
+        src = "first\x0bstill first\nUses R % jss-lint: ignore\n"
+        assert directive_lines(src) == {2: frozenset({ALL_RULES})}
+
+    def test_next_line_character_does_not_start_a_new_line(self):
+        src = "first\x85still first\nUses R % jss-lint: ignore\n"
+        assert directive_lines(src) == {2: frozenset({ALL_RULES})}
+
+    def test_carriage_return_newline_counts_once(self):
+        src = "first\r\nUses R % jss-lint: ignore\r\n"
+        assert directive_lines(src) == {2: frozenset({ALL_RULES})}
+
+
+class TestRmdAndRnwOffsets:
+    """A directive in an `.Rmd`/`.Rnw` must target the line the author sees.
+
+    `.Rmd` prose blocks are parsed as standalone LaTeX fragments whose
+    `source` starts at line 1, while violations carry file-authoritative
+    line numbers. Without `line_offset` a directive only ever worked when
+    the prose block happened to start on line 1 (spec 027 §2).
+    """
+
+    def _report(self, path):
+        from texlint.core.engine import load_journal, parse_document, run
+
+        return run(ToolConfig(), parse_document([path]), load_journal("jss"))
+
+    def test_rmd_directive_below_the_first_block(self, tmp_path):
+        rmd = tmp_path / "paper.Rmd"
+        rmd.write_text(
+            "---\ntitle: Demo\n---\n\n"
+            "Some opening prose without findings.\n\n"
+            "```{r}\nx <- 1\n```\n\n"
+            "We use R here. % jss-lint: ignore JSS-MARKUP-001\n",
+            encoding="utf-8",
+        )
+        report = self._report(rmd)
+        assert not any(
+            v.rule_id == "JSS-MARKUP-001" for v in report.violations
+        ), "the directive did not reach the line it annotates"
+
+    def test_rmd_finding_without_a_directive_is_reported(self, tmp_path):
+        rmd = tmp_path / "paper.Rmd"
+        rmd.write_text(
+            "---\ntitle: Demo\n---\n\n"
+            "Some opening prose without findings.\n\n"
+            "```{r}\nx <- 1\n```\n\n"
+            "We use R here.\n",
+            encoding="utf-8",
+        )
+        report = self._report(rmd)
+        assert any(v.rule_id == "JSS-MARKUP-001" for v in report.violations)
+
+    def test_rnw_directive_below_a_chunk(self, tmp_path):
+        rnw = tmp_path / "paper.Rnw"
+        rnw.write_text(
+            "\\documentclass[article]{jss}\n"
+            "\\begin{document}\n"
+            "<<setup>>=\nx <- 1\n@\n"
+            "We use R here. % jss-lint: ignore JSS-MARKUP-001\n"
+            "\\end{document}\n",
+            encoding="utf-8",
+        )
+        report = self._report(rnw)
+        assert not any(
+            v.rule_id == "JSS-MARKUP-001" for v in report.violations
+        )
+
+
+class TestSuppressorHook:
+    """`engine.run(suppress=...)` — the seam the baseline matcher uses.
+
+    Order matters (spec 027 §5.2): findings are sorted, inline-ignored
+    ones are dropped, and only what survives is offered to the caller's
+    suppressor. An inline-ignored finding must never consume a baseline
+    count — the author already signed off on it.
+    """
+
+    def _run(self, parse_tex_source, src: str, suppress=None):
+        from texlint.core.engine import load_journal, run
+
+        doc = ParsedDocument(tex_files=(parse_tex_source(src),))
+        return run(ToolConfig(), doc, load_journal("jss"), suppress=suppress)
+
+    def test_suppressor_drops_what_it_selects(self, parse_tex_source):
+        src = "We use R and call lm() here.\n"
+        report = self._run(
+            parse_tex_source, src, lambda v: v.rule_id == "JSS-MARKUP-001"
+        )
+        assert not any(
+            v.rule_id == "JSS-MARKUP-001" for v in report.violations
+        )
+        assert any(v.rule_id == "JSS-MARKUP-003" for v in report.violations)
+
+    def test_inline_ignored_findings_never_reach_the_suppressor(
+        self, parse_tex_source
+    ):
+        src = "We use R here. % jss-lint: ignore JSS-MARKUP-001\n"
+        seen: list[str] = []
+        self._run(parse_tex_source, src, lambda v: seen.append(v.rule_id) or False)
+        assert "JSS-MARKUP-001" not in seen
+
+    def test_findings_arrive_in_sort_order(self, parse_tex_source):
+        src = "We use R here.\nAnd R again there.\nAnd R once more.\n"
+        seen: list[int] = []
+        self._run(
+            parse_tex_source,
+            src,
+            lambda v: seen.append(v.line) if v.rule_id == "JSS-MARKUP-001" else False,
+        )
+        assert seen == sorted(seen)
+
+    def test_parse_errors_bypass_the_suppressor(self, parse_tex_source):
+        src = "\\begin{tabular}{ll}\n"
+        report = self._run(parse_tex_source, src, lambda v: True)
+        assert any(v.rule_id == "JSS-PARSE-000" for v in report.violations)
+
+    def test_category_passes_when_the_suppressor_hides_everything(
+        self, parse_tex_source
+    ):
+        src = "We use R here.\n"
+        report = self._run(
+            parse_tex_source, src, lambda v: v.rule_id == "JSS-MARKUP-001"
+        )
+        markup = {c.category_id: c for c in report.categories}["markup"]
+        assert markup.violations == ()

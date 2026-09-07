@@ -18,6 +18,7 @@ use crate::bib::{self, Library};
 use crate::catalogue;
 use crate::config::{ConfidenceTier, DoiResolver, ToolConfig};
 use crate::report::{CategorySummary, ComplianceReport, SkippedRule, Violation};
+use crate::suppress;
 use crate::rules::{
     abbreviations, capitalization, citations, code_style, code_width, crossrefs, house_style,
     markup, naming, operators, preamble, references, structure, typography,
@@ -717,10 +718,8 @@ fn ordered_rules() -> Vec<(&'static str, RuleAction<'static>)> {
 /// `ComplianceReport`. Mirrors `core/engine.py::run`'s algorithm
 /// (category/rule iteration, `SkippedRule` bookkeeping, format
 /// gating, the synthetic `JSS-PARSE-000` "parse" category,
-/// `compliance_percentage`, sorted violations, severity overrides).
-/// One thing still deferred: inline suppression comments (`%
-/// jss-lint: ignore [RULE-IDS]`) aren't implemented — every rule
-/// finding is reported regardless. `JSS-PARSE-000` findings currently
+/// `compliance_percentage`, sorted violations, severity overrides,
+/// inline `% jss-lint: ignore` suppression). `JSS-PARSE-000` findings currently
 /// only ever come from `.Rmd`'s tokenizer (unterminated
 /// frontmatter/fence, malformed YAML); the tex tokenizer itself
 /// (`.tex`/`.ltx`/`.rnw`) never emits one — it only implements
@@ -728,7 +727,27 @@ fn ordered_rules() -> Vec<(&'static str, RuleAction<'static>)> {
 /// Python's strict-then-tolerant-retry `parse_tex_source` (see
 /// `tex::parse_tex_source`'s doc comment).
 pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
-    run_impl(config, document, None)
+    run_impl(config, document, None, None)
+}
+
+/// A caller-supplied filter applied to every finding just before the
+/// engine's bookkeeping — mirrors `api.Suppressor`. Returning `true`
+/// drops the finding, exactly as an inline `% jss-lint: ignore` does.
+/// `&mut self` because the baseline matcher (spec 027 item B) consumes
+/// a multiset as it matches.
+pub trait Suppressor {
+    fn suppress(&mut self, violation: &Violation) -> bool;
+}
+
+/// `run` / `run_with_project` plus a caller-supplied [`Suppressor`].
+/// Mirrors `core/engine.py::run`'s `suppress=` keyword.
+pub fn run_with(
+    config: &ToolConfig,
+    document: &ParsedDocument,
+    project_extra: Option<(Vec<Violation>, Vec<Violation>)>,
+    extra: Option<&mut dyn Suppressor>,
+) -> ComplianceReport {
+    run_impl(config, document, project_extra, extra)
 }
 
 /// Like `run`, but also dispatches `JSS-PROJECT-001` (cycle) /
@@ -750,13 +769,14 @@ pub fn run_with_project(
     cycles: Vec<Violation>,
     missing: Vec<Violation>,
 ) -> ComplianceReport {
-    run_impl(config, document, Some((cycles, missing)))
+    run_impl(config, document, Some((cycles, missing)), None)
 }
 
 fn run_impl(
     config: &ToolConfig,
     document: &ParsedDocument,
     project_extra: Option<(Vec<Violation>, Vec<Violation>)>,
+    mut extra: Option<&mut dyn Suppressor>,
 ) -> ComplianceReport {
     let tex_like = document.tex_like();
     let tex_file_line_indexes = document.tex_file_line_indexes();
@@ -766,11 +786,26 @@ fn run_impl(
     let mut violations_by_category: HashMap<&'static str, Vec<Violation>> = HashMap::new();
     let mut skipped: Vec<SkippedRule> = Vec::new();
 
+    let suppression_index = suppress::build_index(document);
+
     let mut run_one = |rule_id: &'static str, mut rule_violations: Vec<Violation>| {
         let Some(meta) = catalogue::lookup(rule_id) else {
             return;
         };
         let category = meta.category;
+
+        // Suppression order, identical in both engines (spec 027 §5.2):
+        // sort first so a caller-supplied suppressor sees findings in a
+        // deterministic order, then drop inline-ignored ones, then
+        // offer the rest to the suppressor. Inline first means an
+        // ignored finding never consumes a baseline count.
+        rule_violations.sort_by(|a, b| a.sort_key().cmp(&b.sort_key()));
+        if !suppression_index.is_empty() {
+            rule_violations.retain(|v| !suppress::is_suppressed(&suppression_index, v));
+        }
+        if let Some(suppressor) = extra.as_deref_mut() {
+            rule_violations.retain(|v| !suppressor.suppress(v));
+        }
 
         if !config.severity_overrides.is_empty() {
             for v in &mut rule_violations {
