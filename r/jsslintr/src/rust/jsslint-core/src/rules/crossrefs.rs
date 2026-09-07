@@ -6,7 +6,7 @@
 //! `c.span.pos + c.chars[..byte_off].chars().count()` idiom before use.
 
 use super::py_repr;
-use super::tex_common::{tex_violation, tex_violation_with_fix};
+use super::tex_common::{equation_identifier, tex_violation, tex_violation_with_fix};
 use crate::report::{Fix, FixConfidence, Violation};
 use crate::tex::extract;
 use crate::tex::node::{EnvironmentNode, MacroNode, Node};
@@ -246,6 +246,40 @@ fn eqref_label_text(macro_node: &MacroNode) -> String {
     label_arg_text(macro_node)
 }
 
+/// Name the reference the abbreviation points at (spec 027 item S).
+fn xref_002_abbrev_suggestion(abbrev_text: &str, canonical: &str, label: &str) -> String {
+    let target = if label.is_empty() {
+        "\\ref".to_string()
+    } else {
+        format!("\\ref{{{label}}}")
+    };
+    format!(
+        "Replace {} before {target} with '{canonical}~' (capitalised, non-breaking space).",
+        py_repr(abbrev_text)
+    )
+}
+
+fn xref_002_paren_suggestion(label: &str) -> String {
+    if label.is_empty() {
+        return "Replace '(\\ref{...})' or '\\eqref{...}' with 'Equation~\\ref{...}' \
+                (capitalised, non-breaking space)."
+            .to_string();
+    }
+    format!(
+        "Replace '(\\ref{{{label}}})' with 'Equation~\\ref{{{label}}}' (capitalised, \
+         non-breaking space)."
+    )
+}
+
+fn xref_002_eqref_suggestion(label: &str) -> String {
+    // An `\eqref` with no label is skipped before this point, so the
+    // label is always present here.
+    format!(
+        "Replace '\\eqref{{{label}}}' with 'Equation~\\ref{{{label}}}' (capitalised, \
+         non-breaking space; \\eqref renders as parenthesised which reviewers discourage)."
+    )
+}
+
 static EQ_ABBREV_TAIL_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\b(Eqs?|Eqns?)\.?\s*~?\s*\z").unwrap());
 
@@ -286,9 +320,10 @@ pub fn check_xref_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                         &line_index,
                         m.span.pos,
                         "JSS-XREF-002",
-                        Some(format!(
-                            "Replace {} before \\ref with '{canonical}~' (capitalised, non-breaking space).",
-                            py_repr(trimmed)
+                        Some(xref_002_abbrev_suggestion(
+                            trimmed,
+                            canonical,
+                            &eqref_label_text(m),
                         )),
                         Some(Fix {
                             start: abbrev_start,
@@ -329,10 +364,7 @@ pub fn check_xref_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                 &line_index,
                 m.span.pos,
                 "JSS-XREF-002",
-                Some(
-                    "Replace '(\\ref{...})' or '\\eqref{...}' with 'Equation~\\ref{...}' (capitalised, non-breaking space)."
-                        .to_string(),
-                ),
+                Some(xref_002_paren_suggestion(&eqref_label_text(m))),
                 Some(Fix {
                     start: paren_open,
                     end: paren_close + 1,
@@ -355,10 +387,7 @@ pub fn check_xref_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                 &line_index,
                 m.span.pos,
                 "JSS-XREF-002",
-                Some(
-                    "Replace '\\eqref{...}' with 'Equation~\\ref{...}' (capitalised, non-breaking space; \\eqref renders as parenthesised which reviewers discourage)."
-                        .to_string(),
-                ),
+                Some(xref_002_eqref_suggestion(&label_text)),
                 Some(Fix {
                     start: m.span.pos,
                     end: macro_end,
@@ -493,7 +522,39 @@ fn inside_subequations(ancestors: &[&Node]) -> bool {
         .any(|anc| matches!(anc, Node::Environment(e) if e.environmentname == "subequations"))
 }
 
-const MISSING_ROW_LABEL_SUGGESTION: &str = "A numbered equation row carries no \\label{} and can never be referenced. Add \\label{eq:<name>} to the row or suppress its number with \\nonumber.";
+/// Name the unlabelled equation (spec 027 item S). These findings fire
+/// *because* the equation has no label, so `equation_identifier` falls
+/// back to the head of the body — which is what the author will search
+/// for. An equation with no body at all keeps the generic wording.
+fn missing_label_suggestion(env: &EnvironmentNode, source: &[char]) -> String {
+    let name = equation_identifier(env, source);
+    if name.is_empty() {
+        return "Add \\label{eq:<name>} inside the equation so it can be referenced from the \
+                text."
+            .to_string();
+    }
+    format!(
+        "Add \\label{{eq:<name>}} inside the equation '{name}' so it can be referenced from \
+         the text."
+    )
+}
+
+/// As above, for a numbered row inside a partly-labelled block. The
+/// block itself carries at least one label (that is what makes it
+/// "mixed"), so the identifier names the block rather than the row.
+fn missing_row_label_suggestion(env: &EnvironmentNode, source: &[char]) -> String {
+    let name = equation_identifier(env, source);
+    if name.is_empty() {
+        return "A numbered equation row carries no \\label{} and can never be referenced. Add \
+                \\label{eq:<name>} to the row or suppress its number with \\nonumber."
+            .to_string();
+    }
+    format!(
+        "A numbered equation row of '{name}' carries no \\label{{}} and can never be \
+         referenced. Add \\label{{eq:<name>}} to the row or suppress its number with \
+         \\nonumber."
+    )
+}
 
 fn orphan_label_suggestion(key: &str) -> String {
     format!(
@@ -620,8 +681,7 @@ fn check_multiline_eq_rows(
                 py_repr(&orphan_keys.join(", "))
             )
         } else {
-            "Add \\label{eq:<name>} inside the equation so it can be referenced from the text."
-                .to_string()
+            missing_label_suggestion(env, source_chars)
         };
         out.push(tex_violation(
             file,
@@ -649,7 +709,7 @@ fn check_multiline_eq_rows(
                 line_index,
                 env.span.pos,
                 "JSS-XREF-004",
-                Some(MISSING_ROW_LABEL_SUGGESTION.to_string()),
+                Some(missing_row_label_suggestion(env, source_chars)),
             ));
             continue;
         }
@@ -726,7 +786,7 @@ fn check_xref_004_fragment(
                 &line_index,
                 env.span.pos,
                 "JSS-XREF-004",
-                Some("Add \\label{eq:<name>} inside the equation so it can be referenced from the text.".to_string()),
+                Some(missing_label_suggestion(env, &parsed.chars)),
             ));
                 return;
             }

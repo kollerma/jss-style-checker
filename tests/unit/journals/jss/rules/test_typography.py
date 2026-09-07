@@ -412,3 +412,35 @@ def test_empty_tex_silent():
         check_jss_typo_003, check_jss_typo_004,
     ):
         assert list(check(doc, ToolConfig())) == []
+
+
+class TestTypo001Suggestion:
+    """Token-specific suggestion (spec 027 item S): name the caption."""
+
+    def test_names_the_caption_head(self, run_rule):
+        src = (
+            r"\begin{figure}\caption{Posterior draws for the mean}"
+            r"\end{figure}"
+        )
+        (violation,) = run_rule(jss_typo_001, src)
+        assert violation.suggestion == (
+            "End the caption with a period: 'Posterior draws for the mean'."
+        )
+
+    def test_two_captions_get_distinct_suggestions(self, run_rule):
+        src = (
+            r"\begin{figure}\caption{First panel}\end{figure}"
+            r"\begin{table}\caption{Second panel}\end{table}"
+        )
+        first, second = run_rule(jss_typo_001, src)
+        assert first.suggestion.endswith("'First panel'.")
+        assert second.suggestion.endswith("'Second panel'.")
+
+    def test_caption_head_is_collapsed_and_capped(self, run_rule):
+        long_caption = "Posterior draws " + "x" * 60
+        src = (
+            r"\begin{figure}\caption{Posterior" "\n   draws " + "x" * 60
+            + r"}\end{figure}"
+        )
+        (violation,) = run_rule(jss_typo_001, src)
+        assert violation.suggestion.endswith(f"'{long_caption[:40]}'.")

@@ -268,7 +268,9 @@ def _label_has_non_equation_prefix(node: Any) -> bool:
 
 
 def _eqref_label_text(node: Any) -> str:
-    """Return the label text inside an ``\\eqref{...}`` macro, or ``""``."""
+    """Return the label text inside an ``\\eqref{...}`` / ``\\ref{...}``
+    macro, or ``""``. Also names the reference in the JSS-XREF-002
+    suggestions (spec 027 item S)."""
     argd = getattr(node, "nodeargd", None)
     if argd is None:
         return ""
@@ -297,6 +299,39 @@ def _chars_ends_with_eq_abbrev(node: Any) -> tuple[int, str] | None:
     if m is None:
         return None
     return m.start(), m.group(0)
+
+
+def _xref_002_abbrev_suggestion(
+    abbrev_text: str, canonical: str, label: str
+) -> str:
+    """Name the reference the abbreviation points at (spec 027 item S)."""
+    target = f"\\ref{{{label}}}" if label else "\\ref"
+    return (
+        f"Replace {abbrev_text.strip()!r} before {target} with "
+        f"'{canonical}~' (capitalised, non-breaking space)."
+    )
+
+
+def _xref_002_paren_suggestion(label: str) -> str:
+    if not label:
+        return (
+            "Replace '(\\ref{...})' or '\\eqref{...}' with "
+            "'Equation~\\ref{...}' (capitalised, non-breaking space)."
+        )
+    return (
+        f"Replace '(\\ref{{{label}}})' with 'Equation~\\ref{{{label}}}' "
+        "(capitalised, non-breaking space)."
+    )
+
+
+def _xref_002_eqref_suggestion(label: str) -> str:
+    # An `\eqref` with no label is skipped before this point, so the
+    # label is always present here.
+    return (
+        f"Replace '\\eqref{{{label}}}' with 'Equation~\\ref{{{label}}}' "
+        "(capitalised, non-breaking space; \\eqref renders as "
+        "parenthesised which reviewers discourage)."
+    )
 
 
 def check_jss_xref_002(
@@ -344,10 +379,8 @@ def check_jss_xref_002(
                         rule_id="JSS-XREF-002",
                         severity=meta["severity"],
                         message=meta["message_template"],
-                        suggestion=(
-                            f"Replace {abbrev_text.strip()!r} before "
-                            f"\\ref with '{canonical}~' (capitalised, "
-                            "non-breaking space)."
+                        suggestion=_xref_002_abbrev_suggestion(
+                            abbrev_text, canonical, _eqref_label_text(node)
                         ),
                         fix=Fix(
                             start=abbrev_start,
@@ -393,11 +426,7 @@ def check_jss_xref_002(
                     rule_id="JSS-XREF-002",
                     severity=meta["severity"],
                     message=meta["message_template"],
-                    suggestion=(
-                        "Replace '(\\ref{...})' or '\\eqref{...}' with "
-                        "'Equation~\\ref{...}' (capitalised, non-breaking "
-                        "space)."
-                    ),
+                    suggestion=_xref_002_paren_suggestion(_eqref_label_text(node)),
                     fix=Fix(
                         start=paren_open,
                         end=paren_close + 1,
@@ -431,11 +460,7 @@ def check_jss_xref_002(
                     rule_id="JSS-XREF-002",
                     severity=meta["severity"],
                     message=meta["message_template"],
-                    suggestion=(
-                        "Replace '\\eqref{...}' with 'Equation~\\ref{...}' "
-                        "(capitalised, non-breaking space; \\eqref renders "
-                        "as parenthesised which reviewers discourage)."
-                    ),
+                    suggestion=_xref_002_eqref_suggestion(label_text),
                     fix=Fix(
                         start=node.pos,
                         end=node.pos + node.len,
@@ -596,10 +621,7 @@ def check_jss_xref_004(
                     tex=tex,
                     pos=node.pos,
                     rule_id="JSS-XREF-004",
-                    suggestion=(
-                        "Add \\label{eq:<name>} inside the equation so it "
-                        "can be referenced from the text."
-                    ),
+                    suggestion=_missing_label_suggestion(node, tex.source),
                 )
                 continue
             # Label(s) present; a single-line env carries one number, so
@@ -618,11 +640,44 @@ def check_jss_xref_004(
                 )
 
 
-_MISSING_ROW_LABEL_SUGGESTION = (
-    "A numbered equation row carries no \\label{} and can never be "
-    "referenced. Add \\label{eq:<name>} to the row or suppress its number "
-    "with \\nonumber."
-)
+def _missing_label_suggestion(env: Any, source: str) -> str:
+    """Name the unlabelled equation (spec 027 item S).
+
+    These findings fire *because* the equation has no label, so
+    `equation_identifier` falls back to the head of the body — which is
+    also what the author will search for. An equation with no body at
+    all keeps the generic wording.
+    """
+    name = _helpers.equation_identifier(env, source)
+    if not name:
+        return (
+            "Add \\label{eq:<name>} inside the equation so it can be "
+            "referenced from the text."
+        )
+    return (
+        f"Add \\label{{eq:<name>}} inside the equation '{name}' so it can "
+        "be referenced from the text."
+    )
+
+
+def _missing_row_label_suggestion(env: Any, source: str) -> str:
+    """As above, for a numbered row inside a partly-labelled block.
+
+    The block itself carries at least one label here (that is what makes
+    it "mixed"), so the identifier names the block rather than the row.
+    """
+    name = _helpers.equation_identifier(env, source)
+    if not name:
+        return (
+            "A numbered equation row carries no \\label{} and can never be "
+            "referenced. Add \\label{eq:<name>} to the row or suppress its "
+            "number with \\nonumber."
+        )
+    return (
+        f"A numbered equation row of '{name}' carries no \\label{{}} and "
+        "can never be referenced. Add \\label{eq:<name>} to the row or "
+        "suppress its number with \\nonumber."
+    )
 
 
 def _orphan_label_suggestion(key: str) -> str:
@@ -709,10 +764,7 @@ def _check_multiline_eq_rows(
                 "\\ref{} / \\eqref{} or suppress the number with \\nonumber."
             )
         else:
-            suggestion = (
-                "Add \\label{eq:<name>} inside the equation so it can be "
-                "referenced from the text."
-            )
+            suggestion = _missing_label_suggestion(env, tex.source)
         yield _violation(
             tex=tex, pos=env.pos, rule_id="JSS-XREF-004", suggestion=suggestion,
         )
@@ -732,7 +784,7 @@ def _check_multiline_eq_rows(
             missing_label_reported = True
             yield _violation(
                 tex=tex, pos=env.pos, rule_id="JSS-XREF-004",
-                suggestion=_MISSING_ROW_LABEL_SUGGESTION,
+                suggestion=_missing_row_label_suggestion(env, tex.source),
             )
             continue
         for key, pos in labels:

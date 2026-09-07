@@ -1,7 +1,7 @@
 //! Typography rules — mirrors `journals/jss/rules/typography.py`
 //! (JSS-TYPO-001/002/003/004).
 
-use super::tex_common::tex_violation_with_fix;
+use super::tex_common::{identifier, tex_violation_with_fix};
 use crate::report::{Fix, FixConfidence, Violation};
 use crate::tex::node::{EnvironmentNode, GroupNode, MacroNode, Node};
 use crate::tex::prose::{walk, walk_with_context, Slot};
@@ -143,7 +143,12 @@ pub fn check_typo_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             &line_index,
             node.span.pos,
             "JSS-TYPO-001",
-            Some("End the caption with a period.".to_string()),
+            // Name the caption (spec 027 item S): `text` is non-empty
+            // here, so there is no generic-wording branch.
+            Some(format!(
+                "End the caption with a period: '{}'.",
+                identifier(text, 40)
+            )),
             fix,
         ));
     }

@@ -469,3 +469,44 @@ def test_empty_tex_silent():
         check_jss_cap_004,
     ):
         assert list(check(doc, ToolConfig())) == []
+
+
+class TestCap002Suggestion:
+    """Token-specific suggestion (spec 027 item S): name the section title.
+
+    The title quoted is the one the rule inspected — the mandatory
+    ``{...}`` argument — even when a ``[plain]`` variant exists, so the
+    author is pointed at the text that actually triggered the finding.
+    """
+
+    def test_names_the_section_title(self, run_rule):
+        src = r"\section{Robust Methods For Mixed Models}"
+        (violation,) = run_rule(jss_cap_002, src)
+        assert violation.suggestion == (
+            "Use sentence style: capitalise only the first word (proper "
+            "names remain capitalised) in 'Robust Methods For Mixed Models'."
+        )
+
+    def test_two_sections_get_distinct_suggestions(self, run_rule):
+        src = (
+            r"\section{Robust Methods For Mixed Models}" "\n"
+            r"\section{Another Overcapitalised Heading}"
+        )
+        first, second = run_rule(jss_cap_002, src)
+        assert first.suggestion.endswith("'Robust Methods For Mixed Models'.")
+        assert second.suggestion.endswith("'Another Overcapitalised Heading'.")
+
+    def test_title_is_collapsed_and_capped_at_sixty(self, run_rule):
+        title = "Robust Methods For Mixed " + "M" * 60
+        src = "\\section{Robust Methods\n   For Mixed " + "M" * 60 + "}"
+        (violation,) = run_rule(jss_cap_002, src)
+        assert violation.suggestion.endswith(f"'{title[:60]}'.")
+
+    def test_colon_branch_also_names_the_title(self, run_rule):
+        src = r"\section{Estimation: the algorithm}"
+        (violation,) = run_rule(jss_cap_002, src)
+        assert violation.suggestion == (
+            "Use sentence style: capitalise the first word after ':' (or "
+            "wrap it in \\code{}/\\pkg{} if it is a code identifier or "
+            "package name) in 'Estimation: the algorithm'."
+        )

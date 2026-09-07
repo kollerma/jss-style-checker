@@ -836,3 +836,38 @@ class TestCite004:
         tex = ParsedTexFile(path=p, source="", nodes=(), walker=None, violations=())
         doc = ParsedDocument(tex_files=(tex,))
         assert list(check_jss_cite_004(doc, ToolConfig())) == []
+
+
+class TestCite003Suggestion:
+    """Token-specific suggestion (spec 027 item S): name the cite key(s)."""
+
+    def test_names_the_cite_key(self, run_rule):
+        (violation,) = run_rule(jss_cite_003, r"See (\cite{zeileis2004}).")
+        assert violation.suggestion == (
+            "Citation inside parens: replace (\\cite{...}) with "
+            "\\citep{...}, or use \\citealp{...} when additional text "
+            "shares the parens: 'zeileis2004'."
+        )
+
+    def test_names_every_key_of_a_multi_key_citation(self, run_rule):
+        (violation,) = run_rule(
+            jss_cite_003, r"See (\cite{zeileis2004,koller2023})."
+        )
+        assert violation.suggestion.endswith("'zeileis2004,koller2023'.")
+
+    def test_two_citations_get_distinct_suggestions(self, run_rule):
+        first, second = run_rule(
+            jss_cite_003, "See (\\cite{aaa}) and (\\cite{bbb})."
+        )
+        assert first.suggestion.endswith("'aaa'.")
+        assert second.suggestion.endswith("'bbb'.")
+
+    def test_keyless_citation_keeps_the_generic_wording(self, run_rule):
+        (violation,) = run_rule(
+            jss_cite_003, r"(\citeauthor \citeyear{zeileis2004})"
+        )
+        assert violation.suggestion == (
+            "Citation inside parens: replace (\\cite{...}) with "
+            "\\citep{...}, or use \\citealp{...} when additional text "
+            "shares the parens."
+        )

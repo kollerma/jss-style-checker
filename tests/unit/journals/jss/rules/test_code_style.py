@@ -441,3 +441,147 @@ def test_all_silent_on_empty_tex():
     doc = ParsedDocument(tex_files=(tex,))
     for check in (check_jss_code_001, check_jss_code_002, check_jss_code_003):
         assert list(check(doc, ToolConfig())) == []
+
+
+# ---------------------------------------------------------------------------
+# Token-specific suggestions (spec 027 item S)
+#
+# The suggestion is part of a baseline entry's key, so two findings of the
+# same rule in one file must be distinguishable by it. Templates are fixed
+# here and mirrored byte-for-byte in the Rust port.
+# ---------------------------------------------------------------------------
+
+
+class TestCode001Suggestion:
+    def test_names_the_comment(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}" "\n"
+            "R> m <- glm(y ~ x) # fit the Poisson model\n"
+            r"\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_code_001, src)
+        assert violation.suggestion == (
+            "Move the comment into the surrounding LaTeX text: "
+            "'fit the Poisson model'."
+        )
+
+    def test_two_blocks_get_distinct_suggestions(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}" "\n"
+            "R> a <- 1 # first note\n"
+            r"\end{CodeInput}" "\n"
+            r"\begin{CodeInput}" "\n"
+            "R> b <- 2 # second note\n"
+            r"\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        first, second = run_rule(jss_code_001, src)
+        assert first.suggestion != second.suggestion
+        assert "first note" in first.suggestion
+        assert "second note" in second.suggestion
+
+    def test_comment_text_is_collapsed_and_capped(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}" "\n"
+            "R> a <- 1 ###   spaced   " + "x" * 60 + "\n"
+            r"\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_code_001, src)
+        quoted = violation.suggestion.split("'")[1]
+        assert quoted == ("spaced " + "x" * 60)[:40]
+
+    def test_marker_only_content_still_quotes(self, run_rule):
+        # The detection regex demands a non-space character after the
+        # marker, so the identifier can never be empty here — there is no
+        # generic-wording branch for this rule to fall back to.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{CodeInput}" "\n"
+            "R> a <- 1 # #\n"
+            r"\end{CodeInput}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_code_001, src)
+        assert violation.suggestion == (
+            "Move the comment into the surrounding LaTeX text: '#'."
+        )
+
+
+class TestCode003Suggestion:
+    def test_code_macro_quotes_the_offending_fragment(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}Use \code{y=a+b*x} here.\end{document}"
+        )
+        (violation,) = run_rule(jss_code_003, src)
+        assert violation.suggestion == (
+            "Add spaces around operators and after commas in the code "
+            "sample (e.g., 'y = a + b * x'): 'y=a+b*x'."
+        )
+
+    def test_fragment_is_windowed_around_the_match(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}Use \code{"
+            + "a" * 30
+            + "y=z"
+            + "b" * 30
+            + r"} here.\end{document}"
+        )
+        (violation,) = run_rule(jss_code_003, src)
+        quoted = violation.suggestion.rsplit("'", 2)[1]
+        # Eight characters either side of the three-character match.
+        assert quoted == "a" * 8 + "y=z" + "b" * 8
+
+    def test_two_code_macros_get_distinct_suggestions(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"Use \code{y=a+b} and \code{q=r+s}." "\n"
+            r"\end{document}"
+        )
+        first, second = run_rule(jss_code_003, src)
+        assert first.suggestion != second.suggestion
+        assert first.suggestion.endswith("'y=a+b'.")
+        assert second.suggestion.endswith("'q=r+s'.")
+
+    def test_code_env_quotes_the_offending_fragment(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{Sinput}" "\n"
+            "R> plot(x,y)\n"
+            r"\end{Sinput}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_code_003, src)
+        # Eight characters of context either side of the matched comma,
+        # so the quote starts one character into `R> plot(x,y)`.
+        assert violation.suggestion == (
+            "Add spaces around operators and after commas in the code "
+            "sample (e.g., 'f(x = 1, y = 2)' rather than 'f(x=1,y=2)'): "
+            "'> plot(x,y)'."
+        )
+
+    def test_code_env_fragment_comes_from_the_unmasked_source(self, run_rule):
+        # The detection pass masks comments and strings; the quoted
+        # fragment must still be text the author can search for.
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{Sinput}" "\n"
+            'R> f(col="red",lty=2)\n'
+            r"\end{Sinput}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_code_003, src)
+        assert violation.suggestion.endswith("'ol=\"red\",lty=2)'.")

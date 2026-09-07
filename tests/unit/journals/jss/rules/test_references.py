@@ -504,3 +504,99 @@ class TestRefs007:
     def test_no_letter_words_silent(self, run_rule):
         src = "@article{a, journal={1234 5678}, year={2020}}\n"
         assert run_rule(jss_refs_007, src, kind="bib") == []
+
+
+class TestRefs004Suggestion:
+    """Token-specific suggestion (spec 027 item S): name the entry.
+
+    Follows the JSS-REFS-001 / JSS-REFS-003 precedent, which already
+    quotes the entry key.
+    """
+
+    def test_language_in_title_names_the_entry(self, run_rule):
+        src = (
+            "@Article{smith2020,\n"
+            "  author = {Smith},\n"
+            "  title = {Doing Things With R},\n"
+            "  journal = {Journal of Statistical Software},\n"
+            "  year = {2020},\n"
+            "}\n"
+        )
+        (violation,) = run_rule(jss_refs_004, src, kind="bib")
+        assert violation.suggestion == (
+            "Wrap 'R' in \\proglang{R} in the title of entry 'smith2020'."
+        )
+
+    def test_package_in_title_names_the_entry(self, run_rule):
+        src = (
+            "@Article{jones2019,\n"
+            "  author = {Jones},\n"
+            "  title = {Fitting Models With MASS},\n"
+            "  journal = {Journal of Statistical Software},\n"
+            "  year = {2019},\n"
+            "}\n"
+        )
+        (violation,) = run_rule(jss_refs_004, src, kind="bib")
+        assert violation.suggestion == (
+            "Wrap 'MASS' in \\pkg{MASS} in the title of entry 'jones2019'."
+        )
+
+    def test_package_prefix_names_the_entry(self, run_rule):
+        src = (
+            "@Manual{cascsim2021,\n"
+            "  author = {Someone},\n"
+            "  title = {cascsim: Casualty Actuarial Society Simulator},\n"
+            "  year = {2021},\n"
+            "}\n"
+        )
+        (violation,) = run_rule(jss_refs_004, src, kind="bib")
+        assert violation.suggestion == (
+            "The leading identifier 'cascsim' looks like a package name; "
+            "wrap it in \\pkg{cascsim} in the title of entry 'cascsim2021'."
+        )
+
+    def test_note_field_names_the_entry(self, run_rule):
+        src = (
+            "@Manual{pkg2022,\n"
+            "  author = {Someone},\n"
+            "  title = {A Perfectly Fine Title},\n"
+            "  note = {R package version 0.1-5},\n"
+            "  year = {2022},\n"
+            "}\n"
+        )
+        (violation,) = run_rule(jss_refs_004, src, kind="bib")
+        assert violation.suggestion == (
+            "Wrap 'R' in \\proglang{R} in the note field of entry 'pkg2022'."
+        )
+
+    def test_two_entries_get_distinct_suggestions(self, run_rule):
+        src = (
+            "@Article{first2020,\n"
+            "  author = {A}, title = {Doing Things With MASS},\n"
+            "  journal = {Journal of Statistical Software}, year = {2020},\n"
+            "}\n"
+            "@Article{second2021,\n"
+            "  author = {B}, title = {More Things With MASS},\n"
+            "  journal = {Journal of Statistical Software}, year = {2021},\n"
+            "}\n"
+        )
+        first, second = run_rule(jss_refs_004, src, kind="bib")
+        assert first.suggestion.endswith("entry 'first2020'.")
+        assert second.suggestion.endswith("entry 'second2021'.")
+
+
+class TestRefs007Suggestion:
+    def test_names_the_entry(self, run_rule):
+        src = (
+            "@Article{koller2023,\n"
+            "  author = {Koller},\n"
+            "  title = {A Title},\n"
+            "  journal = {Journal of statistical software},\n"
+            "  year = {2023},\n"
+            "}\n"
+        )
+        (violation,) = run_rule(jss_refs_007, src, kind="bib")
+        assert violation.suggestion == (
+            "Capitalize the principal words of the journal title in entry "
+            "'koller2023'."
+        )

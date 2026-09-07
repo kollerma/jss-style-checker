@@ -514,3 +514,70 @@ class TestOper002PrimeNotFlagged:
     def test_sum_upper_bound_T_still_silent(self, run_rule):
         # ^T as a big-operator bound is not transpose (existing carve-out)
         assert self._n(run_rule, "\\sum_{t=1}^T x_t") == 0
+
+
+class TestOper003Suggestion:
+    """Token-specific suggestion (spec 027 item S): name the equation."""
+
+    def test_names_the_label_when_present(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            "Text.\n\n"
+            r"\begin{equation}\label{eq:loglik}" "\n"
+            r"y = X\beta" "\n"
+            r"\end{equation}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_oper_003, src)
+        assert violation.suggestion == (
+            "Remove the blank line(s) around the display equation (add '%' "
+            "after/before to suppress the paragraph break): 'eq:loglik'."
+        )
+
+    def test_falls_back_to_the_equation_body(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            "Text.\n\n"
+            r"\begin{equation}" "\n"
+            "y = a + b\n"
+            r"\end{equation}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_oper_003, src)
+        assert violation.suggestion.endswith("'y = a + b'.")
+
+    def test_two_equations_get_distinct_suggestions(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            "Text.\n\n"
+            r"\begin{equation}" "\n"
+            "y = a + b\n"
+            r"\end{equation}" "\n"
+            "More text.\n\n"
+            r"\begin{equation}" "\n"
+            "z = c + d\n"
+            r"\end{equation}" "\n"
+            r"\end{document}"
+        )
+        first, second = run_rule(jss_oper_003, src)
+        assert first.suggestion.endswith("'y = a + b'.")
+        assert second.suggestion.endswith("'z = c + d'.")
+
+    def test_unnameable_equation_keeps_the_generic_wording(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            "Text.\n\n"
+            r"\begin{equation}" "\n"
+            "\n"
+            r"\end{equation}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_oper_003, src)
+        assert violation.suggestion == (
+            "Remove the blank line(s) around the display equation (add '%' "
+            "after/before to suppress the paragraph break)."
+        )

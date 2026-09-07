@@ -416,3 +416,94 @@ class TestIterReferencedEntries:
         )
         keys = {e.key for _bib, e in _helpers._iter_referenced_entries(doc)}
         assert keys == {"foo"}
+
+
+class TestIdentifier:
+    """`identifier()` — the token-specific-suggestion helper (spec 027 item S).
+
+    Contract: `specs/027-first-time-user-gaps/contracts/suggestions.md` C-3.
+    Baseline entries are keyed on the suggestion, so this normalisation
+    decides when two findings of the same rule in the same file are
+    distinguishable — and when an unrelated edit re-keys them.
+    """
+
+    def test_collapses_internal_whitespace(self):
+        assert _helpers.identifier("a   b\n\tc", 40) == "a b c"
+
+    def test_trims_outer_whitespace(self):
+        assert _helpers.identifier("  padded  ", 40) == "padded"
+
+    def test_truncates_after_collapsing_without_ellipsis(self):
+        # Collapse first, then cut: otherwise the cut length would depend
+        # on whitespace the reader cannot see.
+        assert _helpers.identifier("a     bcdef", 5) == "a bcd"
+
+    def test_keeps_source_text_verbatim(self):
+        # No escaping, no case folding: `\beta` stays `\beta`.
+        assert _helpers.identifier("\\beta MATLAB", 40) == "\\beta MATLAB"
+
+    def test_empty_input_yields_empty(self):
+        assert _helpers.identifier("", 40) == ""
+
+    def test_whitespace_only_input_yields_empty(self):
+        assert _helpers.identifier("   \n ", 40) == ""
+
+    def test_exact_length_is_not_truncated(self):
+        assert _helpers.identifier("abcde", 5) == "abcde"
+
+
+class TestEquationIdentifier:
+    """`equation_identifier()` — shared by JSS-OPER-003 and JSS-XREF-004.
+
+    Contract: the equation's own `\\label` when it has one (stable across
+    any edit to the maths), else the head of its first body line.
+    """
+
+    def _env(self, src: str):
+        _walker, nodes = _parse(src)
+        for node in _helpers._walk(nodes):
+            if isinstance(node, LatexEnvironmentNode):
+                return node, src
+        raise AssertionError("no environment in fixture")
+
+    def test_prefers_the_label(self):
+        env, src = self._env(
+            "\\begin{equation}\\label{eq:loglik} y = X\\beta\\end{equation}"
+        )
+        assert _helpers.equation_identifier(env, src) == "eq:loglik"
+
+    def test_first_label_wins_when_several(self):
+        env, src = self._env(
+            "\\begin{align}\\label{eq:a} x = 1 \\\\ \\label{eq:b} y = 2"
+            "\\end{align}"
+        )
+        assert _helpers.equation_identifier(env, src) == "eq:a"
+
+    def test_falls_back_to_the_first_body_line(self):
+        env, src = self._env(
+            "\\begin{equation}\n  y = X\\beta + \\epsilon \\\\ z = 1\n"
+            "\\end{equation}"
+        )
+        assert _helpers.equation_identifier(env, src) == "y = X\\beta + \\epsilon"
+
+    def test_body_head_is_capped_at_forty_characters(self):
+        env, src = self._env(
+            "\\begin{equation}\n" + "y = " + "a" * 60 + "\n\\end{equation}"
+        )
+        assert _helpers.equation_identifier(env, src) == ("y = " + "a" * 60)[:40]
+
+    def test_empty_body_yields_empty(self):
+        env, src = self._env("\\begin{equation}\n\n\\end{equation}")
+        assert _helpers.equation_identifier(env, src) == ""
+
+    def test_empty_label_falls_through_to_the_body(self):
+        env, src = self._env(
+            "\\begin{equation}\\label{} y = 1\\end{equation}"
+        )
+        assert _helpers.equation_identifier(env, src) == "\\label{} y = 1"
+
+    def test_braceless_label_falls_through_to_the_body(self):
+        # `\label` with no group argument: pylatexenc hands back the
+        # following chars node, which is not a label key.
+        env, src = self._env("\\begin{equation}\\label y = 1\\end{equation}")
+        assert _helpers.equation_identifier(env, src) == "\\label y = 1"

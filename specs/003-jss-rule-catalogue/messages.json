@@ -60,7 +60,7 @@
   "JSS-CAP-002": [
     [
       "Section titles are in sentence style (first word capitalised; others lowercase except proper names)",
-      "Use sentence style: capitalise only the first word (proper names remain capitalised)."
+      "Use sentence style: capitalise only the first word (proper names remain capitalised) in 'Models And Statistical Software'."
     ]
   ],
   "JSS-CAP-004": [
@@ -78,7 +78,7 @@
   "JSS-CITE-003": [
     [
       "Avoid bracket-in-bracket citation forms like (\\cite{...}); use \\citep{...} instead",
-      "Citation inside parens: replace (\\cite{...}) with \\citep{...}, or use \\citealp{...} when additional text shares the parens."
+      "Citation inside parens: replace (\\cite{...}) with \\citep{...}, or use \\citealp{...} when additional text shares the parens: 'Cameron+Trivedi:2013'."
     ]
   ],
   "JSS-CITE-004": [
@@ -90,7 +90,7 @@
   "JSS-CODE-001": [
     [
       "Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text",
-      "Move the comment into the surrounding LaTeX text."
+      "Move the comment into the surrounding LaTeX text: 'fit Poisson model'."
     ]
   ],
   "JSS-CODE-002": [
@@ -106,7 +106,7 @@
   "JSS-CODE-003": [
     [
       "Code samples use spaces around operators and after commas",
-      "Add spaces around operators and after commas in the code sample (e.g., 'y = a + b * x')."
+      "Add spaces around operators and after commas in the code sample (e.g., 'y = a + b * x'): 'y=a+b*x'."
     ]
   ],
   "JSS-HOUSE-001": [
@@ -194,7 +194,7 @@
   "JSS-OPER-003": [
     [
       "Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks)",
-      "Remove the blank line(s) around the display equation (add '%' after/before to suppress the paragraph break)."
+      "Remove the blank line(s) around the display equation (add '%' after/before to suppress the paragraph break): 'eq:mean'."
     ]
   ],
   "JSS-OPER-004": [
@@ -294,7 +294,7 @@
   "JSS-REFS-004": [
     [
       "BibTeX titles use JSS markup (\\proglang, \\pkg, \\code) for language and package names",
-      "Wrap 'MASS' in \\pkg{MASS} in the title."
+      "Wrap 'MASS' in \\pkg{MASS} in the title of entry 'MASS'."
     ]
   ],
   "JSS-REFS-005": [
@@ -316,7 +316,7 @@
   "JSS-REFS-007": [
     [
       "Journal titles in BibTeX entries are in title case",
-      "Capitalize the principal words of the journal title."
+      "Capitalize the principal words of the journal title in entry 'Demo'."
     ]
   ],
   "JSS-STRUCT-001": [
@@ -358,7 +358,7 @@
   "JSS-TYPO-001": [
     [
       "Figure and table captions end with a period",
-      "End the caption with a period."
+      "End the caption with a period: 'Frequency distribution for number of day'."
     ]
   ],
   "JSS-TYPO-002": [
@@ -394,7 +394,7 @@
   "JSS-XREF-002": [
     [
       "Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...}) or \\eqref{...}",
-      "Replace '(\\ref{...})' or '\\eqref{...}' with 'Equation~\\ref{...}' (capitalised, non-breaking space)."
+      "Replace '(\\ref{eq:mean})' with 'Equation~\\ref{eq:mean}' (capitalised, non-breaking space)."
     ]
   ],
   "JSS-XREF-003": [
@@ -406,7 +406,7 @@
   "JSS-XREF-004": [
     [
       "Numbered equations carry \\label{} and are referenced from the text",
-      "Add \\label{eq:<name>} inside the equation so it can be referenced from the text."
+      "Add \\label{eq:<name>} inside the equation '\\log(\\mu) = x^\\top \\beta.' so it can be referenced from the text."
     ],
     [
       "Numbered equations carry \\label{} and are referenced from the text",

@@ -729,3 +729,130 @@ def test_all_checks_silent_on_empty_tex():
         check_jss_xref_006, check_jss_xref_007,
     ):
         assert list(check(doc, ToolConfig())) == []
+
+
+class TestXref004Suggestion:
+    """Token-specific suggestion (spec 027 item S).
+
+    Only the *missing-label* messages need work: the orphan-label ones
+    already quote the label they are about.
+    """
+
+    def test_missing_label_names_the_equation_body(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{equation}" "\n"
+            "y = a + b\n"
+            r"\end{equation}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_xref_004, src)
+        assert violation.suggestion == (
+            "Add \\label{eq:<name>} inside the equation 'y = a + b' so it "
+            "can be referenced from the text."
+        )
+
+    def test_two_unlabelled_equations_get_distinct_suggestions(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{equation}" "\n"
+            "y = a + b\n"
+            r"\end{equation}" "\n"
+            r"\begin{equation}" "\n"
+            "z = c + d\n"
+            r"\end{equation}" "\n"
+            r"\end{document}"
+        )
+        first, second = run_rule(jss_xref_004, src)
+        assert "'y = a + b'" in first.suggestion
+        assert "'z = c + d'" in second.suggestion
+
+    def test_unnameable_equation_keeps_the_generic_wording(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{equation}" "\n"
+            "\n"
+            r"\end{equation}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_xref_004, src)
+        assert violation.suggestion == (
+            "Add \\label{eq:<name>} inside the equation so it can be "
+            "referenced from the text."
+        )
+
+    def test_unlabelled_multiline_block_names_its_first_row(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"\begin{align}" "\n"
+            "y = a + b \\\\\n"
+            "z = c + d\n"
+            r"\end{align}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_xref_004, src)
+        assert "'y = a + b'" in violation.suggestion
+
+    def test_mixed_block_row_without_label_names_the_block(self, run_rule):
+        src = (
+            r"\documentclass[article]{jss}" "\n"
+            r"\begin{document}" "\n"
+            r"See \eqref{eq:first}." "\n"
+            r"\begin{align}" "\n"
+            r"y = a + b \label{eq:first} \\" "\n"
+            "z = c + d\n"
+            r"\end{align}" "\n"
+            r"\end{document}"
+        )
+        (violation,) = run_rule(jss_xref_004, src)
+        assert violation.suggestion == (
+            "A numbered equation row of 'eq:first' carries no \\label{} and "
+            "can never be referenced. Add \\label{eq:<name>} to the row or "
+            "suppress its number with \\nonumber."
+        )
+
+
+class TestXref002Suggestion:
+    """Token-specific suggestion (spec 027 item S): name the label."""
+
+    def test_paren_ref_names_the_label(self, run_rule):
+        (violation,) = run_rule(
+            jss_xref_002, r"Leading (\ref{eq:mean}) trailing."
+        )
+        assert violation.suggestion == (
+            "Replace '(\\ref{eq:mean})' with 'Equation~\\ref{eq:mean}' "
+            "(capitalised, non-breaking space)."
+        )
+
+    def test_eqref_names_the_label(self, run_rule):
+        (violation,) = run_rule(jss_xref_002, r"See \eqref{eq:loglik} above.")
+        assert violation.suggestion == (
+            "Replace '\\eqref{eq:loglik}' with 'Equation~\\ref{eq:loglik}' "
+            "(capitalised, non-breaking space; \\eqref renders as "
+            "parenthesised which reviewers discourage)."
+        )
+
+    def test_abbreviation_names_the_label(self, run_rule):
+        (violation,) = run_rule(jss_xref_002, r"See Eq.~\ref{eq:mean} above.")
+        assert violation.suggestion == (
+            "Replace 'Eq.' before \\ref{eq:mean} with 'Equation~' "
+            "(capitalised, non-breaking space)."
+        )
+
+    def test_two_references_get_distinct_suggestions(self, run_rule):
+        first, second = run_rule(
+            jss_xref_002, r"See \eqref{eq:one} and \eqref{eq:two}."
+        )
+        assert "'\\eqref{eq:one}'" in first.suggestion
+        assert "'\\eqref{eq:two}'" in second.suggestion
+
+    def test_unnameable_reference_keeps_the_generic_wording(self, run_rule):
+        (violation,) = run_rule(jss_xref_002, r"Leading (\ref{}) trailing.")
+        assert violation.suggestion == (
+            "Replace '(\\ref{...})' or '\\eqref{...}' with "
+            "'Equation~\\ref{...}' (capitalised, non-breaking space)."
+        )

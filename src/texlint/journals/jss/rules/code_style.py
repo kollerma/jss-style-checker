@@ -173,11 +173,26 @@ def check_jss_code_001(
                     tex=tex,
                     pos=abs_pos,
                     rule_id="JSS-CODE-001",
-                    suggestion=(
-                        "Move the comment into the surrounding LaTeX text."
-                    ),
+                    suggestion=_code_001_suggestion(match.group(0)),
                 )
                 break  # one violation per code block is enough
+
+
+_CODE_001_BASE = "Move the comment into the surrounding LaTeX text"
+_CODE_001_MARKER_RE = re.compile(r"^#+\s*")
+
+
+def _code_001_suggestion(comment: str) -> str:
+    """Quote the comment so two comments in one file are distinguishable.
+
+    The identifier is the comment text with its ``#`` marker stripped:
+    it changes when the comment changes and not when the code around it
+    moves, which is what a baseline entry needs (spec 027 item S).
+    """
+    # `_COMMENT_LINE_RE` requires a non-space character after the marker,
+    # so the identifier is never empty and needs no generic fallback.
+    text = _helpers.identifier(_CODE_001_MARKER_RE.sub("", comment), 40)
+    return f"{_CODE_001_BASE}: '{text}'."
 
 
 # ---------------------------------------------------------------------------
@@ -242,6 +257,42 @@ def check_jss_code_002(
 # JSS-CODE-003 — missing spaces around operators in \code{}
 # ---------------------------------------------------------------------------
 
+_CODE_003_MACRO_BASE = (
+    "Add spaces around operators and after commas in the code sample "
+    "(e.g., 'y = a + b * x')"
+)
+_CODE_003_ENV_BASE = (
+    "Add spaces around operators and after commas in the code sample "
+    "(e.g., 'f(x = 1, y = 2)' rather than 'f(x=1,y=2)')"
+)
+#: Characters of context quoted either side of the matched operator or
+#: comma. Wide enough to name the expression the author must fix, narrow
+#: enough that editing elsewhere in the same chunk does not re-key the
+#: finding (spec 027 item S).
+_CODE_003_WINDOW = 8
+
+
+def _mask(pattern: re.Pattern[str], text: str, fill: str = " ") -> str:
+    """Blank out *pattern* matches, preserving every offset.
+
+    The scans below run on masked text (comments, string literals, and
+    scientific notation are not code the spacing rule applies to) but the
+    quoted fragment must come from the source the author actually wrote.
+    Replacing each match with a same-length run of *fill* keeps the two
+    strings index-aligned, so a match span found in the masked copy
+    slices the original. ``fill="S"`` keeps a string literal
+    identifier-shaped, so ``col="red"`` still exposes the missing space
+    around ``=``.
+    """
+    return pattern.sub(lambda m: fill * len(m.group()), text)
+
+
+def _fragment(text: str, span: tuple[int, int]) -> str:
+    """The offending fragment: the match plus `_CODE_003_WINDOW` either side."""
+    start, end = span
+    window = text[max(0, start - _CODE_003_WINDOW) : end + _CODE_003_WINDOW]
+    return _helpers.identifier(window, 40)
+
 
 def check_jss_code_003(
     doc: ParsedDocument, _cfg: ToolConfig
@@ -295,16 +346,17 @@ def check_jss_code_003(
             # patterns like ``method="exact"`` still expose the missing
             # space around ``=`` (else the empty-string replacement
             # would collapse the right-of-= context to EOL and miss it).
-            cleaned = _SCIENTIFIC_NOTATION_RE.sub("", text)
-            cleaned = _STRING_LITERAL_RE.sub("S", cleaned)
-            if _MISSING_SPACES_RE.search(cleaned):
+            cleaned = _mask(_SCIENTIFIC_NOTATION_RE, text)
+            cleaned = _mask(_STRING_LITERAL_RE, cleaned, fill="S")
+            match = _MISSING_SPACES_RE.search(cleaned)
+            if match is not None:
                 yield _violation(
                     tex=tex,
                     pos=node.pos,
                     rule_id="JSS-CODE-003",
                     suggestion=(
-                        "Add spaces around operators and after commas in "
-                        "the code sample (e.g., 'y = a + b * x')."
+                        f"{_CODE_003_MACRO_BASE}: "
+                        f"'{_fragment(text, match.span())}'."
                     ),
                 )
 
@@ -323,13 +375,13 @@ def _scan_code_env_for_spacing(tex: Any, env: Any) -> Iterator[Violation]:
         # Mask comments first, then scientific notation, then strings.
         # Strings are replaced with an identifier-shaped placeholder so
         # ``col="red"`` still exposes the missing space around ``=``.
-        cleaned = _CODE_ENV_COMMENT_RE.sub("", text)
-        cleaned = _SCIENTIFIC_NOTATION_RE.sub("", cleaned)
-        cleaned = _CODE_ENV_STRING_RE.sub("S", cleaned)
-        if not (
-            _CODE_ENV_MISSING_COMMA_SPACE_RE.search(cleaned)
-            or _MISSING_SPACES_RE.search(cleaned)
-        ):
+        cleaned = _mask(_CODE_ENV_COMMENT_RE, text)
+        cleaned = _mask(_SCIENTIFIC_NOTATION_RE, cleaned)
+        cleaned = _mask(_CODE_ENV_STRING_RE, cleaned, fill="S")
+        match = _CODE_ENV_MISSING_COMMA_SPACE_RE.search(
+            cleaned
+        ) or _MISSING_SPACES_RE.search(cleaned)
+        if match is None:
             continue
         # Anchor the violation at the environment opening (the
         # ``\begin{Sinput}`` / chunk header), not the content start.
@@ -344,9 +396,7 @@ def _scan_code_env_for_spacing(tex: Any, env: Any) -> Iterator[Violation]:
             pos=env.pos,
             rule_id="JSS-CODE-003",
             suggestion=(
-                "Add spaces around operators and after commas in the "
-                "code sample (e.g., 'f(x = 1, y = 2)' rather than "
-                "'f(x=1,y=2)')."
+                f"{_CODE_003_ENV_BASE}: '{_fragment(text, match.span())}'."
             ),
         )
         return  # one violation per env

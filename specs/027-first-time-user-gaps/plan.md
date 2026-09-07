@@ -831,6 +831,17 @@ recorded in `research.md`.
 | D-6 | "`JournalRuleModule.metadata()` … (item A)" | Item D needs the journal seam for `--version` line 3, and §14 forbids new lazy `journals.jss` imports in output/CLI code. | `metadata()` and `JournalMetadata` land in D carrying `rule_set` only; item A adds `recall_by_rule` and `coverage` to the same object. No shim, no temporary field. |
 | D-7 | `bash r/jsslintr/tools/vendor-jsslint-core.sh` after every core change | That script refreshes the **R package's** vendored copy only. `rust/jsslint-core/specs/003-jss-rule-catalogue/` (the crate's own copy, which `build.rs` reads from a crates.io tarball and which `tests/unit/test_vendored_catalogue_in_sync.py` guards) has no script and must be copied by hand. | Both copies are refreshed; the sync test catches the omission. Worth a follow-up: fold the crate copy into the same script. |
 
+### Item S — token-specific suggestions
+
+| # | Plan said | Reality | What was done |
+|---|---|---|---|
+| S-1 | `JSS-XREF-004` gains the equation identifier | Three of its five emission sites already quote the label they are about (`_orphan_label_suggestion`, and the "label(s) … never referenced" wording). | Only the three *missing-label* sites gained the identifier; the orphan-label ones were already token-specific and were left byte-identical. The same applies to `JSS-XREF-002`, where the identifier is spliced into the existing template (`Replace '(\ref{eq:mean})' with 'Equation~\ref{eq:mean}'`) rather than appended. |
+| S-2 | `JSS-CAP-002` uses the `[plain]` form when given | The rule inspects the **mandatory** `{…}` argument; quoting the optional `[plain]` variant would name a string the finding is not about. | The quoted title is the one the rule inspected. Recorded in the rule's test. |
+| S-3 | `CODE-003`'s identifier is "±8 chars around the matched operator/comma" | The detection scans run on *masked* text (comments, string literals, scientific notation removed), and the old masking changed the string's length, so a match offset did not map back to the source the author wrote. | Masking is now length-preserving in both engines (same-length fill, `"S"` for string literals so `col="red"` still exposes the missing space). Detection was verified unchanged finding-for-finding — same `(rule, line, column)` set on **1 259 files / 5 081 CODE-003 findings** in `examples/` and 237 in the recall corpus (§I, §VI). |
+| S-4 | `equation_identifier` rebuilds the body from nodes | pylatexenc's macro nodes swallow trailing whitespace, so a node-rebuilt body reads `X\beta+ 1`, and the Rust node model has no equivalent of `macro_post_space` to mirror it with. | Both engines slice the body out of the **source** between the first and last child node's span, which is also what the author will search for. |
+| S-5 | The replay test runs against `examples/jss5342-versions/` (committed) | That directory is **gitignored** (`.gitignore:202`) — the manuscript is not redistributable. | `tests/integration/test_baseline_replay.py` skips cleanly when it is absent, exactly like the recall-corpus parity suites, and asserts counts only (no manuscript text in a committed artifact). |
+| S-6 | "distinct keys ≥ 75, re-keyed ≤ 4" | The re-keyed figure in research.md §3 is measured against the **pre-item-S** key, which cannot be recomputed once the old wording is gone. | The pre-S survivor count (26) is recorded as a constant in the test, measured by running the same code against the commit before item S. Replay results: distinct keys **49 → 79** (research predicted ~80), matched `26 → 22`, i.e. **4 re-keyed** — research.md's number exactly. |
+
 ### Environment
 
 - `.venv-host` is the **macOS host's** venv (`/workspace` is a bind mount
@@ -866,3 +877,10 @@ recorded in `research.md`.
   it. Agreed reading for item S (maintainer, 2026-09-07): every branch
   item S *adds* must be covered and no module's coverage may regress;
   each touched module's before/after number is reported with the item.
+  Item S's outcome, `tests/unit/journals/jss/` before → after:
+  `_helpers` 98 → 98, `capitalization` 85 → 86, `citations` 92 → 92,
+  `code_style` 94 → 94, `crossrefs` 86 → 88, `operators` 87 → 88,
+  `references` 91 → 94, `typography` 96 → 96; total 90 → 91 %. No
+  module regressed and the only new uncovered branches found
+  (`equation_identifier`'s label fall-throughs) were covered before the
+  item closed.

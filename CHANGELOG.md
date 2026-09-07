@@ -36,6 +36,26 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
   rule-set mapping for all seven channels, each channel's version-string
   constraints, the compatibility policy, and what to pin.
 
+### Changed
+
+- **Ten rules now name what they found.** `JSS-CODE-001`, `JSS-CODE-003`,
+  `JSS-OPER-003`, `JSS-XREF-002`, `JSS-XREF-004`, `JSS-TYPO-001`,
+  `JSS-CAP-002`, `JSS-CITE-003`, `JSS-REFS-004`, and `JSS-REFS-007`
+  quote a stable identifier in their suggestion — the BibTeX entry key,
+  the equation label or the head of its body, the caption or section
+  title, the offending code fragment, the referenced label, the cite
+  keys, or the comment text. Detection is unchanged: no finding appears
+  or disappears (verified finding-for-finding on 1 259 corpus files).
+  Two findings of the same rule in one file are now usually
+  distinguishable, which matters because the baseline mode landing in
+  this release keys accepted findings on the suggestion text. On a real
+  four-round JSS submission this raises the distinct-key count of one
+  version from 49 to 79 while re-keying 4 of the 26 findings that
+  survive a revision round. `JSS-WIDTH-001` deliberately keeps its
+  generic suggestion (no stable identifier exists for an over-long
+  line). This is a rule-set change: the rule-set date moves, and
+  consumers keying on suggestion text see new values once.
+
 ## [1.1.0] — 2026-07-19
 
 ### Added

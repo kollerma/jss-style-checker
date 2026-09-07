@@ -41,6 +41,80 @@ _VERBATIM_ENVS: frozenset[str] = VERBATIM_ENVS
 
 
 # ---------------------------------------------------------------------------
+# Token-specific suggestions (spec 027 item S)
+# ---------------------------------------------------------------------------
+
+
+def identifier(text: str, limit: int) -> str:
+    """Normalise *text* into a stable identifier for a suggestion.
+
+    A baseline entry is keyed on ``(rule_id, path, message, suggestion)``
+    (spec 027 D1), so whatever a suggestion quotes decides which findings
+    of a rule are distinguishable — and which unrelated edits re-key
+    them. The normalisation is therefore fixed by contract
+    (``specs/027-first-time-user-gaps/contracts/suggestions.md`` C-3) and
+    identical in both engines:
+
+    * runs of whitespace (newlines included) collapse to one space, and
+      the result is trimmed — a re-wrapped line must not re-key a finding;
+    * truncation to *limit* happens **after** collapsing, so the cut does
+      not depend on whitespace the reader cannot see;
+    * no ellipsis is appended — a fixed-length prefix keeps the key
+      stable when the tail of a long title or caption is edited;
+    * nothing is escaped or case-folded: ``\\beta`` stays ``\\beta`` and
+      ``MATLAB`` stays ``MATLAB``, because the quoted text is what the
+      author will search their source for.
+
+    An empty result means the caller has no identifier to quote and must
+    emit its generic wording instead.
+    """
+    collapsed = " ".join(text.split())
+    return collapsed[:limit]
+
+
+#: Identifier length for an equation body head (spec 027 item S).
+_EQUATION_BODY_LIMIT = 40
+
+
+def equation_identifier(env: Any, source: str) -> str:
+    """Name a display equation: its ``\\label`` key, else its first body line.
+
+    Shared by ``JSS-OPER-003`` and ``JSS-XREF-004``, whose suggestions
+    must tell two equations in one file apart. The label is preferred
+    because it survives any edit to the maths; the body head is the
+    fallback for the (common) unlabelled case — including every
+    ``XREF-004`` finding that fires *because* the label is missing.
+
+    The body head is sliced out of *source* rather than rebuilt from the
+    node list: the source is what the author will search for, and a
+    slice is what the Rust port can reproduce byte for byte. Row
+    splitting stops at the first ``\\\\``, so a multi-row ``align`` is
+    named by its first row, not by its whole body.
+    """
+    for child in _walk(env.nodelist or ()):
+        if not (
+            isinstance(child, LatexMacroNode) and child.macroname == "label"
+        ):
+            continue
+        argd = getattr(child, "nodeargd", None)
+        if argd is None:  # pragma: no cover - pylatexenc always fills this
+            continue
+        for arg in argd.argnlist or ():
+            if not isinstance(arg, LatexGroupNode):
+                continue
+            key = " ".join(_group_text(arg).split())
+            if key:
+                return key
+
+    body_nodes = env.nodelist or ()
+    if not body_nodes:
+        return ""
+    body = source[body_nodes[0].pos : body_nodes[-1].pos + body_nodes[-1].len]
+    first_row = body.split("\\\\", 1)[0]
+    return identifier(first_row, _EQUATION_BODY_LIMIT)
+
+
+# ---------------------------------------------------------------------------
 # Rule / violation factories
 # ---------------------------------------------------------------------------
 

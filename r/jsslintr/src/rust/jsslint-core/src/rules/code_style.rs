@@ -1,7 +1,7 @@
 //! Code-style rules — mirrors `journals/jss/rules/code_style.py`
 //! (JSS-CODE-001/002/003).
 
-use super::tex_common::tex_violation_with_fix;
+use super::tex_common::{identifier, tex_violation_with_fix};
 use crate::report::{Fix, FixConfidence, Violation};
 use crate::tex::extract;
 use crate::tex::node::{GroupNode, MacroNode, Node};
@@ -66,6 +66,55 @@ static STRING_LITERAL_RE: LazyLock<Regex> =
 
 const SINGLE_CHAR_ESCAPE_MACROS: &[&str] = &["%", "&", "_", "#", "$", "{", "}", "\\"];
 
+const CODE_001_BASE: &str = "Move the comment into the surrounding LaTeX text";
+static CODE_001_MARKER_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^#+\s*").unwrap());
+
+const CODE_003_MACRO_BASE: &str =
+    "Add spaces around operators and after commas in the code sample (e.g., 'y = a + b * x')";
+const CODE_003_ENV_BASE: &str = "Add spaces around operators and after commas in the code sample \
+                                 (e.g., 'f(x = 1, y = 2)' rather than 'f(x=1,y=2)')";
+/// Characters of context quoted either side of the matched operator or
+/// comma — mirrors `code_style._CODE_003_WINDOW`.
+const CODE_003_WINDOW: usize = 8;
+
+/// Quote the comment so two comments in one file are distinguishable
+/// (spec 027 item S). `COMMENT_LINE_RE` requires a non-space character
+/// after the marker, so the identifier is never empty.
+fn code_001_suggestion(comment: &str) -> String {
+    let text = identifier(&CODE_001_MARKER_RE.replace(comment, ""), 40);
+    format!("{CODE_001_BASE}: '{text}'.")
+}
+
+/// Blank out `pattern` matches, preserving every *character* offset.
+///
+/// Mirrors `code_style._mask`. The scans run on masked text but the
+/// quoted fragment must come from the source the author wrote, so the
+/// two strings stay index-aligned by character. (Character, not byte:
+/// the fragment is sliced by character index, exactly as Python slices
+/// a `str`.)
+fn mask(pattern: &Regex, text: &str, fill: char) -> String {
+    pattern
+        .replace_all(text, |caps: &regex::Captures| {
+            fill.to_string().repeat(caps[0].chars().count())
+        })
+        .into_owned()
+}
+
+/// The offending fragment: the match plus `CODE_003_WINDOW` characters
+/// either side, taken from the unmasked `text`. `start`/`end` are byte
+/// offsets into `cleaned`, which `mask` keeps character-aligned with
+/// `text`.
+fn fragment(text: &str, cleaned: &str, start: usize, end: usize) -> String {
+    let start_chars = cleaned[..start].chars().count();
+    let end_chars = start_chars + cleaned[start..end].chars().count();
+    let window: String = text
+        .chars()
+        .skip(start_chars.saturating_sub(CODE_003_WINDOW))
+        .take(end_chars + CODE_003_WINDOW - start_chars.saturating_sub(CODE_003_WINDOW))
+        .collect();
+    identifier(&window, 40)
+}
+
 /// JSS-CODE-001 — code-display envs contain no `#`-style comments.
 pub fn check_code_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
     let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
@@ -86,7 +135,7 @@ pub fn check_code_001(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                 &line_index,
                 abs_pos,
                 "JSS-CODE-001",
-                Some("Move the comment into the surrounding LaTeX text.".to_string()),
+                Some(code_001_suggestion(m.as_str())),
                 None,
             ));
             break; // one violation per code block is enough
@@ -187,15 +236,18 @@ pub fn check_code_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
         {
             return;
         }
-        let cleaned = SCIENTIFIC_NOTATION_RE.replace_all(&text, "");
-        let cleaned = STRING_LITERAL_RE.replace_all(&cleaned, "S");
-        if MISSING_SPACES_RE.is_match(&cleaned) {
+        let cleaned = mask(&SCIENTIFIC_NOTATION_RE, &text, ' ');
+        let cleaned = mask(&STRING_LITERAL_RE, &cleaned, 'S');
+        if let Some(hit) = MISSING_SPACES_RE.find(&cleaned) {
             out.push(tex_violation_with_fix(
                 file,
                 &line_index,
                 m.span.pos,
                 "JSS-CODE-003",
-                Some("Add spaces around operators and after commas in the code sample (e.g., 'y = a + b * x').".to_string()),
+                Some(format!(
+                    "{CODE_003_MACRO_BASE}: '{}'.",
+                    fragment(&text, &cleaned, hit.start(), hit.end())
+                )),
                 None,
             ));
         }
@@ -211,21 +263,22 @@ fn scan_code_env_for_spacing(
 ) -> Option<Violation> {
     for child in &env.nodelist {
         let Node::Chars(c) = child else { continue };
-        let cleaned = CODE_ENV_COMMENT_RE.replace_all(&c.chars, "");
-        let cleaned = SCIENTIFIC_NOTATION_RE.replace_all(&cleaned, "");
-        let cleaned = CODE_ENV_STRING_RE.replace_all(&cleaned, "S");
-        if CODE_ENV_MISSING_COMMA_SPACE_RE.is_match(&cleaned)
-            || MISSING_SPACES_RE.is_match(&cleaned)
-        {
+        let cleaned = mask(&CODE_ENV_COMMENT_RE, &c.chars, ' ');
+        let cleaned = mask(&SCIENTIFIC_NOTATION_RE, &cleaned, ' ');
+        let cleaned = mask(&CODE_ENV_STRING_RE, &cleaned, 'S');
+        let hit = CODE_ENV_MISSING_COMMA_SPACE_RE
+            .find(&cleaned)
+            .or_else(|| MISSING_SPACES_RE.find(&cleaned));
+        if let Some(hit) = hit {
             return Some(tex_violation_with_fix(
                 file,
                 line_index,
                 env.span.pos,
                 "JSS-CODE-003",
-                Some(
-                    "Add spaces around operators and after commas in the code sample (e.g., 'f(x = 1, y = 2)' rather than 'f(x=1,y=2)')."
-                        .to_string(),
-                ),
+                Some(format!(
+                    "{CODE_003_ENV_BASE}: '{}'.",
+                    fragment(&c.chars, &cleaned, hit.start(), hit.end())
+                )),
                 None,
             ));
         }

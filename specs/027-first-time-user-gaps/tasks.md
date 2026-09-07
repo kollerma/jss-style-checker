@@ -54,7 +54,7 @@ before any code is written.
 - [ ] T001 Materialise the eval corpora (`eval-jss corpus fetch`, `python -m eval.recall_corpus_scaffold`) and record which parity suites would otherwise skip, in `specs/027-first-time-user-gaps/plan.md` under "Deviations" if unavailable
 - [x] T002 [P] Point `.specify/feature.json` at `specs/027-first-time-user-gaps` so the spec-kit scripts resolve this feature
 - [x] T003 [P] Record the pre-change gate results (pytest, ruff, `cargo test --workspace --locked`) as the baseline for every later comparison
-- [ ] T004 Verify that `eval-jss iterate refresh` restores precision labels by `(rule, file, line)` and NOT by message text (plan §2 hazard, contracts/suggestions.md C-6); stop and report if it keys on text — item S cannot land otherwise
+- [x] T004 Verify that `eval-jss iterate refresh` restores precision labels by `(rule, file, line)` and NOT by message text (plan §2 hazard, contracts/suggestions.md C-6); stop and report if it keys on text — item S cannot land otherwise
 
 **Checkpoint**: gates green, corpora present, label-restoration keying confirmed
 
@@ -124,29 +124,29 @@ its implementation task.
 
 ### Shared helper
 
-- [ ] T029 [US4] Failing unit tests for the normalisation helper (collapse whitespace, trim, truncate after collapsing, no ellipsis, empty → generic fallback) in `tests/unit/journals/jss/rules/test_helpers.py`
-- [ ] T030 [US4] Implement the normalisation helper beside the existing suggestion helpers in `src/texlint/journals/jss/rules/_helpers.py` (contracts/suggestions.md C-3)
-- [ ] T031 [US4] Mirror the helper in `rust/jsslint-core/src/rules/` with unit tests
+- [x] T029 [US4] Failing unit tests for the normalisation helper (collapse whitespace, trim, truncate after collapsing, no ellipsis, empty → generic fallback) in `tests/unit/journals/jss/rules/test_helpers.py`
+- [x] T030 [US4] Implement the normalisation helper beside the existing suggestion helpers in `src/texlint/journals/jss/rules/_helpers.py` (contracts/suggestions.md C-3)
+- [x] T031 [US4] Mirror the helper in `rust/jsslint-core/src/rules/` with unit tests
 
 ### Per-rule (test first, then Python, then Rust) — ten rules
 
-- [ ] T032 [US4] `JSS-CODE-003` (±8 chars around the matched operator/comma): failing test → `src/texlint/journals/jss/rules/code_style.py` → `rust/jsslint-core/src/rules/`
-- [ ] T033 [US4] `JSS-OPER-003` (equation `\label`, else first 40 chars of the first body line): failing test → `src/texlint/journals/jss/rules/operators.py` → Rust
-- [ ] T034 [US4] `JSS-XREF-004` (same identifier rule as OPER-003): failing test → `src/texlint/journals/jss/rules/crossrefs.py` → Rust
-- [ ] T035 [US4] `JSS-TYPO-001` (first 40 chars of the caption): failing test → `src/texlint/journals/jss/rules/typography.py` → Rust
-- [ ] T036 [US4] `JSS-REFS-004` (BibTeX entry key): failing test → `src/texlint/journals/jss/rules/references.py` → Rust
-- [ ] T037 [US4] `JSS-REFS-007` (BibTeX entry key): failing test → `src/texlint/journals/jss/rules/references.py` → Rust
-- [ ] T038 [US4] `JSS-CAP-002` (section title ≤ 60 chars, plain form when `[plain]` given): failing test → `src/texlint/journals/jss/rules/capitalization.py` → Rust
-- [ ] T039 [US4] `JSS-CODE-001` (first 40 chars of the comment): failing test → `src/texlint/journals/jss/rules/code_style.py` → Rust
-- [ ] T040 [US4] `JSS-XREF-002` (referenced label): failing test → `src/texlint/journals/jss/rules/crossrefs.py` → Rust
-- [ ] T041 [US4] `JSS-CITE-003` (cite key(s) of the matched `\cite…`): failing test → `src/texlint/journals/jss/rules/citations.py` → Rust
+- [x] T032 [US4] `JSS-CODE-003` (±8 chars around the matched operator/comma): failing test → `src/texlint/journals/jss/rules/code_style.py` → `rust/jsslint-core/src/rules/`
+- [x] T033 [US4] `JSS-OPER-003` (equation `\label`, else first 40 chars of the first body line): failing test → `src/texlint/journals/jss/rules/operators.py` → Rust
+- [x] T034 [US4] `JSS-XREF-004` (same identifier rule as OPER-003): failing test → `src/texlint/journals/jss/rules/crossrefs.py` → Rust
+- [x] T035 [US4] `JSS-TYPO-001` (first 40 chars of the caption): failing test → `src/texlint/journals/jss/rules/typography.py` → Rust
+- [x] T036 [US4] `JSS-REFS-004` (BibTeX entry key): failing test → `src/texlint/journals/jss/rules/references.py` → Rust
+- [x] T037 [US4] `JSS-REFS-007` (BibTeX entry key): failing test → `src/texlint/journals/jss/rules/references.py` → Rust
+- [x] T038 [US4] `JSS-CAP-002` (section title ≤ 60 chars, plain form when `[plain]` given): failing test → `src/texlint/journals/jss/rules/capitalization.py` → Rust
+- [x] T039 [US4] `JSS-CODE-001` (first 40 chars of the comment): failing test → `src/texlint/journals/jss/rules/code_style.py` → Rust
+- [x] T040 [US4] `JSS-XREF-002` (referenced label): failing test → `src/texlint/journals/jss/rules/crossrefs.py` → Rust
+- [x] T041 [US4] `JSS-CITE-003` (cite key(s) of the matched `\cite…`): failing test → `src/texlint/journals/jss/rules/citations.py` → Rust
 
 ### Fixtures, goldens, gates
 
-- [ ] T042 [US4] Update the expectations in `tests/fixtures/violations/` for the ten rules and re-run `tex_rules_parity.rs`, `bib_rules_parity.rs`, `engine_parity.rs`
-- [ ] T043 [US4] Regenerate the SARIF goldens once (`JSSLINT_REGEN_GOLDENS=1 python -m pytest tests/integration/test_cli_sarif_goldens.py`) and review the diff for message-text changes only
-- [ ] T044 [US4] Generate `specs/003-jss-rule-catalogue/messages.json` for real (T008) and stamp the new `ruleset_version` + fingerprint (T009); confirm `--check` is clean and re-run `bash r/jsslintr/tools/vendor-jsslint-core.sh`
-- [ ] T045 [US4] Confirm the §IX gate: `python -m pytest tests/unit/journals/jss/ --cov=src/texlint/journals/jss/rules --cov-branch --cov-fail-under=100`
+- [x] T042 [US4] Update the expectations in `tests/fixtures/violations/` for the ten rules and re-run `tex_rules_parity.rs`, `bib_rules_parity.rs`, `engine_parity.rs`
+- [x] T043 [US4] Regenerate the SARIF goldens once (`JSSLINT_REGEN_GOLDENS=1 python -m pytest tests/integration/test_cli_sarif_goldens.py`) and review the diff for message-text changes only
+- [x] T044 [US4] Generate `specs/003-jss-rule-catalogue/messages.json` for real (T008) and stamp the new `ruleset_version` + fingerprint (T009); confirm `--check` is clean and re-run `bash r/jsslintr/tools/vendor-jsslint-core.sh`
+- [x] T045 [US4] Confirm the §IX gate: `python -m pytest tests/unit/journals/jss/ --cov=src/texlint/journals/jss/rules --cov-branch --cov-fail-under=100`
 
 **Checkpoint**: ten rules token-specific in both engines; `messages.json` exists and is generated exactly once; item S PR ready
 
