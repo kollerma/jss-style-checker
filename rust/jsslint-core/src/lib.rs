@@ -6,6 +6,7 @@
 //! `/home/node/.claude/plans/having-the-style-checker-compressed-crown.md`
 //! for the full architecture.
 
+pub mod baseline;
 pub mod bib;
 pub mod catalogue;
 pub mod config;

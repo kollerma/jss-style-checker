@@ -217,6 +217,20 @@ impl RuleSetInfo {
     }
 }
 
+/// What a `--baseline` run hid — mirrors `core.baseline.BaselineSummary`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BaselineSummary {
+    /// The path as the user gave it (flag or TOML), not resolved.
+    pub path: String,
+    pub matched: u32,
+    /// Unmatched occurrences whose rule *did* run — findings since fixed.
+    pub stale: u32,
+    /// Unmatched occurrences whose rule did not run at all (ignored,
+    /// below `--min-confidence`, format-skipped, retired).
+    pub unevaluated: u32,
+    pub ruleset_version: Option<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct ComplianceReport {
     pub tool_version: String,
@@ -225,4 +239,10 @@ pub struct ComplianceReport {
     pub categories: Vec<CategorySummary>,
     pub compliance_percentage: Option<f64>,
     pub skipped_rules: Vec<SkippedRule>,
+    /// Filled in by the CLI after the run; the engine never sees the
+    /// baseline file (§XIV), only the matcher as a `Suppressor`.
+    pub baseline: Option<BaselineSummary>,
+    /// Provenance of the rule set that produced these findings, so no
+    /// renderer has to reach into the catalogue itself.
+    pub rule_set: RuleSetInfo,
 }

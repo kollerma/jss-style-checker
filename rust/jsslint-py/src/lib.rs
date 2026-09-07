@@ -69,6 +69,10 @@ fn render(
         min_confidence,
         fail_on,
         severity_overrides: None,
+        // Not exposed by this binding in 1.2.0 (baseline-file.md C-9):
+        // the matcher is pure and lives in core, but the *file* is a
+        // filesystem concern, so an in-memory variant is a follow-up.
+        baseline: None,
     };
     let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
     let cfg = config::load(&cwd, &overrides);

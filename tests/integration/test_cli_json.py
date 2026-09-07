@@ -39,7 +39,11 @@ class TestJsonShape:
             "categories",
             "violations",
             "skipped_rules",
+            # spec 027 item B: always present, null when no baseline
+            # was applied.
+            "baseline",
         }
+        assert payload["baseline"] is None
         assert payload["tool_version"] == __version__
         assert payload["journal_id"] == "jss"
         assert payload["compliance_percentage"] == 100.0

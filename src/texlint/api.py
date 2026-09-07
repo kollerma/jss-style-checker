@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 if TYPE_CHECKING:
+    from texlint.core.baseline import BaselineSummary
     from texlint.core.resolver import ResolvedReference
 
 
@@ -255,6 +256,36 @@ class SkippedRule:
 
 
 @dataclass(frozen=True)
+class RuleSetInfo:
+    """Provenance of a journal's rule set (spec 027 item D).
+
+    ``version`` is a date, not a semantic version: it names *which* rule
+    set produced a finding, which is what a baseline file stamps and
+    ``--version`` prints. ``fingerprint`` is what forces that date to
+    move when a rule or its wording changes. The two guide fields are
+    kept apart rather than pre-joined because the two renderings differ:
+    ``--version`` writes ``jss.cls 3.3, vendored 2021-05-23`` while JSON
+    and the report carry :attr:`guide_source`.
+
+    A journal that ships no provenance leaves every field ``None``; the
+    surfaces then render ``n/a`` (``--version``) or ``null`` (JSON).
+    """
+
+    version: str | None = None
+    fingerprint: str | None = None
+    guide_edition: str | None = None
+    source_vendored_at: str | None = None
+
+    @property
+    def guide_source(self) -> str | None:
+        if self.guide_edition is None:
+            return None
+        if self.source_vendored_at is None:
+            return self.guide_edition
+        return f"{self.guide_edition} ({self.source_vendored_at})"
+
+
+@dataclass(frozen=True)
 class ComplianceReport:
     tool_version: str
     journal_id: str
@@ -262,6 +293,16 @@ class ComplianceReport:
     categories: tuple[CategorySummary, ...]
     compliance_percentage: float | None
     skipped_rules: tuple[SkippedRule, ...] = ()
+    #: What a ``--baseline`` run hid, or ``None`` when no baseline was
+    #: applied. Filled in by the CLI *after* :func:`engine.run` — the
+    #: engine never sees the file (§XIV); it only takes the matcher as a
+    #: :data:`Suppressor`.
+    baseline: BaselineSummary | None = None
+    #: Provenance of the rule set that produced these findings, copied
+    #: from the journal's :meth:`JournalRuleModule.metadata`. Carried on
+    #: the report so no renderer has to import a journal package (§IV);
+    #: empty for a journal that supplies none.
+    rule_set: RuleSetInfo = field(default_factory=RuleSetInfo)
 
 
 @dataclass(frozen=True)
@@ -297,6 +338,11 @@ class ToolConfig:
     # JSS-REFS-003 uses it to online-verify and (with ``--fix``) populate
     # missing DOIs.
     doi_resolver: Callable[[Mapping[str, str], str], str | None] | None = None
+    # Baseline file to apply (spec 027 item B). TOML key ``baseline``,
+    # relative to the ``.jss-lint.toml`` directory; ``--baseline`` wins.
+    # There is deliberately no auto-discovery: a file that silences
+    # findings must be named, never found (research.md §6).
+    baseline: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -452,36 +498,6 @@ class ParsedProject:
     documents: tuple[ParsedDocument, ...]
     tree: dict[Path, tuple[Path, ...]]
     missing: tuple[ResolvedReference, ...] = ()
-
-
-@dataclass(frozen=True)
-class RuleSetInfo:
-    """Provenance of a journal's rule set (spec 027 item D).
-
-    ``version`` is a date, not a semantic version: it names *which* rule
-    set produced a finding, which is what a baseline file stamps and
-    ``--version`` prints. ``fingerprint`` is what forces that date to
-    move when a rule or its wording changes. The two guide fields are
-    kept apart rather than pre-joined because the two renderings differ:
-    ``--version`` writes ``jss.cls 3.3, vendored 2021-05-23`` while JSON
-    and the report carry :attr:`guide_source`.
-
-    A journal that ships no provenance leaves every field ``None``; the
-    surfaces then render ``n/a`` (``--version``) or ``null`` (JSON).
-    """
-
-    version: str | None = None
-    fingerprint: str | None = None
-    guide_edition: str | None = None
-    source_vendored_at: str | None = None
-
-    @property
-    def guide_source(self) -> str | None:
-        if self.guide_edition is None:
-            return None
-        if self.source_vendored_at is None:
-            return self.guide_edition
-        return f"{self.guide_edition} ({self.source_vendored_at})"
 
 
 @dataclass(frozen=True)

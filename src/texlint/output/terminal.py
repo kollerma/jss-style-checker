@@ -120,8 +120,40 @@ def render(report: ComplianceReport, config: ToolConfig) -> None:
         _render_reviewer(report)
     else:
         _render_author(report)
+    if report.baseline is not None:
+        _render_baseline(report)
     if config.verbose and report.skipped_rules:
         _render_skipped_rules(report)
+
+
+def _render_baseline(report: ComplianceReport) -> None:
+    """One line saying what the baseline hid (`baseline-file.md` C-6).
+
+    Printed in both modes, and in particular on an otherwise clean run:
+    "no findings" and "no findings you have not already accepted" are
+    different claims, and the user must be able to tell them apart.
+    """
+    summary = report.baseline
+    assert summary is not None  # guarded by the caller
+    line = (
+        f"Baseline: {summary.matched} findings hidden by {summary.path} "
+        f"({summary.stale} stale, {summary.unevaluated} unevaluated)"
+    )
+    current = report.rule_set.version
+    if (
+        summary.ruleset_version is not None
+        and current is not None
+        and summary.ruleset_version != current
+    ):
+        # The wording users' baselines key on may change in a minor
+        # release (docs/versions.md), which strands entries silently
+        # unless the two dates are named.
+        line += (
+            f" — written for rule set {summary.ruleset_version}, current "
+            f"{current}; run --update-baseline"
+        )
+    _console().print(line, highlight=False)
+
 
 
 def _render_skipped_rules(report: ComplianceReport) -> None:

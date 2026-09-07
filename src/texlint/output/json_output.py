@@ -83,6 +83,23 @@ def to_payload(report: ComplianceReport) -> dict[str, Any]:
             {"rule_id": s.rule_id, "reason": s.reason}
             for s in report.skipped_rules
         ],
+        # Always present, `null` when no baseline was applied — the same
+        # "every key always there" contract `compliance_percentage`
+        # follows (`json-output-1.2.md` C-2).
+        "baseline": _baseline_dict(report),
+    }
+
+
+def _baseline_dict(report: ComplianceReport) -> dict[str, Any] | None:
+    summary = report.baseline
+    if summary is None:
+        return None
+    return {
+        "matched": summary.matched,
+        "path": summary.path,
+        "ruleset_version": summary.ruleset_version,
+        "stale": summary.stale,
+        "unevaluated": summary.unevaluated,
     }
 
 

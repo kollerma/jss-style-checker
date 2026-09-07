@@ -130,3 +130,45 @@ def test_persisting_findings_keep_their_key(versions: dict[str, list]) -> None:
         f"(allowed: {MAX_REKEYED}); a suggestion varies with edits that did "
         "not change the finding"
     )
+
+
+def test_the_real_baseline_reproduces_the_key_measurements(
+    versions: dict[str, list], tmp_path: Path
+) -> None:
+    """The same numbers, through `--update-baseline` and `--baseline`.
+
+    The two tests above measure the key directly; this one measures what
+    a user actually gets: accept the initial version, apply that file to
+    the resubmission, and check the summary line's matched/stale counts
+    against the same constants.
+    """
+    from texlint.core.baseline import BaselineMatcher, build, dumps, parse
+
+    path_map = {str(v.file): Path(v.file).name for v in versions["initial"]}
+    accepted = build(
+        versions["initial"],
+        path_map=path_map,
+        tool_version="test",
+        ruleset_version=None,
+        journal="jss",
+    )
+    written = tmp_path / "b.json"
+    written.write_text(dumps(accepted), encoding="utf-8")
+
+    matcher = BaselineMatcher(
+        parse(written.read_text(encoding="utf-8")),
+        {str(v.file): Path(v.file).name for v in versions["resubmission"]},
+    )
+    hidden = sum(
+        1
+        for v in sorted(versions["resubmission"], key=lambda v: v.sort_key())
+        if matcher(v)
+    )
+    summary = matcher.summary(
+        str(written), applied_rule_ids={v.rule_id for v in versions["initial"]}
+    )
+    assert hidden == summary.matched
+    assert PRE_ITEM_S_MATCHED - summary.matched <= MAX_REKEYED
+    # Everything the author actually fixed shows up as stale, which is
+    # what `--update-baseline` prunes — not as a phantom new finding.
+    assert summary.stale == sum(e.count for e in accepted.entries) - summary.matched

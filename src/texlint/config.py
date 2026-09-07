@@ -82,6 +82,11 @@ def load(cli_overrides: dict[str, Any], cwd: Path) -> ToolConfig:
     if "ignore_rules" in merged:
         merged["ignore_rules"] = _normalise_ignore_rules(merged["ignore_rules"])
 
+    if "baseline" in merged and merged["baseline"] is not None:
+        # TOML hands back a string; the CLI resolves it against the
+        # config directory, so keep it a Path from here on.
+        merged["baseline"] = Path(merged["baseline"])
+
     if "severity_overrides" in merged:
         merged["severity_overrides"] = _normalise_severity_overrides(
             merged["severity_overrides"]

@@ -150,6 +150,18 @@ exported by the bindings: `version()` (WASM), `jsslint.version()` /
 the CRAN package version and its resubmission suffix). See
 `docs/versions.md`.
 
+`jsslint --baseline FILE` / `--update-baseline` implement spec 027's
+baseline mode, byte-compatible with the Python CLI's: a file written by
+either engine is read by the other, and `--update-baseline` produces
+identical bytes (`rust/jsslint-cli/tests/baseline_parity.rs`). Only the
+error text for a malformed baseline may differ between the engines —
+the two JSON parsers' messages — as for `diff`; exit code 2 is
+guaranteed either way. The matcher itself lives in `jsslint-core`
+(`baseline.rs`, pure), while reading, writing, and path relativisation
+stay in this crate (§XIV). The WASM, PyO3, and R bindings deliberately
+do **not** expose the baseline in 1.2.0: an in-memory variant needs only
+a path map over the caller's own labels, and is a follow-up.
+
 `jsslint lsp` starts a synchronous LSP 3.17 server over stdio (diagnostics +
 code actions + workspace edits) for any editor with an LSP client. (The
 project's own VS Code extension does NOT use it — it runs the WASM build

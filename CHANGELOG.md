@@ -17,6 +17,22 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
 
 ### Added
 
+- **Baseline mode: adopt the tool on a manuscript that predates it.**
+  `--baseline FILE` hides findings a baseline records — from every
+  output format and from the exit code — so a run fails only on what is
+  new; `--update-baseline` writes the file from the current run. Also
+  settable as `baseline` in `.jss-lint.toml`, and as a `baseline:` input
+  to the GitHub Action, where SARIF omission narrows the Security tab to
+  new findings for free. An accepted finding is identified by
+  `(rule_id, path, message, suggestion)` with a count — never by line
+  number, which survives no edit: on a real four-round JSS submission a
+  line-based key matched 1 % of findings across the first revision
+  round, against 100 % for this one. The file is plain JSON, sorted, and
+  timestamp-free, so `--update-baseline` is byte-identical whichever
+  engine wrote it. Its documented limits, and the interaction with
+  `--fix`, `--min-confidence`, and inline ignores, are in
+  [`docs/baseline.md`](docs/baseline.md). JSON output gains an
+  always-present `baseline` key (`null` when inactive).
 - **Rule-set provenance.** `catalogue.yaml` now carries a dated
   `ruleset_version`, a `ruleset_fingerprint` over every active rule's
   contract fields *and* the message/suggestion wording, and the

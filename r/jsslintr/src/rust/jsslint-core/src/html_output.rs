@@ -111,8 +111,35 @@ pub fn render_author(report: &ComplianceReport) -> String {
         out.push('\n');
         out.push('\n');
     }
+    out.push_str(&baseline_note(report));
     out.push_str("</body>\n</html>\n");
     out
+}
+
+/// The `<p class="note">` both templates emit when a baseline was
+/// applied (`baseline-file.md` C-6). Jinja renders the `{% if %}` block
+/// with no surrounding blank line, hence the exact spacing here.
+fn baseline_note(report: &ComplianceReport) -> String {
+    let Some(summary) = &report.baseline else {
+        return String::new();
+    };
+    let mut note = format!(
+        "<p class=\"note\">Baseline: {} findings hidden by {} ({} stale, {} unevaluated)",
+        summary.matched,
+        escape_html(&summary.path),
+        summary.stale,
+        summary.unevaluated
+    );
+    if let (Some(written), Some(current)) = (&summary.ruleset_version, &report.rule_set.version) {
+        if written != current {
+            note.push_str(&format!(
+                " \u{2014} written for rule set {written}, current {current}; run \
+                 --update-baseline"
+            ));
+        }
+    }
+    note.push_str("</p>\n");
+    note
 }
 
 const REVIEWER_STYLE: &str = "  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; color: #222; }\n  h1 { margin-top: 0; }\n  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }\n  th, td { border: 1px solid #ddd; padding: 0.5rem 0.75rem; font-size: 0.95rem; }\n  th { background: #f5f5f5; text-align: left; }\n  .num { text-align: right; font-variant-numeric: tabular-nums; }\n  .status-PASS { color: #2a7a2a; font-weight: 600; }\n  .status-FAIL { color: #b00020; font-weight: 600; }\n  .status-SKIPPED { color: #777; font-weight: 600; }\n  .overall { font-size: 1.6rem; margin-top: 1rem; }\n  .overall.none { color: #777; }\n";
@@ -155,6 +182,7 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
     }
     out.push('\n');
 
+    out.push_str(&baseline_note(report));
     out.push_str("</body>\n</html>\n");
     out
 }

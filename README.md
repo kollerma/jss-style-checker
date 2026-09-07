@@ -183,6 +183,19 @@ honours the directives — the `jsslint` binary, the browser/WASM build
 and the web app, the VS Code extension, the PyO3 wheel, and the R
 package, not just `jss-lint`.
 
+Adopting the tool on a manuscript that already exists? Accept today's
+findings once and fail only on new ones:
+
+```sh
+jss-lint --baseline .jss-lint-baseline.json --update-baseline paper.tex refs.bib
+git add .jss-lint-baseline.json      # commit it next to the manuscript
+jss-lint --baseline .jss-lint-baseline.json paper.tex refs.bib   # exit 0
+```
+
+Accepted findings are keyed by rule, file, message, and suggestion — not
+by line number — so rewording sentences and inserting paragraphs never
+resurrects them. See [`docs/baseline.md`](docs/baseline.md).
+
 Exit codes: `0` clean · `1` violations found · `2` tool could not complete
 (unknown journal, missing file, parse error, unsupported extension).
 

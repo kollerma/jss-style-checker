@@ -1077,5 +1077,9 @@ fn run_impl(
         categories: summaries,
         compliance_percentage,
         skipped_rules: skipped,
+        // The CLI fills this in after the run, from the baseline file
+        // it alone is allowed to read.
+        baseline: None,
+        rule_set: catalogue::rule_set(),
     }
 }

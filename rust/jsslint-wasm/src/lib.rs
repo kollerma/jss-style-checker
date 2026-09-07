@@ -66,6 +66,10 @@ fn overrides_from(req: &LintRequest) -> RawOverrides {
         min_confidence: req.min_confidence.clone(),
         fail_on: req.fail_on.clone(),
         severity_overrides: req.severity_overrides.clone(),
+        // Not exposed by this binding in 1.2.0 (baseline-file.md C-9):
+        // the matcher is pure and lives in core, but the *file* is a
+        // filesystem concern, so an in-memory variant is a follow-up.
+        baseline: None,
     }
 }
 
