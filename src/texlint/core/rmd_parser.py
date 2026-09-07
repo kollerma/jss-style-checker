@@ -351,6 +351,7 @@ def parse_rmd_source(src: str, path: Path) -> ParsedRmdFile:
             nodes=fragment.nodes,
             walker=wrapped,
             violations=(),
+            line_offset=prose.line - 1,
         ))
 
     return ParsedRmdFile(

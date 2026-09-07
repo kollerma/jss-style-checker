@@ -36,6 +36,24 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
   rule-set mapping for all seven channels, each channel's version-string
   constraints, the compatibility policy, and what to pin.
 
+### Fixed
+
+- **The Rust engine now honours `% jss-lint: ignore`.** It never
+  implemented the directives, so every surface built on it — the
+  `jsslint` binary, the browser/WASM build and the hosted web app, the
+  VS Code extension, the PyO3 wheel, and the R package — reported
+  findings whose author had explicitly signed them off in the source,
+  while the Python `jss-lint` hid them. A live engine-parity gap,
+  covered from now on by `rust/jsslint-core/tests/suppress_parity.rs`
+  over one fixture per directive behaviour.
+- **Two long-standing bugs in the Python engine's directive handling.**
+  A directive inside an `.Rmd` prose block only worked when the block
+  started on line 1 (block-relative line numbers were compared against
+  file-authoritative ones), and line counting used `str.splitlines()`,
+  which also breaks on form feed, vertical tab, `\x1c`-`\x1f` and
+  `\x85` — so a single form feed anywhere above a directive silently
+  moved it to the wrong line.
+
 ### Changed
 
 - **Ten rules now name what they found.** `JSS-CODE-001`, `JSS-CODE-003`,

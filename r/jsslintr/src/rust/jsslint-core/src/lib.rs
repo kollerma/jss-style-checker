@@ -22,6 +22,7 @@ pub mod rmd;
 pub mod rnw;
 pub mod rules;
 pub mod sarif;
+pub mod suppress;
 pub mod terminal;
 pub mod terms;
 pub mod tex;

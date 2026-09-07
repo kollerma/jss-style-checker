@@ -136,6 +136,14 @@ class Violation:
         return (str(self.file), self.line, bucket, col, self.rule_id)
 
 
+#: A caller-supplied filter applied to every finding just before the
+#: engine's bookkeeping. Returning ``True`` drops the finding, exactly as
+#: an inline ``% jss-lint: ignore`` does — the baseline matcher (spec
+#: 027 item B) is the first implementation. Called in
+#: :meth:`Violation.sort_key` order within each rule so that *which*
+#: occurrences of an identical finding are dropped is deterministic.
+Suppressor = Callable[["Violation"], bool]
+
 RuleCheck = Callable[["ParsedDocument", "ToolConfig"], Iterator[Violation]]
 RuleCheckProject = Callable[["ParsedProject"], Iterable[Violation]]
 
@@ -298,6 +306,15 @@ class ParsedTexFile:
     nodes: tuple[Any, ...]
     walker: Any
     violations: tuple[Violation, ...] = ()
+    #: Line number of this file's ``source`` within the file on disk,
+    #: minus one. ``0`` for ``.tex``/``.ltx``/``.Rnw``, whose sources are
+    #: the whole file; for an ``.Rmd`` prose block — parsed as a
+    #: standalone LaTeX fragment starting at line 1 — it is the block's
+    #: first line minus one. Violations are already offset to
+    #: file-authoritative line numbers by the parser; this field lets
+    #: anything reading ``source`` directly (inline suppression) do the
+    #: same arithmetic.
+    line_offset: int = 0
 
 
 @dataclass(frozen=True)

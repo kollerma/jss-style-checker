@@ -40,6 +40,7 @@ from texlint.api import (
     ParsedRmdFile,
     ParsedTexFile,
     SkippedRule,
+    Suppressor,
     ToolConfig,
     Violation,
     _file_format,
@@ -227,6 +228,8 @@ def run(
     config: ToolConfig,
     target: ParsedDocument | ParsedProject,
     journal: JournalRuleModule,
+    *,
+    suppress: Suppressor | None = None,
 ) -> ComplianceReport:
     """Execute ``journal``'s rules against ``target``.
 
@@ -339,12 +342,22 @@ def run(
                     ))
                 continue
 
+            # Suppression order, identical in both engines (spec 027
+            # §5.2): sort first so a caller-supplied suppressor sees the
+            # findings in a deterministic order, then drop
+            # inline-ignored ones, then offer the rest to the
+            # suppressor. Inline first means an ignored finding never
+            # consumes a baseline count — the author already signed off
+            # on it, and it should not also spend an accepted slot.
+            rule_violations.sort(key=lambda v: v.sort_key())
             if suppression_index:
                 rule_violations = [
                     v
                     for v in rule_violations
                     if not _suppress.is_suppressed(suppression_index, v)
                 ]
+            if suppress is not None:
+                rule_violations = [v for v in rule_violations if not suppress(v)]
 
             if config.severity_overrides:
                 # Central remap so every renderer (terminal / JSON /
