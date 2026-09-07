@@ -833,17 +833,36 @@ recorded in `research.md`.
 
 ### Environment
 
-- The brief says `.venv-host` holds the real interpreter. In this
-  container it does not: `.venv-host/bin/python` symlinks to
-  `/opt/homebrew/opt/python@3.14` (the macOS host's path) and cannot
-  execute. `.venv` is the working environment (CPython 3.11.2) and is
-  what every gate below was run with.
-- The §IX coverage command in the brief
-  (`pytest tests/unit/journals/jss/ --cov=…/rules --cov-fail-under=100`)
-  measures 17 %: the rule unit tests live in `tests/unit/rules/`, not
-  under `tests/unit/journals/jss/`. Run over the **whole** suite the
-  same measurement is 93.3 % branch coverage, and **every** rule module
-  is below 100 % — on the untouched branch, before any 1.2.0 code. The
-  §IX gate is therefore not met by the repository as it stands and no
-  CI job runs it. Flagged for item S, which is the first item to touch
-  rule modules; see the report accompanying that item.
+- `.venv-host` is the **macOS host's** venv (`/workspace` is a bind mount
+  of the host checkout, so the two share one directory): its interpreter
+  symlinks to `/opt/homebrew/opt/python@3.14` and cannot execute in a
+  Linux container. Rebuilding it from a container would destroy the
+  host's. **Fixed** by making the consumers pick an interpreter that
+  runs: `paper/Makefile` and `paper/regenerate.sh` prefer `.venv-host`
+  only when it is executable and fall back to `.venv`, and `CLAUDE.md`
+  states which venv belongs to which environment. `.venv` (CPython
+  3.11.2) is what every gate below was run with.
+- **`--version` consumers found and fixed in the same pass**:
+  `paper/regenerate.sh` parsed the old one-liner with
+  `sed 's/.*version //'` and `paper/replicate.sh` took the last token of
+  the whole output — both broke on the new four-line block (the latter
+  would have compared against `jss`, from `journal: jss`). Both now take
+  the last token of **line 1**, which is correct for the pre-1.2.0
+  `jss-lint, version X.Y.Z` form and the new `jss-lint X.Y.Z` alike —
+  `replicate.sh` needs that, since it validates a released tool that may
+  still print the old format.
+- The §IX coverage command measured 17 % because the rule unit tests
+  lived in `tests/unit/rules/` while two of them
+  (`test_helpers.py`, `test_project.py`) already sat under
+  `tests/unit/journals/jss/rules/`. **Fixed** by moving the other 16
+  there, so the test tree mirrors `src/texlint/journals/jss/rules/` and
+  the documented command measures the right thing;
+  `scripts/eval-category.sh` and `CLAUDE.md` follow. Specs 003–005 still
+  name the old path as a historical record.
+- Even measured correctly, the gate does **not** pass: branch coverage
+  on the rule modules is **90.2 %** (`tests/unit/journals/jss/`) /
+  93.3 % (whole suite), and every one of the 16 modules is below 100 %
+  — on the untouched branch, before any 1.2.0 code, and no CI job runs
+  it. Agreed reading for item S (maintainer, 2026-09-07): every branch
+  item S *adds* must be covered and no module's coverage may regress;
+  each touched module's before/after number is reported with the item.

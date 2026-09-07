@@ -4,7 +4,10 @@
 # replication script against the released tool; `make bundle` assembles
 # the submission upload set and `make arxiv` the arXiv source tarball,
 # both into <repo>/submission/.
-PY ?= ../.venv-host/bin/python
+# .venv-host is the macOS host's venv, .venv the one a Linux container or
+# CI creates; the host venv's interpreter is a dangling symlink anywhere
+# else, so prefer it only when it actually executes.
+PY ?= $(shell [ -x ../.venv-host/bin/python ] && echo ../.venv-host/bin/python || echo ../.venv/bin/python)
 
 .PHONY: stats listings pdf lint pages check audit regenerate replicate \
         bundle arxiv joss joss-pdf clean

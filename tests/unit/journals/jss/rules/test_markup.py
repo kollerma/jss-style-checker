@@ -17,7 +17,7 @@ from texlint.journals.jss.rules.markup import (
     rules,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "violations" / "markup"
 AUTOFIX_DIR = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
 AUTOFIX_MARKUP_001 = AUTOFIX_DIR / "JSS-MARKUP-001"

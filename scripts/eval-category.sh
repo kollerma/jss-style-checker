@@ -48,7 +48,7 @@ fi
 
 # Step 1: unit tests with 100% branch coverage gate.
 set -e
-"$SCRIPT_DIR/vtest.sh" "tests/unit/rules/test_${CATEGORY}.py" \
+"$SCRIPT_DIR/vtest.sh" "tests/unit/journals/jss/rules/test_${CATEGORY}.py" \
     "--cov=texlint.journals.jss.rules.${CATEGORY}" \
     "--cov-branch" "--cov-fail-under=100"
 set +e

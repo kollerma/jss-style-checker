@@ -21,7 +21,7 @@ from texlint.journals.jss.rules.structure import (
     rules,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "violations" / "structure"
 AUTOFIX_DIR = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
 

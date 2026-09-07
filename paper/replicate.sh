@@ -84,8 +84,10 @@ done
 
 JSS_LINT=""
 if command -v jss-lint > /dev/null 2>&1; then
-    # Last token of the --version line, robust to its exact phrasing.
-    FOUND=$(jss-lint --version 2>/dev/null || true)
+    # Last token of the FIRST --version line: robust to the phrasing of
+    # the pre-1.2.0 one-liner (`jss-lint, version X.Y.Z`) and to the
+    # four-line block 1.2.0 introduced (`jss-lint X.Y.Z` + three more).
+    FOUND=$(jss-lint --version 2>/dev/null | head -1 || true)
     FOUND=${FOUND##* }
     if [ "$FOUND" = "$EXPECTED_VERSION" ]; then
         JSS_LINT=jss-lint
@@ -108,7 +110,7 @@ if [ -z "$JSS_LINT" ]; then
     JSS_LINT=$WORK/venv/bin/jss-lint
 fi
 # Whatever we ended up with must report the paper's version.
-GOT=$("$JSS_LINT" --version 2>/dev/null || true)
+GOT=$("$JSS_LINT" --version 2>/dev/null | head -1 || true)
 [ "${GOT##* }" = "$EXPECTED_VERSION" ] \
     || fail "jss-lint reports '${GOT:-nothing}', expected $EXPECTED_VERSION"
 echo "$GOT"

@@ -17,7 +17,7 @@ from texlint.journals.jss.rules.typography import (
     rules,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "violations" / "typography"
 AUTOFIX_DIR = REPO_ROOT / "tests" / "fixtures" / "auto-fix"
 
