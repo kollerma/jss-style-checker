@@ -142,6 +142,29 @@ jss-lint --crossref refs.bib             # online: verify missing DOIs
 jss-lint --crossref --fix refs.bib       # online: populate missing DOIs
 ```
 
+### Before `--fix`
+
+`--fix` rewrites your manuscript in place. It is careful about it: each
+file is written atomically (`tempfile` + rename, so a crash can never
+leave a half-written file), and every applied fix is re-checked against
+its own rule, with the whole file rolled back if the fix re-triggers it.
+Rules without a safe deterministic fix never propose one.
+
+It deliberately does **not** read or change version-control state —
+manuscripts live in git, on Overleaf, and in Dropbox alike, and the R,
+Python, and WASM bindings could not honour a git check anyway. So the
+expectation is yours to meet: **commit first, or preview with
+`--fix --dry-run`**, which prints the unified diff and writes nothing.
+Either way the pass ends with a receipt:
+
+```
+Applied 3 fixes to 1 file (1 skipped: conflict 1).
+Dry run: 3 fixes would be applied to 1 file. Re-run without --dry-run to write.
+```
+
+With `--baseline`, only visible (unaccepted) findings are fixed; drop
+the flag to fix accepted ones too.
+
 ### Online DOI lookup (`--crossref`)
 
 By default the linter is fully offline, so `JSS-REFS-003` can only

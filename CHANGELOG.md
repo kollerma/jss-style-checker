@@ -17,6 +17,14 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
 
 ### Added
 
+- **`--fix` ends with a receipt.** Both CLIs now close a fix pass with
+  one line — `Applied 3 fixes to 1 file (1 skipped: conflict 1).`, or
+  the `Dry run: …` form — so a command that rewrites your manuscript
+  says what it did and what it declined to do. Wording matches the R
+  binding's `jssfix()`, which has printed it since 1.1.0. Still no git
+  interaction of any kind (spec 008 stands); the README, `rust/README`,
+  and the R vignette now state the expectation to commit or `--dry-run`
+  first.
 - **Baseline mode: adopt the tool on a manuscript that predates it.**
   `--baseline FILE` hides findings a baseline records — from every
   output format and from the exit code — so a run fails only on what is

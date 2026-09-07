@@ -705,3 +705,76 @@ class TestHouse003Fix:
         assert result.exit_code in (0, 1), result.output
         expected = (HOUSE_003 / "after.tex").read_bytes()
         assert target.read_bytes() == expected
+
+
+class TestFixSummaryLine:
+    """Spec 027 item C: `--fix` ends with a receipt.
+
+    `--fix` rewrites the manuscript in place. Saying what it did is the
+    difference between a tool you can run on a file you care about and
+    one you have to diff afterwards to trust. Wording follows the R
+    binding's existing `jssfix()` output (`r/jsslintr/R/jsslint.R`).
+    """
+
+    SOURCE = (
+        "\\documentclass[article]{jss}\n"
+        "\\title{A Short Demo}\n"
+        "\\Abstract{Demo.}\n"
+        "\\Keywords{Demo}\n"
+        "\\Address{Demo}\n"
+        "\\begin{document}\n"
+        "We use R for everything, e.g. plotting.\n"
+        "\\end{document}\n"
+    )
+
+    def _paper(self, tmp_path: Path) -> Path:
+        paper = tmp_path / "paper.tex"
+        paper.write_text(self.SOURCE, encoding="utf-8")
+        return paper
+
+    def test_write_mode_reports_what_was_applied(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(main, ["--fix", str(self._paper(tmp_path))])
+        assert "Applied 2 fixes to 1 file." in result.stdout
+
+    def test_dry_run_says_nothing_was_written(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        paper = self._paper(tmp_path)
+        result = runner.invoke(main, ["--fix", "--dry-run", str(paper)])
+        assert (
+            "Dry run: 2 fixes would be applied to 1 file. "
+            "Re-run without --dry-run to write." in result.stdout
+        )
+        assert paper.read_text(encoding="utf-8") == self.SOURCE
+
+    def test_skipped_fixes_are_named_with_their_reason(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        paper = self._paper(tmp_path)
+        result = runner.invoke(
+            main, ["--fix", "--fix-rule", "JSS-MARKUP-001", str(paper)]
+        )
+        assert (
+            "Applied 1 fix to 1 file (1 skipped: rule-not-selected 1)."
+            in result.stdout
+        )
+
+    def test_nothing_to_fix_is_stated_too(
+        self, tmp_path: Path, runner: CliRunner
+    ) -> None:
+        clean = tmp_path / "clean.tex"
+        clean.write_text(
+            "\\documentclass[article]{jss}\n"
+            "\\title{A Short Demo}\n"
+            "\\Abstract{Demo.}\n"
+            "\\Keywords{Demo}\n"
+            "\\Address{Demo}\n"
+            "\\begin{document}\n"
+            "Nothing to fix in this sentence.\n"
+            "\\end{document}\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(main, ["--fix", str(clean)])
+        assert "No automatic fixes to apply; files left unchanged." in result.stdout
