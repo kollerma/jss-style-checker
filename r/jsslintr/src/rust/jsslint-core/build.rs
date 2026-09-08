@@ -247,8 +247,12 @@ fn main() {
     out.push_str(&format!(
         "pub static RECALL_RUN: RecallRunData = RecallRunData {{ run_timestamp: {:?}, \
          corpus_hash: {:?}, min_plants: {}, papers: {}, tp: {}, fn_: {} }};\n",
-        recall.run_timestamp, recall.corpus_hash, recall.min_plants, recall.papers,
-        total_tp, total_fn
+        recall.run_timestamp,
+        recall.corpus_hash,
+        recall.min_plants,
+        recall.papers,
+        total_tp,
+        total_fn
     ));
     out.push_str("pub static RECALL: &[(&str, u32, u32)] = &[\n");
     for (rule_id, counts) in &recall.rules {

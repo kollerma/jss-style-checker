@@ -171,8 +171,7 @@ struct Cli {
 /// Subcommand names this port currently registers. Mirrors `cli.py`'s
 /// `if paths and paths[0] in main.commands:` forwarding check, scoped
 /// to only the subcommands actually wired so far.
-const REGISTERED_SUBCOMMANDS: &[&str] =
-    &["explain", "diff", "init", "report", "lsp", "coverage"];
+const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff", "init", "report", "lsp", "coverage"];
 
 #[derive(Parser)]
 #[command(
@@ -254,12 +253,11 @@ fn run_coverage(args: &[String]) -> ExitCode {
 
     // Only `jss` is registered in this engine (documented §IV
     // deviation), so any other journal has no coverage data at all.
-    let directives: &[jsslint_core::catalogue::CoverageDirectiveData] =
-        if config.journal == "jss" {
-            catalogue::coverage()
-        } else {
-            &[]
-        };
+    let directives: &[jsslint_core::catalogue::CoverageDirectiveData] = if config.journal == "jss" {
+        catalogue::coverage()
+    } else {
+        &[]
+    };
 
     let output = match parsed.format.as_str() {
         "json" => jsslint_core::coverage::render_json(
@@ -865,10 +863,7 @@ fn run_with_baseline(
     let doc = match baseline::parse(&text) {
         Ok(doc) => doc,
         Err(message) => {
-            eprint_line(&format!(
-                "jss-lint: {}: {message}",
-                baseline_path.display()
-            ));
+            eprint_line(&format!("jss-lint: {}: {message}", baseline_path.display()));
             return Err(ExitCode::from(2));
         }
     };
@@ -882,7 +877,8 @@ fn run_with_baseline(
         return Err(ExitCode::from(2));
     }
 
-    let mut matcher = baseline::BaselineMatcher::new(&doc, baseline_path_map(document, baseline_path));
+    let mut matcher =
+        baseline::BaselineMatcher::new(&doc, baseline_path_map(document, baseline_path));
     let mut report = engine::run_with(config, document, project_extra, Some(&mut matcher));
     let applied: HashSet<String> = catalogue::all_rules()
         .iter()
@@ -1070,10 +1066,10 @@ fn run_lint() -> ExitCode {
         return ExitCode::from(2);
     }
 
-    let baseline_path = config
-        .baseline
-        .clone()
-        .or_else(|| cli.update_baseline.then(|| PathBuf::from(DEFAULT_BASELINE_NAME)));
+    let baseline_path = config.baseline.clone().or_else(|| {
+        cli.update_baseline
+            .then(|| PathBuf::from(DEFAULT_BASELINE_NAME))
+    });
 
     if cli.update_baseline {
         let report = match project_extra {

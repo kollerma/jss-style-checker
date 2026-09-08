@@ -215,7 +215,11 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
                     out.push_str("\n    <tr>\n      <td>");
                     out.push_str(&escape_html(d.id));
                     out.push_str("</td>\n      <td>");
-                    out.push_str(if d.status == "partial" { "partial" } else { "not checked" });
+                    out.push_str(if d.status == "partial" {
+                        "partial"
+                    } else {
+                        "not checked"
+                    });
                     out.push_str("</td>\n      <td>");
                     out.push_str(&escape_html(d.provision));
                     out.push_str("</td>\n    </tr>\n  ");

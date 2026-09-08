@@ -66,7 +66,9 @@ fn run_fix_with_stdin(
     cmd.args(extra_args);
     cmd.arg(file_name);
     cmd.current_dir(scratch);
-    cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    cmd.stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
     let mut child = cmd
         .spawn()
         .unwrap_or_else(|e| panic!("failed to run {bin}: {e}"));
@@ -347,10 +349,8 @@ fn fix_interactive_matches_python_cli() {
         let py_dir = setup_scratch(&fixture, "py", "interactive", &source, file_name);
         let rs_dir = setup_scratch(&fixture, "rs", "interactive", &source, file_name);
 
-        let expected =
-            run_fix_with_stdin(&jss_lint, &py_dir, file_name, &["--apply"], "a\n");
-        let actual =
-            run_fix_with_stdin(jsslint_bin, &rs_dir, file_name, &["--apply"], "a\n");
+        let expected = run_fix_with_stdin(&jss_lint, &py_dir, file_name, &["--apply"], "a\n");
+        let actual = run_fix_with_stdin(jsslint_bin, &rs_dir, file_name, &["--apply"], "a\n");
         let expected_stdout = normalize(&expected.stdout, &py_dir);
         let actual_stdout = normalize(&actual.stdout, &rs_dir);
 

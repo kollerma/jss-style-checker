@@ -162,13 +162,15 @@ pub fn build(
     }
     let mut entries: Vec<BaselineEntry> = counts
         .into_iter()
-        .map(|((rule_id, path, message, suggestion), count)| BaselineEntry {
-            rule_id,
-            path,
-            message,
-            suggestion,
-            count,
-        })
+        .map(
+            |((rule_id, path, message, suggestion), count)| BaselineEntry {
+                rule_id,
+                path,
+                message,
+                suggestion,
+                count,
+            },
+        )
         .collect();
     sort_entries(&mut entries);
     BaselineDocument {
@@ -387,7 +389,10 @@ mod tests {
             .map(|s| s.to_string())
             .collect();
         let summary = matcher.summary("b.json", &applied);
-        assert_eq!((summary.matched, summary.stale, summary.unevaluated), (1, 1, 1));
+        assert_eq!(
+            (summary.matched, summary.stale, summary.unevaluated),
+            (1, 1, 1)
+        );
         assert_eq!(summary.ruleset_version.as_deref(), Some("2026-09-07"));
     }
 }

@@ -82,8 +82,7 @@ fn coverage_matches_python_cli() {
     // what a tool checks must never be an error.
     let scratch = std::env::temp_dir().join("jsslint-coverage-parity");
     std::fs::create_dir_all(&scratch).expect("create scratch dir");
-    std::fs::write(scratch.join(".jss-lint.toml"), "journal = \"stub\"\n")
-        .expect("write config");
+    std::fs::write(scratch.join(".jss-lint.toml"), "journal = \"stub\"\n").expect("write config");
     let expected = run(&jss_lint, &["coverage"], &scratch);
     let actual = run(jsslint_bin, &["coverage"], &scratch);
     assert_eq!(expected.exit_code, Some(0), "python must exit 0");

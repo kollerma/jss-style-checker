@@ -60,6 +60,16 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
   (the decision spec 017 deferred), ratcheted to the shipped snapshot
   minus 0.03 at each release, with a test that fails if the floor drifts
   further behind than that.
+- **Overleaf: drop the source zip on the browser app.** Menu → Download
+  → Source gives a `.zip`; dropping it on
+  [the web app](https://kollerma.github.io/jss-style-checker/) unpacks it
+  **in the browser tab** — no upload, no new dependency, no WASM change
+  — and checks every `.tex`/`.bib`/`.Rnw`/`.Rmd` inside with its project
+  paths intact, so `\input` resolution and the report's file headings
+  match the project. Figures and macOS resource forks are skipped; a
+  browser without `DecompressionStream` is told to use the folder picker
+  instead. [`docs/overleaf.md`](docs/overleaf.md) also covers the
+  command-line route and checking a GitHub-synced project on every save.
 - **Coloured terminal output.** Severities, PASS/FAIL/SKIPPED statuses,
   rule ids, and banners are coloured with the basic 16-colour palette
   when stdout is a terminal, and plain when it is piped. `--color

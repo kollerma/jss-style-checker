@@ -782,12 +782,12 @@ fn check_xref_004_fragment(
                     return;
                 }
                 out.push(tex_violation(
-                file,
-                &line_index,
-                env.span.pos,
-                "JSS-XREF-004",
-                Some(missing_label_suggestion(env, &parsed.chars)),
-            ));
+                    file,
+                    &line_index,
+                    env.span.pos,
+                    "JSS-XREF-004",
+                    Some(missing_label_suggestion(env, &parsed.chars)),
+                ));
                 return;
             }
             if !label_keys.iter().any(|k| referenced.contains(k)) {

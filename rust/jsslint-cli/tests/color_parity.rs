@@ -55,6 +55,14 @@ fn strip_sgr(text: &str) -> String {
     out
 }
 
+/// `(name, args, environment, does it colour?)`.
+type Case = (
+    &'static str,
+    &'static [&'static str],
+    &'static [(&'static str, &'static str)],
+    bool,
+);
+
 fn run_with_env(bin: &str, args: &[&str], cwd: &Path, env: &HashMap<&str, &str>) -> String {
     let mut cmd = Command::new(bin);
     cmd.args(args).current_dir(cwd);
@@ -89,11 +97,16 @@ fn colour_decision_matches_python_cli() {
     std::fs::create_dir_all(&dir).expect("create scratch dir");
     std::fs::write(dir.join("paper.tex"), SOURCE).expect("write fixture");
 
-    // (name, args, env, expect colour). Neither CLI's stdout is a TTY
-    // here, so `auto` is off unless something forces it on.
-    let cases: &[(&str, &[&str], &[(&str, &str)], bool)] = &[
+    // Neither CLI's stdout is a TTY here, so `auto` is off unless
+    // something forces it on.
+    let cases: &[Case] = &[
         ("piped auto", &["paper.tex"], &[], false),
-        ("--color always", &["--color", "always", "paper.tex"], &[], true),
+        (
+            "--color always",
+            &["--color", "always", "paper.tex"],
+            &[],
+            true,
+        ),
         ("NO_COLOR", &["paper.tex"], &[("NO_COLOR", "1")], false),
         (
             "CLICOLOR_FORCE",
@@ -164,8 +177,7 @@ fn colour_decision_matches_python_cli() {
     }
 
     // The TOML key, which both loaders must read the same way.
-    std::fs::write(dir.join(".jss-lint.toml"), "color = \"always\"\n")
-        .expect("write config");
+    std::fs::write(dir.join(".jss-lint.toml"), "color = \"always\"\n").expect("write config");
     let env = HashMap::new();
     let py = run_with_env(&jss_lint, &["paper.tex"], &dir, &env);
     let rs = run_with_env(jsslint_bin, &["paper.tex"], &dir, &env);

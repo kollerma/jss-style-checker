@@ -9,9 +9,27 @@
 // page/wasm load: this is the point of the WASM build.
 
 import init, { render } from "./pkg/jsslint_wasm.js";
+import { decompressionSupported, readZip } from "./zip.js";
 
 const SUPPORTED_SUFFIXES = [".tex", ".ltx", ".bib", ".rnw", ".rmd"];
 
+/** True for a path worth handing the engine (spec 027 item E).
+ *
+ * Overleaf's source zip carries the whole project — figures, PDFs,
+ * sometimes a macOS resource fork per file. Only the sources are
+ * lintable, and `__MACOSX/`/`._*` entries would otherwise arrive as
+ * mojibake "files" with the same names as the real ones.
+ */
+function isLintablePath(path) {
+  const lower = path.toLowerCase();
+  if (lower.startsWith("__macosx/") || lower.includes("/__macosx/")) return false;
+  if (path.split("/").pop().startsWith("._")) return false;
+  return SUPPORTED_SUFFIXES.some((suffix) => lower.endsWith(suffix));
+}
+
+const zipButton = document.getElementById("zip-button");
+const zipInput = document.getElementById("zip-input");
+const dropZone = document.getElementById("drop-zone");
 const folderButton = document.getElementById("folder-button");
 const folderInput = document.getElementById("folder-input");
 const filesButton = document.getElementById("files-button");
@@ -28,6 +46,7 @@ function setStatus(message, isError = false) {
 function setPickersDisabled(disabled) {
   folderButton.disabled = disabled;
   filesButton.disabled = disabled;
+  zipButton.disabled = disabled;
 }
 
 const ready = init()
@@ -67,7 +86,7 @@ modeSelect.addEventListener("change", () => {
 
 async function handlePickedFiles(input, allFiles) {
   const files = allFiles.filter((f) =>
-    SUPPORTED_SUFFIXES.some((suffix) => f.name.toLowerCase().endsWith(suffix))
+    isLintablePath(f.webkitRelativePath || f.name)
   );
 
   resultsFrame.style.display = "none";
@@ -106,6 +125,89 @@ async function handlePickedFiles(input, allFiles) {
     input.value = "";
   }
 }
+
+/** Check one Overleaf-style source zip, unpacked in this tab. */
+async function handleZip(file) {
+  resultsFrame.style.display = "none";
+  resultsFrame.srcdoc = "";
+  lastPairs = null;
+
+  if (!decompressionSupported()) {
+    setStatus(
+      "This browser cannot unpack zip files (no DecompressionStream). " +
+        "Unzip the download and use \u201cChoose a folder\u2026\u201d instead.",
+      true
+    );
+    return;
+  }
+
+  setPickersDisabled(true);
+  try {
+    setStatus(`Unpacking ${file.name}\u2026`);
+    const pairs = await readZip(await file.arrayBuffer(), isLintablePath);
+    if (pairs.length === 0) {
+      setStatus(
+        `No .tex/.ltx/.bib/.Rnw/.Rmd files inside ${file.name}.`,
+        true
+      );
+      return;
+    }
+    // Entry paths are kept as the keys, so multi-file resolution and
+    // the report's file headings match the project's own layout.
+    lastPairs = pairs;
+
+    await ready;
+    setStatus(`Checking ${pairs.length} file(s)\u2026`);
+    renderReport();
+    setStatus(`Checked ${pairs.length} file(s) from ${file.name}.`);
+  } catch (err) {
+    lastPairs = null;
+    setStatus(`Could not read ${file.name}: ${err.message || err}`, true);
+  } finally {
+    setPickersDisabled(false);
+    zipInput.value = "";
+  }
+}
+
+zipButton.addEventListener("click", () => zipInput.click());
+zipInput.addEventListener("change", () => {
+  const file = zipInput.files[0];
+  if (file) handleZip(file);
+});
+
+// Drag-and-drop: a zip anywhere on the panel, which is what a user does
+// with a freshly downloaded Overleaf export.
+["dragenter", "dragover"].forEach((name) =>
+  dropZone.addEventListener(name, (event) => {
+    event.preventDefault();
+    dropZone.classList.add("dragging");
+  })
+);
+["dragleave", "drop"].forEach((name) =>
+  dropZone.addEventListener(name, (event) => {
+    event.preventDefault();
+    if (name === "dragleave" && dropZone.contains(event.relatedTarget)) return;
+    dropZone.classList.remove("dragging");
+  })
+);
+dropZone.addEventListener("drop", (event) => {
+  const items = Array.from(event.dataTransfer.files);
+  const zip = items.find((f) => f.name.toLowerCase().endsWith(".zip"));
+  if (zip) {
+    handleZip(zip);
+    return;
+  }
+  const lintable = items.filter((f) => isLintablePath(f.name));
+  if (lintable.length > 0) {
+    handlePickedFiles(filesInput, lintable);
+    return;
+  }
+  setStatus(
+    "Drop a .zip from Overleaf (Menu \u2192 Download \u2192 Source), or " +
+      ".tex/.bib files.",
+    true
+  );
+});
 
 folderInput.addEventListener("change", () =>
   handlePickedFiles(folderInput, Array.from(folderInput.files))

@@ -51,7 +51,7 @@ Python reference: `src/texlint/`, `tests/`, `tools/`. Rust workspace:
 **Purpose**: environment, gates, and the two go/no-go checks the plan names
 before any code is written.
 
-- [ ] T001 Materialise the eval corpora (`eval-jss corpus fetch`, `python -m eval.recall_corpus_scaffold`) and record which parity suites would otherwise skip, in `specs/027-first-time-user-gaps/plan.md` under "Deviations" if unavailable
+- [x] T001 Materialise the eval corpora (`eval-jss corpus fetch`, `python -m eval.recall_corpus_scaffold`) and record which parity suites would otherwise skip, in `specs/027-first-time-user-gaps/plan.md` under "Deviations" if unavailable
 - [x] T002 [P] Point `.specify/feature.json` at `specs/027-first-time-user-gaps` so the spec-kit scripts resolve this feature
 - [x] T003 [P] Record the pre-change gate results (pytest, ruff, `cargo test --workspace --locked`) as the baseline for every later comparison
 - [x] T004 Verify that `eval-jss iterate refresh` restores precision labels by `(rule, file, line)` and NOT by message text (plan §2 hazard, contracts/suggestions.md C-6); stop and report if it keys on text — item S cannot land otherwise
@@ -330,10 +330,10 @@ decision matrix agrees across engines.
 **Independent Test**: a zip of `docs/jss-template/` dropped on the app produces
 the same HTML report as the folder picker.
 
-- [ ] T133 [P] [US8] Write `docs/overleaf.md` (zip drop, CLI unzip, GitHub Sync + Action with a baseline, re-upload after `--fix`)
-- [ ] T134 [US8] Zip reader (EOCD → central directory → local headers; stored + `DecompressionStream("deflate-raw")`) in `web/app.js`, skipping `__MACOSX/`, `._*`, and non-lintable suffixes
-- [ ] T135 [US8] Drag-and-drop zone and `.zip` in the file input in `web/index.html` + `web/app.js`, with the unsupported-browser fallback message
-- [ ] T136 [P] [US8] Link `docs/overleaf.md` from `README.md` and the `web/index.html` footer
+- [x] T133 [P] [US8] Write `docs/overleaf.md` (zip drop, CLI unzip, GitHub Sync + Action with a baseline, re-upload after `--fix`)
+- [x] T134 [US8] Zip reader (EOCD → central directory → local headers; stored + `DecompressionStream("deflate-raw")`) in `web/app.js`, skipping `__MACOSX/`, `._*`, and non-lintable suffixes
+- [x] T135 [US8] Drag-and-drop zone and `.zip` in the file input in `web/index.html` + `web/app.js`, with the unsupported-browser fallback message
+- [x] T136 [P] [US8] Link `docs/overleaf.md` from `README.md` and the `web/index.html` footer
 
 **Checkpoint**: all eight items implemented
 
@@ -341,11 +341,11 @@ the same HTML report as the folder picker.
 
 ## Phase 10: Polish, Cross-Cutting, and the Release Checklist (explicit go-ahead required)
 
-- [ ] T137 [P] Add the `web/pkg/*.wasm` size line to the job summary in `.github/workflows/publish-web.yml` and `ci.yml`, plus a 2.2 MB soft gate in `rust/jsslint-wasm/tests/`
-- [ ] T138 [P] Record every §XIII divergence of plan §10 in `rust/README.md`
-- [ ] T139 [P] Record the item-S tail, CLI zip, bindings baseline, SARIF `baselineState`, Action `comment-mode`, Windows colour CI, and second-annotator corpus in `roadmap/follow-ups.md`
-- [ ] T140 Write `docs/releasing.md` with the plan §10 checklist
-- [ ] T141 Run the full gate set: `python -m pytest tests/ -q`, `ruff check .`, the §IX coverage gate, `cargo test --workspace --locked`, `eval-jss recall --gate --no-record`
+- [x] T137 [P] Add the `web/pkg/*.wasm` size line to the job summary in `.github/workflows/publish-web.yml` and `ci.yml`, plus a 2.2 MB soft gate in `rust/jsslint-wasm/tests/`
+- [x] T138 [P] Record every §XIII divergence of plan §10 in `rust/README.md`
+- [x] T139 [P] Record the item-S tail, CLI zip, bindings baseline, SARIF `baselineState`, Action `comment-mode`, Windows colour CI, and second-annotator corpus in `roadmap/follow-ups.md`
+- [x] T140 Write `docs/releasing.md` with the plan §10 checklist
+- [x] T141 Run the full gate set: `python -m pytest tests/ -q`, `ruff check .`, the §IX coverage gate, `cargo test --workspace --locked`, `eval-jss recall --gate --no-record`
 - [ ] T142 **[RELEASE — needs explicit go-ahead]** fresh recorded `eval-jss recall` run → `generate_recall_snapshot.py` → badge JSON → ratchet `RECALL_FLOOR` to `floor(snapshot − 0.03, 2 dp)`
 - [ ] T143 **[RELEASE — needs explicit go-ahead]** `generate_message_snapshot.py --check`, `generate_catalogue_data.py --check`, CHANGELOG, `VERSION` + `python scripts/set_version.py`, tag-guard step in every `release-*.yml`, CTAN bundle, CRAN `1.2.0-1`
 

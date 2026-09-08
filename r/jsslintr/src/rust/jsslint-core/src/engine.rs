@@ -18,11 +18,11 @@ use crate::bib::{self, Library};
 use crate::catalogue;
 use crate::config::{ConfidenceTier, DoiResolver, ToolConfig};
 use crate::report::{CategorySummary, ComplianceReport, SkippedRule, Violation};
-use crate::suppress;
 use crate::rules::{
     abbreviations, capitalization, citations, code_style, code_width, crossrefs, house_style,
     markup, naming, operators, preamble, references, structure, typography,
 };
+use crate::suppress;
 use crate::tex::node::Node as TexNode;
 use crate::tex::position::LineIndex;
 use crate::tex::{self, ParsedTex};
