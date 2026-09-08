@@ -180,6 +180,19 @@ to add and *suppresses* the advisory when no DOI exists. Combine with
 pool. Needs network access; wrong-match-safe (a mismatched year or
 author is never written).
 
+Every run ends with the measured **recall** — of the style problems
+that exist, how many the tool finds — because a clean run means nothing
+without it:
+
+```
+No findings does not mean compliant. Measured recall: 81% (1967 annotated instances, 17 papers).
+```
+
+Reviewer mode adds a per-category `Recall` column; `explain` reports it
+per rule. Rules the annotated corpus never exercised read `unmeasured`,
+never `100%`. It is a lower bound (source-only linting):
+[`docs/recall-and-coverage.md`](docs/recall-and-coverage.md).
+
 Every rule carries a measured-precision **confidence tier** (`high` /
 `medium` / `low`), sourced from the [eval corpus](eval/README.md)
 precision history. Medium/low findings are marked in the terminal

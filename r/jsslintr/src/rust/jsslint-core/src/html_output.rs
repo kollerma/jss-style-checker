@@ -111,6 +111,10 @@ pub fn render_author(report: &ComplianceReport) -> String {
         out.push('\n');
         out.push('\n');
     }
+    out.push_str(&format!(
+        "<p class=\"note\">{}</p>\n",
+        escape_html(&crate::terminal::author_footer_text(report))
+    ));
     out.push_str(&baseline_note(report));
     out.push_str("</body>\n</html>\n");
     out
@@ -147,6 +151,12 @@ const REVIEWER_STYLE: &str = "  body { font-family: -apple-system, Segoe UI, Rob
 /// Mirrors `reviewer.html.j2` (per-category compliance table).
 pub fn render_reviewer(report: &ComplianceReport) -> String {
     let journal = escape_html(&report.journal_id);
+    let min_plants = report
+        .rule_set
+        .recall
+        .as_ref()
+        .map(|r| r.min_plants)
+        .unwrap_or(0);
     let mut out = String::new();
     out.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>jss-lint compliance \u{2014} ");
     out.push_str(&journal);
@@ -156,7 +166,7 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
     out.push_str(&journal);
     out.push_str("</h1>\n<p>Tool version: <code>");
     out.push_str(&escape_html(&report.tool_version));
-    out.push_str("</code></p>\n<table>\n  <thead>\n    <tr><th>Category</th><th>Status</th><th class=\"num\">Applied</th><th class=\"num\">Passed</th></tr>\n  </thead>\n  <tbody>\n  ");
+    out.push_str("</code></p>\n<table>\n  <thead>\n    <tr><th>Category</th><th>Status</th><th class=\"num\">Applied</th><th class=\"num\">Passed</th><th>Recall</th></tr>\n  </thead>\n  <tbody>\n  ");
 
     for c in &report.categories {
         out.push_str("\n    <tr>\n      <td>");
@@ -169,6 +179,11 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
         out.push_str(&c.rules_applied.to_string());
         out.push_str("</td>\n      <td class=\"num\">");
         out.push_str(&c.rules_passed.to_string());
+        out.push_str("</td>\n      <td>");
+        out.push_str(&escape_html(&match &c.recall {
+            Some(stat) => stat.label(min_plants),
+            None => "n/a".to_string(),
+        }));
         out.push_str("</td>\n    </tr>\n  ");
     }
     out.push_str("\n  </tbody>\n</table>\n");
@@ -181,6 +196,9 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
         )),
     }
     out.push('\n');
+    if let Some(line) = crate::terminal::measured_recall_line(report) {
+        out.push_str(&format!("<p class=\"note\">{}</p>\n", escape_html(&line)));
+    }
 
     out.push_str(&baseline_note(report));
     out.push_str("</body>\n</html>\n");

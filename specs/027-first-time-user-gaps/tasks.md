@@ -233,37 +233,37 @@ mode shows the `Recall` column; `project` renders `unmeasured`.
 
 ### Snapshot and gate
 
-- [ ] T082 [US1] Implement `tools/generate_recall_snapshot.py --run-timestamp TS [--check]` writing `specs/003-jss-rule-catalogue/recall.json` from `recall_history`, filtered to active rules (data-model §4.2)
-- [ ] T083 [P] [US1] `tests/unit/eval/test_recall_snapshot_fresh.py` freshness test
-- [ ] T084 [US1] Read `run_timestamp` and sum `tp`/`fn` from the snapshot in `eval/badge.py`; remove the drifted constant
-- [ ] T085 [US1] Replace the hard-coded aggregate floor in `eval/cli.py` with `RECALL_FLOOR = 0.78`, update the help text, and add the `RECALL_FLOOR ≥ snapshot − 0.03` assertion to `tests/unit/eval/test_recall_cli.py`
-- [ ] T086 [US1] Add `eval-jss recall --gate --no-record` to the `parity` job in `.github/workflows/ci.yml` right after the corpus is materialised
+- [x] T082 [US1] Implement `tools/generate_recall_snapshot.py --run-timestamp TS [--check]` writing `specs/003-jss-rule-catalogue/recall.json` from `recall_history`, filtered to active rules (data-model §4.2)
+- [x] T083 [P] [US1] `tests/unit/eval/test_recall_snapshot_fresh.py` freshness test
+- [x] T084 [US1] Read `run_timestamp` and sum `tp`/`fn` from the snapshot in `eval/badge.py`; remove the drifted constant
+- [x] T085 [US1] Replace the hard-coded aggregate floor in `eval/cli.py` with `RECALL_FLOOR = 0.78`, update the help text, and add the `RECALL_FLOOR ≥ snapshot − 0.03` assertion to `tests/unit/eval/test_recall_cli.py`
+- [x] T086 [US1] Add `eval-jss recall --gate --no-record` to the `parity` job in `.github/workflows/ci.yml` right after the corpus is materialised
 
 ### Model and codegen
 
-- [ ] T087 [P] [US1] Failing unit tests for `RecallStat` boundaries (n = 0, 1, 9, 10; half-up 78.5 → 79; 1587/1967 → 81) in `tests/unit/test_api.py`
-- [ ] T088 [US1] Add `RecallStat`, `RecallRun`, `RuleSetInfo`, `JournalMetadata`, and the non-abstract `JournalRuleModule.metadata()` default to `src/texlint/api.py`
-- [ ] T089 [US1] Implement `JSSJournal.metadata()` in `src/texlint/journals/jss/__init__.py` reading `_catalogue_data`
-- [ ] T090 [US1] Stamp `CategorySummary.recall`, `ComplianceReport.rule_set` in `src/texlint/core/engine.py`
-- [ ] T091 [US1] Emit `RECALL_RUN` and `RECALL` from `tools/generate_catalogue_data.py`; extend `rust/jsslint-core/build.rs` (`rerun-if-changed`) and `catalogue.rs` accessors
-- [ ] T092 [US1] Mirror the structs and the stamping in `rust/jsslint-core/src/report.rs` and `engine.rs` with matching integer arithmetic
+- [x] T087 [P] [US1] Failing unit tests for `RecallStat` boundaries (n = 0, 1, 9, 10; half-up 78.5 → 79; 1587/1967 → 81) in `tests/unit/test_api.py`
+- [x] T088 [US1] Add `RecallStat`, `RecallRun`, `RuleSetInfo`, `JournalMetadata`, and the non-abstract `JournalRuleModule.metadata()` default to `src/texlint/api.py`
+- [x] T089 [US1] Implement `JSSJournal.metadata()` in `src/texlint/journals/jss/__init__.py` reading `_catalogue_data`
+- [x] T090 [US1] Stamp `CategorySummary.recall`, `ComplianceReport.rule_set` in `src/texlint/core/engine.py`
+- [x] T091 [US1] Emit `RECALL_RUN` and `RECALL` from `tools/generate_catalogue_data.py`; extend `rust/jsslint-core/build.rs` (`rerun-if-changed`) and `catalogue.rs` accessors
+- [x] T092 [US1] Mirror the structs and the stamping in `rust/jsslint-core/src/report.rs` and `engine.rs` with matching integer arithmetic
 
 ### Surfaces
 
-- [ ] T093 [US1] Reviewer `Recall` column + `Measured recall:` line in `src/texlint/output/terminal.py` and `rust/jsslint-core/src/terminal.rs`
-- [ ] T094 [US1] Author footer (always printed, stdout, also on a clean run) in both engines; update `tests/integration/test_cli_author_terminal.py`
-- [ ] T095 [US1] Per-category `recall` and top-level `rule_set` in `src/texlint/output/json_output.py` + `rust/jsslint-core/src/json_output.rs`; update `tests/integration/test_cli_json.py`
-- [ ] T096 [US1] `properties.confidence` + `properties.recall` on SARIF rule descriptors in `src/texlint/output/sarif.py` and `rust/jsslint-core/src/sarif.rs`
-- [ ] T097 [US1] HTML author note and reviewer `<th>Recall</th>` in `src/texlint/output/html_output.py` (+ `author.html.j2`) and `rust/jsslint-core/src/html_output.rs`
-- [ ] T098 [US1] `Recall:` line in `src/texlint/explain.py` and `rust/jsslint-core/src/explain.rs`
-- [ ] T099 [US1] `Confidence` and `Recall` columns + rule-set header in `tools/render_catalogue.py`; re-render `catalogue.md`
-- [ ] T100 [US1] Vendor `recall.json` (`r/jsslintr/tools/vendor-jsslint-core.sh`, `_FILES` in `tests/unit/test_vendored_catalogue_in_sync.py`) and re-vendor
+- [x] T093 [US1] Reviewer `Recall` column + `Measured recall:` line in `src/texlint/output/terminal.py` and `rust/jsslint-core/src/terminal.rs`
+- [x] T094 [US1] Author footer (always printed, stdout, also on a clean run) in both engines; update `tests/integration/test_cli_author_terminal.py`
+- [x] T095 [US1] Per-category `recall` and top-level `rule_set` in `src/texlint/output/json_output.py` + `rust/jsslint-core/src/json_output.rs`; update `tests/integration/test_cli_json.py`
+- [x] T096 [US1] `properties.confidence` + `properties.recall` on SARIF rule descriptors in `src/texlint/output/sarif.py` and `rust/jsslint-core/src/sarif.rs`
+- [x] T097 [US1] HTML author note and reviewer `<th>Recall</th>` in `src/texlint/output/html_output.py` (+ `author.html.j2`) and `rust/jsslint-core/src/html_output.rs`
+- [x] T098 [US1] `Recall:` line in `src/texlint/explain.py` and `rust/jsslint-core/src/explain.rs`
+- [x] T099 [US1] `Confidence` and `Recall` columns + rule-set header in `tools/render_catalogue.py`; re-render `catalogue.md`
+- [x] T100 [US1] Vendor `recall.json` (`r/jsslintr/tools/vendor-jsslint-core.sh`, `_FILES` in `tests/unit/test_vendored_catalogue_in_sync.py`) and re-vendor
 
 ### Tests and docs
 
-- [ ] T101 [P] [US1] Engine-level tests: pooled category recall, stub journal → `None`/`unmeasured` (`tests/unit/test_engine.py`, `tests/integration/test_plugin_discovery.py`)
+- [x] T101 [P] [US1] Engine-level tests: pooled category recall, stub journal → `None`/`unmeasured` (`tests/unit/test_engine.py`, `tests/integration/test_plugin_discovery.py`)
 - [ ] T102 [P] [US1] Extend `rust/jsslint-core/tests/terminal_parity.rs`, `sarif_parity.rs`, `rust/jsslint-cli/tests/html_parity.rs`, `explain_parity.rs`, `cli_parity.rs` for the new surfaces
-- [ ] T103 [P] [US1] `docs/recall-and-coverage.md` (how recall is measured, the source-only lower-bound caveat, the three states)
+- [x] T103 [P] [US1] `docs/recall-and-coverage.md` (how recall is measured, the source-only lower-bound caveat, the three states)
 - [ ] T104 [P] [US1] Update `specs/027-first-time-user-gaps/contracts/json-output-1.2.md` cross-refs and rewrite the stale `specs/001-linter-foundation/contracts/json-output.md`
 
 **Checkpoint**: a clean run is no longer silent; recall visible in every format

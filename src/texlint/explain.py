@@ -29,6 +29,19 @@ def did_you_mean(unknown_id: str, candidates: Iterable[str] = RULES.keys()) -> l
     return difflib.get_close_matches(unknown_id, list(candidates), n=5, cutoff=0.6)
 
 
+def _recall_label(rule_id: str) -> str:
+    """`81%` / `limited (n=4)` / `unmeasured` for one rule.
+
+    Reads the shipped snapshot through the generated catalogue module,
+    the same source the reviewer table and the author footer use.
+    """
+    from texlint.api import RecallStat
+    from texlint.journals.jss._catalogue_data import RECALL, RECALL_RUN
+
+    tp, fn = RECALL.get(rule_id, (0, 0))
+    return RecallStat(tp=tp, fn=fn).label(RECALL_RUN["min_plants"])
+
+
 def _level(sev: Severity | str) -> str:
     return sev.value if isinstance(sev, Severity) else str(sev)
 
@@ -48,6 +61,10 @@ def _render_one_terminal(rule_id: str, meta: dict) -> str:
             f"  Confidence: {confidence} (measured corpus precision "
             "below the gate; see eval/improvement-log.md)"
         )
+    # Always printed, including `unmeasured` (spec 027 FR-A-005): a rule
+    # nobody has measured is exactly the one a reader should not assume
+    # is reliable.
+    lines.append(f"  Recall: {_recall_label(rule_id)}")
     if section:
         lines.append(f"  JSS guide: {section}")
         if url:
@@ -67,6 +84,7 @@ def _render_one_markdown(rule_id: str, meta: dict) -> str:
     parts.append(f"- **Authority:** {meta['authority']} ({meta['authority_ref']})")
     if meta.get("confidence", "high") != "high":
         parts.append(f"- **Confidence:** {meta['confidence']}")
+    parts.append(f"- **Recall:** {_recall_label(rule_id)}")
     if section and url:
         parts.append(f"- **JSS guide:** [{section}]({url})")
     elif section:

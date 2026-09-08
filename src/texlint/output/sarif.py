@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from texlint import __version__
-from texlint.api import ComplianceReport, Fix, Severity, ToolConfig, Violation
+from texlint.api import ComplianceReport, Fix, RecallStat, Severity, ToolConfig, Violation
 
 JSS_PARSE_RULE_ID = "JSS-PARSE-000"
 
@@ -140,6 +140,8 @@ def _rule_descriptor(rule_id: str, meta: dict[str, Any]) -> dict[str, Any]:
     message = meta["message_template"]
     guide_section = meta.get("guide_section") or ""
     guide_url = meta.get("guide_url")
+    confidence = meta.get("confidence", "high")
+    recall = meta.get("recall")
 
     short_text = (
         f"{message} ({guide_section})"
@@ -152,7 +154,16 @@ def _rule_descriptor(rule_id: str, meta: dict[str, Any]) -> dict[str, Any]:
         "shortDescription": {"text": short_text},
         "fullDescription": {"text": message},
         "defaultConfiguration": {"level": _SARIF_LEVEL[severity]},
-        "properties": {"tags": [category]},
+        # `tags` is the SARIF-blessed surface for tool-internal labels;
+        # `confidence` and `recall` are property-bag keys consumers
+        # ignore unless they know them (spec 027 FR-A-005). A rule with
+        # no annotated instances still carries the unmeasured shape, so
+        # a consumer never has to distinguish "absent" from "zero".
+        "properties": {
+            "tags": [category],
+            "confidence": confidence,
+            "recall": recall,
+        },
     }
     if guide_url:
         descriptor["helpUri"] = guide_url
@@ -167,9 +178,26 @@ def _catalogue_rules() -> list[dict[str, Any]]:
     # with hits. The catalogue is JSS-specific in the current codebase;
     # other journals would import their own catalogue here when SARIF
     # output is requested for them.
-    from texlint.journals.jss._catalogue_data import RULES
+    from texlint.journals.jss._catalogue_data import RECALL, RECALL_RUN, RULES
 
-    rules = [_rule_descriptor(rid, dict(meta)) for rid, meta in RULES.items()]
+    min_plants = RECALL_RUN["min_plants"]
+
+    def with_recall(rule_id: str, meta: dict[str, Any]) -> dict[str, Any]:
+        tp, fn = RECALL.get(rule_id, (0, 0))
+        stat = RecallStat(tp=tp, fn=fn)
+        state = stat.state(min_plants)
+        meta["recall"] = {
+            "state": state,
+            "tp": tp,
+            "fn": fn,
+            "percent": stat.percent() if state == "measured" else None,
+        }
+        return meta
+
+    rules = [
+        _rule_descriptor(rid, with_recall(rid, dict(meta)))
+        for rid, meta in RULES.items()
+    ]
     rules.append(_internal_parse_rule_descriptor())
     rules.sort(key=lambda r: r["id"])
     return rules
@@ -195,7 +223,14 @@ def _internal_parse_rule_descriptor() -> dict[str, Any]:
             )
         },
         "defaultConfiguration": {"level": "error"},
-        "properties": {"tags": ["parse"]},
+        # The synthetic parse rule has no catalogue entry, hence no
+        # measured recall and no confidence tier; the keys are present
+        # with null/unmeasured values so every descriptor has one shape.
+        "properties": {
+            "tags": ["parse"],
+            "confidence": None,
+            "recall": {"state": "unmeasured", "tp": 0, "fn": 0, "percent": None},
+        },
     }
 
 

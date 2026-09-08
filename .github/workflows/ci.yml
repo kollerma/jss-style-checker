@@ -177,6 +177,14 @@ jobs:
       - name: Materialize the recall corpus
         run: .venv/bin/python -m eval.recall_corpus_scaffold
 
+      # Spec 027 FR-A-007: the number the author footer prints has to be
+      # defended, not just published. `--no-record` leaves the committed
+      # history database untouched, so the per-rule regression check
+      # keeps comparing against the last *recorded* run, which the
+      # release checklist refreshes.
+      - name: Recall gate
+        run: .venv/bin/eval-jss recall --gate --no-record
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 

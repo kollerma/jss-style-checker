@@ -456,3 +456,52 @@ class TestSeverityOverrideRemap:
         cfg = ToolConfig(severity_overrides={"JSS-OTHER-999": Severity.INFO})
         report = run(cfg, doc, journal)
         assert [v.severity for v in report.violations] == [Severity.ERROR]
+
+
+class TestPooledRecall:
+    """`engine.run` stamps each category with its pooled recall.
+
+    Pooling (rather than averaging per-rule percentages) is what makes a
+    category's number mean "of the planted defects in this category, how
+    many did we catch" — spec 027 FR-A-002.
+    """
+
+    def _report(self):
+        from pathlib import Path
+
+        from texlint.core.engine import load_journal, parse_document, run
+
+        return run(
+            ToolConfig(),
+            parse_document([Path("tests/fixtures/compliant/minimal.tex")]),
+            load_journal("jss"),
+        )
+
+    def test_every_category_carries_a_stat(self) -> None:
+        assert all(c.recall is not None for c in self._report().categories)
+
+    def test_pooling_sums_the_categorys_rules(self) -> None:
+        from texlint.core.engine import load_journal
+
+        journal = load_journal("jss")
+        by_rule = journal.metadata().recall_by_rule
+        report = self._report()
+        category = {c.category_id: c for c in report.categories}["crossrefs"]
+        rules = {c.id: c for c in journal.categories()}["crossrefs"].rules
+        expected_tp = sum(
+            by_rule[r.id].tp for r in rules if r.id in by_rule
+        )
+        assert category.recall.tp == expected_tp
+
+    def test_a_category_with_no_plants_is_unmeasured_not_perfect(self) -> None:
+        # `project` has no annotated instances at all. Rendering it as
+        # 100% would be the single most misleading number in the report.
+        project = {c.category_id: c for c in self._report().categories}["project"]
+        assert project.recall.plants == 0
+        assert project.recall.label(10) == "unmeasured"
+
+    def test_the_report_carries_the_run_provenance(self) -> None:
+        run_info = self._report().rule_set.recall
+        assert run_info.papers > 0
+        assert run_info.min_plants == 10
+        assert run_info.stat.percent() == 81

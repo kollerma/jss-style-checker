@@ -12,6 +12,8 @@ from importlib import import_module
 from texlint.api import (
     JournalMetadata,
     JournalRuleModule,
+    RecallRun,
+    RecallStat,
     Rule,
     RuleCategory,
     RuleSetInfo,
@@ -57,13 +59,26 @@ class JSSJournal(JournalRuleModule):
     def metadata(self) -> JournalMetadata:
         from texlint.journals.jss import _catalogue_data
 
+        run = _catalogue_data.RECALL_RUN
         return JournalMetadata(
             rule_set=RuleSetInfo(
                 version=_catalogue_data.RULESET_VERSION,
                 fingerprint=_catalogue_data.RULESET_FINGERPRINT,
                 guide_edition=_catalogue_data.GUIDE_EDITION,
                 source_vendored_at=_catalogue_data.SOURCE_VENDORED_AT,
-            )
+                recall=RecallRun(
+                    run_timestamp=run["run_timestamp"],
+                    corpus_hash=run["corpus_hash"],
+                    min_plants=run["min_plants"],
+                    papers=run["papers"],
+                    tp=run["tp"],
+                    fn=run["fn"],
+                ),
+            ),
+            recall_by_rule={
+                rule_id: RecallStat(tp=tp, fn=fn)
+                for rule_id, (tp, fn) in _catalogue_data.RECALL.items()
+            },
         )
 
 

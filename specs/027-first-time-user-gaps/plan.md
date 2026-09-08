@@ -851,6 +851,16 @@ recorded in `research.md`.
 | B-3 | `path_map` built from `document.all_files()` | `ParsedProject` has no `all_files`; it holds `documents`. | The CLI iterates `project.documents` (or the single document) — the same set the engine lints. |
 | B-4 | (not anticipated) | The PyO3 wheel is built from the workspace and is *stale* after any core change, so `tests/unit/test_jsslint_parity.py` fails misleadingly until `maturin develop --release` is re-run. | Noted here for the next session: rebuild the wheel after touching `jsslint-core`, exactly as the R package needs re-vendoring. |
 
+### Item A-recall — recall transparency
+
+| # | Plan said | Reality | What was done |
+|---|---|---|---|
+| A-1 | `recall.json` holds `{corpus_hash, generated_by, min_plants, run_timestamp, rules}` | The footer wording the plan itself specifies quotes a **paper count** (`1967 annotated instances, 17 papers`), which neither `recall_history` nor the plan's snapshot shape carries. | The snapshot gains `papers`, counted from `eval/recall-corpus/*/annotations.toml` at generation time — the same way `eval-jss recall` reports it. `--papers` overrides it, and `--check` falls back to the committed value, so a machine without the gitignored corpus can still verify freshness. |
+| A-2 | Codegen emits `RECALL_RUN` / `RECALL` (Python) and `build.rs` the equivalents | — | Done. The recall snapshot is deliberately **not** a fingerprint input: re-measuring recall changes what the tool *reports*, not which findings it produces, so it must not force a rule-set date bump and invalidate users' baselines. |
+| A-3 | `explain` and SARIF read per-rule recall | The report carries pooled per-category recall, not per-rule; adding 53 per-rule entries to every report to serve two renderers would be the `Rule.recall` field research.md already rejected. | `explain.py`/`sarif.py` read `RECALL` from the generated catalogue module they already import. No *new* journal import (§14's actual constraint); the pre-existing lazy-import smell is unchanged. |
+| A-4 | `eval/badge.py` reads `run_timestamp` and sums from the snapshot | The badge's own `PINNED_RECALL_TIMESTAMP` had already drifted from the paper's pin — the failure mode this item exists to end. | `pinned_recall_aggregate()` now reads the shipped snapshot and needs no database at all; the constant is gone. Badge and author footer cannot disagree. |
+| A-5 | (not anticipated) | Two integration tests asserted a compliant run prints **nothing**. | Updated with the reason in the test itself: the findings table is still empty, and what follows it is the caveat FR-A-004 exists to add. `test_cli_json.py`'s exact key-set assertion gained `rule_set`. |
+
 ### Environment
 
 - `.venv-host` is the **macOS host's** venv (`/workspace` is a bind mount

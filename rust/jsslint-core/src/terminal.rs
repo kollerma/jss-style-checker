@@ -522,6 +522,10 @@ pub fn render(report: &ComplianceReport, config: &ToolConfig) -> String {
     } else {
         render_author(report, &mut out);
     }
+    if config.mode != Mode::Reviewer {
+        out.push_str(&author_footer_text(report));
+        out.push('\n');
+    }
     if let Some(summary) = &report.baseline {
         render_baseline(summary, report, &mut out);
     }
@@ -616,7 +620,11 @@ fn render_reviewer(report: &ComplianceReport, out: &mut String) {
         col_no_wrap("Status"),
         col_right("Applied"),
         col_right("Passed"),
+        // Left-justified, no wrap: the widest cell is `limited (n=NN)`,
+        // which keeps the table inside the 120-column console.
+        col_no_wrap("Recall"),
     ];
+    let min_plants = min_plants(report);
     let rows: Vec<Vec<String>> = report
         .categories
         .iter()
@@ -626,6 +634,10 @@ fn render_reviewer(report: &ComplianceReport, out: &mut String) {
                 c.status.as_str().to_string(),
                 c.rules_applied.to_string(),
                 c.rules_passed.to_string(),
+                match &c.recall {
+                    Some(stat) => stat.label(min_plants),
+                    None => "n/a".to_string(),
+                },
             ]
         })
         .collect();
@@ -638,6 +650,52 @@ fn render_reviewer(report: &ComplianceReport, out: &mut String) {
         Some(pct) => out.push_str(&format!("Overall: {pct:.1}%\n")),
         None => out.push_str("Overall: n/a\n"),
     }
+    if let Some(line) = measured_recall_line(report) {
+        out.push_str(&line);
+        out.push('\n');
+    }
+}
+
+fn min_plants(report: &ComplianceReport) -> u32 {
+    report
+        .rule_set
+        .recall
+        .as_ref()
+        .map(|r| r.min_plants)
+        .unwrap_or(0)
+}
+
+/// `Measured recall: 81% (1967 annotated instances, 17 papers, run …)`.
+/// `None` for a journal that publishes no measurement.
+pub fn measured_recall_line(report: &ComplianceReport) -> Option<String> {
+    let run = report.rule_set.recall.as_ref()?;
+    let stat = run.stat();
+    let day = run.run_timestamp.split('T').next().unwrap_or("");
+    Some(format!(
+        "Measured recall: {} ({} annotated instances, {} papers, run {day})",
+        stat.label(run.min_plants),
+        stat.plants(),
+        run.papers
+    ))
+}
+
+/// The footer an author-mode run always ends with (spec 027 FR-A-004).
+/// Shared with the HTML renderer so the two cannot drift.
+pub fn author_footer_text(report: &ComplianceReport) -> String {
+    let Some(run) = report.rule_set.recall.as_ref() else {
+        return format!(
+            "jss-lint has no recall or coverage data for journal {}.",
+            report.journal_id
+        );
+    };
+    let stat = run.stat();
+    format!(
+        "No findings does not mean compliant. Measured recall: {} ({} annotated \
+         instances, {} papers).",
+        stat.label(run.min_plants),
+        stat.plants(),
+        run.papers
+    )
 }
 
 fn render_skipped_rules(report: &ComplianceReport, out: &mut String) {

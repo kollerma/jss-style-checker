@@ -22,7 +22,7 @@
 <p>Tool version: <code>{{ report.tool_version }}</code></p>
 <table>
   <thead>
-    <tr><th>Category</th><th>Status</th><th class="num">Applied</th><th class="num">Passed</th></tr>
+    <tr><th>Category</th><th>Status</th><th class="num">Applied</th><th class="num">Passed</th><th>Recall</th></tr>
   </thead>
   <tbody>
   {% for c in report.categories %}
@@ -31,6 +31,7 @@
       <td class="status-{{ c.status.value }}">{{ c.status.value }}</td>
       <td class="num">{{ c.rules_applied }}</td>
       <td class="num">{{ c.rules_passed }}</td>
+      <td>{% if c.recall %}{{ c.recall.label(min_plants) }}{% else %}n/a{% endif %}</td>
     </tr>
   {% endfor %}
   </tbody>
@@ -40,6 +41,9 @@
 {% else %}
 <p class="overall">Overall: <strong>{{ report.compliance_percentage }}%</strong></p>
 {% endif %}
+{%- if measured_recall %}
+<p class="note">{{ measured_recall }}</p>
+{%- endif %}
 {%- if report.baseline %}
 <p class="note">Baseline: {{ report.baseline.matched }} findings hidden by {{ report.baseline.path }} ({{ report.baseline.stale }} stale, {{ report.baseline.unevaluated }} unevaluated){% if report.baseline.ruleset_version and report.rule_set.version and report.baseline.ruleset_version != report.rule_set.version %} — written for rule set {{ report.baseline.ruleset_version }}, current {{ report.rule_set.version }}; run --update-baseline{% endif %}</p>
 {%- endif %}
