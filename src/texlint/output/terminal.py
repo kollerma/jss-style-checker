@@ -120,10 +120,64 @@ def render(report: ComplianceReport, config: ToolConfig) -> None:
         _render_reviewer(report)
     else:
         _render_author(report)
+    if config.mode != "reviewer":
+        _render_author_footer(report)
     if report.baseline is not None:
         _render_baseline(report)
     if config.verbose and report.skipped_rules:
         _render_skipped_rules(report)
+
+
+def _min_plants(report: ComplianceReport) -> int:
+    run = report.rule_set.recall
+    return run.min_plants if run is not None else 0
+
+
+def measured_recall_line(report: ComplianceReport) -> str | None:
+    """`Measured recall: 81% (1967 annotated instances, 17 papers, run …)`.
+
+    ``None`` for a journal that publishes no measurement — the author
+    footer says so in words instead.
+    """
+    run = report.rule_set.recall
+    if run is None:
+        return None
+    stat = run.stat
+    day = run.run_timestamp.split("T", 1)[0]
+    return (
+        f"Measured recall: {stat.label(run.min_plants)} "
+        f"({stat.plants} annotated instances, {run.papers} papers, run {day})"
+    )
+
+
+def _render_author_footer(report: ComplianceReport) -> None:
+    """The statement a clean run has to carry (spec 027 FR-A-004).
+
+    Printed on **stdout**, always — including when there are no findings
+    at all. An empty report reads as an all-clear the tool has not
+    earned: recall is 81 %, so roughly one in five planted defects goes
+    unreported. Rationale for stdout over stderr, and for printing it
+    unconditionally, is in plan §7.3 and the Complexity Tracking table:
+    the terminal report *is* the report, and a saved text file of a
+    clean run must not be empty.
+    """
+    _console().print(author_footer_text(report), highlight=False)
+
+
+def author_footer_text(report: ComplianceReport) -> str:
+    """The footer sentence, shared with the HTML renderer."""
+    run = report.rule_set.recall
+    if run is None:
+        return (
+            "jss-lint has no recall or coverage data for journal "
+            f"{report.journal_id}."
+        )
+    stat = run.stat
+    return (
+        "No findings does not mean compliant. Measured recall: "
+        f"{stat.label(run.min_plants)} ({stat.plants} annotated instances, "
+        f"{run.papers} papers)."
+    )
 
 
 def _render_baseline(report: ComplianceReport) -> None:
@@ -209,13 +263,24 @@ def _render_reviewer(report: ComplianceReport) -> None:
     table.add_column("Status", no_wrap=True)
     table.add_column("Applied", justify="right")
     table.add_column("Passed", justify="right")
+    # Left-justified and no-wrap: the widest cell is `limited (n=NN)`,
+    # which keeps the table inside the 120-column console so rich never
+    # collapses the other columns.
+    table.add_column("Recall", no_wrap=True)
 
+    min_plants = _min_plants(report)
     for cat in report.categories:
         style = _STATUS_STYLE.get(cat.status, "")
         status_cell = (
             f"[{style}]{cat.status.value}[/{style}]" if style else cat.status.value
         )
-        table.add_row(cat.title, status_cell, str(cat.rules_applied), str(cat.rules_passed))
+        table.add_row(
+            cat.title,
+            status_cell,
+            str(cat.rules_applied),
+            str(cat.rules_passed),
+            cat.recall.label(min_plants) if cat.recall is not None else "n/a",
+        )
 
     console.print(table)
     pct = report.compliance_percentage
@@ -223,3 +288,6 @@ def _render_reviewer(report: ComplianceReport) -> None:
         console.print("Overall: [dim]n/a[/dim]")
     else:
         console.print(f"Overall: [bold]{pct}%[/bold]")
+    line = measured_recall_line(report)
+    if line is not None:
+        console.print(line, highlight=False)

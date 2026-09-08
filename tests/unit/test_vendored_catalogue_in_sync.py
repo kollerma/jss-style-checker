@@ -23,7 +23,15 @@ _CANONICAL = _REPO / "specs" / "003-jss-rule-catalogue"
 _VENDORED = _REPO / "rust" / "jsslint-core" / "specs" / "003-jss-rule-catalogue"
 
 # Every file jsslint-core/build.rs reads from the catalogue directory.
-_FILES = ["catalogue.yaml", "terms.json", "latex-macro-specs.json"]
+_FILES = [
+    "catalogue.yaml",
+    "terms.json",
+    "latex-macro-specs.json",
+    # Spec 027 item A: the recall snapshot ships with the rule set, so
+    # the crates.io tarball and the CRAN package report the same
+    # measured recall as the Python package.
+    "recall.json",
+]
 
 
 @pytest.mark.parametrize("name", _FILES)

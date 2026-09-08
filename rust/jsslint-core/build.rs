@@ -46,6 +46,26 @@ struct RawRule {
     guide_url: Option<String>,
 }
 
+/// `specs/003-jss-rule-catalogue/recall.json` — the shipped recall
+/// snapshot (spec 027 item A). Read here rather than recomputed: the
+/// eval database ships with neither a crates.io tarball nor a CRAN
+/// binary, and the number a release claims must be the one it measured.
+#[derive(serde::Deserialize)]
+struct RecallDoc {
+    corpus_hash: String,
+    min_plants: u32,
+    papers: u32,
+    run_timestamp: String,
+    rules: BTreeMap<String, RecallCounts>,
+}
+
+#[derive(serde::Deserialize, Clone, Copy)]
+struct RecallCounts {
+    tp: u32,
+    #[serde(rename = "fn")]
+    fn_: u32,
+}
+
 #[derive(serde::Deserialize)]
 struct LatexSpecsDoc {
     macros: BTreeMap<String, String>,
@@ -188,6 +208,33 @@ fn main() {
     out.push_str("pub static CATEGORIES: &[&str] = &[\n");
     for cat in &categories {
         out.push_str(&format!("    {cat:?},\n"));
+    }
+    out.push_str("];\n");
+
+    // --- measured recall (spec 027 item A) ---------------------------
+    let recall_path = repo_root.join("specs/003-jss-rule-catalogue/recall.json");
+    println!("cargo:rerun-if-changed={}", recall_path.display());
+    let recall: RecallDoc = serde_json::from_str(
+        &fs::read_to_string(&recall_path)
+            .unwrap_or_else(|e| panic!("failed to read {}: {e}", recall_path.display())),
+    )
+    .unwrap_or_else(|e| panic!("failed to parse {}: {e}", recall_path.display()));
+
+    let total_tp: u32 = recall.rules.values().map(|c| c.tp).sum();
+    let total_fn: u32 = recall.rules.values().map(|c| c.fn_).sum();
+    out.push_str("\n// Measured recall, from specs/003-jss-rule-catalogue/recall.json.\n");
+    out.push_str(&format!(
+        "pub static RECALL_RUN: RecallRunData = RecallRunData {{ run_timestamp: {:?}, \
+         corpus_hash: {:?}, min_plants: {}, papers: {}, tp: {}, fn_: {} }};\n",
+        recall.run_timestamp, recall.corpus_hash, recall.min_plants, recall.papers,
+        total_tp, total_fn
+    ));
+    out.push_str("pub static RECALL: &[(&str, u32, u32)] = &[\n");
+    for (rule_id, counts) in &recall.rules {
+        out.push_str(&format!(
+            "    ({rule_id:?}, {}, {}),\n",
+            counts.tp, counts.fn_
+        ));
     }
     out.push_str("];\n");
 

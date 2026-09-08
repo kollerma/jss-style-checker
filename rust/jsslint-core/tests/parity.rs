@@ -109,6 +109,10 @@ fn base_categories(overrides: &[(&str, u32)]) -> Vec<CategorySummary> {
                 rules_applied: *applied,
                 rules_passed: passed,
                 violations: Vec::new(),
+                // The JSON renderer reports each category's pooled
+                // recall, so this hand-built report has to carry the
+                // same numbers the engine would compute.
+                recall: Some(jsslint_core::engine::pooled_recall_for(id)),
             }
         })
         .collect()

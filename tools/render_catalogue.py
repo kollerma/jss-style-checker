@@ -16,6 +16,7 @@ shape from ``contracts/rendering.md``.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import tempfile
@@ -160,9 +161,10 @@ def _emit_category(
     out.append(f"## {_title(category)}\n\n")
     out.append(f"_{category}_ — {len(rules)} rule(s)\n\n")
     out.append(
-        "| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |\n"
+        "| Rule ID | Severity | Confidence | Recall | Description | Authority "
+        "| Authority ref | Auto-fixable |\n"
     )
-    out.append("|---|---|---|---|---|---|\n")
+    out.append("|---|---|---|---|---|---|---|---|\n")
     for rule in rules:
         out.append(_render_summary_row(rule))
     out.append("\n")
@@ -171,14 +173,40 @@ def _emit_category(
 def _render_summary_row(rule: Mapping[str, Any]) -> str:
     rule_id = rule["rule_id"]
     severity = rule["severity"]
+    confidence = rule.get("confidence") or "high"
     description = _escape_pipe(rule["description"])
     authority = rule["authority"]
     authority_ref = f"`{rule['authority_ref']}`"
     auto_fixable = "✓" if rule["auto_fixable"] else "—"
     return (
-        f"| `{rule_id}` | {severity} | {description} | {authority} | "
-        f"{authority_ref} | {auto_fixable} |\n"
+        f"| `{rule_id}` | {severity} | {confidence} | {_recall_label(rule_id)} "
+        f"| {description} | {authority} | {authority_ref} | {auto_fixable} |\n"
     )
+
+
+def _recall_label(rule_id: str) -> str:
+    """Measured recall for the catalogue page (spec 027 item A).
+
+    Read from the shipped snapshot so the page, the tool, and the badge
+    quote one number.
+    """
+    snapshot = _recall_snapshot()
+    counts = snapshot.get("rules", {}).get(rule_id)
+    if counts is None:
+        return "unmeasured"
+    plants = counts["tp"] + counts["fn"]
+    if plants < snapshot.get("min_plants", 10):
+        return f"limited (n={plants})"
+    return f"{(200 * counts['tp'] + plants) // (2 * plants)}%"
+
+
+def _recall_snapshot() -> Mapping[str, Any]:
+    cached = getattr(_recall_snapshot, "_cache", None)
+    if cached is None:
+        path = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "recall.json"
+        cached = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        _recall_snapshot._cache = cached  # type: ignore[attr-defined]
+    return cached
 
 
 def _escape_pipe(text: str) -> str:

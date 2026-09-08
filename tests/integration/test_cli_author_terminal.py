@@ -67,7 +67,16 @@ class TestAuthorOutputShape:
         )
         assert "Add a citation" in result.output  # suggestion text
 
-    def test_compliant_output_is_empty(self, runner: CliRunner):
+    def test_compliant_run_reports_no_findings_but_is_not_silent(
+        self, runner: CliRunner
+    ):
+        """Spec 027 FR-A-004 changed this deliberately.
+
+        Until 1.2.0 a clean run printed nothing, which reads as an
+        all-clear the tool has not earned: measured recall is 81 %, so
+        roughly one planted defect in five goes unreported. The findings
+        table is still empty; what follows it is the honest caveat.
+        """
         result = runner.invoke(
             main,
             [
@@ -76,7 +85,9 @@ class TestAuthorOutputShape:
             ],
         )
         assert result.exit_code == 0
-        assert result.output.strip() == ""
+        assert "JSS-" not in result.output, "no findings should be listed"
+        assert result.output.startswith("No findings does not mean compliant.")
+        assert "Measured recall:" in result.output
 
 
 class TestGuideSectionSuffix:

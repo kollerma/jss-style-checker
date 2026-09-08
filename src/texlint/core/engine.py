@@ -32,6 +32,7 @@ from texlint.api import (
     CategorySummary,
     ComplianceReport,
     InvalidJournalError,
+    JournalMetadata,
     JournalNotFoundError,
     JournalRuleModule,
     ParsedBibFile,
@@ -39,6 +40,8 @@ from texlint.api import (
     ParsedProject,
     ParsedRmdFile,
     ParsedTexFile,
+    RecallStat,
+    RuleCategory,
     SkippedRule,
     Suppressor,
     ToolConfig,
@@ -224,6 +227,29 @@ def load_journal(journal_id: str) -> JournalRuleModule:
     return instance
 
 
+def _pooled_recall(
+    category: RuleCategory, metadata: JournalMetadata
+) -> RecallStat | None:
+    """Sum the category's rules' annotated instances (spec 027 FR-A-002).
+
+    ``None`` when the journal publishes no recall at all, so the
+    surfaces can tell "this journal does not measure recall" apart from
+    "this category has no annotated instances" — the latter pools to
+    ``(0, 0)`` and renders ``unmeasured``, never ``100%``.
+    """
+    if not metadata.recall_by_rule:
+        return None
+    tp = 0
+    fn = 0
+    for rule in category.rules:
+        stat = metadata.recall_by_rule.get(rule.id)
+        if stat is None:
+            continue
+        tp += stat.tp
+        fn += stat.fn
+    return RecallStat(tp=tp, fn=fn)
+
+
 def run(
     config: ToolConfig,
     target: ParsedDocument | ParsedProject,
@@ -376,6 +402,7 @@ def run(
                 passed_by_category[category.id] += 1
             violations_by_category[category.id].extend(rule_violations)
 
+    metadata = journal.metadata()
     summaries: list[CategorySummary] = []
     for category in categories:
         summaries.append(
@@ -385,6 +412,7 @@ def run(
                 rules_applied=applied_by_category.get(category.id, 0),
                 rules_passed=passed_by_category.get(category.id, 0),
                 violations=tuple(violations_by_category.get(category.id, ())),
+                recall=_pooled_recall(category, metadata),
             )
         )
 
@@ -435,5 +463,5 @@ def run(
         categories=tuple(summaries),
         compliance_percentage=percentage,
         skipped_rules=tuple(skipped),
-        rule_set=journal.metadata().rule_set,
+        rule_set=metadata.rule_set,
     )

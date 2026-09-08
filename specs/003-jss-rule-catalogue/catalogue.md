@@ -15,175 +15,175 @@
 
 _preamble_ — 8 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-PRE-001` | error | Document class must be jss with a valid class option (article, codesnippet, bookreview, softwarereview) | jss_cls | `jss.cls:37` | — |
-| `JSS-PRE-002` | error | Preamble defines \Address{} with author affiliation and contact | jss_cls | `jss.cls:\Address` | — |
-| `JSS-PRE-003` | error | When \title{} contains LaTeX markup, preamble also defines \Plaintitle{} with the markup-free form | jss_cls | `jss.cls:\Plaintitle` | ✓ |
-| `JSS-PRE-004` | error | \Abstract{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:120` | — |
-| `JSS-PRE-005` | error | \Keywords{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:197` | — |
-| `JSS-PRE-006` | warning | \Plaintitle, \Plainauthor, \Plainkeywords contain no LaTeX markup (PDF metadata must be plain text) | jss_cls | `jss.cls:\Plaintitle` | ✓ |
-| `JSS-PRE-007` | error | When \author{} contains LaTeX markup, preamble also defines \Plainauthor{} with the markup-free form | jss_cls | `jss.cls:\Plainauthor` | ✓ |
-| `JSS-PRE-008` | error | When \Keywords{} contains LaTeX markup, preamble also defines \Plainkeywords{} with the markup-free form | jss_cls | `jss.cls:\Plainkeywords` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-PRE-001` | error | high | unmeasured | Document class must be jss with a valid class option (article, codesnippet, bookreview, softwarereview) | jss_cls | `jss.cls:37` | — |
+| `JSS-PRE-002` | error | high | unmeasured | Preamble defines \Address{} with author affiliation and contact | jss_cls | `jss.cls:\Address` | — |
+| `JSS-PRE-003` | error | high | limited (n=1) | When \title{} contains LaTeX markup, preamble also defines \Plaintitle{} with the markup-free form | jss_cls | `jss.cls:\Plaintitle` | ✓ |
+| `JSS-PRE-004` | error | high | limited (n=1) | \Abstract{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:120` | — |
+| `JSS-PRE-005` | error | high | limited (n=1) | \Keywords{} is present and overrides the sentinel placeholder from jss.cls | jss_cls | `jss.cls:197` | — |
+| `JSS-PRE-006` | warning | high | limited (n=4) | \Plaintitle, \Plainauthor, \Plainkeywords contain no LaTeX markup (PDF metadata must be plain text) | jss_cls | `jss.cls:\Plaintitle` | ✓ |
+| `JSS-PRE-007` | error | high | limited (n=1) | When \author{} contains LaTeX markup, preamble also defines \Plainauthor{} with the markup-free form | jss_cls | `jss.cls:\Plainauthor` | ✓ |
+| `JSS-PRE-008` | error | high | unmeasured | When \Keywords{} contains LaTeX markup, preamble also defines \Plainkeywords{} with the markup-free form | jss_cls | `jss.cls:\Plainkeywords` | ✓ |
 
 ## Structure
 
 _structure_ — 6 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-STRUCT-001` | warning | Document ends with a summary / discussion section before the bibliography | article_tex | `article.tex:378` | — |
-| `JSS-STRUCT-002` | warning | Acknowledgments section uses American spelling (not "Acknowledgements") | article_tex | `article.tex:407` | ✓ |
-| `JSS-STRUCT-003` | warning | Appendix sections have proper titles instead of a bare "Appendix" | article_tex | `article.tex:438` | — |
-| `JSS-STRUCT-004` | error | References are declared via \bibliography{} rather than a hand-written thebibliography environment | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-STRUCT-005` | warning | \author{} separates authors with \And or \AND (not lowercase \and) | article_tex | `article.tex:22` | ✓ |
-| `JSS-STRUCT-006` | warning | Appendix follows the bibliography with a \newpage (or \clearpage) separator | article_tex | `article.tex:430` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-STRUCT-001` | warning | high | limited (n=4) | Document ends with a summary / discussion section before the bibliography | article_tex | `article.tex:378` | — |
+| `JSS-STRUCT-002` | warning | high | limited (n=4) | Acknowledgments section uses American spelling (not "Acknowledgements") | article_tex | `article.tex:407` | ✓ |
+| `JSS-STRUCT-003` | warning | high | limited (n=1) | Appendix sections have proper titles instead of a bare "Appendix" | article_tex | `article.tex:438` | — |
+| `JSS-STRUCT-004` | error | high | limited (n=1) | References are declared via \bibliography{} rather than a hand-written thebibliography environment | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-STRUCT-005` | warning | high | limited (n=2) | \author{} separates authors with \And or \AND (not lowercase \and) | article_tex | `article.tex:22` | ✓ |
+| `JSS-STRUCT-006` | warning | high | limited (n=2) | Appendix follows the bibliography with a \newpage (or \clearpage) separator | article_tex | `article.tex:430` | ✓ |
 
 ## Markup
 
 _markup_ — 4 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-MARKUP-001` | warning | Programming-language names in prose are wrapped in \proglang{} | jss_cls | `jss.cls:\proglang` | ✓ |
-| `JSS-MARKUP-002` | warning | Software-package names in prose are wrapped in \pkg{} | jss_cls | `jss.cls:\pkg` | ✓ |
-| `JSS-MARKUP-003` | warning | Inline function, argument, command names, and R sentinel values are wrapped in \code{} | jss_cls | `jss.cls:\code` | ✓ |
-| `JSS-MARKUP-004` | warning | Section titles containing markup supply a plain-text shim via \section[plain]{markup} | style_guide | `#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-MARKUP-001` | warning | medium | 86% | Programming-language names in prose are wrapped in \proglang{} | jss_cls | `jss.cls:\proglang` | ✓ |
+| `JSS-MARKUP-002` | warning | high | limited (n=7) | Software-package names in prose are wrapped in \pkg{} | jss_cls | `jss.cls:\pkg` | ✓ |
+| `JSS-MARKUP-003` | warning | high | 60% | Inline function, argument, command names, and R sentinel values are wrapped in \code{} | jss_cls | `jss.cls:\code` | ✓ |
+| `JSS-MARKUP-004` | warning | high | limited (n=1) | Section titles containing markup supply a plain-text shim via \section[plain]{markup} | style_guide | `#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do` | ✓ |
 
 ## Citations
 
 _citations_ — 3 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-CITE-002` | warning | First occurrence of a software package has a citation within the same paragraph | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-CITE-003` | warning | Avoid bracket-in-bracket citation forms like (\cite{...}); use \citep{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | ✓ |
-| `JSS-CITE-004` | warning | Citations use natbib commands (\cite, \citet, \citep, \citealp) rather than hardcoded author-year text | jss_cls | `jss.cls:62` | — |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-CITE-002` | warning | medium | 67% | First occurrence of a software package has a citation within the same paragraph | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-CITE-003` | warning | high | 100% | Avoid bracket-in-bracket citation forms like (\cite{...}); use \citep{...} instead | style_guide | `#what-are-the-different-cite-citet-citep-commands-about` | ✓ |
+| `JSS-CITE-004` | warning | high | limited (n=1) | Citations use natbib commands (\cite, \citet, \citep, \citealp) rather than hardcoded author-year text | jss_cls | `jss.cls:62` | — |
 
 ## References
 
 _references_ — 6 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-REFS-001` | warning | BibTeX entries carry a year field so natbib author-year citations render correctly | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-REFS-003` | info | BibTeX entries include a doi field where one is available (advisory) | article_tex | `article.tex:421` | — |
-| `JSS-REFS-004` | warning | BibTeX titles use JSS markup (\proglang, \pkg, \code) for language and package names | style_guide | `#how-to-cite-r-packages` | — |
-| `JSS-REFS-005` | warning | Journal titles in BibTeX entries are not abbreviated | article_tex | `article.tex:473` | — |
-| `JSS-REFS-006` | warning | BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-REFS-007` | warning | Journal titles in BibTeX entries are in title case | article_tex | `article.tex:473` | — |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-REFS-001` | warning | high | unmeasured | BibTeX entries carry a year field so natbib author-year citations render correctly | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-REFS-003` | info | high | 68% | BibTeX entries include a doi field where one is available (advisory) | article_tex | `article.tex:421` | — |
+| `JSS-REFS-004` | warning | high | 89% | BibTeX titles use JSS markup (\proglang, \pkg, \code) for language and package names | style_guide | `#how-to-cite-r-packages` | — |
+| `JSS-REFS-005` | warning | high | limited (n=3) | Journal titles in BibTeX entries are not abbreviated | article_tex | `article.tex:473` | — |
+| `JSS-REFS-006` | warning | high | 97% | BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-REFS-007` | warning | high | 100% | Journal titles in BibTeX entries are in title case | article_tex | `article.tex:473` | — |
 
 ## BibTeX
 
 _bibtex_ — 5 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-BIBTEX-001` | error | Every BibTeX entry has a non-empty citation key | style_guide | `#how-to-cite-r-packages` | — |
-| `JSS-BIBTEX-002` | error | BibTeX citation keys are unique within the database | style_guide | `#how-to-cite-r-packages` | — |
-| `JSS-BIBTEX-003` | error | BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …) | style_guide | `#how-to-cite-r-packages` | — |
-| `JSS-BIBTEX-004` | warning | Entries with 6+ authors use \shortcites{} or the shortnames class option is enabled | jss_cls | `jss.cls:45` | — |
-| `JSS-BIBTEX-005` | error | No BibTeX field key is repeated within a single entry | style_guide | `#how-to-cite-r-packages` | — |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-BIBTEX-001` | error | high | unmeasured | Every BibTeX entry has a non-empty citation key | style_guide | `#how-to-cite-r-packages` | — |
+| `JSS-BIBTEX-002` | error | high | limited (n=2) | BibTeX citation keys are unique within the database | style_guide | `#how-to-cite-r-packages` | — |
+| `JSS-BIBTEX-003` | error | high | limited (n=5) | BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …) | style_guide | `#how-to-cite-r-packages` | — |
+| `JSS-BIBTEX-004` | warning | high | 81% | Entries with 6+ authors use \shortcites{} or the shortnames class option is enabled | jss_cls | `jss.cls:45` | — |
+| `JSS-BIBTEX-005` | error | high | limited (n=2) | No BibTeX field key is repeated within a single entry | style_guide | `#how-to-cite-r-packages` | — |
 
 ## Naming
 
 _naming_ — 2 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-NAME-001` | warning | Programming-language names use their canonical capitalisation | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | ✓ |
-| `JSS-NAME-002` | warning | Publisher and journal names follow JSS conventions (e.g., "Springer-Verlag", "The Annals of Statistics") | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-NAME-001` | warning | high | limited (n=1) | Programming-language names use their canonical capitalisation | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | ✓ |
+| `JSS-NAME-002` | warning | high | 91% | Publisher and journal names follow JSS conventions (e.g., "Springer-Verlag", "The Annals of Statistics") | style_guide | `#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss` | ✓ |
 
 ## Capitalization
 
 _capitalization_ — 3 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-CAP-001` | warning | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-CAP-002` | warning | Section titles are in sentence style (first word capitalised; others lowercase except proper names) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-CAP-004` | warning | \Keywords{} is comma-separated and in sentence case | article_tex | `article.tex:48` | — |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-CAP-001` | warning | high | limited (n=6) | \title{} is in title style (principal words capitalised) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-CAP-002` | warning | medium | 78% | Section titles are in sentence style (first word capitalised; others lowercase except proper names) | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-CAP-004` | warning | high | limited (n=2) | \Keywords{} is comma-separated and in sentence case | article_tex | `article.tex:48` | — |
 
 ## Typography
 
 _typography_ — 4 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-TYPO-001` | warning | Figure and table captions end with a period | style_guide | `#how-to-format-figuretable-captions` | ✓ |
-| `JSS-TYPO-002` | warning | Figure / table captions avoid emphasis macros wrapping the whole caption (\emph, \textbf, \textit on full caption) | style_guide | `#how-to-format-figuretable-captions` | — |
-| `JSS-TYPO-003` | warning | Tables do not use footnote-style annotations; annotations go in the caption | style_guide | `#how-to-format-figuretable-captions` | — |
-| `JSS-TYPO-004` | warning | \caption{} appears after the figure / table content, not before | style_guide | `#how-to-format-figuretable-captions` | — |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-TYPO-001` | warning | high | 86% | Figure and table captions end with a period | style_guide | `#how-to-format-figuretable-captions` | ✓ |
+| `JSS-TYPO-002` | warning | high | unmeasured | Figure / table captions avoid emphasis macros wrapping the whole caption (\emph, \textbf, \textit on full caption) | style_guide | `#how-to-format-figuretable-captions` | — |
+| `JSS-TYPO-003` | warning | high | limited (n=1) | Tables do not use footnote-style annotations; annotations go in the caption | style_guide | `#how-to-format-figuretable-captions` | — |
+| `JSS-TYPO-004` | warning | high | 100% | \caption{} appears after the figure / table content, not before | style_guide | `#how-to-format-figuretable-captions` | — |
 
 ## Abbreviations
 
 _abbreviations_ — 1 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-ABBR-001` | warning | Abbreviations are in uppercase without periods or additional formatting | style_guide | `#how-should-abbrevations-be-formatted` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-ABBR-001` | warning | high | limited (n=4) | Abbreviations are in uppercase without periods or additional formatting | style_guide | `#how-should-abbrevations-be-formatted` | ✓ |
 
 ## Code style
 
 _code_style_ — 3 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-CODE-001` | warning | Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | — |
-| `JSS-CODE-002` | warning | R library() and data() calls quote their first argument | style_guide | `#miscellaneous` | ✓ |
-| `JSS-CODE-003` | warning | Code samples use spaces around operators and after commas | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-CODE-001` | warning | high | 98% | Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | — |
+| `JSS-CODE-002` | warning | high | 97% | R library() and data() calls quote their first argument | style_guide | `#miscellaneous` | ✓ |
+| `JSS-CODE-003` | warning | high | 89% | Code samples use spaces around operators and after commas | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | ✓ |
 
 ## Code width
 
 _code_width_ — 1 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-WIDTH-001` | warning | Code input / output inside Sinput / CodeInput / CodeOutput environments fits within the configured column limit | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | — |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-WIDTH-001` | warning | high | 68% | Code input / output inside Sinput / CodeInput / CodeOutput environments fits within the configured column limit | style_guide | `#how-should-code-be-formatted-in-the-manuscript` | — |
 
 ## Operators
 
 _operators_ — 4 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-OPER-001` | warning | Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen) | style_guide | `#miscellaneous` | ✓ |
-| `JSS-OPER-002` | warning | Transpose is typeset with \top rather than a superscript prime or literal T | style_guide | `#miscellaneous` | ✓ |
-| `JSS-OPER-003` | warning | Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks) | article_tex | `article.tex:154` | ✓ |
-| `JSS-OPER-004` | warning | Expectation / variance / covariance / probability use jss.cls shortcuts \E, \VAR, \COV, \Prob | jss_cls | `jss.cls:484` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-OPER-001` | warning | high | limited (n=9) | Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen) | style_guide | `#miscellaneous` | ✓ |
+| `JSS-OPER-002` | warning | high | 74% | Transpose is typeset with \top rather than a superscript prime or literal T | style_guide | `#miscellaneous` | ✓ |
+| `JSS-OPER-003` | warning | high | 77% | Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks) | article_tex | `article.tex:154` | ✓ |
+| `JSS-OPER-004` | warning | high | 60% | Expectation / variance / covariance / probability use jss.cls shortcuts \E, \VAR, \COV, \Prob | jss_cls | `jss.cls:484` | ✓ |
 
 ## Cross-references
 
 _crossrefs_ — 7 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-XREF-001` | warning | Figures and tables are referenced via \ref{} rather than by manual numbering | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-XREF-002` | info | Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) or \eqref{...} | style_guide | `#miscellaneous` | ✓ |
-| `JSS-XREF-003` | warning | Cross-references to subsections use "Section x.y" rather than "Subsection x.y" | style_guide | `#miscellaneous` | — |
-| `JSS-XREF-004` | info | Numbered equations carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-XREF-005` | warning | Figures and tables carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-XREF-006` | warning | Figure and table floats carry a \caption{} | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
-| `JSS-XREF-007` | info | Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.) | style_guide | `#miscellaneous` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-XREF-001` | warning | high | limited (n=1) | Figures and tables are referenced via \ref{} rather than by manual numbering | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-XREF-002` | info | high | 100% | Equation references prefer Equation~\ref{...} (capitalised) over bare (\ref{...}) or \eqref{...} | style_guide | `#miscellaneous` | ✓ |
+| `JSS-XREF-003` | warning | high | unmeasured | Cross-references to subsections use "Section x.y" rather than "Subsection x.y" | style_guide | `#miscellaneous` | — |
+| `JSS-XREF-004` | info | high | 100% | Numbered equations carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-XREF-005` | warning | high | 100% | Figures and tables carry \label{} and are referenced from the text | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-XREF-006` | warning | high | limited (n=1) | Figure and table floats carry a \caption{} | style_guide | `#what-are-the-most-important-style-guidelines-in-jss` | — |
+| `JSS-XREF-007` | info | high | 100% | Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.) | style_guide | `#miscellaneous` | ✓ |
 
 ## House style
 
 _house_style_ — 3 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-HOUSE-001` | warning | "e.g." and "i.e." are followed by a comma so LaTeX does not treat the period as a sentence end | style_guide | `#miscellaneous` | ✓ |
-| `JSS-HOUSE-002` | warning | Book editions are indicated as 2nd, 3rd, etc., not as "second" or "2e" | style_guide | `#miscellaneous` | ✓ |
-| `JSS-HOUSE-003` | info | Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref) | jss_cls | `jss.cls:54` | ✓ |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-HOUSE-001` | warning | high | 53% | "e.g." and "i.e." are followed by a comma so LaTeX does not treat the period as a sentence end | style_guide | `#miscellaneous` | ✓ |
+| `JSS-HOUSE-002` | warning | high | limited (n=5) | Book editions are indicated as 2nd, 3rd, etc., not as "second" or "2e" | style_guide | `#miscellaneous` | ✓ |
+| `JSS-HOUSE-003` | info | high | 100% | Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref) | jss_cls | `jss.cls:54` | ✓ |
 
 ## Project
 
 _project_ — 2 rule(s)
 
-| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |
-|---|---|---|---|---|---|
-| `JSS-PROJECT-001` | error | A cycle exists in the \input/\include/\subfile/\bibliography reference graph | author_instructions | `multi-file-projects` | — |
-| `JSS-PROJECT-002` | error | A \input/\include/\subfile/\bibliography target could not be found | author_instructions | `multi-file-projects` | — |
+| Rule ID | Severity | Confidence | Recall | Description | Authority | Authority ref | Auto-fixable |
+|---|---|---|---|---|---|---|---|
+| `JSS-PROJECT-001` | error | high | unmeasured | A cycle exists in the \input/\include/\subfile/\bibliography reference graph | author_instructions | `multi-file-projects` | — |
+| `JSS-PROJECT-002` | error | high | unmeasured | A \input/\include/\subfile/\bibliography target could not be found | author_instructions | `multi-file-projects` | — |
 
 ## Rule details
 

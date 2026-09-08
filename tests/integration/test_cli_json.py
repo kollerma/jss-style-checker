@@ -42,8 +42,12 @@ class TestJsonShape:
             # spec 027 item B: always present, null when no baseline
             # was applied.
             "baseline",
+            # spec 027 item A: the rule set that produced these findings,
+            # including its measured recall.
+            "rule_set",
         }
         assert payload["baseline"] is None
+        assert payload["rule_set"]["recall"]["percent"] == 81
         assert payload["tool_version"] == __version__
         assert payload["journal_id"] == "jss"
         assert payload["compliance_percentage"] == 100.0

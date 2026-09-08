@@ -60,7 +60,9 @@ sed \
 
 rm -rf "$catalogue_dest"
 mkdir -p "$catalogue_dest"
-cp "$catalogue_src/catalogue.yaml" "$catalogue_src/terms.json" "$catalogue_src/latex-macro-specs.json" "$catalogue_dest/"
+cp "$catalogue_src/catalogue.yaml" "$catalogue_src/terms.json" \
+   "$catalogue_src/latex-macro-specs.json" "$catalogue_src/recall.json" \
+   "$catalogue_dest/"
 
 echo "Vendored jsslint-core -> $core_dest"
 echo "Vendored catalogue data -> $catalogue_dest"

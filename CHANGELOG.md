@@ -17,6 +17,32 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
 
 ### Added
 
+- **Recall is reported everywhere, so a clean run stops overstating
+  itself.** Precision has been public since 1.0; recall — of the style
+  problems that exist, how many the tool finds — was measured but
+  reached no user. Every run now ends with
+
+      No findings does not mean compliant. Measured recall: 81% (1967 annotated instances, 17 papers).
+
+  printed on stdout, including when there are no findings at all.
+  Reviewer mode gains a per-category `Recall` column and a
+  `Measured recall:` line; JSON gains `recall` on every category and a
+  top-level `rule_set`; SARIF rule descriptors gain
+  `properties.recall` and `properties.confidence`; `explain` prints a
+  `Recall:` line for every rule; the catalogue page gains `Confidence`
+  and `Recall` columns. Three states, never a fabricated number: an
+  integer percentage at 10 or more annotated instances, `limited (n=K)`
+  below that, and `unmeasured` where the corpus has no instances at all
+  — so the `project` category reads `unmeasured`, not `100%`. The
+  measurement is pinned per release in
+  `specs/003-jss-rule-catalogue/recall.json`, which the README badge now
+  reads too, and it is a lower bound (source-only linting). See
+  [`docs/recall-and-coverage.md`](docs/recall-and-coverage.md).
+- **CI defends that number.** `eval-jss recall --gate --no-record` runs
+  on every push with the aggregate floor raised from 0.70 to **0.78**
+  (the decision spec 017 deferred), ratcheted to the shipped snapshot
+  minus 0.03 at each release, with a test that fails if the floor drifts
+  further behind than that.
 - **`--fix` ends with a receipt.** Both CLIs now close a fix pass with
   one line — `Applied 3 fixes to 1 file (1 skipped: conflict 1).`, or
   the `Dry run: …` form — so a command that rewrites your manuscript

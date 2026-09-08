@@ -812,6 +812,74 @@ GUIDE_EDITION: str = 'jss.cls 3.3'
 SOURCE_VENDORED_AT: str = '2021-05-23'
 GUIDE_SOURCE: str = 'jss.cls 3.3 (2021-05-23)'
 
+# Measured recall, from specs/003-jss-rule-catalogue/recall.json
+# (spec 027 item A). RECALL_RUN pins the run; RECALL holds the
+# per-rule counts. Rules absent from RECALL are unmeasured.
+RECALL_RUN: Mapping[str, object] = MappingProxyType({
+    'run_timestamp': '2026-07-19T10:30:02Z',
+    'corpus_hash': '70951d5371df0734',
+    'min_plants': 10,
+    'papers': 17,
+    'tp': 1587,
+    'fn': 380,
+})
+
+RECALL: Mapping[str, tuple[int, int]] = MappingProxyType({
+    'JSS-ABBR-001': (4, 0),
+    'JSS-BIBTEX-002': (2, 0),
+    'JSS-BIBTEX-003': (5, 0),
+    'JSS-BIBTEX-004': (13, 3),
+    'JSS-BIBTEX-005': (2, 0),
+    'JSS-CAP-001': (6, 0),
+    'JSS-CAP-002': (70, 20),
+    'JSS-CAP-004': (2, 0),
+    'JSS-CITE-002': (8, 4),
+    'JSS-CITE-003': (44, 0),
+    'JSS-CITE-004': (1, 0),
+    'JSS-CODE-001': (56, 1),
+    'JSS-CODE-002': (70, 2),
+    'JSS-CODE-003': (203, 25),
+    'JSS-HOUSE-001': (32, 28),
+    'JSS-HOUSE-002': (5, 0),
+    'JSS-HOUSE-003': (10, 0),
+    'JSS-MARKUP-001': (38, 6),
+    'JSS-MARKUP-002': (3, 4),
+    'JSS-MARKUP-003': (168, 114),
+    'JSS-MARKUP-004': (1, 0),
+    'JSS-NAME-001': (1, 0),
+    'JSS-NAME-002': (21, 2),
+    'JSS-OPER-001': (5, 4),
+    'JSS-OPER-002': (14, 5),
+    'JSS-OPER-003': (55, 16),
+    'JSS-OPER-004': (47, 31),
+    'JSS-PRE-003': (1, 0),
+    'JSS-PRE-004': (1, 0),
+    'JSS-PRE-005': (1, 0),
+    'JSS-PRE-006': (4, 0),
+    'JSS-PRE-007': (1, 0),
+    'JSS-REFS-003': (189, 90),
+    'JSS-REFS-004': (66, 8),
+    'JSS-REFS-005': (2, 1),
+    'JSS-REFS-006': (105, 3),
+    'JSS-REFS-007': (26, 0),
+    'JSS-STRUCT-001': (4, 0),
+    'JSS-STRUCT-002': (4, 0),
+    'JSS-STRUCT-003': (1, 0),
+    'JSS-STRUCT-004': (1, 0),
+    'JSS-STRUCT-005': (1, 1),
+    'JSS-STRUCT-006': (1, 1),
+    'JSS-TYPO-001': (32, 5),
+    'JSS-TYPO-003': (1, 0),
+    'JSS-TYPO-004': (20, 0),
+    'JSS-WIDTH-001': (13, 6),
+    'JSS-XREF-001': (1, 0),
+    'JSS-XREF-002': (42, 0),
+    'JSS-XREF-004': (139, 0),
+    'JSS-XREF-005': (19, 0),
+    'JSS-XREF-006': (1, 0),
+    'JSS-XREF-007': (25, 0),
+})
+
 # Rollout order (from catalogue.yaml top-level categories field).
 ROLLOUT_ORDER: tuple[str, ...] = (
     'preamble',

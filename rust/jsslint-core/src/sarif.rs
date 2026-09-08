@@ -195,7 +195,25 @@ fn rule_descriptor(id: &str, meta: &RuleMeta) -> Value {
         "defaultConfiguration".to_string(),
         json!({"level": sarif_level(meta.severity)}),
     );
-    obj.insert("properties".to_string(), json!({"tags": [meta.category]}));
+    // `confidence` and `recall` are property-bag keys consumers ignore
+    // unless they know them (spec 027 FR-A-005). A rule with no
+    // annotated instances still carries the unmeasured shape.
+    let stat = crate::catalogue::recall(id);
+    let min_plants = crate::catalogue::recall_run().min_plants;
+    let state = stat.state(min_plants);
+    obj.insert(
+        "properties".to_string(),
+        json!({
+            "tags": [meta.category],
+            "confidence": meta.confidence,
+            "recall": {
+                "state": state,
+                "tp": stat.tp,
+                "fn": stat.fn_,
+                "percent": if state == "measured" { stat.percent() } else { None },
+            },
+        }),
+    );
     if let Some(url) = meta.guide_url {
         obj.insert("helpUri".to_string(), json!(url));
     }
@@ -214,7 +232,13 @@ fn internal_parse_rule_descriptor() -> Value {
             "text": "Emitted when the parser could not analyse a file. The file is reported under runs[0].invocations[0].toolExecutionNotifications rather than runs[0].results."
         },
         "defaultConfiguration": {"level": "error"},
-        "properties": {"tags": ["parse"]},
+        // No catalogue entry, so no confidence tier and no measurement;
+        // the keys are present so every descriptor has one shape.
+        "properties": {
+            "tags": ["parse"],
+            "confidence": null,
+            "recall": {"state": "unmeasured", "tp": 0, "fn": 0, "percent": null},
+        },
     })
 }
 

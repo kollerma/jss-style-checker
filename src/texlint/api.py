@@ -215,6 +215,11 @@ class CategorySummary:
     rules_applied: int
     rules_passed: int
     violations: tuple[Violation, ...] = ()
+    #: Measured recall pooled over this category's rules, from the
+    #: journal's snapshot. ``None`` for a journal with no recall data at
+    #: all; a category whose rules have no annotated instances pools to
+    #: ``RecallStat(0, 0)`` and renders ``unmeasured``.
+    recall: RecallStat | None = None
 
     @classmethod
     def build(
@@ -225,6 +230,7 @@ class CategorySummary:
         rules_applied: int,
         rules_passed: int = 0,
         violations: tuple[Violation, ...] = (),
+        recall: RecallStat | None = None,
     ) -> CategorySummary:
         if rules_applied == 0:
             status = CategoryStatus.SKIPPED
@@ -239,6 +245,7 @@ class CategorySummary:
             rules_applied=rules_applied,
             rules_passed=rules_passed,
             violations=violations,
+            recall=recall,
         )
 
 
@@ -253,6 +260,75 @@ class SkippedRule:
 
     rule_id: str
     reason: str
+
+
+@dataclass(frozen=True)
+class RecallStat:
+    """Measured recall for one rule, or pooled over a category.
+
+    ``tp``/``fn`` are annotated instances of a planted defect that the
+    rule did / did not catch, from the shipped snapshot
+    (``specs/003-jss-rule-catalogue/recall.json``). Both counts, not a
+    ratio, so categories can pool them.
+
+    Below ``min_plants`` instances the state is ``limited`` and **no
+    percentage is shown**: a rule with two plants that caught one has
+    not been measured at 50 %, and printing that would read as a
+    measurement (spec 027 D3).
+    """
+
+    tp: int
+    fn: int
+
+    @property
+    def plants(self) -> int:
+        return self.tp + self.fn
+
+    def state(self, min_plants: int) -> Literal["measured", "limited", "unmeasured"]:
+        if self.plants == 0:
+            return "unmeasured"
+        return "limited" if self.plants < min_plants else "measured"
+
+    def percent(self) -> int | None:
+        """Integer half-up percentage, or ``None`` with no plants.
+
+        Deliberately integer arithmetic: Python's ``round`` is banker's
+        and Rust's ``f64::round`` is half-away, so a float path would
+        make the two engines disagree on exactly the values that land on
+        .5 (data-model §3.1).
+        """
+        if self.plants == 0:
+            return None
+        return (200 * self.tp + self.plants) // (2 * self.plants)
+
+    def label(self, min_plants: int) -> str:
+        """What every surface prints: ``81%`` / ``limited (n=4)`` /
+        ``unmeasured``."""
+        state = self.state(min_plants)
+        if state == "unmeasured":
+            return "unmeasured"
+        if state == "limited":
+            return f"limited (n={self.plants})"
+        return f"{self.percent()}%"
+
+
+@dataclass(frozen=True)
+class RecallRun:
+    """Provenance of the shipped recall snapshot."""
+
+    run_timestamp: str
+    corpus_hash: str
+    min_plants: int
+    #: Annotated papers behind the measurement. Quoted next to the
+    #: percentage because "81 %" means something different over 17
+    #: papers than over three.
+    papers: int
+    tp: int
+    fn: int
+
+    @property
+    def stat(self) -> RecallStat:
+        return RecallStat(tp=self.tp, fn=self.fn)
 
 
 @dataclass(frozen=True)
@@ -275,6 +351,9 @@ class RuleSetInfo:
     fingerprint: str | None = None
     guide_edition: str | None = None
     source_vendored_at: str | None = None
+    #: The recall run this rule set ships, or ``None`` for a journal
+    #: that publishes no measurement.
+    recall: RecallRun | None = None
 
     @property
     def guide_source(self) -> str | None:
@@ -511,6 +590,9 @@ class JournalMetadata:
     """
 
     rule_set: RuleSetInfo = RuleSetInfo()
+    #: Per-rule measured recall, keyed by rule id. Rules absent from the
+    #: snapshot are unmeasured; the engine pools these per category.
+    recall_by_rule: Mapping[str, RecallStat] = field(default_factory=dict)
 
 
 class JournalRuleModule(ABC):

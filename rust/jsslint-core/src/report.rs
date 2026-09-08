@@ -154,6 +154,11 @@ pub struct CategorySummary {
     /// the top-level `violations` array (json-output.md, "Violations
     /// are not duplicated inside each category in JSON").
     pub violations: Vec<Violation>,
+    /// Measured recall pooled over this category's rules. `None` for a
+    /// journal with no recall data at all; a category whose rules have
+    /// no annotated instances pools to `(0, 0)` and renders
+    /// `unmeasured`, never `100%`.
+    pub recall: Option<RecallStat>,
 }
 
 impl CategorySummary {
@@ -164,6 +169,7 @@ impl CategorySummary {
         rules_applied: u32,
         rules_passed: u32,
         violations: Vec<Violation>,
+        recall: Option<RecallStat>,
     ) -> Self {
         let status = if rules_applied == 0 {
             CategoryStatus::Skipped
@@ -179,6 +185,7 @@ impl CategorySummary {
             rules_applied,
             rules_passed,
             violations,
+            recall,
         }
     }
 }
@@ -189,6 +196,69 @@ impl CategorySummary {
 pub struct SkippedRule {
     pub rule_id: String,
     pub reason: String,
+}
+
+/// Measured recall for one rule, or pooled over a category — mirrors
+/// `api.RecallStat`, including its integer half-up arithmetic. `f64`
+/// would round half-away here and half-to-even in Python, so the two
+/// engines would disagree on exactly the .5 cases.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct RecallStat {
+    pub tp: u32,
+    pub fn_: u32,
+}
+
+impl RecallStat {
+    pub fn plants(&self) -> u32 {
+        self.tp + self.fn_
+    }
+
+    pub fn state(&self, min_plants: u32) -> &'static str {
+        if self.plants() == 0 {
+            "unmeasured"
+        } else if self.plants() < min_plants {
+            "limited"
+        } else {
+            "measured"
+        }
+    }
+
+    pub fn percent(&self) -> Option<u32> {
+        let n = self.plants();
+        if n == 0 {
+            return None;
+        }
+        Some((200 * self.tp + n) / (2 * n))
+    }
+
+    /// `81%` / `limited (n=4)` / `unmeasured`.
+    pub fn label(&self, min_plants: u32) -> String {
+        match self.state(min_plants) {
+            "unmeasured" => "unmeasured".to_string(),
+            "limited" => format!("limited (n={})", self.plants()),
+            _ => format!("{}%", self.percent().unwrap_or(0)),
+        }
+    }
+}
+
+/// Provenance of the shipped recall run — mirrors `api.RecallRun`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RecallRun {
+    pub run_timestamp: String,
+    pub corpus_hash: String,
+    pub min_plants: u32,
+    pub papers: u32,
+    pub tp: u32,
+    pub fn_: u32,
+}
+
+impl RecallRun {
+    pub fn stat(&self) -> RecallStat {
+        RecallStat {
+            tp: self.tp,
+            fn_: self.fn_,
+        }
+    }
 }
 
 /// Provenance of a journal's rule set — mirrors `api.RuleSetInfo`.
@@ -202,6 +272,7 @@ pub struct RuleSetInfo {
     pub fingerprint: Option<String>,
     pub guide_edition: Option<String>,
     pub source_vendored_at: Option<String>,
+    pub recall: Option<RecallRun>,
 }
 
 impl RuleSetInfo {

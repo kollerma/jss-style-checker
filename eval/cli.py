@@ -309,6 +309,19 @@ def report_cmd(
     ctx.exit(code)
 
 
+#: Aggregate-recall floor the CI gate enforces (spec 027 D11; the
+#: decision spec 017 FR-011 deferred to "a future spec").
+#:
+#: The shipped snapshot measures 0.807 on 1 967 annotated instances, so
+#: 0.78 leaves roughly fifty false negatives of slack: adding a corpus
+#: paper that happens to exercise a weak rule must not turn CI red, while
+#: the per-rule "regressed by more than 0.05" check below still catches
+#: the sharp case a single-number floor would miss. The release
+#: checklist ratchets this to floor(snapshot - 0.03, 2 dp), and
+#: `tests/unit/eval/test_recall_cli.py` fails if it drifts below that.
+RECALL_FLOOR = 0.78
+
+
 @cli.command("recall")
 @click.option(
     "--corpus",
@@ -323,8 +336,8 @@ def report_cmd(
     is_flag=True,
     default=False,
     help=(
-        "Exit 1 when aggregate recall < 0.70 OR any per-rule recall "
-        "regressed by > 0.05 vs. the previous recorded run."
+        "Exit 1 when aggregate recall < RECALL_FLOOR (0.78) OR any per-rule "
+        "recall regressed by > 0.05 vs. the previous recorded run."
     ),
 )
 @click.option(
@@ -598,9 +611,9 @@ def recall_cmd(
     # Gate logic.
     if gate:
         agg = recall_report.aggregate_recall or 0.0
-        if agg < 0.70:
+        if agg < RECALL_FLOOR:
             click.echo(
-                f"eval-jss recall: aggregate {agg:.3f} below 0.70 floor",
+                f"eval-jss recall: aggregate {agg:.3f} below {RECALL_FLOOR:.2f} floor",
                 err=True,
             )
             ctx.exit(1)

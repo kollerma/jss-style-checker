@@ -42,6 +42,7 @@ from tools._catalogue_validate import CatalogueError, validate
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CATALOGUE_YAML = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "catalogue.yaml"
 MESSAGES_JSON = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "messages.json"
+RECALL_JSON = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "recall.json"
 OUTPUT_PY = REPO_ROOT / "src" / "texlint" / "journals" / "jss" / "_catalogue_data.py"
 TEMPLATE_DIR = REPO_ROOT / "docs" / "jss-template"
 
@@ -96,7 +97,17 @@ def _py_str(value: str) -> str:
     return repr(value)
 
 
-def render(doc: Mapping[str, Any]) -> str:
+def render(doc: Mapping[str, Any], recall: Mapping[str, Any] | None = None) -> str:
+    recall = recall or {"rules": {}}
+    recall_rules: Mapping[str, Any] = recall.get("rules", {})
+    recall_run = {
+        "run_timestamp": recall.get("run_timestamp", ""),
+        "corpus_hash": recall.get("corpus_hash", ""),
+        "min_plants": recall.get("min_plants", 0),
+        "papers": recall.get("papers", 0),
+        "tp": sum(c["tp"] for c in recall_rules.values()),
+        "fn": sum(c["fn"] for c in recall_rules.values()),
+    }
     categories: list[str] = list(doc["categories"])
     rules = sorted(
         (dict(r) for r in doc["rules"]),
@@ -176,6 +187,24 @@ def render(doc: Mapping[str, Any]) -> str:
     guide_source = f"{doc['guide_edition']} ({doc['source_vendored_at']})"
     out.append(f"GUIDE_SOURCE: str = {_py_str(guide_source)}\n\n")
 
+    out.append(
+        "# Measured recall, from specs/003-jss-rule-catalogue/recall.json\n"
+        "# (spec 027 item A). RECALL_RUN pins the run; RECALL holds the\n"
+        "# per-rule counts. Rules absent from RECALL are unmeasured.\n"
+    )
+    out.append("RECALL_RUN: Mapping[str, object] = MappingProxyType({\n")
+    for key in ("run_timestamp", "corpus_hash", "min_plants", "papers", "tp", "fn"):
+        value = recall_run[key]
+        literal = _py_str(value) if isinstance(value, str) else repr(value)
+        out.append(f"    {_py_str(key)}: {literal},\n")
+    out.append("})\n\n")
+    out.append("RECALL: Mapping[str, tuple[int, int]] = MappingProxyType({\n")
+    for rule_id, counts in sorted(recall_rules.items()):
+        out.append(
+            f"    {_py_str(rule_id)}: ({counts['tp']}, {counts['fn']}),\n"
+        )
+    out.append("})\n\n")
+
     out.append("# Rollout order (from catalogue.yaml top-level categories field).\n")
     out.append("ROLLOUT_ORDER: tuple[str, ...] = (\n")
     for cat in categories:
@@ -218,6 +247,20 @@ def compute_fingerprint(doc: Mapping[str, Any], messages: Mapping[str, Any]) -> 
 
 
 def _load_messages(path: Path) -> Mapping[str, Any]:
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _load_recall(path: Path) -> Mapping[str, Any]:
+    """The shipped recall snapshot, or empty when it does not exist yet.
+
+    Deliberately not part of the fingerprint: re-measuring recall on a
+    bigger corpus changes what the tool *reports*, not which findings it
+    produces, so it must not force a rule-set date bump (users' baselines
+    are unaffected).
+    """
+    if not path.exists():
+        return {"rules": {}}
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -283,6 +326,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--yaml-path", type=Path, default=CATALOGUE_YAML)
     parser.add_argument("--messages-path", type=Path, default=MESSAGES_JSON)
+    parser.add_argument("--recall-path", type=Path, default=RECALL_JSON)
     parser.add_argument("--output-path", type=Path, default=OUTPUT_PY)
     parser.add_argument("--template-dir", type=Path, default=TEMPLATE_DIR)
     args = parser.parse_args(argv)
@@ -305,11 +349,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     messages = _load_messages(args.messages_path)
     computed = compute_fingerprint(doc, messages)
+    recall = _load_recall(args.recall_path)
 
     if args.stamp_fingerprint:
         return _stamp(args, doc, computed)
 
-    rendered = render(doc)
+    rendered = render(doc, recall)
 
     if args.check:
         if doc["ruleset_fingerprint"] != computed:
@@ -386,7 +431,7 @@ def _stamp(
     errors = validate(updated, template_dir=args.template_dir)
     if errors:
         return _report_and_exit(errors)
-    _atomic_write(args.output_path, render(updated))
+    _atomic_write(args.output_path, render(updated, _load_recall(args.recall_path)))
     print(f"wrote {args.output_path}")
     return 0
 

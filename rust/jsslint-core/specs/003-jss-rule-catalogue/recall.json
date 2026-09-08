@@ -1,0 +1,221 @@
+{
+  "corpus_hash": "70951d5371df0734",
+  "generated_by": "tools/generate_recall_snapshot.py",
+  "min_plants": 10,
+  "papers": 17,
+  "rules": {
+    "JSS-ABBR-001": {
+      "fn": 0,
+      "tp": 4
+    },
+    "JSS-BIBTEX-002": {
+      "fn": 0,
+      "tp": 2
+    },
+    "JSS-BIBTEX-003": {
+      "fn": 0,
+      "tp": 5
+    },
+    "JSS-BIBTEX-004": {
+      "fn": 3,
+      "tp": 13
+    },
+    "JSS-BIBTEX-005": {
+      "fn": 0,
+      "tp": 2
+    },
+    "JSS-CAP-001": {
+      "fn": 0,
+      "tp": 6
+    },
+    "JSS-CAP-002": {
+      "fn": 20,
+      "tp": 70
+    },
+    "JSS-CAP-004": {
+      "fn": 0,
+      "tp": 2
+    },
+    "JSS-CITE-002": {
+      "fn": 4,
+      "tp": 8
+    },
+    "JSS-CITE-003": {
+      "fn": 0,
+      "tp": 44
+    },
+    "JSS-CITE-004": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-CODE-001": {
+      "fn": 1,
+      "tp": 56
+    },
+    "JSS-CODE-002": {
+      "fn": 2,
+      "tp": 70
+    },
+    "JSS-CODE-003": {
+      "fn": 25,
+      "tp": 203
+    },
+    "JSS-HOUSE-001": {
+      "fn": 28,
+      "tp": 32
+    },
+    "JSS-HOUSE-002": {
+      "fn": 0,
+      "tp": 5
+    },
+    "JSS-HOUSE-003": {
+      "fn": 0,
+      "tp": 10
+    },
+    "JSS-MARKUP-001": {
+      "fn": 6,
+      "tp": 38
+    },
+    "JSS-MARKUP-002": {
+      "fn": 4,
+      "tp": 3
+    },
+    "JSS-MARKUP-003": {
+      "fn": 114,
+      "tp": 168
+    },
+    "JSS-MARKUP-004": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-NAME-001": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-NAME-002": {
+      "fn": 2,
+      "tp": 21
+    },
+    "JSS-OPER-001": {
+      "fn": 4,
+      "tp": 5
+    },
+    "JSS-OPER-002": {
+      "fn": 5,
+      "tp": 14
+    },
+    "JSS-OPER-003": {
+      "fn": 16,
+      "tp": 55
+    },
+    "JSS-OPER-004": {
+      "fn": 31,
+      "tp": 47
+    },
+    "JSS-PRE-003": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-PRE-004": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-PRE-005": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-PRE-006": {
+      "fn": 0,
+      "tp": 4
+    },
+    "JSS-PRE-007": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-REFS-003": {
+      "fn": 90,
+      "tp": 189
+    },
+    "JSS-REFS-004": {
+      "fn": 8,
+      "tp": 66
+    },
+    "JSS-REFS-005": {
+      "fn": 1,
+      "tp": 2
+    },
+    "JSS-REFS-006": {
+      "fn": 3,
+      "tp": 105
+    },
+    "JSS-REFS-007": {
+      "fn": 0,
+      "tp": 26
+    },
+    "JSS-STRUCT-001": {
+      "fn": 0,
+      "tp": 4
+    },
+    "JSS-STRUCT-002": {
+      "fn": 0,
+      "tp": 4
+    },
+    "JSS-STRUCT-003": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-STRUCT-004": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-STRUCT-005": {
+      "fn": 1,
+      "tp": 1
+    },
+    "JSS-STRUCT-006": {
+      "fn": 1,
+      "tp": 1
+    },
+    "JSS-TYPO-001": {
+      "fn": 5,
+      "tp": 32
+    },
+    "JSS-TYPO-003": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-TYPO-004": {
+      "fn": 0,
+      "tp": 20
+    },
+    "JSS-WIDTH-001": {
+      "fn": 6,
+      "tp": 13
+    },
+    "JSS-XREF-001": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-XREF-002": {
+      "fn": 0,
+      "tp": 42
+    },
+    "JSS-XREF-004": {
+      "fn": 0,
+      "tp": 139
+    },
+    "JSS-XREF-005": {
+      "fn": 0,
+      "tp": 19
+    },
+    "JSS-XREF-006": {
+      "fn": 0,
+      "tp": 1
+    },
+    "JSS-XREF-007": {
+      "fn": 0,
+      "tp": 25
+    }
+  },
+  "run_timestamp": "2026-07-19T10:30:02Z"
+}

@@ -28,7 +28,17 @@ pub fn to_payload(report: &ComplianceReport) -> Value {
     crate::report::sort_violations(&mut sorted);
 
     let violations: Vec<Value> = sorted.iter().map(violation_value).collect();
-    let categories: Vec<Value> = report.categories.iter().map(category_value).collect();
+    let min_plants = report
+        .rule_set
+        .recall
+        .as_ref()
+        .map(|r| r.min_plants)
+        .unwrap_or(0);
+    let categories: Vec<Value> = report
+        .categories
+        .iter()
+        .map(|c| category_value(c, min_plants))
+        .collect();
     let skipped_rules: Vec<Value> = report
         .skipped_rules
         .iter()
@@ -46,6 +56,7 @@ pub fn to_payload(report: &ComplianceReport) -> Value {
         // same "every key always there" contract
         // `compliance_percentage` follows.
         "baseline": baseline_value(report),
+        "rule_set": rule_set_value(report),
     })
 }
 
@@ -83,13 +94,50 @@ fn violation_value(v: &Violation) -> Value {
     })
 }
 
-fn category_value(c: &CategorySummary) -> Value {
+fn category_value(c: &CategorySummary, min_plants: u32) -> Value {
     json!({
         "category_id": c.category_id,
         "title": c.title,
         "status": c.status.as_str(),
         "rules_applied": c.rules_applied,
         "rules_passed": c.rules_passed,
+        "recall": recall_value(c.recall.as_ref(), min_plants),
+    })
+}
+
+/// `{state, tp, fn, percent}` — integers only, `percent` null unless
+/// this category was actually measured (`json-output-1.2.md` C-5).
+fn recall_value(stat: Option<&crate::report::RecallStat>, min_plants: u32) -> Value {
+    let Some(stat) = stat else {
+        return json!({"state": "unmeasured", "tp": 0, "fn": 0, "percent": null});
+    };
+    let state = stat.state(min_plants);
+    json!({
+        "state": state,
+        "tp": stat.tp,
+        "fn": stat.fn_,
+        "percent": if state == "measured" { stat.percent() } else { None },
+    })
+}
+
+fn rule_set_value(report: &ComplianceReport) -> Value {
+    let info = &report.rule_set;
+    json!({
+        "version": info.version,
+        "fingerprint": info.fingerprint,
+        "guide_source": info.guide_source(),
+        "recall": match &info.recall {
+            None => Value::Null,
+            Some(run) => json!({
+                "run_timestamp": run.run_timestamp,
+                "corpus_hash": run.corpus_hash,
+                "min_plants": run.min_plants,
+                "papers": run.papers,
+                "tp": run.tp,
+                "fn": run.fn_,
+                "percent": run.stat().percent(),
+            }),
+        },
     })
 }
 

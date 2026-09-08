@@ -772,6 +772,28 @@ pub fn run_with_project(
     run_impl(config, document, Some((cycles, missing)), None)
 }
 
+/// Sum the annotated instances of every rule in `category_id` — mirrors
+/// `core/engine.py::_pooled_recall`. This engine always has recall data
+/// (it is compiled in), so unlike Python's there is no `None` case for
+/// "journal publishes no measurement"; a category with no annotated
+/// instances pools to `(0, 0)` and renders `unmeasured`.
+pub fn pooled_recall_for(category_id: &str) -> crate::report::RecallStat {
+    pooled_recall(category_id)
+}
+
+fn pooled_recall(category_id: &str) -> crate::report::RecallStat {
+    let mut pooled = crate::report::RecallStat::default();
+    for rule in catalogue::all_rules() {
+        if rule.category != category_id {
+            continue;
+        }
+        let stat = catalogue::recall(rule.rule_id);
+        pooled.tp += stat.tp;
+        pooled.fn_ += stat.fn_;
+    }
+    pooled
+}
+
 fn run_impl(
     config: &ToolConfig,
     document: &ParsedDocument,
@@ -1011,6 +1033,7 @@ fn run_impl(
             applied,
             passed,
             violations,
+            Some(pooled_recall(category_id)),
         ));
     }
 
@@ -1047,6 +1070,9 @@ fn run_impl(
             rules_applied: 0,
             rules_passed: 0,
             violations: parse_errors,
+            // The synthetic parse category has no rules, so nothing to
+            // pool: it renders `unmeasured`, same as Python's.
+            recall: Some(crate::report::RecallStat::default()),
         });
     }
 

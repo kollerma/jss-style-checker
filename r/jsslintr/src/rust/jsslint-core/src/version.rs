@@ -69,6 +69,7 @@ mod tests {
             fingerprint: Some(format!("sha256:{}", "0".repeat(64))),
             guide_edition: Some("jss.cls 3.3".to_string()),
             source_vendored_at: Some("2021-05-23".to_string()),
+            recall: None,
         };
         assert_eq!(
             format_rule_set(&info),
