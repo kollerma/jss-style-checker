@@ -61,14 +61,25 @@ def render(report: ComplianceReport, config: ToolConfig) -> None:
     template = env.get_template(template_name)
     # The footer sentences are composed by the terminal renderer's
     # helpers so the two surfaces can never drift apart (FR-A-004).
+    from texlint import coverage as coverage_module
     from texlint.output.terminal import author_footer_text, measured_recall_line
 
     rendered = template.render(
         report=report,
         groups=_group_violations(report),
         guide_index=_guide_index(),
-        footer=author_footer_text(report),
+        # The footer is two sentences on two lines in the terminal; in
+        # HTML they are one paragraph, so the newline becomes a break.
+        footer=author_footer_text(report).split("\n"),
         measured_recall=measured_recall_line(report),
+        coverage_gaps=(
+            coverage_module.gaps(report.coverage) if report.coverage else []
+        ),
+        coverage_counts=(
+            coverage_module.counts_sentence(report.coverage)
+            if report.coverage
+            else ""
+        ),
         min_plants=(
             report.rule_set.recall.min_plants
             if report.rule_set.recall is not None

@@ -66,6 +66,27 @@ struct RecallCounts {
     fn_: u32,
 }
 
+/// `specs/003-jss-rule-catalogue/guide-coverage.yaml` — the curated
+/// matrix of what the rule set checks and what it does not (spec 027
+/// item A). Validated on the Python side by
+/// `tools/_coverage_validate.py`; read verbatim here.
+#[derive(serde::Deserialize)]
+struct CoverageDoc {
+    directives: Vec<CoverageDirectiveDoc>,
+}
+
+#[derive(serde::Deserialize)]
+struct CoverageDirectiveDoc {
+    id: String,
+    source: String,
+    section: String,
+    provision: String,
+    status: String,
+    rules: Vec<String>,
+    #[serde(default)]
+    reason: String,
+}
+
 #[derive(serde::Deserialize)]
 struct LatexSpecsDoc {
     macros: BTreeMap<String, String>,
@@ -235,6 +256,38 @@ fn main() {
             "    ({rule_id:?}, {}, {}),\n",
             counts.tp, counts.fn_
         ));
+    }
+    out.push_str("];\n");
+
+    // --- guide coverage (spec 027 item A) ----------------------------
+    let coverage_path = repo_root.join("specs/003-jss-rule-catalogue/guide-coverage.yaml");
+    println!("cargo:rerun-if-changed={}", coverage_path.display());
+    let coverage: CoverageDoc = serde_yaml::from_str(
+        &fs::read_to_string(&coverage_path)
+            .unwrap_or_else(|e| panic!("failed to read {}: {e}", coverage_path.display())),
+    )
+    .unwrap_or_else(|e| panic!("failed to parse {}: {e}", coverage_path.display()));
+
+    out.push_str("\n// Guide coverage, from specs/003-jss-rule-catalogue/guide-coverage.yaml.\n");
+    out.push_str("pub static COVERAGE: &[CoverageDirectiveData] = &[\n");
+    for directive in &coverage.directives {
+        out.push_str("    CoverageDirectiveData {\n");
+        out.push_str(&format!("        id: {:?},\n", directive.id));
+        out.push_str(&format!("        source: {:?},\n", directive.source));
+        out.push_str(&format!("        section: {:?},\n", directive.section));
+        out.push_str(&format!("        provision: {:?},\n", directive.provision));
+        out.push_str(&format!("        status: {:?},\n", directive.status));
+        out.push_str(&format!(
+            "        rules: &[{}],\n",
+            directive
+                .rules
+                .iter()
+                .map(|r| format!("{r:?}"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ));
+        out.push_str(&format!("        reason: {:?},\n", directive.reason));
+        out.push_str("    },\n");
     }
     out.push_str("];\n");
 

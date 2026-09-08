@@ -43,6 +43,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CATALOGUE_YAML = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "catalogue.yaml"
 MESSAGES_JSON = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "messages.json"
 RECALL_JSON = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "recall.json"
+COVERAGE_YAML = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "guide-coverage.yaml"
 OUTPUT_PY = REPO_ROOT / "src" / "texlint" / "journals" / "jss" / "_catalogue_data.py"
 TEMPLATE_DIR = REPO_ROOT / "docs" / "jss-template"
 
@@ -97,7 +98,11 @@ def _py_str(value: str) -> str:
     return repr(value)
 
 
-def render(doc: Mapping[str, Any], recall: Mapping[str, Any] | None = None) -> str:
+def render(
+    doc: Mapping[str, Any],
+    recall: Mapping[str, Any] | None = None,
+    coverage: Mapping[str, Any] | None = None,
+) -> str:
     recall = recall or {"rules": {}}
     recall_rules: Mapping[str, Any] = recall.get("rules", {})
     recall_run = {
@@ -205,6 +210,26 @@ def render(doc: Mapping[str, Any], recall: Mapping[str, Any] | None = None) -> s
         )
     out.append("})\n\n")
 
+    out.append(
+        "# Guide coverage, from specs/003-jss-rule-catalogue/guide-coverage.yaml\n"
+        "# (spec 027 item A): which provisions of the four authorities the rule\n"
+        "# set checks, and which it does not.\n"
+    )
+    out.append(
+        "COVERAGE: tuple[Mapping[str, object], ...] = (\n"
+    )
+    for directive in (coverage or {}).get("directives", ()):
+        out.append("    MappingProxyType({\n")
+        for key in ("id", "source", "section", "provision", "status"):
+            out.append(f"        {_py_str(key)}: {_py_str(directive[key])},\n")
+        rules = tuple(directive["rules"])
+        rules_literal = "(" + ", ".join(_py_str(r) for r in rules)
+        rules_literal += ",)" if len(rules) == 1 else ")"
+        out.append(f"        \"rules\": {rules_literal},\n")
+        out.append(f"        \"reason\": {_py_str(directive.get('reason', ''))},\n")
+        out.append("    }),\n")
+    out.append(")\n\n")
+
     out.append("# Rollout order (from catalogue.yaml top-level categories field).\n")
     out.append("ROLLOUT_ORDER: tuple[str, ...] = (\n")
     for cat in categories:
@@ -249,6 +274,30 @@ def compute_fingerprint(doc: Mapping[str, Any], messages: Mapping[str, Any]) -> 
 def _load_messages(path: Path) -> Mapping[str, Any]:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def _load_coverage(path: Path) -> Mapping[str, Any]:
+    """The curated guide-coverage matrix, validated before it is emitted.
+
+    Validating here means no build can produce a catalogue module whose
+    coverage table credits a retired rule or leaves an active one
+    unclaimed — the surfaces read this, and a wrong answer to "what is
+    not checked" is worse than no answer.
+    """
+    if not path.exists():
+        return {"directives": ()}
+    with path.open("r", encoding="utf-8") as f:
+        doc = yaml.safe_load(f)
+    from tools._coverage_validate import validate as validate_coverage
+
+    active = {rule["rule_id"] for rule in _load_doc(CATALOGUE_YAML)["rules"]}
+    errors = validate_coverage(doc, active_rule_ids=active)
+    if errors:
+        raise SystemExit(
+            "guide-coverage.yaml is invalid:\n"
+            + "\n".join(f"  {e}" for e in errors)
+        )
+    return doc
 
 
 def _load_recall(path: Path) -> Mapping[str, Any]:
@@ -327,6 +376,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--yaml-path", type=Path, default=CATALOGUE_YAML)
     parser.add_argument("--messages-path", type=Path, default=MESSAGES_JSON)
     parser.add_argument("--recall-path", type=Path, default=RECALL_JSON)
+    parser.add_argument("--coverage-path", type=Path, default=COVERAGE_YAML)
     parser.add_argument("--output-path", type=Path, default=OUTPUT_PY)
     parser.add_argument("--template-dir", type=Path, default=TEMPLATE_DIR)
     args = parser.parse_args(argv)
@@ -350,11 +400,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     messages = _load_messages(args.messages_path)
     computed = compute_fingerprint(doc, messages)
     recall = _load_recall(args.recall_path)
+    coverage = _load_coverage(args.coverage_path)
 
     if args.stamp_fingerprint:
         return _stamp(args, doc, computed)
 
-    rendered = render(doc, recall)
+    rendered = render(doc, recall, coverage)
 
     if args.check:
         if doc["ruleset_fingerprint"] != computed:
@@ -431,7 +482,10 @@ def _stamp(
     errors = validate(updated, template_dir=args.template_dir)
     if errors:
         return _report_and_exit(errors)
-    _atomic_write(args.output_path, render(updated, _load_recall(args.recall_path)))
+    _atomic_write(
+        args.output_path,
+        render(updated, _load_recall(args.recall_path), _load_coverage(args.coverage_path)),
+    )
     print(f"wrote {args.output_path}")
     return 0
 

@@ -746,6 +746,80 @@ def explain_cmd(rule_id: str | None, fmt: str, example: bool) -> None:
     click.echo(out, nl=False)
 
 
+@main.command(name="coverage")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["terminal", "markdown", "json"], case_sensitive=False),
+    default="terminal",
+    help="Output format (default: terminal).",
+)
+@click.option(
+    "--journal",
+    "journal",
+    default=None,
+    help="Journal identifier to report on (default: from config, else jss).",
+)
+def coverage_cmd(fmt: str, journal: str | None) -> None:
+    """List which guide provisions jss-lint checks, and which it does not.
+
+    "No findings" is only meaningful next to "here is what was looked
+    for" (spec 027 FR-G-004). Exit 0 always — including for a journal
+    that publishes no coverage data, which says so.
+    """
+    from texlint import coverage as coverage_module
+
+    try:
+        cfg = load_config({"journal": journal} if journal else {}, Path.cwd())
+    except Exception as exc:  # pragma: no cover - defensive
+        _eprint(f"jss-lint: failed to load .jss-lint.toml: {exc}")
+        sys.exit(2)
+
+    try:
+        metadata = load_journal(cfg.journal).metadata()
+    except (JournalNotFoundError, InvalidJournalError) as exc:
+        _eprint(f"jss-lint: {exc}")
+        sys.exit(2)
+
+    directives = metadata.coverage
+    fmt = fmt.lower()
+    if fmt == "json":
+        output = coverage_module.render_json(
+            directives, cfg.journal, _coverage_sources(cfg.journal)
+        )
+    elif fmt == "markdown":
+        output = coverage_module.render_markdown(
+            directives, cfg.journal, metadata.rule_set.version
+        )
+    else:
+        output = coverage_module.render_terminal(
+            directives, cfg.journal, metadata.rule_set.version
+        )
+    click.echo(output, nl=False)
+
+
+def _coverage_sources(journal_id: str) -> dict:
+    """The `sources:` block, for `coverage --format json` only.
+
+    Read from the journal's own catalogue directory rather than carried
+    on every report: it is provenance for the matrix, not a per-run
+    fact, and only this one format prints it.
+    """
+    if journal_id != "jss":
+        return {}
+    import yaml
+
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "specs"
+        / "003-jss-rule-catalogue"
+        / "guide-coverage.yaml"
+    )
+    if not path.is_file():  # pragma: no cover - packaged installs
+        return {}
+    return yaml.safe_load(path.read_text(encoding="utf-8")).get("sources", {})
+
+
 @main.command(name="init")
 @click.argument(
     "path",

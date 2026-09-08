@@ -15,6 +15,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
+from texlint import coverage as coverage_module
 from texlint.api import CategoryStatus, ComplianceReport, Severity, ToolConfig, Violation
 
 
@@ -128,6 +129,35 @@ def render(report: ComplianceReport, config: ToolConfig) -> None:
         _render_skipped_rules(report)
 
 
+def _render_not_checked(report: ComplianceReport, console: Console) -> None:
+    """What the tool does *not* check, under the reviewer table.
+
+    Only `partial` and `not_checked` rows: an out-of-scope provision was
+    never checkable from source (compilability, graphics legibility,
+    submission metadata), and listing all sixty-odd of them here would
+    bury the handful a reviewer can act on. The closing line gives the
+    full counts and points at the subcommand.
+    """
+    assert report.coverage is not None  # guarded by the caller
+    console.rule("[bold]Not checked by jss-lint[/bold]")
+    rows = coverage_module.gaps(report.coverage)
+    if rows:
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Directive", no_wrap=True)
+        table.add_column("Status", no_wrap=True)
+        table.add_column("Provision")
+        for directive in rows:
+            table.add_row(
+                directive.id,
+                "partial" if directive.status == "partial" else "not checked",
+                directive.provision,
+            )
+        console.print(table)
+    console.print(
+        coverage_module.counts_sentence(report.coverage), highlight=False
+    )
+
+
 def _min_plants(report: ComplianceReport) -> int:
     run = report.rule_set.recall
     return run.min_plants if run is not None else 0
@@ -173,11 +203,14 @@ def author_footer_text(report: ComplianceReport) -> str:
             f"{report.journal_id}."
         )
     stat = run.stat
-    return (
+    lines = [
         "No findings does not mean compliant. Measured recall: "
         f"{stat.label(run.min_plants)} ({stat.plants} annotated instances, "
         f"{run.papers} papers)."
-    )
+    ]
+    if report.coverage:
+        lines.append(coverage_module.footer_sentence(report.coverage))
+    return "\n".join(lines)
 
 
 def _render_baseline(report: ComplianceReport) -> None:
@@ -291,3 +324,5 @@ def _render_reviewer(report: ComplianceReport) -> None:
     line = measured_recall_line(report)
     if line is not None:
         console.print(line, highlight=False)
+    if report.coverage:
+        _render_not_checked(report, console)

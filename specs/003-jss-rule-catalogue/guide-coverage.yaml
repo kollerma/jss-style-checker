@@ -1,0 +1,1014 @@
+# Guide coverage — which provisions of the JSS authorities jss-lint
+# checks, and which it does not.
+#
+# Hand-curated (spec 027 item A). Schema and validator contract:
+# contracts/coverage-file.md; validated by tools/_coverage_validate.py and
+# tests/unit/journals/jss/test_guide_coverage.py, which fail the build when
+# a listed rule is retired, when an active rule is claimed by no directive
+# (Constitution §V — a rule without a provision has no authority), or when
+# a non-`checked` row carries no reason.
+#
+# Migrated from checklists/rule-catalogue-review.md §1.1–1.4 (146 rows,
+# 2026-04-23) and re-judged for spec 027: six rows credited rules retired
+# since, five rows are now covered by rules added after the checklist was
+# written, and five provisions the checklist had missed were added so that
+# every active rule is claimed. **This file is now authoritative**; the
+# checklist stays as the historical review record.
+#
+# `status`:
+#   checked      — a rule enforces this provision
+#   partial      — enforced in part; `reason` says what is not covered
+#   not_checked  — a real gap; `reason` says why it is not (yet) checked
+#   out_of_scope — not checkable from the manuscript source at all
+#                  (compilability, graphics legibility, submission
+#                  metadata, replication scripts). Excluded from the
+#                  "checks N of M" ratio the author footer prints.
+
+version: 1
+
+# The dated edition of each authority this rule set derives from. The
+# prose guide has no edition, so the fetch date is the honest pin; the
+# vendored jss.cls is the only source with a real version.
+sources:
+  jss_cls:
+    file: docs/jss-template/jss.cls
+    edition: "3.3"
+    date: "2021-05-23"
+  article_tex:
+    file: docs/jss-template/article.tex
+    date: "2021-12-10"
+  style_guide:
+    url: "https://www.jstatsoft.org/style"
+    fetched: "2026-04-23"
+  author_instructions:
+    url: "https://www.jstatsoft.org/authors"
+    fetched: "2026-04-23"
+
+directives:
+  - id: CLS-001
+    source: jss_cls
+    section: "jss.cls:37"
+    provision: "Manuscript declares exactly one of `article`, `codesnippet`, `bookreview`, `softwarereview` as the class option"
+    status: checked
+    rules: [JSS-PRE-001]
+  - id: CLS-002
+    source: jss_cls
+    section: "jss.cls:45"
+    provision: "`shortnames` class option available for natbib short-form names"
+    status: checked
+    rules: [JSS-BIBTEX-004]
+  - id: CLS-003
+    source: jss_cls
+    section: "jss.cls:46"
+    provision: "`nojss` class option turns off JSS header/footer (used for vignettes)"
+    status: out_of_scope
+    rules: []
+    reason: "vignette-only; .Rnw scope in Step 4"
+  - id: CLS-004
+    source: jss_cls
+    section: "jss.cls:47"
+    provision: "`notitle`, `noheadings`, `nofooter` class options exist"
+    status: out_of_scope
+    rules: []
+    reason: "vignette-only"
+  - id: CLS-005
+    source: jss_cls
+    section: "jss.cls:59"
+    provision: "`natbib` loaded with `[authoryear,round]` (or `[authoryear,round,longnamesfirst]` when `shortnames` is off); `\\bibpunct` set to `(){};a,`"
+    status: checked
+    rules: [JSS-CITE-004]
+  - id: CLS-006
+    source: jss_cls
+    section: "jss.cls:65"
+    provision: "Bibliography style is `jss` (i.e., `\\bibliographystyle{jss}`)"
+    status: out_of_scope
+    rules: []
+    reason: "set implicitly by jss.cls; no author action required"
+  - id: CLS-007
+    source: jss_cls
+    section: "jss.cls:81"
+    provision: "`\\Address{}` metadata command (required in preamble)"
+    status: checked
+    rules: [JSS-PRE-002]
+  - id: CLS-008
+    source: jss_cls
+    section: "jss.cls:82"
+    provision: "`\\Plaintitle{}` metadata command (plain-text title without LaTeX markup)"
+    status: checked
+    rules: [JSS-PRE-003]
+  - id: CLS-009
+    source: jss_cls
+    section: "jss.cls:83"
+    provision: "`\\Shorttitle{}` metadata command (running title with markup allowed)"
+    status: out_of_scope
+    rules: []
+    reason: "no rule enforces its presence; author-facing optional, candidate follow-up"
+  - id: CLS-010
+    source: jss_cls
+    section: "jss.cls:84"
+    provision: "`\\Plainauthor{}` metadata command (author list without affiliations)"
+    status: checked
+    rules: [JSS-PRE-007]
+  - id: CLS-011
+    source: jss_cls
+    section: "jss.cls:85"
+    provision: "`\\Volume{}` metadata command"
+    status: out_of_scope
+    rules: []
+    reason: "editorial metadata, set by JSS not by author"
+  - id: CLS-012
+    source: jss_cls
+    section: "jss.cls:86"
+    provision: "`\\Year{}` metadata command"
+    status: out_of_scope
+    rules: []
+    reason: "editorial metadata"
+  - id: CLS-013
+    source: jss_cls
+    section: "jss.cls:87"
+    provision: "`\\Month{}` metadata command"
+    status: out_of_scope
+    rules: []
+    reason: "editorial metadata"
+  - id: CLS-014
+    source: jss_cls
+    section: "jss.cls:88"
+    provision: "`\\Issue{}` metadata command"
+    status: out_of_scope
+    rules: []
+    reason: "editorial metadata"
+  - id: CLS-015
+    source: jss_cls
+    section: "jss.cls:89"
+    provision: "`\\Submitdate{}` metadata command"
+    status: out_of_scope
+    rules: []
+    reason: "editorial metadata"
+  - id: CLS-016
+    source: jss_cls
+    section: "jss.cls:91"
+    provision: "`\\Acceptdate{}` metadata command (articles / code snippets)"
+    status: out_of_scope
+    rules: []
+    reason: "editorial metadata"
+  - id: CLS-017
+    source: jss_cls
+    section: "jss.cls:92"
+    provision: "`\\Abstract{}` is required and non-placeholder (default in 120 is a sentinel error)"
+    status: checked
+    rules: [JSS-PRE-004]
+  - id: CLS-018
+    source: jss_cls
+    section: "jss.cls:93"
+    provision: "`\\Keywords{}` is required and non-placeholder (default in 197 is a sentinel error)"
+    status: checked
+    rules: [JSS-PRE-005]
+  - id: CLS-019
+    source: jss_cls
+    section: "jss.cls:94"
+    provision: "`\\Plainkeywords{}` metadata command"
+    status: checked
+    rules: [JSS-PRE-008]
+  - id: CLS-020
+    source: jss_cls
+    section: "jss.cls:96"
+    provision: "`\\Reviewer`, `\\Booktitle`, `\\Bookauthor`, `\\Publisher`, `\\Pubaddress`, `\\Pubyear`, `\\ISBN`, `\\Pages`, `\\Price`, `\\Plainreviewer`, `\\Softwaretitle`, `\\URL`, `\\DOI` metadata commands exist for `bookreview` / `softwarereview` classes"
+    status: out_of_scope
+    rules: []
+    reason: "review class types deferred (spec scope = `article` class)"
+  - id: CLS-021
+    source: jss_cls
+    section: "jss.cls:473"
+    provision: "`\\code{}` for inline code (functions, commands, arguments, literal tokens)"
+    status: checked
+    rules: [JSS-MARKUP-003]
+  - id: CLS-022
+    source: jss_cls
+    section: "jss.cls:476"
+    provision: "`\\proglang{}` for programming languages and programmable systems (defined as `\\textsf`)"
+    status: checked
+    rules: [JSS-MARKUP-001]
+  - id: CLS-023
+    source: jss_cls
+    section: "jss.cls:477"
+    provision: "`\\pkg{}` for software package names (medium-bold series)"
+    status: checked
+    rules: [JSS-MARKUP-002]
+  - id: CLS-024
+    source: jss_cls
+    section: "jss.cls:478"
+    provision: "`\\email{}` for email addresses (generates `mailto:` link)"
+    status: out_of_scope
+    rules: []
+    reason: "used inside `\\Address`; presence implicitly covered by JSS-PRE-002"
+  - id: CLS-025
+    source: jss_cls
+    section: "jss.cls:480"
+    provision: "`\\doi{}` for DOIs (generates `https://doi.org/...` link)"
+    status: out_of_scope
+    rules: []
+    reason: "used via `\\DOI` editorial metadata"
+  - id: CLS-026
+    source: jss_cls
+    section: "jss.cls:484"
+    provision: "`\\E` math shortcut for expectation (`\\mathsf{E}`)"
+    status: checked
+    rules: [JSS-OPER-004]
+  - id: CLS-027
+    source: jss_cls
+    section: "jss.cls:485"
+    provision: "`\\VAR` math shortcut for variance"
+    status: checked
+    rules: [JSS-OPER-004]
+  - id: CLS-028
+    source: jss_cls
+    section: "jss.cls:486"
+    provision: "`\\COV` math shortcut for covariance"
+    status: checked
+    rules: [JSS-OPER-004]
+  - id: CLS-029
+    source: jss_cls
+    section: "jss.cls:487"
+    provision: "`\\Prob` math shortcut for probability"
+    status: checked
+    rules: [JSS-OPER-004]
+  - id: CLS-030
+    source: jss_cls
+    section: "jss.cls:203"
+    provision: "`Sinput` environment defined (Sweave-style)"
+    status: out_of_scope
+    rules: []
+    reason: ".Rnw-adjacent; environment choice is author preference"
+  - id: CLS-031
+    source: jss_cls
+    section: "jss.cls:204"
+    provision: "`Soutput` environment defined"
+    status: out_of_scope
+    rules: []
+    reason: "same"
+  - id: CLS-032
+    source: jss_cls
+    section: "jss.cls:205"
+    provision: "`Scode` environment defined"
+    status: out_of_scope
+    rules: []
+    reason: "same"
+  - id: CLS-033
+    source: jss_cls
+    section: "jss.cls:206"
+    provision: "`Schunk` environment defined"
+    status: out_of_scope
+    rules: []
+    reason: "same"
+  - id: CLS-034
+    source: jss_cls
+    section: "jss.cls:207"
+    provision: "`Code` verbatim environment (agnostic code listing)"
+    status: out_of_scope
+    rules: []
+    reason: "environment choice is author preference"
+  - id: CLS-035
+    source: jss_cls
+    section: "jss.cls:208"
+    provision: "`CodeInput` environment (preferred for command-prompt inputs)"
+    status: out_of_scope
+    rules: []
+    reason: "same"
+  - id: CLS-036
+    source: jss_cls
+    section: "jss.cls:209"
+    provision: "`CodeOutput` environment"
+    status: out_of_scope
+    rules: []
+    reason: "same"
+  - id: CLS-037
+    source: jss_cls
+    section: "jss.cls:210"
+    provision: "`CodeChunk` wrapper environment"
+    status: out_of_scope
+    rules: []
+    reason: "same"
+  - id: CLS-038
+    source: jss_cls
+    section: "jss.cls:211"
+    provision: "Default figure width set to 0.8\\textwidth by `\\setkeys{Gin}{width=0.8\\textwidth}`"
+    status: out_of_scope
+    rules: []
+    reason: "rendering-time default; no author-side enforcement"
+  - id: TEX-001
+    source: article_tex
+    section: "article.tex:1"
+    provision: "Document class is declared as `\\documentclass[article]{jss}` (for ordinary articles)"
+    status: checked
+    rules: [JSS-PRE-001]
+  - id: TEX-002
+    source: article_tex
+    section: "article.tex:6"
+    provision: "Recommended packages are `orcidlink`, `thumbpdf`, `lmodern`"
+    status: out_of_scope
+    rules: []
+    reason: "author-choice recommendation; enforcing would false-positive on papers that don't use ORCID"
+  - id: TEX-003
+    source: article_tex
+    section: "article.tex:12"
+    provision: "Authors MAY define article-local convenience macros (`\\class`, `\\fct`) that delegate to `\\code{}`"
+    status: out_of_scope
+    rules: []
+    reason: "\"MAY\" not \"MUST\"; author-local convenience"
+  - id: TEX-004
+    source: article_tex
+    section: "article.tex:22"
+    provision: "`\\author{...}` uses `\\And` or `\\AND` to separate authors (not comma); inline `\\orcidlink{...}` is permitted"
+    status: checked
+    rules: [JSS-STRUCT-005]
+  - id: TEX-005
+    source: article_tex
+    section: "article.tex:24"
+    provision: "`\\Plainauthor{...}` separates authors by comma"
+    status: checked
+    rules: [JSS-PRE-007]
+  - id: TEX-006
+    source: article_tex
+    section: "article.tex:29"
+    provision: "`\\title{...}` (with markup), `\\Plaintitle{...}` (no markup), and `\\Shorttitle{...}` (with markup) all present"
+    status: checked
+    rules: [JSS-PRE-003]
+  - id: TEX-007
+    source: article_tex
+    section: "article.tex:29"
+    provision: "`\\title{}` uses **title case** (per style guide SG-007)"
+    status: checked
+    rules: [JSS-CAP-001]
+  - id: TEX-008
+    source: article_tex
+    section: "article.tex:34"
+    provision: "`\\Abstract{...}` present before `\\begin{document}`"
+    status: checked
+    rules: [JSS-PRE-004]
+  - id: TEX-009
+    source: article_tex
+    section: "article.tex:49"
+    provision: "`\\Keywords{...}` is comma-separated and in sentence case (per SG and comment on line 48)"
+    status: checked
+    rules: [JSS-PRE-005, JSS-CAP-004]
+  - id: TEX-010
+    source: article_tex
+    section: "article.tex:50"
+    provision: "`\\Plainkeywords{...}` mirror of `\\Keywords` without markup"
+    status: checked
+    rules: [JSS-PRE-006, JSS-PRE-008]
+  - id: TEX-011
+    source: article_tex
+    section: "article.tex:57"
+    provision: "`\\Address{...}` contains author, affiliation, postal address, `\\email{...}`, `\\url{...}`"
+    status: checked
+    rules: [JSS-PRE-002]
+  - id: TEX-012
+    source: article_tex
+    section: "article.tex:86"
+    provision: "First numbered section is Introduction; uses `\\section[plain]{markup}` to separate bookmark/PDF title from markup title"
+    status: checked
+    rules: [JSS-MARKUP-004]
+  - id: TEX-013
+    source: article_tex
+    section: "article.tex:86"
+    provision: "Section labels follow the `sec:introname` convention (`sec:intro`, `sec:models`, `sec:illustrations`, `sec:summary`)"
+    status: out_of_scope
+    rules: []
+    reason: "label-naming convention not enforced; candidate follow-up (low severity, high FP risk)"
+  - id: TEX-014
+    source: article_tex
+    section: "article.tex:378"
+    provision: "Summary / discussion section is present"
+    status: checked
+    rules: [JSS-STRUCT-001]
+  - id: TEX-015
+    source: article_tex
+    section: "article.tex:387"
+    provision: "\"Computational details\" is an **unnumbered** section (`\\section*{...}`)"
+    status: out_of_scope
+    rules: []
+    reason: "pattern not enforced; \"Computational details\" is optional per article.tex:389"
+  - id: TEX-016
+    source: article_tex
+    section: "article.tex:404"
+    provision: "\"Acknowledgments\" is an unnumbered section; **AE spelling** (\"Acknowledgments\", not \"Acknowledgements\") is normative (comment on line 407)"
+    status: checked
+    rules: [JSS-STRUCT-002]
+  - id: TEX-017
+    source: article_tex
+    section: "article.tex:423"
+    provision: "References are loaded via `\\bibliography{refs}` (BibTeX)"
+    status: checked
+    rules: [JSS-STRUCT-004]
+  - id: TEX-018
+    source: article_tex
+    section: "article.tex:430"
+    provision: "Appendix follows the bibliography after a page break"
+    status: checked
+    rules: [JSS-STRUCT-006]
+  - id: TEX-019
+    source: article_tex
+    section: "article.tex:432"
+    provision: "Appendix sections have proper titles (not just \"Appendix\"); labels use `app:name` convention"
+    status: checked
+    rules: [JSS-STRUCT-003]
+  - id: TEX-020
+    source: article_tex
+    section: "article.tex:88"
+    provision: "`\\proglang{}`, `\\pkg{}`, `\\code{}` markup is used throughout the manuscript body (including in section titles — with plain-text shim in the optional argument)"
+    status: checked
+    rules: [JSS-MARKUP-001, JSS-MARKUP-002, JSS-MARKUP-003, JSS-MARKUP-004]
+  - id: TEX-021
+    source: article_tex
+    section: "article.tex:170"
+    provision: "`{Code}` environment used for code synopses that are not meant to be executed"
+    status: out_of_scope
+    rules: []
+    reason: "environment choice is author preference"
+  - id: TEX-022
+    source: article_tex
+    section: "article.tex:289"
+    provision: "`{CodeChunk}` wraps matching `{CodeInput}` / `{CodeOutput}` for executed code"
+    status: out_of_scope
+    rules: []
+    reason: "environment-wrapping pattern, author preference"
+  - id: TEX-023
+    source: article_tex
+    section: "article.tex:291"
+    provision: "R code inputs use `R> ` as the prompt and `+  ` as the continuation prompt"
+    status: not_checked
+    rules: []
+    reason: "defer to when we implement .Rnw Sweave manuscripts — prompt convention not enforced; candidate follow-up"
+  - id: TEX-024
+    source: article_tex
+    section: "article.tex:154"
+    provision: "`{equation}` environments have **no blank lines** before/after (blank lines are suppressed with `%` comments)"
+    status: checked
+    rules: [JSS-OPER-003]
+  - id: TEX-025
+    source: article_tex
+    section: "article.tex:421"
+    provision: "BibTeX entries carry a doi field where one is available"
+    status: checked
+    rules: [JSS-REFS-003]
+  - id: TEX-026
+    source: article_tex
+    section: "article.tex:473"
+    provision: "Journal titles in BibTeX entries are spelled out in full and in title case"
+    status: checked
+    rules: [JSS-REFS-005, JSS-REFS-007]
+  - id: SG-001
+    source: style_guide
+    section: "#general-requirements"
+    provision: "MUST: All submissions are formatted using LaTeX and JSS style files"
+    status: checked
+    rules: [JSS-PRE-001]
+  - id: SG-002
+    source: style_guide
+    section: "#general-requirements"
+    provision: "SHOULD: Keep LaTeX code as simple as possible; avoid unnecessary packages/commands"
+    status: checked
+    rules: [JSS-HOUSE-003]
+  - id: SG-003
+    source: style_guide
+    section: "#latex-subsection"
+    provision: "SHOULD: Use pdfLaTeX to compile manuscripts to PDF"
+    status: out_of_scope
+    rules: []
+    reason: "compiler choice is not statically visible in the manuscript source"
+  - id: SG-004
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: Manuscript must be compilable by pdfLaTeX"
+    status: out_of_scope
+    rules: []
+    reason: "compilability is a dynamic property; delegating to `jss-lint --parse` is sufficient"
+  - id: SG-005
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: Use `\\proglang`, `\\pkg`, `\\code` markup throughout the paper, including titles and references"
+    status: checked
+    rules: [JSS-MARKUP-001, JSS-MARKUP-002, JSS-MARKUP-003, JSS-REFS-004]
+  - id: SG-006
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: Provide references in a `.bib` BibTeX database; cite via `\\cite`, `\\citep`, `\\citet`, etc."
+    status: checked
+    rules: [JSS-CITE-004, JSS-REFS-001, JSS-STRUCT-004]
+  - id: SG-007
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: `\\title` is in title style"
+    status: checked
+    rules: [JSS-CAP-001]
+  - id: SG-008
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: All titles in the BibTeX file are in title style"
+    status: partial
+    rules: [JSS-REFS-006]
+    reason: "JSS-REFS-002 retired 2026-06-14; JSS-REFS-006 catches entirely lowercase multi-word titles, but a title miscapitalised only in part needs semantics a word list cannot supply"
+  - id: SG-009
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: `\\section`, `\\subsection`, etc. are in sentence style"
+    status: checked
+    rules: [JSS-CAP-002]
+  - id: SG-010
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: Figure/table captions (annotations) are in sentence style"
+    status: not_checked
+    rules: []
+    reason: "JSS-CAP-003 retired 2026-07-04: measured ~32% precision and ~12% recall, and the proper-noun-vs-overcapitalised distinction needs semantics a word list cannot supply"
+  - id: SG-011
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: Figures, tables, and equations are marked with `\\label` and referenced by `\\ref`"
+    status: checked
+    rules: [JSS-XREF-001, JSS-XREF-004, JSS-XREF-005, JSS-XREF-006]
+  - id: SG-012
+    source: style_guide
+    section: "#what-are-the-most-important-style-guidelines-in-jss"
+    provision: "MUST: Software packages are cited via `\\cite{}`"
+    status: checked
+    rules: [JSS-CITE-002]
+  - id: SG-013
+    source: style_guide
+    section: "#what-are-the-capitalization-rules-in-jss-what-is-title-style-and-sentence-style"
+    provision: "MUST: In sentence style, capitalise only the first word and the first word after colon/hyphen; proper names remain uppercase"
+    status: partial
+    rules: [JSS-CAP-002, JSS-CAP-004]
+    reason: "section titles and keywords are checked; captions are not, since JSS-CAP-003 was retired 2026-07-04 (see SG-010)"
+  - id: SG-014
+    source: style_guide
+    section: "#what-are-the-capitalization-rules-in-jss-what-is-title-style-and-sentence-style"
+    provision: "MUST: In title style, capitalise all principal words; articles, coordinating conjunctions, and prepositions stay lowercase unless first/last"
+    status: checked
+    rules: [JSS-CAP-001]
+  - id: SG-015
+    source: style_guide
+    section: "#how-to-cite-software"
+    provision: "SHOULD: If software has a recommended citation, use it; otherwise cite the manual or webpage"
+    status: checked
+    rules: [JSS-CITE-002]
+  - id: SG-016
+    source: style_guide
+    section: "#how-to-cite-r-packages"
+    provision: "SHOULD: Check for official R package citation on CRAN or via `citation(\"pkg\")`; otherwise use CRAN-style reference"
+    status: out_of_scope
+    rules: []
+    reason: "CRAN-backed validation is explicitly deferred (spec FR-023); covered in future work via an ecosystem check"
+  - id: SG-017
+    source: style_guide
+    section: "#how-to-cite-r-packages"
+    provision: "MUST: BibTeX is valid, title is in title style, `\\proglang`/`\\pkg`/`\\code` markup used appropriately"
+    status: partial
+    rules: [JSS-BIBTEX-001, JSS-BIBTEX-002, JSS-BIBTEX-003, JSS-BIBTEX-005, JSS-REFS-001, JSS-REFS-004, JSS-REFS-006]
+    reason: "validity and markup are checked; title style only in its entirely-lowercase form (see SG-008)"
+  - id: SG-018
+    source: style_guide
+    section: "#what-are-the-different-cite-citet-citep-commands-about"
+    provision: "DO NOT: Use brackets-within-brackets constructs like `(\\cite{...})`"
+    status: checked
+    rules: [JSS-CITE-003]
+  - id: SG-019
+    source: style_guide
+    section: "#how-should-abbrevations-be-formatted"
+    provision: "MUST: Spell abbreviations in upper-case letters without periods, small caps, italics, or additional formatting"
+    status: checked
+    rules: [JSS-ABBR-001]
+  - id: SG-020
+    source: style_guide
+    section: "#how-should-abbrevations-be-formatted"
+    provision: "MUST: Introduce all abbreviations with expansion at first use; expansion is not capitalised unless it contains proper names or starts a sentence"
+    status: out_of_scope
+    rules: []
+    reason: "2026-04-23: JSS-ABBR-002 retired (first-use tracking is implementation-brittle; author proofreading is the path to compliance)"
+  - id: SG-021
+    source: style_guide
+    section: "#how-to-format-figuretable-captions"
+    provision: "MUST: Captions appear below the corresponding figure/table"
+    status: checked
+    rules: [JSS-TYPO-004]
+  - id: SG-022
+    source: style_guide
+    section: "#how-to-format-figuretable-captions"
+    provision: "MUST: Captions are in sentence style and end with a period"
+    status: partial
+    rules: [JSS-TYPO-001]
+    reason: "the trailing period is checked; caption sentence style is not, since JSS-CAP-003 was retired 2026-07-04 (see SG-010)"
+  - id: SG-023
+    source: style_guide
+    section: "#how-to-format-figuretable-captions"
+    provision: "DO NOT: Use additional formatting (`\\emph`, `\\bf`, `\\it`) inside captions"
+    status: checked
+    rules: [JSS-TYPO-002]
+  - id: SG-024
+    source: style_guide
+    section: "#how-to-format-figuretable-captions"
+    provision: "MUST: All table row/column headers are in sentence style"
+    status: not_checked
+    rules: []
+    reason: "follow-up — requires tabular-cell-aware check; candidate follow-up"
+  - id: SG-025
+    source: style_guide
+    section: "#how-to-format-figuretable-captions"
+    provision: "DO NOT: Use footnote-style annotations in tables; annotations go in the caption"
+    status: checked
+    rules: [JSS-TYPO-003]
+  - id: SG-026
+    source: style_guide
+    section: "#how-should-code-be-formatted-in-the-manuscript"
+    provision: "SHOULD: Present code in usual text flow with sufficient spaces for readability"
+    status: out_of_scope
+    rules: []
+    reason: "\"text flow\" is layout / rendering, not a source-level check"
+  - id: SG-027
+    source: style_guide
+    section: "#how-should-code-be-formatted-in-the-manuscript"
+    provision: "SHOULD: Include spaces before/after operators and after commas in code (unless syntactically meaningful)"
+    status: checked
+    rules: [JSS-CODE-003]
+  - id: SG-028
+    source: style_guide
+    section: "#how-should-code-be-formatted-in-the-manuscript"
+    provision: "SHOULD: Apply consistent spacing to both inline and verbatim code"
+    status: checked
+    rules: [JSS-CODE-003]
+  - id: SG-029
+    source: style_guide
+    section: "#how-should-code-be-formatted-in-the-manuscript"
+    provision: "DO NOT: Include comments within verbatim code; place comments in normal LaTeX text"
+    status: checked
+    rules: [JSS-CODE-001]
+  - id: SG-030
+    source: style_guide
+    section: "#how-should-code-be-formatted-in-the-manuscript"
+    provision: "SHOULD: Use `\\code{...}` for inline code chunks"
+    status: checked
+    rules: [JSS-MARKUP-003]
+  - id: SG-031
+    source: style_guide
+    section: "#how-should-code-be-formatted-in-the-manuscript"
+    provision: "MUST: Code input/output fits within normal textwidth"
+    status: checked
+    rules: [JSS-WIDTH-001]
+  - id: SG-032
+    source: style_guide
+    section: "#what-is-a-good-pen-to-paper-ratio-for-my-graphics"
+    provision: "MUST: Graphics are legible on paper and on screen"
+    status: out_of_scope
+    rules: []
+    reason: "rendering-time, not source-time"
+  - id: SG-033
+    source: style_guide
+    section: "#what-is-a-good-pen-to-paper-ratio-for-my-graphics"
+    provision: "SHOULD: Graphics annotations are about the size of the figure caption or slightly smaller"
+    status: out_of_scope
+    rules: []
+    reason: "rendering-time"
+  - id: SG-034
+    source: style_guide
+    section: "#some-of-my-graphics-files-are-very-large-what-should-i-do"
+    provision: "SHOULD: If a vector graphic is large/slow, also supply a raster version (`.jpg`/`.png`)"
+    status: out_of_scope
+    rules: []
+    reason: "filesystem-level"
+  - id: SG-035
+    source: style_guide
+    section: "#some-of-my-graphics-files-are-very-large-what-should-i-do"
+    provision: "MUST: Annotations in raster graphics remain legible (no pixelation)"
+    status: out_of_scope
+    rules: []
+    reason: "rendering-time"
+  - id: SG-036
+    source: style_guide
+    section: "#how-should-my-r-package-reflect-that-a-manuscript-about-it-was-published-in-jss"
+    provision: "SHOULD: Include the JSS paper in `\\references{}` of relevant `.Rd` pages"
+    status: out_of_scope
+    rules: []
+    reason: "target is R-package `.Rd` files, not the manuscript"
+  - id: SG-037
+    source: style_guide
+    section: "#how-should-my-r-package-reflect-that-a-manuscript-about-it-was-published-in-jss"
+    provision: "SHOULD: Include `CITATION` file at `inst/CITATION` within the R package"
+    status: out_of_scope
+    rules: []
+    reason: "R-package-level, not manuscript-level"
+  - id: SG-038
+    source: style_guide
+    section: "#how-should-my-r-package-reflect-that-a-manuscript-about-it-was-published-in-jss"
+    provision: "SHOULD: Turn the JSS manuscript into a package vignette"
+    status: out_of_scope
+    rules: []
+    reason: ".Rnw / vignette territory (Step 4+)"
+  - id: SG-039
+    source: style_guide
+    section: "#how-can-i-turn-my-jss-paper-into-an-r-package-vignette"
+    provision: "SHOULD: Use the JSS paper as the basis for the vignette"
+    status: out_of_scope
+    rules: []
+    reason: ".Rnw"
+  - id: SG-040
+    source: style_guide
+    section: "#how-can-i-turn-my-jss-paper-into-an-r-package-vignette"
+    provision: "SHOULD: Use Sweave-style code chunks for inputs/outputs/graphics in the vignette"
+    status: out_of_scope
+    rules: []
+    reason: ".Rnw"
+  - id: SG-041
+    source: style_guide
+    section: "#how-can-i-turn-my-jss-paper-into-an-r-package-vignette"
+    provision: "SHOULD: Use `\\documentclass[nojss]{jss}` to turn off JSS header/footer in the vignette"
+    status: out_of_scope
+    rules: []
+    reason: ".Rnw"
+  - id: SG-042
+    source: style_guide
+    section: "#how-can-i-turn-my-jss-paper-into-an-r-package-vignette"
+    provision: "SHOULD: Cite the JSS paper in the vignette abstract or introduction"
+    status: out_of_scope
+    rules: []
+    reason: ".Rnw"
+  - id: SG-043
+    source: style_guide
+    section: "#how-can-i-turn-my-jss-paper-into-an-r-package-vignette"
+    provision: "SHOULD (advisory): Set `options(prompt = \"R> \", continue = \"+  \", width = 70, useFancyQuotes = FALSE)` invisibly at the start of the vignette"
+    status: out_of_scope
+    rules: []
+    reason: ".Rnw"
+  - id: SG-044
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"Fortran\" not \"FORTRAN\""
+    status: checked
+    rules: [JSS-NAME-001]
+  - id: SG-045
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"Java\" not \"JAVA\" / \"java\""
+    status: checked
+    rules: [JSS-NAME-001]
+  - id: SG-046
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"MATLAB\" not \"Matlab\" / \"matlab\""
+    status: checked
+    rules: [JSS-NAME-001]
+  - id: SG-047
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"S-PLUS\" not \"Splus\" / \"S-Plus\""
+    status: checked
+    rules: [JSS-NAME-001]
+  - id: SG-048
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"The American Statistician\" (with the article)"
+    status: checked
+    rules: [JSS-NAME-002]
+  - id: SG-049
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"The Annals of Statistics\" (with the article)"
+    status: checked
+    rules: [JSS-NAME-002]
+  - id: SG-050
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"Journal of the Royal Statistical Society B\" (not \"..., Series B\")"
+    status: checked
+    rules: [JSS-NAME-002]
+  - id: SG-051
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"Springer-Verlag\" (not \"Springer\")"
+    status: checked
+    rules: [JSS-NAME-002]
+  - id: SG-052
+    source: style_guide
+    section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"
+    provision: "MUST: \"John Wiley & Sons\" (not \"Wiley\" / \"John Wiley & Sons Inc.\")"
+    status: checked
+    rules: [JSS-NAME-002]
+  - id: SG-053
+    source: style_guide
+    section: "#my-latex-paper-does-not-compile-when-there-is-jss-markup-in-section-titles-what-should-i-do"
+    provision: "SHOULD: Section titles containing markup supply a plain-text shim via `\\section[plain]{markup}` for PDF bookmarks"
+    status: checked
+    rules: [JSS-MARKUP-004]
+  - id: SG-054
+    source: style_guide
+    section: "#miscellaneous"
+    provision: "MUST: Use \"Section x.y\" (not \"Subsection x.y\") when referring to subsections"
+    status: checked
+    rules: [JSS-XREF-003]
+  - id: SG-055
+    source: style_guide
+    section: "#miscellaneous"
+    provision: "MUST: \"e.g.\", \"i.e.\" are followed by a comma to prevent LaTeX from interpreting the period as a sentence end"
+    status: checked
+    rules: [JSS-HOUSE-001]
+  - id: SG-056
+    source: style_guide
+    section: "#miscellaneous"
+    provision: "MUST: \"$p$~value\", \"$t$~statistic\", etc. have no hyphen and a tie `~` between symbol and noun"
+    status: checked
+    rules: [JSS-OPER-001]
+  - id: SG-057
+    source: style_guide
+    section: "#miscellaneous"
+    provision: "MUST: Use `\\top` (not `'` or `T`) for the transpose symbol (`X^\\top`)"
+    status: checked
+    rules: [JSS-OPER-002]
+  - id: SG-058
+    source: style_guide
+    section: "#miscellaneous"
+    provision: "MUST: In R-related manuscripts, first argument of `data()` and `library()` is quoted (`library(\"foo\")`)"
+    status: checked
+    rules: [JSS-CODE-002]
+  - id: SG-059
+    source: style_guide
+    section: "#miscellaneous"
+    provision: "MUST: Book editions are indicated as 2nd, 3rd, …"
+    status: checked
+    rules: [JSS-HOUSE-002]
+  - id: SG-060
+    source: style_guide
+    section: "#miscellaneous"
+    provision: "SHOULD: Prefer `Equation~\\ref{...}` (capitalised) over bare `(\\ref{...})` when referring to equations, except when reference count is large"
+    status: checked
+    rules: [JSS-XREF-002]
+  - id: SG-061
+    source: style_guide
+    section: "#miscellaneous"
+    provision: "Cross-reference nouns are spelled out (Figure, Section, Table), not abbreviated"
+    status: checked
+    rules: [JSS-XREF-007]
+  - id: AI-001
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "MUST: Manuscripts are written in English using LaTeX"
+    status: checked
+    rules: [JSS-PRE-001]
+  - id: AI-002
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "MUST: JSS Style Guide is followed (delegates to §1.3)"
+    status: out_of_scope
+    rules: []
+    reason: "meta/delegation, see §1.3 coverage"
+  - id: AI-003
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "MUST: Only PDF files can be submitted (submission format — not linter-checkable from `.tex`)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-004
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "Implicit: Authors are responsible for appropriate format (meta-rule — delegates to the other rules)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-005
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "Implicit: Non-compliant manuscripts are returned (meta-consequence, not a lint rule)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-006
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "SHOULD (advisory): Find a local LaTeX expert for assistance (meta-advice)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-007
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "NOTE: Manuscripts over 30 pages have longer review times (informational, not normative)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-008
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "MUST: All figures, tables, and output are fully reproducible on ≥1 platform (cannot be verified from `.tex` alone)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-009
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "MUST: Platform dependencies indicated with the submission (submission metadata)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-010
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "MUST: Random seed initialised when results depend on simulation"
+    status: out_of_scope
+    rules: []
+    reason: "requires inspecting the replication script, not just the manuscript; deferred (candidate for eval-side checks)"
+  - id: AI-011
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "SHOULD: Reproducibility is demonstrated by a standalone replication script (separate file, not the manuscript)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-012
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "SHOULD: Replication completes in ~1 hour on a regular PC (runtime claim)"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-013
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "SHOULD (advisory): If replication is slow/specialised, supply a proxy script"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-014
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "SHOULD (advisory): Provide an output file showing replication results"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-015
+    source: author_instructions
+    section: "#manuscript-preparation"
+    provision: "SHOULD: For R submissions, provide `code.html` via `knitr::spin('code.R')` including `sessionInfo()`"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-016
+    source: author_instructions
+    section: "#requirements"
+    provision: "MUST: PDF manuscript in JSS style is a required attachment"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-017
+    source: author_instructions
+    section: "#requirements"
+    provision: "MUST: Replication materials are a required attachment"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-018
+    source: author_instructions
+    section: "#requirements"
+    provision: "MUST: Large attachments are explained and linked"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-019
+    source: author_instructions
+    section: "#software-preparation"
+    provision: "MUST: Source code is submitted as ASCII files"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-020
+    source: author_instructions
+    section: "#software-preparation"
+    provision: "SHOULD: Code is readable and commented"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-021
+    source: author_instructions
+    section: "#software-preparation"
+    provision: "HARD LIMIT: Max upload size 50 MB"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-022
+    source: author_instructions
+    section: "#software-preparation"
+    provision: "MUST: Code includes GPL-2 / GPL-3 / GPL-compatible licence"
+    status: out_of_scope
+    rules: []
+    reason: "not checkable from the manuscript source"
+  - id: AI-023
+    source: author_instructions
+    section: "internal"
+    provision: "A multi-file manuscript's \\input / \\include / \\subfile / \\bibliography graph is acyclic"
+    status: checked
+    rules: [JSS-PROJECT-001]
+  - id: AI-024
+    source: author_instructions
+    section: "internal"
+    provision: "Every \\input / \\include / \\subfile / \\bibliography target resolves to a file that exists"
+    status: checked
+    rules: [JSS-PROJECT-002]

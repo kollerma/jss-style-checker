@@ -332,6 +332,51 @@ class RecallRun:
 
 
 @dataclass(frozen=True)
+class CoverageDirective:
+    """One provision of one authority, and what the tool does about it.
+
+    ``status`` is ``checked`` (a rule enforces it), ``partial`` (enforced
+    in part — ``reason`` says what is missing), ``not_checked`` (a real
+    gap), or ``out_of_scope`` (not checkable from the manuscript source
+    at all: compilability, graphics legibility, submission metadata).
+    Out-of-scope provisions are listed but excluded from the "checks N of
+    M" ratio, since they were never checkable.
+    """
+
+    id: str
+    source: str
+    section: str
+    provision: str
+    status: Literal["checked", "partial", "not_checked", "out_of_scope"]
+    rules: tuple[str, ...]
+    reason: str = ""
+
+
+@dataclass(frozen=True)
+class CoverageCounts:
+    checked: int
+    partial: int
+    not_checked: int
+    out_of_scope: int
+
+    @property
+    def checkable(self) -> int:
+        """Provisions a source-level linter could check at all."""
+        return self.checked + self.partial + self.not_checked
+
+    @property
+    def covered(self) -> int:
+        return self.checked + self.partial
+
+    @classmethod
+    def of(cls, directives: Iterable[CoverageDirective]) -> CoverageCounts:
+        tally = {"checked": 0, "partial": 0, "not_checked": 0, "out_of_scope": 0}
+        for directive in directives:
+            tally[directive.status] += 1
+        return cls(**tally)
+
+
+@dataclass(frozen=True)
 class RuleSetInfo:
     """Provenance of a journal's rule set (spec 027 item D).
 
@@ -382,6 +427,9 @@ class ComplianceReport:
     #: the report so no renderer has to import a journal package (§IV);
     #: empty for a journal that supplies none.
     rule_set: RuleSetInfo = field(default_factory=RuleSetInfo)
+    #: The journal's guide-coverage matrix, or ``None`` when it publishes
+    #: none. ``None`` and "everything is checked" are different claims.
+    coverage: tuple[CoverageDirective, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -593,6 +641,10 @@ class JournalMetadata:
     #: Per-rule measured recall, keyed by rule id. Rules absent from the
     #: snapshot are unmeasured; the engine pools these per category.
     recall_by_rule: Mapping[str, RecallStat] = field(default_factory=dict)
+    #: The guide-coverage matrix, in file order. Empty for a journal that
+    #: publishes none — the surfaces then omit the coverage block rather
+    #: than claiming full coverage.
+    coverage: tuple[CoverageDirective, ...] = ()
 
 
 class JournalRuleModule(ABC):

@@ -262,9 +262,9 @@ mode shows the `Recall` column; `project` renders `unmeasured`.
 ### Tests and docs
 
 - [x] T101 [P] [US1] Engine-level tests: pooled category recall, stub journal → `None`/`unmeasured` (`tests/unit/test_engine.py`, `tests/integration/test_plugin_discovery.py`)
-- [ ] T102 [P] [US1] Extend `rust/jsslint-core/tests/terminal_parity.rs`, `sarif_parity.rs`, `rust/jsslint-cli/tests/html_parity.rs`, `explain_parity.rs`, `cli_parity.rs` for the new surfaces
+- [x] T102 [P] [US1] Extend `rust/jsslint-core/tests/terminal_parity.rs`, `sarif_parity.rs`, `rust/jsslint-cli/tests/html_parity.rs`, `explain_parity.rs`, `cli_parity.rs` for the new surfaces
 - [x] T103 [P] [US1] `docs/recall-and-coverage.md` (how recall is measured, the source-only lower-bound caveat, the three states)
-- [ ] T104 [P] [US1] Update `specs/027-first-time-user-gaps/contracts/json-output-1.2.md` cross-refs and rewrite the stale `specs/001-linter-foundation/contracts/json-output.md`
+- [x] T104 [P] [US1] Update `specs/027-first-time-user-gaps/contracts/json-output-1.2.md` cross-refs and rewrite the stale `specs/001-linter-foundation/contracts/json-output.md`
 
 **Checkpoint**: a clean run is no longer silent; recall visible in every format
 
@@ -278,24 +278,24 @@ JSON `coverage` object, and the `coverage` subcommand.
 **Independent Test**: the contract test fails on a retired rule or an unclaimed
 active rule; `coverage` renders identically in both engines.
 
-- [ ] T105 [US2] Script the migration of the 146 checklist rows (`specs/003-jss-rule-catalogue/checklists/rule-catalogue-review.md` §1.1–1.4) into `specs/003-jss-rule-catalogue/guide-coverage.yaml`, including the `sources:` block
-- [ ] T106 [US2] Write directives for the 15 unclaimed active rules (`BIBTEX-003/004/005`, `OPER-004`, `PROJECT-001/002`, `REFS-001/003/005/006/007`, `XREF-004/005/006/007`) by reading the guide sections they cite
-- [ ] T107 [US2] Re-judge the 7 rows crediting retired rules and every `partial` row; add the "YAML is authoritative" note to the checklist
-- [ ] T108 [US2] Implement `tools/_coverage_validate.py` (contracts/coverage-file.md C-3) and the contract test in `tests/unit/journals/jss/test_guide_coverage.py`
-- [ ] T109 [US2] Emit `COVERAGE` from `tools/generate_catalogue_data.py`; parse it in `rust/jsslint-core/build.rs` + `catalogue.rs`
-- [ ] T110 [US2] Add `CoverageDirective` and `ComplianceReport.coverage` in `src/texlint/api.py` / `rust/jsslint-core/src/report.rs`; fill in both engines
-- [ ] T111 [US2] Reviewer "Not checked by jss-lint" block in `src/texlint/output/terminal.py` and `rust/jsslint-core/src/terminal.rs`
-- [ ] T112 [US2] `coverage` block in JSON (both engines) and `<table class="coverage">` in HTML (both engines)
-- [ ] T113 [US2] Implement the renderers in `src/texlint/coverage.py` and `rust/jsslint-core/src/coverage.rs` (terminal, markdown, json)
-- [ ] T114 [US2] Wire the `coverage` subcommand into `src/texlint/cli.py` (`REGISTERED_SUBCOMMANDS`) and `rust/jsslint-cli/src/main.rs`
-- [ ] T115 [US2] `Covers: …` line in `explain` (both engines)
-- [ ] T116 [US2] Author-footer coverage pointer sentence (both engines)
-- [ ] T117 [US2] `Coverage` section in `tools/render_catalogue.py`; re-render `catalogue.md`
-- [ ] T118 [US2] Vendor `guide-coverage.yaml` (`vendor-jsslint-core.sh`, `_FILES`, `build.rs` rerun-if-changed) and add `rust/jsslint-core/tests/package_contents.rs` asserting `cargo package --list` ships all five catalogue files
-- [ ] T119 [P] [US2] New `rust/jsslint-cli/tests/coverage_parity.rs` for all three formats plus the stub-journal case
-- [ ] T120 [P] [US2] Integration tests for the three `coverage` formats and the reviewer block in `tests/integration/test_cli_subcommands.py` / `test_cli_reviewer_terminal.py`
-- [ ] T121 [P] [US2] Extend `docs/recall-and-coverage.md` with how to read the coverage matrix
-- [ ] T122 [US2] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
+- [x] T105 [US2] Script the migration of the 146 checklist rows (`specs/003-jss-rule-catalogue/checklists/rule-catalogue-review.md` §1.1–1.4) into `specs/003-jss-rule-catalogue/guide-coverage.yaml`, including the `sources:` block
+- [x] T106 [US2] Write directives for the 15 unclaimed active rules (`BIBTEX-003/004/005`, `OPER-004`, `PROJECT-001/002`, `REFS-001/003/005/006/007`, `XREF-004/005/006/007`) by reading the guide sections they cite
+- [x] T107 [US2] Re-judge the 7 rows crediting retired rules and every `partial` row; add the "YAML is authoritative" note to the checklist
+- [x] T108 [US2] Implement `tools/_coverage_validate.py` (contracts/coverage-file.md C-3) and the contract test in `tests/unit/journals/jss/test_guide_coverage.py`
+- [x] T109 [US2] Emit `COVERAGE` from `tools/generate_catalogue_data.py`; parse it in `rust/jsslint-core/build.rs` + `catalogue.rs`
+- [x] T110 [US2] Add `CoverageDirective` and `ComplianceReport.coverage` in `src/texlint/api.py` / `rust/jsslint-core/src/report.rs`; fill in both engines
+- [x] T111 [US2] Reviewer "Not checked by jss-lint" block in `src/texlint/output/terminal.py` and `rust/jsslint-core/src/terminal.rs`
+- [x] T112 [US2] `coverage` block in JSON (both engines) and `<table class="coverage">` in HTML (both engines)
+- [x] T113 [US2] Implement the renderers in `src/texlint/coverage.py` and `rust/jsslint-core/src/coverage.rs` (terminal, markdown, json)
+- [x] T114 [US2] Wire the `coverage` subcommand into `src/texlint/cli.py` (`REGISTERED_SUBCOMMANDS`) and `rust/jsslint-cli/src/main.rs`
+- [x] T115 [US2] `Covers: …` line in `explain` (both engines)
+- [x] T116 [US2] Author-footer coverage pointer sentence (both engines)
+- [x] T117 [US2] `Coverage` section in `tools/render_catalogue.py`; re-render `catalogue.md`
+- [x] T118 [US2] Vendor `guide-coverage.yaml` (`vendor-jsslint-core.sh`, `_FILES`, `build.rs` rerun-if-changed) and add `rust/jsslint-core/tests/package_contents.rs` asserting `cargo package --list` ships all five catalogue files
+- [x] T119 [P] [US2] New `rust/jsslint-cli/tests/coverage_parity.rs` for all three formats plus the stub-journal case
+- [x] T120 [P] [US2] Integration tests for the three `coverage` formats and the reviewer block in `tests/integration/test_cli_subcommands.py` / `test_cli_reviewer_terminal.py`
+- [x] T121 [P] [US2] Extend `docs/recall-and-coverage.md` with how to read the coverage matrix
+- [x] T122 [US2] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
 
 **Checkpoint**: Phases 1 and 2 of the release are green — Phase 3 may start
 

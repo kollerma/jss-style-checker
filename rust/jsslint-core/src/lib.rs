@@ -11,6 +11,7 @@ pub mod bib;
 pub mod catalogue;
 pub mod config;
 pub mod conformance;
+pub mod coverage;
 pub mod diff;
 pub mod engine;
 pub mod explain;

@@ -10,6 +10,7 @@ from dataclasses import replace
 from importlib import import_module
 
 from texlint.api import (
+    CoverageDirective,
     JournalMetadata,
     JournalRuleModule,
     RecallRun,
@@ -79,6 +80,18 @@ class JSSJournal(JournalRuleModule):
                 rule_id: RecallStat(tp=tp, fn=fn)
                 for rule_id, (tp, fn) in _catalogue_data.RECALL.items()
             },
+            coverage=tuple(
+                CoverageDirective(
+                    id=d["id"],
+                    source=d["source"],
+                    section=d["section"],
+                    provision=d["provision"],
+                    status=d["status"],
+                    rules=tuple(d["rules"]),
+                    reason=d["reason"],
+                )
+                for d in _catalogue_data.COVERAGE
+            ),
         )
 
 

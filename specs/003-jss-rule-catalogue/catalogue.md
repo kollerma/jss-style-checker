@@ -185,6 +185,183 @@ _project_ — 2 rule(s)
 | `JSS-PROJECT-001` | error | high | unmeasured | A cycle exists in the \input/\include/\subfile/\bibliography reference graph | author_instructions | `multi-file-projects` | — |
 | `JSS-PROJECT-002` | error | high | unmeasured | A \input/\include/\subfile/\bibliography target could not be found | author_instructions | `multi-file-projects` | — |
 
+---
+
+## Guide coverage
+
+Which provisions of the four authorities these rules enforce, and which they do not. Source of truth: [guide-coverage.yaml](guide-coverage.yaml); printed by `jss-lint coverage`.
+
+**76 checked · 4 partial · 3 not checked · 66 out of scope**
+
+### jss.cls
+
+| Directive | Status | Provision | Rules | Reason |
+|---|---|---|---|---|
+| CLS-001 | checked | Manuscript declares exactly one of `article`, `codesnippet`, `bookreview`, `softwarereview` as the class option | `JSS-PRE-001` | — |
+| CLS-002 | checked | `shortnames` class option available for natbib short-form names | `JSS-BIBTEX-004` | — |
+| CLS-003 | out of scope | `nojss` class option turns off JSS header/footer (used for vignettes) | — | vignette-only; .Rnw scope in Step 4 |
+| CLS-004 | out of scope | `notitle`, `noheadings`, `nofooter` class options exist | — | vignette-only |
+| CLS-005 | checked | `natbib` loaded with `[authoryear,round]` (or `[authoryear,round,longnamesfirst]` when `shortnames` is off); `\bibpunct` set to `(){};a,` | `JSS-CITE-004` | — |
+| CLS-006 | out of scope | Bibliography style is `jss` (i.e., `\bibliographystyle{jss}`) | — | set implicitly by jss.cls; no author action required |
+| CLS-007 | checked | `\Address{}` metadata command (required in preamble) | `JSS-PRE-002` | — |
+| CLS-008 | checked | `\Plaintitle{}` metadata command (plain-text title without LaTeX markup) | `JSS-PRE-003` | — |
+| CLS-009 | out of scope | `\Shorttitle{}` metadata command (running title with markup allowed) | — | no rule enforces its presence; author-facing optional, candidate follow-up |
+| CLS-010 | checked | `\Plainauthor{}` metadata command (author list without affiliations) | `JSS-PRE-007` | — |
+| CLS-011 | out of scope | `\Volume{}` metadata command | — | editorial metadata, set by JSS not by author |
+| CLS-012 | out of scope | `\Year{}` metadata command | — | editorial metadata |
+| CLS-013 | out of scope | `\Month{}` metadata command | — | editorial metadata |
+| CLS-014 | out of scope | `\Issue{}` metadata command | — | editorial metadata |
+| CLS-015 | out of scope | `\Submitdate{}` metadata command | — | editorial metadata |
+| CLS-016 | out of scope | `\Acceptdate{}` metadata command (articles / code snippets) | — | editorial metadata |
+| CLS-017 | checked | `\Abstract{}` is required and non-placeholder (default in 120 is a sentinel error) | `JSS-PRE-004` | — |
+| CLS-018 | checked | `\Keywords{}` is required and non-placeholder (default in 197 is a sentinel error) | `JSS-PRE-005` | — |
+| CLS-019 | checked | `\Plainkeywords{}` metadata command | `JSS-PRE-008` | — |
+| CLS-020 | out of scope | `\Reviewer`, `\Booktitle`, `\Bookauthor`, `\Publisher`, `\Pubaddress`, `\Pubyear`, `\ISBN`, `\Pages`, `\Price`, `\Plainreviewer`, `\Softwaretitle`, `\URL`, `\DOI` metadata commands exist for `bookreview` / `softwarereview` classes | — | review class types deferred (spec scope = `article` class) |
+| CLS-021 | checked | `\code{}` for inline code (functions, commands, arguments, literal tokens) | `JSS-MARKUP-003` | — |
+| CLS-022 | checked | `\proglang{}` for programming languages and programmable systems (defined as `\textsf`) | `JSS-MARKUP-001` | — |
+| CLS-023 | checked | `\pkg{}` for software package names (medium-bold series) | `JSS-MARKUP-002` | — |
+| CLS-024 | out of scope | `\email{}` for email addresses (generates `mailto:` link) | — | used inside `\Address`; presence implicitly covered by JSS-PRE-002 |
+| CLS-025 | out of scope | `\doi{}` for DOIs (generates `https://doi.org/...` link) | — | used via `\DOI` editorial metadata |
+| CLS-026 | checked | `\E` math shortcut for expectation (`\mathsf{E}`) | `JSS-OPER-004` | — |
+| CLS-027 | checked | `\VAR` math shortcut for variance | `JSS-OPER-004` | — |
+| CLS-028 | checked | `\COV` math shortcut for covariance | `JSS-OPER-004` | — |
+| CLS-029 | checked | `\Prob` math shortcut for probability | `JSS-OPER-004` | — |
+| CLS-030 | out of scope | `Sinput` environment defined (Sweave-style) | — | .Rnw-adjacent; environment choice is author preference |
+| CLS-031 | out of scope | `Soutput` environment defined | — | same |
+| CLS-032 | out of scope | `Scode` environment defined | — | same |
+| CLS-033 | out of scope | `Schunk` environment defined | — | same |
+| CLS-034 | out of scope | `Code` verbatim environment (agnostic code listing) | — | environment choice is author preference |
+| CLS-035 | out of scope | `CodeInput` environment (preferred for command-prompt inputs) | — | same |
+| CLS-036 | out of scope | `CodeOutput` environment | — | same |
+| CLS-037 | out of scope | `CodeChunk` wrapper environment | — | same |
+| CLS-038 | out of scope | Default figure width set to 0.8\textwidth by `\setkeys{Gin}{width=0.8\textwidth}` | — | rendering-time default; no author-side enforcement |
+
+### article.tex
+
+| Directive | Status | Provision | Rules | Reason |
+|---|---|---|---|---|
+| TEX-001 | checked | Document class is declared as `\documentclass[article]{jss}` (for ordinary articles) | `JSS-PRE-001` | — |
+| TEX-002 | out of scope | Recommended packages are `orcidlink`, `thumbpdf`, `lmodern` | — | author-choice recommendation; enforcing would false-positive on papers that don't use ORCID |
+| TEX-003 | out of scope | Authors MAY define article-local convenience macros (`\class`, `\fct`) that delegate to `\code{}` | — | "MAY" not "MUST"; author-local convenience |
+| TEX-004 | checked | `\author{...}` uses `\And` or `\AND` to separate authors (not comma); inline `\orcidlink{...}` is permitted | `JSS-STRUCT-005` | — |
+| TEX-005 | checked | `\Plainauthor{...}` separates authors by comma | `JSS-PRE-007` | — |
+| TEX-006 | checked | `\title{...}` (with markup), `\Plaintitle{...}` (no markup), and `\Shorttitle{...}` (with markup) all present | `JSS-PRE-003` | — |
+| TEX-007 | checked | `\title{}` uses **title case** (per style guide SG-007) | `JSS-CAP-001` | — |
+| TEX-008 | checked | `\Abstract{...}` present before `\begin{document}` | `JSS-PRE-004` | — |
+| TEX-009 | checked | `\Keywords{...}` is comma-separated and in sentence case (per SG and comment on line 48) | `JSS-PRE-005`, `JSS-CAP-004` | — |
+| TEX-010 | checked | `\Plainkeywords{...}` mirror of `\Keywords` without markup | `JSS-PRE-006`, `JSS-PRE-008` | — |
+| TEX-011 | checked | `\Address{...}` contains author, affiliation, postal address, `\email{...}`, `\url{...}` | `JSS-PRE-002` | — |
+| TEX-012 | checked | First numbered section is Introduction; uses `\section[plain]{markup}` to separate bookmark/PDF title from markup title | `JSS-MARKUP-004` | — |
+| TEX-013 | out of scope | Section labels follow the `sec:introname` convention (`sec:intro`, `sec:models`, `sec:illustrations`, `sec:summary`) | — | label-naming convention not enforced; candidate follow-up (low severity, high FP risk) |
+| TEX-014 | checked | Summary / discussion section is present | `JSS-STRUCT-001` | — |
+| TEX-015 | out of scope | "Computational details" is an **unnumbered** section (`\section*{...}`) | — | pattern not enforced; "Computational details" is optional per article.tex:389 |
+| TEX-016 | checked | "Acknowledgments" is an unnumbered section; **AE spelling** ("Acknowledgments", not "Acknowledgements") is normative (comment on line 407) | `JSS-STRUCT-002` | — |
+| TEX-017 | checked | References are loaded via `\bibliography{refs}` (BibTeX) | `JSS-STRUCT-004` | — |
+| TEX-018 | checked | Appendix follows the bibliography after a page break | `JSS-STRUCT-006` | — |
+| TEX-019 | checked | Appendix sections have proper titles (not just "Appendix"); labels use `app:name` convention | `JSS-STRUCT-003` | — |
+| TEX-020 | checked | `\proglang{}`, `\pkg{}`, `\code{}` markup is used throughout the manuscript body (including in section titles — with plain-text shim in the optional argument) | `JSS-MARKUP-001`, `JSS-MARKUP-002`, `JSS-MARKUP-003`, `JSS-MARKUP-004` | — |
+| TEX-021 | out of scope | `{Code}` environment used for code synopses that are not meant to be executed | — | environment choice is author preference |
+| TEX-022 | out of scope | `{CodeChunk}` wraps matching `{CodeInput}` / `{CodeOutput}` for executed code | — | environment-wrapping pattern, author preference |
+| TEX-023 | not checked | R code inputs use `R> ` as the prompt and `+  ` as the continuation prompt | — | defer to when we implement .Rnw Sweave manuscripts — prompt convention not enforced; candidate follow-up |
+| TEX-024 | checked | `{equation}` environments have **no blank lines** before/after (blank lines are suppressed with `%` comments) | `JSS-OPER-003` | — |
+| TEX-025 | checked | BibTeX entries carry a doi field where one is available | `JSS-REFS-003` | — |
+| TEX-026 | checked | Journal titles in BibTeX entries are spelled out in full and in title case | `JSS-REFS-005`, `JSS-REFS-007` | — |
+
+### Style guide
+
+| Directive | Status | Provision | Rules | Reason |
+|---|---|---|---|---|
+| SG-001 | checked | MUST: All submissions are formatted using LaTeX and JSS style files | `JSS-PRE-001` | — |
+| SG-002 | checked | SHOULD: Keep LaTeX code as simple as possible; avoid unnecessary packages/commands | `JSS-HOUSE-003` | — |
+| SG-003 | out of scope | SHOULD: Use pdfLaTeX to compile manuscripts to PDF | — | compiler choice is not statically visible in the manuscript source |
+| SG-004 | out of scope | MUST: Manuscript must be compilable by pdfLaTeX | — | compilability is a dynamic property; delegating to `jss-lint --parse` is sufficient |
+| SG-005 | checked | MUST: Use `\proglang`, `\pkg`, `\code` markup throughout the paper, including titles and references | `JSS-MARKUP-001`, `JSS-MARKUP-002`, `JSS-MARKUP-003`, `JSS-REFS-004` | — |
+| SG-006 | checked | MUST: Provide references in a `.bib` BibTeX database; cite via `\cite`, `\citep`, `\citet`, etc. | `JSS-CITE-004`, `JSS-REFS-001`, `JSS-STRUCT-004` | — |
+| SG-007 | checked | MUST: `\title` is in title style | `JSS-CAP-001` | — |
+| SG-008 | partial | MUST: All titles in the BibTeX file are in title style | `JSS-REFS-006` | JSS-REFS-002 retired 2026-06-14; JSS-REFS-006 catches entirely lowercase multi-word titles, but a title miscapitalised only in part needs semantics a word list cannot supply |
+| SG-009 | checked | MUST: `\section`, `\subsection`, etc. are in sentence style | `JSS-CAP-002` | — |
+| SG-010 | not checked | MUST: Figure/table captions (annotations) are in sentence style | — | JSS-CAP-003 retired 2026-07-04: measured ~32% precision and ~12% recall, and the proper-noun-vs-overcapitalised distinction needs semantics a word list cannot supply |
+| SG-011 | checked | MUST: Figures, tables, and equations are marked with `\label` and referenced by `\ref` | `JSS-XREF-001`, `JSS-XREF-004`, `JSS-XREF-005`, `JSS-XREF-006` | — |
+| SG-012 | checked | MUST: Software packages are cited via `\cite{}` | `JSS-CITE-002` | — |
+| SG-013 | partial | MUST: In sentence style, capitalise only the first word and the first word after colon/hyphen; proper names remain uppercase | `JSS-CAP-002`, `JSS-CAP-004` | section titles and keywords are checked; captions are not, since JSS-CAP-003 was retired 2026-07-04 (see SG-010) |
+| SG-014 | checked | MUST: In title style, capitalise all principal words; articles, coordinating conjunctions, and prepositions stay lowercase unless first/last | `JSS-CAP-001` | — |
+| SG-015 | checked | SHOULD: If software has a recommended citation, use it; otherwise cite the manual or webpage | `JSS-CITE-002` | — |
+| SG-016 | out of scope | SHOULD: Check for official R package citation on CRAN or via `citation("pkg")`; otherwise use CRAN-style reference | — | CRAN-backed validation is explicitly deferred (spec FR-023); covered in future work via an ecosystem check |
+| SG-017 | partial | MUST: BibTeX is valid, title is in title style, `\proglang`/`\pkg`/`\code` markup used appropriately | `JSS-BIBTEX-001`, `JSS-BIBTEX-002`, `JSS-BIBTEX-003`, `JSS-BIBTEX-005`, `JSS-REFS-001`, `JSS-REFS-004`, `JSS-REFS-006` | validity and markup are checked; title style only in its entirely-lowercase form (see SG-008) |
+| SG-018 | checked | DO NOT: Use brackets-within-brackets constructs like `(\cite{...})` | `JSS-CITE-003` | — |
+| SG-019 | checked | MUST: Spell abbreviations in upper-case letters without periods, small caps, italics, or additional formatting | `JSS-ABBR-001` | — |
+| SG-020 | out of scope | MUST: Introduce all abbreviations with expansion at first use; expansion is not capitalised unless it contains proper names or starts a sentence | — | 2026-04-23: JSS-ABBR-002 retired (first-use tracking is implementation-brittle; author proofreading is the path to compliance) |
+| SG-021 | checked | MUST: Captions appear below the corresponding figure/table | `JSS-TYPO-004` | — |
+| SG-022 | partial | MUST: Captions are in sentence style and end with a period | `JSS-TYPO-001` | the trailing period is checked; caption sentence style is not, since JSS-CAP-003 was retired 2026-07-04 (see SG-010) |
+| SG-023 | checked | DO NOT: Use additional formatting (`\emph`, `\bf`, `\it`) inside captions | `JSS-TYPO-002` | — |
+| SG-024 | not checked | MUST: All table row/column headers are in sentence style | — | follow-up — requires tabular-cell-aware check; candidate follow-up |
+| SG-025 | checked | DO NOT: Use footnote-style annotations in tables; annotations go in the caption | `JSS-TYPO-003` | — |
+| SG-026 | out of scope | SHOULD: Present code in usual text flow with sufficient spaces for readability | — | "text flow" is layout / rendering, not a source-level check |
+| SG-027 | checked | SHOULD: Include spaces before/after operators and after commas in code (unless syntactically meaningful) | `JSS-CODE-003` | — |
+| SG-028 | checked | SHOULD: Apply consistent spacing to both inline and verbatim code | `JSS-CODE-003` | — |
+| SG-029 | checked | DO NOT: Include comments within verbatim code; place comments in normal LaTeX text | `JSS-CODE-001` | — |
+| SG-030 | checked | SHOULD: Use `\code{...}` for inline code chunks | `JSS-MARKUP-003` | — |
+| SG-031 | checked | MUST: Code input/output fits within normal textwidth | `JSS-WIDTH-001` | — |
+| SG-032 | out of scope | MUST: Graphics are legible on paper and on screen | — | rendering-time, not source-time |
+| SG-033 | out of scope | SHOULD: Graphics annotations are about the size of the figure caption or slightly smaller | — | rendering-time |
+| SG-034 | out of scope | SHOULD: If a vector graphic is large/slow, also supply a raster version (`.jpg`/`.png`) | — | filesystem-level |
+| SG-035 | out of scope | MUST: Annotations in raster graphics remain legible (no pixelation) | — | rendering-time |
+| SG-036 | out of scope | SHOULD: Include the JSS paper in `\references{}` of relevant `.Rd` pages | — | target is R-package `.Rd` files, not the manuscript |
+| SG-037 | out of scope | SHOULD: Include `CITATION` file at `inst/CITATION` within the R package | — | R-package-level, not manuscript-level |
+| SG-038 | out of scope | SHOULD: Turn the JSS manuscript into a package vignette | — | .Rnw / vignette territory (Step 4+) |
+| SG-039 | out of scope | SHOULD: Use the JSS paper as the basis for the vignette | — | .Rnw |
+| SG-040 | out of scope | SHOULD: Use Sweave-style code chunks for inputs/outputs/graphics in the vignette | — | .Rnw |
+| SG-041 | out of scope | SHOULD: Use `\documentclass[nojss]{jss}` to turn off JSS header/footer in the vignette | — | .Rnw |
+| SG-042 | out of scope | SHOULD: Cite the JSS paper in the vignette abstract or introduction | — | .Rnw |
+| SG-043 | out of scope | SHOULD (advisory): Set `options(prompt = "R> ", continue = "+  ", width = 70, useFancyQuotes = FALSE)` invisibly at the start of the vignette | — | .Rnw |
+| SG-044 | checked | MUST: "Fortran" not "FORTRAN" | `JSS-NAME-001` | — |
+| SG-045 | checked | MUST: "Java" not "JAVA" / "java" | `JSS-NAME-001` | — |
+| SG-046 | checked | MUST: "MATLAB" not "Matlab" / "matlab" | `JSS-NAME-001` | — |
+| SG-047 | checked | MUST: "S-PLUS" not "Splus" / "S-Plus" | `JSS-NAME-001` | — |
+| SG-048 | checked | MUST: "The American Statistician" (with the article) | `JSS-NAME-002` | — |
+| SG-049 | checked | MUST: "The Annals of Statistics" (with the article) | `JSS-NAME-002` | — |
+| SG-050 | checked | MUST: "Journal of the Royal Statistical Society B" (not "..., Series B") | `JSS-NAME-002` | — |
+| SG-051 | checked | MUST: "Springer-Verlag" (not "Springer") | `JSS-NAME-002` | — |
+| SG-052 | checked | MUST: "John Wiley & Sons" (not "Wiley" / "John Wiley & Sons Inc.") | `JSS-NAME-002` | — |
+| SG-053 | checked | SHOULD: Section titles containing markup supply a plain-text shim via `\section[plain]{markup}` for PDF bookmarks | `JSS-MARKUP-004` | — |
+| SG-054 | checked | MUST: Use "Section x.y" (not "Subsection x.y") when referring to subsections | `JSS-XREF-003` | — |
+| SG-055 | checked | MUST: "e.g.", "i.e." are followed by a comma to prevent LaTeX from interpreting the period as a sentence end | `JSS-HOUSE-001` | — |
+| SG-056 | checked | MUST: "$p$~value", "$t$~statistic", etc. have no hyphen and a tie `~` between symbol and noun | `JSS-OPER-001` | — |
+| SG-057 | checked | MUST: Use `\top` (not `'` or `T`) for the transpose symbol (`X^\top`) | `JSS-OPER-002` | — |
+| SG-058 | checked | MUST: In R-related manuscripts, first argument of `data()` and `library()` is quoted (`library("foo")`) | `JSS-CODE-002` | — |
+| SG-059 | checked | MUST: Book editions are indicated as 2nd, 3rd, … | `JSS-HOUSE-002` | — |
+| SG-060 | checked | SHOULD: Prefer `Equation~\ref{...}` (capitalised) over bare `(\ref{...})` when referring to equations, except when reference count is large | `JSS-XREF-002` | — |
+| SG-061 | checked | Cross-reference nouns are spelled out (Figure, Section, Table), not abbreviated | `JSS-XREF-007` | — |
+
+### Author instructions
+
+| Directive | Status | Provision | Rules | Reason |
+|---|---|---|---|---|
+| AI-001 | checked | MUST: Manuscripts are written in English using LaTeX | `JSS-PRE-001` | — |
+| AI-002 | out of scope | MUST: JSS Style Guide is followed (delegates to §1.3) | — | meta/delegation, see §1.3 coverage |
+| AI-003 | out of scope | MUST: Only PDF files can be submitted (submission format — not linter-checkable from `.tex`) | — | not checkable from the manuscript source |
+| AI-004 | out of scope | Implicit: Authors are responsible for appropriate format (meta-rule — delegates to the other rules) | — | not checkable from the manuscript source |
+| AI-005 | out of scope | Implicit: Non-compliant manuscripts are returned (meta-consequence, not a lint rule) | — | not checkable from the manuscript source |
+| AI-006 | out of scope | SHOULD (advisory): Find a local LaTeX expert for assistance (meta-advice) | — | not checkable from the manuscript source |
+| AI-007 | out of scope | NOTE: Manuscripts over 30 pages have longer review times (informational, not normative) | — | not checkable from the manuscript source |
+| AI-008 | out of scope | MUST: All figures, tables, and output are fully reproducible on ≥1 platform (cannot be verified from `.tex` alone) | — | not checkable from the manuscript source |
+| AI-009 | out of scope | MUST: Platform dependencies indicated with the submission (submission metadata) | — | not checkable from the manuscript source |
+| AI-010 | out of scope | MUST: Random seed initialised when results depend on simulation | — | requires inspecting the replication script, not just the manuscript; deferred (candidate for eval-side checks) |
+| AI-011 | out of scope | SHOULD: Reproducibility is demonstrated by a standalone replication script (separate file, not the manuscript) | — | not checkable from the manuscript source |
+| AI-012 | out of scope | SHOULD: Replication completes in ~1 hour on a regular PC (runtime claim) | — | not checkable from the manuscript source |
+| AI-013 | out of scope | SHOULD (advisory): If replication is slow/specialised, supply a proxy script | — | not checkable from the manuscript source |
+| AI-014 | out of scope | SHOULD (advisory): Provide an output file showing replication results | — | not checkable from the manuscript source |
+| AI-015 | out of scope | SHOULD: For R submissions, provide `code.html` via `knitr::spin('code.R')` including `sessionInfo()` | — | not checkable from the manuscript source |
+| AI-016 | out of scope | MUST: PDF manuscript in JSS style is a required attachment | — | not checkable from the manuscript source |
+| AI-017 | out of scope | MUST: Replication materials are a required attachment | — | not checkable from the manuscript source |
+| AI-018 | out of scope | MUST: Large attachments are explained and linked | — | not checkable from the manuscript source |
+| AI-019 | out of scope | MUST: Source code is submitted as ASCII files | — | not checkable from the manuscript source |
+| AI-020 | out of scope | SHOULD: Code is readable and commented | — | not checkable from the manuscript source |
+| AI-021 | out of scope | HARD LIMIT: Max upload size 50 MB | — | not checkable from the manuscript source |
+| AI-022 | out of scope | MUST: Code includes GPL-2 / GPL-3 / GPL-compatible licence | — | not checkable from the manuscript source |
+| AI-023 | checked | A multi-file manuscript's \input / \include / \subfile / \bibliography graph is acyclic | `JSS-PROJECT-001` | — |
+| AI-024 | checked | Every \input / \include / \subfile / \bibliography target resolves to a file that exists | `JSS-PROJECT-002` | — |
+
 ## Rule details
 
 ### JSS-PRE-001

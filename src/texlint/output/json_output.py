@@ -129,6 +129,43 @@ def to_payload(report: ComplianceReport) -> dict[str, Any]:
         # follows (`json-output-1.2.md` C-2).
         "baseline": _baseline_dict(report),
         "rule_set": _rule_set_dict(report),
+        "coverage": _coverage_dict(report),
+    }
+
+
+def _coverage_dict(report: ComplianceReport) -> dict[str, Any] | None:
+    """Counts plus the gaps only (`json-output-1.2.md` C-4).
+
+    `items` carries no provision text: it is identical in every report,
+    and `jss-lint coverage --format json` is where the full matrix
+    lives. Sorted by `(status, id)` so the array is stable.
+    """
+    from texlint.api import CoverageCounts
+
+    directives = report.coverage
+    if directives is None:
+        return None
+    counts = CoverageCounts.of(directives)
+    return {
+        "counts": {
+            "checked": counts.checked,
+            "not_checked": counts.not_checked,
+            "out_of_scope": counts.out_of_scope,
+            "partial": counts.partial,
+        },
+        "items": [
+            {
+                "id": d.id,
+                "reason": d.reason,
+                "section": d.section,
+                "source": d.source,
+                "status": d.status,
+            }
+            for d in sorted(
+                (d for d in directives if d.status in {"partial", "not_checked"}),
+                key=lambda d: (d.status, d.id),
+            )
+        ],
     }
 
 

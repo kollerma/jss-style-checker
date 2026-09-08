@@ -94,3 +94,40 @@ class TestAuthorVsReviewer:
             ],
         )
         assert "Journal compliance" in result.output
+
+
+class TestNotCheckedBlock:
+    """Spec 027 FR-G-003: reviewer mode ends with what is *not* checked.
+
+    A compliance percentage over a rule set that covers 80 of 83
+    checkable provisions means something different from one over a rule
+    set that covers all of them; the block is what lets a reviewer tell.
+    """
+
+    def _output(self, runner: CliRunner) -> str:
+        result = runner.invoke(
+            main,
+            ["--mode", "reviewer", str(FIXTURES / "compliant" / "minimal.tex")],
+        )
+        assert result.exit_code == 0, result.output
+        return result.output
+
+    def test_block_follows_the_compliance_line(self, runner: CliRunner) -> None:
+        output = self._output(runner)
+        assert output.index("Overall:") < output.index("Not checked by jss-lint")
+
+    def test_lists_partial_before_not_checked(self, runner: CliRunner) -> None:
+        output = self._output(runner)
+        assert output.index("partial") < output.index("not checked")
+
+    def test_out_of_scope_rows_are_not_listed(self, runner: CliRunner) -> None:
+        # 66 provisions are out of scope; listing them here would bury
+        # the handful a reviewer can act on.
+        assert "out of scope" not in self._output(runner).split(
+            "Run jss-lint coverage"
+        )[0]
+
+    def test_ends_with_the_counts_and_a_pointer(self, runner: CliRunner) -> None:
+        output = self._output(runner)
+        assert "Run jss-lint coverage for the full matrix (" in output
+        assert "out of scope)." in output

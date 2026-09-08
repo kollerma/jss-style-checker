@@ -42,6 +42,21 @@ def _recall_label(rule_id: str) -> str:
     return RecallStat(tp=tp, fn=fn).label(RECALL_RUN["min_plants"])
 
 
+def _covers(rule_id: str) -> list[str]:
+    """Guide directives this rule enforces (`coverage-file.md` C-8).
+
+    Omitted for a rule whose only directive is `internal` — there is no
+    public provision to point a reader at.
+    """
+    from texlint.journals.jss._catalogue_data import COVERAGE
+
+    return sorted(
+        d["id"]
+        for d in COVERAGE
+        if rule_id in d["rules"] and d["section"] != "internal"
+    )
+
+
 def _level(sev: Severity | str) -> str:
     return sev.value if isinstance(sev, Severity) else str(sev)
 
@@ -65,6 +80,9 @@ def _render_one_terminal(rule_id: str, meta: dict) -> str:
     # nobody has measured is exactly the one a reader should not assume
     # is reliable.
     lines.append(f"  Recall: {_recall_label(rule_id)}")
+    covers = _covers(rule_id)
+    if covers:
+        lines.append(f"  Covers: {', '.join(covers)}")
     if section:
         lines.append(f"  JSS guide: {section}")
         if url:
@@ -85,6 +103,9 @@ def _render_one_markdown(rule_id: str, meta: dict) -> str:
     if meta.get("confidence", "high") != "high":
         parts.append(f"- **Confidence:** {meta['confidence']}")
     parts.append(f"- **Recall:** {_recall_label(rule_id)}")
+    covers = _covers(rule_id)
+    if covers:
+        parts.append(f"- **Covers:** {', '.join(covers)}")
     if section and url:
         parts.append(f"- **JSS guide:** [{section}]({url})")
     elif section:

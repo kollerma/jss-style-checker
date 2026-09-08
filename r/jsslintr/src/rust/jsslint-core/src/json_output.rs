@@ -57,6 +57,7 @@ pub fn to_payload(report: &ComplianceReport) -> Value {
         // `compliance_percentage` follows.
         "baseline": baseline_value(report),
         "rule_set": rule_set_value(report),
+        "coverage": coverage_value(report),
     })
 }
 
@@ -117,6 +118,38 @@ fn recall_value(stat: Option<&crate::report::RecallStat>, min_plants: u32) -> Va
         "tp": stat.tp,
         "fn": stat.fn_,
         "percent": if state == "measured" { stat.percent() } else { None },
+    })
+}
+
+/// Counts plus the gaps only (`json-output-1.2.md` C-4); the full matrix
+/// lives in `jss-lint coverage --format json`.
+fn coverage_value(report: &ComplianceReport) -> Value {
+    let Some(directives) = report.coverage else {
+        return Value::Null;
+    };
+    let counts = crate::coverage::Counts::of(directives);
+    let mut items: Vec<&crate::catalogue::CoverageDirectiveData> = directives
+        .iter()
+        .filter(|d| d.status == "partial" || d.status == "not_checked")
+        .collect();
+    items.sort_by_key(|d| (d.status, d.id));
+    json!({
+        "counts": {
+            "checked": counts.checked,
+            "not_checked": counts.not_checked,
+            "out_of_scope": counts.out_of_scope,
+            "partial": counts.partial,
+        },
+        "items": items
+            .iter()
+            .map(|d| json!({
+                "id": d.id,
+                "reason": d.reason,
+                "section": d.section,
+                "source": d.source,
+                "status": d.status,
+            }))
+            .collect::<Vec<_>>(),
     })
 }
 

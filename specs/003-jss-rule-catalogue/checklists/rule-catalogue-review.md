@@ -28,6 +28,15 @@
 
 ## 1. Authority coverage matrix
 
+> **Superseded 2026-09-07 (spec 027 item A).** The authoritative matrix
+> is now [`../guide-coverage.yaml`](../guide-coverage.yaml), which the
+> tool itself reads: `jss-lint coverage` prints it, reviewer mode lists
+> its gaps, and `tools/_coverage_validate.py` fails the build when a
+> listed rule is retired or an active rule is claimed by no provision.
+> The rows below are the 2026-04-23 review record and are **not**
+> maintained — six of them credited rules that have since been retired,
+> which is precisely why the matrix moved into a validated data file.
+
 Every normative provision below must map to ≥1 rule in the catalogue, **or** be explicitly marked `out-of-scope` with a one-line rationale. A provision with zero covering rules is a **gap** to close before sign-off; a provision with >1 covering rules is a **redundancy candidate** to merge or justify.
 
 Columns: `source` · `anchor` (section/line) · `provision` (one line) · `covering_rule_ids` (fill in) · `status` (covered | gap | redundant | out-of-scope).

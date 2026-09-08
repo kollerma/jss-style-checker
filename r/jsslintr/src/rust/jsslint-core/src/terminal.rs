@@ -654,6 +654,48 @@ fn render_reviewer(report: &ComplianceReport, out: &mut String) {
         out.push_str(&line);
         out.push('\n');
     }
+    if let Some(directives) = report.coverage {
+        if !directives.is_empty() {
+            render_not_checked(directives, out);
+        }
+    }
+}
+
+/// What the tool does *not* check, under the reviewer table. Only
+/// `partial` and `not_checked` rows: an out-of-scope provision was never
+/// checkable from source, and listing all sixty-odd would bury the few a
+/// reviewer can act on.
+fn render_not_checked(
+    directives: &[crate::catalogue::CoverageDirectiveData],
+    out: &mut String,
+) {
+    out.push_str(&rule_line("Not checked by jss-lint", CONSOLE_WIDTH));
+    out.push('\n');
+    let rows = crate::coverage::gaps(directives);
+    if !rows.is_empty() {
+        let columns = [
+            col_no_wrap("Directive"),
+            col_no_wrap("Status"),
+            col("Provision"),
+        ];
+        let table_rows: Vec<Vec<String>> = rows
+            .iter()
+            .map(|d| {
+                vec![
+                    d.id.to_string(),
+                    if d.status == "partial" {
+                        "partial".to_string()
+                    } else {
+                        "not checked".to_string()
+                    },
+                    d.provision.to_string(),
+                ]
+            })
+            .collect();
+        out.push_str(&render_table(&columns, &table_rows, None));
+    }
+    out.push_str(&crate::coverage::counts_sentence(directives));
+    out.push('\n');
 }
 
 fn min_plants(report: &ComplianceReport) -> u32 {
@@ -689,13 +731,20 @@ pub fn author_footer_text(report: &ComplianceReport) -> String {
         );
     };
     let stat = run.stat();
-    format!(
+    let mut text = format!(
         "No findings does not mean compliant. Measured recall: {} ({} annotated \
          instances, {} papers).",
         stat.label(run.min_plants),
         stat.plants(),
         run.papers
-    )
+    );
+    if let Some(directives) = report.coverage {
+        if !directives.is_empty() {
+            text.push('\n');
+            text.push_str(&crate::coverage::footer_sentence(directives));
+        }
+    }
+    text
 }
 
 fn render_skipped_rules(report: &ComplianceReport, out: &mut String) {

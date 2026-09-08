@@ -31,6 +31,9 @@ _FILES = [
     # the crates.io tarball and the CRAN package report the same
     # measured recall as the Python package.
     "recall.json",
+    # Spec 027 item A: the coverage matrix ships with the rule set too —
+    # the crate's `coverage` subcommand reads it at build time.
+    "guide-coverage.yaml",
 ]
 
 

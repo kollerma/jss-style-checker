@@ -165,7 +165,8 @@ struct Cli {
 /// Subcommand names this port currently registers. Mirrors `cli.py`'s
 /// `if paths and paths[0] in main.commands:` forwarding check, scoped
 /// to only the subcommands actually wired so far.
-const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff", "init", "report", "lsp"];
+const REGISTERED_SUBCOMMANDS: &[&str] =
+    &["explain", "diff", "init", "report", "lsp", "coverage"];
 
 #[derive(Parser)]
 #[command(
@@ -211,6 +212,90 @@ fn run_explain(args: &[String]) -> ExitCode {
             ExitCode::from(2)
         }
     }
+}
+
+#[derive(Parser)]
+#[command(
+    name = "jss-lint coverage",
+    about = "List which guide provisions jss-lint checks, and which it does not"
+)]
+struct CoverageArgs {
+    #[arg(long = "format", value_parser = ["terminal", "markdown", "json"], default_value = "terminal", ignore_case = true)]
+    format: String,
+
+    /// Journal identifier to report on (default: from config, else jss).
+    #[arg(long)]
+    journal: Option<String>,
+}
+
+/// "No findings" is only meaningful next to "here is what was looked
+/// for" (spec 027 FR-G-004). Exit 0 always, including for a journal that
+/// publishes no coverage data — which says so.
+fn run_coverage(args: &[String]) -> ExitCode {
+    let mut parsed = CoverageArgs::try_parse_from(
+        std::iter::once("jss-lint-coverage".to_string()).chain(args.iter().cloned()),
+    )
+    .unwrap_or_else(|e| e.exit());
+    // See `run_explain`'s comment on `ignore_case = true`.
+    parsed.format = parsed.format.to_lowercase();
+
+    let overrides = RawOverrides {
+        journal: parsed.journal.clone(),
+        ..Default::default()
+    };
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let config = config::load(&cwd, &overrides);
+
+    // Only `jss` is registered in this engine (documented §IV
+    // deviation), so any other journal has no coverage data at all.
+    let directives: &[jsslint_core::catalogue::CoverageDirectiveData] =
+        if config.journal == "jss" {
+            catalogue::coverage()
+        } else {
+            &[]
+        };
+
+    let output = match parsed.format.as_str() {
+        "json" => jsslint_core::coverage::render_json(
+            directives,
+            &config.journal,
+            coverage_sources(&config.journal),
+        ),
+        "markdown" => jsslint_core::coverage::render_markdown(
+            directives,
+            &config.journal,
+            catalogue::rule_set().version.as_deref(),
+        ),
+        _ => jsslint_core::coverage::render_terminal(
+            directives,
+            &config.journal,
+            catalogue::rule_set().version.as_deref(),
+        ),
+    };
+    print!("{output}");
+    ExitCode::from(0)
+}
+
+/// The `sources:` block, for `coverage --format json` only. Compiled in
+/// rather than read at runtime: this binary must work from a crates.io
+/// install with no repository around it.
+fn coverage_sources(journal_id: &str) -> serde_json::Value {
+    if journal_id != "jss" {
+        return serde_json::json!({});
+    }
+    serde_json::json!({
+        "article_tex": {"date": "2021-12-10", "file": "docs/jss-template/article.tex"},
+        "author_instructions": {
+            "fetched": "2026-04-23",
+            "url": "https://www.jstatsoft.org/authors",
+        },
+        "jss_cls": {
+            "date": "2021-05-23",
+            "edition": "3.3",
+            "file": "docs/jss-template/jss.cls",
+        },
+        "style_guide": {"fetched": "2026-04-23", "url": "https://www.jstatsoft.org/style"},
+    })
 }
 
 #[derive(Parser)]
@@ -630,6 +715,7 @@ fn main() -> ExitCode {
                 "init" => run_init(&args[2..]),
                 "report" => run_report(&args[2..]),
                 "lsp" => lsp_server::main(),
+                "coverage" => run_coverage(&args[2..]),
                 _ => unreachable!("REGISTERED_SUBCOMMANDS out of sync"),
             };
         }

@@ -1107,5 +1107,6 @@ fn run_impl(
         // it alone is allowed to read.
         baseline: None,
         rule_set: catalogue::rule_set(),
+        coverage: Some(catalogue::coverage()),
     }
 }
