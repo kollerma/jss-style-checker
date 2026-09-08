@@ -60,6 +60,15 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
   (the decision spec 017 deferred), ratcheted to the shipped snapshot
   minus 0.03 at each release, with a test that fails if the floor drifts
   further behind than that.
+- **Coloured terminal output.** Severities, PASS/FAIL/SKIPPED statuses,
+  rule ids, and banners are coloured with the basic 16-colour palette
+  when stdout is a terminal, and plain when it is piped. `--color
+  auto|always|never`, the TOML `color` key, `NO_COLOR`, and
+  `CLICOLOR_FORCE` behave as they do in ripgrep and cargo, identically
+  in both CLIs. JSON, SARIF, and HTML are never coloured, colour is
+  never the only carrier (every coloured token is still a word), and
+  stripping the escape sequences yields exactly the previous plain
+  output — colour cannot change layout.
 - **`--fix` ends with a receipt.** Both CLIs now close a fix pass with
   one line — `Applied 3 fixes to 1 file (1 skipped: conflict 1).`, or
   the `Dry run: …` form — so a command that rewrites your manuscript

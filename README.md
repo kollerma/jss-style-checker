@@ -241,6 +241,13 @@ Accepted findings are keyed by rule, file, message, and suggestion — not
 by line number — so rewording sentences and inserting paragraphs never
 resurrects them. See [`docs/baseline.md`](docs/baseline.md).
 
+Terminal output is coloured when stdout is a terminal and plain when it
+is piped or redirected. `--color always|never` overrides that, `NO_COLOR`
+turns it off, `CLICOLOR_FORCE` turns it on, and `color = "never"` in
+`.jss-lint.toml` sets the default. JSON, SARIF, and HTML are never
+coloured. Nothing is encoded in hue alone — every coloured token is
+still a word — so a monochrome terminal loses nothing.
+
 Exit codes: `0` clean · `1` violations found · `2` tool could not complete
 (unknown journal, missing file, parse error, unsupported extension).
 

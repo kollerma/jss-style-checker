@@ -16,6 +16,11 @@ path = "src/main.rs"
 jsslint-core = { workspace = true }
 jsslint-crossref = { workspace = true }
 clap = { workspace = true }
+# Spec 027 item F. Already in the lockfile via clap; a direct dependency
+# of this crate only — never of the core, WASM, PyO3, or R builds, which
+# do not colourise at all (§XIV, `isolation.rs`). It converts SGR for
+# legacy Windows consoles and strips it when told `Never`.
+anstream = "1"
 regex = "1"
 serde_json = { workspace = true }
 rusqlite = { version = "0.40", default-features = false, features = ["bundled"] }

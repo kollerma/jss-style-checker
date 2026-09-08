@@ -150,6 +150,24 @@ exported by the bindings: `version()` (WASM), `jsslint.version()` /
 the CRAN package version and its resubmission suffix). See
 `docs/versions.md`.
 
+`jsslint --color auto|always|never` colourises the terminal stream. The
+*decision* — flag, then `NO_COLOR`, then `CLICOLOR_FORCE`, then the TOML
+`color` key, then whether stdout is a TTY — is one shared function
+(`jsslint_core::color::should_colorize`, mirroring `texlint/color.py`),
+and `color_parity.rs` checks that both CLIs reach the same answer for
+every combination. **The escape bytes are a documented §XIII
+divergence**: Python lets `rich` emit them, this engine wraps cell text
+in SGR at render time and writes through `anstream::AutoStream` with the
+choice *we* computed (never `AutoStream::auto`, whose own heuristics
+would drift from Python's). Nobody diffs coloured output between
+engines; what both guarantee instead is that stripping every escape
+sequence yields the plain stream byte for byte — widths are measured on
+unstyled text, so colour cannot change layout
+(`terminal_parity.rs::stripping_colour_yields_the_plain_stream`). Only
+the 16-colour set is used, and no token is distinguished by hue alone.
+`anstream` is a direct dependency of this crate only; the WASM, PyO3,
+and R builds never colourise and never link it.
+
 `jsslint --fix` behaves exactly as `jss-lint --fix` does, including the
 closing receipt (`Applied 3 fixes to 1 file (1 skipped: conflict 1).`,
 or the `Dry run: …` form), which `fix_parity.rs` compares across write,

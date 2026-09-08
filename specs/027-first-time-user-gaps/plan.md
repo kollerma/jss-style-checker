@@ -872,6 +872,15 @@ recorded in `research.md`.
 | AC-6 | `vendor-jsslint-core.sh` copies the catalogue data | The script's `cp` list is hand-maintained and was missed for `guide-coverage.yaml`, so the **R package failed to build** while everything else was green. | Fixed, with a comment naming the two other lists that must stay in step (`_FILES` in the sync test, `REQUIRED` in `package_contents.rs`). The new `package_contents.rs` catches the crates.io half of the same failure mode. |
 | AC-5 | `coverage --format json` includes the `sources` block | The Rust CLI must work from a crates.io install with no repository around it, so it cannot read the YAML at runtime. | Python reads the file; Rust compiles the same four entries in. Both outputs are byte-identical (`coverage_parity.rs`), and the pair is small and dated — if it drifts, the parity test says so. |
 
+### Item F — colour
+
+| # | Plan said | Reality | What was done |
+|---|---|---|---|
+| F-1 | Python "lets rich emit the styles already in its markup" | rich adds two of its own on top: the `console.rule` banner line defaults to bright green (SGR 92), and the automatic number highlighter tinted the `Overall:` figure cyan over the bold `color.md` C-2 asks for. | `style="bold"` on the three `console.rule` calls, `title_style="bold"` on the reviewer table, `highlight=False` on the `Overall:` line. The emitted palette is now exactly `0/1/2/31/32/33` — inside C-2 — and a unit test rejects any SGR parameter outside the 16-colour set. |
+| F-2 | Rust "wraps cell text in SGR at render time" | The table renderer measured and wrapped `Vec<Vec<String>>`, so any escape inside a cell would have corrupted every width. | A `Cell { text, style }` type: layout is computed from `text` alone and the style is applied after justification, making C-1 true *by construction* rather than by care. |
+| F-3 | `anstream` "is already in the lockfile via clap" | It is — at 1.0. Depending on `"0.6"` as the plan's prose implied would have added a **second copy** of the same crate to the graph. | Pinned to `"1"`; `Cargo.lock` still has exactly one `anstream`. |
+| F-4 | The strip-SGR unit test asserts `strip(coloured) == plain` | A *clean* author run has nothing to colour — its only output is the footer, which C-2 leaves uncoloured — so the invariant passed vacuously there. | The invariant is asserted for every mode/fixture combination, with separate non-vacuity guards in both engines (`saw_colour` in `terminal_parity.rs`, an explicit findings fixture in the Python test). |
+
 ### Environment
 
 - `.venv-host` is the **macOS host's** venv (`/workspace` is a bind mount

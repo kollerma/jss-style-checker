@@ -73,6 +73,9 @@ fn render(
         // the matcher is pure and lives in core, but the *file* is a
         // filesystem concern, so an in-memory variant is a follow-up.
         baseline: None,
+        // Bindings never colourise: they return a string to a caller,
+        // not to a terminal (`color.md` C-6).
+        color: None,
     };
     let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
     let cfg = config::load(&cwd, &overrides);

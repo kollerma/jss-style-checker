@@ -25,6 +25,7 @@ from .api import (
     RuleSetInfo,
     ToolConfig,
 )
+from .color import should_colorize
 from .config import load as load_config
 from .core.engine import (
     UnsupportedSuffixError,
@@ -126,11 +127,29 @@ def _parse_root_or_paths(
     return _parse_inputs(paths)
 
 
-def _dispatch_renderer(output: str, report: Any, cfg: ToolConfig) -> None:
+def _color_decision(flag: str | None, cfg: ToolConfig) -> bool:
+    """Resolve `--color` / TOML / environment / TTY into one bool.
+
+    Read from the real process state here, at the CLI layer: the
+    renderer takes the answer, not the question (§XIV, `color.md` C-8).
+    """
+    return should_colorize(
+        flag=flag,
+        toml_value=cfg.color,
+        env=os.environ,
+        isatty=sys.stdout.isatty(),
+    )
+
+
+def _dispatch_renderer(
+    output: str, report: Any, cfg: ToolConfig, color: bool = False
+) -> None:
     if output == "terminal":
         from .output.terminal import render as render_terminal
 
-        render_terminal(report, cfg)
+        # Only the terminal stream is ever coloured: JSON, SARIF, and
+        # HTML are consumed by machines and browsers (`color.md` C-3).
+        render_terminal(report, cfg, color)
     elif output == "json":
         from .output.json_output import render as render_json
 
@@ -514,6 +533,17 @@ def _lint_paths_with_doc(
     ),
 )
 @click.option(
+    "--color",
+    "color",
+    type=click.Choice(["auto", "always", "never"], case_sensitive=False),
+    default=None,
+    help=(
+        "Colour policy for terminal output (default: auto — on when stdout "
+        "is a terminal). NO_COLOR and CLICOLOR_FORCE are honoured; JSON, "
+        "SARIF, and HTML are never coloured."
+    ),
+)
+@click.option(
     "--baseline",
     "baseline",
     default=None,
@@ -564,6 +594,7 @@ def main(
     no_resolve: bool,
     crossref: bool,
     crossref_mailto: str | None,
+    color: str | None,
     baseline: str | None,
     update_baseline: bool,
     version: bool,
@@ -623,6 +654,8 @@ def main(
         cli_overrides["verbose"] = verbose
     if baseline is not None:
         cli_overrides["baseline"] = Path(baseline)
+    if color is not None:
+        cli_overrides["color"] = color.lower()
 
     try:
         cfg = load_config(cli_overrides, Path.cwd())
@@ -705,7 +738,7 @@ def main(
         if fix_report.rejected:
             sys.exit(2)
 
-    _dispatch_renderer(cfg.output, report, cfg)
+    _dispatch_renderer(cfg.output, report, cfg, _color_decision(color, cfg))
     sys.exit(_determine_exit_code(report, cfg.fail_on))
 
 
