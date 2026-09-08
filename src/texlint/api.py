@@ -470,6 +470,12 @@ class ToolConfig:
     # There is deliberately no auto-discovery: a file that silences
     # findings must be named, never found (research.md §6).
     baseline: Path | None = None
+    # Colour policy for terminal output (spec 027 item F). TOML key
+    # `color`; `--color` wins; the environment (NO_COLOR /
+    # CLICOLOR_FORCE) beats both, per `texlint.color.should_colorize`.
+    # The config records *intent* — the CLI resolves it to a bool and
+    # hands that to the renderer.
+    color: Literal["auto", "always", "never"] = "auto"
 
 
 @dataclass(frozen=True)

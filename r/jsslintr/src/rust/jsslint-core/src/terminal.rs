@@ -384,13 +384,46 @@ fn justify(text: &str, width: usize, right: bool) -> String {
 /// Renders one complete `rich.table.Table` (box.HEAVY_HEAD, header +
 /// body, no footer, no row separators) as it appears on a non-tty
 /// console. `rows` are already-stripped-of-markup plain strings.
-fn render_table(columns: &[Column], rows: &[Vec<String>], title: Option<&str>) -> String {
-    let widths = column_widths(columns, rows, CONSOLE_WIDTH);
+/// A table cell: the text the layout is computed from, plus the SGR
+/// style it is painted with when colour is on. Keeping the two apart is
+/// what makes `color.md` C-1 true by construction — widths never see an
+/// escape sequence.
+#[derive(Clone)]
+struct Cell {
+    text: String,
+    style: Option<&'static str>,
+}
+
+impl Cell {
+    fn plain(text: impl Into<String>) -> Self {
+        Self { text: text.into(), style: None }
+    }
+
+    fn styled(text: impl Into<String>, style: &'static str) -> Self {
+        Self { text: text.into(), style: Some(style) }
+    }
+}
+
+fn render_table(
+    columns: &[Column],
+    rows: &[Vec<Cell>],
+    title: Option<&str>,
+    color: bool,
+) -> String {
+    let plain_rows: Vec<Vec<String>> = rows
+        .iter()
+        .map(|row| row.iter().map(|c| c.text.clone()).collect())
+        .collect();
+    let widths = column_widths(columns, &plain_rows, CONSOLE_WIDTH);
     let table_width: usize = widths.iter().sum::<usize>() + columns.len() + 1;
 
     let mut out = String::new();
     if let Some(t) = title {
-        out.push_str(&center_text(t, table_width));
+        out.push_str(&crate::color::paint(
+            &center_text(t, table_width),
+            crate::color::BOLD,
+            color,
+        ));
         out.push('\n');
     }
 
@@ -406,7 +439,11 @@ fn render_table(columns: &[Column], rows: &[Vec<String>], title: Option<&str>) -
     out.push('┃');
     for (i, c) in columns.iter().enumerate() {
         out.push(' ');
-        out.push_str(&justify(c.header, widths[i] - 2, false));
+        out.push_str(&crate::color::paint(
+            &justify(c.header, widths[i] - 2, false),
+            crate::color::BOLD,
+            color,
+        ));
         out.push(' ');
         out.push('┃');
     }
@@ -425,15 +462,21 @@ fn render_table(columns: &[Column], rows: &[Vec<String>], title: Option<&str>) -
         let wrapped: Vec<Vec<String>> = row
             .iter()
             .enumerate()
-            .map(|(i, cell)| wrap_cell(cell, widths[i] - 2))
+            .map(|(i, cell)| wrap_cell(&cell.text, widths[i] - 2))
             .collect();
         let height = wrapped.iter().map(|l| l.len()).max().unwrap_or(1);
         for line_idx in 0..height {
             out.push('│');
             for (i, c) in columns.iter().enumerate() {
                 let content = wrapped[i].get(line_idx).map(String::as_str).unwrap_or("");
+                let justified = justify(content, widths[i] - 2, c.right_justify);
                 out.push(' ');
-                out.push_str(&justify(content, widths[i] - 2, c.right_justify));
+                match row[i].style {
+                    Some(style) => {
+                        out.push_str(&crate::color::paint(&justified, style, color))
+                    }
+                    None => out.push_str(&justified),
+                }
                 out.push(' ');
                 out.push('│');
             }
@@ -516,11 +559,23 @@ fn display_path(raw: &str) -> String {
 // ---------------------------------------------------------------------
 
 pub fn render(report: &ComplianceReport, config: &ToolConfig) -> String {
+    render_with_color(report, config, false)
+}
+
+/// `render`, with the colour decision the CLI resolved (spec 027 item
+/// F). Colour never changes layout: every width is measured on the
+/// unstyled text, so stripping the SGR yields this function's own
+/// `color = false` output byte for byte (`color.md` C-1).
+pub fn render_with_color(
+    report: &ComplianceReport,
+    config: &ToolConfig,
+    color: bool,
+) -> String {
     let mut out = String::new();
     if config.mode == Mode::Reviewer {
-        render_reviewer(report, &mut out);
+        render_reviewer(report, &mut out, color);
     } else {
-        render_author(report, &mut out);
+        render_author(report, &mut out, color);
     }
     if config.mode != Mode::Reviewer {
         out.push_str(&author_footer_text(report));
@@ -530,7 +585,7 @@ pub fn render(report: &ComplianceReport, config: &ToolConfig) -> String {
         render_baseline(summary, report, &mut out);
     }
     if config.verbose && !report.skipped_rules.is_empty() {
-        render_skipped_rules(report, &mut out);
+        render_skipped_rules(report, &mut out, color);
     }
     out
 }
@@ -565,7 +620,7 @@ fn render_baseline(
     out.push('\n');
 }
 
-fn render_author(report: &ComplianceReport, out: &mut String) {
+fn render_author(report: &ComplianceReport, out: &mut String, color: bool) {
     let mut files: Vec<&str> = report.violations.iter().map(|v| v.file.as_str()).collect();
     files.sort();
     files.dedup();
@@ -582,14 +637,18 @@ fn render_author(report: &ComplianceReport, out: &mut String) {
     ];
 
     for file in files {
-        out.push_str(&rule_line(&display_path(file), CONSOLE_WIDTH));
+        out.push_str(&crate::color::paint(
+            &rule_line(&display_path(file), CONSOLE_WIDTH),
+            crate::color::BOLD,
+            color,
+        ));
         out.push('\n');
         let file_violations: Vec<&Violation> = report
             .violations
             .iter()
             .filter(|v| v.file == file)
             .collect();
-        let rows: Vec<Vec<String>> = file_violations
+        let rows: Vec<Vec<Cell>> = file_violations
             .iter()
             .map(|v| {
                 let locator = match v.column {
@@ -602,19 +661,21 @@ fn render_author(report: &ComplianceReport, out: &mut String) {
                     strip_markup(&format!("{}{}", v.message, guide_suffix(&v.rule_id)));
                 let suggestion_cell = strip_markup(v.suggestion.as_deref().unwrap_or(""));
                 vec![
-                    locator,
-                    v.severity.as_str().to_string(),
-                    rule_cell,
-                    message_cell,
-                    suggestion_cell,
+                    Cell::plain(locator),
+                    // Severity keeps its word as well as its hue: nothing
+                    // is encoded in colour alone (`color.md` C-2).
+                    Cell::styled(v.severity.as_str(), severity_style(v.severity)),
+                    Cell::styled(rule_cell, crate::color::BOLD),
+                    Cell::plain(message_cell),
+                    Cell::plain(suggestion_cell),
                 ]
             })
             .collect();
-        out.push_str(&render_table(&columns, &rows, None));
+        out.push_str(&render_table(&columns, &rows, None, color));
     }
 }
 
-fn render_reviewer(report: &ComplianceReport, out: &mut String) {
+fn render_reviewer(report: &ComplianceReport, out: &mut String, color: bool) {
     let columns = [
         col_no_wrap("Category"),
         col_no_wrap("Status"),
@@ -625,30 +686,36 @@ fn render_reviewer(report: &ComplianceReport, out: &mut String) {
         col_no_wrap("Recall"),
     ];
     let min_plants = min_plants(report);
-    let rows: Vec<Vec<String>> = report
+    let rows: Vec<Vec<Cell>> = report
         .categories
         .iter()
         .map(|c| {
             vec![
-                c.title.clone(),
-                c.status.as_str().to_string(),
-                c.rules_applied.to_string(),
-                c.rules_passed.to_string(),
-                match &c.recall {
+                Cell::plain(c.title.clone()),
+                Cell::styled(c.status.as_str(), status_style(c.status)),
+                Cell::plain(c.rules_applied.to_string()),
+                Cell::plain(c.rules_passed.to_string()),
+                Cell::plain(match &c.recall {
                     Some(stat) => stat.label(min_plants),
                     None => "n/a".to_string(),
-                },
+                }),
             ]
         })
         .collect();
     let title = format!("Journal compliance — {}", report.journal_id);
-    out.push_str(&render_table(&columns, &rows, Some(&title)));
+    out.push_str(&render_table(&columns, &rows, Some(&title), color));
     match report.compliance_percentage {
         // Python's `f"{pct}%"` formats a `round(x, 1)` float, which
         // Python always shows with at least one decimal digit (40.0,
         // not 40) — Rust's f64 Display drops a trailing ".0".
-        Some(pct) => out.push_str(&format!("Overall: {pct:.1}%\n")),
-        None => out.push_str("Overall: n/a\n"),
+        Some(pct) => out.push_str(&format!(
+            "Overall: {}\n",
+            crate::color::paint(&format!("{pct:.1}%"), crate::color::BOLD, color)
+        )),
+        None => out.push_str(&format!(
+            "Overall: {}\n",
+            crate::color::paint("n/a", crate::color::DIM, color)
+        )),
     }
     if let Some(line) = measured_recall_line(report) {
         out.push_str(&line);
@@ -656,7 +723,7 @@ fn render_reviewer(report: &ComplianceReport, out: &mut String) {
     }
     if let Some(directives) = report.coverage {
         if !directives.is_empty() {
-            render_not_checked(directives, out);
+            render_not_checked(directives, out, color);
         }
     }
 }
@@ -668,8 +735,13 @@ fn render_reviewer(report: &ComplianceReport, out: &mut String) {
 fn render_not_checked(
     directives: &[crate::catalogue::CoverageDirectiveData],
     out: &mut String,
+    color: bool,
 ) {
-    out.push_str(&rule_line("Not checked by jss-lint", CONSOLE_WIDTH));
+    out.push_str(&crate::color::paint(
+        &rule_line("Not checked by jss-lint", CONSOLE_WIDTH),
+        crate::color::BOLD,
+        color,
+    ));
     out.push('\n');
     let rows = crate::coverage::gaps(directives);
     if !rows.is_empty() {
@@ -678,21 +750,21 @@ fn render_not_checked(
             col_no_wrap("Status"),
             col("Provision"),
         ];
-        let table_rows: Vec<Vec<String>> = rows
+        let table_rows: Vec<Vec<Cell>> = rows
             .iter()
             .map(|d| {
                 vec![
-                    d.id.to_string(),
-                    if d.status == "partial" {
-                        "partial".to_string()
+                    Cell::plain(d.id),
+                    Cell::plain(if d.status == "partial" {
+                        "partial"
                     } else {
-                        "not checked".to_string()
-                    },
-                    d.provision.to_string(),
+                        "not checked"
+                    }),
+                    Cell::plain(d.provision),
                 ]
             })
             .collect();
-        out.push_str(&render_table(&columns, &table_rows, None));
+        out.push_str(&render_table(&columns, &table_rows, None, color));
     }
     out.push_str(&crate::coverage::counts_sentence(directives));
     out.push('\n');
@@ -747,14 +819,41 @@ pub fn author_footer_text(report: &ComplianceReport) -> String {
     text
 }
 
-fn render_skipped_rules(report: &ComplianceReport, out: &mut String) {
-    out.push_str(&rule_line("Skipped rules", CONSOLE_WIDTH));
+fn render_skipped_rules(report: &ComplianceReport, out: &mut String, color: bool) {
+    out.push_str(&crate::color::paint(
+        &rule_line("Skipped rules", CONSOLE_WIDTH),
+        crate::color::BOLD,
+        color,
+    ));
     out.push('\n');
     let columns = [col_no_wrap("Rule"), col("Reason")];
-    let rows: Vec<Vec<String>> = report
+    let rows: Vec<Vec<Cell>> = report
         .skipped_rules
         .iter()
-        .map(|s| vec![s.rule_id.clone(), strip_markup(&s.reason)])
+        .map(|s| {
+            vec![
+                Cell::styled(s.rule_id.clone(), crate::color::BOLD),
+                Cell::plain(strip_markup(&s.reason)),
+            ]
+        })
         .collect();
-    out.push_str(&render_table(&columns, &rows, None));
+    out.push_str(&render_table(&columns, &rows, None, color));
+}
+
+/// `color.md` C-2's palette, per severity and per status.
+fn severity_style(severity: crate::report::Severity) -> &'static str {
+    match severity {
+        crate::report::Severity::Error => crate::color::RED,
+        crate::report::Severity::Warning => crate::color::YELLOW,
+        // Cyan, not blue: blue is unreadable on a dark background.
+        crate::report::Severity::Info => crate::color::CYAN,
+    }
+}
+
+fn status_style(status: crate::report::CategoryStatus) -> &'static str {
+    match status {
+        crate::report::CategoryStatus::Pass => crate::color::GREEN,
+        crate::report::CategoryStatus::Fail => crate::color::RED,
+        crate::report::CategoryStatus::Skipped => crate::color::DIM,
+    }
 }

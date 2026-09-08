@@ -110,23 +110,42 @@ _SEVERITY_STYLE = {
 }
 
 
-def _console() -> Console:
-    # Force a fixed width so CI / test captures are stable and the output
-    # looks sensible in pipe-to-file scenarios.
-    return Console(file=sys.stdout, force_terminal=False, no_color=False, width=120)
+def _console(color: bool = False) -> Console:
+    """The one console every part of this renderer writes through.
+
+    ``width=120`` is fixed so CI captures and pipe-to-file output are
+    stable — and so colour cannot change the layout, which is the
+    invariant `color.md` C-1 states: stripping the escapes must give the
+    plain stream back byte for byte.
+
+    ``color_system="standard"`` keeps rich to the 16-colour SGR set: no
+    256-colour or truecolor sequences, so the output stays readable on
+    light and dark backgrounds and on terminals that support neither.
+    """
+    return Console(
+        file=sys.stdout,
+        force_terminal=color,
+        color_system="standard" if color else None,
+        no_color=not color,
+        width=120,
+    )
 
 
-def render(report: ComplianceReport, config: ToolConfig) -> None:
+def render(
+    report: ComplianceReport, config: ToolConfig, color: bool = False
+) -> None:
+    """Render the report. *color* is the resolved decision, not intent —
+    the CLI computes it from flag, TOML, environment, and TTY."""
     if config.mode == "reviewer":
-        _render_reviewer(report)
+        _render_reviewer(report, color)
     else:
-        _render_author(report)
+        _render_author(report, color)
     if config.mode != "reviewer":
-        _render_author_footer(report)
+        _render_author_footer(report, color)
     if report.baseline is not None:
-        _render_baseline(report)
+        _render_baseline(report, color)
     if config.verbose and report.skipped_rules:
-        _render_skipped_rules(report)
+        _render_skipped_rules(report, color)
 
 
 def _render_not_checked(report: ComplianceReport, console: Console) -> None:
@@ -139,7 +158,7 @@ def _render_not_checked(report: ComplianceReport, console: Console) -> None:
     full counts and points at the subcommand.
     """
     assert report.coverage is not None  # guarded by the caller
-    console.rule("[bold]Not checked by jss-lint[/bold]")
+    console.rule("[bold]Not checked by jss-lint[/bold]", style="bold")
     rows = coverage_module.gaps(report.coverage)
     if rows:
         table = Table(show_header=True, header_style="bold")
@@ -180,7 +199,7 @@ def measured_recall_line(report: ComplianceReport) -> str | None:
     )
 
 
-def _render_author_footer(report: ComplianceReport) -> None:
+def _render_author_footer(report: ComplianceReport, color: bool = False) -> None:
     """The statement a clean run has to carry (spec 027 FR-A-004).
 
     Printed on **stdout**, always — including when there are no findings
@@ -191,7 +210,7 @@ def _render_author_footer(report: ComplianceReport) -> None:
     the terminal report *is* the report, and a saved text file of a
     clean run must not be empty.
     """
-    _console().print(author_footer_text(report), highlight=False)
+    _console(color).print(author_footer_text(report), highlight=False)
 
 
 def author_footer_text(report: ComplianceReport) -> str:
@@ -213,7 +232,7 @@ def author_footer_text(report: ComplianceReport) -> str:
     return "\n".join(lines)
 
 
-def _render_baseline(report: ComplianceReport) -> None:
+def _render_baseline(report: ComplianceReport, color: bool = False) -> None:
     """One line saying what the baseline hid (`baseline-file.md` C-6).
 
     Printed in both modes, and in particular on an otherwise clean run:
@@ -239,13 +258,13 @@ def _render_baseline(report: ComplianceReport) -> None:
             f" — written for rule set {summary.ruleset_version}, current "
             f"{current}; run --update-baseline"
         )
-    _console().print(line, highlight=False)
+    _console(color).print(line, highlight=False)
 
 
 
-def _render_skipped_rules(report: ComplianceReport) -> None:
-    console = _console()
-    console.rule("[bold]Skipped rules[/bold]")
+def _render_skipped_rules(report: ComplianceReport, color: bool = False) -> None:
+    console = _console(color)
+    console.rule("[bold]Skipped rules[/bold]", style="bold")
     table = Table(show_header=True, header_style="bold")
     table.add_column("Rule", no_wrap=True)
     table.add_column("Reason")
@@ -254,8 +273,8 @@ def _render_skipped_rules(report: ComplianceReport) -> None:
     console.print(table)
 
 
-def _render_author(report: ComplianceReport) -> None:
-    console = _console()
+def _render_author(report: ComplianceReport, color: bool = False) -> None:
+    console = _console(color)
     by_file: dict[str, list[Violation]] = defaultdict(list)
     for v in report.violations:
         by_file[str(v.file)].append(v)
@@ -264,7 +283,7 @@ def _render_author(report: ComplianceReport) -> None:
         return
 
     for file_path in sorted(by_file):
-        console.rule(f"[bold]{_display_path(file_path)}[/bold]")
+        console.rule(f"[bold]{_display_path(file_path)}[/bold]", style="bold")
         table = Table(show_header=True, header_style="bold")
         table.add_column("Line:Col", no_wrap=True)
         table.add_column("Severity", no_wrap=True)
@@ -285,12 +304,15 @@ def _render_author(report: ComplianceReport) -> None:
         console.print(table)
 
 
-def _render_reviewer(report: ComplianceReport) -> None:
-    console = _console()
+def _render_reviewer(report: ComplianceReport, color: bool = False) -> None:
+    console = _console(color)
     table = Table(
         title=f"Journal compliance — {report.journal_id}",
         show_header=True,
         header_style="bold",
+        # rich's default title style is italic-and-tinted; `color.md`
+        # C-2 puts banner titles in bold, like the Rust engine.
+        title_style="bold",
     )
     table.add_column("Category", no_wrap=True)
     table.add_column("Status", no_wrap=True)
@@ -318,9 +340,12 @@ def _render_reviewer(report: ComplianceReport) -> None:
     console.print(table)
     pct = report.compliance_percentage
     if pct is None:
-        console.print("Overall: [dim]n/a[/dim]")
+        console.print("Overall: [dim]n/a[/dim]", highlight=False)
     else:
-        console.print(f"Overall: [bold]{pct}%[/bold]")
+        # `highlight=False`: rich's automatic number highlighter would
+        # otherwise tint the figure cyan on top of the bold `color.md`
+        # C-2 asks for.
+        console.print(f"Overall: [bold]{pct}%[/bold]", highlight=False)
     line = measured_recall_line(report)
     if line is not None:
         console.print(line, highlight=False)

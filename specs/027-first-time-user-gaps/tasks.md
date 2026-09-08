@@ -308,16 +308,16 @@ active rule; `coverage` renders identically in both engines.
 **Independent Test**: `strip_sgr(coloured) == plain` in both engines; the
 decision matrix agrees across engines.
 
-- [ ] T123 [P] [US7] Failing unit tests for the decision function matrix (flag × `NO_COLOR` × `CLICOLOR_FORCE` × TOML × isatty) in `tests/unit/test_config.py`
-- [ ] T124 [US7] `ToolConfig.color` + TOML key in `src/texlint/config.py`; `ColorChoice` in `rust/jsslint-core/src/config.rs` and the four `RawOverrides` literals
-- [ ] T125 [US7] Implement the decision function in `src/texlint/cli.py` and `rust/jsslint-cli/src/main.rs` with `--color auto|always|never`
-- [ ] T126 [US7] `color: bool` in `_console()` in `src/texlint/output/terminal.py` (`force_terminal`, `color_system="standard"`, `no_color`, `width=120`)
-- [ ] T127 [US7] SGR at render time in `rust/jsslint-core/src/terminal.rs` (measure unstyled text) and `anstream::AutoStream::new(stdout, choice)` in `rust/jsslint-cli` only
-- [ ] T128 [P] [US7] `strip_sgr(render(color=True)) == render(color=False)` unit tests in both engines on author, reviewer, and skipped-rules fixtures
-- [ ] T129 [US7] `--color always` cases in `rust/jsslint-core/tests/terminal_parity.rs` with both sides SGR-stripped
-- [ ] T130 [US7] New `rust/jsslint-cli/tests/color_parity.rs` checking the decision only (env matrix, TOML, `--output json --color always`)
-- [ ] T131 [P] [US7] Document the coloured-bytes §XIII divergence in `rust/README.md` and the flag in `README.md`
-- [ ] T132 [US7] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
+- [x] T123 [P] [US7] Failing unit tests for the decision function matrix (flag × `NO_COLOR` × `CLICOLOR_FORCE` × TOML × isatty) in `tests/unit/test_config.py`
+- [x] T124 [US7] `ToolConfig.color` + TOML key in `src/texlint/config.py`; `ColorChoice` in `rust/jsslint-core/src/config.rs` and the four `RawOverrides` literals
+- [x] T125 [US7] Implement the decision function in `src/texlint/cli.py` and `rust/jsslint-cli/src/main.rs` with `--color auto|always|never`
+- [x] T126 [US7] `color: bool` in `_console()` in `src/texlint/output/terminal.py` (`force_terminal`, `color_system="standard"`, `no_color`, `width=120`)
+- [x] T127 [US7] SGR at render time in `rust/jsslint-core/src/terminal.rs` (measure unstyled text) and `anstream::AutoStream::new(stdout, choice)` in `rust/jsslint-cli` only
+- [x] T128 [P] [US7] `strip_sgr(render(color=True)) == render(color=False)` unit tests in both engines on author, reviewer, and skipped-rules fixtures
+- [x] T129 [US7] `--color always` cases in `rust/jsslint-core/tests/terminal_parity.rs` with both sides SGR-stripped
+- [x] T130 [US7] New `rust/jsslint-cli/tests/color_parity.rs` checking the decision only (env matrix, TOML, `--output json --color always`)
+- [x] T131 [P] [US7] Document the coloured-bytes §XIII divergence in `rust/README.md` and the flag in `README.md`
+- [x] T132 [US7] Run `bash r/jsslintr/tools/vendor-jsslint-core.sh`; commit
 
 **Checkpoint**: colour on in a TTY, never in a pipe, never in JSON/SARIF/HTML
 

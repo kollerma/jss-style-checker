@@ -9,6 +9,7 @@
 pub mod baseline;
 pub mod bib;
 pub mod catalogue;
+pub mod color;
 pub mod config;
 pub mod conformance;
 pub mod coverage;

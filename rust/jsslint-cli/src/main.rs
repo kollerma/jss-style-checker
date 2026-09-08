@@ -141,6 +141,12 @@ struct Cli {
     #[arg(long = "crossref-mailto")]
     crossref_mailto: Option<String>,
 
+    /// Colour policy for terminal output (default: auto — on when
+    /// stdout is a terminal). NO_COLOR and CLICOLOR_FORCE are honoured;
+    /// JSON, SARIF, and HTML are never coloured.
+    #[arg(long, value_parser = ["auto", "always", "never"], ignore_case = true)]
+    color: Option<String>,
+
     /// Apply a baseline file: findings it records are hidden from every
     /// output and from the exit code. Also settable as `baseline` in
     /// .jss-lint.toml; never discovered automatically.
@@ -946,6 +952,40 @@ fn atomic_write(path: &Path, text: &str) -> std::io::Result<()> {
     std::fs::rename(&temp, path)
 }
 
+/// Resolve `--color` / TOML / environment / TTY into one bool.
+///
+/// Read from the real process state here, at the CLI layer: the
+/// renderer takes the answer, not the question (§XIV, `color.md` C-8).
+fn color_decision(flag: Option<&str>, config: &config::ToolConfig) -> bool {
+    jsslint_core::color::should_colorize(
+        flag,
+        config.color,
+        &|key| std::env::var(key).ok(),
+        std::io::IsTerminal::is_terminal(&std::io::stdout()),
+    )
+}
+
+/// Write the rendered terminal stream through `anstream`.
+///
+/// The choice is the one *we* computed — never `AutoStream::auto`, whose
+/// own environment heuristics would drift from the Python engine's and
+/// break the one thing that must agree across engines (`color.md` C-5).
+/// anstream converts SGR for legacy Windows consoles and strips it
+/// outright when told `Never`, which is the belt to the braces of never
+/// emitting it in the first place.
+fn write_terminal(rendered: &str, color: bool) {
+    use std::io::Write;
+
+    let choice = if color {
+        anstream::ColorChoice::Always
+    } else {
+        anstream::ColorChoice::Never
+    };
+    let mut stream = anstream::AutoStream::new(std::io::stdout(), choice);
+    let _ = write!(stream, "{rendered}");
+    let _ = stream.flush();
+}
+
 fn run_lint() -> ExitCode {
     let mut cli = Cli::parse();
     // See `run_explain`'s comment on `ignore_case = true`: clap preserves
@@ -955,6 +995,7 @@ fn run_lint() -> ExitCode {
     cli.output = cli.output.map(|s| s.to_lowercase());
     cli.min_confidence = cli.min_confidence.map(|s| s.to_lowercase());
     cli.fail_on = cli.fail_on.map(|s| s.to_lowercase());
+    cli.color = cli.color.map(|s| s.to_lowercase());
 
     if cli.version {
         return print_version(cli.journal.as_deref());
@@ -982,6 +1023,7 @@ fn run_lint() -> ExitCode {
         fail_on: cli.fail_on.clone(),
         severity_overrides: None,
         baseline: cli.baseline.clone(),
+        color: cli.color.clone(),
     };
     let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     let mut config = config::load(&cwd, &cli_overrides);
@@ -1116,7 +1158,12 @@ fn run_lint() -> ExitCode {
 
     match config.output {
         OutputFormat::Json => print!("{}", json_output::render(&report)),
-        OutputFormat::Terminal => print!("{}", terminal::render(&report, &config)),
+        // Only the terminal stream is ever coloured: JSON, SARIF, and
+        // HTML are consumed by machines and browsers (`color.md` C-3).
+        OutputFormat::Terminal => {
+            let color = color_decision(cli.color.as_deref(), &config);
+            write_terminal(&terminal::render_with_color(&report, &config, color), color);
+        }
         OutputFormat::Sarif => print!("{}", sarif::render(&report, &config)),
         OutputFormat::Html => print!(
             "{}",
