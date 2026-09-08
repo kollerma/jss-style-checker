@@ -95,7 +95,7 @@ authorities have a rule behind them, and which do not.
 ```
 $ jss-lint coverage
 Guide coverage — jss (rule set 2026-09-07)
-76 checked, 4 partial, 3 not checked, 66 out of scope
+76 checked, 4 partial, 5 not checked, 64 out of scope
 …
 $ jss-lint coverage --format markdown   # one table per authority
 $ jss-lint coverage --format json       # every directive, with provisions
@@ -122,7 +122,7 @@ read them before submitting — but excluded from the ratio the footer
 prints, which counts only what is checkable:
 
 ```
-jss-lint checks 80 of 83 guide directives (3 not checked, 4 partial). Run jss-lint coverage for the list.
+jss-lint checks 80 of 85 guide directives (5 not checked, 4 partial). Run jss-lint coverage for the list.
 ```
 
 Reviewer mode ends with the gaps themselves, `partial` first:
@@ -131,7 +131,7 @@ Reviewer mode ends with the gaps themselves, `partial` first:
 ──────────────────────── Not checked by jss-lint ────────────────────────
 │ SG-008    │ partial     │ MUST: All titles in the BibTeX file are in title style │
 │ SG-010    │ not checked │ MUST: Figure/table captions are in sentence style      │
-Run jss-lint coverage for the full matrix (76 checked, 4 partial, 3 not checked, 66 out of scope).
+Run jss-lint coverage for the full matrix (76 checked, 4 partial, 5 not checked, 64 out of scope).
 ```
 
 `jss-lint explain RULE` reports the reverse direction — which provisions

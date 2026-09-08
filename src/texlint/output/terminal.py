@@ -13,6 +13,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from texlint import coverage as coverage_module
@@ -169,7 +170,7 @@ def _render_not_checked(report: ComplianceReport, console: Console) -> None:
             table.add_row(
                 directive.id,
                 "partial" if directive.status == "partial" else "not checked",
-                directive.provision,
+                escape(directive.provision),
             )
         console.print(table)
     console.print(
@@ -258,7 +259,8 @@ def _render_baseline(report: ComplianceReport, color: bool = False) -> None:
             f" — written for rule set {summary.ruleset_version}, current "
             f"{current}; run --update-baseline"
         )
-    _console(color).print(line, highlight=False)
+    # `summary.path` is a user-supplied path: escape before rich sees it.
+    _console(color).print(escape(line), highlight=False)
 
 
 
@@ -269,7 +271,7 @@ def _render_skipped_rules(report: ComplianceReport, color: bool = False) -> None
     table.add_column("Rule", no_wrap=True)
     table.add_column("Reason")
     for skip in report.skipped_rules:
-        table.add_row(skip.rule_id, skip.reason)
+        table.add_row(skip.rule_id, escape(skip.reason))
     console.print(table)
 
 
@@ -283,7 +285,7 @@ def _render_author(report: ComplianceReport, color: bool = False) -> None:
         return
 
     for file_path in sorted(by_file):
-        console.rule(f"[bold]{_display_path(file_path)}[/bold]", style="bold")
+        console.rule(f"[bold]{escape(_display_path(file_path))}[/bold]", style="bold")
         table = Table(show_header=True, header_style="bold")
         table.add_column("Line:Col", no_wrap=True)
         table.add_column("Severity", no_wrap=True)
@@ -298,8 +300,8 @@ def _render_author(report: ComplianceReport, color: bool = False) -> None:
                 locator,
                 f"[{style}]{v.severity.value}[/{style}]" if style else v.severity.value,
                 f"{v.rule_id}{_confidence_suffix(v.rule_id)}",
-                f"{v.message}{_guide_suffix(v.rule_id)}",
-                v.suggestion or "",
+                escape(f"{v.message}{_guide_suffix(v.rule_id)}"),
+                escape(v.suggestion or ""),
             )
         console.print(table)
 

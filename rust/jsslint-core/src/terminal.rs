@@ -8,67 +8,22 @@
 //! plain text automatically. Real-terminal (tty) colored output is
 //! NOT replicated here; this module only targets the non-tty path.
 //!
-//! Faithfully replicates one genuine `rich` quirk rather than working
-//! around it: `Table.add_row(str)` parses EVERY string cell as rich
-//! markup, so any `[lowercase...]` bracket run in a violation message
-//! or suggestion — e.g. `\citep[e.g.][]{key}` — gets silently
-//! swallowed (rich attempts to interpret `[e.g.]` as a style tag,
-//! fails to find a `e.g.`-named style, and drops it, changing the
-//! rendered text to `\citep[]{key}`). Confirmed empirically against
-//! the real Python renderer; see `strip_markup`'s doc comment.
+//! Cell text is emitted verbatim. Until 1.2.0 this module mirrored a
+//! `rich` quirk instead: `Table.add_row(str)` parses every string cell
+//! as console markup, so any `[lowercase...]` run in a message or
+//! suggestion — `\citep[e.g.][]{key}`, `\documentclass[article]{jss}` —
+//! was swallowed as a style tag and rendered as `\citep[]{key}`. The
+//! port reproduced that faithfully to hold §XIII byte-parity, which
+//! kept the two engines identical and both of them wrong. The Python
+//! side now escapes cell text before rich sees it
+//! (`output/terminal.py`), so the honest rendering is the parity
+//! target and this module simply prints what it is given.
 
 use crate::catalogue;
 use crate::config::{Mode, ToolConfig};
 use crate::report::{ComplianceReport, Violation};
-use regex::Regex;
-use std::sync::LazyLock;
 
 const CONSOLE_WIDTH: usize = 120;
-
-// ---------------------------------------------------------------------
-// Markup stripping — mirrors rich.markup's tag regex and substitution.
-// ---------------------------------------------------------------------
-
-/// Mirrors `rich.markup.RE_TAGS = re.compile(r"((\\*)\[([a-z#/@][^[]*?)])")`.
-static TAG_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(\\*)\[([a-z#/@][^\[]*?)\]").unwrap());
-
-/// Strips every `[tag]`-shaped bracket run (content starting with a
-/// lowercase letter, `#`, `/`, or `@`) the way `rich.markup.render`
-/// does: the tag itself (brackets + content) is removed entirely,
-/// regardless of whether the "style name" is real — `rich` doesn't
-/// validate until render time, and non-tty rendering never needs a
-/// real `Style`, so an invalid tag is silently absorbed just like a
-/// valid one. `\[` (single backslash before `[`) is the one escape
-/// `rich` recognizes and unescapes to a literal `[`; runs of 2+
-/// backslashes aren't precisely replicated (not observed in any real
-/// JSS rule message/suggestion).
-pub fn strip_markup(s: &str) -> String {
-    if !s.contains('[') {
-        return s.to_string();
-    }
-    let mut out = String::new();
-    let mut last_end = 0;
-    for caps in TAG_RE.captures_iter(s) {
-        let whole = caps.get(0).unwrap();
-        let backslashes = caps.get(1).unwrap().as_str();
-        let pre = &s[last_end..whole.start()];
-        out.push_str(&pre.replace("\\[", "["));
-        if backslashes.chars().count() % 2 == 1 {
-            // Escaped: not a real tag. Keep one fewer backslash (the
-            // one that did the escaping) plus the literal brackets.
-            let kept = &backslashes[..backslashes.len() - 1];
-            out.push_str(kept);
-            out.push('[');
-            out.push_str(caps.get(2).unwrap().as_str());
-            out.push(']');
-        }
-        // else: a real tag — contributes nothing to plain text.
-        last_end = whole.end();
-    }
-    out.push_str(&s[last_end..].replace("\\[", "["));
-    out
-}
 
 // ---------------------------------------------------------------------
 // console.rule() — mirrors rich.rule.Rule.__rich_console__ (align="center").
@@ -653,11 +608,9 @@ fn render_author(report: &ComplianceReport, out: &mut String, color: bool) {
                     Some(c) => format!("{}:{c}", v.line),
                     None => v.line.to_string(),
                 };
-                let rule_cell =
-                    strip_markup(&format!("{}{}", v.rule_id, confidence_suffix(&v.rule_id)));
-                let message_cell =
-                    strip_markup(&format!("{}{}", v.message, guide_suffix(&v.rule_id)));
-                let suggestion_cell = strip_markup(v.suggestion.as_deref().unwrap_or(""));
+                let rule_cell = format!("{}{}", v.rule_id, confidence_suffix(&v.rule_id));
+                let message_cell = format!("{}{}", v.message, guide_suffix(&v.rule_id));
+                let suggestion_cell = v.suggestion.as_deref().unwrap_or("").to_string();
                 vec![
                     Cell::plain(locator),
                     // Severity keeps its word as well as its hue: nothing
@@ -831,7 +784,7 @@ fn render_skipped_rules(report: &ComplianceReport, out: &mut String, color: bool
         .map(|s| {
             vec![
                 Cell::styled(s.rule_id.clone(), crate::color::BOLD),
-                Cell::plain(strip_markup(&s.reason)),
+                Cell::plain(s.reason.clone()),
             ]
         })
         .collect();
@@ -853,5 +806,71 @@ fn status_style(status: crate::report::CategoryStatus) -> &'static str {
         crate::report::CategoryStatus::Pass => crate::color::GREEN,
         crate::report::CategoryStatus::Fail => crate::color::RED,
         crate::report::CategoryStatus::Skipped => crate::color::DIM,
+    }
+}
+
+#[cfg(test)]
+mod markup_tests {
+    //! Bracketed text must reach the terminal intact (spec 027 review).
+    //!
+    //! Until 1.2.0 both engines dropped `[tag]`-shaped runs: rich ate
+    //! them as console markup, and this module mirrored that to hold
+    //! byte-parity. The result was a suggestion telling an author to
+    //! write `\documentclass{jss}` when the rule meant
+    //! `\documentclass[shortnames]{jss}`. The Python side now escapes
+    //! before rich sees the cell, so verbatim is the parity target.
+
+    use super::render;
+    use crate::config::ToolConfig;
+    use crate::report::{ComplianceReport, Severity, Violation};
+
+    fn report_with(message: &str, suggestion: &str) -> ComplianceReport {
+        let mut report = ComplianceReport {
+            tool_version: "1.2.0".to_string(),
+            journal_id: "jss".to_string(),
+            violations: Vec::new(),
+            categories: Vec::new(),
+            compliance_percentage: None,
+            skipped_rules: Vec::new(),
+            baseline: None,
+            rule_set: crate::report::RuleSetInfo::default(),
+            coverage: None,
+        };
+        report.violations.push(Violation {
+            file: "paper.tex".to_string(),
+            line: 1,
+            column: Some(1),
+            rule_id: "JSS-CAP-001".to_string(),
+            severity: Severity::Warning,
+            message: message.to_string(),
+            suggestion: Some(suggestion.to_string()),
+            fix: None,
+        });
+        report
+    }
+
+    /// The bracket runs a JSS manuscript actually contains: a class
+    /// option, a `\citep` prenote, and a short-title argument. All
+    /// three start with a lowercase letter, which is exactly what
+    /// rich's tag regex matches.
+    #[test]
+    fn bracket_runs_reach_the_table() {
+        for (message, suggestion) in [
+            ("uses \\citep[e.g.][]{key}", "write \\citep[e.g.][]{key}"),
+            ("bare class", "add \\documentclass[shortnames]{jss}"),
+            ("no shim", "supply \\section[plain]{markup}"),
+        ] {
+            let out = render(&report_with(message, suggestion), &ToolConfig::default());
+            let bracketed: String = suggestion
+                .chars()
+                .skip(suggestion.find('[').unwrap())
+                .take_while(|c| *c != ']')
+                .collect();
+            let needle = format!("{bracketed}]");
+            assert!(
+                out.contains(&needle),
+                "{needle:?} was swallowed by the renderer:\n{out}"
+            );
+        }
     }
 }

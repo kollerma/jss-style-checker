@@ -99,7 +99,7 @@ class TestAuthorVsReviewer:
 class TestNotCheckedBlock:
     """Spec 027 FR-G-003: reviewer mode ends with what is *not* checked.
 
-    A compliance percentage over a rule set that covers 80 of 83
+    A compliance percentage over a rule set that covers 80 of 85
     checkable provisions means something different from one over a rule
     set that covers all of them; the block is what lets a reviewer tell.
     """

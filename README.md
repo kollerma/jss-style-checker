@@ -195,7 +195,7 @@ never `100%`. It is a lower bound (source-only linting).
 And it says what it does not look for at all:
 
 ```sh
-jss-lint coverage                    # 76 checked, 4 partial, 3 not checked, 66 out of scope
+jss-lint coverage                    # 76 checked, 4 partial, 5 not checked, 64 out of scope
 jss-lint coverage --format markdown  # one table per authority
 ```
 

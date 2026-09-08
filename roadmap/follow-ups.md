@@ -601,6 +601,29 @@ Deferred deliberately during spec 027; each is independent.
       package's copy; `rust/jsslint-core/specs/003-jss-rule-catalogue/`
       is copied by hand and guarded only by
       `tests/unit/test_vendored_catalogue_in_sync.py`.
+- [ ] **Three Sweave-side provisions that `.Rnw` support unblocked.**
+      `TEX-023`, `SG-041`, and `SG-043` in `guide-coverage.yaml` were
+      judged out-of-scope/deferred when `.Rnw` was unimplemented; it
+      shipped 2026-07 and the reasons were stale until spec 027. Each
+      now has a *named* obstacle rather than a missing feature:
+      - `TEX-023` (`R> ` prompt, `+  ` continuation) — checkable for
+        hand-written `\begin{Sinput}`, but `wrap_rnw_chunks_as_sinput`
+        re-emits `.Rnw` chunks as `Sinput` holding raw R source with no
+        prompts, and leaves no marker separating synthesized envelopes
+        from author-written ones. A rule would fire on every Sweave
+        manuscript. Needs a provenance flag on the envelope.
+      - `SG-041` (`\documentclass[nojss]{jss}` in a vignette) — the
+        class options are already parsed; what is missing is knowing the
+        file *is* a vignette. Nothing in a `.Rnw` separates a vignette
+        from a Sweave manuscript, where requiring `nojss` would be
+        wrong. Needs an explicit scope signal.
+      - `SG-043` (`options(prompt=, continue=, width=70,
+        useFancyQuotes=FALSE)`) — the provision requires the call be
+        *invisible*, i.e. in an `echo=FALSE` chunk, and hidden chunks are
+        blanked before any rule runs. The one place it can live is the
+        one place no rule can see. Needs the parser to expose
+        hidden-chunk content to an opted-in rule.
+      Doing all three would move the ratio from 80/85 to 83/85.
 - [ ] **Close the §IX branch-coverage gap on the JSS rule modules.**
       The constitution mandates 100% branch coverage on
       `src/texlint/journals/*/rules/`; the full suite measures 93%

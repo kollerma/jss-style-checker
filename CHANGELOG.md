@@ -42,11 +42,11 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
   `specs/003-jss-rule-catalogue/guide-coverage.yaml`, maps all 149
   provisions of the four JSS authorities — `jss.cls`, `article.tex`, the
   style guide, the author instructions, each pinned to a dated edition —
-  to the rules that enforce them: **76 checked, 4 partial, 3 not
-  checked, 66 out of scope**. `jss-lint coverage` prints it
+  to the rules that enforce them: **76 checked, 4 partial, 5 not
+  checked, 64 out of scope**. `jss-lint coverage` prints it
   (`--format terminal|markdown|json`); reviewer mode ends with a
   "Not checked by jss-lint" block listing the gaps; the author footer
-  gives the ratio (`checks 80 of 83 guide directives`); JSON gains a
+  gives the ratio (`checks 80 of 85 guide directives`); JSON gains a
   top-level `coverage` object; and `explain` reports the reverse
   direction (`Covers: SG-027, SG-028`). Out-of-scope provisions —
   compilability, graphics legibility, replication scripts — are listed
@@ -123,6 +123,18 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
   constraints, the compatibility policy, and what to pin.
 
 ### Fixed
+
+- **Bracketed text no longer disappears from terminal output.** `rich`
+  parses `[word]` in a table cell as a console-markup tag and drops it,
+  so any message or suggestion quoting LaTeX with an optional argument
+  was rendered wrong: `\documentclass[shortnames]{jss}` came out as
+  `\documentclass{jss}`, and `\citep[e.g.][]{key}` as `\citep[]{key}` —
+  turning a correct suggestion into one that would introduce a
+  different error if followed. The Rust port had reproduced the quirk
+  deliberately to hold byte-parity, so both engines agreed and both were
+  wrong. Cell text is now escaped on the Python side and emitted
+  verbatim on the Rust side. Only terminal output was affected; JSON,
+  SARIF, and HTML always carried the correct text.
 
 - **The Rust engine now honours `% jss-lint: ignore`.** It never
   implemented the directives, so every surface built on it — the

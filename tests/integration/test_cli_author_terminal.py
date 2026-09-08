@@ -134,3 +134,54 @@ class TestIgnoreRules:
             ],
         )
         assert result.exit_code == 0
+
+
+class TestRichMarkupIsNotInterpreted:
+    """Bracketed text in a message must survive to the terminal.
+
+    rich parses `[word]` in a printed string as a console-markup tag and
+    drops it. Every message, suggestion, provision, and path we print is
+    author-derived or guide-derived text, and LaTeX is full of brackets —
+    `\\documentclass[article]{jss}` rendered as `\\documentclass{jss}`,
+    silently turning a correct suggestion into a wrong one.
+
+    Found via a §XIII parity failure: the Rust engine prints the bytes
+    literally, so the two engines disagreed the moment a coverage
+    provision quoted `\\documentclass[nojss]{jss}`. No fixture had a
+    tag-shaped token in a message before, which is why it survived to
+    1.2.0.
+    """
+
+    def test_class_option_survives_in_a_suggestion(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        paper = tmp_path / "paper.tex"
+        paper.write_text(
+            "\\documentclass[article]{jss}\n"
+            "\\title{T}\n\\Abstract{A}\n\\Keywords{K}\n\\Address{X}\n"
+            "\\Plaintitle{T}\n\\Plainkeywords{K}\n"
+            "\\Author{A}\n\\Plainauthor{A}\n"
+            "\\begin{document}\n"
+            "\\section{Using [brackets] And Options}\n"
+            "Text.\n"
+            "\\end{document}\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(main, [str(paper)])
+        assert "[brackets]" in result.output, result.output
+
+    def test_not_checked_provision_keeps_its_brackets(
+        self, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(
+            main,
+            [
+                "--mode",
+                "reviewer",
+                str(FIXTURES / "compliant" / "minimal.tex"),
+                str(FIXTURES / "compliant" / "minimal.bib"),
+            ],
+        )
+        # SG-041 is a `not_checked` row whose provision quotes the class
+        # option; the `[nojss]` is exactly what rich would have eaten.
+        assert "[nojss]" in result.output, result.output

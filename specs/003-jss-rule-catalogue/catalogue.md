@@ -191,7 +191,7 @@ _project_ — 2 rule(s)
 
 Which provisions of the four authorities these rules enforce, and which they do not. Source of truth: [guide-coverage.yaml](guide-coverage.yaml); printed by `jss-lint coverage`.
 
-**76 checked · 4 partial · 3 not checked · 66 out of scope**
+**76 checked · 4 partial · 5 not checked · 64 out of scope**
 
 ### jss.cls
 
@@ -199,7 +199,7 @@ Which provisions of the four authorities these rules enforce, and which they do 
 |---|---|---|---|---|
 | CLS-001 | checked | Manuscript declares exactly one of `article`, `codesnippet`, `bookreview`, `softwarereview` as the class option | `JSS-PRE-001` | — |
 | CLS-002 | checked | `shortnames` class option available for natbib short-form names | `JSS-BIBTEX-004` | — |
-| CLS-003 | out of scope | `nojss` class option turns off JSS header/footer (used for vignettes) | — | vignette-only; .Rnw scope in Step 4 |
+| CLS-003 | out of scope | `nojss` class option turns off JSS header/footer (used for vignettes) | — | the class *offers* the option; nothing obliges an author to use it. Not a vignette-scope gap — JSS-PRE-001 accepts `[nojss]` and preamble.py gates the vignette waiver on it |
 | CLS-004 | out of scope | `notitle`, `noheadings`, `nofooter` class options exist | — | vignette-only |
 | CLS-005 | checked | `natbib` loaded with `[authoryear,round]` (or `[authoryear,round,longnamesfirst]` when `shortnames` is off); `\bibpunct` set to `(){};a,` | `JSS-CITE-004` | — |
 | CLS-006 | out of scope | Bibliography style is `jss` (i.e., `\bibliographystyle{jss}`) | — | set implicitly by jss.cls; no author action required |
@@ -226,7 +226,7 @@ Which provisions of the four authorities these rules enforce, and which they do 
 | CLS-027 | checked | `\VAR` math shortcut for variance | `JSS-OPER-004` | — |
 | CLS-028 | checked | `\COV` math shortcut for covariance | `JSS-OPER-004` | — |
 | CLS-029 | checked | `\Prob` math shortcut for probability | `JSS-OPER-004` | — |
-| CLS-030 | out of scope | `Sinput` environment defined (Sweave-style) | — | .Rnw-adjacent; environment choice is author preference |
+| CLS-030 | out of scope | `Sinput` environment defined (Sweave-style) | — | a class defining an environment is not an author obligation. Sinput content is linted (CODE-*, WIDTH-001), and .Rnw chunks are rewritten into Sinput envelopes precisely to reach those rules |
 | CLS-031 | out of scope | `Soutput` environment defined | — | same |
 | CLS-032 | out of scope | `Scode` environment defined | — | same |
 | CLS-033 | out of scope | `Schunk` environment defined | — | same |
@@ -262,7 +262,7 @@ Which provisions of the four authorities these rules enforce, and which they do 
 | TEX-020 | checked | `\proglang{}`, `\pkg{}`, `\code{}` markup is used throughout the manuscript body (including in section titles — with plain-text shim in the optional argument) | `JSS-MARKUP-001`, `JSS-MARKUP-002`, `JSS-MARKUP-003`, `JSS-MARKUP-004` | — |
 | TEX-021 | out of scope | `{Code}` environment used for code synopses that are not meant to be executed | — | environment choice is author preference |
 | TEX-022 | out of scope | `{CodeChunk}` wraps matching `{CodeInput}` / `{CodeOutput}` for executed code | — | environment-wrapping pattern, author preference |
-| TEX-023 | not checked | R code inputs use `R> ` as the prompt and `+  ` as the continuation prompt | — | defer to when we implement .Rnw Sweave manuscripts — prompt convention not enforced; candidate follow-up |
+| TEX-023 | not checked | R code inputs use `R> ` as the prompt and `+  ` as the continuation prompt | — | implementable and no longer deferred (.Rnw shipped 2026-07): hand-written \begin{Sinput} lines can be checked directly. The obstacle is that wrap_rnw_chunks_as_sinput re-emits .Rnw chunks as Sinput carrying raw R source with no prompts, and leaves no marker separating them from author-written Sinput — so a naive rule would fire on every Sweave manuscript. Needs a provenance flag on the envelope |
 | TEX-024 | checked | `{equation}` environments have **no blank lines** before/after (blank lines are suppressed with `%` comments) | `JSS-OPER-003` | — |
 | TEX-025 | checked | BibTeX entries carry a doi field where one is available | `JSS-REFS-003` | — |
 | TEX-026 | checked | Journal titles in BibTeX entries are spelled out in full and in title case | `JSS-REFS-005`, `JSS-REFS-007` | — |
@@ -308,12 +308,12 @@ Which provisions of the four authorities these rules enforce, and which they do 
 | SG-035 | out of scope | MUST: Annotations in raster graphics remain legible (no pixelation) | — | rendering-time |
 | SG-036 | out of scope | SHOULD: Include the JSS paper in `\references{}` of relevant `.Rd` pages | — | target is R-package `.Rd` files, not the manuscript |
 | SG-037 | out of scope | SHOULD: Include `CITATION` file at `inst/CITATION` within the R package | — | R-package-level, not manuscript-level |
-| SG-038 | out of scope | SHOULD: Turn the JSS manuscript into a package vignette | — | .Rnw / vignette territory (Step 4+) |
-| SG-039 | out of scope | SHOULD: Use the JSS paper as the basis for the vignette | — | .Rnw |
-| SG-040 | out of scope | SHOULD: Use Sweave-style code chunks for inputs/outputs/graphics in the vignette | — | .Rnw |
-| SG-041 | out of scope | SHOULD: Use `\documentclass[nojss]{jss}` to turn off JSS header/footer in the vignette | — | .Rnw |
-| SG-042 | out of scope | SHOULD: Cite the JSS paper in the vignette abstract or introduction | — | .Rnw |
-| SG-043 | out of scope | SHOULD (advisory): Set `options(prompt = "R> ", continue = "+  ", width = 70, useFancyQuotes = FALSE)` invisibly at the start of the vignette | — | .Rnw |
+| SG-038 | out of scope | SHOULD: Turn the JSS manuscript into a package vignette | — | advice about shipping a second artifact; the vignette is not the file under lint and its absence is unobservable from the manuscript |
+| SG-039 | out of scope | SHOULD: Use the JSS paper as the basis for the vignette | — | a provenance relation between two files, only one of which the tool is ever given |
+| SG-040 | out of scope | SHOULD: Use Sweave-style code chunks for inputs/outputs/graphics in the vignette | — | a .Rnw is chunk-based by construction, so there is no failing case to detect; a vignette that inlines results instead is a legitimate choice, not a violation |
+| SG-041 | not checked | SHOULD: Use `\documentclass[nojss]{jss}` to turn off JSS header/footer in the vignette | — | checkable now that .Rnw is parsed — the class options are already read — but only for a file known to *be* a vignette, and nothing in a .Rnw separates a vignette from a Sweave manuscript, where requiring nojss would be wrong. Needs an explicit scope signal |
+| SG-042 | out of scope | SHOULD: Cite the JSS paper in the vignette abstract or introduction | — | deciding which of a vignette's references *is* the JSS paper it derives from needs knowledge the tool does not have at lint time; the corpus tooling does it by title match under human review, which is not a rule |
+| SG-043 | not checked | SHOULD (advisory): Set `options(prompt = "R> ", continue = "+  ", width = 70, useFancyQuotes = FALSE)` invisibly at the start of the vignette | — | the call is required to be *invisible*, i.e. in an echo=FALSE chunk, and wrap_rnw_chunks_as_sinput blanks hidden chunks before any rule runs — the one place this provision can live is the one place no rule can see. Needs the parser to expose hidden-chunk content to an opted-in rule |
 | SG-044 | checked | MUST: "Fortran" not "FORTRAN" | `JSS-NAME-001` | — |
 | SG-045 | checked | MUST: "Java" not "JAVA" / "java" | `JSS-NAME-001` | — |
 | SG-046 | checked | MUST: "MATLAB" not "Matlab" / "matlab" | `JSS-NAME-001` | — |
