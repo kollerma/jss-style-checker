@@ -464,4 +464,5 @@ def run(
         compliance_percentage=percentage,
         skipped_rules=tuple(skipped),
         rule_set=metadata.rule_set,
+        coverage=metadata.coverage or None,
     )

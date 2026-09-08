@@ -60,8 +60,12 @@ sed \
 
 rm -rf "$catalogue_dest"
 mkdir -p "$catalogue_dest"
+# Every file jsslint-core/build.rs reads. Keep in step with `_FILES` in
+# tests/unit/test_vendored_catalogue_in_sync.py and the REQUIRED list in
+# rust/jsslint-core/tests/package_contents.rs.
 cp "$catalogue_src/catalogue.yaml" "$catalogue_src/terms.json" \
    "$catalogue_src/latex-macro-specs.json" "$catalogue_src/recall.json" \
+   "$catalogue_src/guide-coverage.yaml" \
    "$catalogue_dest/"
 
 echo "Vendored jsslint-core -> $core_dest"

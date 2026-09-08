@@ -190,7 +190,16 @@ No findings does not mean compliant. Measured recall: 81% (1967 annotated instan
 
 Reviewer mode adds a per-category `Recall` column; `explain` reports it
 per rule. Rules the annotated corpus never exercised read `unmeasured`,
-never `100%`. It is a lower bound (source-only linting):
+never `100%`. It is a lower bound (source-only linting).
+
+And it says what it does not look for at all:
+
+```sh
+jss-lint coverage                    # 76 checked, 4 partial, 3 not checked, 66 out of scope
+jss-lint coverage --format markdown  # one table per authority
+```
+
+Both are documented in
 [`docs/recall-and-coverage.md`](docs/recall-and-coverage.md).
 
 Every rule carries a measured-precision **confidence tier** (`high` /

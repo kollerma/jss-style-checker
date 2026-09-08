@@ -42,7 +42,25 @@ pub struct RecallRunData {
     pub fn_: u32,
 }
 
+/// One row of the guide-coverage matrix — mirrors
+/// `api.CoverageDirective`.
+#[derive(Debug, Clone, Copy)]
+pub struct CoverageDirectiveData {
+    pub id: &'static str,
+    pub source: &'static str,
+    pub section: &'static str,
+    pub provision: &'static str,
+    pub status: &'static str,
+    pub rules: &'static [&'static str],
+    pub reason: &'static str,
+}
+
 include!(concat!(env!("OUT_DIR"), "/catalogue_data.rs"));
+
+/// Every guide directive, in file order.
+pub fn coverage() -> &'static [CoverageDirectiveData] {
+    COVERAGE
+}
 
 static RECALL_BY_ID: LazyLock<HashMap<&'static str, (u32, u32)>> =
     LazyLock::new(|| RECALL.iter().map(|(id, tp, f)| (*id, (*tp, *f))).collect());

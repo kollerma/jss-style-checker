@@ -861,6 +861,17 @@ recorded in `research.md`.
 | A-4 | `eval/badge.py` reads `run_timestamp` and sums from the snapshot | The badge's own `PINNED_RECALL_TIMESTAMP` had already drifted from the paper's pin — the failure mode this item exists to end. | `pinned_recall_aggregate()` now reads the shipped snapshot and needs no database at all; the constant is gone. Badge and author footer cannot disagree. |
 | A-5 | (not anticipated) | Two integration tests asserted a compliant run prints **nothing**. | Updated with the reason in the test itself: the findings table is still empty, and what follows it is the caveat FR-A-004 exists to add. `test_cli_json.py`'s exact key-set assertion gained `rule_set`. |
 
+### Item A-coverage — guide coverage
+
+| # | Plan said | Reality | What was done |
+|---|---|---|---|
+| AC-1 | 146 checklist rows migrate | Two of them (`CLS-039`, `CLS-040`) assert the **absence** of a macro (`\\dfn{}`, `\\file{}` are not defined in jss.cls 3.3) — reviewer findings, not provisions: nothing to check or to declare unchecked. | Dropped from the coverage file; they remain in the checklist record. 144 migrated + 5 new = **149 directives**. |
+| AC-2 | "7 rows credit retired rules" | Six §1.x rows credit them (`SG-008/010/013/017/018/022`); the seventh mention is `SG-020`'s *reason*, which cites `JSS-ABBR-002`'s retirement rather than crediting it. | All six re-judged: two are now `checked` or `partial` under surviving rules, `SG-010` became the release's one honest `not_checked` caption gap, and each carries the retirement date and evidence in its reason. |
+| AC-3 | The 15 unclaimed rules "mostly attach to existing rows" | They did, once each rule's own `authority_ref` was used as the map: `SG-006` (REFS-001), `SG-011` (XREF-004/005/006), `SG-017` (BIBTEX-003/005, REFS-001), plus two `jss.cls` rows that were marked out-of-scope *before* the rule enforcing them existed (`jss.cls:45` → BIBTEX-004, `jss.cls:484-487` → OPER-004). | Five provisions the checklist genuinely lacked were added: `TEX-025` (doi), `TEX-026` (journal titles), `SG-061` (spelled-out cross-reference nouns), and `AI-023`/`AI-024` (the two `internal` project rules). |
+| AC-4 | Author footer prints `checks N of M` | `M` had to be defined. Counting all 149 would report "80 of 149" and read as 46 % coverage of a guide two thirds of which no source-level linter can check. | The ratio counts **checkable** provisions only (`checked + partial + not_checked` = 83); out-of-scope rows are listed by the subcommand but excluded. Documented in `docs/recall-and-coverage.md` and in the footer helper. |
+| AC-6 | `vendor-jsslint-core.sh` copies the catalogue data | The script's `cp` list is hand-maintained and was missed for `guide-coverage.yaml`, so the **R package failed to build** while everything else was green. | Fixed, with a comment naming the two other lists that must stay in step (`_FILES` in the sync test, `REQUIRED` in `package_contents.rs`). The new `package_contents.rs` catches the crates.io half of the same failure mode. |
+| AC-5 | `coverage --format json` includes the `sources` block | The Rust CLI must work from a crates.io install with no repository around it, so it cannot read the YAML at runtime. | Python reads the file; Rust compiles the same four entries in. Both outputs are byte-identical (`coverage_parity.rs`), and the pair is small and dated — if it drifts, the parity test says so. |
+
 ### Environment
 
 - `.venv-host` is the **macOS host's** venv (`/workspace` is a bind mount

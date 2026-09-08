@@ -113,6 +113,8 @@ def render(doc: Mapping[str, Any]) -> str:
             continue  # validator already flags dangling categories
         _emit_category(out, category, category_rules)
 
+    _emit_coverage(out)
+
     # Per-rule detail blocks — iterate the already-sorted list
     out.append("## Rule details\n\n")
     for rule in rules:
@@ -124,6 +126,67 @@ def render(doc: Mapping[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # Section emitters
 # ---------------------------------------------------------------------------
+
+
+def _emit_coverage(out: list[str]) -> None:
+    """A `Coverage` section below the per-category rule tables.
+
+    The catalogue page answers "what rules exist"; this answers "what
+    provisions do they cover, and which are left" — the same matrix
+    `jss-lint coverage` prints (spec 027 item A).
+    """
+    path = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "guide-coverage.yaml"
+    if not path.exists():  # pragma: no cover - the file ships with the repo
+        return
+    with path.open("r", encoding="utf-8") as f:
+        doc = yaml.safe_load(f)
+    directives = doc["directives"]
+    tally: dict[str, int] = {}
+    for directive in directives:
+        tally[directive["status"]] = tally.get(directive["status"], 0) + 1
+
+    out.append("---\n\n")
+    out.append("## Guide coverage\n\n")
+    out.append(
+        "Which provisions of the four authorities these rules enforce, and "
+        "which they do not. Source of truth: "
+        "[guide-coverage.yaml](guide-coverage.yaml); printed by "
+        "`jss-lint coverage`.\n\n"
+    )
+    out.append(
+        f"**{tally.get('checked', 0)} checked · {tally.get('partial', 0)} partial "
+        f"· {tally.get('not_checked', 0)} not checked · "
+        f"{tally.get('out_of_scope', 0)} out of scope**\n\n"
+    )
+    labels = {
+        "jss_cls": "jss.cls",
+        "article_tex": "article.tex",
+        "style_guide": "Style guide",
+        "author_instructions": "Author instructions",
+    }
+    status_label = {
+        "checked": "checked",
+        "partial": "partial",
+        "not_checked": "not checked",
+        "out_of_scope": "out of scope",
+    }
+    for source, label in labels.items():
+        group = sorted(
+            (d for d in directives if d["source"] == source), key=lambda d: d["id"]
+        )
+        if not group:
+            continue
+        out.append(f"### {label}\n\n")
+        out.append("| Directive | Status | Provision | Rules | Reason |\n")
+        out.append("|---|---|---|---|---|\n")
+        for directive in group:
+            rules = ", ".join(f"`{r}`" for r in directive["rules"]) or "—"
+            reason = _escape_pipe(directive.get("reason", "")) or "—"
+            out.append(
+                f"| {directive['id']} | {status_label[directive['status']]} "
+                f"| {_escape_pipe(directive['provision'])} | {rules} | {reason} |\n"
+            )
+        out.append("\n")
 
 
 def _emit_header(

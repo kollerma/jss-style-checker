@@ -44,6 +44,26 @@
 {%- if measured_recall %}
 <p class="note">{{ measured_recall }}</p>
 {%- endif %}
+{%- if coverage_counts %}
+<h2>Not checked by jss-lint</h2>
+{%- if coverage_gaps %}
+<table class="coverage">
+  <thead>
+    <tr><th>Directive</th><th>Status</th><th>Provision</th></tr>
+  </thead>
+  <tbody>
+  {% for d in coverage_gaps %}
+    <tr>
+      <td>{{ d.id }}</td>
+      <td>{% if d.status == "partial" %}partial{% else %}not checked{% endif %}</td>
+      <td>{{ d.provision }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{%- endif %}
+<p class="note">{{ coverage_counts }}</p>
+{%- endif %}
 {%- if report.baseline %}
 <p class="note">Baseline: {{ report.baseline.matched }} findings hidden by {{ report.baseline.path }} ({{ report.baseline.stale }} stale, {{ report.baseline.unevaluated }} unevaluated){% if report.baseline.ruleset_version and report.rule_set.version and report.baseline.ruleset_version != report.rule_set.version %} — written for rule set {{ report.baseline.ruleset_version }}, current {{ report.rule_set.version }}; run --update-baseline{% endif %}</p>
 {%- endif %}

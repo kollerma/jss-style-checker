@@ -132,6 +132,7 @@ fn compliant_minimal_tex_matches_python_byte_for_byte() {
         skipped_rules: Vec::new(),
         baseline: None,
         rule_set: jsslint_core::catalogue::rule_set(),
+        coverage: Some(jsslint_core::catalogue::coverage()),
     };
     let actual = jsslint_core::json_output::render(&report);
     assert_eq!(
@@ -173,6 +174,7 @@ fn single_violation_matches_python_byte_for_byte_incl_unicode_escaping() {
         skipped_rules: Vec::new(),
         baseline: None,
         rule_set: jsslint_core::catalogue::rule_set(),
+        coverage: Some(jsslint_core::catalogue::coverage()),
     };
     let actual = jsslint_core::json_output::render(&report);
     assert_eq!(

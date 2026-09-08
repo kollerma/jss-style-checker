@@ -316,4 +316,7 @@ pub struct ComplianceReport {
     /// Provenance of the rule set that produced these findings, so no
     /// renderer has to reach into the catalogue itself.
     pub rule_set: RuleSetInfo,
+    /// The journal's guide-coverage matrix, or `None` when it publishes
+    /// none. `None` and "everything is checked" are different claims.
+    pub coverage: Option<&'static [crate::catalogue::CoverageDirectiveData]>,
 }

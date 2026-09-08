@@ -38,6 +38,23 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
   `specs/003-jss-rule-catalogue/recall.json`, which the README badge now
   reads too, and it is a lower bound (source-only linting). See
   [`docs/recall-and-coverage.md`](docs/recall-and-coverage.md).
+- **The tool says what it does not check.** A new curated matrix,
+  `specs/003-jss-rule-catalogue/guide-coverage.yaml`, maps all 149
+  provisions of the four JSS authorities — `jss.cls`, `article.tex`, the
+  style guide, the author instructions, each pinned to a dated edition —
+  to the rules that enforce them: **76 checked, 4 partial, 3 not
+  checked, 66 out of scope**. `jss-lint coverage` prints it
+  (`--format terminal|markdown|json`); reviewer mode ends with a
+  "Not checked by jss-lint" block listing the gaps; the author footer
+  gives the ratio (`checks 80 of 83 guide directives`); JSON gains a
+  top-level `coverage` object; and `explain` reports the reverse
+  direction (`Covers: SG-027, SG-028`). Out-of-scope provisions —
+  compilability, graphics legibility, replication scripts — are listed
+  but excluded from the ratio: they were never checkable from source.
+  It replaces a markdown review checklist that had quietly credited four
+  rules retired months earlier; the new file is validated on every build,
+  so a rule can no longer be added without claiming a provision, nor
+  retired without re-judging the rows that credited it.
 - **CI defends that number.** `eval-jss recall --gate --no-record` runs
   on every push with the aggregate floor raised from 0.70 to **0.78**
   (the decision spec 017 deferred), ratcheted to the shipped snapshot

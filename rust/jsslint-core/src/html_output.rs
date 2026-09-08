@@ -113,7 +113,11 @@ pub fn render_author(report: &ComplianceReport) -> String {
     }
     out.push_str(&format!(
         "<p class=\"note\">{}</p>\n",
-        escape_html(&crate::terminal::author_footer_text(report))
+        crate::terminal::author_footer_text(report)
+            .lines()
+            .map(escape_html)
+            .collect::<Vec<_>>()
+            .join("<br>")
     ));
     out.push_str(&baseline_note(report));
     out.push_str("</body>\n</html>\n");
@@ -198,6 +202,31 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
     out.push('\n');
     if let Some(line) = crate::terminal::measured_recall_line(report) {
         out.push_str(&format!("<p class=\"note\">{}</p>\n", escape_html(&line)));
+    }
+    if let Some(directives) = report.coverage {
+        if !directives.is_empty() {
+            out.push_str("<h2>Not checked by jss-lint</h2>\n");
+            let rows = crate::coverage::gaps(directives);
+            if !rows.is_empty() {
+                out.push_str(
+                    "<table class=\"coverage\">\n  <thead>\n    <tr><th>Directive</th><th>Status</th><th>Provision</th></tr>\n  </thead>\n  <tbody>\n  ",
+                );
+                for d in rows {
+                    out.push_str("\n    <tr>\n      <td>");
+                    out.push_str(&escape_html(d.id));
+                    out.push_str("</td>\n      <td>");
+                    out.push_str(if d.status == "partial" { "partial" } else { "not checked" });
+                    out.push_str("</td>\n      <td>");
+                    out.push_str(&escape_html(d.provision));
+                    out.push_str("</td>\n    </tr>\n  ");
+                }
+                out.push_str("\n  </tbody>\n</table>\n");
+            }
+            out.push_str(&format!(
+                "<p class=\"note\">{}</p>\n",
+                escape_html(&crate::coverage::counts_sentence(directives))
+            ));
+        }
     }
 
     out.push_str(&baseline_note(report));

@@ -86,6 +86,75 @@ and a unit test fails if it is ever left further behind than that. It
 was 0.70 through 1.1.0, which was ten points of slack under a number now
 printed in every author footer.
 
+# What is not checked
+
+Recall says how much of what the tool *looks for* it finds. Coverage
+says what it looks for at all — which provisions of the four JSS
+authorities have a rule behind them, and which do not.
+
+```
+$ jss-lint coverage
+Guide coverage — jss (rule set 2026-09-07)
+76 checked, 4 partial, 3 not checked, 66 out of scope
+…
+$ jss-lint coverage --format markdown   # one table per authority
+$ jss-lint coverage --format json       # every directive, with provisions
+```
+
+The matrix lives in
+[`specs/003-jss-rule-catalogue/guide-coverage.yaml`](../specs/003-jss-rule-catalogue/guide-coverage.yaml),
+one row per provision of `jss.cls`, `article.tex`, the style guide, and
+the author instructions, each pinned to a dated edition (the prose pages
+have no edition, so the fetch date is the honest pin).
+
+| Status | Means |
+|---|---|
+| `checked` | a rule enforces this provision |
+| `partial` | enforced in part; the `reason` says what is missing |
+| `not_checked` | a real gap; the `reason` says why |
+| `out_of_scope` | not checkable from the manuscript source at all |
+
+**Out of scope is not a gap.** Two thirds of the provisions are things
+no source-level linter could check: that the manuscript compiles, that
+graphics are legible at print size, that the replication script runs in
+an hour, that the upload is under 50 MB. They are listed — you should
+read them before submitting — but excluded from the ratio the footer
+prints, which counts only what is checkable:
+
+```
+jss-lint checks 80 of 83 guide directives (3 not checked, 4 partial). Run jss-lint coverage for the list.
+```
+
+Reviewer mode ends with the gaps themselves, `partial` first:
+
+```
+──────────────────────── Not checked by jss-lint ────────────────────────
+│ SG-008    │ partial     │ MUST: All titles in the BibTeX file are in title style │
+│ SG-010    │ not checked │ MUST: Figure/table captions are in sentence style      │
+Run jss-lint coverage for the full matrix (76 checked, 4 partial, 3 not checked, 66 out of scope).
+```
+
+`jss-lint explain RULE` reports the reverse direction — which provisions
+a rule enforces (`Covers: SG-027, SG-028`).
+
+## Keeping the matrix honest
+
+A coverage claim that has quietly gone stale is worse than none, so the
+file is validated, not just written:
+
+- every rule a directive names must be **active** — the markdown
+  checklist this replaced credited four rules that had been retired
+  months earlier, and nothing caught it;
+- every active rule must be claimed by at least one directive
+  (Constitution §V: a rule without a provision behind it is an opinion);
+- every non-`checked` row must carry a reason;
+- ids, sources, and section anchors must agree.
+
+`tools/_coverage_validate.py` runs in the codegen and in
+`tests/unit/journals/jss/test_guide_coverage.py`, so adding a rule
+without claiming a provision, or retiring one without re-judging the
+rows that credited it, fails the build.
+
 ## Reproducing a measurement
 
 ```sh

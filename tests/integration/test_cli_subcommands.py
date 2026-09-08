@@ -371,3 +371,79 @@ class TestVersion:
             result = runner.invoke(main, ["--version"])
         assert result.exit_code == 0, result.stderr
         assert result.stdout.splitlines()[3] == "journal: nope (not registered)"
+
+
+# --------------------------------------------------------------- coverage ----
+
+
+class TestCoverage:
+    """Spec 027 FR-G-004: `jss-lint coverage` in three formats."""
+
+    def test_terminal_lists_every_status_group(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["coverage"])
+        assert result.exit_code == 0, result.stderr
+        assert result.stdout.startswith("Guide coverage — jss (rule set ")
+        for group in ("checked (", "partial (", "not checked (", "out of scope ("):
+            assert group in result.stdout
+        # A gap explains itself; a checked row has nothing to explain.
+        assert "        reason: " in result.stdout
+
+    def test_markdown_has_one_table_per_authority(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["coverage", "--format", "markdown"])
+        assert result.exit_code == 0, result.stderr
+        for heading in (
+            "## jss.cls",
+            "## article.tex",
+            "## Style guide",
+            "## Author instructions",
+        ):
+            assert heading in result.stdout
+        assert "| Directive | Status | Provision | Rules | Reason |" in result.stdout
+
+    def test_json_carries_the_full_matrix(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["coverage", "--format", "json"])
+        assert result.exit_code == 0, result.stderr
+        payload = json.loads(result.stdout)
+        assert set(payload) == {"counts", "directives", "journal_id", "sources"}
+        assert payload["journal_id"] == "jss"
+        # Unlike the report's `coverage` block, this one carries the
+        # provision text and every status (`coverage-file.md` C-6).
+        assert all(d["provision"] for d in payload["directives"])
+        assert {d["status"] for d in payload["directives"]} == {
+            "checked",
+            "partial",
+            "not_checked",
+            "out_of_scope",
+        }
+        assert set(payload["sources"]) == {
+            "jss_cls",
+            "article_tex",
+            "style_guide",
+            "author_instructions",
+        }
+
+    def test_counts_agree_across_formats(self, runner: CliRunner) -> None:
+        payload = json.loads(
+            runner.invoke(main, ["coverage", "--format", "json"]).stdout
+        )
+        counts = payload["counts"]
+        line = (
+            f"{counts['checked']} checked, {counts['partial']} partial, "
+            f"{counts['not_checked']} not checked, "
+            f"{counts['out_of_scope']} out of scope"
+        )
+        assert line in runner.invoke(main, ["coverage"]).stdout
+        assert sum(counts.values()) == len(payload["directives"])
+
+    def test_a_journal_without_coverage_data_says_so(
+        self, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(main, ["coverage", "--journal", "stub"])
+        assert result.exit_code == 0, result.stderr
+        assert result.stdout == (
+            "jss-lint has no guide-coverage data for journal stub.\n"
+        )
+
+    def test_an_unknown_journal_exits_two(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["coverage", "--journal", "nope"])
+        assert result.exit_code == 2
