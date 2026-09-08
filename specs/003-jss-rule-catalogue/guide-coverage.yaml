@@ -738,7 +738,7 @@ directives:
     provision: "SHOULD (advisory): Set `options(prompt = \"R> \", continue = \"+  \", width = 70, useFancyQuotes = FALSE)` invisibly at the start of the vignette"
     status: not_checked
     rules: []
-    reason: "the call is required to be *invisible*, i.e. in an echo=FALSE chunk, and wrap_rnw_chunks_as_sinput blanks hidden chunks before any rule runs — the one place this provision can live is the one place no rule can see. Needs the parser to expose hidden-chunk content to an opted-in rule"
+    reason: "implementable, not yet written: a rule needs the pre-transform chunk text, which the parser does not keep today (hidden chunks are blanked, line counts preserved). Carrying it is the same shape as ParsedTexFile.line_offset. The open question is severity — the guide marks this advisory"
   - id: SG-044
     source: style_guide
     section: "#which-naming-conventions-are-used-for-software-journal-and-publisher-names-in-jss"

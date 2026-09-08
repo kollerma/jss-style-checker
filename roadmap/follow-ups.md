@@ -618,11 +618,13 @@ Deferred deliberately during spec 027; each is independent.
         from a Sweave manuscript, where requiring `nojss` would be
         wrong. Needs an explicit scope signal.
       - `SG-043` (`options(prompt=, continue=, width=70,
-        useFancyQuotes=FALSE)`) — the provision requires the call be
-        *invisible*, i.e. in an `echo=FALSE` chunk, and hidden chunks are
-        blanked before any rule runs. The one place it can live is the
-        one place no rule can see. Needs the parser to expose
-        hidden-chunk content to an opted-in rule.
+        useFancyQuotes=FALSE)`) — straightforwardly implementable. The
+        call lives in an `echo=FALSE` chunk, and `ParsedTexFile.source`
+        holds the rewritten source in which hidden chunks are blanked,
+        so the rule needs the pre-transform chunk text carried alongside
+        — the same shape as the existing `line_offset` field. Then it is
+        a scan of the first chunk. Advisory in the guide, so pick the
+        severity deliberately.
       Doing all three would move the ratio from 80/85 to 83/85.
 - [ ] **Close the §IX branch-coverage gap on the JSS rule modules.**
       The constitution mandates 100% branch coverage on
