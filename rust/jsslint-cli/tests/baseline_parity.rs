@@ -84,7 +84,11 @@ fn baseline_files_and_reports_match_python_cli() {
     let write_args = ["--baseline", "b.json", "--update-baseline", "paper.tex"];
     let py_write = run(&jss_lint, &write_args, &py_dir);
     let rs_write = run(jsslint_bin, &write_args, &rs_dir);
-    assert_eq!(py_write.exit_code, Some(0), "python --update-baseline failed");
+    assert_eq!(
+        py_write.exit_code,
+        Some(0),
+        "python --update-baseline failed"
+    );
     assert_eq!(rs_write.exit_code, Some(0), "rust --update-baseline failed");
     assert_eq!(
         py_write.stdout, rs_write.stdout,
@@ -134,17 +138,18 @@ fn baseline_files_and_reports_match_python_cli() {
 
     // 3. Drift: an edit that adds a finding of a *different* rule must
     // be reported by both, with the same exit code.
-    let drifted = SOURCE.replace(
-        "\\end{document}",
-        "We call lm() in prose.\n\\end{document}",
-    );
+    let drifted = SOURCE.replace("\\end{document}", "We call lm() in prose.\n\\end{document}");
     for dir in [&py_dir, &rs_dir] {
         fs::write(dir.join("paper.tex"), &drifted).expect("rewrite fixture");
     }
     let args = ["--baseline", "b.json", "paper.tex"];
     let expected = run(&jss_lint, &args, &py_dir);
     let actual = run(jsslint_bin, &args, &rs_dir);
-    assert_eq!(expected.exit_code, Some(1), "the new finding must fail the run");
+    assert_eq!(
+        expected.exit_code,
+        Some(1),
+        "the new finding must fail the run"
+    );
     if expected.stdout != actual.stdout || expected.exit_code != actual.exit_code {
         mismatches.push(format!(
             "drift case\n  expected:\n{}\n  actual:\n{}",
@@ -155,8 +160,7 @@ fn baseline_files_and_reports_match_python_cli() {
     // 4. The TOML key is honoured identically.
     for dir in [&py_dir, &rs_dir] {
         fs::write(dir.join("paper.tex"), SOURCE).expect("restore fixture");
-        fs::write(dir.join(".jss-lint.toml"), "baseline = \"b.json\"\n")
-            .expect("write config");
+        fs::write(dir.join(".jss-lint.toml"), "baseline = \"b.json\"\n").expect("write config");
     }
     let expected = run(&jss_lint, &["paper.tex"], &py_dir);
     let actual = run(jsslint_bin, &["paper.tex"], &rs_dir);

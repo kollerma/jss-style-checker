@@ -109,6 +109,13 @@ jobs:
           version=$(grep -A1 '^name = "wasm-bindgen"' rust/Cargo.lock | grep version | head -1 | cut -d '"' -f2)
           cargo install wasm-bindgen-cli --version "$version"
 
+      # Spec 027 item E: the browser zip reader has no build step and no
+      # dependency, so this is the only thing standing between a silently
+      # skipped project file and a user who thinks their manuscript is
+      # clean. Node ships the same DecompressionStream the browser does.
+      - name: Browser zip reader
+        run: node --test web/zip.test.mjs
+
       - name: cargo fmt --check
         working-directory: rust
         run: cargo fmt --all --check

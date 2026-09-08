@@ -108,8 +108,18 @@ fn version_block_matches_python_cli() {
     // that, so a future refactor cannot quietly make them equal-but-wrong.
     let py = run(&jss_lint, &["--version"], root.as_path());
     let rs = run(jsslint_bin, &["--version"], root.as_path());
-    assert!(py.stdout.lines().nth(1).unwrap().starts_with("engine: texlint/python "));
-    assert!(rs.stdout.lines().nth(1).unwrap().starts_with("engine: jsslint-core/rust "));
+    assert!(py
+        .stdout
+        .lines()
+        .nth(1)
+        .unwrap()
+        .starts_with("engine: texlint/python "));
+    assert!(rs
+        .stdout
+        .lines()
+        .nth(1)
+        .unwrap()
+        .starts_with("engine: jsslint-core/rust "));
 
     assert!(
         mismatches.is_empty(),

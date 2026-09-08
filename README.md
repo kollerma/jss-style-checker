@@ -241,6 +241,13 @@ Accepted findings are keyed by rule, file, message, and suggestion — not
 by line number — so rewording sentences and inserting paragraphs never
 resurrects them. See [`docs/baseline.md`](docs/baseline.md).
 
+Writing in Overleaf? **Menu → Download → Source**, then drop the zip on
+the [browser app](https://kollerma.github.io/jss-style-checker/) — it is
+unpacked in your tab, with nothing uploaded. Or unzip and run
+`jss-lint main.tex` (the `\input` graph is followed automatically), or
+add the Action to a GitHub-synced project:
+[`docs/overleaf.md`](docs/overleaf.md).
+
 Terminal output is coloured when stdout is a terminal and plain when it
 is piped or redirected. `--color always|never` overrides that, `NO_COLOR`
 turns it off, `CLICOLOR_FORCE` turns it on, and `color = "never"` in
@@ -340,6 +347,16 @@ Mandatory gate (Constitution §IX — 100% branch coverage on every rule module)
 .venv/bin/python -m pytest tests/unit/journals/jss/ \
   --cov=src/texlint/journals/jss/rules --cov-branch --cov-fail-under=100
 ```
+
+As of 1.2.0 the suite reaches 93%, not 100%: the gate was never wired
+into CI and the modules drifted below it. Closing that gap is
+[a recorded follow-up](roadmap/follow-ups.md); until it lands, the rule
+that is actually enforced in review is that a **new** rule module ships
+at 100% and no existing one regresses.
+
+Cutting a release is a fixed sequence — measured recall, then the
+stamped catalogue data, then the version, then the tags. It is written
+down in [`docs/releasing.md`](docs/releasing.md).
 
 ## License
 

@@ -396,11 +396,17 @@ struct Cell {
 
 impl Cell {
     fn plain(text: impl Into<String>) -> Self {
-        Self { text: text.into(), style: None }
+        Self {
+            text: text.into(),
+            style: None,
+        }
     }
 
     fn styled(text: impl Into<String>, style: &'static str) -> Self {
-        Self { text: text.into(), style: Some(style) }
+        Self {
+            text: text.into(),
+            style: Some(style),
+        }
     }
 }
 
@@ -472,9 +478,7 @@ fn render_table(
                 let justified = justify(content, widths[i] - 2, c.right_justify);
                 out.push(' ');
                 match row[i].style {
-                    Some(style) => {
-                        out.push_str(&crate::color::paint(&justified, style, color))
-                    }
+                    Some(style) => out.push_str(&crate::color::paint(&justified, style, color)),
                     None => out.push_str(&justified),
                 }
                 out.push(' ');
@@ -566,11 +570,7 @@ pub fn render(report: &ComplianceReport, config: &ToolConfig) -> String {
 /// F). Colour never changes layout: every width is measured on the
 /// unstyled text, so stripping the SGR yields this function's own
 /// `color = false` output byte for byte (`color.md` C-1).
-pub fn render_with_color(
-    report: &ComplianceReport,
-    config: &ToolConfig,
-    color: bool,
-) -> String {
+pub fn render_with_color(report: &ComplianceReport, config: &ToolConfig, color: bool) -> String {
     let mut out = String::new();
     if config.mode == Mode::Reviewer {
         render_reviewer(report, &mut out, color);
@@ -604,9 +604,7 @@ fn render_baseline(
         "Baseline: {} findings hidden by {} ({} stale, {} unevaluated)",
         summary.matched, summary.path, summary.stale, summary.unevaluated
     ));
-    if let (Some(written), Some(current)) =
-        (&summary.ruleset_version, &report.rule_set.version)
-    {
+    if let (Some(written), Some(current)) = (&summary.ruleset_version, &report.rule_set.version) {
         if written != current {
             // The wording users' baselines key on may change in a minor
             // release (docs/versions.md), which strands entries silently

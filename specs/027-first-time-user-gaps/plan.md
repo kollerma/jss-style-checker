@@ -881,6 +881,16 @@ recorded in `research.md`.
 | F-3 | `anstream` "is already in the lockfile via clap" | It is — at 1.0. Depending on `"0.6"` as the plan's prose implied would have added a **second copy** of the same crate to the graph. | Pinned to `"1"`; `Cargo.lock` still has exactly one `anstream`. |
 | F-4 | The strip-SGR unit test asserts `strip(coloured) == plain` | A *clean* author run has nothing to colour — its only output is the footer, which C-2 leaves uncoloured — so the invariant passed vacuously there. | The invariant is asserted for every mode/fixture combination, with separate non-vacuity guards in both engines (`saw_colour` in `terminal_parity.rs`, an explicit findings fixture in the Python test). |
 
+### Item E — Overleaf
+
+| # | Plan said | Reality | What was done |
+|---|---|---|---|
+| E-1 | "a ~120-line zip reader" | 116 lines, as estimated — but the local header's name/extra lengths routinely differ from the central directory's, so the entry offset must be recomputed from the *local* record. Reading it from the central copy would have silently shifted every entry's bytes. | `entryBytes()` reads both lengths from the local header. Covered by `web/zip.test.mjs`, which builds real archives with `zip` and `zip -0`. |
+| E-2 | (not anticipated) | The zip reader is the one piece of this item that can be wrong invisibly: a silently skipped entry looks exactly like a clean project. | `node --test web/zip.test.mjs` (5 tests: deflated, stored, path preservation, skipped figures/resource forks, truncated archive) wired into the CI job that already installs Node. |
+| E-4 | (not anticipated) | `publish-web.yml` copies a hand-listed set of files to `gh-pages`, and `web/zip.js` was not on it. `app.js` `import`s it, so the deploy would have shipped a page stuck on "Loading checker…" — the failure mode the existing `git add -f` comment already warns about. | `zip.js` added to all three lists in the publish step (copy, `rm -rf`, `git add -f`). |
+| E-5 | "a size line to the job summary in `publish-web.yml`/`ci.yml`" | `ci.yml` never builds the browser bundle — its WASM job uses `wasm-bindgen-cli` for the differential test, so there is no `web/pkg` to measure and adding a `wasm-pack` build only to print a number would cost a minute per PR. | The summary line goes in `publish-web.yml`, where the bundle is actually built; the *gate* — which is what catches a regression before it ships — goes in `rust/jsslint-wasm/tests/bundle_size.rs`, which every `cargo test` run sees. It skips when no bundle has been built. |
+| E-3 | (not anticipated) | CI runs `cargo fmt --all --check` and `clippy --all-targets -- -D warnings`; neither had been run against items D–F until now. | `cargo fmt --all` applied across 17 files, and one real clippy finding fixed (`type_complexity` on `color_parity.rs`'s case table, now a named `Case` type). Both gates clean. Worth adding to the per-item checklist. |
+
 ### Environment
 
 - `.venv-host` is the **macOS host's** venv (`/workspace` is a bind mount

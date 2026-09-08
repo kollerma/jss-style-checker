@@ -115,7 +115,9 @@ fn directives_actually_suppress_something() {
 
     let document = ParsedDocument::from_sources(&[(fixture.to_string(), contents.clone())])
         .expect("supported suffix");
-    let with_directives = engine::run(&ToolConfig::default(), &document).violations.len();
+    let with_directives = engine::run(&ToolConfig::default(), &document)
+        .violations
+        .len();
 
     let stripped: String = contents
         .lines()
@@ -127,7 +129,9 @@ fn directives_actually_suppress_something() {
         .join("\n");
     let document =
         ParsedDocument::from_sources(&[(fixture.to_string(), stripped)]).expect("supported suffix");
-    let without_directives = engine::run(&ToolConfig::default(), &document).violations.len();
+    let without_directives = engine::run(&ToolConfig::default(), &document)
+        .violations
+        .len();
 
     assert!(
         without_directives > with_directives,

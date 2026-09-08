@@ -53,9 +53,7 @@ pub fn should_colorize(
     match toml_value {
         ColorChoice::Always => true,
         ColorChoice::Never => false,
-        ColorChoice::Auto => {
-            isatty && env("TERM").unwrap_or_default() != "dumb"
-        }
+        ColorChoice::Auto => isatty && env("TERM").unwrap_or_default() != "dumb",
     }
 }
 
@@ -117,20 +115,45 @@ mod tests {
 
     #[test]
     fn flag_beats_everything() {
-        assert!(decide(Some("always"), ColorChoice::Never, &[("NO_COLOR", "1")], false));
-        assert!(!decide(Some("never"), ColorChoice::Always, &[("CLICOLOR_FORCE", "1")], true));
+        assert!(decide(
+            Some("always"),
+            ColorChoice::Never,
+            &[("NO_COLOR", "1")],
+            false
+        ));
+        assert!(!decide(
+            Some("never"),
+            ColorChoice::Always,
+            &[("CLICOLOR_FORCE", "1")],
+            true
+        ));
     }
 
     #[test]
     fn no_color_beats_clicolor_force() {
-        assert!(!decide(None, ColorChoice::Auto, &[("NO_COLOR", "1"), ("CLICOLOR_FORCE", "1")], true));
+        assert!(!decide(
+            None,
+            ColorChoice::Auto,
+            &[("NO_COLOR", "1"), ("CLICOLOR_FORCE", "1")],
+            true
+        ));
     }
 
     #[test]
     fn empty_values_are_ignored() {
         assert!(decide(None, ColorChoice::Auto, &[("NO_COLOR", "")], true));
-        assert!(!decide(None, ColorChoice::Auto, &[("CLICOLOR_FORCE", "")], false));
-        assert!(!decide(None, ColorChoice::Auto, &[("CLICOLOR_FORCE", "0")], false));
+        assert!(!decide(
+            None,
+            ColorChoice::Auto,
+            &[("CLICOLOR_FORCE", "")],
+            false
+        ));
+        assert!(!decide(
+            None,
+            ColorChoice::Auto,
+            &[("CLICOLOR_FORCE", "0")],
+            false
+        ));
     }
 
     #[test]
@@ -144,7 +167,12 @@ mod tests {
     #[test]
     fn a_dumb_terminal_is_not_coloured() {
         assert!(!decide(None, ColorChoice::Auto, &[("TERM", "dumb")], true));
-        assert!(decide(Some("always"), ColorChoice::Auto, &[("TERM", "dumb")], true));
+        assert!(decide(
+            Some("always"),
+            ColorChoice::Auto,
+            &[("TERM", "dumb")],
+            true
+        ));
     }
 
     #[test]

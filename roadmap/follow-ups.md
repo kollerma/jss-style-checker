@@ -555,6 +555,66 @@ and tracked here rather than papered over.
       and no network during `R CMD check` (CRAN policy; see
       `specs/024-crossref-doi-verification/spec.md`).
 
+## Feature 027 — Release 1.2.0 first-time-user gaps
+
+Deferred deliberately during spec 027; each is independent.
+
+- [ ] **Token-specific suggestions for the deferred tail.** Item S
+      sharpened ten rules (94 % of the removable baseline masking
+      measured on the 30-paper audit). The rest are worth doing when
+      convenient, each a rule-set bump that only affects its own
+      baseline entries: BibTeX entry keys for `JSS-REFS-005`,
+      `JSS-REFS-006`, `JSS-NAME-002`, `JSS-HOUSE-002`,
+      `JSS-BIBTEX-003/004/005`; identifiers for `JSS-TYPO-004` and
+      `JSS-XREF-006`. `JSS-WIDTH-001` stays generic by decision
+      (research.md §2).
+- [ ] **Baseline in the WASM / PyO3 / R bindings.** The matcher is pure
+      and already lives in `jsslint-core`; only the file I/O and the
+      path map are CLI-side. An in-memory variant needs a `path_map`
+      over the caller's own labels — roughly a day, per plan §5.4.
+- [ ] **CLI zip input.** `jss-lint project.zip` for the Overleaf route,
+      rather than `unzip` first: Python's stdlib `zipfile` (~0.5 d), the
+      Rust `zip` crate at the CLI layer only (~1 d, isolation-safe),
+      parity (~0.5 d). Deferred in favour of the browser drop, which
+      needed no dependency at all (D6).
+- [ ] **SARIF `baselineState`.** Baselined findings are currently
+      *omitted* from the SARIF, which makes the Action's severity gate
+      correct for free. Marking them `baselineState: "unchanged"`
+      instead would surface them in the Security tab as suppressed —
+      but would also post them as PR review comments, and needs a jq
+      change in the Action (research.md §6).
+- [ ] **Action `comment-mode: pr-comment`.** Advertised by
+      `action/action.yml` but unimplemented; only `pr-review` works.
+- [ ] **Confidence tiers derived from the precision DB.** The same
+      pipeline the recall snapshot now uses (`generate_recall_snapshot`)
+      could stamp `confidence` from measured precision, instead of the
+      hand-maintained catalogue field.
+- [ ] **Windows CI job for the colour path.** `anstream` handles legacy
+      console translation, and the decision function is unit-tested, but
+      no CI runner exercises Windows; verified manually at release.
+- [ ] **A second annotator for the recall corpus.** The floor now
+      ratchets against a measurement made by one annotator (spec 017
+      Clarifications §3). A second pass would put an inter-annotator
+      agreement number behind the 0.78 gate.
+- [ ] **Fold the crate's vendored catalogue into the vendor script.**
+      `r/jsslintr/tools/vendor-jsslint-core.sh` refreshes the R
+      package's copy; `rust/jsslint-core/specs/003-jss-rule-catalogue/`
+      is copied by hand and guarded only by
+      `tests/unit/test_vendored_catalogue_in_sync.py`.
+- [ ] **Close the §IX branch-coverage gap on the JSS rule modules.**
+      The constitution mandates 100% branch coverage on
+      `src/texlint/journals/*/rules/`; the full suite measures 93%
+      (spec 027, 2026-09). No module is at 100% except `code_width.py`;
+      the weakest are `abbreviations.py` (87%), `capitalization.py`,
+      `crossrefs.py`, and `markup.py` (90%). The gap pre-dates 1.2.0 —
+      it was never a gate, so it drifted. Two things are needed: the
+      per-module numbers turned into a CI gate that fails on a
+      *regression* (the only version of this that can be adopted
+      incrementally), and then a module-by-module pass to reach the
+      mandated 100%. The uncovered branches are exactly the paths the
+      eval corpus does not exercise, which is where latent false
+      positives live — the reason §IX exists.
+
 ## Rule catalogue follow-ups surfaced by recall annotation
 
 New rule proposals and existing-rule behaviour fixes discovered

@@ -59,7 +59,8 @@ test_<category>.py` for `src/texlint/journals/jss/rules/<category>.py`
 (they lived in `tests/unit/rules/` until spec 027; older specs still name
 that path).
 
-Release flow: tag-triggered workflows publish per component
+Release flow (step by step: `docs/releasing.md`): tag-triggered
+workflows publish per component
 (`vX.Y.Z-cli|-py|-pypkg|-wasm|-vscode`, plain `vX.Y.Z` for the Action —
 push tags to the public remote only). PyPI/npm use OIDC trusted publishing.
 `vscode-extension/` runs the checker in-process from the bundled WASM

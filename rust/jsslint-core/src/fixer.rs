@@ -537,11 +537,8 @@ fn count(n: usize, singular: &str, plural: &str) -> String {
 /// Byte-identical to `fixer.py::summary_line`.
 pub fn summary_line(fix_report: &FixReport, dry_run: bool) -> String {
     let applied = fix_report.applied.len();
-    let files: std::collections::BTreeSet<&str> = fix_report
-        .applied
-        .iter()
-        .map(|a| a.file.as_str())
-        .collect();
+    let files: std::collections::BTreeSet<&str> =
+        fix_report.applied.iter().map(|a| a.file.as_str()).collect();
     if dry_run {
         return format!(
             "Dry run: {} would be applied to {}. Re-run without --dry-run to write.\n",
@@ -558,8 +555,7 @@ pub fn summary_line(fix_report: &FixReport, dry_run: bool) -> String {
         count(files.len(), "file", "files")
     );
     // Sorted by reason so both engines list them in the same order.
-    let mut reasons: std::collections::BTreeMap<&str, usize> =
-        std::collections::BTreeMap::new();
+    let mut reasons: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
     for skip in &fix_report.skipped {
         *reasons.entry(skip.reason.as_str()).or_insert(0) += 1;
     }

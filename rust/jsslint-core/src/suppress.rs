@@ -32,9 +32,8 @@ pub const ALL_RULES: &str = "*";
 /// on its second `%` in both flavours. Group 1 is the `%` run, whose
 /// start is what the comment-only-line test needs; group 2 is the
 /// trailing argument text.
-static DIRECTIVE_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)(?:^|[^\\])(%+)\s*jss-lint:\s*ignore\b([^\n]*)").unwrap()
-});
+static DIRECTIVE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)(?:^|[^\\])(%+)\s*jss-lint:\s*ignore\b([^\n]*)").unwrap());
 
 /// Rule-id shape: dash-joined uppercase/digit segments (JSS-MARKUP-001),
 /// matched against the upper-cased argument text.
@@ -95,7 +94,10 @@ pub fn build_index(document: &ParsedDocument) -> HashMap<String, HashMap<u32, Ha
         }
         let per_file = index.entry(path.to_string()).or_default();
         for (lineno, ids) in lines {
-            per_file.entry(lineno + line_offset).or_default().extend(ids);
+            per_file
+                .entry(lineno + line_offset)
+                .or_default()
+                .extend(ids);
         }
     };
     for tex in document.all_tex_like_docs() {
@@ -155,10 +157,7 @@ mod tests {
         let out = directive_lines("% jss-lint: ignore JSS-CAP-002\nUses R\n");
         assert_eq!(
             out,
-            HashMap::from([
-                (1, ids(&["JSS-CAP-002"])),
-                (2, ids(&["JSS-CAP-002"]))
-            ])
+            HashMap::from([(1, ids(&["JSS-CAP-002"])), (2, ids(&["JSS-CAP-002"]))])
         );
     }
 

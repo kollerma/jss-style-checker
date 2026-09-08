@@ -37,9 +37,7 @@ pub fn format_rule_set(info: &RuleSetInfo) -> String {
 
 /// The four-line block, newline-terminated.
 pub fn format_block(tool: &str, engine: &str, rule_set: &str, journal: &str) -> String {
-    format!(
-        "jss-lint {tool}\nengine: {engine} {tool}\nrule set: {rule_set}\njournal: {journal}\n"
-    )
+    format!("jss-lint {tool}\nengine: {engine} {tool}\nrule set: {rule_set}\njournal: {journal}\n")
 }
 
 #[cfg(test)]
