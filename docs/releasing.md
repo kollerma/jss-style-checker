@@ -21,7 +21,17 @@ the corpus at each release rather than carried forward.
 ```sh
 eval-jss corpus fetch && python -m eval.recall_corpus_scaffold
 eval-jss recall                       # recorded run — no --no-record
-python tools/generate_recall_snapshot.py
+python -m tools.generate_recall_snapshot --run-timestamp <NEW RUN>
+```
+
+`--run-timestamp` is **required** to adopt the run you just made: with
+no flag the generator re-pins the timestamp already in the committed
+snapshot, so `--check` stays stable and a stray regeneration cannot
+silently jump runs. Take the value from `recall_history`:
+
+```sh
+sqlite3 eval/precision-history.db \
+  'select max(run_timestamp) from recall_history'
 ```
 
 The badge reads that same snapshot, so it cannot disagree with the
@@ -69,8 +79,10 @@ python scripts/set_version.py
 ```
 
 Never hand-edit a manifest (Constitution §XV;
-`tests/unit/test_version_single_source.py` guards it). Note the two
-side effects: `r/jsslintr/DESCRIPTION` is reset to a bare `1.2.0` (the
+`tests/unit/test_version_single_source.py` guards it). The script
+updates both `Cargo.lock` files before re-vendoring the R crate, because
+`vendor-crate-archive.sh` runs `cargo --locked` and a lock still naming
+the previous version aborts it. Note the two side effects: `r/jsslintr/DESCRIPTION` is reset to a bare `1.2.0` (the
 CRAN `-N` suffix is added back at submission time), and
 `CITATION.cff`'s date is set to today.
 

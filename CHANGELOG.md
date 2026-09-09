@@ -13,7 +13,7 @@ suggestions, which bumps that date and means baseline entries for the
 reworded rules go stale — re-run `--update-baseline`. Channel-by-channel
 version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
 
-## [Unreleased]
+## [1.2.0] — 2026-09-09
 
 ### Added
 

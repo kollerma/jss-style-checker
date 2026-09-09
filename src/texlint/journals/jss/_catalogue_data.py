@@ -816,7 +816,7 @@ GUIDE_SOURCE: str = 'jss.cls 3.3 (2021-05-23)'
 # (spec 027 item A). RECALL_RUN pins the run; RECALL holds the
 # per-rule counts. Rules absent from RECALL are unmeasured.
 RECALL_RUN: Mapping[str, object] = MappingProxyType({
-    'run_timestamp': '2026-07-19T10:30:02Z',
+    'run_timestamp': '2026-09-09T19:13:46Z',
     'corpus_hash': '70951d5371df0734',
     'min_plants': 10,
     'papers': 17,

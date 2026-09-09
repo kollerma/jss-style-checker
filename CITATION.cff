@@ -3,8 +3,8 @@ cff-version: 1.2.0
 # at the JOSS paper's DOI, per JOSS's post-acceptance checklist.
 message: "If you use this software, please cite it using these metadata."
 title: "jss-style-checker: a style checker for Journal of Statistical Software manuscripts"
-version: 1.1.0
-date-released: 2026-07-19
+version: 1.2.0
+date-released: 2026-09-09
 authors:
   - family-names: Koller
     given-names: Manuel

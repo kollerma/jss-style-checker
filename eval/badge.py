@@ -41,8 +41,8 @@ from typing import Any
 from eval import history
 
 # The iterations.label recorded for this release — see
-# `eval iterate record v1.0.0-release`.
-PINNED_ITERATION_LABEL = "v1.0.0-release"
+# `eval iterate record v1.2.0-release`.
+PINNED_ITERATION_LABEL = "v1.2.0-release"
 # Recall is pinned by the shipped snapshot, not by a constant here:
 # `specs/003-jss-rule-catalogue/recall.json` is the single source every
 # recall surface reads (spec 027 FR-A-006), badge included.

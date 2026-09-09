@@ -110,12 +110,16 @@ def main(argv: list[str]) -> None:
     # Derived artifacts: the R package's vendored jsslint-core (its Cargo.toml
     # version is stamped from rust/Cargo.toml by the vendor script) and the two
     # Cargo.lock files that --locked builds pin against.
+    # Order matters: the lock files must agree with the manifests *before*
+    # the vendor script runs, because `vendor-crate-archive.sh` invokes
+    # `cargo run --locked` and `cargo vendor --locked`, both of which refuse
+    # to proceed against a lock that still names the previous version.
     print("Regenerating derived artifacts")
-    _run(["bash", "r/jsslintr/tools/vendor-jsslint-core.sh"])
     _run(["cargo", "update", "-p", "jsslintr", "-p", "jsslint-core",
           "--manifest-path", "r/jsslintr/src/rust/Cargo.toml"])
     _run(["cargo", "update", "-p", "jsslint-core", "-p", "jsslint-cli",
           "-p", "jsslint-wasm", "-p", "jsslint-py", "--manifest-path", "rust/Cargo.toml"])
+    _run(["bash", "r/jsslintr/tools/vendor-jsslint-core.sh"])
 
     print("Done. Run `python -m pytest tests/unit/test_version_single_source.py` to verify.")
 
