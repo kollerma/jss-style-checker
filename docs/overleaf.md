@@ -26,6 +26,23 @@ Firefox 113+, Safari 16.4+. On an older browser the page says so and
 points you at the folder picker; unzip the download yourself and use
 "Choose a folder…".
 
+### Running the app locally
+
+To try it against a project before it is deployed, build the bundle and
+serve `web/` over HTTP (`file://` blocks ES-module imports and the WASM
+fetch):
+
+```sh
+cd rust/jsslint-wasm && wasm-pack build --release --target web --out-dir ../../web/pkg
+cd ../../web && python3 -m http.server 8000
+```
+
+If the page reports `RangeError: WebAssembly.Table.grow()`, the build
+picked up an old system `wasm-opt` (Binaryen ≤ 108 mangles the
+reference-type tables). Build with `--no-opt`, or put a current Binaryen
+first on `PATH`. CI is unaffected: its runners have no system
+`wasm-opt`, so wasm-pack downloads a current one.
+
 ## 2. Unzip and run the command-line tool
 
 For a full report, auto-fixes, or a baseline, download the source zip

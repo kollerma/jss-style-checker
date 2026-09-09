@@ -50,7 +50,9 @@ fn browser_bundle_stays_under_the_ceiling() {
     assert!(
         size <= CEILING_BYTES,
         "browser bundle is {size} bytes, over the {CEILING_BYTES}-byte soft ceiling.\n\
-         Check what grew (embedded catalogue data? a new dependency?). If the growth \
-         is justified, raise CEILING_BYTES here and say why in the commit message."
+         First check this is a release build: `wasm-pack build --no-opt` produces a \
+         bundle ~30% larger and is not what ships. Otherwise, check what grew \
+         (embedded catalogue data? a new dependency?) and, if the growth is \
+         justified, raise CEILING_BYTES here and say why in the commit message."
     );
 }
