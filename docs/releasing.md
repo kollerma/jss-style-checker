@@ -82,9 +82,9 @@ Never hand-edit a manifest (Constitution §XV;
 `tests/unit/test_version_single_source.py` guards it). The script
 updates both `Cargo.lock` files before re-vendoring the R crate, because
 `vendor-crate-archive.sh` runs `cargo --locked` and a lock still naming
-the previous version aborts it. Note the two side effects: `r/jsslintr/DESCRIPTION` is reset to a bare `1.2.0` (the
-CRAN `-N` suffix is added back at submission time), and
-`CITATION.cff`'s date is set to today.
+the previous version aborts it. Note the two side effects: `r/jsslintr/DESCRIPTION` is set to a bare `1.2.0`, which
+is what the first CRAN submission carries, and `CITATION.cff`'s date is
+set to today.
 
 ## 4. Gates
 
@@ -162,8 +162,10 @@ present and unexpired before tagging.
 
 ## 7. Manual channels
 
-- **CRAN**: `r/jsslintr` as `1.2.0-1`. Bump the `-N` suffix, not the
-  version, for a resubmission of the same source.
+- **CRAN**: `r/jsslintr` as **`1.2.0`** — submit the bare version. The
+  `-N` suffix is only for *resubmissions*: if the first submission is
+  rejected, fix the cause and go to `1.2.0-1`, then `-2`, and so on.
+  A first submission never carries a suffix.
 - **CTAN**: the manual bundle, version `1.2.0`, with the README that
   ships in it re-read rather than assumed.
 

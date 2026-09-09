@@ -347,7 +347,7 @@ the same HTML report as the folder picker.
 - [x] T140 Write `docs/releasing.md` with the plan §10 checklist
 - [x] T141 Run the full gate set: `python -m pytest tests/ -q`, `ruff check .`, the §IX coverage gate, `cargo test --workspace --locked`, `eval-jss recall --gate --no-record`
 - [ ] T142 **[RELEASE — needs explicit go-ahead]** fresh recorded `eval-jss recall` run → `generate_recall_snapshot.py` → badge JSON → ratchet `RECALL_FLOOR` to `floor(snapshot − 0.03, 2 dp)`
-- [ ] T143 **[RELEASE — needs explicit go-ahead]** `generate_message_snapshot.py --check`, `generate_catalogue_data.py --check`, CHANGELOG, `VERSION` + `python scripts/set_version.py`, tag-guard step in every `release-*.yml`, CTAN bundle, CRAN `1.2.0-1`
+- [ ] T143 **[RELEASE — needs explicit go-ahead]** `generate_message_snapshot.py --check`, `generate_catalogue_data.py --check`, CHANGELOG, `VERSION` + `python scripts/set_version.py`, tag-guard step in every `release-*.yml`, CTAN bundle, CRAN `1.2.0` (bare; `-N` only on resubmission)
 
 ---
 
