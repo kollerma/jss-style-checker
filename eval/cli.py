@@ -489,6 +489,11 @@ def recall_cmd(
 
     all_linter: list[dict] = []
     all_annotations: list[dict] = []
+    # Papers whose annotations exist but whose sources were never
+    # materialised. Their plants are dropped from BOTH sides, so the
+    # aggregate stays well-formed but describes a different corpus than
+    # the one we ship a number for — see the gate below.
+    skipped_papers: list[str] = []
     for ann_path, ann_violations in per_paper:
         paper_dir = ann_path.parent
         # The corpus convention is one manuscript per paper directory,
@@ -507,6 +512,7 @@ def recall_cmd(
                 f"eval-jss recall: {paper_dir}: no manuscript file; skipping",
                 err=True,
             )
+            skipped_papers.append(paper_dir.name)
             continue
         document = parse_document(manuscript_files)
         report = run_engine(cfg, document, journal)
@@ -610,6 +616,26 @@ def recall_cmd(
 
     # Gate logic.
     if gate:
+        # An incomplete corpus is not a low score — it is a different
+        # measurement, and the gate must not pass judgement on it. A
+        # missing paper drops its plants from both numerator and
+        # denominator, so the aggregate can move either way: it sank the
+        # 1.2.0 CI run to 0.762, but a corpus missing the tool's weakest
+        # papers would move it *up* and wave a real regression through.
+        # Fail on the cause instead of reporting a number for a corpus
+        # nobody chose.
+        if skipped_papers:
+            click.echo(
+                "eval-jss recall: corpus incomplete — "
+                f"{len(skipped_papers)} paper(s) have annotations but no "
+                f"sources: {', '.join(sorted(skipped_papers))}.\n"
+                "  Recall over a partial corpus is not comparable to the "
+                "shipped snapshot. Materialise it first:\n"
+                "    eval-jss corpus fetch && "
+                "python -m eval.recall_corpus_scaffold",
+                err=True,
+            )
+            ctx.exit(1)
         agg = recall_report.aggregate_recall or 0.0
         if agg < RECALL_FLOOR:
             click.echo(

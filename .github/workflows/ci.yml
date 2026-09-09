@@ -174,7 +174,12 @@ jobs:
         with:
           # Only the fetched (gitignored) payloads — never committed
           # examples, so a stale cache can't shadow checked-in files.
-          path: examples/cran_*
+          # BOTH source kinds: the manifest has 16 `github` rows, and
+          # caching only `cran_*` meant every cache hit skipped the fetch
+          # and left them absent, silently shrinking the recall corpus.
+          path: |
+            examples/cran_*
+            examples/github_*
           key: eval-corpus-${{ hashFiles('eval/corpus-manifest.csv') }}
 
       - name: Fetch the eval corpus (cache miss only)

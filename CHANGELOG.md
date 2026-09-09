@@ -124,6 +124,15 @@ version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
 
 ### Fixed
 
+- **`eval-jss recall --gate` refuses to judge an incomplete corpus.**
+  A paper whose annotations exist but whose sources were never fetched
+  was skipped with a warning, and its plants left both the numerator and
+  the denominator — so the gate reported a confident number for a corpus
+  nobody chose. It can move either way: the 1.2.0 CI run sank to 0.762,
+  but dropping one paper measured 0.781, which would have *passed* the
+  0.78 floor while measuring something else. The gate now fails on the
+  cause and names the missing papers. Ungated runs are unchanged.
+
 - **Bracketed text no longer disappears from terminal output.** `rich`
   parses `[word]` in a table cell as a console-markup tag and drops it,
   so any message or suggestion quoting LaTeX with an optional argument
