@@ -130,28 +130,28 @@ class TestPinnedAggregates:
 
         assert pinned_precision_aggregate(db) == 0.0
 
-    def test_recall_reads_the_pinned_timestamp_not_latest(self, tmp_path: Path) -> None:
+    def test_recall_reads_the_shipped_snapshot_not_the_database(
+        self, tmp_path: Path
+    ) -> None:
+        # Spec 027 FR-A-006: the badge and the tool must report the same
+        # number, so the badge reads the file the tool ships — whatever
+        # the database has been doing since.
         db = tmp_path / "precision-history.db"
-        history.record_recall(
-            db, run_timestamp="2020-01-01T00:00:00Z", corpus_hash="h1",
-            per_rule=[("JSS-CITE-001", 1, 99, None)],
-        )
-        history.record_recall(
-            db, run_timestamp=badge.PINNED_RECALL_TIMESTAMP, corpus_hash="h2",
-            per_rule=[("JSS-CITE-001", 9, 1, None)],
-        )
         history.record_recall(
             db, run_timestamp="2030-01-01T00:00:00Z", corpus_hash="h3",
             per_rule=[("JSS-CITE-001", 1, 99, None)],
         )
+        snapshot = json.loads(badge.RECALL_SNAPSHOT.read_text(encoding="utf-8"))
+        tp = sum(e["tp"] for e in snapshot["rules"].values())
+        fn = sum(e["fn"] for e in snapshot["rules"].values())
 
-        assert pinned_recall_aggregate(db) == pytest.approx(0.9)
+        assert pinned_recall_aggregate(db) == pytest.approx(tp / (tp + fn))
 
-    def test_recall_is_zero_when_pinned_timestamp_absent(self, tmp_path: Path) -> None:
-        db = tmp_path / "precision-history.db"
-        history.record_recall(
-            db, run_timestamp="2020-01-01T00:00:00Z", corpus_hash="h1",
-            per_rule=[("JSS-CITE-001", 9, 1, None)],
-        )
+    def test_recall_needs_no_database_at_all(self, tmp_path: Path) -> None:
+        # The badge workflow runs on a fresh checkout where
+        # `recall_history` may not even exist; the snapshot is a file.
+        assert pinned_recall_aggregate(tmp_path / "absent.db") > 0.0
 
-        assert pinned_recall_aggregate(db) == 0.0
+    def test_recall_run_timestamp_comes_from_the_snapshot(self) -> None:
+        snapshot = json.loads(badge.RECALL_SNAPSHOT.read_text(encoding="utf-8"))
+        assert badge.pinned_recall_run_timestamp() == snapshot["run_timestamp"]

@@ -528,10 +528,15 @@ def check_jss_cap_002(
             group = _first_group_arg(node, parent, idx)
             if group is None:
                 continue
+            # Name the heading (spec 027 item S). The title quoted is the
+            # one the rule inspects — the mandatory `{...}` argument —
+            # even when a `[plain]` variant exists, so the author is
+            # pointed at the text that actually triggered the finding.
+            title = _helpers.identifier(_group_plain_text(group), 60)
             yield from _check_sentence_style(
                 tex, node.pos, group, "JSS-CAP-002",
                 "Use sentence style: capitalise only the first word "
-                "(proper names remain capitalised).",
+                f"(proper names remain capitalised) in '{title}'.",
                 # Section titles are short and the user's recall
                 # annotations flag single-offender titles like
                 # "Bayesian Estimation" / "Model Training" / "MCMC
@@ -553,7 +558,8 @@ def check_jss_cap_002(
                     suggestion=(
                         "Use sentence style: capitalise the first word "
                         "after ':' (or wrap it in \\code{}/\\pkg{} if it "
-                        "is a code identifier or package name)."
+                        f"is a code identifier or package name) in "
+                        f"'{title}'."
                     ),
                 )
 

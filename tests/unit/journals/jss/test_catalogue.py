@@ -59,7 +59,16 @@ def test_validate_returns_no_errors(catalogue_doc: dict) -> None:
 
 
 def test_top_level_keys_are_required_plus_optional(catalogue_doc: dict) -> None:
-    required = {"version", "source_vendored_at", "categories", "rules"}
+    required = {
+        "version",
+        "source_vendored_at",
+        "categories",
+        "rules",
+        # Rule-set provenance (spec 027 item D).
+        "guide_edition",
+        "ruleset_version",
+        "ruleset_fingerprint",
+    }
     optional = {"retired_rule_ids", "deterministic_rule_ids"}
     assert required <= set(catalogue_doc), (
         f"missing required keys: {sorted(required - set(catalogue_doc))}"
@@ -144,6 +153,9 @@ def _minimal_catalogue(**overrides) -> dict:
     base = {
         "version": 1,
         "source_vendored_at": "2021-05-23",
+        "guide_edition": "jss.cls 3.3",
+        "ruleset_version": "2026-09-06",
+        "ruleset_fingerprint": "sha256:" + "0" * 64,
         "categories": ["citations"],
         "rules": [
             {
@@ -413,3 +425,23 @@ def test_no_forbidden_keys_on_rules(catalogue_doc: dict) -> None:
             f"{rule['rule_id']}: forbidden keys present: "
             f"{sorted(set(rule) & forbidden_examples)}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Reject-path tests for the rule-set provenance keys (spec 027 item D)
+# ---------------------------------------------------------------------------
+
+
+def test_ruleset_version_must_be_an_iso_date() -> None:
+    errors = validate(_minimal_catalogue(ruleset_version="2026-9-6"))
+    assert any("must be an ISO date" in str(e) for e in errors)
+
+
+def test_ruleset_fingerprint_must_be_a_sha256() -> None:
+    errors = validate(_minimal_catalogue(ruleset_fingerprint="deadbeef"))
+    assert any("sha256:" in str(e) for e in errors)
+
+
+def test_guide_edition_must_be_non_empty() -> None:
+    errors = validate(_minimal_catalogue(guide_edition=""))
+    assert any("guide_edition must be a non-empty string" in str(e) for e in errors)

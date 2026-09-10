@@ -18,13 +18,16 @@ Run via:
     python -m eval.badge precision 0.94
     python -m eval.badge recall    0.81
 
-Aggregates are pinned (spec 018, the 1.0.0 release): ``pinned_precision_
-aggregate``/``pinned_recall_aggregate`` read a fixed iteration/snapshot
-from ``precision-history.db`` rather than "whatever's latest," so the
-public ``jss-style-checker`` repo's badges reflect the release state and
-don't silently drift as the dev repo (``jss-style-checker-dev``) keeps
-iterating after release. Bump ``PINNED_ITERATION_LABEL``/
-``PINNED_RECALL_TIMESTAMP`` when cutting the next pinned release.
+Aggregates are pinned rather than "whatever's latest", so the public
+``jss-style-checker`` repo's badges reflect the release state and don't
+silently drift as the dev repo keeps iterating after release.
+``pinned_precision_aggregate`` reads a fixed iteration label from
+``precision-history.db``; ``pinned_recall_aggregate`` reads the shipped
+snapshot ``specs/003-jss-rule-catalogue/recall.json`` — the same file
+the tool itself reports recall from (spec 027 FR-A-006), so the badge
+and the author footer can never disagree. Bump
+``PINNED_ITERATION_LABEL`` and regenerate the snapshot
+(``tools/generate_recall_snapshot.py``) when cutting the next release.
 """
 
 from __future__ import annotations
@@ -38,12 +41,17 @@ from typing import Any
 from eval import history
 
 # The iterations.label recorded for this release — see
-# `eval iterate record v1.0.0-release`.
-PINNED_ITERATION_LABEL = "v1.0.0-release"
-# The recall_history.run_timestamp of the `eval-jss recall` pass run
-# for this release (recall_history has no label column — spec 017
-# predates the pinning concept — so this pins by timestamp instead).
-PINNED_RECALL_TIMESTAMP = "2026-07-11T20:33:47Z"
+# `eval iterate record v1.2.0-release`.
+PINNED_ITERATION_LABEL = "v1.2.0-release"
+# Recall is pinned by the shipped snapshot, not by a constant here:
+# `specs/003-jss-rule-catalogue/recall.json` is the single source every
+# recall surface reads (spec 027 FR-A-006), badge included.
+RECALL_SNAPSHOT = (
+    Path(__file__).resolve().parents[1]
+    / "specs"
+    / "003-jss-rule-catalogue"
+    / "recall.json"
+)
 
 
 def _color_for(value: float) -> str:
@@ -107,25 +115,29 @@ def pinned_precision_aggregate(history_db: Path) -> float:
     return 0.0 if tp + fp == 0 else tp / (tp + fp)
 
 
-def pinned_recall_aggregate(history_db: Path) -> float:
-    """Aggregate recall for the ``PINNED_RECALL_TIMESTAMP`` snapshot.
+def pinned_recall_aggregate(_history_db: Path | None = None) -> float:
+    """Aggregate recall from the **shipped snapshot**.
 
-    ``0.0`` (not an error) if that timestamp has no rows — see
-    ``pinned_precision_aggregate`` for why a bare ``SUM()`` never
-    returns ``None`` for the row itself.
+    Reads ``specs/003-jss-rule-catalogue/recall.json`` rather than
+    querying the history database, so the badge cannot disagree with
+    what the tool itself reports to a user (spec 027 FR-A-006). The
+    snapshot is generated from one pinned run by
+    ``tools/generate_recall_snapshot.py``; before 1.2.0 this function
+    carried its own timestamp constant, which had already drifted from
+    the one the paper pinned.
+
+    The parameter is kept so existing callers (and the CLI below) need
+    no change; it is unused.
     """
-    cx = history.connect(history_db)
-    try:
-        row = cx.execute(
-            "SELECT SUM(tp) AS tp, SUM(fn) AS fn FROM recall_history "
-            "WHERE run_timestamp = ?",
-            (PINNED_RECALL_TIMESTAMP,),
-        ).fetchone()
-    finally:
-        cx.close()
-    tp = row["tp"] or 0
-    fn = row["fn"] or 0
+    snapshot = json.loads(RECALL_SNAPSHOT.read_text(encoding="utf-8"))
+    tp = sum(entry["tp"] for entry in snapshot["rules"].values())
+    fn = sum(entry["fn"] for entry in snapshot["rules"].values())
     return 0.0 if tp + fn == 0 else tp / (tp + fn)
+
+
+def pinned_recall_run_timestamp() -> str:
+    """The run the shipped snapshot pins, for release notes and docs."""
+    return json.loads(RECALL_SNAPSHOT.read_text(encoding="utf-8"))["run_timestamp"]
 
 
 def main(argv: list[str] | None = None) -> int:

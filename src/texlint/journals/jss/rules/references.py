@@ -124,6 +124,15 @@ def check_jss_refs_001(
         )
 
 
+def _entry_key(entry: Any) -> str:
+    """The BibTeX entry key a suggestion quotes (spec 027 item S).
+
+    Mirrors the fallback JSS-REFS-001 / JSS-REFS-003 already use: an
+    entry with no key (JSS-BIBTEX-001 territory) is still nameable.
+    """
+    return entry.key or "<unknown>"
+
+
 # ---------------------------------------------------------------------------
 # Title helpers (shared by the REFS-006 title-case heuristic)
 # ---------------------------------------------------------------------------
@@ -308,7 +317,8 @@ def check_jss_refs_004(
                 entry=entry,
                 rule_id="JSS-REFS-004",
                 suggestion=(
-                    f"Wrap {lang!r} in \\proglang{{{lang}}} in the title."
+                    f"Wrap {lang!r} in \\proglang{{{lang}}} in the title "
+                    f"of entry {_entry_key(entry)!r}."
                 ),
             )
             continue
@@ -319,7 +329,8 @@ def check_jss_refs_004(
                 entry=entry,
                 rule_id="JSS-REFS-004",
                 suggestion=(
-                    f"Wrap {pkg!r} in \\pkg{{{pkg}}} in the title."
+                    f"Wrap {pkg!r} in \\pkg{{{pkg}}} in the title "
+                    f"of entry {_entry_key(entry)!r}."
                 ),
             )
             continue
@@ -351,7 +362,8 @@ def check_jss_refs_004(
             rule_id="JSS-REFS-004",
             suggestion=(
                 f"The leading identifier {name!r} looks like a package "
-                f"name; wrap it in \\pkg{{{name}}} in the title."
+                f"name; wrap it in \\pkg{{{name}}} in the title of entry "
+                f"{_entry_key(entry)!r}."
             ),
         )
 
@@ -373,7 +385,7 @@ def check_jss_refs_004(
                 rule_id="JSS-REFS-004",
                 suggestion=(
                     f"Wrap {lang!r} in \\proglang{{{lang}}} in the "
-                    "note field."
+                    f"note field of entry {_entry_key(entry)!r}."
                 ),
             )
 
@@ -647,7 +659,8 @@ def check_jss_refs_007(
                     entry=entry,
                     rule_id="JSS-REFS-007",
                     suggestion=(
-                        "Capitalize the principal words of the journal title."
+                        "Capitalize the principal words of the journal "
+                        f"title in entry {_entry_key(entry)!r}."
                     ),
                 )
                 break

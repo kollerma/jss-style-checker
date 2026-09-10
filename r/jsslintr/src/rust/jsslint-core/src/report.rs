@@ -154,6 +154,11 @@ pub struct CategorySummary {
     /// the top-level `violations` array (json-output.md, "Violations
     /// are not duplicated inside each category in JSON").
     pub violations: Vec<Violation>,
+    /// Measured recall pooled over this category's rules. `None` for a
+    /// journal with no recall data at all; a category whose rules have
+    /// no annotated instances pools to `(0, 0)` and renders
+    /// `unmeasured`, never `100%`.
+    pub recall: Option<RecallStat>,
 }
 
 impl CategorySummary {
@@ -164,6 +169,7 @@ impl CategorySummary {
         rules_applied: u32,
         rules_passed: u32,
         violations: Vec<Violation>,
+        recall: Option<RecallStat>,
     ) -> Self {
         let status = if rules_applied == 0 {
             CategoryStatus::Skipped
@@ -179,6 +185,7 @@ impl CategorySummary {
             rules_applied,
             rules_passed,
             violations,
+            recall,
         }
     }
 }
@@ -191,6 +198,110 @@ pub struct SkippedRule {
     pub reason: String,
 }
 
+/// Measured recall for one rule, or pooled over a category — mirrors
+/// `api.RecallStat`, including its integer half-up arithmetic. `f64`
+/// would round half-away here and half-to-even in Python, so the two
+/// engines would disagree on exactly the .5 cases.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct RecallStat {
+    pub tp: u32,
+    pub fn_: u32,
+}
+
+impl RecallStat {
+    pub fn plants(&self) -> u32 {
+        self.tp + self.fn_
+    }
+
+    pub fn state(&self, min_plants: u32) -> &'static str {
+        if self.plants() == 0 {
+            "unmeasured"
+        } else if self.plants() < min_plants {
+            "limited"
+        } else {
+            "measured"
+        }
+    }
+
+    pub fn percent(&self) -> Option<u32> {
+        let n = self.plants();
+        if n == 0 {
+            return None;
+        }
+        Some((200 * self.tp + n) / (2 * n))
+    }
+
+    /// `81%` / `limited (n=4)` / `unmeasured`.
+    pub fn label(&self, min_plants: u32) -> String {
+        match self.state(min_plants) {
+            "unmeasured" => "unmeasured".to_string(),
+            "limited" => format!("limited (n={})", self.plants()),
+            _ => format!("{}%", self.percent().unwrap_or(0)),
+        }
+    }
+}
+
+/// Provenance of the shipped recall run — mirrors `api.RecallRun`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RecallRun {
+    pub run_timestamp: String,
+    pub corpus_hash: String,
+    pub min_plants: u32,
+    pub papers: u32,
+    pub tp: u32,
+    pub fn_: u32,
+}
+
+impl RecallRun {
+    pub fn stat(&self) -> RecallStat {
+        RecallStat {
+            tp: self.tp,
+            fn_: self.fn_,
+        }
+    }
+}
+
+/// Provenance of a journal's rule set — mirrors `api.RuleSetInfo`.
+///
+/// Every field is optional so a journal without provenance renders
+/// `n/a` / `null` exactly as the Python reference does for a
+/// third-party journal that supplies no metadata.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct RuleSetInfo {
+    pub version: Option<String>,
+    pub fingerprint: Option<String>,
+    pub guide_edition: Option<String>,
+    pub source_vendored_at: Option<String>,
+    pub recall: Option<RecallRun>,
+}
+
+impl RuleSetInfo {
+    /// `"jss.cls 3.3 (2021-05-23)"` — the report/JSON rendering.
+    /// `--version` lays the same two parts out differently, which is why
+    /// they are stored apart. Mirrors `RuleSetInfo.guide_source`.
+    pub fn guide_source(&self) -> Option<String> {
+        let edition = self.guide_edition.as_ref()?;
+        Some(match &self.source_vendored_at {
+            Some(date) => format!("{edition} ({date})"),
+            None => edition.clone(),
+        })
+    }
+}
+
+/// What a `--baseline` run hid — mirrors `core.baseline.BaselineSummary`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BaselineSummary {
+    /// The path as the user gave it (flag or TOML), not resolved.
+    pub path: String,
+    pub matched: u32,
+    /// Unmatched occurrences whose rule *did* run — findings since fixed.
+    pub stale: u32,
+    /// Unmatched occurrences whose rule did not run at all (ignored,
+    /// below `--min-confidence`, format-skipped, retired).
+    pub unevaluated: u32,
+    pub ruleset_version: Option<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct ComplianceReport {
     pub tool_version: String,
@@ -199,4 +310,13 @@ pub struct ComplianceReport {
     pub categories: Vec<CategorySummary>,
     pub compliance_percentage: Option<f64>,
     pub skipped_rules: Vec<SkippedRule>,
+    /// Filled in by the CLI after the run; the engine never sees the
+    /// baseline file (§XIV), only the matcher as a `Suppressor`.
+    pub baseline: Option<BaselineSummary>,
+    /// Provenance of the rule set that produced these findings, so no
+    /// renderer has to reach into the catalogue itself.
+    pub rule_set: RuleSetInfo,
+    /// The journal's guide-coverage matrix, or `None` when it publishes
+    /// none. `None` and "everything is checked" are different claims.
+    pub coverage: Option<&'static [crate::catalogue::CoverageDirectiveData]>,
 }

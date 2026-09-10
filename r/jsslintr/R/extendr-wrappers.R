@@ -38,4 +38,12 @@ lint_data <- function(files, journal = NULL, mode = NULL, ignore_rules = NULL, m
 #' @noRd
 fix_data <- function(files, dry_run = FALSE, rules = NULL, journal = NULL, mode = NULL, ignore_rules = NULL, min_confidence = NULL, verbose = NULL) .Call(wrap__fix_data, files, dry_run, rules, journal, mode, ignore_rules, min_confidence, verbose)
 
+#' Engine and rule-set provenance backing `jsslint_version()` —
+#' internal; the R wrapper adds the package version (which may carry a
+#' CRAN resubmission suffix, e.g. "1.2.0-1", the one sanctioned
+#' deviation from single-source versioning). Spec 027 item D,
+#' contracts/version-output.md C-4.
+#' @noRd
+version_data <- function() .Call(wrap__version_data)
+
 # nolint end

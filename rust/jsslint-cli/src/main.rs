@@ -55,6 +55,7 @@ mod report_pdf;
 mod resolver;
 
 use clap::Parser;
+use jsslint_core::baseline;
 use jsslint_core::catalogue;
 use jsslint_core::config::{self, OutputFormat, RawOverrides};
 use jsslint_core::engine::{self, EngineError, ParsedDocument};
@@ -77,7 +78,7 @@ const PARSE_RULE_ID: &str = "JSS-PARSE-000";
 const RESOLVE_ROOT_SUFFIXES: &[&str] = &[".ltx", ".rmd", ".rnw", ".tex"];
 
 #[derive(Parser)]
-#[command(name = "jss-lint", version, about = "JSS LaTeX/BibTeX style checker")]
+#[command(name = "jss-lint", about = "JSS LaTeX/BibTeX style checker")]
 struct Cli {
     /// Files or directories to lint.
     paths: Vec<String>,
@@ -139,12 +140,38 @@ struct Cli {
     /// using --crossref).
     #[arg(long = "crossref-mailto")]
     crossref_mailto: Option<String>,
+
+    /// Colour policy for terminal output (default: auto — on when
+    /// stdout is a terminal). NO_COLOR and CLICOLOR_FORCE are honoured;
+    /// JSON, SARIF, and HTML are never coloured.
+    #[arg(long, value_parser = ["auto", "always", "never"], ignore_case = true)]
+    color: Option<String>,
+
+    /// Apply a baseline file: findings it records are hidden from every
+    /// output and from the exit code. Also settable as `baseline` in
+    /// .jss-lint.toml; never discovered automatically.
+    #[arg(long)]
+    baseline: Option<PathBuf>,
+
+    /// Write the baseline from this run (accepting every finding) and
+    /// exit 0 without rendering a report. Path: --baseline, else the
+    /// TOML key, else ./.jss-lint-baseline.json.
+    #[arg(long = "update-baseline")]
+    update_baseline: bool,
+
+    /// Print the tool, engine, rule-set, and journal versions, then exit.
+    /// Not clap's built-in `version` flag: that one is eager, and this
+    /// block reports the journal `.jss-lint.toml`/`--journal` selects,
+    /// so it must be handled after the config is loaded (mirrors
+    /// `cli.py`'s dropped `click.version_option`).
+    #[arg(long)]
+    version: bool,
 }
 
 /// Subcommand names this port currently registers. Mirrors `cli.py`'s
 /// `if paths and paths[0] in main.commands:` forwarding check, scoped
 /// to only the subcommands actually wired so far.
-const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff", "init", "report", "lsp"];
+const REGISTERED_SUBCOMMANDS: &[&str] = &["explain", "diff", "init", "report", "lsp", "coverage"];
 
 #[derive(Parser)]
 #[command(
@@ -190,6 +217,89 @@ fn run_explain(args: &[String]) -> ExitCode {
             ExitCode::from(2)
         }
     }
+}
+
+#[derive(Parser)]
+#[command(
+    name = "jss-lint coverage",
+    about = "List which guide provisions jss-lint checks, and which it does not"
+)]
+struct CoverageArgs {
+    #[arg(long = "format", value_parser = ["terminal", "markdown", "json"], default_value = "terminal", ignore_case = true)]
+    format: String,
+
+    /// Journal identifier to report on (default: from config, else jss).
+    #[arg(long)]
+    journal: Option<String>,
+}
+
+/// "No findings" is only meaningful next to "here is what was looked
+/// for" (spec 027 FR-G-004). Exit 0 always, including for a journal that
+/// publishes no coverage data — which says so.
+fn run_coverage(args: &[String]) -> ExitCode {
+    let mut parsed = CoverageArgs::try_parse_from(
+        std::iter::once("jss-lint-coverage".to_string()).chain(args.iter().cloned()),
+    )
+    .unwrap_or_else(|e| e.exit());
+    // See `run_explain`'s comment on `ignore_case = true`.
+    parsed.format = parsed.format.to_lowercase();
+
+    let overrides = RawOverrides {
+        journal: parsed.journal.clone(),
+        ..Default::default()
+    };
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let config = config::load(&cwd, &overrides);
+
+    // Only `jss` is registered in this engine (documented §IV
+    // deviation), so any other journal has no coverage data at all.
+    let directives: &[jsslint_core::catalogue::CoverageDirectiveData] = if config.journal == "jss" {
+        catalogue::coverage()
+    } else {
+        &[]
+    };
+
+    let output = match parsed.format.as_str() {
+        "json" => jsslint_core::coverage::render_json(
+            directives,
+            &config.journal,
+            coverage_sources(&config.journal),
+        ),
+        "markdown" => jsslint_core::coverage::render_markdown(
+            directives,
+            &config.journal,
+            catalogue::rule_set().version.as_deref(),
+        ),
+        _ => jsslint_core::coverage::render_terminal(
+            directives,
+            &config.journal,
+            catalogue::rule_set().version.as_deref(),
+        ),
+    };
+    print!("{output}");
+    ExitCode::from(0)
+}
+
+/// The `sources:` block, for `coverage --format json` only. Compiled in
+/// rather than read at runtime: this binary must work from a crates.io
+/// install with no repository around it.
+fn coverage_sources(journal_id: &str) -> serde_json::Value {
+    if journal_id != "jss" {
+        return serde_json::json!({});
+    }
+    serde_json::json!({
+        "article_tex": {"date": "2021-12-10", "file": "docs/jss-template/article.tex"},
+        "author_instructions": {
+            "fetched": "2026-04-23",
+            "url": "https://www.jstatsoft.org/authors",
+        },
+        "jss_cls": {
+            "date": "2021-05-23",
+            "edition": "3.3",
+            "file": "docs/jss-template/jss.cls",
+        },
+        "style_guide": {"fetched": "2026-04-23", "url": "https://www.jstatsoft.org/style"},
+    })
 }
 
 #[derive(Parser)]
@@ -609,11 +719,267 @@ fn main() -> ExitCode {
                 "init" => run_init(&args[2..]),
                 "report" => run_report(&args[2..]),
                 "lsp" => lsp_server::main(),
+                "coverage" => run_coverage(&args[2..]),
                 _ => unreachable!("REGISTERED_SUBCOMMANDS out of sync"),
             };
         }
     }
     run_lint()
+}
+
+/// Prints the four-line `--version` block (contract:
+/// `specs/027-first-time-user-gaps/contracts/version-output.md`).
+///
+/// Mirrors `cli.py::_print_version`: config is loaded first so
+/// `.jss-lint.toml` and `--journal` are honoured, and an unregistered
+/// journal is reported rather than treated as an error — asking a tool
+/// what it is must never fail. Only `jss` is registered in this engine
+/// (documented §IV deviation), so anything else is "not registered".
+fn print_version(journal: Option<&str>) -> ExitCode {
+    let overrides = RawOverrides {
+        journal: journal.map(str::to_string),
+        ..Default::default()
+    };
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let config = config::load(&cwd, &overrides);
+
+    let (rule_set, journal_line) = if config.journal == "jss" {
+        (
+            jsslint_core::version::format_rule_set(&catalogue::rule_set()),
+            config.journal.clone(),
+        )
+    } else {
+        (
+            jsslint_core::version::format_rule_set(&Default::default()),
+            format!("{} (not registered)", config.journal),
+        )
+    };
+
+    print!(
+        "{}",
+        jsslint_core::version::format_block(
+            env!("CARGO_PKG_VERSION"),
+            "jsslint-core/rust",
+            &rule_set,
+            &journal_line,
+        )
+    );
+    ExitCode::from(0)
+}
+
+const DEFAULT_BASELINE_NAME: &str = ".jss-lint-baseline.json";
+
+/// Map each parsed file's label to its baseline-relative posix path.
+///
+/// Relativisation happens here, at the CLI layer, because it is the
+/// only layer that may touch the filesystem (§XIV). Both the label a
+/// violation carries (absolute and canonical under auto-resolve, the
+/// literal argument under `--no-resolve`) and the baseline file's
+/// directory are canonicalised first, so the two invocations produce
+/// the same key for the same file (`baseline-file.md` C-3). Mirrors
+/// `cli.py::_baseline_path_map`.
+fn baseline_path_map(
+    document: &ParsedDocument,
+    baseline_path: &Path,
+) -> std::collections::HashMap<String, String> {
+    let base = canonical_parent(baseline_path);
+    let mut out = std::collections::HashMap::new();
+    let labels = document
+        .tex_files
+        .iter()
+        .map(|f| f.path.clone())
+        .chain(document.bib_files.iter().map(|f| f.path.clone()))
+        .chain(document.rmd_files.iter().map(|f| f.path.clone()));
+    for label in labels {
+        let resolved = std::fs::canonicalize(&label)
+            .map(|p| strip_verbatim_prefix(&p))
+            .unwrap_or_else(|_| PathBuf::from(&label));
+        out.insert(label, relative_posix(&resolved, &base));
+    }
+    out
+}
+
+fn canonical_parent(path: &Path) -> PathBuf {
+    let absolute = std::fs::canonicalize(path).unwrap_or_else(|_| {
+        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        cwd.join(path)
+    });
+    let parent = absolute.parent().unwrap_or(Path::new(".")).to_path_buf();
+    strip_verbatim_prefix(&parent)
+}
+
+/// Windows `canonicalize` returns a `\\?\`-prefixed path; the baseline
+/// file must not carry it (`baseline-file.md` C-3). Mirrors
+/// `resolver.rs`'s handling.
+fn strip_verbatim_prefix(path: &Path) -> PathBuf {
+    let text = path.to_string_lossy();
+    match text.strip_prefix(r"\\?\") {
+        Some(stripped) => PathBuf::from(stripped),
+        None => path.to_path_buf(),
+    }
+}
+
+/// `os.path.relpath(target, base)` as a posix string, `../` segments
+/// and all. Purely lexical, like Python's.
+fn relative_posix(target: &Path, base: &Path) -> String {
+    let target_parts: Vec<_> = target.components().collect();
+    let base_parts: Vec<_> = base.components().collect();
+    let common = target_parts
+        .iter()
+        .zip(base_parts.iter())
+        .take_while(|(a, b)| a == b)
+        .count();
+    let mut parts: Vec<String> = vec!["..".to_string(); base_parts.len() - common];
+    parts.extend(
+        target_parts[common..]
+            .iter()
+            .map(|c| c.as_os_str().to_string_lossy().into_owned()),
+    );
+    if parts.is_empty() {
+        ".".to_string()
+    } else {
+        parts.join("/")
+    }
+}
+
+/// Lint with accepted findings hidden, and stamp the summary. Mirrors
+/// `cli.py::_run_with_baseline`.
+fn run_with_baseline(
+    baseline_path: &Path,
+    config: &config::ToolConfig,
+    document: &ParsedDocument,
+    project_extra: Option<(Vec<Violation>, Vec<Violation>)>,
+) -> Result<ComplianceReport, ExitCode> {
+    let text = match std::fs::read_to_string(baseline_path) {
+        Ok(text) => text,
+        Err(exc) => {
+            eprint_line(&format!(
+                "jss-lint: failed to read {}: {exc}",
+                baseline_path.display()
+            ));
+            return Err(ExitCode::from(2));
+        }
+    };
+    let doc = match baseline::parse(&text) {
+        Ok(doc) => doc,
+        Err(message) => {
+            eprint_line(&format!("jss-lint: {}: {message}", baseline_path.display()));
+            return Err(ExitCode::from(2));
+        }
+    };
+    if doc.journal != config.journal {
+        eprint_line(&format!(
+            "jss-lint: {} was written for journal '{}', but this run uses '{}'",
+            baseline_path.display(),
+            doc.journal,
+            config.journal
+        ));
+        return Err(ExitCode::from(2));
+    }
+
+    let mut matcher =
+        baseline::BaselineMatcher::new(&doc, baseline_path_map(document, baseline_path));
+    let mut report = engine::run_with(config, document, project_extra, Some(&mut matcher));
+    let applied: HashSet<String> = catalogue::all_rules()
+        .iter()
+        .map(|r| r.rule_id.to_string())
+        .filter(|id| !config.ignore_rules.contains(id))
+        .filter(|id| !report.skipped_rules.iter().any(|s| &s.rule_id == id))
+        .collect();
+    report.baseline = Some(matcher.summary(&baseline_path.to_string_lossy(), &applied));
+    Ok(report)
+}
+
+/// Accept the current findings, atomically (§VII). Mirrors
+/// `cli.py::_write_baseline`.
+fn write_baseline(
+    baseline_path: &Path,
+    report: &ComplianceReport,
+    document: &ParsedDocument,
+    config: &config::ToolConfig,
+) -> ExitCode {
+    if determine_exit_code(report, config.fail_on) == 2 {
+        eprint_line(&format!(
+            "jss-lint: refusing to write {}: the run did not complete (parse error)",
+            baseline_path.display()
+        ));
+        return ExitCode::from(2);
+    }
+    let doc = baseline::build(
+        &report.violations,
+        &baseline_path_map(document, baseline_path),
+        env!("CARGO_PKG_VERSION"),
+        catalogue::rule_set().version.as_deref(),
+        &config.journal,
+    );
+    if let Err(exc) = atomic_write(baseline_path, &baseline::to_json(&doc)) {
+        eprint_line(&format!(
+            "jss-lint: failed to write {}: {exc}",
+            baseline_path.display()
+        ));
+        return ExitCode::from(2);
+    }
+    let written: u32 = doc.entries.iter().map(|e| e.count).sum();
+    eprint_line(&format!(
+        "jss-lint: wrote {written} baseline entries to {}",
+        baseline_path.display()
+    ));
+    ExitCode::from(0)
+}
+
+/// tempfile + rename, so a crash can never truncate the file the user
+/// has already committed (§VII). Mirrors `cli.py::_atomic_write`.
+fn atomic_write(path: &Path, text: &str) -> std::io::Result<()> {
+    use std::io::Write;
+
+    let directory = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| PathBuf::from("."));
+    let temp = directory.join(format!(
+        "{}.tmp",
+        path.file_name().unwrap_or_default().to_string_lossy()
+    ));
+    {
+        let mut file = std::fs::File::create(&temp)?;
+        file.write_all(text.as_bytes())?;
+    }
+    std::fs::rename(&temp, path)
+}
+
+/// Resolve `--color` / TOML / environment / TTY into one bool.
+///
+/// Read from the real process state here, at the CLI layer: the
+/// renderer takes the answer, not the question (§XIV, `color.md` C-8).
+fn color_decision(flag: Option<&str>, config: &config::ToolConfig) -> bool {
+    jsslint_core::color::should_colorize(
+        flag,
+        config.color,
+        &|key| std::env::var(key).ok(),
+        std::io::IsTerminal::is_terminal(&std::io::stdout()),
+    )
+}
+
+/// Write the rendered terminal stream through `anstream`.
+///
+/// The choice is the one *we* computed — never `AutoStream::auto`, whose
+/// own environment heuristics would drift from the Python engine's and
+/// break the one thing that must agree across engines (`color.md` C-5).
+/// anstream converts SGR for legacy Windows consoles and strips it
+/// outright when told `Never`, which is the belt to the braces of never
+/// emitting it in the first place.
+fn write_terminal(rendered: &str, color: bool) {
+    use std::io::Write;
+
+    let choice = if color {
+        anstream::ColorChoice::Always
+    } else {
+        anstream::ColorChoice::Never
+    };
+    let mut stream = anstream::AutoStream::new(std::io::stdout(), choice);
+    let _ = write!(stream, "{rendered}");
+    let _ = stream.flush();
 }
 
 fn run_lint() -> ExitCode {
@@ -625,6 +991,11 @@ fn run_lint() -> ExitCode {
     cli.output = cli.output.map(|s| s.to_lowercase());
     cli.min_confidence = cli.min_confidence.map(|s| s.to_lowercase());
     cli.fail_on = cli.fail_on.map(|s| s.to_lowercase());
+    cli.color = cli.color.map(|s| s.to_lowercase());
+
+    if cli.version {
+        return print_version(cli.journal.as_deref());
+    }
 
     if cli.paths.is_empty() {
         eprint_line("jss-lint: at least one FILE argument is required.");
@@ -647,6 +1018,8 @@ fn run_lint() -> ExitCode {
         min_confidence: cli.min_confidence.clone(),
         fail_on: cli.fail_on.clone(),
         severity_overrides: None,
+        baseline: cli.baseline.clone(),
+        color: cli.color.clone(),
     };
     let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     let mut config = config::load(&cwd, &cli_overrides);
@@ -693,11 +1066,36 @@ fn run_lint() -> ExitCode {
         return ExitCode::from(2);
     }
 
-    let report = match project_extra {
-        Some((cycles, missing)) => engine::run_with_project(&config, &document, cycles, missing),
-        None => engine::run(&config, &document),
-    };
+    let baseline_path = config.baseline.clone().or_else(|| {
+        cli.update_baseline
+            .then(|| PathBuf::from(DEFAULT_BASELINE_NAME))
+    });
 
+    if cli.update_baseline {
+        let report = match project_extra {
+            Some((cycles, missing)) => {
+                engine::run_with_project(&config, &document, cycles, missing)
+            }
+            None => engine::run(&config, &document),
+        };
+        return write_baseline(
+            baseline_path.as_deref().expect("set just above"),
+            &report,
+            &document,
+            &config,
+        );
+    }
+
+    let report = match (&baseline_path, project_extra) {
+        (None, Some((cycles, missing))) => {
+            engine::run_with_project(&config, &document, cycles, missing)
+        }
+        (None, None) => engine::run(&config, &document),
+        (Some(path), extra) => match run_with_baseline(path, &config, &document, extra) {
+            Ok(report) => report,
+            Err(code) => return code,
+        },
+    };
     if cli.dry_run && !cli.fix {
         eprint_line("jss-lint: --dry-run requires --fix");
         return ExitCode::from(2);
@@ -756,7 +1154,12 @@ fn run_lint() -> ExitCode {
 
     match config.output {
         OutputFormat::Json => print!("{}", json_output::render(&report)),
-        OutputFormat::Terminal => print!("{}", terminal::render(&report, &config)),
+        // Only the terminal stream is ever coloured: JSON, SARIF, and
+        // HTML are consumed by machines and browsers (`color.md` C-3).
+        OutputFormat::Terminal => {
+            let color = color_decision(cli.color.as_deref(), &config);
+            write_terminal(&terminal::render_with_color(&report, &config, color), color);
+        }
         OutputFormat::Sarif => print!("{}", sarif::render(&report, &config)),
         OutputFormat::Html => print!(
             "{}",

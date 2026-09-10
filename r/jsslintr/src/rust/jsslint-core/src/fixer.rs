@@ -45,6 +45,18 @@ pub enum SkipReason {
     UserSkipped,
 }
 
+impl SkipReason {
+    /// The wording `FixSkip.reason` carries on the Python side, which
+    /// the fix summary line quotes verbatim.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Conflict => "conflict",
+            Self::RuleNotSelected => "rule-not-selected",
+            Self::UserSkipped => "user-skipped",
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct FixSkip {
     pub file: String,
@@ -503,9 +515,61 @@ pub fn apply_fixes(
         }));
     }
 
-    FixReport {
+    let fix_report = FixReport {
         applied: applied_all,
         skipped: skipped_all,
         rejected: rejected_all,
+    };
+    let _ = write!(
+        stdout,
+        "{}",
+        summary_line(&fix_report, matches!(mode, ApplyMode::DryRun))
+    );
+    fix_report
+}
+
+/// `1 fix` / `2 fixes` — mirrors `fixer.py::_count`.
+fn count(n: usize, singular: &str, plural: &str) -> String {
+    format!("{n} {}", if n == 1 { singular } else { plural })
+}
+
+/// The receipt a fix pass ends with (spec 027 item C, `cli.md` C-7).
+/// Byte-identical to `fixer.py::summary_line`.
+pub fn summary_line(fix_report: &FixReport, dry_run: bool) -> String {
+    let applied = fix_report.applied.len();
+    let files: std::collections::BTreeSet<&str> =
+        fix_report.applied.iter().map(|a| a.file.as_str()).collect();
+    if dry_run {
+        return format!(
+            "Dry run: {} would be applied to {}. Re-run without --dry-run to write.\n",
+            count(applied, "fix", "fixes"),
+            count(files.len(), "file", "files")
+        );
     }
+    if applied == 0 {
+        return "No automatic fixes to apply; files left unchanged.\n".to_string();
+    }
+    let mut line = format!(
+        "Applied {} to {}",
+        count(applied, "fix", "fixes"),
+        count(files.len(), "file", "files")
+    );
+    // Sorted by reason so both engines list them in the same order.
+    let mut reasons: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
+    for skip in &fix_report.skipped {
+        *reasons.entry(skip.reason.as_str()).or_insert(0) += 1;
+    }
+    if !reasons.is_empty() {
+        let detail = reasons
+            .iter()
+            .map(|(reason, n)| format!("{reason} {n}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        line.push_str(&format!(
+            " ({} skipped: {detail})",
+            fix_report.skipped.len()
+        ));
+    }
+    line.push_str(".\n");
+    line
 }

@@ -394,3 +394,30 @@ print.jsslint_fixes <- function(x, ...) {
   }
   invisible(x)
 }
+
+#' Versions of the package, engine, and rule set
+#'
+#' The distribution-to-engine-to-rule-set mapping in code (spec 027 item
+#' D). `package` is this R package's version, which may carry a CRAN
+#' resubmission suffix (`1.2.0-1`) that no other channel uses; `tool` and
+#' `engine` name the compiled core it wraps; `ruleset_version` is the
+#' date of the rule set whose findings — and whose baseline entries —
+#' this build produces. `docs/versions.md` carries the same mapping for
+#' every other channel.
+#'
+#' @return A named list with `package`, `tool`, `engine`,
+#'   `ruleset_version`, and `guide_source`.
+#' @examples
+#' jsslint_version()
+#' @export
+jsslint_version <- function() {
+  # getNamespaceVersion() rather than utils::packageVersion(): it is in
+  # base (no Imports entry for one string lookup) and, more importantly,
+  # it returns the DESCRIPTION string verbatim -- packageVersion()
+  # normalises the CRAN resubmission suffix "1.2.0-1" to "1.2.0.1",
+  # which is precisely the distinction this function exists to report.
+  c(
+    list(package = unname(getNamespaceVersion("jsslintr"))),
+    version_data()
+  )
+}

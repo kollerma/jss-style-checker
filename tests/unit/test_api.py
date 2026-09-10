@@ -18,6 +18,7 @@ from texlint.api import (
     ParsedBibFile,
     ParsedDocument,
     ParsedTexFile,
+    RecallStat,
     Rule,
     RuleCategory,
     Severity,
@@ -364,3 +365,41 @@ class TestErrors:
     def test_errors_are_exception_subclasses(self):
         assert issubclass(JournalNotFoundError, Exception)
         assert issubclass(InvalidJournalError, Exception)
+
+
+class TestRecallStat:
+    """Integer recall arithmetic (spec 027 data-model §3.1).
+
+    No floating point anywhere in the classification or the rendered
+    percentage: Python's `round` is banker's, Rust's `f64::round` is
+    half-away, and the two engines must agree on every value. Integer
+    half-up sidesteps both.
+    """
+
+    def test_no_plants_is_unmeasured(self) -> None:
+        stat = RecallStat(tp=0, fn=0)
+        assert stat.state(10) == "unmeasured"
+        assert stat.percent() is None
+        assert stat.label(10) == "unmeasured"
+
+    def test_below_the_threshold_is_limited_and_prints_no_percentage(self) -> None:
+        # A rule with two plants at 50% has not been measured; showing
+        # "50%" would read as one.
+        for n in (1, 9):
+            stat = RecallStat(tp=n, fn=0)
+            assert stat.state(10) == "limited"
+            assert stat.label(10) == f"limited (n={n})"
+
+    def test_at_the_threshold_is_measured(self) -> None:
+        stat = RecallStat(tp=10, fn=0)
+        assert stat.state(10) == "measured"
+        assert stat.label(10) == "100%"
+
+    def test_rounds_half_up(self) -> None:
+        # 78.5% must render 79, not 78 (banker's rounding would say 78).
+        assert RecallStat(tp=157, fn=43).percent() == 79
+        assert RecallStat(tp=1587, fn=380).percent() == 81
+
+    def test_percent_is_none_below_the_threshold(self) -> None:
+        assert RecallStat(tp=4, fn=0).percent() == 100
+        assert RecallStat(tp=4, fn=0).label(10) == "limited (n=4)"

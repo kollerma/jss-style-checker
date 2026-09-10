@@ -6,10 +6,13 @@
 //! `/home/node/.claude/plans/having-the-style-checker-compressed-crown.md`
 //! for the full architecture.
 
+pub mod baseline;
 pub mod bib;
 pub mod catalogue;
+pub mod color;
 pub mod config;
 pub mod conformance;
+pub mod coverage;
 pub mod diff;
 pub mod engine;
 pub mod explain;
@@ -22,9 +25,11 @@ pub mod rmd;
 pub mod rnw;
 pub mod rules;
 pub mod sarif;
+pub mod suppress;
 pub mod terminal;
 pub mod terms;
 pub mod tex;
+pub mod version;
 
 pub use catalogue::{lookup as lookup_rule, RuleMeta};
 pub use report::{

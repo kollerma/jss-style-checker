@@ -24,7 +24,11 @@ step() { printf '\n== %s\n' "$*"; }
 # -- 0. toolchain -----------------------------------------------------------
 PY=${JSS_PAPER_PYTHON:-}
 if [ -z "$PY" ]; then
-    for cand in "$REPO_ROOT/.venv-host/bin/python" python3; do
+    # .venv-host is the macOS host's venv; .venv the one a Linux
+    # container/CI creates. A dangling symlink (the host venv seen from
+    # a container) fails the probe below, so the list just falls through.
+    for cand in "$REPO_ROOT/.venv-host/bin/python" \
+                "$REPO_ROOT/.venv/bin/python" python3; do
         if "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 10))' \
             2>/dev/null; then PY=$cand; break; fi
     done
@@ -38,7 +42,11 @@ JSS_LINT() { "$PY" -m texlint.cli "$@"; }
 
 # -- 1. version coherence ---------------------------------------------------
 step "version coherence"
-CLI_VERSION=$(JSS_LINT --version | sed 's/.*version //')
+# `--version` prints a four-line block (spec 027 item D); line 1 is
+# `jss-lint <semver>`, and its last token is the version in that form and
+# in the pre-1.2.0 `jss-lint, version <semver>` form alike.
+CLI_VERSION=$(JSS_LINT --version | head -1)
+CLI_VERSION=${CLI_VERSION##* }
 STAT_VERSION=$(sed -n 's/.*StatToolVersion}{\([^}]*\)}.*/\1/p' generated/stats.tex)
 [ "$CLI_VERSION" = "$STAT_VERSION" ] || {
     echo "error: jss-lint $CLI_VERSION != stats.tex $STAT_VERSION" >&2; exit 1; }

@@ -27,6 +27,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # A mistyped tag must fail here, not publish the wrong version.
+      # VERSION is the single source (Constitution §XV); the tag only
+      # ever restates it, so any disagreement is an operator error.
+      - name: Tag matches VERSION
+        if: github.ref_type == 'tag'
+        run: |
+          want="$(cat VERSION)"
+          got="${GITHUB_REF_NAME#v}"
+          got="${got%-pypkg}"
+          if [ "$got" != "$want" ]; then
+            echo "::error::tag $GITHUB_REF_NAME (channel suffix -pypkg) implies"\
+              "version '$got', but VERSION says '$want'. Fix the tag, or run"\
+              "scripts/set_version.py and commit before tagging."
+            exit 1
+          fi
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'

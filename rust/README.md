@@ -133,6 +133,61 @@ present unfixed through 0.11.x, and the 0.12.0 rewrite that does fix it has
 a completely different, incompatible API that `genpdf` 0.2.0 can't consume.
 See `rust/vendor/printpdf-0.3.4/NOTICE.md` for the full writeup.
 
+`jsslint --version` prints the same four-line block the Python CLI does
+— tool version, engine, rule set with the authority edition it derives
+from, and the effective journal — after `.jss-lint.toml` and `--journal`
+are resolved. **Line 2 is the one deliberate divergence**: this engine
+prints `engine: jsslint-core/rust <v>` where Python prints
+`engine: texlint/python <v>`. Lines 1, 3, and 4 are byte-identical and
+`rust/jsslint-cli/tests/version_parity.rs` compares them with line 2
+masked. The rule-set date is embedded at build time from
+`specs/003-jss-rule-catalogue/catalogue.yaml`; this engine never
+recomputes the fingerprint (its wording half, `messages.json`, is
+produced by the Python reference), it embeds the stored string, and the
+vendored-catalogue sync test keeps the two equal. The same facts are
+exported by the bindings: `version()` (WASM), `jsslint.version()` /
+`jsslint.__version__` (PyO3), `jsslint_version()` (R, which also reports
+the CRAN package version and its resubmission suffix). See
+`docs/versions.md`.
+
+`jsslint --color auto|always|never` colourises the terminal stream. The
+*decision* — flag, then `NO_COLOR`, then `CLICOLOR_FORCE`, then the TOML
+`color` key, then whether stdout is a TTY — is one shared function
+(`jsslint_core::color::should_colorize`, mirroring `texlint/color.py`),
+and `color_parity.rs` checks that both CLIs reach the same answer for
+every combination. **The escape bytes are a documented §XIII
+divergence**: Python lets `rich` emit them, this engine wraps cell text
+in SGR at render time and writes through `anstream::AutoStream` with the
+choice *we* computed (never `AutoStream::auto`, whose own heuristics
+would drift from Python's). Nobody diffs coloured output between
+engines; what both guarantee instead is that stripping every escape
+sequence yields the plain stream byte for byte — widths are measured on
+unstyled text, so colour cannot change layout
+(`terminal_parity.rs::stripping_colour_yields_the_plain_stream`). Only
+the 16-colour set is used, and no token is distinguished by hue alone.
+`anstream` is a direct dependency of this crate only; the WASM, PyO3,
+and R builds never colourise and never link it.
+
+`jsslint --fix` behaves exactly as `jss-lint --fix` does, including the
+closing receipt (`Applied 3 fixes to 1 file (1 skipped: conflict 1).`,
+or the `Dry run: …` form), which `fix_parity.rs` compares across write,
+dry-run, and interactive modes. Neither engine reads or changes
+version-control state: commit first, or preview with `--dry-run`. Writes
+are atomic and every applied fix is re-validated against its own rule,
+with a rollback if it re-triggers.
+
+`jsslint --baseline FILE` / `--update-baseline` implement spec 027's
+baseline mode, byte-compatible with the Python CLI's: a file written by
+either engine is read by the other, and `--update-baseline` produces
+identical bytes (`rust/jsslint-cli/tests/baseline_parity.rs`). Only the
+error text for a malformed baseline may differ between the engines —
+the two JSON parsers' messages — as for `diff`; exit code 2 is
+guaranteed either way. The matcher itself lives in `jsslint-core`
+(`baseline.rs`, pure), while reading, writing, and path relativisation
+stay in this crate (§XIV). The WASM, PyO3, and R bindings deliberately
+do **not** expose the baseline in 1.2.0: an in-memory variant needs only
+a path map over the caller's own labels, and is a follow-up.
+
 `jsslint lsp` starts a synchronous LSP 3.17 server over stdio (diagnostics +
 code actions + workspace edits) for any editor with an LSP client. (The
 project's own VS Code extension does NOT use it — it runs the WASM build

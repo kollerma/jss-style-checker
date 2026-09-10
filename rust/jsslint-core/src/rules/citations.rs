@@ -2,7 +2,7 @@
 //! (JSS-CITE-002/003/004).
 
 use super::py_repr;
-use super::tex_common::{tex_violation, tex_violation_with_fix};
+use super::tex_common::{identifier, tex_violation, tex_violation_with_fix};
 use crate::report::{Fix, FixConfidence, Violation};
 use crate::terms::TERMS;
 use crate::tex::extract;
@@ -510,7 +510,8 @@ pub fn check_cite_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             return;
         };
         let tail: String = parsed.chars[m.span.pos..].iter().collect();
-        if let Some(caps) = KEY_MATCH_RE.captures(&tail) {
+        let key_match = KEY_MATCH_RE.captures(&tail);
+        if let Some(caps) = &key_match {
             if caps.get(1).unwrap().as_str().contains('#') {
                 return;
             }
@@ -543,14 +544,29 @@ pub fn check_cite_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
             &line_index,
             m.span.pos,
             "JSS-CITE-003",
-            Some(
-                "Citation inside parens: replace (\\cite{...}) with \\citep{...}, or use \\citealp{...} when additional text shares the parens."
-                    .to_string(),
-            ),
+            Some(cite_003_suggestion(key_match.as_ref())),
             fix,
         ));
     });
     out
+}
+
+const CITE_003_BASE: &str =
+    "Citation inside parens: replace (\\cite{...}) with \\citep{...}, or use \\citealp{...} \
+     when additional text shares the parens";
+
+/// Name the citation (spec 027 item S), keys and all. Mirrors
+/// `citations._cite_003_suggestion`: a cite-family macro used without
+/// braces has no key to quote and keeps the generic wording.
+fn cite_003_suggestion(key_match: Option<&regex::Captures>) -> String {
+    let keys = key_match
+        .map(|caps| identifier(caps.get(1).unwrap().as_str(), 60))
+        .unwrap_or_default();
+    if keys.is_empty() {
+        format!("{CITE_003_BASE}.")
+    } else {
+        format!("{CITE_003_BASE}: '{keys}'.")
+    }
 }
 
 // ---------------------------------------------------------------------

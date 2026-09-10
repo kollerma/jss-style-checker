@@ -103,6 +103,11 @@ winner per span; if any were skipped as conflicting, running
 `jssfix()` again picks them up. A `rules` argument restricts fixing
 to selected rules, e.g., `jssfix(res, rules = "JSS-HOUSE-001")`.
 
+`jssfix()` rewrites your files and never inspects version control —
+commit first, or start with `dry_run = TRUE` as above. Every run
+prints what it did, which is the same receipt the command-line tool
+gives (`Applied 3 fixes to 1 file`).
+
 ## Re-lint
 
 The remaining issues need manual attention — the printed

@@ -71,3 +71,47 @@ class TestZeroCoreEdits:
         # observation (see tasks.md §T044 Independent Test) that the plugin work
         # touches only journal plugin code, not these paths.
         # We rely on `git diff` in CI to enforce this across the phase's commits.
+
+
+class TestJournalWithoutRecallData:
+    """A third-party journal must degrade, not crash (spec 027 §14 §IV).
+
+    The `stub` fixture journal ships no `metadata()` override, so every
+    recall surface has to fall back: `n/a` in the reviewer column, the
+    "no recall or coverage data" sentence in the footer, and nulls in
+    JSON — never a fabricated 100 %.
+    """
+
+    def _run(self, runner: CliRunner, *extra: str):
+        return runner.invoke(
+            main,
+            ["--journal", "stub", *extra, str(FIXTURES / "compliant" / "minimal.tex")],
+        )
+
+    def test_author_footer_says_there_is_no_data(self, runner: CliRunner) -> None:
+        result = self._run(runner)
+        assert result.exit_code == 0, result.output
+        assert (
+            "jss-lint has no recall or coverage data for journal stub."
+            in result.output
+        )
+
+    def test_json_reports_nulls_not_zeroes(self, runner: CliRunner) -> None:
+        import json
+
+        result = self._run(runner, "--output", "json")
+        payload = json.loads(result.stdout)
+        assert payload["rule_set"] == {
+            "version": None,
+            "fingerprint": None,
+            "guide_source": None,
+            "recall": None,
+        }
+
+    def test_reviewer_table_shows_n_a(self, runner: CliRunner) -> None:
+        result = self._run(runner, "--mode", "reviewer")
+        assert result.exit_code == 0, result.output
+        # The stub journal has no categories at all, so the point is
+        # simply that rendering does not raise and no percentage is
+        # invented anywhere.
+        assert "%" not in result.output.replace("Overall: n/a", "")

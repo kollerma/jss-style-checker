@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 if TYPE_CHECKING:
+    from texlint.core.baseline import BaselineSummary
     from texlint.core.resolver import ResolvedReference
 
 
@@ -136,6 +137,14 @@ class Violation:
         return (str(self.file), self.line, bucket, col, self.rule_id)
 
 
+#: A caller-supplied filter applied to every finding just before the
+#: engine's bookkeeping. Returning ``True`` drops the finding, exactly as
+#: an inline ``% jss-lint: ignore`` does — the baseline matcher (spec
+#: 027 item B) is the first implementation. Called in
+#: :meth:`Violation.sort_key` order within each rule so that *which*
+#: occurrences of an identical finding are dropped is deterministic.
+Suppressor = Callable[["Violation"], bool]
+
 RuleCheck = Callable[["ParsedDocument", "ToolConfig"], Iterator[Violation]]
 RuleCheckProject = Callable[["ParsedProject"], Iterable[Violation]]
 
@@ -206,6 +215,11 @@ class CategorySummary:
     rules_applied: int
     rules_passed: int
     violations: tuple[Violation, ...] = ()
+    #: Measured recall pooled over this category's rules, from the
+    #: journal's snapshot. ``None`` for a journal with no recall data at
+    #: all; a category whose rules have no annotated instances pools to
+    #: ``RecallStat(0, 0)`` and renders ``unmeasured``.
+    recall: RecallStat | None = None
 
     @classmethod
     def build(
@@ -216,6 +230,7 @@ class CategorySummary:
         rules_applied: int,
         rules_passed: int = 0,
         violations: tuple[Violation, ...] = (),
+        recall: RecallStat | None = None,
     ) -> CategorySummary:
         if rules_applied == 0:
             status = CategoryStatus.SKIPPED
@@ -230,6 +245,7 @@ class CategorySummary:
             rules_applied=rules_applied,
             rules_passed=rules_passed,
             violations=violations,
+            recall=recall,
         )
 
 
@@ -247,6 +263,153 @@ class SkippedRule:
 
 
 @dataclass(frozen=True)
+class RecallStat:
+    """Measured recall for one rule, or pooled over a category.
+
+    ``tp``/``fn`` are annotated instances of a planted defect that the
+    rule did / did not catch, from the shipped snapshot
+    (``specs/003-jss-rule-catalogue/recall.json``). Both counts, not a
+    ratio, so categories can pool them.
+
+    Below ``min_plants`` instances the state is ``limited`` and **no
+    percentage is shown**: a rule with two plants that caught one has
+    not been measured at 50 %, and printing that would read as a
+    measurement (spec 027 D3).
+    """
+
+    tp: int
+    fn: int
+
+    @property
+    def plants(self) -> int:
+        return self.tp + self.fn
+
+    def state(self, min_plants: int) -> Literal["measured", "limited", "unmeasured"]:
+        if self.plants == 0:
+            return "unmeasured"
+        return "limited" if self.plants < min_plants else "measured"
+
+    def percent(self) -> int | None:
+        """Integer half-up percentage, or ``None`` with no plants.
+
+        Deliberately integer arithmetic: Python's ``round`` is banker's
+        and Rust's ``f64::round`` is half-away, so a float path would
+        make the two engines disagree on exactly the values that land on
+        .5 (data-model §3.1).
+        """
+        if self.plants == 0:
+            return None
+        return (200 * self.tp + self.plants) // (2 * self.plants)
+
+    def label(self, min_plants: int) -> str:
+        """What every surface prints: ``81%`` / ``limited (n=4)`` /
+        ``unmeasured``."""
+        state = self.state(min_plants)
+        if state == "unmeasured":
+            return "unmeasured"
+        if state == "limited":
+            return f"limited (n={self.plants})"
+        return f"{self.percent()}%"
+
+
+@dataclass(frozen=True)
+class RecallRun:
+    """Provenance of the shipped recall snapshot."""
+
+    run_timestamp: str
+    corpus_hash: str
+    min_plants: int
+    #: Annotated papers behind the measurement. Quoted next to the
+    #: percentage because "81 %" means something different over 17
+    #: papers than over three.
+    papers: int
+    tp: int
+    fn: int
+
+    @property
+    def stat(self) -> RecallStat:
+        return RecallStat(tp=self.tp, fn=self.fn)
+
+
+@dataclass(frozen=True)
+class CoverageDirective:
+    """One provision of one authority, and what the tool does about it.
+
+    ``status`` is ``checked`` (a rule enforces it), ``partial`` (enforced
+    in part — ``reason`` says what is missing), ``not_checked`` (a real
+    gap), or ``out_of_scope`` (not checkable from the manuscript source
+    at all: compilability, graphics legibility, submission metadata).
+    Out-of-scope provisions are listed but excluded from the "checks N of
+    M" ratio, since they were never checkable.
+    """
+
+    id: str
+    source: str
+    section: str
+    provision: str
+    status: Literal["checked", "partial", "not_checked", "out_of_scope"]
+    rules: tuple[str, ...]
+    reason: str = ""
+
+
+@dataclass(frozen=True)
+class CoverageCounts:
+    checked: int
+    partial: int
+    not_checked: int
+    out_of_scope: int
+
+    @property
+    def checkable(self) -> int:
+        """Provisions a source-level linter could check at all."""
+        return self.checked + self.partial + self.not_checked
+
+    @property
+    def covered(self) -> int:
+        return self.checked + self.partial
+
+    @classmethod
+    def of(cls, directives: Iterable[CoverageDirective]) -> CoverageCounts:
+        tally = {"checked": 0, "partial": 0, "not_checked": 0, "out_of_scope": 0}
+        for directive in directives:
+            tally[directive.status] += 1
+        return cls(**tally)
+
+
+@dataclass(frozen=True)
+class RuleSetInfo:
+    """Provenance of a journal's rule set (spec 027 item D).
+
+    ``version`` is a date, not a semantic version: it names *which* rule
+    set produced a finding, which is what a baseline file stamps and
+    ``--version`` prints. ``fingerprint`` is what forces that date to
+    move when a rule or its wording changes. The two guide fields are
+    kept apart rather than pre-joined because the two renderings differ:
+    ``--version`` writes ``jss.cls 3.3, vendored 2021-05-23`` while JSON
+    and the report carry :attr:`guide_source`.
+
+    A journal that ships no provenance leaves every field ``None``; the
+    surfaces then render ``n/a`` (``--version``) or ``null`` (JSON).
+    """
+
+    version: str | None = None
+    fingerprint: str | None = None
+    guide_edition: str | None = None
+    source_vendored_at: str | None = None
+    #: The recall run this rule set ships, or ``None`` for a journal
+    #: that publishes no measurement.
+    recall: RecallRun | None = None
+
+    @property
+    def guide_source(self) -> str | None:
+        if self.guide_edition is None:
+            return None
+        if self.source_vendored_at is None:
+            return self.guide_edition
+        return f"{self.guide_edition} ({self.source_vendored_at})"
+
+
+@dataclass(frozen=True)
 class ComplianceReport:
     tool_version: str
     journal_id: str
@@ -254,6 +417,19 @@ class ComplianceReport:
     categories: tuple[CategorySummary, ...]
     compliance_percentage: float | None
     skipped_rules: tuple[SkippedRule, ...] = ()
+    #: What a ``--baseline`` run hid, or ``None`` when no baseline was
+    #: applied. Filled in by the CLI *after* :func:`engine.run` — the
+    #: engine never sees the file (§XIV); it only takes the matcher as a
+    #: :data:`Suppressor`.
+    baseline: BaselineSummary | None = None
+    #: Provenance of the rule set that produced these findings, copied
+    #: from the journal's :meth:`JournalRuleModule.metadata`. Carried on
+    #: the report so no renderer has to import a journal package (§IV);
+    #: empty for a journal that supplies none.
+    rule_set: RuleSetInfo = field(default_factory=RuleSetInfo)
+    #: The journal's guide-coverage matrix, or ``None`` when it publishes
+    #: none. ``None`` and "everything is checked" are different claims.
+    coverage: tuple[CoverageDirective, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -289,6 +465,17 @@ class ToolConfig:
     # JSS-REFS-003 uses it to online-verify and (with ``--fix``) populate
     # missing DOIs.
     doi_resolver: Callable[[Mapping[str, str], str], str | None] | None = None
+    # Baseline file to apply (spec 027 item B). TOML key ``baseline``,
+    # relative to the ``.jss-lint.toml`` directory; ``--baseline`` wins.
+    # There is deliberately no auto-discovery: a file that silences
+    # findings must be named, never found (research.md §6).
+    baseline: Path | None = None
+    # Colour policy for terminal output (spec 027 item F). TOML key
+    # `color`; `--color` wins; the environment (NO_COLOR /
+    # CLICOLOR_FORCE) beats both, per `texlint.color.should_colorize`.
+    # The config records *intent* — the CLI resolves it to a bool and
+    # hands that to the renderer.
+    color: Literal["auto", "always", "never"] = "auto"
 
 
 @dataclass(frozen=True)
@@ -298,6 +485,15 @@ class ParsedTexFile:
     nodes: tuple[Any, ...]
     walker: Any
     violations: tuple[Violation, ...] = ()
+    #: Line number of this file's ``source`` within the file on disk,
+    #: minus one. ``0`` for ``.tex``/``.ltx``/``.Rnw``, whose sources are
+    #: the whole file; for an ``.Rmd`` prose block — parsed as a
+    #: standalone LaTeX fragment starting at line 1 — it is the block's
+    #: first line minus one. Violations are already offset to
+    #: file-authoritative line numbers by the parser; this field lets
+    #: anything reading ``source`` directly (inline suppression) do the
+    #: same arithmetic.
+    line_offset: int = 0
 
 
 @dataclass(frozen=True)
@@ -437,6 +633,26 @@ class ParsedProject:
     missing: tuple[ResolvedReference, ...] = ()
 
 
+@dataclass(frozen=True)
+class JournalMetadata:
+    """Journal-level facts that no rule decides on, but users read.
+
+    Supplied by :meth:`JournalRuleModule.metadata`, copied onto the
+    :class:`ComplianceReport` by the engine, and read from there by the
+    renderers — so no renderer imports a journal package (Constitution
+    §IV).
+    """
+
+    rule_set: RuleSetInfo = RuleSetInfo()
+    #: Per-rule measured recall, keyed by rule id. Rules absent from the
+    #: snapshot are unmeasured; the engine pools these per category.
+    recall_by_rule: Mapping[str, RecallStat] = field(default_factory=dict)
+    #: The guide-coverage matrix, in file order. Empty for a journal that
+    #: publishes none — the surfaces then omit the coverage block rather
+    #: than claiming full coverage.
+    coverage: tuple[CoverageDirective, ...] = ()
+
+
 class JournalRuleModule(ABC):
     id: ClassVar[str]
 
@@ -446,6 +662,14 @@ class JournalRuleModule(ABC):
 
     def rules(self) -> tuple[Rule, ...]:
         return tuple(r for c in self.categories() for r in c.rules)
+
+    def metadata(self) -> JournalMetadata:
+        """Provenance and measurement facts about this journal's rules.
+
+        Non-abstract: a third-party journal that supplies nothing keeps
+        working and its surfaces degrade to ``n/a`` / ``null``.
+        """
+        return JournalMetadata()
 
 
 class JournalNotFoundError(LookupError):

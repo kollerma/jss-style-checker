@@ -132,3 +132,19 @@ def test_jsslint_matches_python_engine_rnw_rmd(
     )
 
     assert actual == expected
+
+
+def test_jsslint_version_matches_the_python_rule_set() -> None:
+    """Both engines report the same rule set (spec 027 D, contract C-5).
+
+    The rule-set date is what a baseline file stamps, so a wheel whose
+    embedded catalogue had drifted from the Python reference would hand
+    users a baseline the other engine calls stale.
+    """
+    from texlint.journals.jss import _catalogue_data
+
+    reported = jsslint.version()
+    assert reported["rulesetVersion"] == _catalogue_data.RULESET_VERSION
+    assert reported["guideSource"] == _catalogue_data.GUIDE_SOURCE
+    assert reported["engine"] == "jsslint-core/rust"
+    assert jsslint.__version__ == reported["tool"]

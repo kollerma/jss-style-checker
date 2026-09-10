@@ -155,7 +155,13 @@ def check_jss_typo_001(
                 tex=tex,
                 pos=node.pos,
                 rule_id="JSS-TYPO-001",
-                suggestion="End the caption with a period.",
+                # Name the caption (spec 027 item S): `text` is non-empty
+                # here (the empty case is skipped above), so there is no
+                # generic-wording branch to fall back to.
+                suggestion=(
+                    "End the caption with a period: "
+                    f"'{_helpers.identifier(text, 40)}'."
+                ),
                 fix=fix,
             )
 

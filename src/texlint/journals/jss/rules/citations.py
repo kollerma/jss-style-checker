@@ -607,13 +607,29 @@ def check_jss_cite_003(
                 rule_id="JSS-CITE-003",
                 severity=meta["severity"],
                 message=meta["message_template"],
-                suggestion=(
-                    r"Citation inside parens: replace (\cite{...}) "
-                    r"with \citep{...}, or use \citealp{...} when "
-                    "additional text shares the parens."
-                ),
+                suggestion=_cite_003_suggestion(key_match),
                 fix=fix,
             )
+
+
+_CITE_003_BASE = (
+    r"Citation inside parens: replace (\cite{...}) with \citep{...}, "
+    r"or use \citealp{...} when additional text shares the parens"
+)
+
+
+def _cite_003_suggestion(key_match: re.Match[str] | None) -> str:
+    """Name the citation (spec 027 item S), keys and all.
+
+    ``key_match`` is the braced-argument match the macro-definition
+    carve-out above already computed. A cite-family macro used without
+    braces (``(\\citeauthor \\citeyear{x})``) has no key to quote and
+    keeps the generic wording.
+    """
+    keys = _helpers.identifier(key_match.group(1), 60) if key_match else ""
+    if not keys:
+        return f"{_CITE_003_BASE}."
+    return f"{_CITE_003_BASE}: '{keys}'."
 
 
 _PARAGRAPH_BREAK_RE = re.compile(r"\n\s*\n")

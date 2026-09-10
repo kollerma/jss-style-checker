@@ -1,0 +1,450 @@
+{
+  "JSS-ABBR-001": [
+    [
+      "Abbreviations are in uppercase without periods or additional formatting",
+      "Replace 'U.S.A.' with 'USA' (uppercase, no periods)."
+    ]
+  ],
+  "JSS-BIBTEX-001": [
+    [
+      "Every BibTeX entry has a non-empty citation key",
+      "Give this entry a non-empty citation key."
+    ]
+  ],
+  "JSS-BIBTEX-002": [
+    [
+      "BibTeX citation keys are unique within the database",
+      "Citation key 'Knuth1984' is used more than once; rename one (e.g., add a suffix 'a' / 'b')."
+    ]
+  ],
+  "JSS-BIBTEX-003": [
+    [
+      "BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …)",
+      "Entry type 'article' is missing required field(s): author / journal."
+    ],
+    [
+      "BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …)",
+      "Entry type 'article' is missing required field(s): journal."
+    ],
+    [
+      "BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …)",
+      "Entry type 'article' is missing required field(s): title / journal."
+    ],
+    [
+      "BibTeX entries carry the fields required for their entry type (article, book, inproceedings, …)",
+      "Entry type 'article' is missing required field(s): year."
+    ]
+  ],
+  "JSS-BIBTEX-004": [
+    [
+      "Entries with 6+ authors use \\shortcites{} or the shortnames class option is enabled",
+      "Add the 'shortnames' option to \\documentclass{jss}, or list this key in \\shortcites{Many}."
+    ]
+  ],
+  "JSS-BIBTEX-005": [
+    [
+      "No BibTeX field key is repeated within a single entry",
+      "Remove the duplicate field(s) author in entry 'Knuth1984'; BibTeX keeps only the first occurrence and silently drops the rest."
+    ]
+  ],
+  "JSS-CAP-001": [
+    [
+      "\\title{} is in title style (principal words capitalised)",
+      "Use title style: capitalise principal words in the title (found lowercase 'short')."
+    ],
+    [
+      "\\title{} is in title style (principal words capitalised)",
+      "Use title style: capitalise principal words in the title."
+    ]
+  ],
+  "JSS-CAP-002": [
+    [
+      "Section titles are in sentence style (first word capitalised; others lowercase except proper names)",
+      "Use sentence style: capitalise only the first word (proper names remain capitalised) in 'Models And Statistical Software'."
+    ]
+  ],
+  "JSS-CAP-004": [
+    [
+      "\\Keywords{} is comma-separated and in sentence case",
+      "Use sentence case for keywords: do not capitalise words after the first in an entry (proper names and abbreviations excepted)."
+    ]
+  ],
+  "JSS-CITE-002": [
+    [
+      "First occurrence of a software package has a citation within the same paragraph",
+      "Add a citation for \\pkg{mgcv} (e.g., \\citep{…}) within this paragraph."
+    ]
+  ],
+  "JSS-CITE-003": [
+    [
+      "Avoid bracket-in-bracket citation forms like (\\cite{...}); use \\citep{...} instead",
+      "Citation inside parens: replace (\\cite{...}) with \\citep{...}, or use \\citealp{...} when additional text shares the parens: 'Cameron+Trivedi:2013'."
+    ]
+  ],
+  "JSS-CITE-004": [
+    [
+      "Citations use natbib commands (\\cite, \\citet, \\citep, \\citealp) rather than hardcoded author-year text",
+      "Replace the hardcoded reference '(Knuth, 1984)' with a natbib command (e.g., \\citet{Key})."
+    ]
+  ],
+  "JSS-CODE-001": [
+    [
+      "Verbatim / CodeInput blocks do not contain comments; comments belong in the surrounding LaTeX text",
+      "Move the comment into the surrounding LaTeX text: 'fit Poisson model'."
+    ]
+  ],
+  "JSS-CODE-002": [
+    [
+      "R library() and data() calls quote their first argument",
+      "Quote the argument: e.g., 'data(\"quine\")'."
+    ],
+    [
+      "R library() and data() calls quote their first argument",
+      "Quote the argument: e.g., 'library(\"MASS\")'."
+    ]
+  ],
+  "JSS-CODE-003": [
+    [
+      "Code samples use spaces around operators and after commas",
+      "Add spaces around operators and after commas in the code sample (e.g., 'y = a + b * x'): 'y=a+b*x'."
+    ]
+  ],
+  "JSS-HOUSE-001": [
+    [
+      "\"e.g.\" and \"i.e.\" are followed by a comma so LaTeX does not treat the period as a sentence end",
+      "Add a comma after 'e.g.': 'e.g.,'."
+    ]
+  ],
+  "JSS-HOUSE-002": [
+    [
+      "Book editions are indicated as 2nd, 3rd, etc., not as \"second\" or \"2e\"",
+      "Replace edition 'second' with an ordinal form (e.g., '2nd', '3rd')."
+    ]
+  ],
+  "JSS-HOUSE-003": [
+    [
+      "Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref)",
+      "Remove \\usepackage{graphicx} — jss.cls already loads it."
+    ],
+    [
+      "Preamble avoids loading LaTeX packages that jss.cls already provides (graphicx, xcolor, ae, fancyvrb, hyperref)",
+      "Remove \\usepackage{hyperref} — jss.cls already loads it."
+    ]
+  ],
+  "JSS-MARKUP-001": [
+    [
+      "Programming-language names in prose are wrapped in \\proglang{}",
+      "Wrap 'Python' in \\proglang{Python}."
+    ],
+    [
+      "Programming-language names in prose are wrapped in \\proglang{}",
+      "Wrap 'R' in \\proglang{R}."
+    ]
+  ],
+  "JSS-MARKUP-002": [
+    [
+      "Software-package names in prose are wrapped in \\pkg{}",
+      "Wrap 'MASS' in \\pkg{MASS}."
+    ]
+  ],
+  "JSS-MARKUP-003": [
+    [
+      "Inline function, argument, command names, and R sentinel values are wrapped in \\code{}",
+      "Wrap 'glm()' in \\code{glm()}."
+    ]
+  ],
+  "JSS-MARKUP-004": [
+    [
+      "Section titles containing markup supply a plain-text shim via \\section[plain]{markup}",
+      "Provide a plain-text section title as the optional argument: \\section[plain]{...}."
+    ]
+  ],
+  "JSS-NAME-001": [
+    [
+      "Programming-language names use their canonical capitalisation",
+      "Use canonical form 'Java' instead of 'JAVA'."
+    ],
+    [
+      "Programming-language names use their canonical capitalisation",
+      "Use canonical form 'MATLAB' instead of 'matlab'."
+    ]
+  ],
+  "JSS-NAME-002": [
+    [
+      "Publisher and journal names follow JSS conventions (e.g., \"Springer-Verlag\", \"The Annals of Statistics\")",
+      "Replace publisher 'Springer' with 'Springer-Verlag'."
+    ]
+  ],
+  "JSS-OPER-001": [
+    [
+      "Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen)",
+      "Replace 'p-value' with '$p$~value' (italicized symbol, tie)."
+    ],
+    [
+      "Symbol-plus-noun constructs like p-value and t-statistic are typeset as $p$~value and $t$~statistic (tie, no hyphen)",
+      "Replace 't-statistic' with '$t$~statistic' (italicized symbol, tie)."
+    ]
+  ],
+  "JSS-OPER-002": [
+    [
+      "Transpose is typeset with \\top rather than a superscript prime or literal T",
+      "Use '\\top' for transpose: e.g., 'X^\\top X'."
+    ]
+  ],
+  "JSS-OPER-003": [
+    [
+      "Display equations have no blank lines immediately before or after (use % to suppress paragraph breaks)",
+      "Remove the blank line(s) around the display equation (add '%' after/before to suppress the paragraph break): 'eq:mean'."
+    ]
+  ],
+  "JSS-OPER-004": [
+    [
+      "Expectation / variance / covariance / probability use jss.cls shortcuts \\E, \\VAR, \\COV, \\Prob",
+      "Use the jss.cls shortcut (\\E / \\VAR / \\COV / \\Prob) instead of \\mathbb{E}."
+    ]
+  ],
+  "JSS-PRE-001": [
+    [
+      "Document class must be jss with a valid class option (article, codesnippet, bookreview, softwarereview)",
+      "Use \\documentclass[article]{jss} (or codesnippet / bookreview / softwarereview)."
+    ]
+  ],
+  "JSS-PRE-002": [
+    [
+      "Preamble defines \\Address{} with author affiliation and contact",
+      "Add \\Address{...} in the preamble with author affiliation and e-mail."
+    ]
+  ],
+  "JSS-PRE-003": [
+    [
+      "When \\title{} contains LaTeX markup, preamble also defines \\Plaintitle{} with the markup-free form",
+      "\\title{} contains LaTeX markup; add a \\Plaintitle{} with the markup-free form for PDF metadata."
+    ]
+  ],
+  "JSS-PRE-004": [
+    [
+      "\\Abstract{} is present and overrides the sentinel placeholder from jss.cls",
+      "Add \\Abstract{...} in the preamble with the paper's abstract."
+    ]
+  ],
+  "JSS-PRE-005": [
+    [
+      "\\Keywords{} is present and overrides the sentinel placeholder from jss.cls",
+      "Add \\Keywords{...} in the preamble with comma-separated keywords."
+    ]
+  ],
+  "JSS-PRE-006": [
+    [
+      "\\Plaintitle, \\Plainauthor, \\Plainkeywords contain no LaTeX markup (PDF metadata must be plain text)",
+      "Strip LaTeX macros from \\Plaintitle{}: PDF metadata must be plain text."
+    ]
+  ],
+  "JSS-PRE-007": [
+    [
+      "When \\author{} contains LaTeX markup, preamble also defines \\Plainauthor{} with the markup-free form",
+      "\\author{} contains LaTeX markup; add a \\Plainauthor{} with the markup-free form for PDF metadata."
+    ]
+  ],
+  "JSS-PRE-008": [
+    [
+      "When \\Keywords{} contains LaTeX markup, preamble also defines \\Plainkeywords{} with the markup-free form",
+      "\\Keywords{} contains LaTeX markup; add a \\Plainkeywords{} with the markup-free form for PDF metadata."
+    ]
+  ],
+  "JSS-PROJECT-001": [
+    [
+      "cycle detected: tests/fixtures/resolver_projects/cycle/a.tex -> tests/fixtures/resolver_projects/cycle/b.tex -> tests/fixtures/resolver_projects/cycle/a.tex",
+      ""
+    ]
+  ],
+  "JSS-PROJECT-002": [
+    [
+      "referenced file not found: ghost",
+      ""
+    ]
+  ],
+  "JSS-REFS-001": [
+    [
+      "BibTeX entries carry a year field so natbib author-year citations render correctly",
+      "Add a year field to entry 'Knuth1984'."
+    ]
+  ],
+  "JSS-REFS-003": [
+    [
+      "BibTeX entries include a doi field where one is available (advisory)",
+      "Add a doi field to entry 'Demo' if one is available."
+    ],
+    [
+      "BibTeX entries include a doi field where one is available (advisory)",
+      "Add a doi field to entry 'Example' if one is available."
+    ],
+    [
+      "BibTeX entries include a doi field where one is available (advisory)",
+      "Add a doi field to entry 'Knuth1984' if one is available."
+    ],
+    [
+      "BibTeX entries include a doi field where one is available (advisory)",
+      "Add a doi field to entry 'MASS' if one is available."
+    ],
+    [
+      "BibTeX entries include a doi field where one is available (advisory)",
+      "Add a doi field to entry 'Many' if one is available."
+    ]
+  ],
+  "JSS-REFS-004": [
+    [
+      "BibTeX titles use JSS markup (\\proglang, \\pkg, \\code) for language and package names",
+      "Wrap 'MASS' in \\pkg{MASS} in the title of entry 'MASS'."
+    ]
+  ],
+  "JSS-REFS-005": [
+    [
+      "Journal titles in BibTeX entries are not abbreviated",
+      "Expand the journal name (e.g., 'J. Stat. Softw.' → 'Journal of Statistical Software')."
+    ]
+  ],
+  "JSS-REFS-006": [
+    [
+      "BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case)",
+      "Capitalize the first word of the title."
+    ],
+    [
+      "BibTeX titles are in title style — loose heuristic (flags lowercase first word or unusual mixed case)",
+      "Capitalize the principal words in the title (found lowercase: 'book')."
+    ]
+  ],
+  "JSS-REFS-007": [
+    [
+      "Journal titles in BibTeX entries are in title case",
+      "Capitalize the principal words of the journal title in entry 'Demo'."
+    ]
+  ],
+  "JSS-STRUCT-001": [
+    [
+      "Document ends with a summary / discussion section before the bibliography",
+      "Add a 'Summary and discussion' (or similar) section before the bibliography."
+    ]
+  ],
+  "JSS-STRUCT-002": [
+    [
+      "Acknowledgments section uses American spelling (not \"Acknowledgements\")",
+      "Use 'Acknowledgments' (American spelling) — not 'Acknowledgements'."
+    ]
+  ],
+  "JSS-STRUCT-003": [
+    [
+      "Appendix sections have proper titles instead of a bare \"Appendix\"",
+      "Give the appendix section a descriptive title (e.g., 'More technical details'), not a bare 'Appendix'."
+    ]
+  ],
+  "JSS-STRUCT-004": [
+    [
+      "References are declared via \\bibliography{} rather than a hand-written thebibliography environment",
+      "Replace \\begin{thebibliography}...\\end{thebibliography} with \\bibliography{<bib-file>}."
+    ]
+  ],
+  "JSS-STRUCT-005": [
+    [
+      "\\author{} separates authors with \\And or \\AND (not lowercase \\and)",
+      "Separate authors with \\And (inline) or \\AND (line break), not lowercase \\and."
+    ]
+  ],
+  "JSS-STRUCT-006": [
+    [
+      "Appendix follows the bibliography with a \\newpage (or \\clearpage) separator",
+      "Insert \\newpage (or \\clearpage) between \\bibliography{} and \\begin{appendix}."
+    ]
+  ],
+  "JSS-TYPO-001": [
+    [
+      "Figure and table captions end with a period",
+      "End the caption with a period: 'Frequency distribution for number of day'."
+    ]
+  ],
+  "JSS-TYPO-002": [
+    [
+      "Figure / table captions avoid emphasis macros wrapping the whole caption (\\emph, \\textbf, \\textit on full caption)",
+      "Remove the wrapping \\emph{...} from the caption (intra-caption markup is fine)."
+    ]
+  ],
+  "JSS-TYPO-003": [
+    [
+      "Tables do not use footnote-style annotations; annotations go in the caption",
+      "Move footnote annotations into the caption text."
+    ]
+  ],
+  "JSS-TYPO-004": [
+    [
+      "\\caption{} appears after the figure / table content, not before",
+      "Place \\caption{} after the figure / table content."
+    ]
+  ],
+  "JSS-WIDTH-001": [
+    [
+      "Code input / output inside Sinput / CodeInput / CodeOutput environments fits within the configured column limit",
+      "Wrap or reflow the code line to fit in 80 columns."
+    ]
+  ],
+  "JSS-XREF-001": [
+    [
+      "Figures and tables are referenced via \\ref{} rather than by manual numbering",
+      "Replace 'Figure 2' with 'Figure~\\ref{<label>}'."
+    ]
+  ],
+  "JSS-XREF-002": [
+    [
+      "Equation references prefer Equation~\\ref{...} (capitalised) over bare (\\ref{...}) or \\eqref{...}",
+      "Replace '(\\ref{eq:mean})' with 'Equation~\\ref{eq:mean}' (capitalised, non-breaking space)."
+    ]
+  ],
+  "JSS-XREF-003": [
+    [
+      "Cross-references to subsections use \"Section x.y\" rather than \"Subsection x.y\"",
+      "Use 'Section N.N' (or 'Section~\\ref{<label>}'), not 'Subsection N.N'."
+    ]
+  ],
+  "JSS-XREF-004": [
+    [
+      "Numbered equations carry \\label{} and are referenced from the text",
+      "Add \\label{eq:<name>} inside the equation '\\log(\\mu) = x^\\top \\beta.' so it can be referenced from the text."
+    ],
+    [
+      "Numbered equations carry \\label{} and are referenced from the text",
+      "Equation label(s) 'eq:mean' are never referenced from the text. Either cite the equation via \\ref{} / \\eqref{} or suppress the number with \\nonumber."
+    ]
+  ],
+  "JSS-XREF-005": [
+    [
+      "Figures and tables carry \\label{} and are referenced from the text",
+      "Add \\label{fig:<name>} / \\label{tab:<name>} to the float so it can be referenced from the text."
+    ],
+    [
+      "Figures and tables carry \\label{} and are referenced from the text",
+      "Float label(s) 'fig:quine' are never referenced from the text. Add a Figure~\\ref{} / Table~\\ref{} callout in the prose."
+    ],
+    [
+      "Figures and tables carry \\label{} and are referenced from the text",
+      "Float label(s) 'fig:x' are never referenced from the text. Add a Figure~\\ref{} / Table~\\ref{} callout in the prose."
+    ],
+    [
+      "Figures and tables carry \\label{} and are referenced from the text",
+      "Float label(s) 'tab:ov' are never referenced from the text. Add a Figure~\\ref{} / Table~\\ref{} callout in the prose."
+    ],
+    [
+      "Figures and tables carry \\label{} and are referenced from the text",
+      "Float label(s) 'tab:x' are never referenced from the text. Add a Figure~\\ref{} / Table~\\ref{} callout in the prose."
+    ]
+  ],
+  "JSS-XREF-006": [
+    [
+      "Figure and table floats carry a \\caption{}",
+      "Add a \\caption{...} to the figure so it is numbered and can be referenced from the text."
+    ]
+  ],
+  "JSS-XREF-007": [
+    [
+      "Cross-reference nouns are spelled out (Figure/Section/Table), not abbreviated (Fig./Sec./Tab.)",
+      "Spell out the cross-reference noun: 'Figure~\\ref{...}', not 'Fig.~\\ref{...}'."
+    ]
+  ]
+}

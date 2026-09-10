@@ -20,6 +20,7 @@ import difflib
 import os
 import sys
 import tempfile
+from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -316,8 +317,42 @@ def apply_fixes(
             FixApplication(c.file, c.fix, c.rule_id) for c in accepted
         )
 
-    return FixReport(
+    fix_report = FixReport(
         applied=tuple(applied_all),
         skipped=tuple(skipped_all),
         rejected=tuple(rejected_all),
     )
+    out.write(summary_line(fix_report, dry_run=mode == "dry-run"))
+    return fix_report
+
+
+def _count(n: int, singular: str, plural: str | None = None) -> str:
+    """`1 fix` / `2 fixes` — mirrors the R binding's `count_word`."""
+    return f"{n} {singular if n == 1 else (plural or singular + 's')}"
+
+
+def summary_line(fix_report: FixReport, *, dry_run: bool) -> str:
+    """The receipt a fix pass ends with (spec 027 item C, `cli.md` C-7).
+
+    `--fix` rewrites the manuscript in place; saying what it did, and
+    what it declined to do and why, is what makes that safe to run on a
+    file the author cares about. Wording follows the R binding's
+    `jssfix()` output, which has printed it since 1.1.0.
+    """
+    applied = len(fix_report.applied)
+    files = len({str(a.file) for a in fix_report.applied})
+    if dry_run:
+        return (
+            f"Dry run: {_count(applied, 'fix', 'fixes')} would be applied to "
+            f"{_count(files, 'file')}. Re-run without --dry-run to write.\n"
+        )
+    if applied == 0:
+        return "No automatic fixes to apply; files left unchanged.\n"
+    line = (
+        f"Applied {_count(applied, 'fix', 'fixes')} to {_count(files, 'file')}"
+    )
+    reasons = Counter(skip.reason for skip in fix_report.skipped)
+    if reasons:
+        detail = ", ".join(f"{reason} {n}" for reason, n in sorted(reasons.items()))
+        line += f" ({len(fix_report.skipped)} skipped: {detail})"
+    return line + ".\n"

@@ -39,7 +39,24 @@ class TestJsonShape:
             "categories",
             "violations",
             "skipped_rules",
+            # spec 027 item B: always present, null when no baseline
+            # was applied.
+            "baseline",
+            # spec 027 item A: the rule set that produced these findings,
+            # including its measured recall, and which guide provisions
+            # it covers.
+            "rule_set",
+            "coverage",
         }
+        assert payload["baseline"] is None
+        assert payload["rule_set"]["recall"]["percent"] == 81
+        assert payload["coverage"]["counts"]["checked"] > 0
+        # `items` lists the gaps only, without provision text.
+        assert {i["status"] for i in payload["coverage"]["items"]} <= {
+            "partial",
+            "not_checked",
+        }
+        assert all("provision" not in i for i in payload["coverage"]["items"])
         assert payload["tool_version"] == __version__
         assert payload["journal_id"] == "jss"
         assert payload["compliance_percentage"] == 100.0

@@ -5,7 +5,7 @@
 //! just one `ParsedTex`) so its `flag_pr`/alias pre-scan matches
 //! Python's `doc.all_tex_like()` — see its doc comment.
 
-use super::tex_common::tex_violation_with_fix;
+use super::tex_common::{equation_identifier, tex_violation_with_fix};
 use crate::report::{Fix, FixConfidence, Violation};
 use crate::tex::extract;
 use crate::tex::node::{GroupNode, MacroNode, Node};
@@ -260,6 +260,21 @@ fn chars_starts_with_blank_line(node: Option<&Node>) -> bool {
 }
 
 /// JSS-OPER-003 — no blank lines immediately around display equations.
+const OPER_003_BASE: &str =
+    "Remove the blank line(s) around the display equation (add '%' after/before to suppress the \
+     paragraph break)";
+
+/// Name the offending equation so two in one file stay distinct (spec
+/// 027 item S). Mirrors `operators._oper_003_suggestion`.
+fn oper_003_suggestion(env: &crate::tex::node::EnvironmentNode, source: &[char]) -> String {
+    let name = equation_identifier(env, source);
+    if name.is_empty() {
+        format!("{OPER_003_BASE}.")
+    } else {
+        format!("{OPER_003_BASE}: '{name}'.")
+    }
+}
+
 pub fn check_oper_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
     let line_index = LineIndex::with_offset(&parsed.chars, parsed.line_offset);
     let mut out = Vec::new();
@@ -279,10 +294,7 @@ pub fn check_oper_003(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                 &line_index,
                 env.span.pos,
                 "JSS-OPER-003",
-                Some(
-                    "Remove the blank line(s) around the display equation (add '%' after/before to suppress the paragraph break)."
-                        .to_string(),
-                ),
+                Some(oper_003_suggestion(env, &parsed.chars)),
                 None,
             ));
         }

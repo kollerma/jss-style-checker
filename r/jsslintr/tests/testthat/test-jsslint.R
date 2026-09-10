@@ -163,3 +163,20 @@ test_that("jssfix honours the rules filter", {
   expect_false(any(grepl("\\\\proglang", readLines(files[[1]]))))
   expect_true(any(grepl("e\\.g\\.,", readLines(files[[1]]))))
 })
+
+test_that("jsslint_version() reports package, engine, and rule set", {
+  v <- jsslint_version()
+  expect_named(
+    v,
+    c("package", "tool", "engine", "ruleset_version", "guide_source")
+  )
+  # The package version may carry a CRAN resubmission suffix ("1.2.0-1")
+  # that the engine version never has -- that mapping is the point of
+  # this function (spec 027 item D).
+  # Compared against the raw DESCRIPTION field, not packageVersion(),
+  # which normalises the CRAN suffix "1.1.0-2" to "1.1.0.2".
+  expect_equal(v$package, as.character(utils::packageDescription("jsslintr")$Version))
+  expect_equal(v$engine, "jsslint-core/rust")
+  expect_match(v$ruleset_version, "^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+  expect_match(v$guide_source, "^jss\\.cls ")
+})

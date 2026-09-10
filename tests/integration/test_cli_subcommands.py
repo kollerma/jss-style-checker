@@ -308,3 +308,142 @@ class TestDiff:
         result = runner.invoke(main, ["diff", str(old), str(new)])
         assert result.exit_code == 2
         assert "missing key" in result.stderr.lower()
+
+
+# ---------------------------------------------------------------- version ----
+
+
+class TestVersion:
+    """Contract: specs/027-first-time-user-gaps/contracts/version-output.md."""
+
+    def test_four_line_block(self, runner: CliRunner) -> None:
+        from texlint import __version__
+        from texlint.journals.jss import _catalogue_data
+
+        result = runner.invoke(main, ["--version"])
+        assert result.exit_code == 0, result.stderr
+        assert result.stdout == (
+            f"jss-lint {__version__}\n"
+            f"engine: texlint/python {__version__}\n"
+            f"rule set: {_catalogue_data.RULESET_VERSION} "
+            f"({_catalogue_data.GUIDE_EDITION}, vendored "
+            f"{_catalogue_data.SOURCE_VENDORED_AT})\n"
+            "journal: jss\n"
+        )
+
+    def test_explicit_jss_journal_matches_the_default(
+        self, runner: CliRunner
+    ) -> None:
+        default = runner.invoke(main, ["--version"])
+        explicit = runner.invoke(main, ["--version", "--journal", "jss"])
+        assert explicit.exit_code == 0
+        assert explicit.stdout == default.stdout
+
+    def test_registered_journal_without_metadata_reports_n_a(
+        self, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(main, ["--version", "--journal", "stub"])
+        assert result.exit_code == 0, result.stderr
+        lines = result.stdout.splitlines()
+        assert lines[2] == "rule set: n/a"
+        assert lines[3] == "journal: stub"
+
+    def test_unregistered_journal_still_exits_zero(
+        self, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(main, ["--version", "--journal", "nope"])
+        assert result.exit_code == 0, result.stderr
+        lines = result.stdout.splitlines()
+        assert lines[2] == "rule set: n/a"
+        assert lines[3] == "journal: nope (not registered)"
+
+    def test_toml_journal_is_honoured(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """`--version` is not eager: config is loaded before it prints."""
+        (tmp_path / ".jss-lint.toml").write_text(
+            'journal = "nope"\n', encoding="utf-8"
+        )
+        with runner.isolated_filesystem(temp_dir=tmp_path) as cwd:
+            (Path(cwd) / ".jss-lint.toml").write_text(
+                'journal = "nope"\n', encoding="utf-8"
+            )
+            result = runner.invoke(main, ["--version"])
+        assert result.exit_code == 0, result.stderr
+        assert result.stdout.splitlines()[3] == "journal: nope (not registered)"
+
+
+# --------------------------------------------------------------- coverage ----
+
+
+class TestCoverage:
+    """Spec 027 FR-G-004: `jss-lint coverage` in three formats."""
+
+    def test_terminal_lists_every_status_group(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["coverage"])
+        assert result.exit_code == 0, result.stderr
+        assert result.stdout.startswith("Guide coverage — jss (rule set ")
+        for group in ("checked (", "partial (", "not checked (", "out of scope ("):
+            assert group in result.stdout
+        # A gap explains itself; a checked row has nothing to explain.
+        assert "        reason: " in result.stdout
+
+    def test_markdown_has_one_table_per_authority(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["coverage", "--format", "markdown"])
+        assert result.exit_code == 0, result.stderr
+        for heading in (
+            "## jss.cls",
+            "## article.tex",
+            "## Style guide",
+            "## Author instructions",
+        ):
+            assert heading in result.stdout
+        assert "| Directive | Status | Provision | Rules | Reason |" in result.stdout
+
+    def test_json_carries_the_full_matrix(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["coverage", "--format", "json"])
+        assert result.exit_code == 0, result.stderr
+        payload = json.loads(result.stdout)
+        assert set(payload) == {"counts", "directives", "journal_id", "sources"}
+        assert payload["journal_id"] == "jss"
+        # Unlike the report's `coverage` block, this one carries the
+        # provision text and every status (`coverage-file.md` C-6).
+        assert all(d["provision"] for d in payload["directives"])
+        assert {d["status"] for d in payload["directives"]} == {
+            "checked",
+            "partial",
+            "not_checked",
+            "out_of_scope",
+        }
+        assert set(payload["sources"]) == {
+            "jss_cls",
+            "article_tex",
+            "style_guide",
+            "author_instructions",
+        }
+
+    def test_counts_agree_across_formats(self, runner: CliRunner) -> None:
+        payload = json.loads(
+            runner.invoke(main, ["coverage", "--format", "json"]).stdout
+        )
+        counts = payload["counts"]
+        line = (
+            f"{counts['checked']} checked, {counts['partial']} partial, "
+            f"{counts['not_checked']} not checked, "
+            f"{counts['out_of_scope']} out of scope"
+        )
+        assert line in runner.invoke(main, ["coverage"]).stdout
+        assert sum(counts.values()) == len(payload["directives"])
+
+    def test_a_journal_without_coverage_data_says_so(
+        self, runner: CliRunner
+    ) -> None:
+        result = runner.invoke(main, ["coverage", "--journal", "stub"])
+        assert result.exit_code == 0, result.stderr
+        assert result.stdout == (
+            "jss-lint has no guide-coverage data for journal stub.\n"
+        )
+
+    def test_an_unknown_journal_exits_two(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["coverage", "--journal", "nope"])
+        assert result.exit_code == 2

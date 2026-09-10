@@ -142,6 +142,29 @@ jss-lint --crossref refs.bib             # online: verify missing DOIs
 jss-lint --crossref --fix refs.bib       # online: populate missing DOIs
 ```
 
+### Before `--fix`
+
+`--fix` rewrites your manuscript in place. It is careful about it: each
+file is written atomically (`tempfile` + rename, so a crash can never
+leave a half-written file), and every applied fix is re-checked against
+its own rule, with the whole file rolled back if the fix re-triggers it.
+Rules without a safe deterministic fix never propose one.
+
+It deliberately does **not** read or change version-control state —
+manuscripts live in git, on Overleaf, and in Dropbox alike, and the R,
+Python, and WASM bindings could not honour a git check anyway. So the
+expectation is yours to meet: **commit first, or preview with
+`--fix --dry-run`**, which prints the unified diff and writes nothing.
+Either way the pass ends with a receipt:
+
+```
+Applied 3 fixes to 1 file (1 skipped: conflict 1).
+Dry run: 3 fixes would be applied to 1 file. Re-run without --dry-run to write.
+```
+
+With `--baseline`, only visible (unaccepted) findings are fixed; drop
+the flag to fix accepted ones too.
+
 ### Online DOI lookup (`--crossref`)
 
 By default the linter is fully offline, so `JSS-REFS-003` can only
@@ -156,6 +179,28 @@ to add and *suppresses* the advisory when no DOI exists. Combine with
 `--crossref-mailto you@example.org` to use Crossref's faster polite
 pool. Needs network access; wrong-match-safe (a mismatched year or
 author is never written).
+
+Every run ends with the measured **recall** — of the style problems
+that exist, how many the tool finds — because a clean run means nothing
+without it:
+
+```
+No findings does not mean compliant. Measured recall: 81% (1967 annotated instances, 17 papers).
+```
+
+Reviewer mode adds a per-category `Recall` column; `explain` reports it
+per rule. Rules the annotated corpus never exercised read `unmeasured`,
+never `100%`. It is a lower bound (source-only linting).
+
+And it says what it does not look for at all:
+
+```sh
+jss-lint coverage                    # 76 checked, 4 partial, 5 not checked, 64 out of scope
+jss-lint coverage --format markdown  # one table per authority
+```
+
+Both are documented in
+[`docs/recall-and-coverage.md`](docs/recall-and-coverage.md).
 
 Every rule carries a measured-precision **confidence tier** (`high` /
 `medium` / `low`), sourced from the [eval corpus](eval/README.md)
@@ -178,7 +223,37 @@ The sandwich estimator is robust.  % jss-lint: ignore JSS-MARKUP-002
 
 A bare `% jss-lint: ignore` suppresses every rule on the target line;
 free text after the rule ids is treated as rationale. Parse errors
-(`JSS-PARSE-000`) are never suppressed.
+(`JSS-PARSE-000`) are never suppressed. Since 1.2.0 every distribution
+honours the directives — the `jsslint` binary, the browser/WASM build
+and the web app, the VS Code extension, the PyO3 wheel, and the R
+package, not just `jss-lint`.
+
+Adopting the tool on a manuscript that already exists? Accept today's
+findings once and fail only on new ones:
+
+```sh
+jss-lint --baseline .jss-lint-baseline.json --update-baseline paper.tex refs.bib
+git add .jss-lint-baseline.json      # commit it next to the manuscript
+jss-lint --baseline .jss-lint-baseline.json paper.tex refs.bib   # exit 0
+```
+
+Accepted findings are keyed by rule, file, message, and suggestion — not
+by line number — so rewording sentences and inserting paragraphs never
+resurrects them. See [`docs/baseline.md`](docs/baseline.md).
+
+Writing in Overleaf? **Menu → Download → Source**, then drop the zip on
+the [browser app](https://kollerma.github.io/jss-style-checker/) — it is
+unpacked in your tab, with nothing uploaded. Or unzip and run
+`jss-lint main.tex` (the `\input` graph is followed automatically), or
+add the Action to a GitHub-synced project:
+[`docs/overleaf.md`](docs/overleaf.md).
+
+Terminal output is coloured when stdout is a terminal and plain when it
+is piped or redirected. `--color always|never` overrides that, `NO_COLOR`
+turns it off, `CLICOLOR_FORCE` turns it on, and `color = "never"` in
+`.jss-lint.toml` sets the default. JSON, SARIF, and HTML are never
+coloured. Nothing is encoded in hue alone — every coloured token is
+still a word — so a monochrome terminal loses nothing.
 
 Exit codes: `0` clean · `1` violations found · `2` tool could not complete
 (unknown journal, missing file, parse error, unsupported extension).
@@ -272,6 +347,16 @@ Mandatory gate (Constitution §IX — 100% branch coverage on every rule module)
 .venv/bin/python -m pytest tests/unit/journals/jss/ \
   --cov=src/texlint/journals/jss/rules --cov-branch --cov-fail-under=100
 ```
+
+As of 1.2.0 the suite reaches 93%, not 100%: the gate was never wired
+into CI and the modules drifted below it. Closing that gap is
+[a recorded follow-up](roadmap/follow-ups.md); until it lands, the rule
+that is actually enforced in review is that a **new** rule module ships
+at 100% and no existing one regresses.
+
+Cutting a release is a fixed sequence — measured recall, then the
+stamped catalogue data, then the version, then the tags. It is written
+down in [`docs/releasing.md`](docs/releasing.md).
 
 ## License
 

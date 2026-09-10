@@ -22,7 +22,7 @@
 <p>Tool version: <code>{{ report.tool_version }}</code></p>
 <table>
   <thead>
-    <tr><th>Category</th><th>Status</th><th class="num">Applied</th><th class="num">Passed</th></tr>
+    <tr><th>Category</th><th>Status</th><th class="num">Applied</th><th class="num">Passed</th><th>Recall</th></tr>
   </thead>
   <tbody>
   {% for c in report.categories %}
@@ -31,6 +31,7 @@
       <td class="status-{{ c.status.value }}">{{ c.status.value }}</td>
       <td class="num">{{ c.rules_applied }}</td>
       <td class="num">{{ c.rules_passed }}</td>
+      <td>{% if c.recall %}{{ c.recall.label(min_plants) }}{% else %}n/a{% endif %}</td>
     </tr>
   {% endfor %}
   </tbody>
@@ -40,5 +41,31 @@
 {% else %}
 <p class="overall">Overall: <strong>{{ report.compliance_percentage }}%</strong></p>
 {% endif %}
+{%- if measured_recall %}
+<p class="note">{{ measured_recall }}</p>
+{%- endif %}
+{%- if coverage_counts %}
+<h2>Not checked by jss-lint</h2>
+{%- if coverage_gaps %}
+<table class="coverage">
+  <thead>
+    <tr><th>Directive</th><th>Status</th><th>Provision</th></tr>
+  </thead>
+  <tbody>
+  {% for d in coverage_gaps %}
+    <tr>
+      <td>{{ d.id }}</td>
+      <td>{% if d.status == "partial" %}partial{% else %}not checked{% endif %}</td>
+      <td>{{ d.provision }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{%- endif %}
+<p class="note">{{ coverage_counts }}</p>
+{%- endif %}
+{%- if report.baseline %}
+<p class="note">Baseline: {{ report.baseline.matched }} findings hidden by {{ report.baseline.path }} ({{ report.baseline.stale }} stale, {{ report.baseline.unevaluated }} unevaluated){% if report.baseline.ruleset_version and report.rule_set.version and report.baseline.ruleset_version != report.rule_set.version %} — written for rule set {{ report.baseline.ruleset_version }}, current {{ report.rule_set.version }}; run --update-baseline{% endif %}</p>
+{%- endif %}
 </body>
 </html>

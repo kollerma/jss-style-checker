@@ -1,0 +1,13 @@
+---
+title: A Short Demo
+---
+
+Some opening prose with no findings at all.
+
+```{r setup}
+x <- 1
+```
+
+We use R here. % jss-lint: ignore JSS-MARKUP-001
+
+We use Python here.

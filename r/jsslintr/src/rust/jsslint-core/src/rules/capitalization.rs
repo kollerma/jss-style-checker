@@ -6,7 +6,7 @@
 //! just one `ParsedTex`) so `_doc_pkg_names_lower`'s `\pkg{}` scan
 //! matches Python's `doc.all_tex_like()` — see its doc comment.
 
-use super::tex_common::tex_violation_with_fix;
+use super::tex_common::{identifier, tex_violation_with_fix};
 use crate::report::Violation;
 use crate::terms::TERMS;
 use crate::tex::extract;
@@ -722,13 +722,21 @@ pub fn check_cap_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
         let Some(group) = first_group_arg_brace_only(m, parent, idx) else {
             return;
         };
+        // Name the heading (spec 027 item S). The title quoted is the
+        // one the rule inspects — the mandatory `{...}` argument — even
+        // when a `[plain]` variant exists, so the author is pointed at
+        // the text that actually triggered the finding.
+        let title = identifier(&group_plain_text(group), 60);
         check_sentence_style(
             file,
             &line_index,
             m.span.pos,
             group,
             "JSS-CAP-002",
-            "Use sentence style: capitalise only the first word (proper names remain capitalised).",
+            &format!(
+                "Use sentence style: capitalise only the first word (proper names remain \
+                 capitalised) in '{title}'."
+            ),
             false,
             &PROPER_NOUNS,
             1,
@@ -742,7 +750,11 @@ pub fn check_cap_002(file: &str, parsed: &ParsedTex) -> Vec<Violation> {
                 &line_index,
                 m.span.pos,
                 "JSS-CAP-002",
-                Some("Use sentence style: capitalise the first word after ':' (or wrap it in \\code{}/\\pkg{} if it is a code identifier or package name).".to_string()),
+                Some(format!(
+                    "Use sentence style: capitalise the first word after ':' (or wrap it in \
+                     \\code{{}}/\\pkg{{}} if it is a code identifier or package name) in \
+                     '{title}'."
+                )),
                 None,
             ));
         }

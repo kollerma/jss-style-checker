@@ -17,6 +17,14 @@ use std::path::PathBuf;
 struct CatalogueDoc {
     categories: Vec<String>,
     rules: Vec<RawRule>,
+    /// Rule-set provenance (spec 027 item D). Never recomputed here:
+    /// the fingerprint is computed by `tools/generate_catalogue_data.py`
+    /// (it covers `messages.json`, which is Python-only) and embedded
+    /// verbatim, so both engines report the same string.
+    guide_edition: String,
+    ruleset_version: String,
+    ruleset_fingerprint: String,
+    source_vendored_at: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -36,6 +44,47 @@ struct RawRule {
     guide_section: Option<String>,
     #[serde(default)]
     guide_url: Option<String>,
+}
+
+/// `specs/003-jss-rule-catalogue/recall.json` — the shipped recall
+/// snapshot (spec 027 item A). Read here rather than recomputed: the
+/// eval database ships with neither a crates.io tarball nor a CRAN
+/// binary, and the number a release claims must be the one it measured.
+#[derive(serde::Deserialize)]
+struct RecallDoc {
+    corpus_hash: String,
+    min_plants: u32,
+    papers: u32,
+    run_timestamp: String,
+    rules: BTreeMap<String, RecallCounts>,
+}
+
+#[derive(serde::Deserialize, Clone, Copy)]
+struct RecallCounts {
+    tp: u32,
+    #[serde(rename = "fn")]
+    fn_: u32,
+}
+
+/// `specs/003-jss-rule-catalogue/guide-coverage.yaml` — the curated
+/// matrix of what the rule set checks and what it does not (spec 027
+/// item A). Validated on the Python side by
+/// `tools/_coverage_validate.py`; read verbatim here.
+#[derive(serde::Deserialize)]
+struct CoverageDoc {
+    directives: Vec<CoverageDirectiveDoc>,
+}
+
+#[derive(serde::Deserialize)]
+struct CoverageDirectiveDoc {
+    id: String,
+    source: String,
+    section: String,
+    provision: String,
+    status: String,
+    rules: Vec<String>,
+    #[serde(default)]
+    reason: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -92,6 +141,12 @@ fn main() {
     let doc: CatalogueDoc = serde_yaml::from_str(&yaml_src)
         .unwrap_or_else(|e| panic!("failed to parse {}: {e}", catalogue_path.display()));
     let categories = doc.categories;
+    let doc_provenance = (
+        doc.ruleset_version,
+        doc.ruleset_fingerprint,
+        doc.guide_edition,
+        doc.source_vendored_at,
+    );
 
     // Deterministic (alphabetical by rule_id) so codegen output is stable
     // across runs regardless of catalogue.yaml's on-disk rule order.
@@ -152,10 +207,91 @@ fn main() {
     }
     out.push_str("];\n\n");
 
+    out.push_str("// Rule-set provenance, from catalogue.yaml (spec 027 item D).\n");
+    out.push_str(&format!(
+        "pub static RULESET_VERSION: &str = {:?};\n",
+        doc_provenance.0
+    ));
+    out.push_str(&format!(
+        "pub static RULESET_FINGERPRINT: &str = {:?};\n",
+        doc_provenance.1
+    ));
+    out.push_str(&format!(
+        "pub static GUIDE_EDITION: &str = {:?};\n",
+        doc_provenance.2
+    ));
+    out.push_str(&format!(
+        "pub static SOURCE_VENDORED_AT: &str = {:?};\n\n",
+        doc_provenance.3
+    ));
+
     out.push_str("// Rollout order, from catalogue.yaml's top-level `categories` field.\n");
     out.push_str("pub static CATEGORIES: &[&str] = &[\n");
     for cat in &categories {
         out.push_str(&format!("    {cat:?},\n"));
+    }
+    out.push_str("];\n");
+
+    // --- measured recall (spec 027 item A) ---------------------------
+    let recall_path = repo_root.join("specs/003-jss-rule-catalogue/recall.json");
+    println!("cargo:rerun-if-changed={}", recall_path.display());
+    let recall: RecallDoc = serde_json::from_str(
+        &fs::read_to_string(&recall_path)
+            .unwrap_or_else(|e| panic!("failed to read {}: {e}", recall_path.display())),
+    )
+    .unwrap_or_else(|e| panic!("failed to parse {}: {e}", recall_path.display()));
+
+    let total_tp: u32 = recall.rules.values().map(|c| c.tp).sum();
+    let total_fn: u32 = recall.rules.values().map(|c| c.fn_).sum();
+    out.push_str("\n// Measured recall, from specs/003-jss-rule-catalogue/recall.json.\n");
+    out.push_str(&format!(
+        "pub static RECALL_RUN: RecallRunData = RecallRunData {{ run_timestamp: {:?}, \
+         corpus_hash: {:?}, min_plants: {}, papers: {}, tp: {}, fn_: {} }};\n",
+        recall.run_timestamp,
+        recall.corpus_hash,
+        recall.min_plants,
+        recall.papers,
+        total_tp,
+        total_fn
+    ));
+    out.push_str("pub static RECALL: &[(&str, u32, u32)] = &[\n");
+    for (rule_id, counts) in &recall.rules {
+        out.push_str(&format!(
+            "    ({rule_id:?}, {}, {}),\n",
+            counts.tp, counts.fn_
+        ));
+    }
+    out.push_str("];\n");
+
+    // --- guide coverage (spec 027 item A) ----------------------------
+    let coverage_path = repo_root.join("specs/003-jss-rule-catalogue/guide-coverage.yaml");
+    println!("cargo:rerun-if-changed={}", coverage_path.display());
+    let coverage: CoverageDoc = serde_yaml::from_str(
+        &fs::read_to_string(&coverage_path)
+            .unwrap_or_else(|e| panic!("failed to read {}: {e}", coverage_path.display())),
+    )
+    .unwrap_or_else(|e| panic!("failed to parse {}: {e}", coverage_path.display()));
+
+    out.push_str("\n// Guide coverage, from specs/003-jss-rule-catalogue/guide-coverage.yaml.\n");
+    out.push_str("pub static COVERAGE: &[CoverageDirectiveData] = &[\n");
+    for directive in &coverage.directives {
+        out.push_str("    CoverageDirectiveData {\n");
+        out.push_str(&format!("        id: {:?},\n", directive.id));
+        out.push_str(&format!("        source: {:?},\n", directive.source));
+        out.push_str(&format!("        section: {:?},\n", directive.section));
+        out.push_str(&format!("        provision: {:?},\n", directive.provision));
+        out.push_str(&format!("        status: {:?},\n", directive.status));
+        out.push_str(&format!(
+            "        rules: &[{}],\n",
+            directive
+                .rules
+                .iter()
+                .map(|r| format!("{r:?}"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ));
+        out.push_str(&format!("        reason: {:?},\n", directive.reason));
+        out.push_str("    },\n");
     }
     out.push_str("];\n");
 

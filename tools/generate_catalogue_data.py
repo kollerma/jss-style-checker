@@ -3,17 +3,32 @@
 Invoke from the repository root::
 
     python -m tools.generate_catalogue_data          # write the file
-    python -m tools.generate_catalogue_data --check  # exit 1 if the file drifts
+    python -m tools.generate_catalogue_data --check  # exit 1 if the file
+                                                     # or the fingerprint drifts
+    python -m tools.generate_catalogue_data --stamp-fingerprint \\
+        --ruleset-version YYYY-MM-DD                 # re-stamp the rule set
 
 The source of truth is ``specs/003-jss-rule-catalogue/catalogue.yaml``.
 The output is a generated Python module; runtime imports from it never
 parse YAML.
+
+Rule-set provenance (spec 027 item D): the catalogue carries a
+``ruleset_version`` date guarded by a ``ruleset_fingerprint`` over both
+the catalogue-declared contract fields of every active rule and the
+message/suggestion wording in ``messages.json``. ``--check`` fails when
+the stored fingerprint no longer matches; ``--stamp-fingerprint``
+refuses to keep the old date once the fingerprint has moved. Users'
+baseline entries are keyed on that wording, so a silent rewording would
+strand them with no version signal.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
+import re
 import sys
 import tempfile
 from collections.abc import Mapping, Sequence
@@ -26,8 +41,25 @@ from tools._catalogue_validate import CatalogueError, validate
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CATALOGUE_YAML = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "catalogue.yaml"
+MESSAGES_JSON = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "messages.json"
+RECALL_JSON = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "recall.json"
+COVERAGE_YAML = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "guide-coverage.yaml"
 OUTPUT_PY = REPO_ROOT / "src" / "texlint" / "journals" / "jss" / "_catalogue_data.py"
 TEMPLATE_DIR = REPO_ROOT / "docs" / "jss-template"
+
+#: Catalogue-declared fields that form the contract half of the
+#: fingerprint. Deliberately narrower than the whole rule record:
+#: prose fields users never key on (``explanation``, ``notes``, the
+#: example fragments) may be improved in a patch release.
+_FINGERPRINT_RULE_FIELDS: tuple[str, ...] = (
+    "rule_id",
+    "category",
+    "severity",
+    "description",
+    "guide_section",
+    "confidence",
+    "auto_fixable",
+)
 
 _SEVERITY_MAP: Mapping[str, str] = {
     "error": "Severity.ERROR",
@@ -66,7 +98,21 @@ def _py_str(value: str) -> str:
     return repr(value)
 
 
-def render(doc: Mapping[str, Any]) -> str:
+def render(
+    doc: Mapping[str, Any],
+    recall: Mapping[str, Any] | None = None,
+    coverage: Mapping[str, Any] | None = None,
+) -> str:
+    recall = recall or {"rules": {}}
+    recall_rules: Mapping[str, Any] = recall.get("rules", {})
+    recall_run = {
+        "run_timestamp": recall.get("run_timestamp", ""),
+        "corpus_hash": recall.get("corpus_hash", ""),
+        "min_plants": recall.get("min_plants", 0),
+        "papers": recall.get("papers", 0),
+        "tp": sum(c["tp"] for c in recall_rules.values()),
+        "fn": sum(c["fn"] for c in recall_rules.values()),
+    }
     categories: list[str] = list(doc["categories"])
     rules = sorted(
         (dict(r) for r in doc["rules"]),
@@ -134,6 +180,56 @@ def render(doc: Mapping[str, Any]) -> str:
         out.append(f"    {_py_str(rid)},\n")
     out.append("})\n\n")
 
+    out.append(
+        "# Rule-set provenance (spec 027 item D). GUIDE_SOURCE is the\n"
+        "# report/JSON rendering; GUIDE_EDITION and SOURCE_VENDORED_AT are its\n"
+        "# parts, which `--version` line 3 lays out differently.\n"
+    )
+    out.append(f"RULESET_VERSION: str = {_py_str(doc['ruleset_version'])}\n")
+    out.append(f"RULESET_FINGERPRINT: str = {_py_str(doc['ruleset_fingerprint'])}\n")
+    out.append(f"GUIDE_EDITION: str = {_py_str(doc['guide_edition'])}\n")
+    out.append(f"SOURCE_VENDORED_AT: str = {_py_str(doc['source_vendored_at'])}\n")
+    guide_source = f"{doc['guide_edition']} ({doc['source_vendored_at']})"
+    out.append(f"GUIDE_SOURCE: str = {_py_str(guide_source)}\n\n")
+
+    out.append(
+        "# Measured recall, from specs/003-jss-rule-catalogue/recall.json\n"
+        "# (spec 027 item A). RECALL_RUN pins the run; RECALL holds the\n"
+        "# per-rule counts. Rules absent from RECALL are unmeasured.\n"
+    )
+    out.append("RECALL_RUN: Mapping[str, object] = MappingProxyType({\n")
+    for key in ("run_timestamp", "corpus_hash", "min_plants", "papers", "tp", "fn"):
+        value = recall_run[key]
+        literal = _py_str(value) if isinstance(value, str) else repr(value)
+        out.append(f"    {_py_str(key)}: {literal},\n")
+    out.append("})\n\n")
+    out.append("RECALL: Mapping[str, tuple[int, int]] = MappingProxyType({\n")
+    for rule_id, counts in sorted(recall_rules.items()):
+        out.append(
+            f"    {_py_str(rule_id)}: ({counts['tp']}, {counts['fn']}),\n"
+        )
+    out.append("})\n\n")
+
+    out.append(
+        "# Guide coverage, from specs/003-jss-rule-catalogue/guide-coverage.yaml\n"
+        "# (spec 027 item A): which provisions of the four authorities the rule\n"
+        "# set checks, and which it does not.\n"
+    )
+    out.append(
+        "COVERAGE: tuple[Mapping[str, object], ...] = (\n"
+    )
+    for directive in (coverage or {}).get("directives", ()):
+        out.append("    MappingProxyType({\n")
+        for key in ("id", "source", "section", "provision", "status"):
+            out.append(f"        {_py_str(key)}: {_py_str(directive[key])},\n")
+        rules = tuple(directive["rules"])
+        rules_literal = "(" + ", ".join(_py_str(r) for r in rules)
+        rules_literal += ",)" if len(rules) == 1 else ")"
+        out.append(f"        \"rules\": {rules_literal},\n")
+        out.append(f"        \"reason\": {_py_str(directive.get('reason', ''))},\n")
+        out.append("    }),\n")
+    out.append(")\n\n")
+
     out.append("# Rollout order (from catalogue.yaml top-level categories field).\n")
     out.append("ROLLOUT_ORDER: tuple[str, ...] = (\n")
     for cat in categories:
@@ -141,6 +237,98 @@ def render(doc: Mapping[str, Any]) -> str:
     out.append(")\n")
 
     return "".join(out)
+
+
+def fingerprint_input(
+    doc: Mapping[str, Any], messages: Mapping[str, Any]
+) -> str:
+    """Canonical JSON the fingerprint hashes. Stable across hosts."""
+    rules = [
+        {
+            field: (
+                rule.get(field, "")
+                if field == "guide_section"
+                else rule.get(field, "high")
+                if field == "confidence"
+                else rule[field]
+            )
+            for field in _FINGERPRINT_RULE_FIELDS
+        }
+        for rule in sorted(doc["rules"], key=lambda r: r["rule_id"])
+    ]
+    return json.dumps(
+        {"rules": rules, "messages": messages},
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+
+
+def compute_fingerprint(doc: Mapping[str, Any], messages: Mapping[str, Any]) -> str:
+    digest = hashlib.sha256(
+        fingerprint_input(doc, messages).encode("utf-8")
+    ).hexdigest()
+    return f"sha256:{digest}"
+
+
+def _load_messages(path: Path) -> Mapping[str, Any]:
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _load_coverage(path: Path) -> Mapping[str, Any]:
+    """The curated guide-coverage matrix, validated before it is emitted.
+
+    Validating here means no build can produce a catalogue module whose
+    coverage table credits a retired rule or leaves an active one
+    unclaimed — the surfaces read this, and a wrong answer to "what is
+    not checked" is worse than no answer.
+    """
+    if not path.exists():
+        return {"directives": ()}
+    with path.open("r", encoding="utf-8") as f:
+        doc = yaml.safe_load(f)
+    from tools._coverage_validate import validate as validate_coverage
+
+    active = {rule["rule_id"] for rule in _load_doc(CATALOGUE_YAML)["rules"]}
+    errors = validate_coverage(doc, active_rule_ids=active)
+    if errors:
+        raise SystemExit(
+            "guide-coverage.yaml is invalid:\n"
+            + "\n".join(f"  {e}" for e in errors)
+        )
+    return doc
+
+
+def _load_recall(path: Path) -> Mapping[str, Any]:
+    """The shipped recall snapshot, or empty when it does not exist yet.
+
+    Deliberately not part of the fingerprint: re-measuring recall on a
+    bigger corpus changes what the tool *reports*, not which findings it
+    produces, so it must not force a rule-set date bump (users' baselines
+    are unaffected).
+    """
+    if not path.exists():
+        return {"rules": {}}
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _rewrite_top_key(text: str, key: str, value: str) -> str:
+    """Replace one single-line top-level ``key: "value"`` scalar.
+
+    PyYAML cannot round-trip this file (the comment header carries the
+    retirement rationale that the whole catalogue is documented by), so
+    stamping is a line rewrite, not a load-and-dump.
+    """
+    pattern = re.compile(rf'^{re.escape(key)}: *"[^"]*"$', re.MULTILINE)
+    replaced, count = pattern.subn(f'{key}: "{value}"', text)
+    if count != 1:
+        raise SystemExit(
+            f"error: expected exactly one top-level `{key}:` line to rewrite, "
+            f"found {count}"
+        )
+    return replaced
 
 
 def _load_doc(path: Path) -> Mapping[str, Any]:
@@ -171,7 +359,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         description="Generate _catalogue_data.py from catalogue.yaml.",
     )
     parser.add_argument("--check", action="store_true")
+    parser.add_argument(
+        "--stamp-fingerprint",
+        action="store_true",
+        help=(
+            "Rewrite ruleset_fingerprint (and, with --ruleset-version, the "
+            "rule-set date) in catalogue.yaml, then regenerate."
+        ),
+    )
+    parser.add_argument(
+        "--ruleset-version",
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="The rule-set date to stamp. Required when the fingerprint changed.",
+    )
     parser.add_argument("--yaml-path", type=Path, default=CATALOGUE_YAML)
+    parser.add_argument("--messages-path", type=Path, default=MESSAGES_JSON)
+    parser.add_argument("--recall-path", type=Path, default=RECALL_JSON)
+    parser.add_argument("--coverage-path", type=Path, default=COVERAGE_YAML)
     parser.add_argument("--output-path", type=Path, default=OUTPUT_PY)
     parser.add_argument("--template-dir", type=Path, default=TEMPLATE_DIR)
     args = parser.parse_args(argv)
@@ -179,15 +384,40 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.yaml_path.exists():
         print(f"error: {args.yaml_path} does not exist", file=sys.stderr)
         return 2
+    if not args.messages_path.exists():
+        print(
+            f"error: {args.messages_path} does not exist; run "
+            "`python -m tools.generate_message_snapshot` first",
+            file=sys.stderr,
+        )
+        return 2
 
     doc = _load_doc(args.yaml_path)
     errors = validate(doc, template_dir=args.template_dir)
     if errors:
         return _report_and_exit(errors)
 
-    rendered = render(doc)
+    messages = _load_messages(args.messages_path)
+    computed = compute_fingerprint(doc, messages)
+    recall = _load_recall(args.recall_path)
+    coverage = _load_coverage(args.coverage_path)
+
+    if args.stamp_fingerprint:
+        return _stamp(args, doc, computed)
+
+    rendered = render(doc, recall, coverage)
 
     if args.check:
+        if doc["ruleset_fingerprint"] != computed:
+            print(
+                f"error: {args.yaml_path}'s ruleset_fingerprint is stale "
+                f"(stored {doc['ruleset_fingerprint']}, computed {computed}). "
+                "The rule set changed: re-run "
+                "`python -m tools.generate_catalogue_data --stamp-fingerprint "
+                "--ruleset-version YYYY-MM-DD` with today's date.",
+                file=sys.stderr,
+            )
+            return 1
         if not args.output_path.exists():
             print(
                 f"error: {args.output_path} does not exist; run without --check first",
@@ -205,6 +435,57 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     _atomic_write(args.output_path, rendered)
+    print(f"wrote {args.output_path}")
+    return 0
+
+
+def _stamp(
+    args: argparse.Namespace, doc: Mapping[str, Any], computed: str
+) -> int:
+    """Rewrite the two provenance keys, then regenerate the Python module.
+
+    The policy gate lives here: once the fingerprint has moved, the date
+    must be named explicitly and may never move backwards. A rule set
+    that changed silently is exactly the failure users' baselines cannot
+    survive. Re-stamping the *same* date is allowed — two rule-set
+    changes on one day share one date — but only as a deliberate act,
+    never as the tool's default.
+    """
+    stored_version = doc["ruleset_version"]
+    changed = computed != doc["ruleset_fingerprint"]
+    if changed and args.ruleset_version is None:
+        print(
+            "error: the rule-set fingerprint changed, so --ruleset-version is "
+            f"required (stored date {stored_version!r}). A rule, its severity, "
+            "or the wording users' baselines key on has moved:\n"
+            "  python -m tools.generate_catalogue_data --stamp-fingerprint "
+            "--ruleset-version YYYY-MM-DD",
+            file=sys.stderr,
+        )
+        return 1
+    new_version = args.ruleset_version or stored_version
+    if new_version < stored_version:
+        print(
+            f"error: --ruleset-version {new_version} is older than the stored "
+            f"{stored_version}; the rule-set date never moves backwards.",
+            file=sys.stderr,
+        )
+        return 1
+
+    text = args.yaml_path.read_text(encoding="utf-8")
+    text = _rewrite_top_key(text, "ruleset_version", new_version)
+    text = _rewrite_top_key(text, "ruleset_fingerprint", computed)
+    _atomic_write(args.yaml_path, text)
+    print(f"stamped {args.yaml_path}: {new_version} {computed}")
+
+    updated = _load_doc(args.yaml_path)
+    errors = validate(updated, template_dir=args.template_dir)
+    if errors:
+        return _report_and_exit(errors)
+    _atomic_write(
+        args.output_path,
+        render(updated, _load_recall(args.recall_path), _load_coverage(args.coverage_path)),
+    )
     print(f"wrote {args.output_path}")
     return 0
 

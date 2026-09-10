@@ -339,3 +339,80 @@ fn terminal_render_format_gate_edge_cases() {
         mismatches.join("\n---\n")
     );
 }
+
+/// Spec 027 item F: colour must never change layout (`color.md` C-1).
+///
+/// Rendered with `color = true` and stripped, every fixture must equal
+/// its own plain rendering byte for byte — in this engine and, since the
+/// plain stream is already parity-checked above, in the Python one too.
+/// This is what lets the parity suites, the snapshot tests, and the eval
+/// harness go on comparing the plain stream while colour ships.
+#[test]
+fn stripping_colour_yields_the_plain_stream() {
+    fn strip_sgr(text: &str) -> String {
+        let mut out = String::with_capacity(text.len());
+        let mut chars = text.chars().peekable();
+        while let Some(c) = chars.next() {
+            if c == '\u{1b}' && chars.peek() == Some(&'[') {
+                chars.next();
+                for c in chars.by_ref() {
+                    if c == 'm' {
+                        break;
+                    }
+                }
+                continue;
+            }
+            out.push(c);
+        }
+        out
+    }
+
+    let root = repo_root();
+    let mut mismatches = Vec::new();
+    let mut saw_colour = false;
+
+    // A cross-section: the checked-in `.Rmd` fixtures (always present)
+    // plus the corpus `.Rnw` files when the corpus is materialised.
+    let fixtures = RMD_FIXTURES.iter().chain(RNW_PAPERS.iter());
+    for fixture in fixtures {
+        let path = root.join(fixture);
+        let Ok(source) = std::fs::read_to_string(&path) else {
+            continue;
+        };
+        let filename = path.file_name().unwrap().to_string_lossy().to_string();
+        let sources = vec![(filename.clone(), source)];
+        let document = ParsedDocument::from_sources(&sources).unwrap();
+
+        for mode in [Mode::Author, Mode::Reviewer] {
+            for verbose in [false, true] {
+                let config = ToolConfig {
+                    mode,
+                    verbose,
+                    ..ToolConfig::default()
+                };
+                let report = engine::run(&config, &document);
+                let plain = terminal::render_with_color(&report, &config, false);
+                let coloured = terminal::render_with_color(&report, &config, true);
+                saw_colour |= coloured.contains('\u{1b}');
+                if strip_sgr(&coloured) != plain {
+                    mismatches.push(format!(
+                        "{filename} (mode={mode:?}, verbose={verbose})\n  plain:\n{plain}\n  stripped:\n{}",
+                        strip_sgr(&coloured)
+                    ));
+                }
+            }
+        }
+    }
+
+    assert!(
+        saw_colour,
+        "no fixture produced any escape sequence — the invariant above \
+         would pass vacuously"
+    );
+    assert!(
+        mismatches.is_empty(),
+        "{} mismatches:\n{}",
+        mismatches.len(),
+        mismatches.join("\n---\n")
+    );
+}

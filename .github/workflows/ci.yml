@@ -109,6 +109,13 @@ jobs:
           version=$(grep -A1 '^name = "wasm-bindgen"' rust/Cargo.lock | grep version | head -1 | cut -d '"' -f2)
           cargo install wasm-bindgen-cli --version "$version"
 
+      # Spec 027 item E: the browser zip reader has no build step and no
+      # dependency, so this is the only thing standing between a silently
+      # skipped project file and a user who thinks their manuscript is
+      # clean. Node ships the same DecompressionStream the browser does.
+      - name: Browser zip reader
+        run: node --test web/zip.test.mjs
+
       - name: cargo fmt --check
         working-directory: rust
         run: cargo fmt --all --check
@@ -167,7 +174,12 @@ jobs:
         with:
           # Only the fetched (gitignored) payloads — never committed
           # examples, so a stale cache can't shadow checked-in files.
-          path: examples/cran_*
+          # BOTH source kinds: the manifest has 16 `github` rows, and
+          # caching only `cran_*` meant every cache hit skipped the fetch
+          # and left them absent, silently shrinking the recall corpus.
+          path: |
+            examples/cran_*
+            examples/github_*
           key: eval-corpus-${{ hashFiles('eval/corpus-manifest.csv') }}
 
       - name: Fetch the eval corpus (cache miss only)
@@ -176,6 +188,14 @@ jobs:
 
       - name: Materialize the recall corpus
         run: .venv/bin/python -m eval.recall_corpus_scaffold
+
+      # Spec 027 FR-A-007: the number the author footer prints has to be
+      # defended, not just published. `--no-record` leaves the committed
+      # history database untouched, so the per-rule regression check
+      # keeps comparing against the last *recorded* run, which the
+      # release checklist refreshes.
+      - name: Recall gate
+        run: .venv/bin/eval-jss recall --gate --no-record
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable

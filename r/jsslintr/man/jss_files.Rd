@@ -13,6 +13,7 @@ jss_files(path = ".")
 A character vector of file paths.
 }
 \description{
-Lists the \code{.tex}, \code{.ltx}, and \code{.bib} files in a directory -- the
-file set \code{\link[=jsslint]{jsslint()}} checks when called without arguments.
+Lists the \code{.tex}, \code{.ltx}, \code{.bib}, \code{.Rnw}, and \code{.Rmd} files in a
+directory -- the file set \code{\link[=jsslint]{jsslint()}} checks when called without
+arguments.
 }

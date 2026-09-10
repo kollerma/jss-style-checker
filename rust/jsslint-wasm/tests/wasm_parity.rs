@@ -149,4 +149,97 @@ process.stdout.write(result);
         actual, expected,
         "WASM render() output diverges from jss-lint --output json"
     );
+
+    // Spec 027 item B: the bundle honours `% jss-lint: ignore`. This is
+    // the surface the fix is *for* — the web app and the VS Code
+    // extension both run this bundle, and both used to report findings
+    // their author had signed off on in the source.
+    let suppress_fixture = root.join("tests/fixtures/suppress/inline.tex");
+    let suppress_script = format!(
+        r#"
+const jsslint = require({glue_path:?});
+const fs = require('fs');
+const tex = fs.readFileSync({fixture:?}, 'utf8');
+process.stdout.write(jsslint.render({{
+  files: [['tests/fixtures/suppress/inline.tex', tex]],
+  output: 'json',
+}}));
+"#,
+        glue_path = scratch.join("jsslint_wasm.js").to_string_lossy(),
+        fixture = suppress_fixture.to_string_lossy(),
+    );
+    let suppress_script_path = scratch.join("suppress.js");
+    std::fs::write(&suppress_script_path, suppress_script).expect("write suppress script");
+    let suppress_output = Command::new("node")
+        .arg(&suppress_script_path)
+        .output()
+        .expect("failed to run node");
+    assert!(
+        suppress_output.status.success(),
+        "node suppress script failed: {}",
+        String::from_utf8_lossy(&suppress_output.stderr)
+    );
+    let actual = String::from_utf8(suppress_output.stdout).expect("valid UTF-8");
+
+    let py_output = Command::new(&jss_lint)
+        .arg("--no-resolve")
+        .arg("--output")
+        .arg("json")
+        .arg("tests/fixtures/suppress/inline.tex")
+        .current_dir(&root)
+        .output()
+        .expect("failed to run jss-lint");
+    let expected = String::from_utf8(py_output.stdout).expect("valid UTF-8");
+    assert_eq!(
+        actual, expected,
+        "WASM render() ignores an inline `% jss-lint: ignore` the CLI honours"
+    );
+
+    // Spec 027 item D: the bundle reports the rule set it was compiled
+    // with. A drifted bundle would tell a page a different rule-set date
+    // than the CLI stamps into baseline files.
+    let version_script = format!(
+        r#"
+const jsslint = require({glue_path:?});
+process.stdout.write(JSON.stringify(jsslint.version()));
+"#,
+        glue_path = scratch.join("jsslint_wasm.js").to_string_lossy(),
+    );
+    let version_script_path = scratch.join("version.js");
+    std::fs::write(&version_script_path, version_script).expect("write version script");
+    let version_output = Command::new("node")
+        .arg(&version_script_path)
+        .output()
+        .expect("failed to run node");
+    assert!(
+        version_output.status.success(),
+        "node version script failed: {}",
+        String::from_utf8_lossy(&version_output.stderr)
+    );
+    // Substring assertions rather than a JSON parse: this crate has no
+    // `serde_json` dev-dependency, and adding one only to read four
+    // fields would widen a dependency graph §XIV asks to stay narrow.
+    let reported = String::from_utf8(version_output.stdout).expect("valid UTF-8");
+
+    let py_version = Command::new(&jss_lint)
+        .arg("--version")
+        .current_dir(&root)
+        .output()
+        .expect("failed to run jss-lint --version");
+    let py_version = String::from_utf8(py_version.stdout).expect("valid UTF-8");
+    // Line 3 is `rule set: <date> (<edition>, vendored <date>)`.
+    let rule_set_line = py_version.lines().nth(2).expect("four-line block");
+    let ruleset_version = rule_set_line
+        .trim_start_matches("rule set: ")
+        .split_whitespace()
+        .next()
+        .expect("a rule-set date");
+    assert!(
+        reported.contains(&format!("\"rulesetVersion\":\"{ruleset_version}\"")),
+        "WASM version() reports a different rule set than jss-lint --version: {reported}"
+    );
+    assert!(
+        reported.contains("\"engine\":\"jsslint-core/rust\""),
+        "unexpected engine label: {reported}"
+    );
 }

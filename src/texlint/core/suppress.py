@@ -75,7 +75,12 @@ def directive_lines(source: str) -> dict[int, frozenset[str]]:
         existing = out.get(line)
         out[line] = ids if existing is None else existing | ids
 
-    for lineno, line in enumerate(source.splitlines(), start=1):
+    # ``split("\n")`` rather than ``splitlines()``: the latter also
+    # breaks on form feed, vertical tab, ``\x1c``-``\x1f`` and ``\x85``,
+    # while every line number a violation carries comes from counting
+    # ``\n``. One form feed would otherwise shift every directive below
+    # it and suppress the wrong line.
+    for lineno, line in enumerate(source.split("\n"), start=1):
         m = _DIRECTIVE_RE.search(line)
         if m is None:
             continue
@@ -99,18 +104,22 @@ def build_index(
     """
     index: dict[str, dict[int, frozenset[str]]] = {}
 
-    def _merge(path: Any, source: str) -> None:
+    def _merge(path: Any, source: str, line_offset: int = 0) -> None:
         lines = directive_lines(source)
         if not lines:
             return
         per_file = index.setdefault(str(path), {})
         for lineno, ids in lines.items():
-            existing = per_file.get(lineno)
-            per_file[lineno] = ids if existing is None else existing | ids
+            target = lineno + line_offset
+            existing = per_file.get(target)
+            per_file[target] = ids if existing is None else existing | ids
 
     for doc in documents:
         for tex in doc.all_tex_like():
-            _merge(tex.path, tex.source)
+            # ``line_offset`` maps a fragment-relative directive line to
+            # the file-authoritative one violations carry (``.Rmd``
+            # prose blocks; zero everywhere else).
+            _merge(tex.path, tex.source, tex.line_offset)
         for bib in doc.bib_files:
             _merge(bib.path, bib.source)
     return index

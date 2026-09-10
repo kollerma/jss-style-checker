@@ -8,67 +8,22 @@
 //! plain text automatically. Real-terminal (tty) colored output is
 //! NOT replicated here; this module only targets the non-tty path.
 //!
-//! Faithfully replicates one genuine `rich` quirk rather than working
-//! around it: `Table.add_row(str)` parses EVERY string cell as rich
-//! markup, so any `[lowercase...]` bracket run in a violation message
-//! or suggestion — e.g. `\citep[e.g.][]{key}` — gets silently
-//! swallowed (rich attempts to interpret `[e.g.]` as a style tag,
-//! fails to find a `e.g.`-named style, and drops it, changing the
-//! rendered text to `\citep[]{key}`). Confirmed empirically against
-//! the real Python renderer; see `strip_markup`'s doc comment.
+//! Cell text is emitted verbatim. Until 1.2.0 this module mirrored a
+//! `rich` quirk instead: `Table.add_row(str)` parses every string cell
+//! as console markup, so any `[lowercase...]` run in a message or
+//! suggestion — `\citep[e.g.][]{key}`, `\documentclass[article]{jss}` —
+//! was swallowed as a style tag and rendered as `\citep[]{key}`. The
+//! port reproduced that faithfully to hold §XIII byte-parity, which
+//! kept the two engines identical and both of them wrong. The Python
+//! side now escapes cell text before rich sees it
+//! (`output/terminal.py`), so the honest rendering is the parity
+//! target and this module simply prints what it is given.
 
 use crate::catalogue;
 use crate::config::{Mode, ToolConfig};
 use crate::report::{ComplianceReport, Violation};
-use regex::Regex;
-use std::sync::LazyLock;
 
 const CONSOLE_WIDTH: usize = 120;
-
-// ---------------------------------------------------------------------
-// Markup stripping — mirrors rich.markup's tag regex and substitution.
-// ---------------------------------------------------------------------
-
-/// Mirrors `rich.markup.RE_TAGS = re.compile(r"((\\*)\[([a-z#/@][^[]*?)])")`.
-static TAG_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(\\*)\[([a-z#/@][^\[]*?)\]").unwrap());
-
-/// Strips every `[tag]`-shaped bracket run (content starting with a
-/// lowercase letter, `#`, `/`, or `@`) the way `rich.markup.render`
-/// does: the tag itself (brackets + content) is removed entirely,
-/// regardless of whether the "style name" is real — `rich` doesn't
-/// validate until render time, and non-tty rendering never needs a
-/// real `Style`, so an invalid tag is silently absorbed just like a
-/// valid one. `\[` (single backslash before `[`) is the one escape
-/// `rich` recognizes and unescapes to a literal `[`; runs of 2+
-/// backslashes aren't precisely replicated (not observed in any real
-/// JSS rule message/suggestion).
-pub fn strip_markup(s: &str) -> String {
-    if !s.contains('[') {
-        return s.to_string();
-    }
-    let mut out = String::new();
-    let mut last_end = 0;
-    for caps in TAG_RE.captures_iter(s) {
-        let whole = caps.get(0).unwrap();
-        let backslashes = caps.get(1).unwrap().as_str();
-        let pre = &s[last_end..whole.start()];
-        out.push_str(&pre.replace("\\[", "["));
-        if backslashes.chars().count() % 2 == 1 {
-            // Escaped: not a real tag. Keep one fewer backslash (the
-            // one that did the escaping) plus the literal brackets.
-            let kept = &backslashes[..backslashes.len() - 1];
-            out.push_str(kept);
-            out.push('[');
-            out.push_str(caps.get(2).unwrap().as_str());
-            out.push(']');
-        }
-        // else: a real tag — contributes nothing to plain text.
-        last_end = whole.end();
-    }
-    out.push_str(&s[last_end..].replace("\\[", "["));
-    out
-}
 
 // ---------------------------------------------------------------------
 // console.rule() — mirrors rich.rule.Rule.__rich_console__ (align="center").
@@ -384,13 +339,52 @@ fn justify(text: &str, width: usize, right: bool) -> String {
 /// Renders one complete `rich.table.Table` (box.HEAVY_HEAD, header +
 /// body, no footer, no row separators) as it appears on a non-tty
 /// console. `rows` are already-stripped-of-markup plain strings.
-fn render_table(columns: &[Column], rows: &[Vec<String>], title: Option<&str>) -> String {
-    let widths = column_widths(columns, rows, CONSOLE_WIDTH);
+/// A table cell: the text the layout is computed from, plus the SGR
+/// style it is painted with when colour is on. Keeping the two apart is
+/// what makes `color.md` C-1 true by construction — widths never see an
+/// escape sequence.
+#[derive(Clone)]
+struct Cell {
+    text: String,
+    style: Option<&'static str>,
+}
+
+impl Cell {
+    fn plain(text: impl Into<String>) -> Self {
+        Self {
+            text: text.into(),
+            style: None,
+        }
+    }
+
+    fn styled(text: impl Into<String>, style: &'static str) -> Self {
+        Self {
+            text: text.into(),
+            style: Some(style),
+        }
+    }
+}
+
+fn render_table(
+    columns: &[Column],
+    rows: &[Vec<Cell>],
+    title: Option<&str>,
+    color: bool,
+) -> String {
+    let plain_rows: Vec<Vec<String>> = rows
+        .iter()
+        .map(|row| row.iter().map(|c| c.text.clone()).collect())
+        .collect();
+    let widths = column_widths(columns, &plain_rows, CONSOLE_WIDTH);
     let table_width: usize = widths.iter().sum::<usize>() + columns.len() + 1;
 
     let mut out = String::new();
     if let Some(t) = title {
-        out.push_str(&center_text(t, table_width));
+        out.push_str(&crate::color::paint(
+            &center_text(t, table_width),
+            crate::color::BOLD,
+            color,
+        ));
         out.push('\n');
     }
 
@@ -406,7 +400,11 @@ fn render_table(columns: &[Column], rows: &[Vec<String>], title: Option<&str>) -
     out.push('┃');
     for (i, c) in columns.iter().enumerate() {
         out.push(' ');
-        out.push_str(&justify(c.header, widths[i] - 2, false));
+        out.push_str(&crate::color::paint(
+            &justify(c.header, widths[i] - 2, false),
+            crate::color::BOLD,
+            color,
+        ));
         out.push(' ');
         out.push('┃');
     }
@@ -425,15 +423,19 @@ fn render_table(columns: &[Column], rows: &[Vec<String>], title: Option<&str>) -
         let wrapped: Vec<Vec<String>> = row
             .iter()
             .enumerate()
-            .map(|(i, cell)| wrap_cell(cell, widths[i] - 2))
+            .map(|(i, cell)| wrap_cell(&cell.text, widths[i] - 2))
             .collect();
         let height = wrapped.iter().map(|l| l.len()).max().unwrap_or(1);
         for line_idx in 0..height {
             out.push('│');
             for (i, c) in columns.iter().enumerate() {
                 let content = wrapped[i].get(line_idx).map(String::as_str).unwrap_or("");
+                let justified = justify(content, widths[i] - 2, c.right_justify);
                 out.push(' ');
-                out.push_str(&justify(content, widths[i] - 2, c.right_justify));
+                match row[i].style {
+                    Some(style) => out.push_str(&crate::color::paint(&justified, style, color)),
+                    None => out.push_str(&justified),
+                }
                 out.push(' ');
                 out.push('│');
             }
@@ -516,19 +518,62 @@ fn display_path(raw: &str) -> String {
 // ---------------------------------------------------------------------
 
 pub fn render(report: &ComplianceReport, config: &ToolConfig) -> String {
+    render_with_color(report, config, false)
+}
+
+/// `render`, with the colour decision the CLI resolved (spec 027 item
+/// F). Colour never changes layout: every width is measured on the
+/// unstyled text, so stripping the SGR yields this function's own
+/// `color = false` output byte for byte (`color.md` C-1).
+pub fn render_with_color(report: &ComplianceReport, config: &ToolConfig, color: bool) -> String {
     let mut out = String::new();
     if config.mode == Mode::Reviewer {
-        render_reviewer(report, &mut out);
+        render_reviewer(report, &mut out, color);
     } else {
-        render_author(report, &mut out);
+        render_author(report, &mut out, color);
+    }
+    if config.mode != Mode::Reviewer {
+        out.push_str(&author_footer_text(report));
+        out.push('\n');
+    }
+    if let Some(summary) = &report.baseline {
+        render_baseline(summary, report, &mut out);
     }
     if config.verbose && !report.skipped_rules.is_empty() {
-        render_skipped_rules(report, &mut out);
+        render_skipped_rules(report, &mut out, color);
     }
     out
 }
 
-fn render_author(report: &ComplianceReport, out: &mut String) {
+/// One line saying what the baseline hid (`baseline-file.md` C-6).
+///
+/// Printed in both modes, and in particular on an otherwise clean run:
+/// "no findings" and "no findings you have not already accepted" are
+/// different claims, and the user must be able to tell them apart.
+fn render_baseline(
+    summary: &crate::report::BaselineSummary,
+    report: &ComplianceReport,
+    out: &mut String,
+) {
+    out.push_str(&format!(
+        "Baseline: {} findings hidden by {} ({} stale, {} unevaluated)",
+        summary.matched, summary.path, summary.stale, summary.unevaluated
+    ));
+    if let (Some(written), Some(current)) = (&summary.ruleset_version, &report.rule_set.version) {
+        if written != current {
+            // The wording users' baselines key on may change in a minor
+            // release (docs/versions.md), which strands entries silently
+            // unless the two dates are named.
+            out.push_str(&format!(
+                " \u{2014} written for rule set {written}, current {current}; run \
+                 --update-baseline"
+            ));
+        }
+    }
+    out.push('\n');
+}
+
+fn render_author(report: &ComplianceReport, out: &mut String, color: bool) {
     let mut files: Vec<&str> = report.violations.iter().map(|v| v.file.as_str()).collect();
     files.sort();
     files.dedup();
@@ -545,76 +590,287 @@ fn render_author(report: &ComplianceReport, out: &mut String) {
     ];
 
     for file in files {
-        out.push_str(&rule_line(&display_path(file), CONSOLE_WIDTH));
+        out.push_str(&crate::color::paint(
+            &rule_line(&display_path(file), CONSOLE_WIDTH),
+            crate::color::BOLD,
+            color,
+        ));
         out.push('\n');
         let file_violations: Vec<&Violation> = report
             .violations
             .iter()
             .filter(|v| v.file == file)
             .collect();
-        let rows: Vec<Vec<String>> = file_violations
+        let rows: Vec<Vec<Cell>> = file_violations
             .iter()
             .map(|v| {
                 let locator = match v.column {
                     Some(c) => format!("{}:{c}", v.line),
                     None => v.line.to_string(),
                 };
-                let rule_cell =
-                    strip_markup(&format!("{}{}", v.rule_id, confidence_suffix(&v.rule_id)));
-                let message_cell =
-                    strip_markup(&format!("{}{}", v.message, guide_suffix(&v.rule_id)));
-                let suggestion_cell = strip_markup(v.suggestion.as_deref().unwrap_or(""));
+                let rule_cell = format!("{}{}", v.rule_id, confidence_suffix(&v.rule_id));
+                let message_cell = format!("{}{}", v.message, guide_suffix(&v.rule_id));
+                let suggestion_cell = v.suggestion.as_deref().unwrap_or("").to_string();
                 vec![
-                    locator,
-                    v.severity.as_str().to_string(),
-                    rule_cell,
-                    message_cell,
-                    suggestion_cell,
+                    Cell::plain(locator),
+                    // Severity keeps its word as well as its hue: nothing
+                    // is encoded in colour alone (`color.md` C-2).
+                    Cell::styled(v.severity.as_str(), severity_style(v.severity)),
+                    Cell::styled(rule_cell, crate::color::BOLD),
+                    Cell::plain(message_cell),
+                    Cell::plain(suggestion_cell),
                 ]
             })
             .collect();
-        out.push_str(&render_table(&columns, &rows, None));
+        out.push_str(&render_table(&columns, &rows, None, color));
     }
 }
 
-fn render_reviewer(report: &ComplianceReport, out: &mut String) {
+fn render_reviewer(report: &ComplianceReport, out: &mut String, color: bool) {
     let columns = [
         col_no_wrap("Category"),
         col_no_wrap("Status"),
         col_right("Applied"),
         col_right("Passed"),
+        // Left-justified, no wrap: the widest cell is `limited (n=NN)`,
+        // which keeps the table inside the 120-column console.
+        col_no_wrap("Recall"),
     ];
-    let rows: Vec<Vec<String>> = report
+    let min_plants = min_plants(report);
+    let rows: Vec<Vec<Cell>> = report
         .categories
         .iter()
         .map(|c| {
             vec![
-                c.title.clone(),
-                c.status.as_str().to_string(),
-                c.rules_applied.to_string(),
-                c.rules_passed.to_string(),
+                Cell::plain(c.title.clone()),
+                Cell::styled(c.status.as_str(), status_style(c.status)),
+                Cell::plain(c.rules_applied.to_string()),
+                Cell::plain(c.rules_passed.to_string()),
+                Cell::plain(match &c.recall {
+                    Some(stat) => stat.label(min_plants),
+                    None => "n/a".to_string(),
+                }),
             ]
         })
         .collect();
     let title = format!("Journal compliance — {}", report.journal_id);
-    out.push_str(&render_table(&columns, &rows, Some(&title)));
+    out.push_str(&render_table(&columns, &rows, Some(&title), color));
     match report.compliance_percentage {
         // Python's `f"{pct}%"` formats a `round(x, 1)` float, which
         // Python always shows with at least one decimal digit (40.0,
         // not 40) — Rust's f64 Display drops a trailing ".0".
-        Some(pct) => out.push_str(&format!("Overall: {pct:.1}%\n")),
-        None => out.push_str("Overall: n/a\n"),
+        Some(pct) => out.push_str(&format!(
+            "Overall: {}\n",
+            crate::color::paint(&format!("{pct:.1}%"), crate::color::BOLD, color)
+        )),
+        None => out.push_str(&format!(
+            "Overall: {}\n",
+            crate::color::paint("n/a", crate::color::DIM, color)
+        )),
+    }
+    if let Some(line) = measured_recall_line(report) {
+        out.push_str(&line);
+        out.push('\n');
+    }
+    if let Some(directives) = report.coverage {
+        if !directives.is_empty() {
+            render_not_checked(directives, out, color);
+        }
     }
 }
 
-fn render_skipped_rules(report: &ComplianceReport, out: &mut String) {
-    out.push_str(&rule_line("Skipped rules", CONSOLE_WIDTH));
+/// What the tool does *not* check, under the reviewer table. Only
+/// `partial` and `not_checked` rows: an out-of-scope provision was never
+/// checkable from source, and listing all sixty-odd would bury the few a
+/// reviewer can act on.
+fn render_not_checked(
+    directives: &[crate::catalogue::CoverageDirectiveData],
+    out: &mut String,
+    color: bool,
+) {
+    out.push_str(&crate::color::paint(
+        &rule_line("Not checked by jss-lint", CONSOLE_WIDTH),
+        crate::color::BOLD,
+        color,
+    ));
+    out.push('\n');
+    let rows = crate::coverage::gaps(directives);
+    if !rows.is_empty() {
+        let columns = [
+            col_no_wrap("Directive"),
+            col_no_wrap("Status"),
+            col("Provision"),
+        ];
+        let table_rows: Vec<Vec<Cell>> = rows
+            .iter()
+            .map(|d| {
+                vec![
+                    Cell::plain(d.id),
+                    Cell::plain(if d.status == "partial" {
+                        "partial"
+                    } else {
+                        "not checked"
+                    }),
+                    Cell::plain(d.provision),
+                ]
+            })
+            .collect();
+        out.push_str(&render_table(&columns, &table_rows, None, color));
+    }
+    out.push_str(&crate::coverage::counts_sentence(directives));
+    out.push('\n');
+}
+
+fn min_plants(report: &ComplianceReport) -> u32 {
+    report
+        .rule_set
+        .recall
+        .as_ref()
+        .map(|r| r.min_plants)
+        .unwrap_or(0)
+}
+
+/// `Measured recall: 81% (1967 annotated instances, 17 papers, run …)`.
+/// `None` for a journal that publishes no measurement.
+pub fn measured_recall_line(report: &ComplianceReport) -> Option<String> {
+    let run = report.rule_set.recall.as_ref()?;
+    let stat = run.stat();
+    let day = run.run_timestamp.split('T').next().unwrap_or("");
+    Some(format!(
+        "Measured recall: {} ({} annotated instances, {} papers, run {day})",
+        stat.label(run.min_plants),
+        stat.plants(),
+        run.papers
+    ))
+}
+
+/// The footer an author-mode run always ends with (spec 027 FR-A-004).
+/// Shared with the HTML renderer so the two cannot drift.
+pub fn author_footer_text(report: &ComplianceReport) -> String {
+    let Some(run) = report.rule_set.recall.as_ref() else {
+        return format!(
+            "jss-lint has no recall or coverage data for journal {}.",
+            report.journal_id
+        );
+    };
+    let stat = run.stat();
+    let mut text = format!(
+        "No findings does not mean compliant. Measured recall: {} ({} annotated \
+         instances, {} papers).",
+        stat.label(run.min_plants),
+        stat.plants(),
+        run.papers
+    );
+    if let Some(directives) = report.coverage {
+        if !directives.is_empty() {
+            text.push('\n');
+            text.push_str(&crate::coverage::footer_sentence(directives));
+        }
+    }
+    text
+}
+
+fn render_skipped_rules(report: &ComplianceReport, out: &mut String, color: bool) {
+    out.push_str(&crate::color::paint(
+        &rule_line("Skipped rules", CONSOLE_WIDTH),
+        crate::color::BOLD,
+        color,
+    ));
     out.push('\n');
     let columns = [col_no_wrap("Rule"), col("Reason")];
-    let rows: Vec<Vec<String>> = report
+    let rows: Vec<Vec<Cell>> = report
         .skipped_rules
         .iter()
-        .map(|s| vec![s.rule_id.clone(), strip_markup(&s.reason)])
+        .map(|s| {
+            vec![
+                Cell::styled(s.rule_id.clone(), crate::color::BOLD),
+                Cell::plain(s.reason.clone()),
+            ]
+        })
         .collect();
-    out.push_str(&render_table(&columns, &rows, None));
+    out.push_str(&render_table(&columns, &rows, None, color));
+}
+
+/// `color.md` C-2's palette, per severity and per status.
+fn severity_style(severity: crate::report::Severity) -> &'static str {
+    match severity {
+        crate::report::Severity::Error => crate::color::RED,
+        crate::report::Severity::Warning => crate::color::YELLOW,
+        // Cyan, not blue: blue is unreadable on a dark background.
+        crate::report::Severity::Info => crate::color::CYAN,
+    }
+}
+
+fn status_style(status: crate::report::CategoryStatus) -> &'static str {
+    match status {
+        crate::report::CategoryStatus::Pass => crate::color::GREEN,
+        crate::report::CategoryStatus::Fail => crate::color::RED,
+        crate::report::CategoryStatus::Skipped => crate::color::DIM,
+    }
+}
+
+#[cfg(test)]
+mod markup_tests {
+    //! Bracketed text must reach the terminal intact (spec 027 review).
+    //!
+    //! Until 1.2.0 both engines dropped `[tag]`-shaped runs: rich ate
+    //! them as console markup, and this module mirrored that to hold
+    //! byte-parity. The result was a suggestion telling an author to
+    //! write `\documentclass{jss}` when the rule meant
+    //! `\documentclass[shortnames]{jss}`. The Python side now escapes
+    //! before rich sees the cell, so verbatim is the parity target.
+
+    use super::render;
+    use crate::config::ToolConfig;
+    use crate::report::{ComplianceReport, Severity, Violation};
+
+    fn report_with(message: &str, suggestion: &str) -> ComplianceReport {
+        let mut report = ComplianceReport {
+            tool_version: "1.2.0".to_string(),
+            journal_id: "jss".to_string(),
+            violations: Vec::new(),
+            categories: Vec::new(),
+            compliance_percentage: None,
+            skipped_rules: Vec::new(),
+            baseline: None,
+            rule_set: crate::report::RuleSetInfo::default(),
+            coverage: None,
+        };
+        report.violations.push(Violation {
+            file: "paper.tex".to_string(),
+            line: 1,
+            column: Some(1),
+            rule_id: "JSS-CAP-001".to_string(),
+            severity: Severity::Warning,
+            message: message.to_string(),
+            suggestion: Some(suggestion.to_string()),
+            fix: None,
+        });
+        report
+    }
+
+    /// The bracket runs a JSS manuscript actually contains: a class
+    /// option, a `\citep` prenote, and a short-title argument. All
+    /// three start with a lowercase letter, which is exactly what
+    /// rich's tag regex matches.
+    #[test]
+    fn bracket_runs_reach_the_table() {
+        for (message, suggestion) in [
+            ("uses \\citep[e.g.][]{key}", "write \\citep[e.g.][]{key}"),
+            ("bare class", "add \\documentclass[shortnames]{jss}"),
+            ("no shim", "supply \\section[plain]{markup}"),
+        ] {
+            let out = render(&report_with(message, suggestion), &ToolConfig::default());
+            let bracketed: String = suggestion
+                .chars()
+                .skip(suggestion.find('[').unwrap())
+                .take_while(|c| *c != ']')
+                .collect();
+            let needle = format!("{bracketed}]");
+            assert!(
+                out.contains(&needle),
+                "{needle:?} was swallowed by the renderer:\n{out}"
+            );
+        }
+    }
 }

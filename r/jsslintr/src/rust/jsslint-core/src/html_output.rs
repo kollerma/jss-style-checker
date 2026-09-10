@@ -111,8 +111,43 @@ pub fn render_author(report: &ComplianceReport) -> String {
         out.push('\n');
         out.push('\n');
     }
+    out.push_str(&format!(
+        "<p class=\"note\">{}</p>\n",
+        crate::terminal::author_footer_text(report)
+            .lines()
+            .map(escape_html)
+            .collect::<Vec<_>>()
+            .join("<br>")
+    ));
+    out.push_str(&baseline_note(report));
     out.push_str("</body>\n</html>\n");
     out
+}
+
+/// The `<p class="note">` both templates emit when a baseline was
+/// applied (`baseline-file.md` C-6). Jinja renders the `{% if %}` block
+/// with no surrounding blank line, hence the exact spacing here.
+fn baseline_note(report: &ComplianceReport) -> String {
+    let Some(summary) = &report.baseline else {
+        return String::new();
+    };
+    let mut note = format!(
+        "<p class=\"note\">Baseline: {} findings hidden by {} ({} stale, {} unevaluated)",
+        summary.matched,
+        escape_html(&summary.path),
+        summary.stale,
+        summary.unevaluated
+    );
+    if let (Some(written), Some(current)) = (&summary.ruleset_version, &report.rule_set.version) {
+        if written != current {
+            note.push_str(&format!(
+                " \u{2014} written for rule set {written}, current {current}; run \
+                 --update-baseline"
+            ));
+        }
+    }
+    note.push_str("</p>\n");
+    note
 }
 
 const REVIEWER_STYLE: &str = "  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; color: #222; }\n  h1 { margin-top: 0; }\n  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }\n  th, td { border: 1px solid #ddd; padding: 0.5rem 0.75rem; font-size: 0.95rem; }\n  th { background: #f5f5f5; text-align: left; }\n  .num { text-align: right; font-variant-numeric: tabular-nums; }\n  .status-PASS { color: #2a7a2a; font-weight: 600; }\n  .status-FAIL { color: #b00020; font-weight: 600; }\n  .status-SKIPPED { color: #777; font-weight: 600; }\n  .overall { font-size: 1.6rem; margin-top: 1rem; }\n  .overall.none { color: #777; }\n";
@@ -120,6 +155,12 @@ const REVIEWER_STYLE: &str = "  body { font-family: -apple-system, Segoe UI, Rob
 /// Mirrors `reviewer.html.j2` (per-category compliance table).
 pub fn render_reviewer(report: &ComplianceReport) -> String {
     let journal = escape_html(&report.journal_id);
+    let min_plants = report
+        .rule_set
+        .recall
+        .as_ref()
+        .map(|r| r.min_plants)
+        .unwrap_or(0);
     let mut out = String::new();
     out.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>jss-lint compliance \u{2014} ");
     out.push_str(&journal);
@@ -129,7 +170,7 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
     out.push_str(&journal);
     out.push_str("</h1>\n<p>Tool version: <code>");
     out.push_str(&escape_html(&report.tool_version));
-    out.push_str("</code></p>\n<table>\n  <thead>\n    <tr><th>Category</th><th>Status</th><th class=\"num\">Applied</th><th class=\"num\">Passed</th></tr>\n  </thead>\n  <tbody>\n  ");
+    out.push_str("</code></p>\n<table>\n  <thead>\n    <tr><th>Category</th><th>Status</th><th class=\"num\">Applied</th><th class=\"num\">Passed</th><th>Recall</th></tr>\n  </thead>\n  <tbody>\n  ");
 
     for c in &report.categories {
         out.push_str("\n    <tr>\n      <td>");
@@ -142,6 +183,11 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
         out.push_str(&c.rules_applied.to_string());
         out.push_str("</td>\n      <td class=\"num\">");
         out.push_str(&c.rules_passed.to_string());
+        out.push_str("</td>\n      <td>");
+        out.push_str(&escape_html(&match &c.recall {
+            Some(stat) => stat.label(min_plants),
+            None => "n/a".to_string(),
+        }));
         out.push_str("</td>\n    </tr>\n  ");
     }
     out.push_str("\n  </tbody>\n</table>\n");
@@ -154,7 +200,40 @@ pub fn render_reviewer(report: &ComplianceReport) -> String {
         )),
     }
     out.push('\n');
+    if let Some(line) = crate::terminal::measured_recall_line(report) {
+        out.push_str(&format!("<p class=\"note\">{}</p>\n", escape_html(&line)));
+    }
+    if let Some(directives) = report.coverage {
+        if !directives.is_empty() {
+            out.push_str("<h2>Not checked by jss-lint</h2>\n");
+            let rows = crate::coverage::gaps(directives);
+            if !rows.is_empty() {
+                out.push_str(
+                    "<table class=\"coverage\">\n  <thead>\n    <tr><th>Directive</th><th>Status</th><th>Provision</th></tr>\n  </thead>\n  <tbody>\n  ",
+                );
+                for d in rows {
+                    out.push_str("\n    <tr>\n      <td>");
+                    out.push_str(&escape_html(d.id));
+                    out.push_str("</td>\n      <td>");
+                    out.push_str(if d.status == "partial" {
+                        "partial"
+                    } else {
+                        "not checked"
+                    });
+                    out.push_str("</td>\n      <td>");
+                    out.push_str(&escape_html(d.provision));
+                    out.push_str("</td>\n    </tr>\n  ");
+                }
+                out.push_str("\n  </tbody>\n</table>\n");
+            }
+            out.push_str(&format!(
+                "<p class=\"note\">{}</p>\n",
+                escape_html(&crate::coverage::counts_sentence(directives))
+            ));
+        }
+    }
 
+    out.push_str(&baseline_note(report));
     out.push_str("</body>\n</html>\n");
     out
 }

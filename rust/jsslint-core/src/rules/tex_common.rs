@@ -5,7 +5,10 @@
 
 use crate::catalogue;
 use crate::report::{Fix, Violation};
+use crate::tex::extract::group_text;
+use crate::tex::node::{EnvironmentNode, Node};
 use crate::tex::position::LineIndex;
+use crate::tex::prose::walk;
 
 /// Generic catalogue-backed violation: severity/message come from the
 /// rule's catalogue entry; the caller supplies position. Mirrors
@@ -61,4 +64,79 @@ pub fn tex_violation_with_fix(
 ) -> Violation {
     let (line, column) = lineno_col(line_index, pos);
     make_violation(file, line, Some(column), rule_id, suggestion, fix)
+}
+
+// ---------------------------------------------------------------------------
+// Token-specific suggestions (spec 027 item S)
+// ---------------------------------------------------------------------------
+
+/// Identifier length for an equation body head — mirrors
+/// `_helpers._EQUATION_BODY_LIMIT`.
+const EQUATION_BODY_LIMIT: usize = 40;
+
+/// Python `str.split()`'s whitespace set. `char::is_whitespace` covers
+/// Unicode White_Space, which is *almost* the same — Python also splits
+/// on the four ASCII information separators, so they are added here.
+/// Without them a `\x1c` inside a caption would collapse in one engine
+/// and not the other, and the two suggestions would diverge.
+fn is_py_whitespace(c: char) -> bool {
+    c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c)
+}
+
+/// Normalise *text* into a stable identifier for a suggestion.
+///
+/// Mirrors `_helpers.identifier` exactly (contract:
+/// `specs/027-first-time-user-gaps/contracts/suggestions.md` C-3):
+/// collapse whitespace runs to one space, trim, then truncate to
+/// *limit* **characters** (not bytes) with no ellipsis, escaping and
+/// case left alone. A baseline entry is keyed on the suggestion, so any
+/// divergence here would re-key findings between engines.
+pub fn identifier(text: &str, limit: usize) -> String {
+    let collapsed = text
+        .split(is_py_whitespace)
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
+    collapsed.chars().take(limit).collect()
+}
+
+/// Name a display equation: its `\label` key, else its first body line.
+///
+/// Mirrors `_helpers.equation_identifier`. `source` is the parsed file's
+/// character vector; the body head is sliced out of it (not rebuilt from
+/// the node list) so both engines quote the same source text.
+pub fn equation_identifier(env: &EnvironmentNode, source: &[char]) -> String {
+    let mut label: Option<String> = None;
+    walk(&env.nodelist, &mut |node, _ancestors| {
+        if label.is_some() {
+            return;
+        }
+        let Node::Macro(m) = node else { return };
+        if m.macroname != "label" {
+            return;
+        }
+        for arg in m.args.iter().flatten() {
+            let Node::Group(g) = arg else { continue };
+            let key = identifier(&group_text(g), usize::MAX);
+            if !key.is_empty() {
+                label = Some(key);
+                return;
+            }
+        }
+    });
+    if let Some(key) = label {
+        return key;
+    }
+
+    let (Some(first), Some(last)) = (env.nodelist.first(), env.nodelist.last()) else {
+        return String::new();
+    };
+    let start = first.span().pos;
+    let end = (last.span().pos + last.span().len).min(source.len());
+    if start >= end {
+        return String::new();
+    }
+    let body: String = source[start..end].iter().collect();
+    let first_row = body.split("\\\\").next().unwrap_or("");
+    identifier(first_row, EQUATION_BODY_LIMIT)
 }

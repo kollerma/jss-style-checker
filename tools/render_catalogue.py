@@ -16,6 +16,7 @@ shape from ``contracts/rendering.md``.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import tempfile
@@ -112,6 +113,8 @@ def render(doc: Mapping[str, Any]) -> str:
             continue  # validator already flags dangling categories
         _emit_category(out, category, category_rules)
 
+    _emit_coverage(out)
+
     # Per-rule detail blocks — iterate the already-sorted list
     out.append("## Rule details\n\n")
     for rule in rules:
@@ -123,6 +126,67 @@ def render(doc: Mapping[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # Section emitters
 # ---------------------------------------------------------------------------
+
+
+def _emit_coverage(out: list[str]) -> None:
+    """A `Coverage` section below the per-category rule tables.
+
+    The catalogue page answers "what rules exist"; this answers "what
+    provisions do they cover, and which are left" — the same matrix
+    `jss-lint coverage` prints (spec 027 item A).
+    """
+    path = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "guide-coverage.yaml"
+    if not path.exists():  # pragma: no cover - the file ships with the repo
+        return
+    with path.open("r", encoding="utf-8") as f:
+        doc = yaml.safe_load(f)
+    directives = doc["directives"]
+    tally: dict[str, int] = {}
+    for directive in directives:
+        tally[directive["status"]] = tally.get(directive["status"], 0) + 1
+
+    out.append("---\n\n")
+    out.append("## Guide coverage\n\n")
+    out.append(
+        "Which provisions of the four authorities these rules enforce, and "
+        "which they do not. Source of truth: "
+        "[guide-coverage.yaml](guide-coverage.yaml); printed by "
+        "`jss-lint coverage`.\n\n"
+    )
+    out.append(
+        f"**{tally.get('checked', 0)} checked · {tally.get('partial', 0)} partial "
+        f"· {tally.get('not_checked', 0)} not checked · "
+        f"{tally.get('out_of_scope', 0)} out of scope**\n\n"
+    )
+    labels = {
+        "jss_cls": "jss.cls",
+        "article_tex": "article.tex",
+        "style_guide": "Style guide",
+        "author_instructions": "Author instructions",
+    }
+    status_label = {
+        "checked": "checked",
+        "partial": "partial",
+        "not_checked": "not checked",
+        "out_of_scope": "out of scope",
+    }
+    for source, label in labels.items():
+        group = sorted(
+            (d for d in directives if d["source"] == source), key=lambda d: d["id"]
+        )
+        if not group:
+            continue
+        out.append(f"### {label}\n\n")
+        out.append("| Directive | Status | Provision | Rules | Reason |\n")
+        out.append("|---|---|---|---|---|\n")
+        for directive in group:
+            rules = ", ".join(f"`{r}`" for r in directive["rules"]) or "—"
+            reason = _escape_pipe(directive.get("reason", "")) or "—"
+            out.append(
+                f"| {directive['id']} | {status_label[directive['status']]} "
+                f"| {_escape_pipe(directive['provision'])} | {rules} | {reason} |\n"
+            )
+        out.append("\n")
 
 
 def _emit_header(
@@ -138,6 +202,11 @@ def _emit_header(
         "edits here are overwritten.\n\n"
     )
     out.append(f"**Schema version**: {doc['version']}  \n")
+    out.append(
+        f"**Rule set**: {doc['ruleset_version']} "
+        f"({doc['guide_edition']}, vendored {doc['source_vendored_at']})  \n"
+    )
+    out.append(f"**Rule-set fingerprint**: `{doc['ruleset_fingerprint']}`  \n")
     out.append(
         f"**Vendored sources**: `docs/jss-template/jss.cls` dated "
         f"{doc['source_vendored_at']}  \n"
@@ -155,9 +224,10 @@ def _emit_category(
     out.append(f"## {_title(category)}\n\n")
     out.append(f"_{category}_ — {len(rules)} rule(s)\n\n")
     out.append(
-        "| Rule ID | Severity | Description | Authority | Authority ref | Auto-fixable |\n"
+        "| Rule ID | Severity | Confidence | Recall | Description | Authority "
+        "| Authority ref | Auto-fixable |\n"
     )
-    out.append("|---|---|---|---|---|---|\n")
+    out.append("|---|---|---|---|---|---|---|---|\n")
     for rule in rules:
         out.append(_render_summary_row(rule))
     out.append("\n")
@@ -166,14 +236,40 @@ def _emit_category(
 def _render_summary_row(rule: Mapping[str, Any]) -> str:
     rule_id = rule["rule_id"]
     severity = rule["severity"]
+    confidence = rule.get("confidence") or "high"
     description = _escape_pipe(rule["description"])
     authority = rule["authority"]
     authority_ref = f"`{rule['authority_ref']}`"
     auto_fixable = "✓" if rule["auto_fixable"] else "—"
     return (
-        f"| `{rule_id}` | {severity} | {description} | {authority} | "
-        f"{authority_ref} | {auto_fixable} |\n"
+        f"| `{rule_id}` | {severity} | {confidence} | {_recall_label(rule_id)} "
+        f"| {description} | {authority} | {authority_ref} | {auto_fixable} |\n"
     )
+
+
+def _recall_label(rule_id: str) -> str:
+    """Measured recall for the catalogue page (spec 027 item A).
+
+    Read from the shipped snapshot so the page, the tool, and the badge
+    quote one number.
+    """
+    snapshot = _recall_snapshot()
+    counts = snapshot.get("rules", {}).get(rule_id)
+    if counts is None:
+        return "unmeasured"
+    plants = counts["tp"] + counts["fn"]
+    if plants < snapshot.get("min_plants", 10):
+        return f"limited (n={plants})"
+    return f"{(200 * counts['tp'] + plants) // (2 * plants)}%"
+
+
+def _recall_snapshot() -> Mapping[str, Any]:
+    cached = getattr(_recall_snapshot, "_cache", None)
+    if cached is None:
+        path = REPO_ROOT / "specs" / "003-jss-rule-catalogue" / "recall.json"
+        cached = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        _recall_snapshot._cache = cached  # type: ignore[attr-defined]
+    return cached
 
 
 def _escape_pipe(text: str) -> str:

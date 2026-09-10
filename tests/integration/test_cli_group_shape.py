@@ -33,7 +33,9 @@ def test_bare_invocation_still_works(runner: CliRunner) -> None:
     """The historic ``jss-lint <PATHS>`` invocation must keep working.
 
     Mirrors the first author-terminal test: a compliant fixture pair
-    exits 0 with empty stdout.
+    exits 0, listing no findings. Since 1.2.0 the run still prints the
+    recall footer (spec 027 FR-A-004), so "empty" means "no findings",
+    not "no output".
     """
     result = runner.invoke(
         main,
@@ -43,7 +45,8 @@ def test_bare_invocation_still_works(runner: CliRunner) -> None:
         ],
     )
     assert result.exit_code == 0, result.output
-    assert result.output.strip() == ""
+    assert "JSS-" not in result.output
+    assert result.output.startswith("No findings does not mean compliant.")
 
 
 def test_main_is_a_click_group() -> None:

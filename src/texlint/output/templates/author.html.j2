@@ -52,5 +52,9 @@
 {% else %}
 <p class="ok">No violations found.</p>
 {% endif %}
+<p class="note">{% for sentence in footer %}{{ sentence }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+{%- if report.baseline %}
+<p class="note">Baseline: {{ report.baseline.matched }} findings hidden by {{ report.baseline.path }} ({{ report.baseline.stale }} stale, {{ report.baseline.unevaluated }} unevaluated){% if report.baseline.ruleset_version and report.rule_set.version and report.baseline.ruleset_version != report.rule_set.version %} — written for rule set {{ report.baseline.ruleset_version }}, current {{ report.rule_set.version }}; run --update-baseline{% endif %}</p>
+{%- endif %}
 </body>
 </html>

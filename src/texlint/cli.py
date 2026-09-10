@@ -8,7 +8,9 @@ dispatch to a renderer → exit with the appropriate status.
 
 from __future__ import annotations
 
+import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -20,8 +22,10 @@ from .api import (
     JournalNotFoundError,
     ParsedDocument,
     ParsedProject,
+    RuleSetInfo,
     ToolConfig,
 )
+from .color import should_colorize
 from .config import load as load_config
 from .core.engine import (
     UnsupportedSuffixError,
@@ -30,6 +34,7 @@ from .core.engine import (
     resolve_project,
     run,
 )
+from .version import format_rule_set, format_version_block
 
 _SUPPORTED_SUFFIXES = {".tex", ".ltx", ".bib", ".rnw", ".rmd"}
 # Spec 013: auto-resolve triggers only for a single positional argument
@@ -122,11 +127,29 @@ def _parse_root_or_paths(
     return _parse_inputs(paths)
 
 
-def _dispatch_renderer(output: str, report: Any, cfg: ToolConfig) -> None:
+def _color_decision(flag: str | None, cfg: ToolConfig) -> bool:
+    """Resolve `--color` / TOML / environment / TTY into one bool.
+
+    Read from the real process state here, at the CLI layer: the
+    renderer takes the answer, not the question (§XIV, `color.md` C-8).
+    """
+    return should_colorize(
+        flag=flag,
+        toml_value=cfg.color,
+        env=os.environ,
+        isatty=sys.stdout.isatty(),
+    )
+
+
+def _dispatch_renderer(
+    output: str, report: Any, cfg: ToolConfig, color: bool = False
+) -> None:
     if output == "terminal":
         from .output.terminal import render as render_terminal
 
-        render_terminal(report, cfg)
+        # Only the terminal stream is ever coloured: JSON, SARIF, and
+        # HTML are consumed by machines and browsers (`color.md` C-3).
+        render_terminal(report, cfg, color)
     elif output == "json":
         from .output.json_output import render as render_json
 
@@ -180,6 +203,172 @@ def _determine_exit_code(report: Any, fail_on: str = "info") -> int:
     return 0
 
 
+_DEFAULT_BASELINE_NAME = ".jss-lint-baseline.json"
+
+
+def _baseline_path_map(
+    document: ParsedDocument | ParsedProject, baseline_path: Path
+) -> dict[str, str]:
+    """Map each parsed file's label to its baseline-relative posix path.
+
+    Relativisation happens here, at the CLI layer, because it is the only
+    layer that may touch the filesystem (§XIV). Both the label a
+    violation carries (absolute and canonical under auto-resolve, the
+    literal argument under ``--no-resolve``) and the baseline file's
+    directory are resolved first, so the two invocations produce the
+    same key for the same file (`baseline-file.md` C-3). A file outside
+    the baseline's directory gets `../` segments; one on another Windows
+    drive, where no relative path exists, is simply left unmapped and
+    stays unsuppressible.
+    """
+    base = baseline_path.resolve().parent
+    documents = (
+        document.documents
+        if isinstance(document, ParsedProject)
+        else (document,)
+    )
+    out: dict[str, str] = {}
+    for parsed in (f for doc in documents for f in doc.all_files()):
+        try:
+            relative = Path(os.path.relpath(Path(parsed.path).resolve(), base))
+        except ValueError:  # pragma: no cover - Windows cross-drive only
+            continue
+        out[str(parsed.path)] = relative.as_posix()
+    return out
+
+
+def _run_with_baseline(
+    baseline_path: Path,
+    cfg: ToolConfig,
+    document: ParsedDocument | ParsedProject,
+    journal_module: Any,
+) -> Any:
+    """Lint with accepted findings hidden, and stamp the summary."""
+    from dataclasses import replace
+
+    from .core import baseline as _baseline
+
+    try:
+        doc = _baseline.parse(baseline_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        _eprint(f"jss-lint: failed to read {baseline_path}: {exc}")
+        sys.exit(2)
+    except _baseline.BaselineError as exc:
+        _eprint(f"jss-lint: {baseline_path}: {exc}")
+        sys.exit(2)
+    if doc.journal != cfg.journal:
+        _eprint(
+            f"jss-lint: {baseline_path} was written for journal "
+            f"{doc.journal!r}, but this run uses {cfg.journal!r}"
+        )
+        sys.exit(2)
+
+    matcher = _baseline.BaselineMatcher(
+        doc, _baseline_path_map(document, baseline_path)
+    )
+    report = run(cfg, document, journal_module, suppress=matcher)
+    applied = {
+        rule.id
+        for rule in journal_module.rules()
+        if rule.id not in cfg.ignore_rules
+    } - {s.rule_id for s in report.skipped_rules}
+    return replace(
+        report,
+        baseline=matcher.summary(str(baseline_path), applied_rule_ids=applied),
+    )
+
+
+def _write_baseline(
+    baseline_path: Path,
+    report: Any,
+    document: ParsedDocument | ParsedProject,
+    cfg: ToolConfig,
+) -> None:
+    """Accept the current findings, atomically (§VII).
+
+    Exits 2 on an error-severity parse failure: a report the parser could
+    not complete is not a state worth accepting.
+    """
+    from .core import baseline as _baseline
+
+    if _determine_exit_code(report, cfg.fail_on) == 2:
+        _eprint(
+            f"jss-lint: refusing to write {baseline_path}: the run did not "
+            "complete (parse error)"
+        )
+        sys.exit(2)
+
+    doc = _baseline.build(
+        report.violations,
+        path_map=_baseline_path_map(document, baseline_path),
+        tool_version=__version__,
+        ruleset_version=_ruleset_version(cfg.journal),
+        journal=cfg.journal,
+    )
+    text = _baseline.dumps(doc)
+    try:
+        _atomic_write(baseline_path, text)
+    except OSError as exc:
+        _eprint(f"jss-lint: failed to write {baseline_path}: {exc}")
+        sys.exit(2)
+    written = sum(entry.count for entry in doc.entries)
+    _eprint(f"jss-lint: wrote {written} baseline entries to {baseline_path}")
+
+
+def _atomic_write(path: Path, text: str) -> None:
+    """tempfile + os.replace, so a crash can never truncate the file
+    the user has already committed (§VII)."""
+    directory = path.resolve().parent
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", delete=False, dir=directory, prefix=path.name + "."
+    ) as tmp:
+        tmp.write(text)
+        tmp_name = tmp.name
+    os.replace(tmp_name, path)
+
+
+def _ruleset_version(journal_id: str) -> str | None:
+    """The rule-set date to stamp into a baseline, or ``None``."""
+    try:
+        return load_journal(journal_id).metadata().rule_set.version
+    except (JournalNotFoundError, InvalidJournalError):  # pragma: no cover
+        return None
+
+
+def _print_version(journal: str | None) -> None:
+    """Print the four-line ``--version`` block (contract: version-output.md).
+
+    Deliberately not eager: ``.jss-lint.toml`` and ``--journal`` are
+    resolved first, so lines 3 and 4 describe the rule set this
+    invocation would actually apply. An unregistered journal is reported,
+    not an error — asking a tool what it is must never fail.
+    """
+    try:
+        cfg = load_config({"journal": journal} if journal else {}, Path.cwd())
+    except Exception as exc:  # pragma: no cover - defensive; matches the lint path
+        _eprint(f"jss-lint: failed to load .jss-lint.toml: {exc}")
+        sys.exit(2)
+
+    try:
+        metadata = load_journal(cfg.journal).metadata()
+    except (JournalNotFoundError, InvalidJournalError):
+        journal_line = f"{cfg.journal} (not registered)"
+        rule_set = format_rule_set(RuleSetInfo())
+    else:
+        journal_line = cfg.journal
+        rule_set = format_rule_set(metadata.rule_set)
+
+    click.echo(
+        format_version_block(
+            tool=__version__,
+            engine="texlint/python",
+            rule_set=rule_set,
+            journal=journal_line,
+        ),
+        nl=False,
+    )
+
+
 def _lint_paths(paths: tuple[str, ...]) -> tuple[Any, ToolConfig]:
     """Shared lint pipeline used by ``init`` and ``report`` subcommands.
 
@@ -222,7 +411,6 @@ def _lint_paths_with_doc(
     name="jss-lint",
     invoke_without_command=True,
 )
-@click.version_option(__version__, prog_name="jss-lint")
 @click.option(
     "--journal",
     "journal",
@@ -344,6 +532,49 @@ def _lint_paths_with_doc(
         "(recommended when using --crossref)."
     ),
 )
+@click.option(
+    "--color",
+    "color",
+    type=click.Choice(["auto", "always", "never"], case_sensitive=False),
+    default=None,
+    help=(
+        "Colour policy for terminal output (default: auto — on when stdout "
+        "is a terminal). NO_COLOR and CLICOLOR_FORCE are honoured; JSON, "
+        "SARIF, and HTML are never coloured."
+    ),
+)
+@click.option(
+    "--baseline",
+    "baseline",
+    default=None,
+    type=click.Path(path_type=str),
+    help=(
+        "Apply a baseline file: findings it records are hidden from every "
+        "output and from the exit code. Also settable as `baseline` in "
+        ".jss-lint.toml; never discovered automatically."
+    ),
+)
+@click.option(
+    "--update-baseline",
+    "update_baseline",
+    is_flag=True,
+    default=False,
+    help=(
+        "Write the baseline from this run (accepting every finding) and "
+        "exit 0 without rendering a report. Path: --baseline, else the "
+        "TOML key, else ./.jss-lint-baseline.json."
+    ),
+)
+@click.option(
+    "--version",
+    "version",
+    is_flag=True,
+    default=False,
+    help=(
+        "Print the tool, engine, rule-set, and journal versions, then exit. "
+        "Not eager: .jss-lint.toml and --journal are honoured first."
+    ),
+)
 @click.argument("paths", nargs=-1, type=click.Path(path_type=str))
 @click.pass_context
 def main(
@@ -363,6 +594,10 @@ def main(
     no_resolve: bool,
     crossref: bool,
     crossref_mailto: str | None,
+    color: str | None,
+    baseline: str | None,
+    update_baseline: bool,
+    version: bool,
     paths: tuple[str, ...],
 ) -> None:
     """Lint LaTeX/BibTeX manuscripts against journal style guides.
@@ -392,6 +627,10 @@ def main(
             sub.invoke(sub_ctx)
         return
 
+    if version:
+        _print_version(journal)
+        return
+
     if not paths:
         _eprint("jss-lint: at least one FILE argument is required.")
         sys.exit(2)
@@ -413,6 +652,10 @@ def main(
         cli_overrides["fail_on"] = fail_on.lower()
     if verbose is not None:
         cli_overrides["verbose"] = verbose
+    if baseline is not None:
+        cli_overrides["baseline"] = Path(baseline)
+    if color is not None:
+        cli_overrides["color"] = color.lower()
 
     try:
         cfg = load_config(cli_overrides, Path.cwd())
@@ -442,7 +685,21 @@ def main(
         _eprint(f"jss-lint: {exc}")
         sys.exit(2)
 
-    report = run(cfg, document, journal_module)
+    baseline_path = cfg.baseline
+    if update_baseline and baseline_path is None:
+        baseline_path = Path(_DEFAULT_BASELINE_NAME)
+
+    if update_baseline:
+        _write_baseline(baseline_path, run(cfg, document, journal_module),
+                        document, cfg)
+        return
+
+    if baseline_path is None:
+        report = run(cfg, document, journal_module)
+    else:
+        report = _run_with_baseline(
+            baseline_path, cfg, document, journal_module
+        )
 
     # Spec 008: --fix / --dry-run / --apply / --fix-rule.
     if dry_run and not fix:
@@ -481,7 +738,7 @@ def main(
         if fix_report.rejected:
             sys.exit(2)
 
-    _dispatch_renderer(cfg.output, report, cfg)
+    _dispatch_renderer(cfg.output, report, cfg, _color_decision(color, cfg))
     sys.exit(_determine_exit_code(report, cfg.fail_on))
 
 
@@ -520,6 +777,80 @@ def explain_cmd(rule_id: str | None, fmt: str, example: bool) -> None:
             _eprint(f"did you mean: {', '.join(suggestions)}")
         sys.exit(2)
     click.echo(out, nl=False)
+
+
+@main.command(name="coverage")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["terminal", "markdown", "json"], case_sensitive=False),
+    default="terminal",
+    help="Output format (default: terminal).",
+)
+@click.option(
+    "--journal",
+    "journal",
+    default=None,
+    help="Journal identifier to report on (default: from config, else jss).",
+)
+def coverage_cmd(fmt: str, journal: str | None) -> None:
+    """List which guide provisions jss-lint checks, and which it does not.
+
+    "No findings" is only meaningful next to "here is what was looked
+    for" (spec 027 FR-G-004). Exit 0 always — including for a journal
+    that publishes no coverage data, which says so.
+    """
+    from texlint import coverage as coverage_module
+
+    try:
+        cfg = load_config({"journal": journal} if journal else {}, Path.cwd())
+    except Exception as exc:  # pragma: no cover - defensive
+        _eprint(f"jss-lint: failed to load .jss-lint.toml: {exc}")
+        sys.exit(2)
+
+    try:
+        metadata = load_journal(cfg.journal).metadata()
+    except (JournalNotFoundError, InvalidJournalError) as exc:
+        _eprint(f"jss-lint: {exc}")
+        sys.exit(2)
+
+    directives = metadata.coverage
+    fmt = fmt.lower()
+    if fmt == "json":
+        output = coverage_module.render_json(
+            directives, cfg.journal, _coverage_sources(cfg.journal)
+        )
+    elif fmt == "markdown":
+        output = coverage_module.render_markdown(
+            directives, cfg.journal, metadata.rule_set.version
+        )
+    else:
+        output = coverage_module.render_terminal(
+            directives, cfg.journal, metadata.rule_set.version
+        )
+    click.echo(output, nl=False)
+
+
+def _coverage_sources(journal_id: str) -> dict:
+    """The `sources:` block, for `coverage --format json` only.
+
+    Read from the journal's own catalogue directory rather than carried
+    on every report: it is provenance for the matrix, not a per-run
+    fact, and only this one format prints it.
+    """
+    if journal_id != "jss":
+        return {}
+    import yaml
+
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "specs"
+        / "003-jss-rule-catalogue"
+        / "guide-coverage.yaml"
+    )
+    if not path.is_file():  # pragma: no cover - packaged installs
+        return {}
+    return yaml.safe_load(path.read_text(encoding="utf-8")).get("sources", {})
 
 
 @main.command(name="init")

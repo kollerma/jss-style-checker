@@ -41,11 +41,26 @@ export PATH="$PWD/.venv/bin:$HOME/.cargo/bin:$PATH"   # both needed
 python -m pytest tests/ -q            # Python suite (needs .venv/bin on PATH:
                                       #   eval tests shell out to `jss-lint`)
 ruff check .                          # lint gate (CI runs exactly this)
+python -m pytest tests/unit/journals/jss/ \
+    --cov=src/texlint/journals/jss/rules --cov-branch   # §IX rule coverage
 (cd rust && cargo test --workspace)   # Rust suite incl. parity + isolation
 R CMD INSTALL --library=$HOME/R/library r/jsslintr   # R package build
 ```
 
-Release flow: tag-triggered workflows publish per component
+Two virtualenvs live side by side: **`.venv`** is the one to use (Linux
+containers and CI create it); **`.venv-host`** is a macOS host venv used by
+the paper toolchain, and its interpreter is a dangling symlink anywhere but
+that host. `paper/Makefile` and `paper/regenerate.sh` prefer `.venv-host`
+only when it actually executes and fall back to `.venv`. Never rebuild
+`.venv-host` from a container — the working tree is shared with the host.
+
+Rule unit tests mirror the rule modules: `tests/unit/journals/jss/rules/
+test_<category>.py` for `src/texlint/journals/jss/rules/<category>.py`
+(they lived in `tests/unit/rules/` until spec 027; older specs still name
+that path).
+
+Release flow (step by step: `docs/releasing.md`): tag-triggered
+workflows publish per component
 (`vX.Y.Z-cli|-py|-pypkg|-wasm|-vscode`, plain `vX.Y.Z` for the Action —
 push tags to the public remote only). PyPI/npm use OIDC trusted publishing.
 `vscode-extension/` runs the checker in-process from the bundled WASM

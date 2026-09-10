@@ -53,6 +53,13 @@ fn render_one_terminal(rule_id: &str, meta: &RuleMeta) -> String {
             meta.confidence
         ));
     }
+    // Always printed, including `unmeasured` (spec 027 FR-A-005): a rule
+    // nobody has measured is exactly the one not to assume reliable.
+    lines.push(format!("  Recall: {}", recall_label(meta.rule_id)));
+    let covers = covers(meta.rule_id);
+    if !covers.is_empty() {
+        lines.push(format!("  Covers: {}", covers.join(", ")));
+    }
     if !meta.guide_section.is_empty() {
         lines.push(format!("  JSS guide: {}", meta.guide_section));
         if let Some(url) = meta.guide_url {
@@ -79,6 +86,11 @@ fn render_one_markdown(rule_id: &str, meta: &RuleMeta) -> String {
     ));
     if meta.confidence != "high" {
         parts.push(format!("- **Confidence:** {}", meta.confidence));
+    }
+    parts.push(format!("- **Recall:** {}", recall_label(meta.rule_id)));
+    let covers = covers(meta.rule_id);
+    if !covers.is_empty() {
+        parts.push(format!("- **Covers:** {}", covers.join(", ")));
     }
     if !meta.guide_section.is_empty() {
         if let Some(url) = meta.guide_url {
@@ -148,6 +160,25 @@ fn render_listing(fmt: &str) -> String {
 /// `rule_id` is `None`. `Err(normalized_id)` for an unknown rule id —
 /// mirrors `explain.py::render`'s `raise KeyError(rule_id)`, with the
 /// caller (CLI dispatch) producing a "did you mean?" suggestion list.
+/// `81%` / `limited (n=4)` / `unmeasured` for one rule — the same
+/// shipped snapshot the reviewer table and the author footer read.
+/// Guide directives this rule enforces (`coverage-file.md` C-8).
+/// Omitted for a rule whose only directive is `internal`.
+fn covers(rule_id: &str) -> Vec<&'static str> {
+    let mut ids: Vec<&str> = crate::catalogue::coverage()
+        .iter()
+        .filter(|d| d.section != "internal" && d.rules.contains(&rule_id))
+        .map(|d| d.id)
+        .collect();
+    ids.sort_unstable();
+    ids
+}
+
+fn recall_label(rule_id: &str) -> String {
+    let stat = crate::catalogue::recall(rule_id);
+    stat.label(crate::catalogue::recall_run().min_plants)
+}
+
 pub fn render(rule_id: Option<&str>, fmt: &str) -> Result<String, String> {
     let Some(raw_id) = rule_id else {
         return Ok(render_listing(fmt));

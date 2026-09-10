@@ -22,6 +22,7 @@ use crate::rules::{
     abbreviations, capitalization, citations, code_style, code_width, crossrefs, house_style,
     markup, naming, operators, preamble, references, structure, typography,
 };
+use crate::suppress;
 use crate::tex::node::Node as TexNode;
 use crate::tex::position::LineIndex;
 use crate::tex::{self, ParsedTex};
@@ -717,10 +718,8 @@ fn ordered_rules() -> Vec<(&'static str, RuleAction<'static>)> {
 /// `ComplianceReport`. Mirrors `core/engine.py::run`'s algorithm
 /// (category/rule iteration, `SkippedRule` bookkeeping, format
 /// gating, the synthetic `JSS-PARSE-000` "parse" category,
-/// `compliance_percentage`, sorted violations, severity overrides).
-/// One thing still deferred: inline suppression comments (`%
-/// jss-lint: ignore [RULE-IDS]`) aren't implemented — every rule
-/// finding is reported regardless. `JSS-PARSE-000` findings currently
+/// `compliance_percentage`, sorted violations, severity overrides,
+/// inline `% jss-lint: ignore` suppression). `JSS-PARSE-000` findings currently
 /// only ever come from `.Rmd`'s tokenizer (unterminated
 /// frontmatter/fence, malformed YAML); the tex tokenizer itself
 /// (`.tex`/`.ltx`/`.rnw`) never emits one — it only implements
@@ -728,7 +727,27 @@ fn ordered_rules() -> Vec<(&'static str, RuleAction<'static>)> {
 /// Python's strict-then-tolerant-retry `parse_tex_source` (see
 /// `tex::parse_tex_source`'s doc comment).
 pub fn run(config: &ToolConfig, document: &ParsedDocument) -> ComplianceReport {
-    run_impl(config, document, None)
+    run_impl(config, document, None, None)
+}
+
+/// A caller-supplied filter applied to every finding just before the
+/// engine's bookkeeping — mirrors `api.Suppressor`. Returning `true`
+/// drops the finding, exactly as an inline `% jss-lint: ignore` does.
+/// `&mut self` because the baseline matcher (spec 027 item B) consumes
+/// a multiset as it matches.
+pub trait Suppressor {
+    fn suppress(&mut self, violation: &Violation) -> bool;
+}
+
+/// `run` / `run_with_project` plus a caller-supplied [`Suppressor`].
+/// Mirrors `core/engine.py::run`'s `suppress=` keyword.
+pub fn run_with(
+    config: &ToolConfig,
+    document: &ParsedDocument,
+    project_extra: Option<(Vec<Violation>, Vec<Violation>)>,
+    extra: Option<&mut dyn Suppressor>,
+) -> ComplianceReport {
+    run_impl(config, document, project_extra, extra)
 }
 
 /// Like `run`, but also dispatches `JSS-PROJECT-001` (cycle) /
@@ -750,13 +769,36 @@ pub fn run_with_project(
     cycles: Vec<Violation>,
     missing: Vec<Violation>,
 ) -> ComplianceReport {
-    run_impl(config, document, Some((cycles, missing)))
+    run_impl(config, document, Some((cycles, missing)), None)
+}
+
+/// Sum the annotated instances of every rule in `category_id` — mirrors
+/// `core/engine.py::_pooled_recall`. This engine always has recall data
+/// (it is compiled in), so unlike Python's there is no `None` case for
+/// "journal publishes no measurement"; a category with no annotated
+/// instances pools to `(0, 0)` and renders `unmeasured`.
+pub fn pooled_recall_for(category_id: &str) -> crate::report::RecallStat {
+    pooled_recall(category_id)
+}
+
+fn pooled_recall(category_id: &str) -> crate::report::RecallStat {
+    let mut pooled = crate::report::RecallStat::default();
+    for rule in catalogue::all_rules() {
+        if rule.category != category_id {
+            continue;
+        }
+        let stat = catalogue::recall(rule.rule_id);
+        pooled.tp += stat.tp;
+        pooled.fn_ += stat.fn_;
+    }
+    pooled
 }
 
 fn run_impl(
     config: &ToolConfig,
     document: &ParsedDocument,
     project_extra: Option<(Vec<Violation>, Vec<Violation>)>,
+    mut extra: Option<&mut dyn Suppressor>,
 ) -> ComplianceReport {
     let tex_like = document.tex_like();
     let tex_file_line_indexes = document.tex_file_line_indexes();
@@ -766,11 +808,26 @@ fn run_impl(
     let mut violations_by_category: HashMap<&'static str, Vec<Violation>> = HashMap::new();
     let mut skipped: Vec<SkippedRule> = Vec::new();
 
+    let suppression_index = suppress::build_index(document);
+
     let mut run_one = |rule_id: &'static str, mut rule_violations: Vec<Violation>| {
         let Some(meta) = catalogue::lookup(rule_id) else {
             return;
         };
         let category = meta.category;
+
+        // Suppression order, identical in both engines (spec 027 §5.2):
+        // sort first so a caller-supplied suppressor sees findings in a
+        // deterministic order, then drop inline-ignored ones, then
+        // offer the rest to the suppressor. Inline first means an
+        // ignored finding never consumes a baseline count.
+        rule_violations.sort_by(|a, b| a.sort_key().cmp(&b.sort_key()));
+        if !suppression_index.is_empty() {
+            rule_violations.retain(|v| !suppress::is_suppressed(&suppression_index, v));
+        }
+        if let Some(suppressor) = extra.as_deref_mut() {
+            rule_violations.retain(|v| !suppressor.suppress(v));
+        }
 
         if !config.severity_overrides.is_empty() {
             for v in &mut rule_violations {
@@ -976,6 +1033,7 @@ fn run_impl(
             applied,
             passed,
             violations,
+            Some(pooled_recall(category_id)),
         ));
     }
 
@@ -1012,6 +1070,9 @@ fn run_impl(
             rules_applied: 0,
             rules_passed: 0,
             violations: parse_errors,
+            // The synthetic parse category has no rules, so nothing to
+            // pool: it renders `unmeasured`, same as Python's.
+            recall: Some(crate::report::RecallStat::default()),
         });
     }
 
@@ -1042,5 +1103,10 @@ fn run_impl(
         categories: summaries,
         compliance_percentage,
         skipped_rules: skipped,
+        // The CLI fills this in after the run, from the baseline file
+        // it alone is allowed to read.
+        baseline: None,
+        rule_set: catalogue::rule_set(),
+        coverage: Some(catalogue::coverage()),
     }
 }

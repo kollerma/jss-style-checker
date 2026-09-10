@@ -130,7 +130,7 @@ VSX, a GitHub Action, and a hosted browser application, with releases
 archived on Zenodo [@jss-style-checker].
 
 The significance claim rests on measured accuracy, not on adoption counts.
-After 115 recorded evaluation iterations against a pinned
+After 116 recorded evaluation iterations against a pinned
 corpus of 254 real JSS-format manuscripts, precision
 estimated over 20,060 adjudicated violation instances is
 97.2% — a label-set estimate bracketed by the human-only
@@ -151,8 +151,8 @@ implements are offered as the substantive contribution in the meantime.
 
 Large language models of the Claude family [@claude] wrote every line of
 the software, the tests, the evaluation tooling, and the text of this
-paper and its companion; approximately 750 of the
-repository's more than 900 commits carry an AI co-author
+paper and its companion; approximately 800 of the
+repository's more than 950 commits carry an AI co-author
 trailer. The human author's contribution was directional and evaluative:
 setting requirements, issuing corrective instructions when the tool or
 process drifted, hand-annotating the recall ground truth, and working the
@@ -161,7 +161,7 @@ label. Notably, the human author never reviewed the code — only its
 measured behavior.
 
 Correctness of the AI-generated content is verified by substituting
-measurement for line review: 1,915 automated tests with full
+measurement for line review: 2,117 automated tests with full
 branch coverage on rule logic; byte-parity between the two independently
 implemented engines; a per-rule precision gate (at least 90%) with
 1 documented exemption and 4 public

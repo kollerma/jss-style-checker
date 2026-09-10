@@ -333,12 +333,27 @@ def check_jss_oper_003(
                     tex=tex,
                     pos=node.pos,
                     rule_id="JSS-OPER-003",
-                    suggestion=(
-                        "Remove the blank line(s) around the display "
-                        "equation (add '%' after/before to suppress the "
-                        "paragraph break)."
-                    ),
+                    suggestion=_oper_003_suggestion(node, tex.source),
                 )
+
+
+_OPER_003_BASE = (
+    "Remove the blank line(s) around the display equation (add '%' "
+    "after/before to suppress the paragraph break)"
+)
+
+
+def _oper_003_suggestion(env: Any, source: str) -> str:
+    """Name the offending equation so two in one file stay distinct.
+
+    Spec 027 item S: the suggestion is part of a baseline entry's key.
+    An equation with neither a label nor a body — the only case
+    `equation_identifier` cannot name — keeps the generic wording.
+    """
+    name = _helpers.equation_identifier(env, source)
+    if not name:
+        return f"{_OPER_003_BASE}."
+    return f"{_OPER_003_BASE}: '{name}'."
 
 
 # Macros that don't render a glyph in the equation body. Used by the

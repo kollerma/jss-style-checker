@@ -6,6 +6,181 @@ JSON-output shape (see
 `specs/001-linter-foundation/contracts/json-output.md`) require a major
 version bump and an entry in this file — see the spec's Clarification Q2.
 
+The **rule set** carries its own date, printed by `jss-lint --version` and
+stamped into baseline files. A patch release may only make findings
+disappear; a minor release may add rules or reword messages and
+suggestions, which bumps that date and means baseline entries for the
+reworded rules go stale — re-run `--update-baseline`. Channel-by-channel
+version constraints and pinning advice: [`docs/versions.md`](docs/versions.md).
+
+## [1.2.0] — 2026-09-09
+
+### Added
+
+- **Recall is reported everywhere, so a clean run stops overstating
+  itself.** Precision has been public since 1.0; recall — of the style
+  problems that exist, how many the tool finds — was measured but
+  reached no user. Every run now ends with
+
+      No findings does not mean compliant. Measured recall: 81% (1967 annotated instances, 17 papers).
+
+  printed on stdout, including when there are no findings at all.
+  Reviewer mode gains a per-category `Recall` column and a
+  `Measured recall:` line; JSON gains `recall` on every category and a
+  top-level `rule_set`; SARIF rule descriptors gain
+  `properties.recall` and `properties.confidence`; `explain` prints a
+  `Recall:` line for every rule; the catalogue page gains `Confidence`
+  and `Recall` columns. Three states, never a fabricated number: an
+  integer percentage at 10 or more annotated instances, `limited (n=K)`
+  below that, and `unmeasured` where the corpus has no instances at all
+  — so the `project` category reads `unmeasured`, not `100%`. The
+  measurement is pinned per release in
+  `specs/003-jss-rule-catalogue/recall.json`, which the README badge now
+  reads too, and it is a lower bound (source-only linting). See
+  [`docs/recall-and-coverage.md`](docs/recall-and-coverage.md).
+- **The tool says what it does not check.** A new curated matrix,
+  `specs/003-jss-rule-catalogue/guide-coverage.yaml`, maps all 149
+  provisions of the four JSS authorities — `jss.cls`, `article.tex`, the
+  style guide, the author instructions, each pinned to a dated edition —
+  to the rules that enforce them: **76 checked, 4 partial, 5 not
+  checked, 64 out of scope**. `jss-lint coverage` prints it
+  (`--format terminal|markdown|json`); reviewer mode ends with a
+  "Not checked by jss-lint" block listing the gaps; the author footer
+  gives the ratio (`checks 80 of 85 guide directives`); JSON gains a
+  top-level `coverage` object; and `explain` reports the reverse
+  direction (`Covers: SG-027, SG-028`). Out-of-scope provisions —
+  compilability, graphics legibility, replication scripts — are listed
+  but excluded from the ratio: they were never checkable from source.
+  It replaces a markdown review checklist that had quietly credited four
+  rules retired months earlier; the new file is validated on every build,
+  so a rule can no longer be added without claiming a provision, nor
+  retired without re-judging the rows that credited it.
+- **CI defends that number.** `eval-jss recall --gate --no-record` runs
+  on every push with the aggregate floor raised from 0.70 to **0.78**
+  (the decision spec 017 deferred), ratcheted to the shipped snapshot
+  minus 0.03 at each release, with a test that fails if the floor drifts
+  further behind than that.
+- **Overleaf: drop the source zip on the browser app.** Menu → Download
+  → Source gives a `.zip`; dropping it on
+  [the web app](https://kollerma.github.io/jss-style-checker/) unpacks it
+  **in the browser tab** — no upload, no new dependency, no WASM change
+  — and checks every `.tex`/`.bib`/`.Rnw`/`.Rmd` inside with its project
+  paths intact, so `\input` resolution and the report's file headings
+  match the project. Figures and macOS resource forks are skipped; a
+  browser without `DecompressionStream` is told to use the folder picker
+  instead. [`docs/overleaf.md`](docs/overleaf.md) also covers the
+  command-line route and checking a GitHub-synced project on every save.
+- **Coloured terminal output.** Severities, PASS/FAIL/SKIPPED statuses,
+  rule ids, and banners are coloured with the basic 16-colour palette
+  when stdout is a terminal, and plain when it is piped. `--color
+  auto|always|never`, the TOML `color` key, `NO_COLOR`, and
+  `CLICOLOR_FORCE` behave as they do in ripgrep and cargo, identically
+  in both CLIs. JSON, SARIF, and HTML are never coloured, colour is
+  never the only carrier (every coloured token is still a word), and
+  stripping the escape sequences yields exactly the previous plain
+  output — colour cannot change layout.
+- **`--fix` ends with a receipt.** Both CLIs now close a fix pass with
+  one line — `Applied 3 fixes to 1 file (1 skipped: conflict 1).`, or
+  the `Dry run: …` form — so a command that rewrites your manuscript
+  says what it did and what it declined to do. Wording matches the R
+  binding's `jssfix()`, which has printed it since 1.1.0. Still no git
+  interaction of any kind (spec 008 stands); the README, `rust/README`,
+  and the R vignette now state the expectation to commit or `--dry-run`
+  first.
+- **Baseline mode: adopt the tool on a manuscript that predates it.**
+  `--baseline FILE` hides findings a baseline records — from every
+  output format and from the exit code — so a run fails only on what is
+  new; `--update-baseline` writes the file from the current run. Also
+  settable as `baseline` in `.jss-lint.toml`, and as a `baseline:` input
+  to the GitHub Action, where SARIF omission narrows the Security tab to
+  new findings for free. An accepted finding is identified by
+  `(rule_id, path, message, suggestion)` with a count — never by line
+  number, which survives no edit: on a real four-round JSS submission a
+  line-based key matched 1 % of findings across the first revision
+  round, against 100 % for this one. The file is plain JSON, sorted, and
+  timestamp-free, so `--update-baseline` is byte-identical whichever
+  engine wrote it. Its documented limits, and the interaction with
+  `--fix`, `--min-confidence`, and inline ignores, are in
+  [`docs/baseline.md`](docs/baseline.md). JSON output gains an
+  always-present `baseline` key (`null` when inactive).
+- **Rule-set provenance.** `catalogue.yaml` now carries a dated
+  `ruleset_version`, a `ruleset_fingerprint` over every active rule's
+  contract fields *and* the message/suggestion wording, and the
+  `guide_edition` the rules derive from. A rewording can no longer ship
+  without a visible rule-set date change, which matters because baseline
+  entries are keyed on that wording.
+- **`--version` prints a four-line block** in both CLIs — tool, engine,
+  rule set with its authority edition, and the effective journal — after
+  `.jss-lint.toml` and `--journal` are resolved, so it reports the rule
+  set the invocation would actually apply. The two engines differ only
+  in the engine line.
+- **Version functions in every binding**: `version()` in the WASM build,
+  `jsslint.version()` / `jsslint.__version__` in the PyO3 wheel, and
+  `jsslintr::jsslint_version()` in R, which additionally reports the
+  CRAN package version (`1.2.0-N`) alongside the engine it wraps.
+- **[`docs/versions.md`](docs/versions.md)**: the distribution → engine →
+  rule-set mapping for all seven channels, each channel's version-string
+  constraints, the compatibility policy, and what to pin.
+
+### Fixed
+
+- **`eval-jss recall --gate` refuses to judge an incomplete corpus.**
+  A paper whose annotations exist but whose sources were never fetched
+  was skipped with a warning, and its plants left both the numerator and
+  the denominator — so the gate reported a confident number for a corpus
+  nobody chose. It can move either way: the 1.2.0 CI run sank to 0.762,
+  but dropping one paper measured 0.781, which would have *passed* the
+  0.78 floor while measuring something else. The gate now fails on the
+  cause and names the missing papers. Ungated runs are unchanged.
+
+- **Bracketed text no longer disappears from terminal output.** `rich`
+  parses `[word]` in a table cell as a console-markup tag and drops it,
+  so any message or suggestion quoting LaTeX with an optional argument
+  was rendered wrong: `\documentclass[shortnames]{jss}` came out as
+  `\documentclass{jss}`, and `\citep[e.g.][]{key}` as `\citep[]{key}` —
+  turning a correct suggestion into one that would introduce a
+  different error if followed. The Rust port had reproduced the quirk
+  deliberately to hold byte-parity, so both engines agreed and both were
+  wrong. Cell text is now escaped on the Python side and emitted
+  verbatim on the Rust side. Only terminal output was affected; JSON,
+  SARIF, and HTML always carried the correct text.
+
+- **The Rust engine now honours `% jss-lint: ignore`.** It never
+  implemented the directives, so every surface built on it — the
+  `jsslint` binary, the browser/WASM build and the hosted web app, the
+  VS Code extension, the PyO3 wheel, and the R package — reported
+  findings whose author had explicitly signed them off in the source,
+  while the Python `jss-lint` hid them. A live engine-parity gap,
+  covered from now on by `rust/jsslint-core/tests/suppress_parity.rs`
+  over one fixture per directive behaviour.
+- **Two long-standing bugs in the Python engine's directive handling.**
+  A directive inside an `.Rmd` prose block only worked when the block
+  started on line 1 (block-relative line numbers were compared against
+  file-authoritative ones), and line counting used `str.splitlines()`,
+  which also breaks on form feed, vertical tab, `\x1c`-`\x1f` and
+  `\x85` — so a single form feed anywhere above a directive silently
+  moved it to the wrong line.
+
+### Changed
+
+- **Ten rules now name what they found.** `JSS-CODE-001`, `JSS-CODE-003`,
+  `JSS-OPER-003`, `JSS-XREF-002`, `JSS-XREF-004`, `JSS-TYPO-001`,
+  `JSS-CAP-002`, `JSS-CITE-003`, `JSS-REFS-004`, and `JSS-REFS-007`
+  quote a stable identifier in their suggestion — the BibTeX entry key,
+  the equation label or the head of its body, the caption or section
+  title, the offending code fragment, the referenced label, the cite
+  keys, or the comment text. Detection is unchanged: no finding appears
+  or disappears (verified finding-for-finding on 1 259 corpus files).
+  Two findings of the same rule in one file are now usually
+  distinguishable, which matters because the baseline mode landing in
+  this release keys accepted findings on the suggestion text. On a real
+  four-round JSS submission this raises the distinct-key count of one
+  version from 49 to 79 while re-keying 4 of the 26 findings that
+  survive a revision round. `JSS-WIDTH-001` deliberately keeps its
+  generic suggestion (no stable identifier exists for an over-long
+  line). This is a rule-set change: the rule-set date moves, and
+  consumers keying on suggestion text see new values once.
+
 ## [1.1.0] — 2026-07-19
 
 ### Added

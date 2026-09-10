@@ -303,9 +303,10 @@ fn check_refs_004_field(
             entry,
             "JSS-REFS-004",
             Some(format!(
-                "Wrap {} in \\proglang{{{lang}}} in the {}.",
+                "Wrap {} in \\proglang{{{lang}}} in the {} of entry {}.",
                 py_repr(&lang),
-                if is_title { "title" } else { "note field" }
+                if is_title { "title" } else { "note field" },
+                py_repr(entry_key(entry))
             )),
         ));
         return;
@@ -320,8 +321,9 @@ fn check_refs_004_field(
             entry,
             "JSS-REFS-004",
             Some(format!(
-                "Wrap {} in \\pkg{{{pkg}}} in the title.",
-                py_repr(&pkg)
+                "Wrap {} in \\pkg{{{pkg}}} in the title of entry {}.",
+                py_repr(&pkg),
+                py_repr(entry_key(entry))
             )),
         ));
         return;
@@ -344,10 +346,23 @@ fn check_refs_004_field(
         entry,
         "JSS-REFS-004",
         Some(format!(
-            "The leading identifier {} looks like a package name; wrap it in \\pkg{{{name}}} in the title.",
-            py_repr(name)
+            "The leading identifier {} looks like a package name; wrap it in \\pkg{{{name}}} in \
+             the title of entry {}.",
+            py_repr(name),
+            py_repr(entry_key(entry))
         )),
     ));
+}
+
+/// The BibTeX entry key a suggestion quotes (spec 027 item S). Mirrors
+/// `references._entry_key`, including the `<unknown>` fallback the
+/// older rules spell inline.
+fn entry_key(entry: &Entry) -> &str {
+    if entry.key.is_empty() {
+        "<unknown>"
+    } else {
+        &entry.key
+    }
 }
 
 /// JSS-REFS-004 — BibTeX titles/notes use JSS markup (`\proglang`,
@@ -550,7 +565,10 @@ pub fn check_refs_007(file: &str, library: &Library, tex_like: &[&[TexNode]]) ->
                     file,
                     entry,
                     "JSS-REFS-007",
-                    Some("Capitalize the principal words of the journal title.".to_string()),
+                    Some(format!(
+                        "Capitalize the principal words of the journal title in entry {}.",
+                        py_repr(entry_key(entry))
+                    )),
                 ));
                 break;
             }
