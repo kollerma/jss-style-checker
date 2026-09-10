@@ -142,6 +142,8 @@ jobs:
       # ever restates it, so any disagreement is an operator error.
       - name: Tag matches VERSION
         if: github.ref_type == 'tag'
+        # The Windows runner's default shell is pwsh; this script is bash.
+        shell: bash
         run: |
           want="$(cat VERSION)"
           got="${GITHUB_REF_NAME#v}"
