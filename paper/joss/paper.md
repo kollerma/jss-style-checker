@@ -161,7 +161,7 @@ label. Notably, the human author never reviewed the code — only its
 measured behavior.
 
 Correctness of the AI-generated content is verified by substituting
-measurement for line review: 2,117 automated tests with full
+measurement for line review: 2,121 automated tests with full
 branch coverage on rule logic; byte-parity between the two independently
 implemented engines; a per-rule precision gate (at least 90%) with
 1 documented exemption and 4 public
