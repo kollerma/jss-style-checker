@@ -1,8 +1,15 @@
 name: release-action
 on:
   push:
+    # 'v*.*.*', not 'v*': the rolling tag this workflow pushes is itself a
+    # `v*` ref, and it moves under RELEASE_TAG_PAT — a PAT push DOES start
+    # new workflow runs (only the default GITHUB_TOKEN is exempt). Under
+    # 'v*' the `v1` push would re-enter this workflow, where the tag guard
+    # reads it as version '1', compares that against VERSION, and fails the
+    # run. This never bit before v1.2.0 only because v1.1.0's rolling-tag
+    # push was rejected outright for want of the PAT.
     tags:
-      - 'v*'
+      - 'v*.*.*'
   workflow_dispatch:  # dry run: prints what the rolling tag update would do, pushes nothing
     inputs:
       tag:
