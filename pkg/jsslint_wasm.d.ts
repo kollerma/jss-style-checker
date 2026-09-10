@@ -29,6 +29,14 @@ export function fix(request: any): any;
  */
 export function render(request: any): string;
 
+/**
+ * Which engine and which rule set this bundle carries (spec 027 item D,
+ * contracts/version-output.md C-4): the same facts `jsslint --version`
+ * prints, minus the journal line (this binding is always `jss`). Lets a
+ * page show the rule-set date its results were produced under.
+ */
+export function version(): any;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -36,6 +44,7 @@ export interface InitOutput {
     readonly analyze: (a: any) => [number, number, number];
     readonly fix: (a: any) => [number, number, number];
     readonly render: (a: any) => [number, number, number, number];
+    readonly version: () => [number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

@@ -62,6 +62,21 @@ export function render(request) {
         wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
     }
 }
+
+/**
+ * Which engine and which rule set this bundle carries (spec 027 item D,
+ * contracts/version-output.md C-4): the same facts `jsslint --version`
+ * prints, minus the journal line (this binding is always `jss`). Lets a
+ * page show the rule-set date its results were produced under.
+ * @returns {any}
+ */
+export function version() {
+    const ret = wasm.version();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,

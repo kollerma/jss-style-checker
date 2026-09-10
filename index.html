@@ -75,7 +75,12 @@
   @media (prefers-color-scheme: dark) {
     .privacy { background: #14261a; border-color: #2a4a34; }
   }
-</style>
+    .panel.dragging {
+      outline: 2px dashed #2a7a2a;
+      outline-offset: 4px;
+      background: #f3faf3;
+    }
+  </style>
 </head>
 <body>
   <h1>JSS Style Checker</h1>
@@ -89,9 +94,11 @@
     WebAssembly — no upload, no network request, no server involved.
   </p>
 
-  <div class="panel">
+  <div class="panel" id="drop-zone">
     <div class="controls">
-      <button id="folder-button">Choose a folder…</button>
+      <button id="zip-button">Drop or choose an Overleaf .zip…</button>
+      <input id="zip-input" type="file" accept=".zip" hidden>
+      <button id="folder-button" class="secondary">Choose a folder…</button>
       <input id="folder-input" type="file" webkitdirectory multiple hidden>
       <button id="files-button" class="secondary">Choose files…</button>
       <input id="files-input" type="file" multiple accept=".tex,.ltx,.bib,.Rnw,.Rmd" hidden>
@@ -103,6 +110,14 @@
         </select>
       </label>
     </div>
+    <p class="hint">
+      From Overleaf: <strong>Menu → Download → Source</strong>, then drop
+      the <code>.zip</code> anywhere on this panel. It is unpacked in
+      this tab — nothing is uploaded. See
+      <a href="https://github.com/kollerma/jss-style-checker/blob/main/docs/overleaf.md"
+         target="_blank" rel="noopener">the Overleaf guide</a> for the
+      command-line and GitHub-sync routes.
+    </p>
     <p class="hint">
       "Choose a folder" scans everything in it before this page ever sees
       it — slow or unresponsive if the folder also holds a lot of
@@ -117,6 +132,11 @@
 
   <footer>
     Checks <code>.tex</code> / <code>.ltx</code> / <code>.bib</code> / <code>.Rnw</code> / <code>.Rmd</code> files.
+    Writing in Overleaf? Menu → Download → Source, then drop the zip
+    above — see the
+    <a href="https://github.com/kollerma/jss-style-checker/blob/main/docs/overleaf.md"
+       target="_blank" rel="noopener">Overleaf guide</a>.
+    <br>
     Source, the command-line tool, and Python/R packages:
     <a href="https://github.com/kollerma/jss-style-checker" target="_blank" rel="noopener">github.com/kollerma/jss-style-checker</a>.
     <br>
