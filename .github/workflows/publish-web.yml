@@ -40,9 +40,12 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
-      - uses: jetli/wasm-pack-action@v0.4.0
+      # Composite action installing a prebuilt binary. Not
+      # jetli/wasm-pack-action: that one is a node16 JS action, which the
+      # runner now warns about on every run.
+      - uses: taiki-e/install-action@v2
         with:
-          version: latest
+          tool: wasm-pack
 
       - name: Build the WASM package for the browser
         working-directory: rust/jsslint-wasm
