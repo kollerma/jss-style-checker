@@ -346,8 +346,12 @@ the same HTML report as the folder picker.
 - [x] T139 [P] Record the item-S tail, CLI zip, bindings baseline, SARIF `baselineState`, Action `comment-mode`, Windows colour CI, and second-annotator corpus in `roadmap/follow-ups.md`
 - [x] T140 Write `docs/releasing.md` with the plan §10 checklist
 - [x] T141 Run the full gate set: `python -m pytest tests/ -q`, `ruff check .`, the §IX coverage gate, `cargo test --workspace --locked`, `eval-jss recall --gate --no-record`
-- [ ] T142 **[RELEASE — needs explicit go-ahead]** fresh recorded `eval-jss recall` run → `generate_recall_snapshot.py` → badge JSON → ratchet `RECALL_FLOOR` to `floor(snapshot − 0.03, 2 dp)`
-- [ ] T143 **[RELEASE — needs explicit go-ahead]** `generate_message_snapshot.py --check`, `generate_catalogue_data.py --check`, CHANGELOG, `VERSION` + `python scripts/set_version.py`, tag-guard step in every `release-*.yml`, CTAN bundle, CRAN `1.2.0` (bare; `-N` only on resubmission)
+- [x] T142 **[RELEASE]** fresh recorded `eval-jss recall` run (`2026-09-09T19:13:46Z`) → `generate_recall_snapshot.py --run-timestamp` → badge JSON (rendered 0.97 / 0.81; `publish-badges.yml` writes them on push to `main`). **`RECALL_FLOOR` deliberately left at 0.78**: the mechanical ratchet to `floor(0.8068 − 0.03, 2 dp)` would have *lowered* it to 0.77. Decision recorded, not an omission.
+- [x] T143 **[RELEASE]** `generate_message_snapshot.py --check` ✔, `generate_catalogue_data.py --check` ✔, CHANGELOG closed as `[1.2.0] — 2026-09-09`, `VERSION` + `scripts/set_version.py` ✔, tag-guard step in all six `release-*.yml` ✔
+- [x] T144 Precision pin bumped to `v1.2.0-release` (iteration 116); note the aggregate moved 0.9723 → 0.9716, from iterations 111–115 (multifile-resolve, 2026-07-19), not from 1.2.0
+- [ ] T145 **[RELEASE — not started]** CTAN bundle, version `1.2.0`, with the README that ships in it re-read rather than assumed
+- [ ] T146 **[RELEASE — not started]** CRAN submission of `r/jsslintr` as bare `1.2.0` (`-N` only on resubmission); `DESCRIPTION` already carries the bare version
+- [ ] T147 **[RELEASE — not started]** Confirm `RELEASE_TAG_PAT` is present and unexpired, then push the six per-component tags to the **public** remote (`v1.2.0-cli|-py|-pypkg|-wasm|-vscode`, plain `v1.2.0` for the Action). No tags exist yet, so nothing has been published.
 
 ---
 
