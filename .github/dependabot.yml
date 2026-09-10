@@ -72,6 +72,16 @@ updates:
     schedule:
       interval: monthly
     open-pull-requests-limit: 2
+    ignore:
+      # @types/vscode declares the API surface the extension compiles
+      # against, so vsce refuses to package when it is newer than
+      # engines.vscode — the extension would be typed against APIs the
+      # oldest supported VS Code doesn't have. An unattended bump here
+      # merges green (CI only compiles) and fails at `vsce package` on
+      # the release tag, which is how 1.2.0-vscode broke. Raising the
+      # supported floor is a deliberate call: edit engines.vscode and
+      # @types/vscode together, by hand.
+      - dependency-name: "@types/vscode"
     groups:
       npm-minor-patch:
         update-types: ["minor", "patch"]
