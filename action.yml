@@ -1,0 +1,93 @@
+name: 'JSS Style Checker'
+description: 'Lint LaTeX/BibTeX manuscripts against the JSS style guide.'
+author: 'kollerma'
+
+# A forwarder. The implementation is action/action.yml; this file exists
+# so that the short form documented in docs/ resolves:
+#
+#     uses: kollerma/jss-style-checker@v1          # this file
+#     uses: kollerma/jss-style-checker/action@v1   # the implementation
+#
+# Both must keep working: the long form is what action/README.md (the
+# Marketplace listing copy) has always published, and the short form is
+# what docs/baseline.md, docs/overleaf.md and docs/versions.md tell
+# people to write.
+#
+# Why the delegation below names the repository instead of `./action`:
+# inside a composite action, a relative `uses:` is resolved against the
+# *calling* workflow's workspace, not against the action's own repo
+# (actions/runner#1348, open since 2021), so `./action` would look for
+# `action/` in the user's checkout. A repo-qualified reference is the
+# only form that works, and `uses:` takes no expressions, so the ref has
+# to be a literal.
+#
+# That literal is `@v1`, the rolling major, which makes an exact ref pin
+# on THIS path meaningless — `kollerma/jss-style-checker@v1.2.0` still
+# runs whatever v1 currently points at. That matches how the tool is
+# meant to be pinned (docs/versions.md "What to pin": ride the rolling
+# major, pin the linter through the `version:` input). Anyone who wants
+# the ref itself frozen should use the implementation path, which is
+# tagged per release: `kollerma/jss-style-checker/action@v1.2.0`.
+#
+# Bump the ref below when the major does.
+
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  paths:
+    description: 'Files or directories to lint (default: auto-detect tracked .tex/.Rnw/.Rmd files).'
+    required: false
+    default: ''
+  journal:
+    description: 'Journal id (default: jss).'
+    required: false
+    default: 'jss'
+  fail-on-severity:
+    description: 'error | warning | info | never (default: error).'
+    required: false
+    default: 'error'
+  comment-mode:
+    description: 'pr-review | pr-comment | none (default: pr-review).'
+    required: false
+    default: 'pr-review'
+  upload-sarif:
+    description: 'Upload SARIF to the Security tab (default: true).'
+    required: false
+    default: 'true'
+  python-version:
+    description: 'Python version (default: 3.12).'
+    required: false
+    default: '3.12'
+  baseline:
+    description: 'Baseline file to apply (spec 027 item B). Findings it records are hidden from the SARIF, so the severity gate and the Security tab show only what is new. Empty (the default) applies no baseline.'
+    required: false
+    default: ''
+  version:
+    description: "jss-lint PyPI version. 'latest' pulls the latest release from PyPI; 'local' installs from the action's checked-out source (used by this repo's smoke-test workflow); any other value is treated as a pinned PyPI version."
+    required: false
+    default: 'latest'
+
+outputs:
+  sarif-path:
+    description: 'Path to the generated SARIF file.'
+    value: ${{ steps.action.outputs.sarif-path }}
+  violation-count:
+    description: 'Total violation count.'
+    value: ${{ steps.action.outputs.violation-count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: action
+      uses: kollerma/jss-style-checker/action@v1
+      with:
+        paths: ${{ inputs.paths }}
+        journal: ${{ inputs.journal }}
+        fail-on-severity: ${{ inputs.fail-on-severity }}
+        comment-mode: ${{ inputs.comment-mode }}
+        upload-sarif: ${{ inputs.upload-sarif }}
+        python-version: ${{ inputs.python-version }}
+        baseline: ${{ inputs.baseline }}
+        version: ${{ inputs.version }}

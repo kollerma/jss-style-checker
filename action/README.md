@@ -39,6 +39,13 @@ jobs:
 dedicated `jss-style-checker-action` marketplace repo is tracked in
 `roadmap/follow-ups.md` but does not exist yet.)
 
+`kollerma/jss-style-checker@v1` — no `/action` — works too, via a
+forwarder at the repo root, and is the form the rest of the docs use. The
+two differ in one respect: the forwarder always delegates to the rolling
+`v1`, so pinning it to an exact tag pins nothing. Use the `/action` path
+above if you want the ref itself frozen, or pin the linter through the
+`version:` input, which is what `docs/versions.md` recommends either way.
+
 ## Inputs
 
 | Input              | Default      | Description                                                |
